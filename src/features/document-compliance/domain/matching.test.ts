@@ -10,6 +10,9 @@ describe("namesCompatible", () => {
     "Amara L. Velasco",
     "A. Velasco",
     "Amara Velasco",
+    // OCR sometimes drops the space between given names.
+    "VELASCO AMARALUCIA",
+    "AmaraL. Velasco",
   ])("accepts %s", (name) => {
     expect(namesCompatible(name, declared)).toBe(true);
   });
@@ -22,6 +25,8 @@ describe("namesCompatible", () => {
     "Marisol Velasco",
     "Amara Lucia Reyes",
     "Velasco",
+    "VELASCO AMARALUCAS",
+    "VELASCO LUCIAAMARA",
   ])("rejects %s", (name) => {
     expect(namesCompatible(name, declared)).toBe(false);
   });

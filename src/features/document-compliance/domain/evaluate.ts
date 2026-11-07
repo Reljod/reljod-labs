@@ -80,12 +80,12 @@ export function evaluate(input: PrescreenInput): Finding[] {
       .filter(usable);
     if (readable.length === 0) {
       return review(
-        `A ${label} was submitted but its key details could not be read reliably.`,
+        `The ${label} was submitted but its key details could not be read reliably.`,
         [evidenceOf(document)],
       );
     }
     return pass(
-      `A ${label} is present.`,
+      `The ${label} is present.`,
       readable.map((field) => evidenceOf(document, field)),
     );
   }

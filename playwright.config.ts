@@ -11,6 +11,8 @@ try {
 }
 
 const externalBaseUrl = process.env.E2E_BASE_URL;
+// Its own port, so a dev server you already have on 3000 is never mistaken for this one.
+const localUrl = "http://localhost:3100";
 
 export default defineConfig({
   testDir: "e2e",
@@ -25,16 +27,18 @@ export default defineConfig({
   globalSetup: "./e2e/global-setup.ts",
   globalTeardown: "./e2e/global-teardown.ts",
   use: {
-    baseURL: externalBaseUrl ?? "http://localhost:3000",
+    baseURL: externalBaseUrl ?? localUrl,
+    // Locally, use the installed Google Chrome; CI installs Playwright's Chromium.
+    channel: process.env.CI ? undefined : "chrome",
     extraHTTPHeaders: { [E2E_HEADER]: process.env.E2E_BYPASS_TOKEN ?? "" },
     trace: "retain-on-failure",
   },
   webServer: externalBaseUrl
     ? undefined
     : {
-        command: "pnpm dev",
-        url: "http://localhost:3000",
-        reuseExistingServer: true,
+        command: "pnpm dev --port 3100",
+        url: localUrl,
+        reuseExistingServer: false,
         timeout: 120_000,
       },
 });

@@ -9,9 +9,24 @@ export function words(text: string): string[] {
 }
 
 /**
+ * True when `word` is one or more of the given names, each written in full or as
+ * its initial, in declared order. Covers OCR runs such as "amaralucia" and "amaral".
+ */
+function madeOfGivenNames(word: string, givenNames: string[]): boolean {
+  if (word === "") return true;
+  return givenNames.some((name, index) =>
+    [name, name[0]].some(
+      (piece) =>
+        word.startsWith(piece) &&
+        madeOfGivenNames(word.slice(piece.length), givenNames.slice(index + 1)),
+    ),
+  );
+}
+
+/**
  * True when a name on a Document can belong to the declared person: the surname
- * (last declared word) appears, and every other word is a declared given name or
- * its initial. Middle names may be left out.
+ * (last declared word) appears, and every other word is made of declared given
+ * names or their initials. Middle names may be left out.
  */
 export function namesCompatible(documentName: string, declaredName: string) {
   const declared = words(declaredName);
@@ -23,11 +38,7 @@ export function namesCompatible(documentName: string, declaredName: string) {
   const otherWords = found.filter((word) => word !== surname);
   if (otherWords.length === 0) return false;
 
-  return otherWords.every((word) =>
-    givenNames.some((given) =>
-      word.length === 1 ? given.startsWith(word) : given === word,
-    ),
-  );
+  return otherWords.every((word) => madeOfGivenNames(word, givenNames));
 }
 
 const COUNTRY_WORDS = new Set(["republic", "of", "meridia"]);

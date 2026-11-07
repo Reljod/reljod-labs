@@ -1,6 +1,5 @@
 import "server-only";
-import { openai } from "@ai-sdk/openai";
-import { generateText, Output } from "ai";
+import { createGateway, generateText, Output } from "ai";
 import { z } from "zod";
 import {
   type DocumentJudgments,
@@ -107,8 +106,9 @@ export async function extractDocument(input: {
     .map((span) => `${span.ref} | ${span.page} | ${span.text}`)
     .join("\n");
 
+  const gateway = createGateway({ apiKey: env.aiGatewayApiKey() });
   const { output } = await generateText({
-    model: openai(env.model()),
+    model: gateway(env.model()),
     instructions: INSTRUCTIONS,
     output: Output.object({ schema: extractionSchema }),
     providerOptions: { openai: { reasoningEffort: "low" } },

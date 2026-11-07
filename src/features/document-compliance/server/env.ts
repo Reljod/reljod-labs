@@ -15,5 +15,7 @@ export const env = {
   rateLimitSalt: () => required("RATE_LIMIT_SALT"),
   /** When set, requests carrying it skip rate limits and are tagged as e2e runs. */
   e2eBypassToken: () => process.env.E2E_BYPASS_TOKEN ?? "",
-  model: () => process.env.DOCUMENT_COMPLIANCE_MODEL ?? "gpt-6.1-terra",
+  aiGatewayApiKey: () => required("DOCUMENT_COMPLIANCE_AI_GATEWAY_API_KEY"),
+  /** A Vercel AI Gateway model id, `provider/model`. */
+  model: () => process.env.DOCUMENT_COMPLIANCE_MODEL ?? "openai/gpt-6.1-terra",
 };

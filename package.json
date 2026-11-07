@@ -13,7 +13,6 @@
     "seed:document-compliance": "node --env-file=.env.local scripts/seed-document-compliance.mts"
   },
   "dependencies": {
-    "@ai-sdk/openai": "^4.0.109",
     "@supabase/supabase-js": "^2.119.0",
     "@tanstack/react-query": "^5.106.1",
     "ai": "^7.0.163",

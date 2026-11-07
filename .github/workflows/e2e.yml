@@ -9,7 +9,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 45
     env:
-      OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+      DOCUMENT_COMPLIANCE_AI_GATEWAY_API_KEY: ${{ secrets.DOCUMENT_COMPLIANCE_AI_GATEWAY_API_KEY }}
       SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
       SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
       RATE_LIMIT_SALT: ${{ secrets.RATE_LIMIT_SALT }}
