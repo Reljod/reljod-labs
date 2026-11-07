@@ -1,5 +1,5 @@
 import "server-only";
-import { createGateway, generateText, Output } from "ai";
+import { createGateway, Output, streamText } from "ai";
 import { z } from "zod";
 import {
   type DocumentJudgments,
@@ -94,10 +94,17 @@ export type DocumentExtraction = {
   judgments: DocumentJudgments;
 };
 
+type ExtractedItem = z.infer<typeof extractionSchema>["fields"][number];
+
+/**
+ * Reads one Document with the model, streaming: `onReading` gets each field as
+ * soon as the model has finished writing it, before the whole answer is in.
+ */
 export async function extractDocument(input: {
   kind: DocumentKind;
   spans: Span[];
   pageImages: { data: Uint8Array; mediaType: string }[];
+  onReading?: (reading: FieldReading) => Promise<void>;
 }): Promise<DocumentExtraction> {
   const requested = FIELDS_BY_KIND[input.kind]
     .map((name) => `- ${name}: ${FIELD_HINTS[name]}`)
@@ -107,7 +114,7 @@ export async function extractDocument(input: {
     .join("\n");
 
   const gateway = createGateway({ apiKey: env.aiGatewayApiKey() });
-  const { output } = await generateText({
+  const result = streamText({
     model: gateway(env.model()),
     instructions: INSTRUCTIONS,
     output: Output.object({ schema: extractionSchema }),
@@ -131,13 +138,32 @@ export async function extractDocument(input: {
   });
 
   const allowed = new Set(FIELDS_BY_KIND[input.kind]);
+  const toReading = (field: ExtractedItem): FieldReading | null =>
+    allowed.has(field.name)
+      ? { ...field, confidence: Math.min(1, Math.max(0, field.confidence)) }
+      : null;
+
+  // A partial array's last item may still be streaming; every earlier one is complete.
+  let reported = 0;
+  const report = async (fields: ExtractedItem[]) => {
+    for (; reported < fields.length; reported++) {
+      const reading = toReading(fields[reported]);
+      if (reading) await input.onReading?.(reading);
+    }
+  };
+  for await (const partial of result.partialOutputStream) {
+    const complete = (partial.fields ?? []).slice(0, -1);
+    if (complete.every(isComplete)) await report(complete as ExtractedItem[]);
+  }
+
+  const output = await result.output;
+  await report(output.fields);
   return {
-    readings: output.fields
-      .filter((field) => allowed.has(field.name))
-      .map((field) => ({
-        ...field,
-        confidence: Math.min(1, Math.max(0, field.confidence)),
-      })),
+    readings: output.fields.flatMap((field) => toReading(field) ?? []),
     judgments: output.judgments,
   };
+}
+
+function isComplete(field: unknown): field is ExtractedItem {
+  return extractionSchema.shape.fields.element.safeParse(field).success;
 }

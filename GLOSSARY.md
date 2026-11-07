@@ -46,6 +46,10 @@ _Avoid_: Region, country, locale
 The outcome of checking one Requirement against a Document pack: `Pass`, `Fail` or `Needs review`, with its Evidence.
 _Avoid_: Result, check result, issue
 
+**Field check**:
+The mark on one Extracted field as soon as its Document is read: the field compared with the Client declaration or a Rulebook threshold, such as a passport expiry date compared with the Pre-screen date. It shows where a Finding will come from, but is not one.
+_Avoid_: Field finding, flag, annotation
+
 **Fail**:
 A Finding where a confidently read value clearly breaks a Requirement, such as a passport expired on the Pre-screen date.
 _Avoid_: Reject, error

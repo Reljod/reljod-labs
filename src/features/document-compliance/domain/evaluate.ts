@@ -1,10 +1,11 @@
+import type { IsoDate } from "./dates";
 import {
-  type IsoDate,
-  parseMrzDate,
-  parsePrintedDate,
-  subtractMonths,
-} from "./dates";
-import { addressesCompatible, namesCompatible } from "./matching";
+  compareField,
+  isExpired,
+  isUsable,
+  proofOfAddressAge,
+  readDate,
+} from "./field-checks";
 import type { RequirementId, Rulebook } from "./rulebook";
 import type {
   ClientDeclaration,
@@ -66,10 +67,11 @@ function evidenceOf(
 /** Evaluates every Requirement in the Rulebook against the extracted Document pack. */
 export function evaluate(input: PrescreenInput): Finding[] {
   const { rulebook, prescreenDate, declaration, documents } = input;
+  const context = { rulebook, prescreenDate, declaration };
   const documentOf = (kind: DocumentKind) =>
     documents.find((document) => document.kind === kind);
   const usable = (field: ExtractedField | undefined): field is ExtractedField =>
-    field?.verified === true && field.confidence >= rulebook.minFieldConfidence;
+    isUsable(field, rulebook);
 
   function present(kind: DocumentKind, keyFields: FieldName[]): Result {
     const document = documentOf(kind);
@@ -100,12 +102,8 @@ export function evaluate(input: PrescreenInput): Finding[] {
       .map((field) => evidenceOf(document, field));
 
     const readings = [
-      { field: printed, label: "printed expiry", parse: parsePrintedDate },
-      {
-        field: mrz,
-        label: "machine-readable expiry",
-        parse: (value: string) => parseMrzDate(value, "expiry", prescreenDate),
-      },
+      { field: printed, label: "printed expiry" },
+      { field: mrz, label: "machine-readable expiry" },
     ].filter((reading) => reading.field !== undefined);
     if (readings.length === 0) {
       return review("No expiry date was found on the identity document.", [
@@ -114,8 +112,8 @@ export function evaluate(input: PrescreenInput): Finding[] {
     }
 
     const dates: { label: string; date: IsoDate }[] = [];
-    for (const { field, label, parse } of readings) {
-      const date = usable(field) ? parse(field.value) : null;
+    for (const { field, label } of readings) {
+      const date = usable(field) ? readDate(field, prescreenDate) : null;
       if (!date) {
         return review(`The ${label} could not be read reliably.`, evidence);
       }
@@ -133,7 +131,7 @@ export function evaluate(input: PrescreenInput): Finding[] {
     }
 
     const expiry = dates[0].date;
-    if (expiry < prescreenDate) {
+    if (isExpired(expiry, prescreenDate)) {
       return fail(`The identity document expired on ${expiry}.`, evidence);
     }
     return pass(`The identity document is valid until ${expiry}.`, evidence);
@@ -143,7 +141,7 @@ export function evaluate(input: PrescreenInput): Finding[] {
     const document = documentOf("proof_of_address");
     if (!document) return fail("The pack has no proof of address.");
     const field = fieldOf(document, "statement_date");
-    const date = usable(field) ? parsePrintedDate(field.value) : null;
+    const date = usable(field) ? readDate(field, prescreenDate) : null;
     if (!field || !date) {
       return review("The proof of address date could not be read reliably.", [
         evidenceOf(document, field),
@@ -151,14 +149,14 @@ export function evaluate(input: PrescreenInput): Finding[] {
     }
     const evidence = [evidenceOf(document, field)];
     const months = rulebook.proofOfAddressMaxAgeMonths;
-    const cutoff = subtractMonths(prescreenDate, months);
-    if (date > prescreenDate) {
+    const { status } = proofOfAddressAge(date, rulebook, prescreenDate);
+    if (status === "future") {
       return review(
         `The proof of address is dated in the future (${date}).`,
         evidence,
       );
     }
-    if (date < cutoff) {
+    if (status === "stale") {
       return fail(
         `The proof of address is dated ${date}, more than ${months} months before ${prescreenDate}.`,
         evidence,
@@ -176,7 +174,7 @@ export function evaluate(input: PrescreenInput): Finding[] {
       evidence.push(evidenceOf(document, field));
       if (!usable(field)) {
         problems.push(`the name on the ${label} could not be read reliably`);
-      } else if (!namesCompatible(field.value, declaration.fullName)) {
+      } else if (compareField(field, context).outcome !== "pass") {
         problems.push(
           `the ${label} names "${field.value}", not "${declaration.fullName}"`,
         );
@@ -198,14 +196,14 @@ export function evaluate(input: PrescreenInput): Finding[] {
       const field = fieldOf(document, "date_of_birth");
       if (!field) continue;
       evidence.push(evidenceOf(document, field));
-      const date = usable(field) ? parsePrintedDate(field.value) : null;
+      const date = usable(field) ? readDate(field, prescreenDate) : null;
       if (!date) {
         return review(
           `The date of birth on the ${KIND_LABELS[document.kind]} could not be read reliably.`,
           evidence,
         );
       }
-      if (date !== declaration.dateOfBirth) {
+      if (compareField(field, context).outcome === "fail") {
         mismatch = `the ${KIND_LABELS[document.kind]} shows ${date}`;
       }
     }
@@ -235,7 +233,7 @@ export function evaluate(input: PrescreenInput): Finding[] {
         evidence,
       );
     }
-    if (!addressesCompatible(field.value, declaration.residentialAddress)) {
+    if (compareField(field, context).outcome !== "pass") {
       return review(
         `The proof of address shows "${field.value}", which differs from the declared address.`,
         evidence,

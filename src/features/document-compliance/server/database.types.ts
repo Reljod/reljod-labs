@@ -34,6 +34,7 @@ type RunRow = {
     | "failed";
   model: string | null;
   error: string | null;
+  workflow_run_id: string | null;
   visitor_hash: string;
   created_at: string;
   completed_at: string | null;
@@ -119,6 +120,7 @@ export type Database = {
           | "status"
           | "model"
           | "error"
+          | "workflow_run_id"
           | "created_at"
           | "completed_at"
           | "expires_at"
