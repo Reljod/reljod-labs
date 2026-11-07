@@ -1,4 +1,5 @@
 import "server-only";
+import { fieldChecks } from "../domain/field-checks";
 import type { Rulebook } from "../domain/rulebook";
 import { individualOnboarding } from "../domain/rulebook";
 import type {
@@ -50,7 +51,7 @@ export async function createRun(input: {
         client_declaration: input.declaration,
         visitor_hash: input.visitorHash,
         model: input.model,
-        status: "parsing",
+        status: "queued",
       })
       .select("id")
       .single(),
@@ -62,6 +63,26 @@ export async function setRunStatus(runId: string, status: RunStatus) {
   ok(
     await supabase().from("prescreen_runs").update({ status }).eq("id", runId),
   );
+}
+
+export async function setWorkflowRunId(runId: string, workflowRunId: string) {
+  ok(
+    await supabase()
+      .from("prescreen_runs")
+      .update({ workflow_run_id: workflowRunId })
+      .eq("id", runId),
+  );
+}
+
+export async function workflowRunIdOf(runId: string) {
+  const [run] = rows<{ workflow_run_id: string | null }[]>(
+    await supabase()
+      .from("prescreen_runs")
+      .select("workflow_run_id")
+      .eq("id", runId)
+      .limit(1),
+  );
+  return run?.workflow_run_id ?? null;
 }
 
 export async function failRun(runId: string, message: string) {
@@ -307,6 +328,55 @@ export async function loadRun(runId: string): Promise<RunView | null> {
     ) ?? [],
   );
 
+  const runFindings = individualOnboarding.requirements.flatMap(
+    (requirement): FindingView[] => {
+      const finding = findings.find(
+        (row) => row.requirement_id === requirement.id,
+      );
+      if (!finding) return [];
+      const grouped = new Map<string, FindingView["evidence"][number]>();
+      for (const row of evidence) {
+        if (row.finding_id !== finding.id) continue;
+        const documentKind = kindByDocumentId.get(row.document_id);
+        if (!documentKind) continue;
+        const fieldName = row.extracted_field_id
+          ? (fieldNameById.get(row.extracted_field_id) ?? null)
+          : null;
+        const key = `${documentKind}:${fieldName ?? ""}`;
+        const entry = grouped.get(key) ?? {
+          documentKind,
+          fieldName,
+          spanRefs: [],
+        };
+        const ref = row.span_id ? refBySpanId.get(row.span_id) : undefined;
+        if (ref) entry.spanRefs.push(ref);
+        grouped.set(key, entry);
+      }
+      return [
+        {
+          requirementId: requirement.id,
+          title: requirement.title,
+          outcome: finding.outcome,
+          reason: finding.reason,
+          evidence: [...grouped.values()],
+        },
+      ];
+    },
+  );
+
+  // Judgments are not stored; suspected tampering survives as the spans the
+  // no-tampering Finding cites, which is all a Field check needs.
+  const tamperingRefs = (kind: DocumentKind) =>
+    runFindings
+      .find((finding) => finding.requirementId === "no-tampering")
+      ?.evidence.filter((item) => item.documentKind === kind && !item.fieldName)
+      .flatMap((item) => item.spanRefs) ?? [];
+  const checkContext = {
+    rulebook: individualOnboarding,
+    prescreenDate: pack?.prescreenDate ?? "",
+    declaration: run.client_declaration as ClientDeclaration,
+  };
+
   return {
     id: run.id,
     packSlug: run.pack_slug,
@@ -315,24 +385,8 @@ export async function loadRun(runId: string): Promise<RunView | null> {
     model: run.model,
     createdAt: run.created_at,
     prescreenDate: pack?.prescreenDate ?? "",
-    documents: documents.map((document) => ({
-      kind: document.kind,
-      pages: (
-        pack?.documents.find((candidate) => candidate.kind === document.kind)
-          ?.pages ?? []
-      ).map((file, index) => ({
-        page: index + 1,
-        imageUrl: urls.get(storagePath(run.pack_slug, file)) ?? "",
-      })),
-      spans: spans
-        .filter((span) => span.document_id === document.id)
-        .map((span) => ({
-          ref: span.ref,
-          page: span.page,
-          text: span.text,
-          box: { x0: span.x0, y0: span.y0, x1: span.x1, y1: span.y1 },
-        })),
-      fields: fields
+    documents: documents.map((document) => {
+      const documentFields = fields
         .filter((field) => field.document_id === document.id)
         .map((field) => ({
           name: field.name as FieldName,
@@ -342,42 +396,48 @@ export async function loadRun(runId: string): Promise<RunView | null> {
           spanRefs: fieldSpans
             .filter((link) => link.extracted_field_id === field.id)
             .map((link) => refBySpanId.get(link.span_id) ?? ""),
+        }));
+      const tampering = tamperingRefs(document.kind);
+      return {
+        kind: document.kind,
+        parser: document.parser,
+        pageCount: document.page_count,
+        pages: (
+          pack?.documents.find((candidate) => candidate.kind === document.kind)
+            ?.pages ?? []
+        ).map((file, index) => ({
+          page: index + 1,
+          imageUrl: urls.get(storagePath(run.pack_slug, file)) ?? "",
         })),
-    })),
-    findings: individualOnboarding.requirements.flatMap(
-      (requirement): FindingView[] => {
-        const finding = findings.find(
-          (row) => row.requirement_id === requirement.id,
-        );
-        if (!finding) return [];
-        const grouped = new Map<string, FindingView["evidence"][number]>();
-        for (const row of evidence) {
-          if (row.finding_id !== finding.id) continue;
-          const documentKind = kindByDocumentId.get(row.document_id);
-          if (!documentKind) continue;
-          const fieldName = row.extracted_field_id
-            ? (fieldNameById.get(row.extracted_field_id) ?? null)
-            : null;
-          const key = `${documentKind}:${fieldName ?? ""}`;
-          const entry = grouped.get(key) ?? {
-            documentKind,
-            fieldName,
-            spanRefs: [],
-          };
-          const ref = row.span_id ? refBySpanId.get(row.span_id) : undefined;
-          if (ref) entry.spanRefs.push(ref);
-          grouped.set(key, entry);
-        }
-        return [
+        spans: spans
+          .filter((span) => span.document_id === document.id)
+          .map((span) => ({
+            ref: span.ref,
+            page: span.page,
+            text: span.text,
+            box: { x0: span.x0, y0: span.y0, x1: span.x1, y1: span.y1 },
+          })),
+        fields: documentFields,
+        checks: fieldChecks(
           {
-            requirementId: requirement.id,
-            title: requirement.title,
-            outcome: finding.outcome,
-            reason: finding.reason,
-            evidence: [...grouped.values()],
+            kind: document.kind,
+            spans: [],
+            fields: documentFields.map((field) => ({
+              ...field,
+              confidence: field.confidence ?? 0,
+            })),
+            judgments: {
+              legible: true,
+              tamperingSuspected: tampering.length > 0,
+              tamperingSpanRefs: tampering,
+              signaturePresent: null,
+              notes: "",
+            },
           },
-        ];
-      },
-    ),
+          checkContext,
+        ),
+      };
+    }),
+    findings: runFindings,
   };
 }

@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import type { FieldReading, Span } from "./types";
-import { verifyReading } from "./verify";
+import { correctSpans, verifyReading } from "./verify";
 
 function span(ref: string, text: string): Span {
   return {
@@ -51,5 +51,35 @@ describe("verifyReading", () => {
 
   it("rejects a reading that cites no spans", () => {
     expect(verifyReading(reading("VELASCO", []), spans).verified).toBe(false);
+  });
+});
+
+describe("correctSpans", () => {
+  const ocr = [span("p1-s1", "Vethsco"), span("p1-s2", "AMARA LUCIA")];
+
+  it("fixes text and keeps every box where the parser put it", () => {
+    const { spans: fixed, applied } = correctSpans(ocr, [
+      { ref: "p1-s1", text: "VELASCO" },
+    ]);
+    expect(fixed[0]).toEqual({ ...ocr[0], text: "VELASCO" });
+    expect(applied).toEqual([{ ref: "p1-s1", from: "Vethsco", to: "VELASCO" }]);
+  });
+
+  it("ignores unknown refs and corrections that change nothing", () => {
+    const { spans: fixed, applied } = correctSpans(ocr, [
+      { ref: "p1-s9", text: "INVENTED" },
+      { ref: "p1-s2", text: "AMARA LUCIA" },
+    ]);
+    expect(fixed).toEqual(ocr);
+    expect(applied).toEqual([]);
+  });
+
+  it("lets a corrected value verify against its Span", () => {
+    const { spans: fixed } = correctSpans(ocr, [
+      { ref: "p1-s1", text: "VELASCO" },
+    ]);
+    expect(verifyReading(reading("VELASCO", ["p1-s1"]), fixed).verified).toBe(
+      true,
+    );
   });
 });

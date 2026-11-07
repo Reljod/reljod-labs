@@ -8,14 +8,49 @@ const DEMO = "/demos/document-compliance";
 // Generous: three parses plus three model calls, on a cold parser.
 const RUN_TIMEOUT = 4 * 60 * 1000;
 
-async function runPrescreen(page: Page, slug: string) {
-  await page.goto(DEMO);
-  await page.getByTestId(`pack-option-${slug}`).click();
-  await page.getByTestId("run-prescreen").click();
+/** The field each flawed pack's scan should stamp, as soon as its Document is read. */
+const PLANTED: Partial<Record<string, { field: string; outcome: string }>> = {
+  "expired-passport": { field: "date_of_expiry", outcome: "fail" },
+  "stale-bill": { field: "statement_date", outcome: "fail" },
+  "name-mismatch": { field: "full_name", outcome: "needs_review" },
+  "tampered-passport": { field: "date_of_expiry", outcome: "needs_review" },
+};
+
+async function expectFindingsReport(page: Page) {
   const report = page.getByTestId("findings-report");
   await expect(report).toBeVisible({ timeout: RUN_TIMEOUT });
   await expect(report).toHaveAttribute("data-run-status", "completed");
+}
+
+async function runPrescreen(page: Page, slug: string) {
+  await page.goto(DEMO);
+  await page.getByTestId(`pack-option-${slug}`).click();
+  await expect(page.getByTestId("pack-preview")).toBeVisible();
+  await page.getByTestId("run-prescreen").click();
+
+  await page.waitForURL(/\/demos\/document-compliance\/runs\/[0-9a-f-]+$/);
+  await expect(page.getByTestId("scan-stage")).toBeVisible();
+  // Fields fly in as the model reads them, then get their Field check stamp.
+  await expect(page.getByTestId("field-chip").first()).toBeVisible({
+    timeout: RUN_TIMEOUT,
+  });
+  const planted = PLANTED[slug];
+  if (planted) {
+    await expect
+      .soft(
+        page.locator(
+          `[data-testid="field-chip"][data-field-name="${planted.field}"][data-outcome="${planted.outcome}"]`,
+        ),
+      )
+      .not.toHaveCount(0, { timeout: RUN_TIMEOUT });
+  }
+  await expect(page.getByTestId("terminal")).toContainText("parse");
+
+  await expectFindingsReport(page);
   await expect(page.getByTestId("run-notice")).toHaveCount(0);
+  await expect(page.getByTestId("terminal")).toContainText(
+    "pre-screen complete",
+  );
 }
 
 const compact = (text: string) => text.replace(/\s+/g, "").toLowerCase();
@@ -74,6 +109,18 @@ for (const pack of packs) {
     if (pack.slug === "clean") {
       await test.step("every Finding traces back to boxes on its source", () =>
         expectEvidenceTraceable(page));
+
+      await test.step("a stored run replays its scan, then its Findings", async () => {
+        await page.goto(`${page.url()}?replay=1`);
+        await expect(page.getByTestId("scan-stage")).toBeVisible();
+        await expect(page.getByTestId("field-chip").first()).toBeVisible();
+        await expectFindingsReport(page);
+        for (const { requirementId, outcome } of pack.expectedFindings) {
+          await expect
+            .soft(page.getByTestId(`finding-${requirementId}`))
+            .toHaveAttribute("data-outcome", outcome);
+        }
+      });
     }
 
     // Open each flagged Finding so its Evidence is on screen (and in recordings).

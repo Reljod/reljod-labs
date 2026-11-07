@@ -1,5 +1,7 @@
 # Run parsing in a container Vercel Function
 
+_Superseded by ADR 0004: parsing now runs inside the app with Tesseract and pdf.js._
+
 opendataloader-pdf needs a Java runtime and PaddleOCR needs Python, and neither runs in the Next.js app's Node functions. Vercel is the only compute available to us, so parsing lives in one Docker image (Python plus a JRE) deployed as a container Vercel Function in its own Vercel project. The Next.js app calls it server to server with a short-lived signed Supabase Storage URL rather than the file itself, to stay under Vercel's 4.5 MB request body limit, and gets back Spans in one shape regardless of which parser ran.
 
 ## Considered Options

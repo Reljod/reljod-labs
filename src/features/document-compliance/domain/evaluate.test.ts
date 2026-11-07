@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { findPack, type Pack } from "../packs";
 import { evaluate } from "./evaluate";
+import { fieldChecks } from "./field-checks";
 import { individualOnboarding } from "./rulebook";
 import type {
   DocumentJudgments,
@@ -161,6 +162,59 @@ describe("evaluate against the preset packs", () => {
         outcome,
       })),
     ).toEqual(pack.expectedFindings);
+  });
+});
+
+describe("Field checks agree with Findings", () => {
+  /** Requirements decided by comparing a field, and the fields they compare. */
+  const compared: Partial<Record<string, FieldName[]>> = {
+    "identity-document-not-expired": ["date_of_expiry", "mrz_date_of_expiry"],
+    "proof-of-address-recent": ["statement_date"],
+    "name-matches": ["full_name"],
+    "date-of-birth-matches": ["date_of_birth"],
+    "address-matches": ["address"],
+  };
+
+  it.each(
+    Object.keys(idealExtractions),
+  )("%s marks compared fields the way their Finding decides", (slug) => {
+    const pack = findPack(slug);
+    if (!pack) throw new Error(`Unknown pack ${slug}`);
+    const documents = idealExtractions[slug];
+    const checks = documents.flatMap((item) =>
+      fieldChecks(item, {
+        rulebook: individualOnboarding,
+        prescreenDate: pack.prescreenDate,
+        declaration: pack.clientDeclaration,
+      }),
+    );
+
+    for (const finding of prescreen(pack, documents)) {
+      const names = compared[finding.requirementId];
+      if (!names) continue;
+      const outcomes = checks
+        .filter((check) => names.includes(check.fieldName))
+        .map((check) => check.outcome);
+      if (finding.outcome === "pass") {
+        expect(outcomes.every((outcome) => outcome === "pass")).toBe(true);
+      } else {
+        expect(outcomes).toContain(finding.outcome);
+      }
+    }
+  });
+
+  it("marks a field on a tampered Span as needs_review", () => {
+    const [identity] = idealExtractions["tampered-passport"];
+    const pack = findPack("tampered-passport") as Pack;
+    const expiry = fieldChecks(identity, {
+      rulebook: individualOnboarding,
+      prescreenDate: pack.prescreenDate,
+      declaration: pack.clientDeclaration,
+    }).find((check) => check.fieldName === "date_of_expiry");
+    expect(expiry).toMatchObject({
+      outcome: "needs_review",
+      note: "possible tampering",
+    });
   });
 });
 

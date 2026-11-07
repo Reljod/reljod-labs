@@ -1,0 +1,7 @@
+{
+  "functions": {
+    "src/app/demos/document-compliance/runs/[runId]/events/route.ts": {
+      "supportsCancellation": true
+    }
+  }
+}

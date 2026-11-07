@@ -1,6 +1,30 @@
 {
   "version": 1,
   "skills": {
+    "internal-dev-workbench": {
+      "source": "vercel/workflow",
+      "sourceType": "github",
+      "skillPath": "skills/internal-dev-workbench/SKILL.md",
+      "computedHash": "46211d42c201e0aabcd4be147ac389b02f35b28dac4c7594c1fec4d4d5d14d21"
+    },
+    "migrating-to-workflow-sdk": {
+      "source": "vercel/workflow",
+      "sourceType": "github",
+      "skillPath": "skills/migrating-to-workflow-sdk/SKILL.md",
+      "computedHash": "ead5c7846306e4a436f8ea750d1a683fa33f44b1569166f0828bd3458d4742ce"
+    },
+    "migrating-workflow-v4-to-v5": {
+      "source": "vercel/workflow",
+      "sourceType": "github",
+      "skillPath": "skills/migrating-workflow-v4-to-v5/SKILL.md",
+      "computedHash": "1f53a125dd4b484a37925ad5874052cc1c73c5ddbe8d99bba56f70634b8a9aa3"
+    },
+    "migrating-world-v4-to-v5": {
+      "source": "vercel/workflow",
+      "sourceType": "github",
+      "skillPath": "skills/migrating-world-v4-to-v5/SKILL.md",
+      "computedHash": "1054ab06b5561546be3dbb19fe95453aebef26fd51f5fb62bab109d3818e1757"
+    },
     "supabase": {
       "source": "supabase/agent-skills",
       "sourceType": "github",
@@ -12,6 +36,18 @@
       "sourceType": "github",
       "skillPath": "skills/supabase-postgres-best-practices/SKILL.md",
       "computedHash": "e14e276241805c97dbcfe40dcbea1a3035269cc7293cac4b1832dda41a835e60"
+    },
+    "workflow": {
+      "source": "vercel/workflow",
+      "sourceType": "github",
+      "skillPath": "skills/workflow/SKILL.md",
+      "computedHash": "e69441328e9a1aa9eaef5fdbda6c103d787131b1f64bcb7662631c0327aef077"
+    },
+    "workflow-init": {
+      "source": "vercel/workflow",
+      "sourceType": "github",
+      "skillPath": "skills/workflow-init/SKILL.md",
+      "computedHash": "9c0b52bef125952301346092510afed4cc92fa1ceed4c68b46d31605217a81df"
     }
   }
 }

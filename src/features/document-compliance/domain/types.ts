@@ -19,6 +19,9 @@ export type Span = {
   confidence: number | null;
 };
 
+/** The model's fix to one OCR'd Span's text; it never changes where the Span is. */
+export type SpanCorrection = { ref: string; text: string };
+
 export type ClientDeclaration = {
   fullName: string;
   dateOfBirth: string;

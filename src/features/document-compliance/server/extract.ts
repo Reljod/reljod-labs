@@ -1,5 +1,5 @@
 import "server-only";
-import { createGateway, generateText, Output } from "ai";
+import { createGateway, Output, streamText } from "ai";
 import { z } from "zod";
 import {
   type DocumentJudgments,
@@ -8,6 +8,7 @@ import {
   type FieldName,
   type FieldReading,
   type Span,
+  type SpanCorrection,
 } from "../domain/types";
 import { env } from "./env";
 
@@ -55,6 +56,7 @@ const KIND_LABELS: Record<DocumentKind, string> = {
 };
 
 const extractionSchema = z.object({
+  corrections: z.array(z.object({ ref: z.string(), text: z.string() })),
   fields: z.array(
     z.object({
       name: z.enum(FIELD_NAMES),
@@ -74,11 +76,15 @@ const extractionSchema = z.object({
 
 const INSTRUCTIONS = `You read one Document submitted for client onboarding at a regulated bank and report what is printed on it. You never decide whether the client passes; code does that from your readings.
 
-You get the page images and a list of Spans: every piece of text a parser found, as "ref | page | text".
+You get the page images and a list of Spans: every piece of text a parser found, as "ref | page | text", or "ref | page | OCR confidence | text" when the text came from OCR.
+
+Corrections, before anything else (OCR documents only; leave empty otherwise):
+- OCR misreads characters, such as "Vethsco" for "VELASCO" or "I" for "9" in the machine-readable zone. For every Span whose text differs from what the page image shows at that Span, give its ref and the text exactly as printed there.
+- Correct characters only. Never merge, split or move Spans, never add text from elsewhere on the page, and leave out Spans that are already right.
 
 Fields:
 - Report only the requested fields that are actually printed. Leave out any field that is absent or left blank on the document.
-- Copy each value exactly as printed, taken from the Spans. If a value is split across Spans, combine them in reading order.
+- Copy each value exactly as printed, taken from the Spans as you corrected them. If a value is split across Spans, combine them in reading order.
 - spanRefs lists every Span you took the value from. Use only refs from the list.
 - confidence is 0 to 1: how sure you are the value is correct and complete.
 
@@ -92,22 +98,37 @@ Judgments, from the page images:
 export type DocumentExtraction = {
   readings: FieldReading[];
   judgments: DocumentJudgments;
+  /** The model's fixes to OCR text, by Span ref; never to where a Span sits. */
+  corrections: SpanCorrection[];
 };
 
+type ExtractedItem = z.infer<typeof extractionSchema>["fields"][number];
+
+/**
+ * Reads one Document with the model, streaming: `onReading` gets each field as
+ * soon as the model has finished writing it, before the whole answer is in.
+ */
 export async function extractDocument(input: {
   kind: DocumentKind;
   spans: Span[];
+  /** Whether the Spans came from OCR, the only text the model may correct. */
+  ocr: boolean;
   pageImages: { data: Uint8Array; mediaType: string }[];
+  onReading?: (reading: FieldReading) => Promise<void>;
 }): Promise<DocumentExtraction> {
   const requested = FIELDS_BY_KIND[input.kind]
     .map((name) => `- ${name}: ${FIELD_HINTS[name]}`)
     .join("\n");
   const spanList = input.spans
-    .map((span) => `${span.ref} | ${span.page} | ${span.text}`)
+    .map((span) =>
+      span.confidence === null
+        ? `${span.ref} | ${span.page} | ${span.text}`
+        : `${span.ref} | ${span.page} | ${span.confidence.toFixed(2)} | ${span.text}`,
+    )
     .join("\n");
 
   const gateway = createGateway({ apiKey: env.aiGatewayApiKey() });
-  const { output } = await generateText({
+  const result = streamText({
     model: gateway(env.model()),
     instructions: INSTRUCTIONS,
     output: Output.object({ schema: extractionSchema }),
@@ -131,13 +152,33 @@ export async function extractDocument(input: {
   });
 
   const allowed = new Set(FIELDS_BY_KIND[input.kind]);
-  return {
-    readings: output.fields
-      .filter((field) => allowed.has(field.name))
-      .map((field) => ({
-        ...field,
-        confidence: Math.min(1, Math.max(0, field.confidence)),
-      })),
-    judgments: output.judgments,
+  const toReading = (field: ExtractedItem): FieldReading | null =>
+    allowed.has(field.name)
+      ? { ...field, confidence: Math.min(1, Math.max(0, field.confidence)) }
+      : null;
+
+  // A partial array's last item may still be streaming; every earlier one is complete.
+  let reported = 0;
+  const report = async (fields: ExtractedItem[]) => {
+    for (; reported < fields.length; reported++) {
+      const reading = toReading(fields[reported]);
+      if (reading) await input.onReading?.(reading);
+    }
   };
+  for await (const partial of result.partialOutputStream) {
+    const complete = (partial.fields ?? []).slice(0, -1);
+    if (complete.every(isComplete)) await report(complete as ExtractedItem[]);
+  }
+
+  const output = await result.output;
+  await report(output.fields);
+  return {
+    readings: output.fields.flatMap((field) => toReading(field) ?? []),
+    judgments: output.judgments,
+    corrections: input.ocr ? output.corrections : [],
+  };
+}
+
+function isComplete(field: unknown): field is ExtractedItem {
+  return extractionSchema.shape.fields.element.safeParse(field).success;
 }

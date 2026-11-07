@@ -1,5 +1,6 @@
 "use client";
 
+import { AnimatePresence, motion } from "motion/react";
 import type { DocumentKind } from "../domain/types";
 import type { DocumentView, FindingView } from "../view";
 import { DOCUMENT_LABELS, FIELD_LABELS } from "./labels";
@@ -67,8 +68,16 @@ export function DocumentViewer({
                 {FIELD_LABELS[field.name]}:
               </span>{" "}
               {field.value}{" "}
-              <span className="text-ink-muted">
-                {field.verified ? "· found in source" : "· not found in source"}
+              <span
+                title={
+                  field.verified ? "Found in source" : "Not found in source"
+                }
+                className={field.verified ? "text-ivy" : "text-seal-red"}
+              >
+                <span aria-hidden>{field.verified ? "✓" : "✕"}</span>
+                <span className="sr-only">
+                  {field.verified ? "Found in source" : "Not found in source"}
+                </span>
               </span>
             </li>
           ))}
@@ -83,24 +92,30 @@ export function DocumentViewer({
             alt={`${DOCUMENT_LABELS[document.kind]}, page ${page.page}`}
             className="block h-auto w-full"
           />
-          {boxes
-            .filter((span) => span.page === page.page)
-            .map((span) => (
-              <div
-                key={span.ref}
-                data-testid="evidence-box"
-                data-span-ref={span.ref}
-                data-span-text={span.text}
-                title={span.text}
-                className="pointer-events-none absolute border-2 border-seal-red bg-seal-red/15"
-                style={{
-                  left: `${span.box.x0 * 100}%`,
-                  top: `${span.box.y0 * 100}%`,
-                  width: `${(span.box.x1 - span.box.x0) * 100}%`,
-                  height: `${(span.box.y1 - span.box.y0) * 100}%`,
-                }}
-              />
-            ))}
+          <AnimatePresence>
+            {boxes
+              .filter((span) => span.page === page.page)
+              .map((span) => (
+                <motion.div
+                  key={`${finding?.requirementId}-${span.ref}`}
+                  initial={{ opacity: 0, scale: 1.5 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  exit={{ opacity: 0 }}
+                  transition={{ type: "spring", stiffness: 320, damping: 22 }}
+                  data-testid="evidence-box"
+                  data-span-ref={span.ref}
+                  data-span-text={span.text}
+                  title={span.text}
+                  className="pointer-events-none absolute border-2 border-seal-red bg-seal-red/15"
+                  style={{
+                    left: `${span.box.x0 * 100}%`,
+                    top: `${span.box.y0 * 100}%`,
+                    width: `${(span.box.x1 - span.box.x0) * 100}%`,
+                    height: `${(span.box.y1 - span.box.y0) * 100}%`,
+                  }}
+                />
+              ))}
+          </AnimatePresence>
         </div>
       ))}
     </div>

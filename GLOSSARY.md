@@ -22,6 +22,10 @@ _Avoid_: Application data, profile, form data
 A piece of text read from one page of a Document together with the box that encloses it on that page.
 _Avoid_: Token, block, region, OCR result
 
+**Span correction**:
+A fix to the text of a Span that was misread from a scanned or photographed page, made by reading the page itself. It changes what a Span says, never where it is.
+_Avoid_: OCR fix, rewrite, edit
+
 **Extracted field**:
 A named value read from a Document, such as date of birth or expiry date, that points to the Spans it was read from.
 _Avoid_: Attribute, entity, key-value
@@ -45,6 +49,10 @@ _Avoid_: Region, country, locale
 **Finding**:
 The outcome of checking one Requirement against a Document pack: `Pass`, `Fail` or `Needs review`, with its Evidence.
 _Avoid_: Result, check result, issue
+
+**Field check**:
+The mark on one Extracted field as soon as its Document is read: the field compared with the Client declaration or a Rulebook threshold, such as a passport expiry date compared with the Pre-screen date. It shows where a Finding will come from, but is not one.
+_Avoid_: Field finding, flag, annotation
 
 **Fail**:
 A Finding where a confidently read value clearly breaks a Requirement, such as a passport expired on the Pre-screen date.
