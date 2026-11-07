@@ -8,6 +8,7 @@ import type { ScanStage } from "../../scan-events";
 import type { DocumentScan, StageState } from "../../scan-state";
 import { CHECK_STYLES, DOCUMENT_SHORT_LABELS } from "../labels";
 import { pageImageUrl } from "../page-image";
+import { PageImage } from "../page-image-loader";
 
 const STAGES: ScanStage[] = ["parse", "read", "check"];
 
@@ -63,11 +64,12 @@ export function ProgressRail({
           >
             <span className="relative hidden h-12 w-10 shrink-0 overflow-hidden rounded-[1px] border border-ink sm:block">
               {file ? (
-                // biome-ignore lint/performance/noImgElement: signed Storage redirect thumbnail
-                <img
+                <PageImage
                   src={pageImageUrl(pack.slug, file)}
                   alt=""
-                  className="size-full object-cover object-top"
+                  compact
+                  className="relative size-full"
+                  imageClassName="size-full object-cover object-top"
                 />
               ) : null}
             </span>

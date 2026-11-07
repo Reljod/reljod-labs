@@ -61,6 +61,19 @@ async function expectEvidenceTraceable(page: Page) {
   const findings = page.locator('[data-testid^="finding-"]');
   for (let index = 0; index < (await findings.count()); index++) {
     await findings.nth(index).click();
+    // Boxes wait for their page image: none may sit on an unloaded or stale page.
+    const boxesOnUnloadedPages = await page
+      .getByTestId("evidence-box")
+      .evaluateAll(
+        (boxes) =>
+          boxes.filter((box) => {
+            const image = box
+              .closest('[data-testid="page-image"]')
+              ?.querySelector("img");
+            return !image?.complete || image.naturalWidth === 0;
+          }).length,
+      );
+    expect(boxesOnUnloadedPages, "evidence box drawn before its page").toBe(0);
     const fields = page.getByTestId("evidence-field");
     for (
       let fieldIndex = 0;
@@ -94,6 +107,39 @@ async function expectEvidenceTraceable(page: Page) {
   expect(boxesSeen, "no evidence box was drawn at all").toBeGreaterThan(0);
 }
 
+test("page images show a loading state until they arrive", async ({ page }) => {
+  let release = () => {};
+  const held = new Promise<void>((resolve) => {
+    release = resolve;
+  });
+  await page.route("**/demos/document-compliance/packs/**", async (route) => {
+    await held;
+    await route.continue();
+  });
+  await page.goto(DEMO, { waitUntil: "domcontentloaded" });
+  const frame = page.getByTestId("page-frame");
+  await expect(frame).toHaveAttribute("data-image-status", "loading");
+  await expect(page.getByTestId("image-loading").first()).toBeVisible();
+
+  release();
+  await expect(frame).toHaveAttribute("data-image-status", "loaded");
+  await expect(page.getByTestId("image-loading")).toHaveCount(0);
+});
+
+test("the wheel zooms the Document preview", async ({ page }) => {
+  await page.goto(DEMO);
+  const frame = page.getByTestId("page-frame");
+  const zoom = page.getByTestId("zoom-level");
+  await expect(zoom).toHaveText("100%");
+
+  await frame.hover();
+  await page.mouse.wheel(0, -300);
+  await expect(zoom).not.toHaveText("100%");
+
+  await page.mouse.wheel(0, 3000);
+  await expect(zoom).toHaveText("100%");
+});
+
 for (const pack of packs) {
   test(`${pack.slug}: Findings match the pack's expected outcomes`, async ({
     page,
@@ -107,6 +153,15 @@ for (const pack of packs) {
     }
 
     if (pack.slug === "clean") {
+      await test.step("going back leaves Run Pre-screen ready to use", async () => {
+        await page.goBack();
+        const run = page.getByTestId("run-prescreen");
+        await expect(run).toBeEnabled();
+        await expect(run).toContainText("Run Pre-screen");
+        await page.goForward();
+        await expectFindingsReport(page);
+      });
+
       await test.step("every Finding traces back to boxes on its source", () =>
         expectEvidenceTraceable(page));
 

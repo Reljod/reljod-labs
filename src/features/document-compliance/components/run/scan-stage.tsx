@@ -7,6 +7,7 @@ import type { PackDocument } from "../../packs";
 import type { DocumentScan } from "../../scan-state";
 import { CHECK_STYLES, DOCUMENT_LABELS, FIELD_LABELS } from "../labels";
 import { pageImageUrl } from "../page-image";
+import { PageImage } from "../page-image-loader";
 import type { Playhead } from "./use-playhead";
 
 type ScanStageProps = {
@@ -98,23 +99,27 @@ export function ScanStage({
               className="outline-box grid min-h-[40vh] place-items-center overflow-hidden rounded-sm bg-limestone shadow-hard-lg"
             >
               {/* Sized by the image alone, so boxes land where the parser found them. */}
-              <div className="relative w-fit max-w-full">
-                {/* biome-ignore lint/performance/noImgElement: signed Storage redirect; boxes need the image's natural size */}
-                <img
-                  src={pageImageUrl(packSlug, pack.pages[page - 1] ?? "")}
-                  alt={`${DOCUMENT_LABELS[scan.kind]}, page ${page}`}
-                  className="block h-auto max-h-[70vh] w-auto max-w-full"
-                />
-                <ScanOverlay
-                  scan={scan}
-                  page={page}
-                  revealed={revealed}
-                  checkOf={checkOf}
-                  stamped={head.stamped}
-                  scanning={scanning}
-                  reduceMotion={reduceMotion}
-                />
-              </div>
+              <PageImage
+                src={pageImageUrl(packSlug, pack.pages[page - 1] ?? "")}
+                alt={`${DOCUMENT_LABELS[scan.kind]}, page ${page}`}
+                className="relative w-fit max-w-full"
+                imageClassName="block max-h-[70vh] max-w-full"
+                pendingClassName="aspect-[3/4] h-[50vh]"
+              >
+                {(status) =>
+                  status === "loaded" ? (
+                    <ScanOverlay
+                      scan={scan}
+                      page={page}
+                      revealed={revealed}
+                      checkOf={checkOf}
+                      stamped={head.stamped}
+                      scanning={scanning}
+                      reduceMotion={reduceMotion}
+                    />
+                  ) : null
+                }
+              </PageImage>
             </motion.div>
           </AnimatePresence>
         </div>
