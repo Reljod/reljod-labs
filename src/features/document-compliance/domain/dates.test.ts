@@ -36,6 +36,16 @@ describe("parseMrzDate", () => {
   it("rejects anything that is not six digits", () => {
     expect(parseMrzDate("25091", "expiry", "2026-11-07")).toBeNull();
   });
+
+  it("ignores spaces OCR inserts inside the date", () => {
+    expect(parseMrzDate("32050 9", "expiry", "2026-11-07")).toBe("2032-05-09");
+  });
+
+  it("accepts a trailing check digit only when it is correct", () => {
+    expect(parseMrzDate("3205091", "expiry", "2026-11-07")).toBe("2032-05-09");
+    expect(parseMrzDate("32050 91", "expiry", "2026-11-07")).toBe("2032-05-09");
+    expect(parseMrzDate("3205092", "expiry", "2026-11-07")).toBeNull();
+  });
 });
 
 describe("subtractMonths", () => {

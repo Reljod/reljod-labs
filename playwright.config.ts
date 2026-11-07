@@ -11,6 +11,7 @@ try {
 }
 
 const externalBaseUrl = process.env.E2E_BASE_URL;
+const recording = process.env.E2E_RECORD === "1";
 // Its own port, so a dev server you already have on 3000 is never mistaken for this one.
 const localUrl = "http://localhost:3100";
 
@@ -30,6 +31,11 @@ export default defineConfig({
     baseURL: externalBaseUrl ?? localUrl,
     // Locally, use the installed Google Chrome; CI installs Playwright's Chromium.
     channel: process.env.CI ? undefined : "chrome",
+    // `pnpm test:e2e:record` keeps a video of every test as review evidence.
+    viewport: recording ? { width: 1440, height: 1000 } : undefined,
+    video: recording
+      ? { mode: "on", size: { width: 1440, height: 1000 } }
+      : "off",
     extraHTTPHeaders: { [E2E_HEADER]: process.env.E2E_BYPASS_TOKEN ?? "" },
     trace: "retain-on-failure",
   },

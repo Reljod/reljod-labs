@@ -53,16 +53,33 @@ export function parsePrintedDate(text: string): IsoDate | null {
   return null;
 }
 
+/** ICAO 9303 check digit: weights 7, 3, 1 over the digits, modulo 10. */
+function mrzCheckDigit(digits: string) {
+  const weights = [7, 3, 1];
+  const sum = [...digits].reduce(
+    (total, digit, index) => total + Number(digit) * weights[index % 3],
+    0,
+  );
+  return String(sum % 10);
+}
+
 /**
- * Parses a `YYMMDD` date from a passport's machine-readable zone. Expiry dates are
- * always this century; birth dates later than the reference year belong to the last one.
+ * Parses a `YYMMDD` date from a passport's machine-readable zone. OCR may insert
+ * spaces, and a trailing check digit is accepted only when it is correct. Expiry
+ * dates are always this century; birth dates later than the reference year belong
+ * to the last one.
  */
 export function parseMrzDate(
   text: string,
   kind: "expiry" | "birth",
   referenceDate: IsoDate,
 ): IsoDate | null {
-  const match = /^(\d{2})(\d{2})(\d{2})$/.exec(text.trim());
+  let digits = text.replace(/\s+/g, "");
+  if (/^\d{7}$/.test(digits)) {
+    if (mrzCheckDigit(digits.slice(0, 6)) !== digits[6]) return null;
+    digits = digits.slice(0, 6);
+  }
+  const match = /^(\d{2})(\d{2})(\d{2})$/.exec(digits);
   if (!match) return null;
   const twoDigitYear = Number(match[1]);
   const referenceYear = Number(referenceDate.slice(0, 4));

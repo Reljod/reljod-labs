@@ -1,6 +1,9 @@
 import { expect, type Page, test } from "@playwright/test";
 import { packs } from "../src/features/document-compliance/packs";
 
+/** Set by `pnpm test:e2e:record`: slow down at each flagged Finding so videos show the evidence. */
+const recording = process.env.E2E_RECORD === "1";
+
 const DEMO = "/demos/document-compliance";
 // Generous: three parses plus three model calls, on a cold parser.
 const RUN_TIMEOUT = 4 * 60 * 1000;
@@ -71,6 +74,20 @@ for (const pack of packs) {
     if (pack.slug === "clean") {
       await test.step("every Finding traces back to boxes on its source", () =>
         expectEvidenceTraceable(page));
+    }
+
+    // Open each flagged Finding so its Evidence is on screen (and in recordings).
+    for (const { requirementId, outcome } of pack.expectedFindings) {
+      if (outcome === "pass") continue;
+      const finding = page.getByTestId(`finding-${requirementId}`);
+      await finding.click();
+      await expect(finding).toHaveAttribute("aria-pressed", "true");
+      if (recording) {
+        await page
+          .getByRole("tablist", { name: "Documents" })
+          .evaluate((element) => element.scrollIntoView({ block: "start" }));
+        await page.waitForTimeout(3000);
+      }
     }
   });
 }
