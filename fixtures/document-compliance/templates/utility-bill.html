@@ -1,0 +1,66 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<style>
+  @page { size: A4; margin: 0; }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: Helvetica, Arial, sans-serif; color: #1f2a30; font-size: 12.5px; line-height: 1.45; }
+  .sheet { position: relative; width: 210mm; height: 296mm; padding: 18mm 18mm 16mm; overflow: hidden; }
+  header { display: flex; justify-content: space-between; align-items: flex-start; border-bottom: 3px solid #1f6f78;
+    padding-bottom: 10px; }
+  .brand { font-size: 22px; font-weight: 700; color: #1f6f78; }
+  .brand small { display: block; font-size: 11px; font-weight: 400; color: #4d5d64; }
+  .meta { text-align: right; font-size: 11.5px; }
+  .meta strong { font-size: 15px; display: block; margin-bottom: 2px; }
+  .addressee { margin-top: 26px; font-size: 13.5px; }
+  .addressee .name { font-weight: 700; }
+  h2 { margin-top: 26px; font-size: 14px; color: #1f6f78; }
+  table { width: 100%; border-collapse: collapse; margin-top: 8px; }
+  th, td { text-align: left; padding: 7px 6px; border-bottom: 1px solid #d5dde0; }
+  th { font-size: 11px; color: #4d5d64; font-weight: 600; }
+  td.num, th.num { text-align: right; }
+  .total td { font-weight: 700; font-size: 14px; border-bottom: 2px solid #1f2a30; }
+  .summary { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-top: 18px; }
+  .summary div { background: #eef4f5; padding: 10px; }
+  .summary span { display: block; font-size: 11px; color: #4d5d64; }
+  .summary b { font-size: 15px; }
+  footer { position: absolute; left: 18mm; right: 18mm; bottom: 14mm; font-size: 10px; color: #5c6b71;
+    border-top: 1px solid #d5dde0; padding-top: 8px; }
+  .specimen { position: absolute; left: 30mm; top: 120mm; transform: rotate(-30deg); font-size: 96px;
+    font-weight: 800; letter-spacing: 14px; color: rgba(200, 30, 40, 0.18); }
+</style>
+</head>
+<body>
+<div class="sheet">
+  <header>
+    <div class="brand">Meridia Power &amp; Water<small>Utility Services Authority · Republic of Meridia</small></div>
+    <div class="meta"><strong>Electricity &amp; Water Statement</strong>
+      Account no. $account_number<br>Statement date: $statement_date<br>Billing period: $billing_period</div>
+  </header>
+  <div class="addressee">
+    <div class="name">$account_holder</div>
+    <div>$address_line_1</div>
+    <div>$address_line_2</div>
+    <div>Republic of Meridia</div>
+  </div>
+  <div class="summary">
+    <div><span>Previous balance</span><b>MRD 0.00</b></div>
+    <div><span>Amount due</span><b>MRD $amount_due</b></div>
+    <div><span>Due date</span><b>$due_date</b></div>
+  </div>
+  <h2>Charges this period</h2>
+  <table>
+    <tr><th>Description</th><th class="num">Usage</th><th class="num">Rate</th><th class="num">Amount (MRD)</th></tr>
+    <tr><td>Electricity, residential</td><td class="num">412 kWh</td><td class="num">0.21</td><td class="num">86.52</td></tr>
+    <tr><td>Water supply</td><td class="num">9.4 m³</td><td class="num">3.10</td><td class="num">29.14</td></tr>
+    <tr><td>Wastewater service</td><td class="num">9.4 m³</td><td class="num">1.25</td><td class="num">11.75</td></tr>
+    <tr><td>Fixed service charge</td><td class="num"></td><td class="num"></td><td class="num">12.00</td></tr>
+    <tr class="total"><td>Total due</td><td></td><td></td><td class="num">$amount_due</td></tr>
+  </table>
+  <footer>Meridia Power &amp; Water, 2 Lighthouse Quay, Port Selene MR-1001. This statement is a synthetic specimen
+    produced for software testing. It is not a real bill and has no value.</footer>
+  <div class="specimen">SPECIMEN</div>
+</div>
+</body>
+</html>

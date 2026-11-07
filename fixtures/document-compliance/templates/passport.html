@@ -1,0 +1,72 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { width: 1000px; height: 700px; background: #ffffff; }
+  .page {
+    position: relative; width: 1000px; height: 700px; overflow: hidden;
+    font-family: Helvetica, Arial, sans-serif; color: #1d2433;
+    background:
+      repeating-radial-gradient(circle at 78% 38%, #e6eef2 0 2px, #f3f7f4 2px 9px),
+      #f3f7f4;
+  }
+  .guilloche { position: absolute; inset: 0; opacity: 0.55; }
+  .band { position: absolute; left: 0; right: 0; top: 0; height: 74px; background: #24485f; color: #f3f7f4;
+    display: flex; align-items: center; justify-content: space-between; padding: 0 36px; }
+  .band h1 { font-size: 25px; letter-spacing: 4px; font-weight: 700; }
+  .band span { font-size: 15px; letter-spacing: 3px; }
+  .photo { position: absolute; left: 36px; top: 104px; width: 220px; height: 280px; background: #cdd8de;
+    border: 2px solid #8fa3ad; }
+  .fields { position: absolute; left: 290px; top: 98px; right: 36px; display: grid;
+    grid-template-columns: 1fr 1fr 1fr; column-gap: 26px; row-gap: 14px; }
+  .field { display: flex; flex-direction: column; gap: 3px; }
+  .field.wide { grid-column: span 3; }
+  .field.two { grid-column: span 2; }
+  .label { font-size: 12px; color: #4b6270; letter-spacing: 0.5px; }
+  .value { font-size: 21px; font-weight: 700; letter-spacing: 0.6px; text-transform: uppercase; }
+  .tampered {
+    font-family: "Times New Roman", Times, serif; font-weight: 400; font-size: 23px;
+    background: #ffffff; padding: 0 4px; margin-left: -4px; position: relative; top: 2px; left: 3px;
+  }
+  .mrz { position: absolute; left: 36px; right: 36px; bottom: 30px; font-family: "Courier New", Courier, monospace;
+    font-size: 27px; font-weight: 700; letter-spacing: 3.2px; line-height: 40px; color: #111; white-space: pre; }
+  .specimen { position: absolute; left: 160px; top: 270px; transform: rotate(-24deg); font-size: 120px;
+    font-weight: 800; letter-spacing: 18px; color: rgba(200, 30, 40, 0.28); pointer-events: none; }
+</style>
+</head>
+<body>
+<div class="page">
+  <svg aria-hidden="true" class="guilloche" width="1000" height="700" viewBox="0 0 1000 700">
+    <g fill="none" stroke="#9fc0b4" stroke-width="0.8">
+      $guilloche
+    </g>
+  </svg>
+  <div class="band"><h1>REPUBLIC OF MERIDIA</h1><span>PASSPORT · PASSEPORT</span></div>
+  <div class="photo">
+    <svg aria-hidden="true" width="216" height="276" viewBox="0 0 216 276">
+      <circle cx="108" cy="104" r="50" fill="#9fb2bc"/>
+      <path d="M18 276 C26 196 70 170 108 170 C146 170 190 196 198 276 Z" fill="#9fb2bc"/>
+    </svg>
+  </div>
+  <div class="fields">
+    <div class="field"><span class="label">Type</span><span class="value">P</span></div>
+    <div class="field"><span class="label">Country code</span><span class="value">MRD</span></div>
+    <div class="field"><span class="label">Passport No.</span><span class="value">$passport_number</span></div>
+    <div class="field wide"><span class="label">Surname</span><span class="value">$surname</span></div>
+    <div class="field wide"><span class="label">Given names</span><span class="value">$given_names</span></div>
+    <div class="field"><span class="label">Nationality</span><span class="value">Meridian</span></div>
+    <div class="field"><span class="label">Date of birth</span><span class="value">$date_of_birth</span></div>
+    <div class="field"><span class="label">Sex</span><span class="value">$sex</span></div>
+    <div class="field two"><span class="label">Place of birth</span><span class="value">$place_of_birth</span></div>
+    <div class="field"><span class="label">Authority</span><span class="value">MPO Port Selene</span></div>
+    <div class="field two"><span class="label">Date of issue</span><span class="value">$date_of_issue</span></div>
+    <div class="field"><span class="label">Date of expiry</span><span class="value $expiry_class">$date_of_expiry</span></div>
+  </div>
+  <div class="specimen">SPECIMEN</div>
+  <div class="mrz">$mrz_line_1
+$mrz_line_2</div>
+</div>
+</body>
+</html>
