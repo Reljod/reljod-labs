@@ -9,17 +9,6 @@ export const FEATURED_PROJECT_LIMIT = 6;
  */
 export const projects: Project[] = [
   {
-    slug: "kyc-automation",
-    icon: "id-card",
-    title: "In-house KYC automation",
-    sector: "Digital bank",
-    summary:
-      "AI identity verification that replaced a paid third-party KYC vendor for a Philippine digital bank and wallet.",
-    outcome: "90% lower KYC operating cost",
-    tags: ["KYC", "Document AI", "AWS"],
-    status: "Case study soon",
-  },
-  {
     slug: "document-compliance-checks",
     icon: "document-check",
     title: "Document compliance checks",
@@ -34,6 +23,17 @@ export const projects: Project[] = [
       src: "/projects/document-compliance.jpg",
       alt: "Specimen passport from the fictional Republic of Meridia, one of the demo's synthetic documents",
     },
+  },
+  {
+    slug: "kyc-automation",
+    icon: "id-card",
+    title: "In-house KYC automation",
+    sector: "Digital bank",
+    summary:
+      "AI identity verification that replaced a paid third-party KYC vendor for a Philippine digital bank and wallet.",
+    outcome: "90% lower KYC operating cost",
+    tags: ["KYC", "Document AI", "AWS"],
+    status: "Case study soon",
   },
   {
     slug: "name-matching",
