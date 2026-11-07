@@ -13,7 +13,7 @@ export const metadata: Metadata = {
 
 export default function DocumentComplianceDemoPage() {
   return (
-    <main className="mx-auto flex max-w-6xl flex-col gap-8 px-4 py-10 sm:px-6 sm:py-12">
+    <main className="mx-auto flex max-w-6xl flex-col gap-8 px-4 py-10 sm:px-6 sm:py-12 lg:h-dvh lg:min-h-[44rem] lg:gap-6 lg:py-8">
       <header className="flex flex-col gap-3">
         <Link href="/" className="eyebrow text-federal-blue underline">
           ← Reljod Labs

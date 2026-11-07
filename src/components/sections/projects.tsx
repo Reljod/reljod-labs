@@ -1,3 +1,5 @@
+import Image from "next/image";
+import Link from "next/link";
 import { Badge } from "@/components/ui/badge";
 import { Icon, IconTile } from "@/components/ui/icon";
 import { Section } from "@/components/ui/section";
@@ -27,10 +29,22 @@ export function Projects() {
 function ProjectCard({ project }: { project: Project }) {
   return (
     <article className="outline-box flex h-full flex-col bg-paper">
-      {/* Cover placeholder: swap for a screenshot or diagram per project. */}
-      <div className="flex aspect-[16/9] items-center justify-center border-ink border-b-2 bg-limestone bg-[repeating-linear-gradient(135deg,transparent_0_12px,rgb(20_33_61/0.06)_12px_14px)]">
-        <IconTile name={project.icon} />
-      </div>
+      {project.cover ? (
+        <div className="relative aspect-[16/9] overflow-hidden border-ink border-b-2 bg-limestone">
+          <Image
+            src={project.cover.src}
+            alt={project.cover.alt}
+            fill
+            sizes="(min-width: 1024px) 33vw, (min-width: 768px) 50vw, 100vw"
+            className="object-cover"
+          />
+        </div>
+      ) : (
+        // Cover placeholder: swap for a screenshot or diagram per project.
+        <div className="flex aspect-[16/9] items-center justify-center border-ink border-b-2 bg-limestone bg-[repeating-linear-gradient(135deg,transparent_0_12px,rgb(20_33_61/0.06)_12px_14px)]">
+          <IconTile name={project.icon} />
+        </div>
+      )}
       <div className="flex flex-1 flex-col p-6">
         <div className="flex items-center justify-between gap-3">
           <p className="eyebrow text-ink-muted">{project.sector}</p>
@@ -55,12 +69,15 @@ function ProjectCard({ project }: { project: Project }) {
         </ul>
         <div className="mt-auto pt-6">
           {project.href ? (
-            <a
+            <Link
               href={project.href}
               className="eyebrow inline-flex items-center gap-2 font-bold text-federal-blue hover:underline"
             >
-              Read case study <Icon name="arrow" size={16} />
-            </a>
+              {project.status === "Live"
+                ? "Try the live demo"
+                : "Read case study"}{" "}
+              <Icon name="arrow" size={16} />
+            </Link>
           ) : (
             <p className="eyebrow text-ink-muted">Case study in progress</p>
           )}
