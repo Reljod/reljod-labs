@@ -1,0 +1,35 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { width: 1240px; height: 1754px; background: #ffffff; }
+  .sheet { position: relative; width: 1240px; height: 1754px; padding: 120px 110px; font-family: Helvetica, Arial, sans-serif;
+    color: #111; }
+  .copy { width: 1000px; height: 700px; border: 1px solid #555; filter: grayscale(1) contrast(1.15); overflow: hidden; }
+  .copy img { width: 1000px; height: 700px; display: block; }
+  .stamp { margin-top: 90px; width: 760px; border: 4px double #1b2f6b; color: #1b2f6b; padding: 26px 30px;
+    transform: rotate(-1.4deg); font-size: 25px; line-height: 1.6; }
+  .stamp .title { font-weight: 700; font-size: 27px; letter-spacing: 1px; margin-bottom: 8px; }
+  .row { display: flex; gap: 14px; }
+  .row b { min-width: 170px; }
+  .signature { height: 70px; }
+</style>
+</head>
+<body>
+<div class="sheet">
+  <div class="copy"><img src="$passport_image" alt=""></div>
+  <div class="stamp">
+    <div class="title">CERTIFIED TRUE COPY</div>
+    <div>$certification_wording</div>
+    <div class="row"><b>Name:</b><span>$certifier_name</span></div>
+    <div class="row"><b>Occupation:</b><span>$certifier_occupation</span></div>
+    <div class="row"><b>Date:</b><span>$certification_date</span></div>
+    <div class="row"><b>Signature:</b>
+      <svg aria-hidden="true" class="signature" width="300" height="70" viewBox="0 0 300 70">$signature</svg>
+    </div>
+  </div>
+</div>
+</body>
+</html>

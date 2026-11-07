@@ -1,0 +1,74 @@
+{
+  "slug": "tampered-passport",
+  "title": "Tampered passport",
+  "flaw": "The expiry date on the data page was pasted over in a different font. The machine-readable zone still carries the real, past expiry date.",
+  "rulebookId": "individual-onboarding",
+  "prescreenDate": "2026-11-07",
+  "clientDeclaration": {
+    "fullName": "Amara Lucia Velasco",
+    "dateOfBirth": "1991-03-14",
+    "residentialAddress": "14 Harbour View Road, Port Selene MR-2041, Republic of Meridia"
+  },
+  "documents": [
+    {
+      "kind": "identity_document",
+      "file": "identity-document.jpg",
+      "mediaType": "image/jpeg",
+      "sourceFormat": "image"
+    },
+    {
+      "kind": "proof_of_address",
+      "file": "proof-of-address.pdf",
+      "mediaType": "application/pdf",
+      "sourceFormat": "pdf_digital"
+    },
+    {
+      "kind": "certified_copy",
+      "file": "certified-copy.pdf",
+      "mediaType": "application/pdf",
+      "sourceFormat": "pdf_scanned"
+    }
+  ],
+  "expectedFindings": [
+    {
+      "requirementId": "identity-document-present",
+      "outcome": "pass"
+    },
+    {
+      "requirementId": "identity-document-not-expired",
+      "outcome": "needs_review"
+    },
+    {
+      "requirementId": "proof-of-address-present",
+      "outcome": "pass"
+    },
+    {
+      "requirementId": "proof-of-address-recent",
+      "outcome": "pass"
+    },
+    {
+      "requirementId": "name-matches",
+      "outcome": "pass"
+    },
+    {
+      "requirementId": "date-of-birth-matches",
+      "outcome": "pass"
+    },
+    {
+      "requirementId": "address-matches",
+      "outcome": "pass"
+    },
+    {
+      "requirementId": "certification-complete",
+      "outcome": "pass"
+    },
+    {
+      "requirementId": "documents-legible",
+      "outcome": "pass"
+    },
+    {
+      "requirementId": "no-tampering",
+      "outcome": "needs_review"
+    }
+  ]
+}
