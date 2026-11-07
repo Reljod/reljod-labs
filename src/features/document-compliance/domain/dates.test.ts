@@ -6,6 +6,8 @@ describe("parsePrintedDate", () => {
     ["14 MAR 1991", "1991-03-14"],
     ["02 Oct 2026", "2026-10-02"],
     ["9 September 2029", "2029-09-09"],
+    ["20Oct 2026", "2026-10-20"],
+    ["20Oct2026", "2026-10-20"],
     ["1991-03-14", "1991-03-14"],
   ])("reads %s", (text, expected) => {
     expect(parsePrintedDate(text)).toBe(expected);

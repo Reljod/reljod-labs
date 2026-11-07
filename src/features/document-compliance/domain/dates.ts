@@ -40,7 +40,8 @@ export function parsePrintedDate(text: string): IsoDate | null {
     return iso(Number(isoMatch[1]), Number(isoMatch[2]), Number(isoMatch[3]));
   }
 
-  const dayMonthYear = /^(\d{1,2})\s+([A-Za-z]{3})[A-Za-z]*\.?\s+(\d{4})$/.exec(
+  // OCR often drops the spaces ("20Oct 2026"), so they are optional.
+  const dayMonthYear = /^(\d{1,2})\s*([A-Za-z]{3})[A-Za-z]*\.?\s*(\d{4})$/.exec(
     value,
   );
   if (dayMonthYear) {
