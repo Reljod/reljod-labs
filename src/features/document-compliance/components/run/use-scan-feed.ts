@@ -35,6 +35,7 @@ const REPLAY_DELAY: Record<ScanEvent["type"], number> = {
   stage: 260,
   spans: 520,
   field: 380,
+  corrections: 300,
   checks: 700,
   findings: 600,
   end: 300,

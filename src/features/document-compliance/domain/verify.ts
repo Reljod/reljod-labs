@@ -1,5 +1,26 @@
 import { words } from "./matching";
-import type { ExtractedField, FieldReading, Span } from "./types";
+import type {
+  ExtractedField,
+  FieldReading,
+  Span,
+  SpanCorrection,
+} from "./types";
+
+/**
+ * Applies the model's corrections to OCR'd Span text (ADR 0005). Only Spans that
+ * exist and actually change are touched; boxes always stay the parser's.
+ */
+export function correctSpans(spans: Span[], corrections: SpanCorrection[]) {
+  const fixes = new Map(corrections.map(({ ref, text }) => [ref, text.trim()]));
+  const applied: { ref: string; from: string; to: string }[] = [];
+  const corrected = spans.map((span) => {
+    const text = fixes.get(span.ref);
+    if (!text || text === span.text) return span;
+    applied.push({ ref: span.ref, from: span.text, to: text });
+    return { ...span, text };
+  });
+  return { spans: corrected, applied };
+}
 
 /**
  * Confirms a reading is rooted in its source: every Span it cites exists, and

@@ -33,6 +33,11 @@ export type ScanEvent = { at: number } & (
     }
   | { type: "field"; kind: DocumentKind; reading: FieldReading }
   | {
+      type: "corrections";
+      kind: DocumentKind;
+      corrections: { ref: string; from: string; to: string }[];
+    }
+  | {
       type: "checks";
       kind: DocumentKind;
       checks: FieldCheck[];

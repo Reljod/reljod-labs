@@ -3,7 +3,7 @@ import { evaluate } from "../domain/evaluate";
 import { fieldChecks } from "../domain/field-checks";
 import { individualOnboarding } from "../domain/rulebook";
 import type { DocumentKind, ExtractedDocument, Span } from "../domain/types";
-import { verifyReading } from "../domain/verify";
+import { correctSpans, verifyReading } from "../domain/verify";
 import { findPack, type Pack, type PackDocument, storagePath } from "../packs";
 import type { ScanEvent } from "../scan-events";
 import { findingViews } from "../view";
@@ -141,23 +141,30 @@ async function parseStep(
 parseStep.maxRetries = 2;
 
 /**
- * The model reads each field as Span references, streamed field by field; code
- * then verifies every reading against its Spans and marks its Field check.
+ * The model corrects OCR'd Span text and reads each field as Span references,
+ * streamed field by field; code then verifies every reading against the
+ * corrected Spans and marks its Field check.
  */
 async function readStep(
   packSlug: string,
   kind: DocumentKind,
-  spans: Span[],
+  ocrSpans: Span[],
+  ocr: boolean,
 ): Promise<ExtractedDocument> {
   "use step";
   const { pack, document } = packAndDocument(packSlug, kind);
   const extracted = await staged(kind, "read", async () => {
     const extraction = await extractDocument({
       kind,
-      spans,
+      spans: ocrSpans,
+      ocr,
       pageImages: await pageImages(pack, document),
       onReading: (reading) => emit({ type: "field", kind, reading }),
     });
+    const { spans, applied } = correctSpans(ocrSpans, extraction.corrections);
+    if (applied.length > 0) {
+      await emit({ type: "corrections", kind, corrections: applied });
+    }
     const value: ExtractedDocument = {
       kind,
       spans,
@@ -166,7 +173,10 @@ async function readStep(
       ),
       judgments: extraction.judgments,
     };
-    return { value, detail: `${value.fields.length} fields` };
+    return {
+      value,
+      detail: `${value.fields.length} fields${applied.length > 0 ? ` · ${applied.length} OCR fixes` : ""}`,
+    };
   });
 
   await emit({
@@ -256,7 +266,15 @@ export async function prescreenWorkflow(input: {
     const processed = await Promise.all(
       kinds.map(async (kind): Promise<ProcessedDocument> => {
         const { spans, ...parsed } = await parseStep(packSlug, kind);
-        return { parsed, extracted: await readStep(packSlug, kind, spans) };
+        return {
+          parsed,
+          extracted: await readStep(
+            packSlug,
+            kind,
+            spans,
+            parsed.parser === "tesseract",
+          ),
+        };
       }),
     );
     await markStatus(runId, "evaluating");

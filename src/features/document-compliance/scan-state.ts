@@ -134,6 +134,12 @@ function linesFor(event: ScanEvent): Omit<LogLine, "id" | "at">[] {
         },
       ];
     }
+    case "corrections":
+      return event.corrections.map(({ ref, from, to }) => ({
+        tone: "info" as const,
+        kind: event.kind,
+        text: `  ✎ ${ref} "${from}" → "${to}"`,
+      }));
     case "checks": {
       const lines = event.checks.map((check) => ({
         tone: CHECK_TONE[check.outcome],
@@ -226,6 +232,16 @@ function applyToDocuments(state: ScanState, event: ScanEvent) {
           event.reading,
         ],
       }));
+    case "corrections": {
+      const fixed = new Map(event.corrections.map(({ ref, to }) => [ref, to]));
+      return withDocument(state, event.kind, (document) => ({
+        ...document,
+        spans: document.spans.map((span) => ({
+          ...span,
+          text: fixed.get(span.ref) ?? span.text,
+        })),
+      }));
+    }
     case "checks":
       return withDocument(state, event.kind, (document) => ({
         ...document,
