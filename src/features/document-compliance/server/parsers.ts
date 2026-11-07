@@ -151,7 +151,14 @@ function joinLines(items: TextItem[]) {
 
 /** A born-digital PDF's text layer as line Spans; PDF points are flipped to a top-left origin. */
 async function parseDigitalPdf(file: Uint8Array): Promise<ParsedDocument> {
-  const { getDocument } = await import("pdfjs-dist/legacy/build/pdf.mjs");
+  // pdf.js loads its worker by a computed path that file tracing cannot see,
+  // so it was missing on Vercel. Registered on globalThis, the worker is
+  // imported like any module and runs in-process.
+  const [{ getDocument }, worker] = await Promise.all([
+    import("pdfjs-dist/legacy/build/pdf.mjs"),
+    import("pdfjs-dist/legacy/build/pdf.worker.mjs"),
+  ]);
+  Object.assign(globalThis, { pdfjsWorker: worker });
   const loading = getDocument({ data: new Uint8Array(file) });
   const pdf = await loading.promise;
   try {
