@@ -18,6 +18,14 @@ _Avoid_: Upload, attachment
 The details the client states on their application (full name, date of birth, residential address) that every Document is checked against.
 _Avoid_: Application data, profile, form data
 
+**Span**:
+A piece of text read from one page of a Document together with the box that encloses it on that page.
+_Avoid_: Token, block, region, OCR result
+
+**Extracted field**:
+A named value read from a Document, such as date of birth or expiry date, that points to the Spans it was read from.
+_Avoid_: Attribute, entity, key-value
+
 ### Rules
 
 **Rulebook**:
@@ -53,6 +61,10 @@ _Avoid_: Proof, source, citation
 **Pre-screen**:
 Producing Findings for a Document pack before a person looks at it. It never approves or rejects a client.
 _Avoid_: Approval, verification, decision
+
+**Pre-screen run**:
+One execution of a Pre-screen against a Document pack, holding everything it produced: Spans, Extracted fields and Findings.
+_Avoid_: Job, check, session
 
 **Reviewer**:
 The person who owns the decision on a Document pack and resolves every `Fail` and `Needs review` Finding.
