@@ -69,8 +69,7 @@ export function evaluate(input: PrescreenInput): Finding[] {
   const documentOf = (kind: DocumentKind) =>
     documents.find((document) => document.kind === kind);
   const usable = (field: ExtractedField | undefined): field is ExtractedField =>
-    field?.verified === true &&
-    field.confidence >= rulebook.minFieldConfidence;
+    field?.verified === true && field.confidence >= rulebook.minFieldConfidence;
 
   function present(kind: DocumentKind, keyFields: FieldName[]): Result {
     const document = documentOf(kind);
