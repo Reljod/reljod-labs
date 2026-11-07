@@ -23,12 +23,17 @@ export const projects: Project[] = [
     slug: "document-compliance-checks",
     icon: "document-check",
     title: "Document compliance checks",
-    sector: "[Client sector]",
+    sector: "Banking onboarding",
     summary:
-      "AI pipelines that review submitted documents against compliance requirements before human review.",
-    outcome: "[Outcome metric]",
-    tags: ["Compliance", "LLM agents"],
-    status: "Case study soon",
+      "Pre-screens an onboarding pack (ID, proof of address, certified copy) against a compliance rulebook before a person reviews it.",
+    outcome: "Every finding boxed on the source page",
+    tags: ["Compliance", "OCR", "LLM"],
+    status: "Live",
+    href: "/demos/document-compliance",
+    cover: {
+      src: "/projects/document-compliance.jpg",
+      alt: "Specimen passport from the fictional Republic of Meridia, one of the demo's synthetic documents",
+    },
   },
   {
     slug: "name-matching",

@@ -68,5 +68,7 @@ export type Project = {
   outcome: string;
   tags: string[];
   status: ProjectStatus;
+  /** A live demo when `status` is "Live", otherwise the case study. */
   href?: string;
+  cover?: { src: string; alt: string };
 };
