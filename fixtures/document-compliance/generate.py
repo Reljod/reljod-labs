@@ -4,9 +4,10 @@ Every document belongs to the fictional Republic of Meridia and carries a SPECIM
 watermark. Each pack holds one deliberate flaw (or none, for `clean`) and a
 `pack.json` with its Client declaration, Pre-screen date and expected Findings.
 
-Requires Google Chrome (headless rendering) and Pillow:
+Requires Google Chrome (headless rendering), Pillow and pypdfium2. The parser's
+virtual environment has both Python packages:
 
-    python3 fixtures/document-compliance/generate.py
+    services/parser/.venv/bin/python fixtures/document-compliance/generate.py
 """
 
 import html
@@ -21,6 +22,7 @@ from datetime import date
 from pathlib import Path
 from string import Template
 
+import pypdfium2
 from PIL import Image, ImageChops, ImageFilter, ImageOps
 
 ROOT = Path(__file__).resolve().parent
@@ -271,6 +273,22 @@ def photograph(source: Path, out: Path, seed: int) -> None:
     photo.save(out, "JPEG", quality=82)
 
 
+# Page images are what the viewer draws boxes on and what the model looks at.
+PAGE_RENDER_DPI = 150
+
+
+def render_pdf_pages(pdf: Path) -> list[str]:
+    """Rasterize every page of a PDF next to it and return the page file names."""
+    names = []
+    document = pypdfium2.PdfDocument(pdf)
+    for index in range(len(document)):
+        name = f"{pdf.stem}.page-{index + 1}.png"
+        document[index].render(scale=PAGE_RENDER_DPI / 72).to_pil().convert("RGB").save(pdf.parent / name)
+        names.append(name)
+    document.close()
+    return names
+
+
 def scan_to_pdf(source: Path, out: Path, seed: int) -> None:
     """Make a rendered page look like a greyscale photocopy, saved as an image-only PDF."""
     rng = random.Random(seed)
@@ -328,7 +346,7 @@ def certification_values(certification: Certification, passport_image: Path) -> 
     }
 
 
-def pack_manifest(pack: Pack) -> dict:
+def pack_manifest(pack: Pack, pages: dict[str, list[str]]) -> dict:
     return {
         "slug": pack.slug,
         "title": pack.title,
@@ -342,18 +360,21 @@ def pack_manifest(pack: Pack) -> dict:
                 "file": "identity-document.jpg",
                 "mediaType": "image/jpeg",
                 "sourceFormat": "image",
+                "pages": pages["identity-document.jpg"],
             },
             {
                 "kind": "proof_of_address",
                 "file": "proof-of-address.pdf",
                 "mediaType": "application/pdf",
                 "sourceFormat": "pdf_digital",
+                "pages": pages["proof-of-address.pdf"],
             },
             {
                 "kind": "certified_copy",
                 "file": "certified-copy.pdf",
                 "mediaType": "application/pdf",
                 "sourceFormat": "pdf_scanned",
+                "pages": pages["certified-copy.pdf"],
             },
         ],
         "expectedFindings": [
@@ -390,7 +411,12 @@ def build_pack(pack: Pack, seed: int) -> None:
         screenshot(copy_html, copy_png, 1240, 1754, scale=1)
         scan_to_pdf(copy_png, out_dir / "certified-copy.pdf", seed)
 
-    (out_dir / "pack.json").write_text(json.dumps(pack_manifest(pack), indent=2) + "\n")
+    pages = {
+        "identity-document.jpg": ["identity-document.jpg"],
+        "proof-of-address.pdf": render_pdf_pages(out_dir / "proof-of-address.pdf"),
+        "certified-copy.pdf": render_pdf_pages(out_dir / "certified-copy.pdf"),
+    }
+    (out_dir / "pack.json").write_text(json.dumps(pack_manifest(pack, pages), indent=2) + "\n")
 
 
 def main() -> None:
