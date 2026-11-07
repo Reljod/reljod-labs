@@ -1,0 +1,69 @@
+@import "tailwindcss";
+
+/*
+ * Colonnade design tokens.
+ * Source: https://claude.ai/artifact/HJP49abWMYrhjyPmkPez2Y (project/tokens.json)
+ */
+@theme {
+  --color-ink: #14213d;
+  --color-ink-muted: #4a4f5b;
+  --color-federal-blue: #1d4e89;
+  --color-clear-sky: #6fa0dc;
+  --color-morning-haze: #d6e4f5;
+  --color-brass: #d9a84e;
+  --color-marble: #f5f1e8;
+  --color-limestone: #e4dccb;
+  --color-paper: #ffffff;
+  --color-oak: #6b4226;
+  --color-ivy: #2f6b3f;
+  --color-seal-red: #b23a2b;
+  --color-stone: #8a8478;
+
+  --radius-sm: 2px;
+
+  --shadow-hard-sm: 2px 2px 0 var(--color-ink);
+  --shadow-hard-md: 4px 4px 0 var(--color-ink);
+  --shadow-hard-hover: 6px 6px 0 var(--color-ink);
+  --shadow-hard-lg: 8px 8px 0 var(--color-ink);
+
+  --text-display: 4.5rem;
+  --text-display--line-height: 1;
+  --text-display--letter-spacing: -0.02em;
+}
+
+@theme inline {
+  --font-mono: var(--font-plex-mono), ui-monospace, Menlo, monospace;
+  --font-sans: var(--font-inter), system-ui, -apple-system, sans-serif;
+}
+
+@layer base {
+  html {
+    scroll-behavior: smooth;
+    scroll-padding-top: 5rem;
+  }
+
+  body {
+    @apply bg-marble font-sans text-base text-ink antialiased;
+  }
+
+  ::selection {
+    @apply bg-clear-sky text-ink;
+  }
+}
+
+/* Every box carries the 2px ink outline. */
+@utility outline-box {
+  @apply border-2 border-ink;
+}
+
+/* Hover lifts to a 6px shadow; press stamps it down like a seal. */
+@utility press {
+  @apply shadow-hard-md transition-[translate,box-shadow] duration-150;
+  @apply hover:-translate-x-0.5 hover:-translate-y-0.5 hover:shadow-hard-hover;
+  @apply active:translate-x-1 active:translate-y-1 active:shadow-none;
+  @apply focus-visible:outline-2 focus-visible:outline-offset-3 focus-visible:outline-federal-blue;
+}
+
+@utility eyebrow {
+  @apply font-mono text-xs font-medium tracking-[0.1em] uppercase;
+}
