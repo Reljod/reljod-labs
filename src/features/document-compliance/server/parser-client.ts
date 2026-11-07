@@ -23,6 +23,9 @@ const parseResponseSchema = z.object({
   spans: z.array(spanSchema),
 });
 
+/** Longer than a cold container's first OCR, shorter than a function's limit. */
+const PARSE_TIMEOUT_MS = 150_000;
+
 export type ParsedDocument = {
   parser: "paddleocr" | "opendataloader_pdf";
   pageCount: number;
@@ -45,6 +48,8 @@ export async function parseDocument(input: {
       authorization: `Bearer ${env.parserToken()}`,
     },
     body: JSON.stringify({ url: input.url, source_format: input.sourceFormat }),
+    // A stuck parse fails its step so the workflow retries it, rather than hanging.
+    signal: AbortSignal.timeout(PARSE_TIMEOUT_MS),
   });
   if (!response.ok) {
     throw new Error(

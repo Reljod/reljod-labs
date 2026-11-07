@@ -15,13 +15,20 @@ export type FeedSource =
   | { mode: "replay"; view: RunView; key: number }
   | { mode: "idle" };
 
-type Action = { type: "event"; event: ScanEvent } | { type: "reset" };
+/** The scan, tagged with the source it came from so a stale one is never shown. */
+type FeedState = { key: string | null; scan: ScanState };
 
-function reducer(state: ScanState, action: Action) {
+type Action =
+  | { type: "event"; event: ScanEvent }
+  | { type: "reset"; key: string };
+
+function reducer(state: FeedState, action: Action): FeedState {
   return action.type === "reset"
-    ? initialScanState()
-    : scanReducer(state, action.event);
+    ? { key: action.key, scan: initialScanState() }
+    : { ...state, scan: scanReducer(state.scan, action.event) };
 }
+
+const EMPTY = initialScanState();
 
 /** How long a replay waits before releasing each kind of event. */
 const REPLAY_DELAY: Record<ScanEvent["type"], number> = {
@@ -96,20 +103,25 @@ async function playReplay(
 
 /** The run's ScanEvents folded into state, from the live stream or a replay. */
 export function useScanFeed(source: FeedSource) {
-  const [state, dispatch] = useReducer(reducer, undefined, initialScanState);
+  const [state, dispatch] = useReducer(reducer, { key: null, scan: EMPTY });
   const received = useRef(0);
-  received.current = state.received;
+  received.current = state.scan.received;
 
   const liveRunId = source.mode === "live" ? source.runId : null;
   const replayView = source.mode === "replay" ? source.view : null;
   const replayKey = source.mode === "replay" ? source.key : null;
+  const sourceKey = liveRunId
+    ? `live-${liveRunId}`
+    : replayKey !== null
+      ? `replay-${replayKey}`
+      : null;
 
-  // biome-ignore lint/correctness/useExhaustiveDependencies: replayKey restarts a replay of the same run
+  // biome-ignore lint/correctness/useExhaustiveDependencies: sourceKey names the live run or replay; the view is read once per key
   useEffect(() => {
-    if (!liveRunId && !replayView) return;
+    if (!sourceKey) return;
     const controller = new AbortController();
     const push = (event: ScanEvent) => dispatch({ type: "event", event });
-    dispatch({ type: "reset" });
+    dispatch({ type: "reset", key: sourceKey });
     received.current = 0;
     if (liveRunId) {
       void streamLive(
@@ -122,7 +134,9 @@ export function useScanFeed(source: FeedSource) {
       void playReplay(replayView, push, controller.signal);
     }
     return () => controller.abort();
-  }, [liveRunId, replayView, replayKey]);
+  }, [sourceKey]);
 
-  return state;
+  // Until the new source's reset lands, the previous scan must not leak through.
+  if (sourceKey && state.key !== sourceKey) return EMPTY;
+  return state.scan;
 }

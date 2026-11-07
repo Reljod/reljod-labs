@@ -3,6 +3,7 @@ PaddleOCR (CPU, lightweight PP-OCR models) for images and scanned PDFs."""
 
 import json
 import tempfile
+import threading
 from functools import cache
 from pathlib import Path
 
@@ -14,6 +15,8 @@ from .spans import Span, spans_from_ocr, spans_from_opendataloader
 
 # Matches the page images the app shows, so OCR boxes line up with them.
 SCAN_RENDER_DPI = 150
+
+OCR_LOCK = threading.Lock()
 
 
 @cache
@@ -33,7 +36,10 @@ def ocr_engine():
 def ocr_image(path: Path, page: int) -> list[Span]:
     with Image.open(path) as image:
         width, height = image.size
-    results = ocr_engine().predict(str(path))
+    # PaddleOCR is not thread-safe, and FastAPI runs requests on a thread pool:
+    # concurrent requests building or calling the engine can spin forever.
+    with OCR_LOCK:
+        results = ocr_engine().predict(str(path))
     if not results:
         return []
     result = results[0]

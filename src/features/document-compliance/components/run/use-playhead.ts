@@ -5,6 +5,8 @@ import type { DocumentKind } from "../../domain/types";
 import type { ScanState } from "../../scan-state";
 
 export type Playhead = {
+  /** The playback this head belongs to; a stale one is never shown. */
+  key: unknown;
   /** Which Document is on screen, as an index into the pack's display order. */
   index: number;
   /** How many of its readings have been revealed. */
@@ -16,6 +18,7 @@ export type Playhead = {
 };
 
 const START: Playhead = {
+  key: null,
   index: 0,
   revealed: 0,
   stamped: false,
@@ -28,7 +31,9 @@ const HOLD_TICKS = 5;
 
 function advance(head: Playhead, total: number): Playhead {
   const index = head.index + 1;
-  return index >= total ? { ...head, finished: true } : { ...START, index };
+  return index >= total
+    ? { ...head, finished: true }
+    : { ...START, key: head.key, index };
 }
 
 function step(head: Playhead, scan: ScanState, kinds: DocumentKind[]) {
@@ -56,13 +61,13 @@ function step(head: Playhead, scan: ScanState, kinds: DocumentKind[]) {
 
 type Action =
   | { type: "tick"; scan: ScanState; kinds: DocumentKind[] }
-  | { type: "reset" }
+  | { type: "reset"; key: unknown }
   | { type: "skip" };
 
 function reducer(head: Playhead, action: Action): Playhead {
   switch (action.type) {
     case "reset":
-      return START;
+      return { ...START, key: action.key };
     case "skip":
       return { ...head, finished: true };
     case "tick":
@@ -83,9 +88,8 @@ export function usePlayhead(
   const latest = useRef({ scan, kinds });
   latest.current = { scan, kinds };
 
-  // biome-ignore lint/correctness/useExhaustiveDependencies: resetKey restarts playback on purpose
   useEffect(() => {
-    dispatch({ type: "reset" });
+    dispatch({ type: "reset", key: options.resetKey });
   }, [options.resetKey]);
 
   useEffect(() => {
@@ -96,5 +100,9 @@ export function usePlayhead(
     return () => clearInterval(timer);
   }, [options.tickMs]);
 
-  return { head, skip: () => dispatch({ type: "skip" }) };
+  return {
+    // Until the reset for a new playback lands, the old head must not leak through.
+    head: head.key === options.resetKey ? head : START,
+    skip: () => dispatch({ type: "skip" }),
+  };
 }

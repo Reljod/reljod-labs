@@ -46,9 +46,14 @@ function EvidenceDiff({
   return (
     <span className="flex flex-wrap gap-1.5">
       {cited.map((check) => {
-        const style = CHECK_STYLES[check.outcome];
-        const issue =
-          check.outcome === "fail" || check.outcome === "needs_review";
+        // A passing Finding asked a different question of this field (such as
+        // "is it present?"), so its other marks would only read as contradictions.
+        const outcome =
+          finding.outcome === "pass" && check.outcome !== "pass"
+            ? "read"
+            : check.outcome;
+        const style = CHECK_STYLES[outcome];
+        const issue = outcome === "fail" || outcome === "needs_review";
         return (
           <span
             key={`${check.documentKind}-${check.fieldName}`}

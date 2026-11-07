@@ -95,23 +95,26 @@ export function ScanStage({
                 reduceMotion ? undefined : { opacity: 0, y: -24, rotate: 1 }
               }
               transition={{ type: "spring", stiffness: 220, damping: 26 }}
-              className="outline-box relative overflow-hidden rounded-sm bg-paper shadow-hard-lg"
+              className="outline-box grid min-h-[40vh] place-items-center overflow-hidden rounded-sm bg-limestone shadow-hard-lg"
             >
-              {/* biome-ignore lint/performance/noImgElement: signed Storage redirect; boxes need the image's natural size */}
-              <img
-                src={pageImageUrl(packSlug, pack.pages[page - 1] ?? "")}
-                alt={`${DOCUMENT_LABELS[scan.kind]}, page ${page}`}
-                className="block h-auto w-full"
-              />
-              <ScanOverlay
-                scan={scan}
-                page={page}
-                revealed={revealed}
-                checkOf={checkOf}
-                stamped={head.stamped}
-                scanning={scanning}
-                reduceMotion={reduceMotion}
-              />
+              {/* Sized by the image alone, so boxes land where the parser found them. */}
+              <div className="relative w-fit max-w-full">
+                {/* biome-ignore lint/performance/noImgElement: signed Storage redirect; boxes need the image's natural size */}
+                <img
+                  src={pageImageUrl(packSlug, pack.pages[page - 1] ?? "")}
+                  alt={`${DOCUMENT_LABELS[scan.kind]}, page ${page}`}
+                  className="block h-auto max-h-[70vh] w-auto max-w-full"
+                />
+                <ScanOverlay
+                  scan={scan}
+                  page={page}
+                  revealed={revealed}
+                  checkOf={checkOf}
+                  stamped={head.stamped}
+                  scanning={scanning}
+                  reduceMotion={reduceMotion}
+                />
+              </div>
             </motion.div>
           </AnimatePresence>
         </div>

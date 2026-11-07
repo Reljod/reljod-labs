@@ -126,6 +126,7 @@ export function PackPicker({ packs }: { packs: PackSummary[] }) {
           <div className="outline-box relative overflow-hidden rounded-sm bg-limestone shadow-hard-lg">
             <div className="relative grid aspect-[4/3] place-items-center p-4 sm:p-6">
               <AnimatePresence mode="popLayout" initial={false}>
+                {/* biome-ignore lint/performance/noImgElement: signed Storage redirect, animated between pages */}
                 <motion.img
                   key={`${pack.slug}-${current.file}`}
                   src={pageImageUrl(pack.slug, current.file)}
