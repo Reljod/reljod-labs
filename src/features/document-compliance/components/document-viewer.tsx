@@ -4,6 +4,7 @@ import { AnimatePresence, motion } from "motion/react";
 import type { DocumentKind } from "../domain/types";
 import type { DocumentView, FindingView } from "../view";
 import { DOCUMENT_LABELS, FIELD_LABELS } from "./labels";
+import { PageImage } from "./page-image-loader";
 
 type DocumentViewerProps = {
   documents: DocumentView[];
@@ -85,38 +86,48 @@ export function DocumentViewer({
       ) : null}
 
       {document?.pages.map((page) => (
-        <div key={page.page} className="relative">
-          {/* biome-ignore lint/performance/noImgElement: short-lived signed Storage URLs; boxes need the image's natural size */}
-          <img
-            src={page.imageUrl}
-            alt={`${DOCUMENT_LABELS[document.kind]}, page ${page.page}`}
-            className="block h-auto w-full"
-          />
-          <AnimatePresence>
-            {boxes
-              .filter((span) => span.page === page.page)
-              .map((span) => (
-                <motion.div
-                  key={`${finding?.requirementId}-${span.ref}`}
-                  initial={{ opacity: 0, scale: 1.5 }}
-                  animate={{ opacity: 1, scale: 1 }}
-                  exit={{ opacity: 0 }}
-                  transition={{ type: "spring", stiffness: 320, damping: 22 }}
-                  data-testid="evidence-box"
-                  data-span-ref={span.ref}
-                  data-span-text={span.text}
-                  title={span.text}
-                  className="pointer-events-none absolute border-2 border-seal-red bg-seal-red/15"
-                  style={{
-                    left: `${span.box.x0 * 100}%`,
-                    top: `${span.box.y0 * 100}%`,
-                    width: `${(span.box.x1 - span.box.x0) * 100}%`,
-                    height: `${(span.box.y1 - span.box.y0) * 100}%`,
-                  }}
-                />
-              ))}
-          </AnimatePresence>
-        </div>
+        // Keyed by Document too: a reused <img> keeps painting the previous
+        // Document's page until the new one loads, under the new boxes.
+        <PageImage
+          key={`${document.kind}-${page.page}`}
+          src={page.imageUrl}
+          alt={`${DOCUMENT_LABELS[document.kind]}, page ${page.page}`}
+          imageClassName="block h-auto w-full"
+          pendingClassName="aspect-[3/4]"
+        >
+          {(status) => (
+            <AnimatePresence>
+              {status !== "loaded"
+                ? null
+                : boxes
+                    .filter((span) => span.page === page.page)
+                    .map((span) => (
+                      <motion.div
+                        key={`${finding?.requirementId}-${span.ref}`}
+                        initial={{ opacity: 0, scale: 1.5 }}
+                        animate={{ opacity: 1, scale: 1 }}
+                        exit={{ opacity: 0 }}
+                        transition={{
+                          type: "spring",
+                          stiffness: 320,
+                          damping: 22,
+                        }}
+                        data-testid="evidence-box"
+                        data-span-ref={span.ref}
+                        data-span-text={span.text}
+                        title={span.text}
+                        className="pointer-events-none absolute border-2 border-seal-red bg-seal-red/15"
+                        style={{
+                          left: `${span.box.x0 * 100}%`,
+                          top: `${span.box.y0 * 100}%`,
+                          width: `${(span.box.x1 - span.box.x0) * 100}%`,
+                          height: `${(span.box.y1 - span.box.y0) * 100}%`,
+                        }}
+                      />
+                    ))}
+            </AnimatePresence>
+          )}
+        </PageImage>
       ))}
     </div>
   );

@@ -3,13 +3,14 @@
 import { useMutation } from "@tanstack/react-query";
 import { motion } from "motion/react";
 import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { useEffect, useState, useTransition } from "react";
 import type { Pack } from "../packs";
 import { DOCUMENT_ORDER } from "../scan-events";
 import { startPrescreen } from "../server/actions";
 import { DOCUMENT_LABELS, DOCUMENT_SHORT_LABELS } from "./labels";
 import { PageFrame } from "./page-frame";
 import { pageImageUrl } from "./page-image";
+import { PageImage } from "./page-image-loader";
 
 export type PackSummary = Pick<Pack, "slug" | "title" | "documents">;
 
@@ -36,19 +37,37 @@ export function PackPicker({ packs }: { packs: PackSummary[] }) {
   const pack = packs.find((item) => item.slug === packSlug) ?? packs[0];
   const pages = pack ? pagesOf(pack) : [];
   const current = pages[Math.min(pageIndex, pages.length - 1)];
+  // Pending only while the run page is loading: once the navigation settles
+  // (or the router cache restores this page on back), the button is usable again.
+  const [navigating, startNavigation] = useTransition();
 
   const start = useMutation({
     mutationFn: startPrescreen,
     onMutate: () => setNotice(null),
     onSuccess: (result) => {
       const base = "/demos/document-compliance/runs";
-      if (result.status === "started") router.push(`${base}/${result.runId}`);
-      else if (result.runId) {
-        router.push(`${base}/${result.runId}?replay=limited`);
+      if (result.status === "started") {
+        startNavigation(() => router.push(`${base}/${result.runId}`));
+      } else if (result.runId) {
+        const href = `${base}/${result.runId}?replay=limited`;
+        startNavigation(() => router.push(href));
       } else setNotice(result.message);
     },
     onError: (error) => setNotice(error.message),
   });
+  const starting = start.isPending || navigating;
+
+  // Warm the neighbouring pages so paging through the preview doesn't wait on
+  // a signed redirect each time.
+  const neighbours = [pages[pageIndex - 1], pages[pageIndex + 1]]
+    .filter((page) => page !== undefined)
+    .map((page) => (pack ? pageImageUrl(pack.slug, page.file) : ""))
+    .join(" ");
+  useEffect(() => {
+    for (const src of neighbours.split(" ").filter(Boolean)) {
+      new Image().src = src;
+    }
+  }, [neighbours]);
 
   function choose(slug: string) {
     setPackSlug(slug);
@@ -84,16 +103,17 @@ export function PackPicker({ packs }: { packs: PackSummary[] }) {
                   {pagesOf(item).map((page, index, all) => {
                     const offset = index - (all.length - 1) / 2;
                     return (
-                      // biome-ignore lint/performance/noImgElement: signed Storage redirect thumbnail
-                      <img
+                      <PageImage
                         key={`${page.kind}-${page.page}`}
                         src={pageImageUrl(item.slug, page.file)}
                         alt=""
+                        compact
                         style={{
                           transform: `translateX(${offset * 38}%) rotate(${offset * 6}deg)`,
                           zIndex: 10 - Math.abs(Math.round(offset)),
                         }}
-                        className="absolute bottom-0 aspect-[3/4] h-full rounded-[1px] border border-ink bg-paper object-cover object-top shadow-hard-sm transition-transform duration-300 group-hover:-translate-y-1"
+                        className="absolute bottom-0 aspect-[3/4] h-full overflow-hidden rounded-[1px] border border-ink bg-paper shadow-hard-sm transition-transform duration-300 group-hover:-translate-y-1"
+                        imageClassName="size-full object-cover object-top"
                       />
                     );
                   })}
@@ -120,11 +140,11 @@ export function PackPicker({ packs }: { packs: PackSummary[] }) {
         <button
           type="button"
           data-testid="run-prescreen"
-          disabled={!pack || start.isPending || start.isSuccess}
+          disabled={!pack || starting}
           onClick={() => pack && start.mutate(pack.slug)}
           className="outline-box press group/run flex min-h-14 items-center justify-center gap-3 rounded-sm bg-federal-blue px-6 font-mono text-base font-bold tracking-[0.1em] text-paper uppercase disabled:cursor-wait disabled:opacity-80"
         >
-          {start.isPending || start.isSuccess ? (
+          {starting ? (
             <>
               <motion.span
                 aria-hidden
