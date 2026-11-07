@@ -83,7 +83,7 @@ describe("replayEvents", () => {
     documents: [
       {
         kind: "identity_document",
-        parser: "paddleocr",
+        parser: "tesseract",
         pageCount: 1,
         pages: [{ page: 1, imageUrl: "" }],
         spans: [

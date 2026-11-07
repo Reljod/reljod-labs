@@ -8,7 +8,7 @@ import { findPack, type Pack, type PackDocument, storagePath } from "../packs";
 import type { ScanEvent } from "../scan-events";
 import { findingViews } from "../view";
 import { extractDocument } from "./extract";
-import { type ParsedDocument, parseDocument } from "./parser-client";
+import { type ParsedDocument, parseDocument } from "./parsers";
 import {
   failRun,
   type SavedDocument,
@@ -88,7 +88,22 @@ async function markStatus(
   await setRunStatus(runId, status);
 }
 
-/** Parser service: the Document's text and where each piece sits on the page. */
+async function download(path: string) {
+  const response = await fetch(await signedUrl(path));
+  if (!response.ok) throw new Error(`Could not download ${path}`);
+  return new Uint8Array(await response.arrayBuffer());
+}
+
+function pageImages(pack: Pack, document: PackDocument) {
+  return Promise.all(
+    document.pages.map(async (file) => ({
+      data: await download(storagePath(pack.slug, file)),
+      mediaType: file.endsWith(".png") ? "image/png" : "image/jpeg",
+    })),
+  );
+}
+
+/** The Document's text and where each piece sits on the page (ADR 0004). */
 async function parseStep(
   packSlug: string,
   kind: DocumentKind,
@@ -96,9 +111,14 @@ async function parseStep(
   "use step";
   const { pack, document } = packAndDocument(packSlug, kind);
   return staged(kind, "parse", async () => {
+    const [file, pages] = await Promise.all([
+      download(storagePath(pack.slug, document.file)),
+      pageImages(pack, document),
+    ]);
     const parsed = await parseDocument({
-      url: await signedUrl(storagePath(pack.slug, document.file)),
+      file,
       sourceFormat: document.sourceFormat,
+      pageImages: pages.map((page) => page.data),
     });
     await emit({
       type: "spans",
@@ -119,21 +139,6 @@ async function parseStep(
   });
 }
 parseStep.maxRetries = 2;
-
-async function download(path: string) {
-  const response = await fetch(await signedUrl(path));
-  if (!response.ok) throw new Error(`Could not download ${path}`);
-  return new Uint8Array(await response.arrayBuffer());
-}
-
-function pageImages(pack: Pack, document: PackDocument) {
-  return Promise.all(
-    document.pages.map(async (file) => ({
-      data: await download(storagePath(pack.slug, file)),
-      mediaType: file.endsWith(".png") ? "image/png" : "image/jpeg",
-    })),
-  );
-}
 
 /**
  * The model reads each field as Span references, streamed field by field; code

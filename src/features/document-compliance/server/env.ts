@@ -10,8 +10,6 @@ function required(name: string): string {
 export const env = {
   supabaseUrl: () => required("SUPABASE_URL"),
   supabaseServiceRoleKey: () => required("SUPABASE_SERVICE_ROLE_KEY"),
-  parserUrl: () => required("PARSER_URL"),
-  parserToken: () => process.env.PARSER_TOKEN ?? "",
   rateLimitSalt: () => required("RATE_LIMIT_SALT"),
   /** When set, requests carrying it skip rate limits and are tagged as e2e runs. */
   e2eBypassToken: () => process.env.E2E_BYPASS_TOKEN ?? "",

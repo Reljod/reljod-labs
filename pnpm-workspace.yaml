@@ -3,4 +3,5 @@ allowBuilds:
   cbor-extract: false
   esbuild: true
   sharp: false
+  tesseract.js: false
   unrs-resolver: false

@@ -48,7 +48,7 @@ type DocumentRow = {
   storage_path: string;
   media_type: string;
   source_format: "image" | "pdf_digital" | "pdf_scanned";
-  parser: "paddleocr" | "opendataloader_pdf";
+  parser: "paddleocr" | "opendataloader_pdf" | "tesseract" | "pdfjs";
   page_count: number;
 };
 

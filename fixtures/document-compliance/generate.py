@@ -4,10 +4,11 @@ Every document belongs to the fictional Republic of Meridia and carries a SPECIM
 watermark. Each pack holds one deliberate flaw (or none, for `clean`) and a
 `pack.json` with its Client declaration, Pre-screen date and expected Findings.
 
-Requires Google Chrome (headless rendering), Pillow and pypdfium2. The parser's
-virtual environment has both Python packages:
+Requires Google Chrome (headless rendering), Pillow and pypdfium2:
 
-    services/parser/.venv/bin/python fixtures/document-compliance/generate.py
+    python3 -m venv fixtures/document-compliance/.venv
+    fixtures/document-compliance/.venv/bin/pip install -r fixtures/document-compliance/requirements.txt
+    fixtures/document-compliance/.venv/bin/python fixtures/document-compliance/generate.py
 """
 
 import html

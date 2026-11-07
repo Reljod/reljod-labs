@@ -13,18 +13,20 @@ Synthetic Document packs for the document compliance demo. Every document is iss
 
 Each pack holds three Documents, one per parser path:
 
-- `identity-document.jpg`: photo of a passport data page (OCR)
-- `proof-of-address.pdf`: born-digital utility bill with a text layer (opendataloader-pdf)
-- `certified-copy.pdf`: image-only scan of a certified passport copy (OCR)
+- `identity-document.jpg`: photo of a passport data page (Tesseract OCR)
+- `proof-of-address.pdf`: born-digital utility bill with a text layer (pdf.js)
+- `certified-copy.pdf`: image-only scan of a certified passport copy (Tesseract OCR on its page image)
 
 `pack.json` holds the Client declaration, the fixed Pre-screen date and the expected Finding for every Requirement, so each pack doubles as a test fixture.
 
 ## Regenerating
 
-Requires Google Chrome and Pillow.
+Requires Google Chrome, Pillow and pypdfium2.
 
 ```bash
-python3 fixtures/document-compliance/generate.py
+python3 -m venv fixtures/document-compliance/.venv
+fixtures/document-compliance/.venv/bin/pip install -r fixtures/document-compliance/requirements.txt
+fixtures/document-compliance/.venv/bin/python fixtures/document-compliance/generate.py
 ```
 
 Output is deterministic apart from Chrome's PDF metadata.

@@ -1,7 +1,0 @@
-services:
-  parser:
-    build: services/parser
-    ports:
-      - "8000:8000"
-    environment:
-      PARSER_TOKEN: ${PARSER_TOKEN:-}
