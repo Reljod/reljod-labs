@@ -102,12 +102,16 @@ function trimLine(line: string) {
 /**
  * Checks streamed steps one at a time, in order. Returns the step as it will
  * be played and stored, or null to drop it: an unknown source, an excerpt the
- * site doesn't say, a repeat, or one step too many.
+ * site doesn't say, a repeat, a piece inside one already placed (or around
+ * one), or one step too many.
  */
 export function createStepValidator(tree: ContentTree = contentTree) {
   const seen = new Set<string>();
+  const placed: string[] = [];
   let accepted = 0;
   let tosses = 0;
+  const nested = (a: string, b: string) =>
+    a.startsWith(`${b}.`) || b.startsWith(`${a}.`);
 
   return (step: PlanStep): PlanStep | null => {
     if (accepted >= MAX_STEPS) return null;
@@ -119,12 +123,18 @@ export function createStepValidator(tree: ContentTree = contentTree) {
       const whole = node.block.text;
       const matched = matchExcerpt(whole, step.excerpt);
       if (!matched) return null;
-      excerpt = matched === whole ? null : matched;
+      const all =
+        matched === whole || matched === whole.replace(/[.,;:]+$/, "");
+      excerpt = all ? null : matched;
     }
 
     const key = `${node.path}#${excerpt ?? ""}`;
     if (seen.has(key)) return null;
     if (step.action === "toss" && tosses >= MAX_TOSSES) return null;
+    if (step.action === "fetch") {
+      if (placed.some((path) => nested(path, node.path))) return null;
+      placed.push(node.path);
+    }
 
     seen.add(key);
     accepted++;

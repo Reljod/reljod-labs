@@ -89,6 +89,29 @@ describe("createStepValidator", () => {
     ).toBeNull();
   });
 
+  it("drops a piece inside one already placed, and one around it", () => {
+    const validate = createStepValidator();
+    expect(validate(step({ source: sourcePath.project(1) }))).not.toBeNull();
+    expect(validate(step({ source: sourcePath.projectOutcome(1) }))).toBeNull();
+    expect(
+      validate(step({ source: KYC_POINT, excerpt: "+7 pts approval rate" })),
+    ).not.toBeNull();
+    expect(
+      validate(step({ source: KYC_POINT, excerpt: "+8 pts automation rate" })),
+    ).not.toBeNull();
+    expect(validate(step({ source: sourcePath.job(MAYA) }))).toBeNull();
+  });
+
+  it("treats an excerpt of the whole sentence as the whole piece", () => {
+    const node = contentTree.get(KYC_POINT);
+    if (!node || node.block.kind !== "quote")
+      throw new Error("missing KYC point");
+    const sentence = node.block.text.replace(/\.$/, "");
+    expect(
+      validate1(step({ source: KYC_POINT, excerpt: sentence }))?.excerpt,
+    ).toBeNull();
+  });
+
   it("trims long lines", () => {
     const line = validate1(step({ line: "word ".repeat(40) }))?.line ?? "";
     expect(line.length).toBeLessThanOrEqual(60);
