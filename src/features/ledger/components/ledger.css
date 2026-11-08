@@ -1,0 +1,1215 @@
+/* Ledger, the cat banker: parts, poses and motion. Ported from the mascot's design canvas. */
+.lgr {
+  overflow: visible;
+  display: block;
+}
+.lgr .sleeve {
+  fill: none;
+  stroke: #14213d;
+  stroke-width: 18;
+  stroke-linecap: round;
+}
+.lgr .sleeve-far {
+  fill: none;
+  stroke: #0b1428;
+  stroke-width: 16;
+  stroke-linecap: round;
+}
+.lgr .paw {
+  fill: #fbebd3;
+  stroke: #c47a35;
+  stroke-width: 1.5;
+}
+.lgr .ln {
+  fill: none;
+  stroke: #14213d;
+  stroke-width: 2.5;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+.lgr .stripe {
+  fill: none;
+  stroke: #c47a35;
+  stroke-width: 4;
+  stroke-linecap: round;
+}
+.lgr .whisk {
+  fill: none;
+  stroke: #14213d;
+  stroke-width: 1.5;
+  stroke-linecap: round;
+  opacity: 0.55;
+}
+.lgr .frame {
+  fill: rgba(255, 255, 255, 0.2);
+  stroke: #14213d;
+  stroke-width: 3.5;
+}
+.lgr .temple {
+  fill: none;
+  stroke: #14213d;
+  stroke-width: 3;
+  stroke-linecap: round;
+}
+.lgr .glint {
+  fill: none;
+  stroke: #ffffff;
+  stroke-width: 2.4;
+  stroke-linecap: round;
+  opacity: 0.8;
+}
+.lgr .tail {
+  fill: none;
+  stroke: #e9a055;
+  stroke-width: 14;
+  stroke-linecap: round;
+}
+.lgr .tailtip {
+  fill: none;
+  stroke: #b96a2c;
+  stroke-width: 14;
+  stroke-linecap: round;
+}
+.lgr .chain {
+  fill: none;
+  stroke: #c9a227;
+  stroke-width: 2;
+  stroke-linecap: round;
+}
+.lgr .lapel {
+  fill: none;
+  stroke: #2d4270;
+  stroke-width: 3;
+  stroke-linecap: round;
+}
+.lgr .speed {
+  fill: none;
+  stroke: #14213d;
+  stroke-width: 4;
+  stroke-linecap: round;
+  opacity: 0.3;
+}
+.lgr .mono {
+  font-family: "IBM Plex Mono", ui-monospace, monospace;
+  font-weight: 700;
+}
+
+/* ---------- ambient ---------- */
+.lgr-anim .c-blink {
+  transform-origin: 120px 94px;
+  animation: lgr-blink 4.2s infinite;
+}
+.lgr-anim .c-tail {
+  transform-origin: 152px 200px;
+  animation: lgr-tail 2.4s ease-in-out infinite;
+}
+.lgr-anim .c-breathe {
+  transform-origin: 120px 222px;
+  animation: lgr-breathe 3s ease-in-out infinite;
+}
+@keyframes lgr-blink {
+  0%,
+  90%,
+  100% {
+    transform: scaleY(1);
+  }
+  93% {
+    transform: scaleY(0.08);
+  }
+}
+@keyframes lgr-tail {
+  0%,
+  100% {
+    transform: rotate(-7deg);
+  }
+  50% {
+    transform: rotate(9deg);
+  }
+}
+@keyframes lgr-breathe {
+  0%,
+  100% {
+    transform: scale(1, 1);
+  }
+  50% {
+    transform: scale(1.012, 1.02);
+  }
+}
+
+/* ---------- wave ---------- */
+.lgr-anim.pose-wave .c-wave {
+  transform-origin: 152px 150px;
+  animation: lgr-wave 0.9s ease-in-out infinite;
+}
+@keyframes lgr-wave {
+  0%,
+  100% {
+    transform: rotate(-10deg);
+  }
+  50% {
+    transform: rotate(14deg);
+  }
+}
+
+/* ---------- think ---------- */
+.lgr-anim .c-dot1 {
+  animation: lgr-dot 1.2s infinite;
+}
+.lgr-anim .c-dot2 {
+  animation: lgr-dot 1.2s 0.2s infinite;
+}
+.lgr-anim .c-dot3 {
+  animation: lgr-dot 1.2s 0.4s infinite;
+}
+@keyframes lgr-dot {
+  0%,
+  100% {
+    opacity: 0.2;
+  }
+  40% {
+    opacity: 1;
+  }
+}
+
+/* ---------- search ---------- */
+.lgr-anim.pose-search .c-scan {
+  animation: lgr-scan 1.6s ease-in-out infinite;
+}
+.lgr-anim.pose-search .c-book {
+  animation: lgr-bookbob 1.6s ease-in-out infinite;
+}
+@keyframes lgr-scan {
+  0%,
+  100% {
+    transform: translateX(-3px);
+  }
+  50% {
+    transform: translateX(3px);
+  }
+}
+@keyframes lgr-bookbob {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-2px);
+  }
+}
+
+/* ---------- talk ---------- */
+.lgr-anim.pose-talk .c-mouth {
+  transform-origin: 120px 128px;
+  animation: lgr-talk 0.28s ease-in-out infinite alternate;
+}
+@keyframes lgr-talk {
+  from {
+    transform: scaleY(0.35);
+  }
+  to {
+    transform: scaleY(1);
+  }
+}
+
+/* ---------- shared run bits ---------- */
+@keyframes lgr-bob {
+  from {
+    transform: translateY(0);
+  }
+  to {
+    transform: translateY(-6px);
+  }
+}
+@keyframes lgr-leg {
+  from {
+    transform: rotate(-30deg);
+  }
+  to {
+    transform: rotate(30deg);
+  }
+}
+@keyframes lgr-arm {
+  from {
+    transform: rotate(38deg);
+  }
+  to {
+    transform: rotate(-38deg);
+  }
+}
+@keyframes lgr-speed {
+  from {
+    transform: translateX(10px);
+    opacity: 0.9;
+  }
+  to {
+    transform: translateX(-14px);
+    opacity: 0;
+  }
+}
+.lgr-anim .c-speed {
+  animation: lgr-speed 0.42s linear infinite;
+}
+
+/* ---------- run: side view = four-legged rotary GALLOP (cycle .48s) ----------
+   0% extended (reach)  25% flight  50% gathered (legs crossed under)  75% push-off */
+.lgr-anim.pose-run .c-breathe {
+  animation: none;
+}
+.lgr-anim.pose-run .c-gbob {
+  animation: lgr-g-bob 0.48s linear infinite;
+}
+.lgr-anim.pose-run .c-gtorso {
+  transform-origin: 118px 162px;
+  animation: lgr-g-torso 0.48s ease-in-out infinite;
+}
+.lgr-anim.pose-run .c-gfore-n {
+  transform-origin: 158px 170px;
+  animation: lgr-g-fore 0.48s ease-in-out infinite;
+}
+.lgr-anim.pose-run .c-gfore-f {
+  transform-origin: 146px 170px;
+  animation: lgr-g-fore2 0.48s ease-in-out infinite;
+}
+.lgr-anim.pose-run .c-ghind-n {
+  transform-origin: 84px 170px;
+  animation: lgr-g-hind 0.48s ease-in-out infinite;
+}
+.lgr-anim.pose-run .c-ghind-f {
+  transform-origin: 96px 170px;
+  animation: lgr-g-hind2 0.48s ease-in-out infinite;
+}
+.lgr-anim.pose-run .c-ghead {
+  transform-origin: 176px 150px;
+  animation: lgr-g-head 0.48s ease-in-out infinite;
+}
+.lgr-anim.pose-run .c-gtail {
+  transform-origin: 66px 156px;
+  animation: lgr-g-tail 0.48s ease-in-out infinite;
+}
+.lgr-anim.pose-run .c-gcoat {
+  transform-origin: 70px 170px;
+  animation: lgr-g-coat 0.24s ease-in-out infinite alternate;
+}
+.lgr-anim.pose-run .c-gtie {
+  transform-origin: 166px 150px;
+  animation: lgr-g-tie 0.24s ease-in-out infinite alternate;
+}
+.lgr-anim.pose-run .c-gtongue {
+  transform-origin: 216px 134px;
+  animation: lgr-g-tongue 0.24s ease-in-out infinite alternate;
+}
+.lgr-anim.pose-run .c-blink-g {
+  transform-origin: 198px 102px;
+  animation: lgr-blink 3.1s infinite;
+}
+.lgr-anim.pose-run .c-gdust1 {
+  transform-origin: 70px 220px;
+  animation: lgr-g-dust 0.48s ease-out infinite;
+}
+.lgr-anim.pose-run .c-gdust2 {
+  transform-origin: 58px 214px;
+  animation: lgr-g-dust 0.48s 0.16s ease-out infinite;
+}
+.lgr-anim.pose-run .c-gdust3 {
+  transform-origin: 80px 224px;
+  animation: lgr-g-dust 0.48s 0.32s ease-out infinite;
+}
+.lgr-anim.pose-run .c-speed {
+  animation-duration: 0.24s;
+}
+@keyframes lgr-g-bob {
+  0% {
+    transform: translateY(3px);
+  }
+  25% {
+    transform: translateY(-14px);
+  }
+  50% {
+    transform: translateY(5px);
+  }
+  75% {
+    transform: translateY(-5px);
+  }
+  100% {
+    transform: translateY(3px);
+  }
+}
+@keyframes lgr-g-torso {
+  0% {
+    transform: scale(1.12, 0.92) rotate(-2deg);
+  }
+  25% {
+    transform: scale(1.03, 1) rotate(0deg);
+  }
+  50% {
+    transform: scale(0.88, 1.1) rotate(3deg);
+  }
+  75% {
+    transform: scale(1, 1) rotate(1deg);
+  }
+  100% {
+    transform: scale(1.12, 0.92) rotate(-2deg);
+  }
+}
+@keyframes lgr-g-fore {
+  0% {
+    transform: rotate(-62deg);
+  }
+  25% {
+    transform: rotate(-28deg);
+  }
+  50% {
+    transform: rotate(40deg);
+  }
+  75% {
+    transform: rotate(14deg);
+  }
+  100% {
+    transform: rotate(-62deg);
+  }
+}
+@keyframes lgr-g-fore2 {
+  0% {
+    transform: rotate(-42deg);
+  }
+  15% {
+    transform: rotate(-60deg);
+  }
+  40% {
+    transform: rotate(-8deg);
+  }
+  62% {
+    transform: rotate(44deg);
+  }
+  85% {
+    transform: rotate(6deg);
+  }
+  100% {
+    transform: rotate(-42deg);
+  }
+}
+@keyframes lgr-g-hind {
+  0% {
+    transform: rotate(58deg);
+  }
+  25% {
+    transform: rotate(30deg);
+  }
+  50% {
+    transform: rotate(-50deg);
+  }
+  75% {
+    transform: rotate(-12deg);
+  }
+  100% {
+    transform: rotate(58deg);
+  }
+}
+@keyframes lgr-g-hind2 {
+  0% {
+    transform: rotate(44deg);
+  }
+  15% {
+    transform: rotate(60deg);
+  }
+  40% {
+    transform: rotate(18deg);
+  }
+  62% {
+    transform: rotate(-46deg);
+  }
+  85% {
+    transform: rotate(-4deg);
+  }
+  100% {
+    transform: rotate(44deg);
+  }
+}
+@keyframes lgr-g-head {
+  0% {
+    transform: translate(0, 4px) rotate(-5deg);
+  }
+  25% {
+    transform: translate(2px, 9px) rotate(1deg);
+  }
+  50% {
+    transform: translate(-3px, -3px) rotate(5deg);
+  }
+  75% {
+    transform: translate(0, 3px) rotate(0deg);
+  }
+  100% {
+    transform: translate(0, 4px) rotate(-5deg);
+  }
+}
+@keyframes lgr-g-tail {
+  0% {
+    transform: rotate(-14deg);
+  }
+  50% {
+    transform: rotate(18deg);
+  }
+  100% {
+    transform: rotate(-14deg);
+  }
+}
+@keyframes lgr-g-coat {
+  from {
+    transform: rotate(12deg) scaleX(0.9);
+  }
+  to {
+    transform: rotate(-16deg) scaleX(1.1);
+  }
+}
+@keyframes lgr-g-tie {
+  from {
+    transform: rotate(-10deg);
+  }
+  to {
+    transform: rotate(12deg);
+  }
+}
+@keyframes lgr-g-tongue {
+  from {
+    transform: rotate(-12deg);
+  }
+  to {
+    transform: rotate(14deg);
+  }
+}
+@keyframes lgr-g-dust {
+  0% {
+    transform: translateX(0) scale(0.3);
+    opacity: 0.9;
+  }
+  100% {
+    transform: translateX(-34px) translateY(-8px) scale(1.5);
+    opacity: 0;
+  }
+}
+/* fly sparkle trail */
+.lgr-anim.pose-fly .c-ft1 {
+  animation: lgr-trail 0.5s linear infinite;
+}
+.lgr-anim.pose-fly .c-ft2 {
+  animation: lgr-trail 0.5s 0.17s linear infinite;
+}
+.lgr-anim.pose-fly .c-ft3 {
+  animation: lgr-trail 0.5s 0.34s linear infinite;
+}
+.lgr-anim.pose-fly .c-flegs {
+  transform-origin: 104px 146px;
+  animation: lgr-flegs 0.3s ease-in-out infinite alternate;
+}
+.lgr-anim.pose-fly .c-ftie {
+  transform-origin: 162px 136px;
+  animation: lgr-g-tie 0.18s ease-in-out infinite alternate;
+}
+@keyframes lgr-trail {
+  from {
+    transform: translate(0, 0) scale(1);
+    opacity: 1;
+  }
+  to {
+    transform: translate(-34px, 6px) scale(0.2);
+    opacity: 0;
+  }
+}
+@keyframes lgr-flegs {
+  from {
+    transform: rotate(-4deg);
+  }
+  to {
+    transform: rotate(5deg);
+  }
+}
+
+/* ---------- run: top view (moving down the screen) ---------- */
+.lgr-anim.pose-run-down .c-runner {
+  animation: lgr-bob 0.21s ease-in-out infinite alternate;
+}
+.lgr-anim.pose-run-down .c-dfoot-a {
+  transform-origin: 101px 190px;
+  animation: lgr-dstep 0.42s ease-in-out infinite alternate;
+}
+.lgr-anim.pose-run-down .c-dfoot-b {
+  transform-origin: 139px 190px;
+  animation: lgr-dstep 0.42s ease-in-out infinite alternate-reverse;
+}
+.lgr-anim.pose-run-down .c-darm-a {
+  animation: lgr-pump 0.42s ease-in-out infinite alternate-reverse;
+}
+.lgr-anim.pose-run-down .c-darm-b {
+  animation: lgr-pump 0.42s ease-in-out infinite alternate;
+}
+.lgr-anim.pose-run-down .c-dtail {
+  transform-origin: 120px 54px;
+  animation: lgr-tail 0.42s ease-in-out infinite;
+}
+@keyframes lgr-dstep {
+  from {
+    transform: translateY(-14px) scale(0.88);
+  }
+  to {
+    transform: translateY(4px) scale(1.06);
+  }
+}
+@keyframes lgr-pump {
+  from {
+    transform: translateY(-12px);
+  }
+  to {
+    transform: translateY(6px);
+  }
+}
+
+/* ---------- run: bottom view (moving up the screen) ---------- */
+.lgr-anim.pose-run-up .c-runner {
+  animation: lgr-bob 0.21s ease-in-out infinite alternate;
+}
+.lgr-anim.pose-run-up .c-ufoot-a {
+  transform-origin: 103px 190px;
+  animation: lgr-ustep 0.42s ease-in-out infinite alternate;
+}
+.lgr-anim.pose-run-up .c-ufoot-b {
+  transform-origin: 137px 190px;
+  animation: lgr-ustep 0.42s ease-in-out infinite alternate-reverse;
+}
+.lgr-anim.pose-run-up .c-uarm-a {
+  transform-origin: 88px 148px;
+  animation: lgr-arm 0.42s ease-in-out infinite alternate;
+}
+.lgr-anim.pose-run-up .c-uarm-b {
+  transform-origin: 152px 148px;
+  animation: lgr-arm 0.42s ease-in-out infinite alternate-reverse;
+}
+.lgr-anim.pose-run-up .c-utail {
+  transform-origin: 120px 194px;
+  animation: lgr-tail 0.42s ease-in-out infinite;
+}
+@keyframes lgr-ustep {
+  from {
+    transform: translateY(2px) scaleY(1);
+  }
+  to {
+    transform: translateY(-16px) scaleY(1.12);
+  }
+}
+
+/* ---------- fly: superhero diagonal ---------- */
+.lgr-anim.pose-fly .c-runner {
+  animation: lgr-float 0.5s ease-in-out infinite alternate;
+}
+.lgr-anim.pose-fly .c-cape {
+  transform-origin: 132px 130px;
+  animation: lgr-cape 0.26s ease-in-out infinite alternate;
+}
+.lgr-anim.pose-fly .c-speed {
+  animation-duration: 0.3s;
+}
+@keyframes lgr-float {
+  from {
+    transform: translateY(-3px);
+  }
+  to {
+    transform: translateY(4px);
+  }
+}
+@keyframes lgr-cape {
+  from {
+    transform: scaleY(0.86) skewX(5deg);
+  }
+  to {
+    transform: scaleY(1.08) skewX(-5deg);
+  }
+}
+
+/* ---------- found ---------- */
+.lgr-anim.pose-found .c-runner {
+  animation: lgr-jump 0.7s cubic-bezier(0.3, 1.6, 0.5, 1) infinite;
+}
+.lgr-anim.pose-found .c-spark {
+  transform-origin: 120px 80px;
+  animation: lgr-spark 0.7s ease-out infinite;
+}
+@keyframes lgr-jump {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  40% {
+    transform: translateY(-14px);
+  }
+}
+@keyframes lgr-spark {
+  0% {
+    transform: scale(0.8);
+    opacity: 0.3;
+  }
+  40% {
+    transform: scale(1.06);
+    opacity: 1;
+  }
+  100% {
+    transform: scale(1);
+    opacity: 0.6;
+  }
+}
+
+/* ---------- confused ---------- */
+.lgr-anim.pose-confused .c-q {
+  transform-origin: 206px 40px;
+  animation: lgr-wobble 1.4s ease-in-out infinite;
+}
+@keyframes lgr-wobble {
+  0%,
+  100% {
+    transform: rotate(-10deg);
+  }
+  50% {
+    transform: rotate(10deg);
+  }
+}
+
+/* ---------- sleep ---------- */
+.lgr-anim .c-z1 {
+  animation: lgr-z 2.4s ease-out infinite;
+}
+.lgr-anim .c-z2 {
+  animation: lgr-z 2.4s 1.2s ease-out infinite;
+}
+.lgr-anim.pose-sleep .c-breathe {
+  animation-duration: 4.4s;
+}
+@keyframes lgr-z {
+  0% {
+    transform: translate(0, 8px);
+    opacity: 0;
+  }
+  30% {
+    opacity: 1;
+  }
+  100% {
+    transform: translate(8px, -16px);
+    opacity: 0;
+  }
+}
+/* ---------- body-level moves on the traveller (squash, stretch, flips) ---------- */
+.lgr-body {
+  transform-origin: 50% 100%;
+}
+.lgr-crouch {
+  animation: lgr-crouch 0.28s cubic-bezier(0.5, 0, 0.8, 0.4) forwards;
+}
+.lgr-launch {
+  animation: lgr-launch 0.4s cubic-bezier(0.2, 1.4, 0.4, 1);
+}
+.lgr-land {
+  animation: lgr-land 0.45s cubic-bezier(0.3, 1.6, 0.5, 1);
+}
+.lgr-skid {
+  animation: lgr-skid 0.5s cubic-bezier(0.2, 0.9, 0.3, 1.3);
+}
+.lgr-backflip {
+  transform-origin: 50% 60%;
+  animation: lgr-backflip 1.15s cubic-bezier(0.4, 0, 0.3, 1);
+}
+.lgr-shake {
+  animation: lgr-shake 0.4s linear;
+}
+@keyframes lgr-crouch {
+  from {
+    transform: scale(1, 1);
+  }
+  to {
+    transform: scale(1.16, 0.78) translateY(4px);
+  }
+}
+@keyframes lgr-launch {
+  0% {
+    transform: scale(0.82, 1.25);
+  }
+  60% {
+    transform: scale(1.06, 0.96);
+  }
+  100% {
+    transform: scale(1, 1);
+  }
+}
+@keyframes lgr-land {
+  0% {
+    transform: scale(1.3, 0.7);
+  }
+  45% {
+    transform: scale(0.9, 1.14);
+  }
+  75% {
+    transform: scale(1.05, 0.96);
+  }
+  100% {
+    transform: scale(1, 1);
+  }
+}
+@keyframes lgr-skid {
+  0% {
+    transform: rotate(-12deg) scale(1.15, 0.85);
+  }
+  40% {
+    transform: rotate(6deg) scale(0.95, 1.08);
+  }
+  70% {
+    transform: rotate(-3deg);
+  }
+  100% {
+    transform: rotate(0deg) scale(1, 1);
+  }
+}
+@keyframes lgr-backflip {
+  0% {
+    transform: translateY(0) rotate(0deg) scale(1, 1);
+  }
+  14% {
+    transform: translateY(6px) rotate(0deg) scale(1.18, 0.78);
+  }
+  28% {
+    transform: translateY(-90px) rotate(-120deg) scale(0.95, 1.08);
+  }
+  50% {
+    transform: translateY(-150px) rotate(-220deg) scale(1, 1);
+  }
+  76% {
+    transform: translateY(-20px) rotate(-340deg) scale(1, 1);
+  }
+  86% {
+    transform: translateY(0) rotate(-360deg) scale(1.22, 0.76);
+  }
+  100% {
+    transform: translateY(0) rotate(-360deg) scale(1, 1);
+  }
+}
+@keyframes lgr-shake {
+  0%,
+  100% {
+    transform: translate(0, 0);
+  }
+  15% {
+    transform: translate(-6px, 3px);
+  }
+  30% {
+    transform: translate(5px, -4px);
+  }
+  45% {
+    transform: translate(-4px, 2px);
+  }
+  60% {
+    transform: translate(3px, -2px);
+  }
+  80% {
+    transform: translate(-1px, 1px);
+  }
+}
+
+/* ---------- page FX: bursts, rings, comic words, paw prints ---------- */
+.fx {
+  position: absolute;
+  width: 0;
+  height: 0;
+  pointer-events: none;
+  z-index: 7;
+}
+.fx span {
+  position: absolute;
+  display: block;
+}
+.fx .t {
+  display: none;
+}
+.fx-puff span,
+.fx-dust span,
+.fx-smoke span {
+  width: 30px;
+  height: 30px;
+  margin: -15px 0 0 -15px;
+  border-radius: 50%;
+  background: #ffffff;
+  border: 1.5px solid #14213d;
+  opacity: 0;
+  animation: fx-puff 0.7s ease-out forwards;
+}
+.fx-dust span {
+  background: #ede5d3;
+  border-color: #b9ae95;
+  width: 24px;
+  height: 24px;
+  margin: -12px 0 0 -12px;
+}
+.fx-smoke span {
+  width: 40px;
+  height: 40px;
+  margin: -20px 0 0 -20px;
+  animation-duration: 0.9s;
+}
+.fx .s1 {
+  --dx: -46px;
+  --dy: -10px;
+}
+.fx .s2 {
+  --dx: -26px;
+  --dy: -34px;
+  animation-delay: 0.04s;
+}
+.fx .s3 {
+  --dx: 6px;
+  --dy: -42px;
+  animation-delay: 0.08s;
+}
+.fx .s4 {
+  --dx: 34px;
+  --dy: -22px;
+  animation-delay: 0.02s;
+}
+.fx .s5 {
+  --dx: 48px;
+  --dy: -4px;
+  animation-delay: 0.06s;
+}
+@keyframes fx-puff {
+  0% {
+    transform: translate(0, 0) scale(0.2);
+    opacity: 1;
+  }
+  60% {
+    opacity: 0.9;
+  }
+  100% {
+    transform: translate(var(--dx), var(--dy)) scale(1.4);
+    opacity: 0;
+  }
+}
+.fx-word .t,
+.fx-smoke .t,
+.fx-dust .t,
+.fx-tada .t {
+  display: block;
+  white-space: nowrap;
+  transform: translate(-50%, -100%);
+  font-family: "IBM Plex Mono", monospace;
+  font-weight: 700;
+  font-size: 30px;
+  letter-spacing: 0.02em;
+  color: #c9a227;
+  text-shadow:
+    2px 2px 0 #14213d,
+    -1px -1px 0 #14213d,
+    1px -1px 0 #14213d,
+    -1px 1px 0 #14213d;
+  animation: fx-word 1s cubic-bezier(0.2, 1.6, 0.4, 1) forwards;
+}
+.fx-tada .t {
+  font-size: 46px;
+  animation-duration: 1.6s;
+}
+@keyframes fx-word {
+  0% {
+    transform: translate(-50%, -60%) scale(0.2) rotate(-14deg);
+    opacity: 0;
+  }
+  25% {
+    transform: translate(-50%, -110%) scale(1.15) rotate(-6deg);
+    opacity: 1;
+  }
+  70% {
+    transform: translate(-50%, -125%) scale(1) rotate(-4deg);
+    opacity: 1;
+  }
+  100% {
+    transform: translate(-50%, -170%) scale(0.9) rotate(-4deg);
+    opacity: 0;
+  }
+}
+.fx-ring span {
+  width: 18px;
+  height: 18px;
+  margin: -9px 0 0 -9px;
+  border-radius: 50%;
+  border: 3px solid #c9a227;
+  opacity: 0;
+  animation: fx-ring 1.1s ease-out forwards;
+}
+.fx-ring .s2 {
+  animation-delay: 0.25s;
+}
+.fx-ring .s3 {
+  animation-delay: 0.5s;
+}
+.fx-ring .s4,
+.fx-ring .s5 {
+  display: none;
+}
+@keyframes fx-ring {
+  0% {
+    transform: scale(0.4);
+    opacity: 1;
+  }
+  100% {
+    transform: scale(7);
+    opacity: 0;
+  }
+}
+.fx-tada span {
+  width: 14px;
+  height: 14px;
+  margin: -7px 0 0 -7px;
+  background: #c9a227;
+  border: 1.5px solid #14213d;
+  transform: rotate(45deg);
+  opacity: 0;
+  animation: fx-star 1.1s ease-out forwards;
+}
+.fx-tada .s1 {
+  --dx: -110px;
+  --dy: -40px;
+}
+.fx-tada .s2 {
+  --dx: -60px;
+  --dy: -120px;
+}
+.fx-tada .s3 {
+  --dx: 10px;
+  --dy: -150px;
+}
+.fx-tada .s4 {
+  --dx: 80px;
+  --dy: -110px;
+}
+.fx-tada .s5 {
+  --dx: 120px;
+  --dy: -30px;
+}
+@keyframes fx-star {
+  0% {
+    transform: translate(0, 0) rotate(45deg) scale(0.3);
+    opacity: 1;
+  }
+  100% {
+    transform: translate(var(--dx), var(--dy)) rotate(225deg) scale(1.2);
+    opacity: 0;
+  }
+}
+.print {
+  position: absolute;
+  width: 20px;
+  height: 20px;
+  margin: -10px 0 0 -10px;
+  opacity: 0;
+  pointer-events: none;
+  z-index: 4;
+  animation: fx-print 2.8s ease-out forwards;
+}
+@keyframes fx-print {
+  0% {
+    opacity: 0;
+    transform: scale(1.6);
+  }
+  6% {
+    opacity: 0.55;
+    transform: scale(1);
+  }
+  65% {
+    opacity: 0.35;
+  }
+  100% {
+    opacity: 0;
+  }
+}
+
+/* ---------- new rigs: drag, toss, stamp, conduct, unstitch, carry ---------- */
+.lgr-anim.pose-drag .c-tug {
+  transform-origin: 120px 156px;
+  animation: lgr-tug 0.32s ease-in-out infinite alternate;
+}
+.lgr-anim.pose-drag .c-runner {
+  animation: lgr-shuffle 0.32s ease-in-out infinite alternate;
+}
+@keyframes lgr-tug {
+  from {
+    transform: translateX(-3px) rotate(-2deg);
+  }
+  to {
+    transform: translateX(4px) rotate(2deg);
+  }
+}
+@keyframes lgr-shuffle {
+  from {
+    transform: translate(0, 0);
+  }
+  to {
+    transform: translate(-3px, -3px);
+  }
+}
+
+.lgr-anim.pose-toss .c-throw {
+  transform-origin: 152px 150px;
+  animation: lgr-throw 0.55s cubic-bezier(0.5, 0, 0.2, 1.4) infinite;
+}
+@keyframes lgr-throw {
+  0% {
+    transform: rotate(-70deg);
+  }
+  55% {
+    transform: rotate(30deg);
+  }
+  100% {
+    transform: rotate(-70deg);
+  }
+}
+
+.lgr-anim.pose-stamp .c-stamp {
+  animation: lgr-stamp 0.5s cubic-bezier(0.6, 0, 0.3, 1.6) infinite;
+}
+@keyframes lgr-stamp {
+  0%,
+  100% {
+    transform: translateY(-18px);
+  }
+  45% {
+    transform: translateY(6px);
+  }
+  60% {
+    transform: translateY(2px);
+  }
+}
+
+.lgr-anim.pose-conduct .c-conduct {
+  transform-origin: 152px 150px;
+  animation: lgr-conduct 0.9s ease-in-out infinite;
+}
+.lgr-anim.pose-conduct .c-spark {
+  transform-origin: 120px 80px;
+  animation: lgr-spark 0.9s ease-out infinite;
+}
+@keyframes lgr-conduct {
+  0%,
+  100% {
+    transform: rotate(-18deg);
+  }
+  33% {
+    transform: rotate(16deg);
+  }
+  66% {
+    transform: rotate(-4deg) translateY(-6px);
+  }
+}
+
+.lgr-anim.pose-unstitch .c-yank {
+  animation: lgr-yank 0.36s cubic-bezier(0.5, 0, 0.3, 1.5) infinite;
+}
+.lgr-anim.pose-unstitch .c-thread {
+  animation: lgr-thread 0.36s linear infinite;
+}
+@keyframes lgr-yank {
+  0%,
+  100% {
+    transform: translateX(0);
+  }
+  40% {
+    transform: translateX(-12px) rotate(-3deg);
+  }
+}
+@keyframes lgr-thread {
+  from {
+    stroke-dashoffset: 0;
+  }
+  to {
+    stroke-dashoffset: 30;
+  }
+}
+
+.lgr-anim.pose-carry .c-runner {
+  animation: lgr-bob 0.3s ease-in-out infinite alternate;
+}
+
+/* ---------- Content blocks: torn out of the page, stamped, Reformed ---------- */
+.ldg-torn {
+  outline: 2px dashed #c9a227;
+  outline-offset: 2px;
+  background-image: repeating-linear-gradient(
+    135deg,
+    transparent 0 10px,
+    rgb(201 162 39 / 0.12) 10px 12px
+  );
+}
+.ldg-torn > * {
+  visibility: hidden;
+}
+.ldg-rip {
+  animation: ldg-rip 0.35s ease-out;
+}
+@keyframes ldg-rip {
+  0% {
+    transform: rotate(0);
+  }
+  30% {
+    transform: rotate(-3deg) translateY(-4px);
+  }
+  60% {
+    transform: rotate(2deg);
+  }
+  100% {
+    transform: rotate(0);
+  }
+}
+.ldg-stamp-mark {
+  animation: ldg-stamp-mark 0.45s cubic-bezier(0.3, 1.6, 0.5, 1) both;
+}
+@keyframes ldg-stamp-mark {
+  0% {
+    transform: scale(2.2) rotate(-18deg);
+    opacity: 0;
+  }
+  60% {
+    transform: scale(0.92) rotate(-8deg);
+    opacity: 1;
+  }
+  100% {
+    transform: scale(1) rotate(-8deg);
+    opacity: 1;
+  }
+}
+.ldg-sweep {
+  background-image: linear-gradient(
+    transparent 60%,
+    rgb(201 162 39 / 0.45) 60%
+  );
+  background-repeat: no-repeat;
+  animation: ldg-sweep 0.8s cubic-bezier(0.2, 0.8, 0.2, 1) both;
+}
+@keyframes ldg-sweep {
+  from {
+    background-size: 0% 100%;
+  }
+  to {
+    background-size: 100% 100%;
+  }
+}
+
+/* Unstitch: a gold seam runs round the page copy while it shakes loose. */
+.ldg-seam {
+  outline: 3px dashed #c9a227;
+  outline-offset: -6px;
+  animation: lgr-shake 0.4s linear 3;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ldg-seam,
+  .lgr-anim *,
+  .fx span,
+  .print,
+  .lgr-body,
+  .ldg-rip,
+  .ldg-stamp-mark,
+  .ldg-sweep {
+    /* biome-ignore lint/complexity/noImportantStyles: reduced motion must beat every pose's animation */
+    animation: none !important;
+  }
+}

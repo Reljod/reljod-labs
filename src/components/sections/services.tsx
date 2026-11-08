@@ -1,6 +1,7 @@
 import { IconTile } from "@/components/ui/icon";
 import { Section } from "@/components/ui/section";
 import { services } from "@/content/services";
+import { source, sourcePath } from "@/features/ledger/domain/source-paths";
 
 export function Services() {
   return (
@@ -12,19 +13,29 @@ export function Services() {
       ground="paper"
     >
       <ul className="grid gap-8 md:grid-cols-2 lg:grid-cols-3">
-        {services.map((service) => (
+        {services.map((service, index) => (
           <li
             key={service.title}
+            {...source(sourcePath.service(index))}
             className="outline-box flex flex-col bg-marble p-6"
           >
             <IconTile name={service.icon} />
             <h3 className="mt-6 text-[1.375rem] leading-snug font-semibold">
               {service.title}
             </h3>
-            <p className="mt-3 text-ink-muted">{service.summary}</p>
+            <p
+              className="mt-3 text-ink-muted"
+              {...source(sourcePath.serviceSummary(index))}
+            >
+              {service.summary}
+            </p>
             <ul className="mt-6 space-y-2 border-ink border-t-2 pt-4">
-              {service.points.map((point) => (
-                <li key={point} className="flex gap-3 text-sm">
+              {service.points.map((point, pointIndex) => (
+                <li
+                  key={point}
+                  className="flex gap-3 text-sm"
+                  {...source(sourcePath.servicePoint(index, pointIndex))}
+                >
                   <span
                     aria-hidden="true"
                     className="mt-1.5 size-2 shrink-0 bg-federal-blue"

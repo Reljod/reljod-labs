@@ -15,26 +15,13 @@ export const profile: Profile = {
     "I help banks and financial firms turn slow, manual compliance work into AI services that run in production: KYC, document checks and name matching. Seven years in software, the last two shipping multi-agent LLM systems for a digital bank and multi-tenant SaaS platforms.",
 };
 
-/* Every figure below comes from shipped work on the resume. Never add one that isn't. */
+/** The closing pitch in the contact band. */
+export const contactPitch = {
+  heading: "Let's map your first AI win",
+  body: "Tell me where your team spends the most manual hours on checks and reviews. I'll come back with where AI fits, what it takes, and how we'd prove it works.",
+};
 
-/** The headline proof, shown in the hero case file. */
-export const kycCaseFile: Metric[] = [
-  {
-    figure: "90%",
-    label: "Lower KYC operating cost",
-    source: "Maya Philippines",
-  },
-  {
-    figure: "+7 pts",
-    label: "KYC approval rate",
-    source: "Maya Philippines",
-  },
-  {
-    figure: "+8 pts",
-    label: "KYC automation rate",
-    source: "Maya Philippines",
-  },
-];
+/* Every figure below comes from shipped work on the resume. Never add one that isn't. */
 
 /** Career-level highlights for the impact band under the hero. */
 export const highlights: Metric[] = [
