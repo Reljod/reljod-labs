@@ -1,5 +1,6 @@
 import { Section } from "@/components/ui/section";
 import { approach } from "@/content/services";
+import { source, sourcePath } from "@/features/ledger/domain/source-paths";
 
 export function Approach() {
   return (
@@ -14,6 +15,7 @@ export function Approach() {
         {approach.map((step, index) => (
           <li
             key={step.title}
+            {...source(sourcePath.approachStep(index))}
             className="border-ink p-6 not-last:border-b-2 md:max-lg:odd:border-r-2 md:max-lg:nth-3:border-b-0 lg:not-last:border-r-2 lg:not-last:border-b-0"
           >
             <p className="font-mono text-4xl font-bold text-federal-blue">
@@ -22,7 +24,12 @@ export function Approach() {
             <h3 className="mt-4 text-[1.375rem] leading-snug font-semibold">
               {step.title}
             </h3>
-            <p className="mt-3 text-ink-muted">{step.summary}</p>
+            <p
+              className="mt-3 text-ink-muted"
+              {...source(sourcePath.approachSummary(index))}
+            >
+              {step.summary}
+            </p>
           </li>
         ))}
       </ol>

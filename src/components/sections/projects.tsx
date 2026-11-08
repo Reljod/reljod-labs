@@ -5,6 +5,7 @@ import { Icon, IconTile } from "@/components/ui/icon";
 import { Section } from "@/components/ui/section";
 import { featuredProjects } from "@/content/projects";
 import type { Project } from "@/content/types";
+import { source, sourcePath } from "@/features/ledger/domain/source-paths";
 
 export function Projects() {
   return (
@@ -16,9 +17,9 @@ export function Projects() {
       ground="paper"
     >
       <ul className="grid gap-8 md:grid-cols-2 lg:grid-cols-3">
-        {featuredProjects.map((project) => (
-          <li key={project.slug}>
-            <ProjectCard project={project} />
+        {featuredProjects.map((project, index) => (
+          <li key={project.slug} {...source(sourcePath.project(index))}>
+            <ProjectCard project={project} index={index} />
           </li>
         ))}
       </ul>
@@ -26,7 +27,7 @@ export function Projects() {
   );
 }
 
-function ProjectCard({ project }: { project: Project }) {
+function ProjectCard({ project, index }: { project: Project; index: number }) {
   return (
     <article className="outline-box flex h-full flex-col bg-paper">
       {project.cover ? (
@@ -53,8 +54,16 @@ function ProjectCard({ project }: { project: Project }) {
         <h3 className="mt-4 text-[1.375rem] leading-snug font-semibold">
           {project.title}
         </h3>
-        <p className="mt-2 text-ink-muted">{project.summary}</p>
-        <p className="mt-4 font-mono text-sm font-bold text-ivy">
+        <p
+          className="mt-2 text-ink-muted"
+          {...source(sourcePath.projectSummary(index))}
+        >
+          {project.summary}
+        </p>
+        <p
+          className="mt-4 font-mono text-sm font-bold text-ivy"
+          {...source(sourcePath.projectOutcome(index))}
+        >
           {project.outcome}
         </p>
         <ul aria-label="Tags" className="mt-4 flex flex-wrap gap-2">

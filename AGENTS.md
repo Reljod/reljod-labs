@@ -7,9 +7,16 @@
 
 ## Document compliance
 
-- Domain language: `GLOSSARY.md`. Read it before naming anything in `src/features/document-compliance/`.
+- Domain language: `src/features/document-compliance/GLOSSARY.md` (map of all contexts: `GLOSSARY-MAP.md`). Read it before naming anything in `src/features/document-compliance/`.
 - Decisions and their reasons: `docs/adr/`. Read before changing the parsing or evaluation pipeline.
 - Synthetic documents: `fixtures/document-compliance/`. Every document uses the fictional Republic of Meridia and a SPECIMEN watermark.
+
+## Ledger (the site's cat mascot)
+
+- Domain language: `src/features/ledger/GLOSSARY.md`. Decision: `docs/adr/0006-llm-plans-what-browser-plans-where.md`.
+- Env: `LEDGER_AI_GATEWAY_API_KEY`, optional `LEDGER_MODEL` (default `zai/glm-5.3-flash`); shares `RATE_LIMIT_SALT` and `E2E_BYPASS_TOKEN`. Data lives in the Supabase `ledger` schema, which must be listed under Data API > Exposed schemas.
+- Anything on the home page Ledger may cut carries `source(sourcePath.…)`; the content tree in `src/features/ledger/domain/content-tree.ts` must name the same paths.
+- `e2e/ledger.spec.ts` runs stubbed by default (canned Build plans, no model spend). `E2E_LEDGER_LIVE=1 pnpm test:e2e e2e/ledger.spec.ts` asks the real model; run it only when asked, like the rest of the suite.
 
 <!-- BEGIN:nextjs-agent-rules -->
 
