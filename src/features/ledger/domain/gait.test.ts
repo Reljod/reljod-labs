@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { beatsForStep, closingBeats, openingBeats } from "./choreography";
-import { chooseGait, gripFor, haulGait } from "./gait";
+import { chooseGait } from "./gait";
 
 describe("chooseGait", () => {
   it("gallops side-on under 25° and faces the way he runs", () => {
@@ -36,19 +36,11 @@ describe("chooseGait", () => {
   });
 });
 
-describe("hauling", () => {
-  it("carries small pieces and drags big ones", () => {
-    expect(gripFor("figure")).toBe("carry");
-    expect(gripFor("quote")).toBe("carry");
-    expect(gripFor("job")).toBe("drag");
-    expect(gripFor("card")).toBe("drag");
-  });
-
-  it("walks backwards when dragging, so he faces the block", () => {
-    expect(haulGait(300, 0, "drag").flip).toBe(true);
-    expect(haulGait(300, 0, "carry").flip).toBe(false);
-    expect(haulGait(600, 0, "drag").duration).toBeGreaterThan(
-      haulGait(600, 0, "carry").duration,
+describe("pushing", () => {
+  it("uses the same gaits with a block ahead, only slower", () => {
+    expect(chooseGait(0, -600, "trot", true).pose).toBe("run-up");
+    expect(chooseGait(600, 0, "trot", true).duration).toBeGreaterThan(
+      chooseGait(600, 0).duration,
     );
   });
 });
@@ -62,25 +54,25 @@ describe("choreography", () => {
     line: "This one!",
   };
 
-  it("fetches: run, rip, haul, stamp", () => {
-    expect(beatsForStep(step, "job").map((beat) => beat.type)).toEqual([
+  it("fetches: run, rip, push, stack", () => {
+    expect(beatsForStep(step).map((beat) => beat.type)).toEqual([
       "run-to",
       "rip",
-      "haul",
-      "stamp",
+      "push",
+      "stack",
     ]);
   });
 
-  it("tosses: run, rip, toss, and never reaches the board", () => {
+  it("tosses: run, rip, toss, and never reaches the Stack", () => {
     expect(
-      beatsForStep({ ...step, action: "toss" }, "job").map((beat) => beat.type),
+      beatsForStep({ ...step, action: "toss" }).map((beat) => beat.type),
     ).toEqual(["run-to", "rip", "toss"]);
   });
 
-  it("unstitches first, rewinds on follow-ups, and Reforms only with blocks placed", () => {
+  it("unstitches first, rewinds on follow-ups, and kicks and writes only with blocks stacked", () => {
     expect(openingBeats(false)).toEqual([{ type: "unstitch" }]);
     expect(openingBeats(true)).toEqual([{ type: "rewind" }]);
     expect(closingBeats(0)).toEqual([]);
-    expect(closingBeats(2)).toEqual([{ type: "reform" }]);
+    expect(closingBeats(2).map((beat) => beat.type)).toEqual(["kick", "write"]);
   });
 });

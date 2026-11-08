@@ -130,6 +130,7 @@ describe("finalizePlan", () => {
     layout: "timeline" as const,
     answer: "Six roles.",
     steps: [step()],
+    writeup: [{ text: "He spent three years at Maya.", cites: [1] }],
   };
 
   it("keeps an answer that places at least one block", () => {
@@ -149,7 +150,77 @@ describe("finalizePlan", () => {
   });
 
   it("drops every step when the model says not_found", () => {
-    expect(finalizePlan({ ...raw, verdict: "not_found" }).steps).toEqual([]);
+    const plan = finalizePlan({ ...raw, verdict: "not_found" });
+    expect(plan.steps).toEqual([]);
+    expect(plan.writeup).toEqual([]);
+  });
+});
+
+describe("the Write-up", () => {
+  const raw = {
+    verdict: "answer" as const,
+    title: "KYC",
+    layout: "figures" as const,
+    answer: "He cut KYC cost by 90%.",
+  };
+
+  it("renumbers citations to the fetches that were kept, skipping tosses", () => {
+    const plan = finalizePlan({
+      ...raw,
+      steps: [
+        step({ action: "toss", source: sourcePath.job(4) }),
+        step({ source: "made.up" }),
+        step(),
+        step({ source: sourcePath.job(0) }),
+      ],
+      writeup: [
+        { text: "  He worked at   Maya. ", cites: [2, 2] },
+        { text: "Then he consulted.", cites: [3, 1] },
+      ],
+    });
+    expect(plan.writeup).toEqual([
+      { text: "He worked at Maya.", cites: [1] },
+      { text: "Then he consulted.", cites: [2] },
+    ]);
+  });
+
+  it("drops a sentence that only cites a piece the site never says", () => {
+    const plan = finalizePlan({
+      ...raw,
+      steps: [
+        step({ source: KYC_POINT, excerpt: "90% lower KYC operating cost" }),
+        step({ source: KYC_POINT, excerpt: "99% lower fraud losses" }),
+      ],
+      writeup: [
+        { text: "He cut KYC cost by 90%.", cites: [1] },
+        { text: "He cut fraud losses by 99%.", cites: [2] },
+      ],
+    });
+    expect(plan.writeup.map((sentence) => sentence.text)).toEqual([
+      "He cut KYC cost by 90%.",
+    ]);
+  });
+
+  it("falls back to the chat answer, citing every block, when nothing is usable", () => {
+    const plan = finalizePlan({
+      ...raw,
+      steps: [step(), step({ source: sourcePath.job(0) })],
+      writeup: [{ text: "Uncited.", cites: [] }],
+    });
+    expect(plan.writeup).toEqual([
+      { text: "He cut KYC cost by 90%.", cites: [1, 2] },
+    ]);
+  });
+
+  it("gives a stored plan from before the Write-up one from its answer", () => {
+    const { writeup: _none, ...old } = {
+      ...raw,
+      steps: [step()],
+      writeup: [],
+    };
+    expect(
+      finalizePlan(old as Parameters<typeof finalizePlan>[0]).writeup,
+    ).toEqual([{ text: "He cut KYC cost by 90%.", cites: [1] }]);
   });
 });
 

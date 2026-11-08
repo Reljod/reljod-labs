@@ -53,6 +53,11 @@ const paths = {
     </>
   ),
   arrow: <path d="M5 12h14M13 6l6 6-6 6" />,
+  send: <path d="M4 12l16-8-6 16-3-7zM11 13l9-9" />,
+  replay: <path d="M4 4v6h6M5 10a8 8 0 1 1 1 6" />,
+  redo: <path d="M20 4v6h-6M19 10a8 8 0 1 0-1 6" />,
+  close: <path d="M6 6l12 12M18 6L6 18" />,
+  expand: <path d="M14 4h6v6M10 20H4v-6M20 4l-7 7M4 20l7-7" />,
   mail: (
     <>
       <rect x="3" y="5" width="18" height="14" />

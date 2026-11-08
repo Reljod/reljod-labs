@@ -4,11 +4,20 @@ import { Icon } from "@/components/ui/icon";
 import { profile } from "@/content/profile";
 import { source, sourcePath } from "@/features/ledger/domain/source-paths";
 
-/** `aside` fills the right column: Ledger's chat box on the home page. */
+/**
+ * `aside` fills the right column: Ledger's chat on the home page, with Ledger
+ * peeking up from the hero's bottom edge, so it keeps room below for him.
+ */
 export function Hero({ aside }: { aside?: ReactNode }) {
   return (
-    <section id="top" aria-labelledby="hero-title" className="bg-marble">
-      <div className="mx-auto grid max-w-6xl items-center gap-12 px-4 py-16 sm:px-6 lg:grid-cols-[1.2fr_1fr] lg:py-24">
+    <section
+      id="top"
+      aria-labelledby="hero-title"
+      className="relative overflow-hidden bg-marble"
+    >
+      <div
+        className={`mx-auto grid max-w-6xl items-center gap-12 px-4 py-16 sm:px-6 lg:grid-cols-[1.2fr_1fr] lg:py-24 ${aside ? "pb-36 sm:pb-40 lg:pb-48" : ""}`}
+      >
         <div>
           <p className="eyebrow mb-6 text-ink-muted">
             {profile.title} · {profile.focus}

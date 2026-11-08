@@ -2,6 +2,9 @@ import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { Suspense } from "react";
 import { HomeSections } from "@/components/sections/home-sections";
+import { SiteFooter } from "@/components/sections/site-footer";
+import { SiteHeader } from "@/components/sections/site-header";
+import { AskBox } from "@/features/ledger/components/ask-box";
 import { AskScreen } from "@/features/ledger/components/ask-screen";
 import { loadAskSession } from "@/features/ledger/server/repository";
 
@@ -39,9 +42,10 @@ async function Session({
   return (
     <AskScreen
       session={session}
-      initialQuestion={typeof query.ask === "string" ? query.ask : null}
       limited={query.notice === "limited"}
-      pageCopy={<HomeSections />}
+      header={<SiteHeader />}
+      pageCopy={<HomeSections heroAside={<AskBox />} />}
+      footer={<SiteFooter />}
     />
   );
 }

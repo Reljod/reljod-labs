@@ -4,7 +4,7 @@ Ledger answers a visitor's question by rebuilding the site into an answer page. 
 
 ## Consequences
 
-- Hallucinated facts cannot reach the answer page. The chat answer is free text from the model and is only as grounded as the instructions make it.
+- Hallucinated facts cannot reach a Source block. The chat answer and the Write-up are free text from the model and only as grounded as the instructions make them; each Write-up sentence must cite a fetch step that survived validation, so a sentence resting only on a dropped step is dropped with it, and citations are renumbered to the steps that were kept.
 - Steps stream: each is played as soon as the model finishes writing it and it passes validation, so Ledger starts moving before the plan is complete.
 - A stored Build keeps paths and excerpts, not words. Plans are validated again on read, so a source the site no longer shows is dropped from replays instead of rendering stale text.
 - Adding content to `src/content` adds Content blocks automatically, but a new piece only becomes cuttable once its section marks it with `source(...)`.

@@ -1,98 +1,25 @@
 "use client";
 
-import { useMutation } from "@tanstack/react-query";
-import { animate, useReducedMotion } from "motion/react";
-import { useRouter } from "next/navigation";
-import { type FormEvent, useEffect, useRef, useState } from "react";
-import { QueryProvider } from "@/features/document-compliance/components/query-provider";
+import { type FormEvent, useState } from "react";
+import { Icon } from "@/components/ui/icon";
 import { cleanQuestion, MAX_QUESTION_LENGTH } from "../domain/presets";
-import { startAskSession } from "../server/actions";
-import { Cat, type CatPose } from "./cat";
+import { Cat } from "./cat";
+import { useLedgerDesk } from "./ledger-desk";
 import { PresetChips } from "./preset-chips";
 
-const GREETING_MS = 2700;
-const TYPING_DEBOUNCE_MS = 400;
-
-/** The hero's chat box: Ask Ledger anything, and he rebuilds the site to answer. */
+/**
+ * The hero's chat with Ledger, and Ledger himself peeking up from the corner
+ * of the hero. Asking pushes the chat into the dock; the page never reloads.
+ */
 export function AskBox() {
-  return (
-    <QueryProvider>
-      <AskForm />
-    </QueryProvider>
-  );
-}
-
-function AskForm() {
-  const router = useRouter();
-  const reduceMotion = useReducedMotion();
-  const catRef = useRef<HTMLDivElement>(null);
+  const desk = useLedgerDesk();
   const [question, setQuestion] = useState("");
-  const [pose, setPose] = useState<CatPose>("wave");
-  const [typing, setTyping] = useState(false);
-  const [notice, setNotice] = useState<string | null>(null);
-
-  useEffect(() => {
-    const timer = setTimeout(() => setPose("idle"), GREETING_MS);
-    return () => clearTimeout(timer);
-  }, []);
-
-  useEffect(() => {
-    if (!typing) return;
-    const timer = setTimeout(() => setTyping(false), TYPING_DEBOUNCE_MS * 3);
-    return () => clearTimeout(timer);
-  }, [typing]);
-
-  /** He crouches, then gallops off the box toward the page he's about to rebuild. */
-  async function runOff() {
-    const cat = catRef.current;
-    if (!cat || reduceMotion) return;
-    setPose("idle");
-    cat.firstElementChild?.classList.add("lgr-crouch");
-    await new Promise((resolve) => setTimeout(resolve, 260));
-    cat.firstElementChild?.classList.remove("lgr-crouch");
-    setPose("run");
-    await animate(
-      cat,
-      { x: window.innerWidth },
-      { duration: 0.9, ease: [0.45, 0.05, 0.25, 1] },
-    );
-  }
-
-  const ask = useMutation({
-    mutationFn: startAskSession,
-    onSuccess: async (result, asked) => {
-      if (result.status === "started") {
-        await runOff();
-        router.push(
-          `/ask/${result.sessionId}?ask=${encodeURIComponent(asked)}`,
-        );
-        // Next keeps this page mounted, hidden, for the Back button: be back on the box by then.
-        setTimeout(() => {
-          if (catRef.current)
-            void animate(catRef.current, { x: 0 }, { duration: 0 });
-          setQuestion("");
-          setPose("idle");
-          ask.reset();
-        }, 1200);
-      } else if (result.status === "limited" && result.sessionId) {
-        router.push(`/ask/${result.sessionId}?notice=limited`);
-      } else if (result.status === "limited") {
-        setPose("sleep");
-        setNotice(result.message);
-      }
-    },
-    onError: () => {
-      setPose("confused");
-      setNotice("Ledger couldn't open his books just now. Please try again.");
-    },
-  });
+  if (!desk?.inHero) return null;
 
   function submit(text: string) {
     const clean = cleanQuestion(text);
-    if (!clean || ask.isPending) return;
-    setNotice(null);
-    setPose("search");
-    ask.mutate(clean);
+    if (!clean || !desk || desk.pending) return;
+    desk.ask(clean);
   }
 
   function onSubmit(event: FormEvent) {
@@ -100,81 +27,88 @@ function AskForm() {
     submit(question);
   }
 
-  const shownPose: CatPose =
-    ask.isPending || ask.isSuccess ? pose : typing ? "think" : pose;
-
   return (
-    <aside
-      aria-label="Ask Ledger"
-      data-testid="ask-box"
-      className="outline-box relative mt-16 bg-paper shadow-hard-lg lg:mt-0"
-    >
-      <div
-        ref={catRef}
-        data-testid="ledger-cat"
-        data-pose={shownPose}
-        className="pointer-events-none absolute -top-[5.5rem] right-6"
+    <>
+      <aside
+        ref={desk.boxRef}
+        aria-label="Chat with Ledger"
+        data-testid="ask-box"
+        className="outline-box relative flex flex-col bg-paper shadow-hard-lg"
       >
-        <div className="lgr-body">
-          <Cat pose={shownPose} size={96} />
+        <div className="flex items-center gap-3 border-ink border-b-2 bg-morning-haze px-4 py-3">
+          <span className="outline-box flex size-10 shrink-0 items-end justify-center overflow-hidden rounded-full bg-paper">
+            <Cat pose="idle" size={44} animate={false} />
+          </span>
+          <p className="font-mono text-sm font-bold tracking-[0.1em] uppercase">
+            Ledger
+          </p>
+          <span className="ml-auto flex items-center gap-1.5">
+            <span className="size-2 rounded-full bg-ivy" />
+            <span className="sr-only">Online</span>
+          </span>
         </div>
-      </div>
-      <div className="flex items-center justify-between gap-4 border-ink border-b-2 bg-morning-haze px-6 py-4">
-        <p className="eyebrow">Ledger · Front desk</p>
-        <span className="outline-box eyebrow rounded-sm bg-paper px-2 py-0.5">
-          Ask
-        </span>
-      </div>
-      <div className="p-6">
-        <h2 className="text-[1.375rem] leading-snug font-semibold">
-          Ask me anything about Reljod's work.
-        </h2>
-        <p className="mt-2 text-sm text-ink-muted">
-          I'll take this site apart and rebuild it into your answer, using only
-          what it says.
-        </p>
-        <form onSubmit={onSubmit} className="mt-6 flex flex-col gap-3">
+
+        <div aria-live="polite" className="flex flex-col gap-3 p-4">
+          <p className="max-w-[85%] self-start rounded-sm border-2 border-limestone bg-marble px-3 py-2">
+            Hi! Ask me anything about Reljod.
+          </p>
+          {desk.notice ? (
+            <p
+              data-testid="ask-notice"
+              className="max-w-[85%] self-start rounded-sm border-2 border-seal-red bg-marble px-3 py-2 text-sm"
+            >
+              {desk.notice}
+            </p>
+          ) : null}
+          <div className="self-end">
+            <PresetChips onPick={submit} disabled={desk.pending} align="end" />
+          </div>
+        </div>
+
+        <form
+          onSubmit={onSubmit}
+          className="mt-auto flex gap-2 border-ink border-t-2 p-3"
+        >
           <label htmlFor="ask-input" className="sr-only">
             Your question
           </label>
-          <textarea
+          <input
             id="ask-input"
             data-testid="ask-input"
-            rows={2}
             maxLength={MAX_QUESTION_LENGTH}
             value={question}
-            placeholder="Where has Reljod worked?"
+            placeholder="Message Ledger…"
+            autoComplete="off"
             onChange={(event) => {
               setQuestion(event.target.value);
-              setTyping(true);
+              desk.typing(event.target.value.length > 0);
             }}
-            onKeyDown={(event) => {
-              if (event.key === "Enter" && !event.shiftKey) {
-                event.preventDefault();
-                submit(question);
-              }
-            }}
-            className="outline-box w-full resize-none rounded-sm bg-marble px-3 py-2 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-federal-blue"
+            className="outline-box min-h-11 min-w-0 flex-1 rounded-sm bg-marble px-3 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-federal-blue"
           />
           <button
             type="submit"
             data-testid="ask-send"
-            disabled={ask.isPending || !cleanQuestion(question)}
-            className="outline-box press min-h-11 self-end rounded-sm bg-federal-blue px-5 font-mono text-sm font-bold tracking-[0.1em] text-paper uppercase disabled:opacity-50"
+            aria-label="Send"
+            disabled={desk.pending || !cleanQuestion(question)}
+            className="outline-box press inline-flex size-11 shrink-0 items-center justify-center rounded-sm bg-federal-blue text-paper disabled:opacity-50"
           >
-            {ask.isPending ? "Opening books…" : "Ask Ledger"}
+            <Icon name="send" size={20} />
           </button>
         </form>
-        {notice ? (
-          <p aria-live="polite" className="mt-4 text-sm text-seal-red">
-            {notice}
-          </p>
-        ) : null}
-        <div className="mt-6 border-ink border-t-2 pt-4">
-          <p className="eyebrow mb-3 text-ink-muted">Or try</p>
-          <PresetChips onPick={submit} disabled={ask.isPending} />
+      </aside>
+
+      {/* Peeks over the band below the hero: his feet stay out of sight. */}
+      <div
+        ref={desk.catRef}
+        data-testid="hero-cat"
+        data-pose={desk.pose}
+        aria-hidden="true"
+        className={`pointer-events-none absolute right-[max(1rem,calc(50%-36rem))] bottom-0 w-24 translate-y-[20%] sm:w-32 lg:w-[170px] [&_svg]:h-auto [&_svg]:w-full ${desk.catLeft ? "invisible" : ""}`}
+      >
+        <div className="lgr-body">
+          <Cat pose={desk.pose} size={170} />
         </div>
       </div>
-    </aside>
+    </>
   );
 }

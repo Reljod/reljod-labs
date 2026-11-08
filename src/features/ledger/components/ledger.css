@@ -717,6 +717,14 @@
 .lgr-shake {
   animation: lgr-shake 0.4s linear;
 }
+/* Wind up, then boot: leans back and lunges through the kick. */
+.lgr-kick {
+  animation: lgr-kick 0.42s cubic-bezier(0.3, 0, 0.2, 1.4);
+}
+/* Pen in paw, he hops along the line he is fixing. */
+.lgr-fix {
+  animation: lgr-fix 0.32s ease-in-out infinite alternate;
+}
 @keyframes lgr-crouch {
   from {
     transform: scale(1, 1);
@@ -785,6 +793,28 @@
   }
   100% {
     transform: translateY(0) rotate(-360deg) scale(1, 1);
+  }
+}
+@keyframes lgr-kick {
+  0% {
+    transform: rotate(0deg) scale(1, 1);
+  }
+  35% {
+    transform: rotate(-16deg) translateX(-10px) scale(0.92, 1.08);
+  }
+  60% {
+    transform: rotate(14deg) translateX(18px) scale(1.12, 0.9);
+  }
+  100% {
+    transform: rotate(0deg) translateX(0) scale(1, 1);
+  }
+}
+@keyframes lgr-fix {
+  from {
+    transform: translateY(0) rotate(-3deg);
+  }
+  to {
+    transform: translateY(-10px) rotate(4deg) scale(1.04, 0.96);
   }
 }
 @keyframes lgr-shake {
@@ -1129,7 +1159,7 @@
   animation: lgr-bob 0.3s ease-in-out infinite alternate;
 }
 
-/* ---------- Content blocks: torn out of the page, stamped, Reformed ---------- */
+/* ---------- Content blocks: torn out of the page, stacked, written up ---------- */
 .ldg-torn {
   outline: 2px dashed #c9a227;
   outline-offset: 2px;
@@ -1193,6 +1223,32 @@
   }
 }
 
+/* A section Ledger kicked off the page: nothing spills out while it collapses. */
+.ldg-kicked {
+  overflow: hidden;
+  pointer-events: none;
+}
+
+/* Source blocks drift beside the Write-up, each a beat apart. */
+.ldg-float {
+  animation: ldg-float 5.6s ease-in-out infinite;
+}
+.ldg-float:hover,
+.ldg-float:focus-within {
+  animation-play-state: paused;
+}
+@keyframes ldg-float {
+  0%,
+  100% {
+    translate: 0 0;
+    rotate: -1.2deg;
+  }
+  50% {
+    translate: 0 -6px;
+    rotate: 1.2deg;
+  }
+}
+
 /* Unstitch: a gold seam runs round the page copy while it shakes loose. */
 .ldg-seam {
   outline: 3px dashed #c9a227;
@@ -1208,6 +1264,7 @@
   .lgr-body,
   .ldg-rip,
   .ldg-stamp-mark,
+  .ldg-float,
   .ldg-sweep {
     /* biome-ignore lint/complexity/noImportantStyles: reduced motion must beat every pose's animation */
     animation: none !important;

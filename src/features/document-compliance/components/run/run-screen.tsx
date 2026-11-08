@@ -5,6 +5,7 @@ import { AnimatePresence, motion, useReducedMotion } from "motion/react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { useEffect, useState } from "react";
+import { Terminal } from "@/components/ui/terminal";
 import { findPack } from "../../packs";
 import { DOCUMENT_ORDER } from "../../scan-events";
 import { getRun } from "../../server/actions";
@@ -13,7 +14,6 @@ import { Caveats } from "../caveats";
 import { FindingsReport } from "./findings-report";
 import { ProgressRail } from "./progress-rail";
 import { ScanStage } from "./scan-stage";
-import { Terminal } from "./terminal";
 import { usePlayhead } from "./use-playhead";
 import { type FeedSource, useScanFeed } from "./use-scan-feed";
 

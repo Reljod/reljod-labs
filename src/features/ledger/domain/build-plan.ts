@@ -16,7 +16,9 @@ export const LAYOUTS = [
 export const PACES = ["stroll", "trot", "dash"] as const;
 export const MAX_STEPS = 14;
 export const MAX_TOSSES = 2;
+export const MAX_SENTENCES = 8;
 const MAX_LINE = 60;
+const MAX_SENTENCE = 320;
 const MIN_EXCERPT = 8;
 
 export type Layout = (typeof LAYOUTS)[number];
@@ -31,7 +33,7 @@ export const planStepSchema = z.object({
   action: z
     .enum(["fetch", "toss"])
     .describe(
-      "fetch: cut this piece and place it on the Build board. toss: pick it up, decide it does not answer the question, and throw it away.",
+      "fetch: cut this piece and stack it above the page. toss: pick it up, decide it does not answer the question, and throw it away.",
     ),
   source: z
     .string()
@@ -60,10 +62,31 @@ export const buildPlanSchema = z.object({
       "Two or three sentences for the chat, using only the site's facts.",
     ),
   steps: z.array(planStepSchema),
+  writeup: z
+    .array(
+      z.object({
+        text: z
+          .string()
+          .describe(
+            "One plain sentence about Reljod, third person, only facts from the cited pieces.",
+          ),
+        cites: z
+          .array(z.number().int())
+          .describe(
+            "The fetch steps this sentence comes from, numbered 1, 2, 3… in the order the fetch steps appear (toss steps are not counted).",
+          ),
+      }),
+    )
+    .describe(
+      "The Write-up: 3 to 6 sentences that read as one complete answer, in reading order. Written after the steps, because it cites them.",
+    ),
 });
 
 export type PlanStep = z.infer<typeof planStepSchema>;
 export type RawBuildPlan = z.infer<typeof buildPlanSchema>;
+
+/** One sentence of the Write-up and the Source blocks it comes from, numbered from 1. */
+export type Sentence = { text: string; cites: number[] };
 
 /** A Build plan that only names real sources and real words. */
 export type BuildPlan = {
@@ -72,6 +95,7 @@ export type BuildPlan = {
   layout: Layout;
   answer: string;
   steps: PlanStep[];
+  writeup: Sentence[];
 };
 
 /* Curly quotes and dashes swap one character for one, so indexes still line up. */
@@ -149,23 +173,100 @@ export function createStepValidator(tree: ContentTree = contentTree) {
   };
 }
 
+/**
+ * Tracks which of the model's fetch steps survive validation, so the
+ * Write-up's citations can be renumbered to the fetches that were kept.
+ */
+export function createFetchNumbering() {
+  const kept = new Map<number, number>();
+  let written = 0;
+  let placed = 0;
+  return {
+    /** Call for every step the model wrote, in order, with what validation made of it. */
+    record(
+      raw: { action?: unknown } | null | undefined,
+      valid: PlanStep | null,
+    ) {
+      if (raw?.action !== "fetch") return;
+      written++;
+      if (valid?.action === "fetch") kept.set(written, ++placed);
+    },
+    get placed() {
+      return placed;
+    },
+    renumber: (cite: number) => kept.get(cite) ?? null,
+  };
+}
+
+/**
+ * The Write-up as it will be shown: sentences trimmed and capped, citations
+ * renumbered to the fetches that were kept, and any sentence that no longer
+ * cites a kept block dropped. With nothing usable, the chat answer stands in,
+ * citing every block.
+ */
+export function cleanWriteup(
+  raw: RawBuildPlan["writeup"] | undefined,
+  answer: string,
+  numbering: Pick<
+    ReturnType<typeof createFetchNumbering>,
+    "renumber" | "placed"
+  >,
+): Sentence[] {
+  if (numbering.placed === 0) return [];
+  const sentences = (raw ?? []).flatMap((sentence) => {
+    const text = sentence.text?.replace(/\s+/g, " ").trim() ?? "";
+    if (!text) return [];
+    const cites = [
+      ...new Set(
+        (sentence.cites ?? []).flatMap(
+          (cite) => numbering.renumber(cite) ?? [],
+        ),
+      ),
+    ].sort((a, b) => a - b);
+    // Every sentence must rest on a block that is really on the page.
+    if (cites.length === 0) return [];
+    return [
+      {
+        text:
+          text.length <= MAX_SENTENCE
+            ? text
+            : `${text.slice(0, MAX_SENTENCE - 1).trimEnd()}…`,
+        cites,
+      },
+    ];
+  });
+  if (sentences.length > 0) return sentences.slice(0, MAX_SENTENCES);
+  return [
+    {
+      text: answer.trim(),
+      cites: Array.from({ length: numbering.placed }, (_, index) => index + 1),
+    },
+  ];
+}
+
 /** Validates a whole plan: what gets stored, and what a replay plays. */
 export function finalizePlan(
   raw: RawBuildPlan,
   tree: ContentTree = contentTree,
 ): BuildPlan {
   const validate = createStepValidator(tree);
+  const numbering = createFetchNumbering();
   const steps =
     raw.verdict === "answer"
-      ? raw.steps.flatMap((step) => validate(step) ?? [])
+      ? raw.steps.flatMap((step) => {
+          const valid = validate(step);
+          numbering.record(step, valid);
+          return valid ?? [];
+        })
       : [];
-  const answers = steps.some((step) => step.action === "fetch");
+  const answers = numbering.placed > 0;
   return {
     verdict: answers ? "answer" : "not_found",
     title: trimLine(raw.title) || "Here's what I found",
     layout: LAYOUTS.includes(raw.layout) ? raw.layout : "mixed",
     answer: raw.answer.trim(),
     steps: answers ? steps : [],
+    writeup: answers ? cleanWriteup(raw.writeup, raw.answer, numbering) : [],
   };
 }
 

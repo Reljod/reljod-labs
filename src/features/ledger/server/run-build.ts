@@ -6,6 +6,8 @@ import {
 } from "../domain/build-events";
 import {
   type BuildPlan,
+  cleanWriteup,
+  createFetchNumbering,
   createStepValidator,
   LAYOUTS,
   type Layout,
@@ -55,6 +57,7 @@ export function runBuild(input: {
           stubbed: input.visitor.stubbed,
         });
         const validate = createStepValidator();
+        const numbering = createFetchNumbering();
         const steps: PlanStep[] = [];
         let examined = 0;
         let answerSent = "";
@@ -75,8 +78,8 @@ export function runBuild(input: {
         const examine = (candidates: unknown[]) => {
           for (; examined < candidates.length; examined++) {
             const candidate = candidates[examined];
-            if (!isComplete(candidate)) continue;
-            const step = validate(candidate);
+            const step = isComplete(candidate) ? validate(candidate) : null;
+            numbering.record(candidate as { action?: unknown } | null, step);
             if (step) {
               steps.push(step);
               send({ type: "step", step });
@@ -111,13 +114,14 @@ export function runBuild(input: {
         }
         if (raw.verdict === "answer") examine(raw.steps);
 
-        const fetches = steps.some((step) => step.action === "fetch");
+        const fetches = numbering.placed > 0;
         const plan: BuildPlan = {
           verdict: fetches ? "answer" : "not_found",
           title: raw.title,
           layout: raw.layout,
           answer: raw.answer,
           steps: fetches ? steps : [],
+          writeup: cleanWriteup(raw.writeup, raw.answer, numbering),
         };
         const build = await insertBuild({
           askSessionId: input.session.id,

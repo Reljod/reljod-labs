@@ -1,6 +1,4 @@
 import type { PlanStep } from "./build-plan";
-import type { ContentKind } from "./content-tree";
-import { type Grip, gripFor } from "./gait";
 
 /**
  * One beat of a Build, in the order Ledger plays them. Beats say what happens,
@@ -10,14 +8,15 @@ export type Beat =
   | { type: "unstitch" }
   | { type: "run-to"; source: string; pace: PlanStep["pace"] }
   | { type: "rip"; source: string; excerpt: string | null; line: string }
-  | { type: "haul"; grip: Grip; pace: PlanStep["pace"] }
-  | { type: "stamp" }
+  | { type: "push"; pace: PlanStep["pace"] }
+  | { type: "stack" }
   | { type: "toss" }
-  | { type: "reform" }
+  | { type: "kick" }
+  | { type: "write" }
   | { type: "rewind" };
 
 /** The beats for one validated step. */
-export function beatsForStep(step: PlanStep, kind: ContentKind): Beat[] {
+export function beatsForStep(step: PlanStep): Beat[] {
   const reach: Beat[] = [
     { type: "run-to", source: step.source, pace: step.pace },
     {
@@ -28,11 +27,7 @@ export function beatsForStep(step: PlanStep, kind: ContentKind): Beat[] {
     },
   ];
   if (step.action === "toss") return [...reach, { type: "toss" }];
-  return [
-    ...reach,
-    { type: "haul", grip: gripFor(kind), pace: step.pace },
-    { type: "stamp" },
-  ];
+  return [...reach, { type: "push", pace: step.pace }, { type: "stack" }];
 }
 
 /**
@@ -43,7 +38,10 @@ export function openingBeats(isFollowUp: boolean): Beat[] {
   return isFollowUp ? [{ type: "rewind" }] : [{ type: "unstitch" }];
 }
 
-/** Closes a Build: Reform only when something was placed on the board. */
-export function closingBeats(placed: number): Beat[] {
-  return placed > 0 ? [{ type: "reform" }] : [];
+/**
+ * Closes a Build: with blocks on the Stack, the rest of the page is kicked
+ * away and the Stack is written up; with none, nothing is.
+ */
+export function closingBeats(stacked: number): Beat[] {
+  return stacked > 0 ? [{ type: "kick" }, { type: "write" }] : [];
 }

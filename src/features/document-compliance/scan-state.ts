@@ -1,3 +1,7 @@
+import type {
+  LogTone,
+  LogLine as TerminalLine,
+} from "@/components/ui/terminal";
 import type { FieldCheck } from "./domain/field-checks";
 import type {
   DocumentJudgments,
@@ -21,15 +25,8 @@ export type DocumentScan = {
   stages: Record<ScanStage, StageState>;
 };
 
-export type LogTone = "muted" | "info" | "ok" | "warn" | "bad";
-
-export type LogLine = {
-  id: number;
-  at: number;
-  tone: LogTone;
-  kind: DocumentKind | null;
-  text: string;
-};
+export type { LogTone };
+export type LogLine = TerminalLine & { kind: DocumentKind | null };
 
 export type ScanState = {
   documents: Record<DocumentKind, DocumentScan>;

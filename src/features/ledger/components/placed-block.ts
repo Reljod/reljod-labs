@@ -1,8 +1,8 @@
 import type { ContentBlock } from "../domain/content-tree";
 
-/** A Content block Ledger has placed on the Build board. */
+/** A Content block Ledger has pushed onto the Stack. */
 export type PlacedBlock = {
-  /** Shared by the board and the answer page, so Reform can slide one into the other. */
+  /** Shared by the Stack and the Source blocks, so the Write-up can float one into the other. */
   id: string;
   source: string;
   excerpt: string | null;

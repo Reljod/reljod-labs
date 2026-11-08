@@ -26,6 +26,7 @@ const fetch = (
   pace: "trot",
   line,
 });
+const say = (text: string, ...cites: number[]) => ({ text, cites });
 
 const PLANS: Record<string, RawBuildPlan> = {
   [PRESET_QUESTIONS[0]]: {
@@ -38,6 +39,14 @@ const PLANS: Record<string, RawBuildPlan> = {
       fetch(sourcePath.job(0), "Newest first!"),
       fetch(sourcePath.job(MAYA), "The bank years!"),
       fetch(sourcePath.job(4), "Finance data, check."),
+    ],
+    writeup: [
+      say("Reljod works today as an AI Consultant at Acquire Intelligence.", 1),
+      say(
+        "Before that he spent three years as a Senior Software Engineer at Maya Philippines, a digital bank.",
+        2,
+      ),
+      say("Earlier still, he spent two years at FactSet.", 3),
     ],
   },
   [PRESET_QUESTIONS[1]]: {
@@ -52,6 +61,18 @@ const PLANS: Record<string, RawBuildPlan> = {
       fetch(KYC_POINT, "More automated!", "+8 pts automation rate"),
       fetch(sourcePath.project(1), "The project file."),
     ],
+    writeup: [
+      say(
+        "At Maya Philippines, Reljod helped replace a third-party KYC vendor with an in-house AI solution.",
+        4,
+      ),
+      say(
+        "It brought a 90% lower KYC operating cost and raised the approval rate by 7 points.",
+        1,
+        2,
+      ),
+      say("The automation rate rose by 8 points too.", 3),
+    ],
   },
   [PRESET_QUESTIONS[2]]: {
     verdict: "answer",
@@ -63,6 +84,11 @@ const PLANS: Record<string, RawBuildPlan> = {
       fetch(sourcePath.service(0), "KYC first."),
       fetch(sourcePath.service(1), "Documents next."),
       fetch(sourcePath.service(2), "Names too!"),
+    ],
+    writeup: [
+      say("Reljod builds KYC automation for banks and financial firms.", 1),
+      say("He also builds document compliance checks.", 2),
+      say("And he builds name matching.", 3),
     ],
   },
   [PRESET_QUESTIONS[3]]: {
@@ -76,6 +102,11 @@ const PLANS: Record<string, RawBuildPlan> = {
       fetch(sourcePath.project(1), "Ninety percent cheaper."),
       fetch(sourcePath.project(2), "Names, matched."),
     ],
+    writeup: [
+      say("His live document compliance checks demo runs on this site.", 1),
+      say("He also built in-house KYC automation.", 2),
+      say("A name matching engine rounds out the set.", 3),
+    ],
   },
   [PRESET_QUESTIONS[4]]: {
     verdict: "answer",
@@ -86,6 +117,12 @@ const PLANS: Record<string, RawBuildPlan> = {
     steps: [0, 1, 2, 3].map((index) =>
       fetch(sourcePath.approachStep(index), `Step ${index + 1}!`),
     ),
+    writeup: [
+      say("Reljod starts by framing the problem.", 1),
+      say("He looks for an early win.", 2),
+      say("He builds with evidence.", 3),
+      say("And he hands over a path to production.", 4),
+    ],
   },
   [PRESET_QUESTIONS[5]]: {
     verdict: "answer",
@@ -93,6 +130,7 @@ const PLANS: Record<string, RawBuildPlan> = {
     layout: "mixed",
     answer: "Email Reljod or reach him on LinkedIn or GitHub.",
     steps: [fetch(sourcePath.contact, "Here's how!")],
+    writeup: [say("Email Reljod, or reach him on LinkedIn or GitHub.", 1)],
   },
   [STUB_INVENTED_QUESTION]: {
     verdict: "answer",
@@ -104,6 +142,10 @@ const PLANS: Record<string, RawBuildPlan> = {
       fetch(KYC_POINT, "Made up!", "99% lower fraud losses"),
       fetch("experience.42", "Not a job."),
     ],
+    writeup: [
+      say("He cut KYC operating cost by 90%.", 1),
+      say("He cut fraud losses by 99%.", 2),
+    ],
   },
   [STUB_TOSS_QUESTION]: {
     verdict: "answer",
@@ -114,6 +156,7 @@ const PLANS: Record<string, RawBuildPlan> = {
       { ...fetch(sourcePath.job(4), "Hmm, not this one."), action: "toss" },
       fetch(sourcePath.job(MAYA), "This one!"),
     ],
+    writeup: [say("He spent three years at Maya Philippines.", 1)],
   },
 };
 
@@ -124,6 +167,7 @@ const NOT_FOUND: RawBuildPlan = {
   answer:
     "I only keep books on Reljod's work: his experience, projects, services and how to reach him. Try one of these.",
   steps: [],
+  writeup: [],
 };
 
 export function stubPlan(question: string): RawBuildPlan {

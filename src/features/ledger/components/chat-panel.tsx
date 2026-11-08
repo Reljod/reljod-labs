@@ -1,6 +1,8 @@
 "use client";
 
-import { type FormEvent, type Ref, useEffect, useRef, useState } from "react";
+import { type FormEvent, useEffect, useRef, useState } from "react";
+import { Icon } from "@/components/ui/icon";
+import { type LogLine, Terminal } from "@/components/ui/terminal";
 import { cleanQuestion, MAX_QUESTION_LENGTH } from "../domain/presets";
 import { PresetChips } from "./preset-chips";
 
@@ -19,8 +21,9 @@ type ChatPanelProps = {
   notice: string | null;
   onAsk: (question: string) => void;
   onReplay: (buildIndex: number) => void;
-  /** Ledger sits on this edge when he isn't working. */
-  homeRef: Ref<HTMLDivElement>;
+  /** What Ledger is doing, line by line. */
+  log: LogLine[];
+  sessionId: string;
 };
 
 export function ChatPanel({
@@ -29,7 +32,8 @@ export function ChatPanel({
   notice,
   onAsk,
   onReplay,
-  homeRef,
+  log,
+  sessionId,
 }: ChatPanelProps) {
   const [question, setQuestion] = useState("");
   const listRef = useRef<HTMLOListElement>(null);
@@ -51,16 +55,18 @@ export function ChatPanel({
   return (
     <section
       aria-label="Chat with Ledger"
-      className="flex min-h-0 flex-col border-ink border-t-2"
+      className="flex min-h-0 flex-1 flex-col"
     >
-      <div
-        ref={homeRef}
-        className="flex items-center justify-between gap-3 border-ink border-b-2 bg-morning-haze px-4 py-3"
-      >
-        <p className="eyebrow font-bold">Ledger</p>
-        <p className="eyebrow text-ink-muted">
-          {busy ? "Building…" : "Front desk"}
+      <div className="flex items-center justify-between gap-3 border-ink border-b-2 bg-morning-haze px-4 py-3">
+        <p className="font-mono text-sm font-bold tracking-[0.1em] uppercase">
+          Ledger
         </p>
+        <span className="flex items-center gap-1.5">
+          <span
+            className={`size-2 rounded-full ${busy ? "animate-pulse bg-brass" : "bg-ivy"}`}
+          />
+          <span className="sr-only">{busy ? "Building" : "Online"}</span>
+        </span>
       </div>
       <ol
         ref={listRef}
@@ -95,12 +101,13 @@ export function ChatPanel({
             {message.buildIndex !== undefined && !message.notFound ? (
               <button
                 type="button"
-                data-testid="replay-build"
+                data-testid="replay-message"
+                aria-label="Watch Ledger build this answer"
                 disabled={busy}
                 onClick={() => onReplay(message.buildIndex as number)}
-                className="eyebrow mt-2 font-bold text-federal-blue underline disabled:opacity-50"
+                className="mt-2 inline-flex size-8 items-center justify-center text-federal-blue hover:bg-paper disabled:opacity-50"
               >
-                Watch Ledger build it
+                <Icon name="replay" size={18} />
               </button>
             ) : null}
           </li>
@@ -119,18 +126,27 @@ export function ChatPanel({
           value={question}
           maxLength={MAX_QUESTION_LENGTH}
           onChange={(event) => setQuestion(event.target.value)}
-          placeholder={busy ? "Ledger is building…" : "Ask a follow-up"}
+          placeholder={busy ? "Ledger is building…" : "Message Ledger…"}
           className="outline-box min-h-11 min-w-0 flex-1 rounded-sm bg-marble px-3 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-federal-blue"
         />
         <button
           type="submit"
           data-testid="chat-send"
+          aria-label="Send"
           disabled={busy || !cleanQuestion(question)}
-          className="outline-box press min-h-11 rounded-sm bg-federal-blue px-4 font-mono text-sm font-bold tracking-[0.1em] text-paper uppercase disabled:opacity-50"
+          className="outline-box press inline-flex size-11 shrink-0 items-center justify-center rounded-sm bg-federal-blue text-paper disabled:opacity-50"
         >
-          Ask
+          <Icon name="send" size={20} />
         </button>
       </form>
+      <div className="border-ink border-t-2 p-2">
+        <Terminal
+          title={`ledger@reljod:~/ask/${sessionId.slice(0, 8)}`}
+          lines={log}
+          live={busy}
+          bodyClassName="h-36 sm:h-44"
+        />
+      </div>
     </section>
   );
 }

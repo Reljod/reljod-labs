@@ -2,7 +2,7 @@ import type { ContentBlock } from "../domain/content-tree";
 
 type BlockViewProps = {
   block: ContentBlock;
-  /** compact on the Build board and in flight; full on the answer page. */
+  /** compact on the Stack, in flight and as a Source block; full when a Source block is opened. */
   size: "compact" | "full";
 };
 

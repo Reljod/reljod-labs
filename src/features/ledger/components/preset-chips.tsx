@@ -3,12 +3,17 @@ import { PRESET_QUESTIONS } from "../domain/presets";
 export function PresetChips({
   onPick,
   disabled,
+  align = "start",
 }: {
   onPick: (question: string) => void;
   disabled?: boolean;
+  /** Quick replies sit on the visitor's side of a chat. */
+  align?: "start" | "end";
 }) {
   return (
-    <ul className="flex flex-wrap gap-2">
+    <ul
+      className={`flex flex-wrap gap-2 ${align === "end" ? "justify-end" : ""}`}
+    >
       {PRESET_QUESTIONS.map((question) => (
         <li key={question}>
           <button

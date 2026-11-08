@@ -1,8 +1,12 @@
 "use client";
 
-import { motion } from "motion/react";
+import { motion, useReducedMotion } from "motion/react";
 import { useEffect, useRef } from "react";
-import type { LogLine, LogTone } from "../../scan-state";
+
+export type LogTone = "muted" | "info" | "ok" | "warn" | "bad";
+
+/** One line of a Terminal; `at` is milliseconds since the run started. */
+export type LogLine = { id: number; at: number; tone: LogTone; text: string };
 
 const TONE: Record<LogTone, string> = {
   muted: "text-stone",
@@ -18,11 +22,22 @@ type TerminalProps = {
   title: string;
   lines: LogLine[];
   live: boolean;
-  reduceMotion: boolean;
+  /** Defaults to the user's motion setting. */
+  reduceMotion?: boolean;
+  /** Height of the scrolling body. */
+  bodyClassName?: string;
 };
 
-/** What the run is doing, line by line, as it happens. */
-export function Terminal({ title, lines, live, reduceMotion }: TerminalProps) {
+/** What a run is doing, line by line, as it happens. */
+export function Terminal({
+  title,
+  lines,
+  live,
+  reduceMotion,
+  bodyClassName = "h-56 sm:h-64",
+}: TerminalProps) {
+  const prefersReduced = useReducedMotion();
+  const still = reduceMotion ?? prefersReduced ?? false;
   const body = useRef<HTMLDivElement>(null);
   const drawer = useRef<HTMLDetailsElement>(null);
 
@@ -72,12 +87,12 @@ export function Terminal({ title, lines, live, reduceMotion }: TerminalProps) {
         data-testid="terminal"
         role="log"
         aria-live="off"
-        className="h-56 overflow-y-auto px-3 py-2 font-mono text-[12px] leading-relaxed sm:h-64"
+        className={`${bodyClassName} overflow-y-auto px-3 py-2 font-mono text-[12px] leading-relaxed`}
       >
         {lines.map((line) => (
           <motion.div
             key={line.id}
-            initial={reduceMotion ? false : { opacity: 0, x: -8 }}
+            initial={still ? false : { opacity: 0, x: -8 }}
             animate={{ opacity: 1, x: 0 }}
             transition={{ duration: 0.18 }}
             className="flex gap-3 whitespace-pre-wrap break-all"

@@ -2,7 +2,8 @@ import { expect, type Locator, type Page, test } from "@playwright/test";
 import { PRESET_QUESTIONS } from "../src/features/ledger/domain/presets";
 
 /*
- * Ledger: ask from the home page, watch him rebuild the site into an answer.
+ * Ledger: ask from the home page, watch him push the chat into the dock, stack
+ * the right pieces above the site, kick the rest away and write them up.
  * Stubbed by default: canned Build plans run through the real validation,
  * storage and stream. `E2E_LEDGER_LIVE=1` asks the real model instead and
  * skips the scenarios that need a specific plan.
@@ -46,11 +47,17 @@ const poses = (page: Page) =>
 
 const screen = (page: Page) => page.getByTestId("ask-screen");
 
-/** Asks from the home page's chat box and waits for the session page to open. */
+/**
+ * Asks from the home page's chat box and waits for the session's address.
+ * The page never reloads: a marker set before asking is still there after.
+ */
 async function askFromHome(page: Page, question: string, viaPreset = false) {
   await page.goto("/");
   const box = page.getByTestId("ask-box");
   await expect(box).toBeVisible();
+  await page.evaluate(() => {
+    (window as unknown as { __samePage: boolean }).__samePage = true;
+  });
   if (viaPreset) {
     await box.getByTestId("preset-chip").filter({ hasText: question }).click();
   } else {
@@ -58,16 +65,22 @@ async function askFromHome(page: Page, question: string, viaPreset = false) {
     await box.getByTestId("ask-send").click();
   }
   await page.waitForURL(/\/ask\/[0-9a-f-]{36}/);
+  expect(
+    await page.evaluate(
+      () => (window as unknown as { __samePage?: boolean }).__samePage,
+    ),
+    "asking never reloads the page",
+  ).toBe(true);
 }
 
-/** Waits for the Build to finish: Reform done, Ledger back by the chat. */
+/** Waits for the Build to finish: Write-up done, Ledger back by the dock. */
 async function waitForBuild(page: Page) {
   await expect(screen(page)).toHaveAttribute("data-busy", "false", {
     timeout: BUILD_TIMEOUT,
   });
 }
 
-/** Every block on the answer page names a real piece of the page, in the page's own words. */
+/** Every Source block names a real piece of the page, in the page's own words. */
 async function expectGrounded(page: Page, blocks: Locator) {
   const count = await blocks.count();
   expect(count).toBeGreaterThan(0);
@@ -90,14 +103,21 @@ async function expectAnswered(page: Page) {
   await waitForBuild(page);
   await expect(page.getByTestId("answer-page")).toBeVisible();
   await expect(screen(page)).toHaveAttribute("data-phase", "answer");
-  await expectGrounded(page, page.getByTestId("answer-block"));
+  await expectGrounded(page, page.getByTestId("source-block"));
+  const sentences = page.getByTestId("writeup-sentence");
+  expect(await sentences.count()).toBeGreaterThan(0);
+  await expect(sentences.last()).toHaveAttribute("data-written", "true");
+  const sources = await page.getByTestId("source-block").count();
+  for (const cite of await page.getByTestId("cite").allTextContents()) {
+    expect(
+      Number(cite),
+      "every citation names a Source block",
+    ).toBeLessThanOrEqual(sources);
+  }
   const reply = screen(page)
     .locator('[data-testid="chat-message"][data-role="ledger"]')
     .last();
   await expect(reply).not.toHaveText(/^…?$/);
-  expect(page.url(), "?ask= is dropped once the Build starts").not.toContain(
-    "ask=",
-  );
 }
 
 test.describe("Ledger", () => {
@@ -108,18 +128,21 @@ test.describe("Ledger", () => {
   for (const question of PRESET_QUESTIONS) {
     test(`preset: ${question}`, async ({ page }) => {
       await askFromHome(page, question, true);
-      await expect(page.getByTestId("board-block").first()).toBeVisible({
+      await expect(page.getByTestId("stack-block").first()).toBeVisible({
         timeout: BUILD_TIMEOUT,
       });
       await expectAnswered(page);
       const seen = await poses(page);
       expect(seen, "tore the page apart first").toContain("unstitch");
       expect(
-        seen.some((pose) => pose === "carry" || pose === "drag"),
-        "hauled a block",
+        seen.some((pose) =>
+          ["run", "run-up", "run-down", "fly"].includes(pose),
+        ),
+        "ran and pushed",
       ).toBe(true);
-      expect(seen, "stamped it on the board").toContain("stamp");
-      expect(seen, "conducted the Reform").toContain("conduct");
+      expect(seen, "stamped it on the Stack").toContain("stamp");
+      expect(seen, "kicked the rest away").toContain("toss");
+      expect(seen, "wrote it up").toContain("conduct");
     });
   }
 
@@ -129,17 +152,17 @@ test.describe("Ledger", () => {
     await askFromHome(page, PRESET_QUESTIONS[1], true);
     await expectAnswered(page);
     const fromMaya = page.locator(
-      '[data-testid="answer-block"][data-source^="experience.3"]',
+      '[data-testid="source-block"][data-source^="experience.3"]',
     );
     const kycProject = page.locator(
-      '[data-testid="answer-block"][data-source="projects.1"]',
+      '[data-testid="source-block"][data-source="projects.1"]',
     );
     expect(
       (await fromMaya.count()) + (await kycProject.count()),
     ).toBeGreaterThan(0);
     if (!live) {
       const cost = page.locator(
-        '[data-testid="answer-block"][data-source="experience.3.points.0"][data-excerpt="90% lower KYC operating cost"]',
+        '[data-testid="source-block"][data-source="experience.3.points.0"][data-excerpt="90% lower KYC operating cost"]',
       );
       await expect(cost).toHaveAttribute("data-kind", "figure");
       await expect(cost).toContainText("90%");
@@ -154,17 +177,43 @@ test.describe("Ledger", () => {
     const sessionUrl = page.url();
     await screen(page).getByTestId("chat-input").fill(PRESET_QUESTIONS[2]);
     await screen(page).getByTestId("chat-send").click();
-    await expect(screen(page)).toHaveAttribute("data-phase", "copy");
+    await expect(screen(page)).toHaveAttribute("data-phase", "stack");
     await expectAnswered(page);
     expect(page.url()).toBe(sessionUrl);
     await expect(
       screen(page).locator('[data-testid="chat-message"][data-role="visitor"]'),
     ).toHaveCount(2);
-    if (!live)
-      await expect(page.getByTestId("answer-page")).toHaveAttribute(
-        "data-layout",
-        "cards",
-      );
+  });
+
+  test("asking pushes the chat into the dock and logs every move", async ({
+    page,
+  }) => {
+    await askFromHome(page, PRESET_QUESTIONS[5], true);
+    await expect(page.getByTestId("dock")).toBeVisible();
+    await expect(page.getByTestId("ask-box")).toHaveCount(0);
+    await expect(page.getByTestId("hero-cat")).toHaveCount(0);
+    await expectAnswered(page);
+    const terminal = page.getByTestId("terminal");
+    await expect(terminal).toContainText("pushing the chat into the dock");
+    await expect(terminal).toContainText("stacked #1");
+    await expect(terminal).toContainText("kicking");
+    await expect(terminal).toContainText("built in");
+  });
+
+  test("a Source block opens, closes and comes back", async ({ page }) => {
+    await askFromHome(page, PRESET_QUESTIONS[1], true);
+    await expectAnswered(page);
+    const sources = page.getByTestId("source-block");
+    const count = await sources.count();
+    await page.getByTestId("cite").first().click();
+    await expect(page.getByTestId("expanded-source")).toBeVisible();
+    await page.keyboard.press("Escape");
+    await expect(page.getByTestId("expanded-source")).toHaveCount(0);
+    // The cards drift; dispatch rather than wait for one to hold still.
+    await page.getByTestId("close-source").first().dispatchEvent("click");
+    await expect(sources).toHaveCount(count - 1);
+    await page.getByTestId("show-sources").click();
+    await expect(sources).toHaveCount(count);
   });
 
   test("an off-topic question builds nothing and offers the presets", async ({
@@ -186,7 +235,7 @@ test.describe("Ledger", () => {
     await askFromHome(page, PRESET_QUESTIONS[3], true);
     await expectAnswered(page);
     const before = await page
-      .getByTestId("answer-block")
+      .getByTestId("source-block")
       .evaluateAll((blocks) =>
         blocks.map((block) => block.getAttribute("data-source")),
       );
@@ -198,15 +247,15 @@ test.describe("Ledger", () => {
     await expect(screen(page)).toHaveAttribute("data-busy", "false");
     expect(
       await page
-        .getByTestId("answer-block")
+        .getByTestId("source-block")
         .evaluateAll((blocks) =>
           blocks.map((block) => block.getAttribute("data-source")),
         ),
     ).toEqual(before);
 
-    await screen(page).getByTestId("replay-build").last().click();
-    await expect(screen(page)).toHaveAttribute("data-phase", "copy");
-    await expect(page.getByTestId("board-block").first()).toBeVisible({
+    await page.getByTestId("replay-build").click();
+    await expect(screen(page)).toHaveAttribute("data-phase", "stack");
+    await expect(page.getByTestId("stack-block").first()).toBeVisible({
       timeout: BUILD_TIMEOUT,
     });
     await expectAnswered(page);
@@ -233,7 +282,7 @@ test.describe("Ledger", () => {
     test.skip(live, "needs a canned plan");
     await askFromHome(page, STUB_INVENTED);
     await expectAnswered(page);
-    await expect(page.getByTestId("answer-block")).toHaveCount(1);
+    await expect(page.getByTestId("source-block")).toHaveCount(1);
     await expect(page.getByTestId("answer-page")).not.toContainText("99%");
     await expect(page.locator('[data-source="experience.42"]')).toHaveCount(0);
   });
@@ -246,7 +295,7 @@ test.describe("Ledger", () => {
     await expectAnswered(page);
     expect(await poses(page)).toContain("toss");
     const sources = await page
-      .getByTestId("answer-block")
+      .getByTestId("source-block")
       .evaluateAll((blocks) =>
         blocks.map((block) => block.getAttribute("data-source")),
       );
@@ -291,17 +340,15 @@ test.describe("Ledger with reduced motion", () => {
 test.describe("Ledger on a phone", () => {
   test.use({ viewport: { width: 390, height: 844 } });
 
-  test("builds into one column with a small Ledger", async ({ page }) => {
+  test("builds into one column with a smaller Ledger", async ({ page }) => {
     test.skip(live, "covered by the stubbed run");
     await recordPoses(page);
     await askFromHome(page, PRESET_QUESTIONS[1], true);
     await expectAnswered(page);
     const cat = screen(page).getByTestId("ledger-cat");
-    expect((await cat.boundingBox())?.width).toBe(72);
-    const blocks = page.getByTestId("answer-block");
-    const first = await blocks.nth(0).boundingBox();
-    const second = await blocks.nth(1).boundingBox();
-    expect(second?.x).toBe(first?.x);
+    expect((await cat.boundingBox())?.width).toBe(96);
+    const writeup = await page.getByTestId("writeup").boundingBox();
+    expect(writeup?.width).toBeLessThanOrEqual(390);
     const scrollWidth = await page.evaluate(
       () => document.documentElement.scrollWidth,
     );
