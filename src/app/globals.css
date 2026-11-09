@@ -29,6 +29,89 @@
   --text-display: 4.5rem;
   --text-display--line-height: 1;
   --text-display--letter-spacing: -0.02em;
+
+  /* Landing page showcase. Pair every one with `motion-safe:`. */
+  --animate-bench-float: bench-float 6s ease-in-out infinite;
+  --animate-live-pulse: live-pulse 1.8s ease-out infinite;
+  --animate-scan-sweep: scan-sweep 5.6s linear infinite;
+  --animate-find-box: find-box 5.6s ease-out infinite both;
+  --animate-haul: haul 5.6s cubic-bezier(0.45, 0.05, 0.25, 1) infinite both;
+
+  /* Soon-to-ship work drifts on the bench; `--tilt` sets each card's lean. */
+  @keyframes bench-float {
+    0%,
+    100% {
+      transform: translateY(0) rotate(var(--tilt, 0deg));
+    }
+    50% {
+      transform: translateY(-14px) rotate(calc(var(--tilt, 0deg) * -1));
+    }
+  }
+
+  @keyframes live-pulse {
+    0% {
+      box-shadow: 0 0 0 0 rgb(47 107 63 / 0.55);
+    }
+    100% {
+      box-shadow: 0 0 0 10px rgb(47 107 63 / 0);
+    }
+  }
+
+  @keyframes scan-sweep {
+    0% {
+      top: 0%;
+      opacity: 1;
+    }
+    60% {
+      top: 100%;
+      opacity: 1;
+    }
+    61%,
+    100% {
+      top: 100%;
+      opacity: 0;
+    }
+  }
+
+  /* A finding box stamps in as the scan line passes, then clears for the next loop. */
+  @keyframes find-box {
+    0% {
+      opacity: 0;
+      transform: scale(1.12);
+    }
+    6%,
+    88% {
+      opacity: 1;
+      transform: scale(1);
+    }
+    100% {
+      opacity: 0;
+      transform: scale(1);
+    }
+  }
+
+  /* Ledger gallops a block from the page copy onto the Build board. */
+  @keyframes haul {
+    0% {
+      left: 4%;
+      top: 34%;
+      opacity: 0;
+    }
+    8% {
+      opacity: 1;
+    }
+    50% {
+      left: 54%;
+      top: 50%;
+      opacity: 1;
+    }
+    58%,
+    100% {
+      left: 54%;
+      top: 50%;
+      opacity: 0;
+    }
+  }
 }
 
 @theme inline {

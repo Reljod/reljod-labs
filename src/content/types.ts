@@ -71,4 +71,6 @@ export type Project = {
   /** A live demo when `status` is "Live", otherwise the case study. */
   href?: string;
   cover?: { src: string; alt: string };
+  /** What a visitor gets to do once they open a live demo. */
+  features?: string[];
 };

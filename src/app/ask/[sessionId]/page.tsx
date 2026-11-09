@@ -1,12 +1,12 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { Suspense } from "react";
-import { HomeSections } from "@/components/sections/home-sections";
+import { AboutSections } from "@/components/sections/about-sections";
 import { AskScreen } from "@/features/ledger/components/ask-screen";
 import { loadAskSession } from "@/features/ledger/server/repository";
 
 export const metadata: Metadata = {
-  title: "Ask Ledger · Reljod Oreta",
+  title: "Ask Ledger",
   description: "Ledger the cat banker rebuilds Reljod's site into an answer.",
   robots: { index: false },
 };
@@ -41,7 +41,7 @@ async function Session({
       session={session}
       initialQuestion={typeof query.ask === "string" ? query.ask : null}
       limited={query.notice === "limited"}
-      pageCopy={<HomeSections />}
+      pageCopy={<AboutSections />}
     />
   );
 }

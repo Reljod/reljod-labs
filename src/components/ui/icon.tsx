@@ -52,6 +52,12 @@ const paths = {
       <path d="M8 16v-4M12 16V8M16 16v-6" />
     </>
   ),
+  chat: (
+    <>
+      <path d="M3 4h18v12H10l-5 4v-4H3z" />
+      <path d="M7 9h10M7 12h6" />
+    </>
+  ),
   arrow: <path d="M5 12h14M13 6l6 6-6 6" />,
   mail: (
     <>

@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import { IBM_Plex_Mono, Inter } from "next/font/google";
-import { profile } from "@/content/profile";
+import { lab } from "@/content/lab";
 import "./globals.css";
 
 const plexMono = IBM_Plex_Mono({
@@ -15,8 +15,11 @@ const inter = Inter({
 });
 
 export const metadata: Metadata = {
-  title: `${profile.name} · ${profile.title}`,
-  description: profile.intro,
+  title: {
+    default: `${lab.name} · ${lab.tagline}`,
+    template: `%s · ${lab.name}`,
+  },
+  description: lab.intro,
 };
 
 export default function RootLayout({ children }: LayoutProps<"/">) {

@@ -61,10 +61,10 @@ function shownOf(build: StoredBuild): Shown | null {
 
 type AskScreenProps = {
   session: AskSessionView;
-  /** Asked from the home page: the session's first Build plays on arrival. */
+  /** Asked from the Ledger demo page: the session's first Build plays on arrival. */
   initialQuestion: string | null;
   limited: boolean;
-  /** The home page's sections, which Ledger takes apart. */
+  /** The About page's sections, which Ledger takes apart. */
   pageCopy: ReactNode;
 };
 
@@ -272,10 +272,10 @@ export function AskScreen({
         <header className="sticky top-0 z-20 border-ink border-b-2 bg-marble">
           <div className="flex h-16 items-center justify-between gap-4 px-4 sm:px-6">
             <Link
-              href="/"
+              href="/demos/ledger"
               className="eyebrow font-bold text-federal-blue underline"
             >
-              ← Reljod Labs
+              ← Ledger demo
             </Link>
             <p className="eyebrow text-ink-muted">
               Ask session · Ledger rebuilds the site
