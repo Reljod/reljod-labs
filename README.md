@@ -1,6 +1,13 @@
 # Reljod Labs
 
-Portfolio and service site for Reljod Oreta, AI consultant for banking and financial services. Built with Next.js (App Router), Tailwind CSS 4 and the [Colonnade](https://claude.ai/artifact/HJP49abWMYrhjyPmkPez2Y) design system.
+Reljod Oreta's lab of working AI demos for banking and financial services. Built with Next.js (App Router), Tailwind CSS 4 and the [Colonnade](https://claude.ai/artifact/HJP49abWMYrhjyPmkPez2Y) design system.
+
+| Route | What it shows |
+| --- | --- |
+| `/` | The lab: live demos as large panels with moving previews, upcoming work floating on the bench |
+| `/about` | Reljod: services, approach, experience, selected work and contact |
+| `/demos/document-compliance` | Document compliance checks demo |
+| `/demos/ledger` | Ledger, the cat banker, who rebuilds the About page into an answer |
 
 ## Commands
 
@@ -17,13 +24,14 @@ All copy lives in typed data files under `src/content/`, so most updates never t
 
 | File | What it holds |
 | --- | --- |
-| `profile.ts` | Name, headline, intro, contact links, hero case file and highlight figures |
+| `lab.ts` | The lab's name, tagline and landing headline |
+| `profile.ts` | Name, headline, intro, contact links and highlight figures |
 | `services.ts` | "What I do" services and the four-step approach |
 | `experience.ts` | Work history and credentials |
-| `projects.ts` | Project cards. The home page shows the first `FEATURED_PROJECT_LIMIT` (6) |
-| `navigation.ts` | Header and footer anchor links |
+| `projects.ts` | Every demo and project. `status: "Live"` puts one on the landing stage; anything else floats on the bench. The About page shows the first `FEATURED_PROJECT_LIMIT` (6) |
+| `navigation.ts` | Header and footer links |
 
-Project entries are templates. Replace bracketed placeholders such as `[Outcome metric]` with real, approved figures, and set `href` once a case study exists to turn on its "Read case study" link.
+Project entries are templates. Replace bracketed placeholders such as `[Outcome metric]` with real, approved figures, and set `href` once a case study exists to turn on its "Read case study" link. A new live demo also needs a moving preview: add one under `src/components/showcase/previews/` and register it by slug in `live-demos.tsx`. Add new projects at the end of the list: Ledger's source paths point at projects by index.
 
 ## Design system
 

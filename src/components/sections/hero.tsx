@@ -4,7 +4,7 @@ import { Icon } from "@/components/ui/icon";
 import { profile } from "@/content/profile";
 import { source, sourcePath } from "@/features/ledger/domain/source-paths";
 
-/** `aside` fills the right column: Ledger's chat box on the home page. */
+/** The About page's opener. `aside` fills the right column with the profile card. */
 export function Hero({ aside }: { aside?: ReactNode }) {
   return (
     <section id="top" aria-labelledby="hero-title" className="bg-marble">
@@ -31,8 +31,8 @@ export function Hero({ aside }: { aside?: ReactNode }) {
               Book a call
               <Icon name="arrow" size={18} />
             </ButtonLink>
-            <ButtonLink href="#projects" variant="secondary">
-              See the work
+            <ButtonLink href="/#demos" variant="secondary">
+              See the demos
             </ButtonLink>
           </div>
         </div>

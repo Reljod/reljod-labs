@@ -35,7 +35,7 @@ export type ContentKind = ContentBlock["kind"];
 
 export type SourceNode = {
   path: string;
-  /** The home section the piece sits in, so Ledger knows where to run. */
+  /** The About section the piece sits in, so Ledger knows where to run. */
   section: string;
   block: ContentBlock;
   /** A quote can be cut down to an excerpt; anything else is taken whole. */
@@ -62,7 +62,7 @@ export function blockText(block: ContentBlock): string {
   }
 }
 
-/** Every piece of the home page Ledger may cut, keyed by source path. */
+/** Every piece of the About page Ledger may cut, keyed by source path. */
 export function buildContentTree(): ContentTree {
   const nodes: SourceNode[] = [];
   const add = (

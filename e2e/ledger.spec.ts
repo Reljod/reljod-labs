@@ -2,7 +2,7 @@ import { expect, type Locator, type Page, test } from "@playwright/test";
 import { PRESET_QUESTIONS } from "../src/features/ledger/domain/presets";
 
 /*
- * Ledger: ask from the home page, watch him rebuild the site into an answer.
+ * Ledger: ask from his demo page, watch him rebuild the About page into an answer.
  * Stubbed by default: canned Build plans run through the real validation,
  * storage and stream. `E2E_LEDGER_LIVE=1` asks the real model instead and
  * skips the scenarios that need a specific plan.
@@ -46,9 +46,9 @@ const poses = (page: Page) =>
 
 const screen = (page: Page) => page.getByTestId("ask-screen");
 
-/** Asks from the home page's chat box and waits for the session page to open. */
-async function askFromHome(page: Page, question: string, viaPreset = false) {
-  await page.goto("/");
+/** Asks from the Ledger demo's chat box and waits for the session page to open. */
+async function askFromDemo(page: Page, question: string, viaPreset = false) {
+  await page.goto("/demos/ledger");
   const box = page.getByTestId("ask-box");
   await expect(box).toBeVisible();
   if (viaPreset) {
@@ -107,7 +107,7 @@ test.describe("Ledger", () => {
 
   for (const question of PRESET_QUESTIONS) {
     test(`preset: ${question}`, async ({ page }) => {
-      await askFromHome(page, question, true);
+      await askFromDemo(page, question, true);
       await expect(page.getByTestId("board-block").first()).toBeVisible({
         timeout: BUILD_TIMEOUT,
       });
@@ -126,7 +126,7 @@ test.describe("Ledger", () => {
   test("KYC figures are cut out of the Maya Philippines bullet, word for word", async ({
     page,
   }) => {
-    await askFromHome(page, PRESET_QUESTIONS[1], true);
+    await askFromDemo(page, PRESET_QUESTIONS[1], true);
     await expectAnswered(page);
     const fromMaya = page.locator(
       '[data-testid="answer-block"][data-source^="experience.3"]',
@@ -149,7 +149,7 @@ test.describe("Ledger", () => {
   test("a follow-up rewinds the answer and rebuilds in the same session", async ({
     page,
   }) => {
-    await askFromHome(page, PRESET_QUESTIONS[0], true);
+    await askFromDemo(page, PRESET_QUESTIONS[0], true);
     await expectAnswered(page);
     const sessionUrl = page.url();
     await screen(page).getByTestId("chat-input").fill(PRESET_QUESTIONS[2]);
@@ -170,7 +170,7 @@ test.describe("Ledger", () => {
   test("an off-topic question builds nothing and offers the presets", async ({
     page,
   }) => {
-    await askFromHome(page, "What's the best pizza topping?");
+    await askFromDemo(page, "What's the best pizza topping?");
     await waitForBuild(page);
     await expect(screen(page).getByTestId("not-found")).toBeVisible();
     await expect(
@@ -183,7 +183,7 @@ test.describe("Ledger", () => {
   test("a stored session shows its answer at once and replays on request", async ({
     page,
   }) => {
-    await askFromHome(page, PRESET_QUESTIONS[3], true);
+    await askFromDemo(page, PRESET_QUESTIONS[3], true);
     await expectAnswered(page);
     const before = await page
       .getByTestId("answer-block")
@@ -212,13 +212,12 @@ test.describe("Ledger", () => {
     await expectAnswered(page);
   });
 
-  test("the home page is untouched by a session and has no case file", async ({
+  test("the About page is untouched by a session and has no case file", async ({
     page,
   }) => {
-    await askFromHome(page, PRESET_QUESTIONS[5], true);
+    await askFromDemo(page, PRESET_QUESTIONS[5], true);
     await expectAnswered(page);
-    await page.goto("/");
-    await expect(page.getByTestId("ask-box")).toBeVisible();
+    await page.goto("/about");
     await expect(page.getByText("Case file · Digital bank")).toHaveCount(0);
     await expect(page.locator(".ldg-torn")).toHaveCount(0);
     await expect(page.getByTestId("answer-page")).toHaveCount(0);
@@ -231,7 +230,7 @@ test.describe("Ledger", () => {
     page,
   }) => {
     test.skip(live, "needs a canned plan");
-    await askFromHome(page, STUB_INVENTED);
+    await askFromDemo(page, STUB_INVENTED);
     await expectAnswered(page);
     await expect(page.getByTestId("answer-block")).toHaveCount(1);
     await expect(page.getByTestId("answer-page")).not.toContainText("99%");
@@ -242,7 +241,7 @@ test.describe("Ledger", () => {
     page,
   }) => {
     test.skip(live, "needs a canned plan");
-    await askFromHome(page, STUB_TOSS);
+    await askFromDemo(page, STUB_TOSS);
     await expectAnswered(page);
     expect(await poses(page)).toContain("toss");
     const sources = await page
@@ -256,7 +255,7 @@ test.describe("Ledger", () => {
   test("an over-limit visitor lands on a stored answer", async ({ page }) => {
     test.skip(live, "forces the limit with an e2e header");
     await page.setExtraHTTPHeaders({ "x-ledger-force-limit": "1" });
-    await page.goto("/");
+    await page.goto("/demos/ledger");
     await page
       .getByTestId("ask-box")
       .getByTestId("preset-chip")
@@ -275,7 +274,7 @@ test.describe("Ledger with reduced motion", () => {
     test.skip(live, "covered by the stubbed run");
     await recordPoses(page);
     const started = Date.now();
-    await askFromHome(page, PRESET_QUESTIONS[2], true);
+    await askFromDemo(page, PRESET_QUESTIONS[2], true);
     await expectAnswered(page);
     expect(Date.now() - started).toBeLessThan(45_000);
     const seen = await poses(page);
@@ -294,7 +293,7 @@ test.describe("Ledger on a phone", () => {
   test("builds into one column with a small Ledger", async ({ page }) => {
     test.skip(live, "covered by the stubbed run");
     await recordPoses(page);
-    await askFromHome(page, PRESET_QUESTIONS[1], true);
+    await askFromDemo(page, PRESET_QUESTIONS[1], true);
     await expectAnswered(page);
     const cat = screen(page).getByTestId("ledger-cat");
     expect((await cat.boundingBox())?.width).toBe(72);

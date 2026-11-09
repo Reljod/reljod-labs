@@ -1,6 +1,6 @@
 import type { Project } from "./types";
 
-/** How many projects the home page shows. The rest stay in the list for a future projects page. */
+/** How many projects the About page shows. The rest stay in the list for a future projects page. */
 export const FEATURED_PROJECT_LIMIT = 6;
 
 /*
@@ -23,6 +23,11 @@ export const projects: Project[] = [
       src: "/projects/document-compliance.jpg",
       alt: "Specimen passport from the fictional Republic of Meridia, one of the demo's synthetic documents",
     },
+    features: [
+      "Six synthetic onboarding packs, each hiding a different problem",
+      "Watch OCR and the model scan every page live",
+      "Every finding boxed on the source document",
+    ],
   },
   {
     slug: "kyc-automation",
@@ -90,6 +95,32 @@ export const projects: Project[] = [
     tags: ["OpenCV", "YOLO"],
     status: "Case study soon",
   },
+  // Kept last so Ledger's `projects.<index>` source paths keep naming the same entries.
+  {
+    slug: "ledger",
+    icon: "chat",
+    title: "Ledger, the cat banker",
+    sector: "Conversational UI",
+    summary:
+      "Ask about Reljod and a cat in a suit takes the About page apart, carries the right pieces into order and rebuilds them into your answer.",
+    outcome: "Every answer built from the site's own words",
+    tags: ["LLM planning", "Streaming", "Motion"],
+    status: "Live",
+    href: "/demos/ledger",
+    features: [
+      "Ask anything, or pick a ready-made question",
+      "A model plans which pieces of the page answer it",
+      "Ledger hauls them over and reforms the page",
+    ],
+  },
 ];
 
 export const featuredProjects = projects.slice(0, FEATURED_PROJECT_LIMIT);
+
+/** The landing page's split: live demos take the stage, the rest wait on the bench. */
+export const liveDemos = projects.filter(
+  (project) => project.status === "Live",
+);
+export const benchProjects = projects.filter(
+  (project) => project.status !== "Live",
+);

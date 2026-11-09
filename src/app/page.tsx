@@ -1,14 +1,21 @@
-import { HomeSections } from "@/components/sections/home-sections";
+import { Contact } from "@/components/sections/contact";
 import { SiteFooter } from "@/components/sections/site-footer";
 import { SiteHeader } from "@/components/sections/site-header";
-import { AskBox } from "@/features/ledger/components/ask-box";
+import { AboutTeaser } from "@/components/showcase/about-teaser";
+import { Bench } from "@/components/showcase/bench";
+import { LabHero } from "@/components/showcase/lab-hero";
+import { LiveDemos } from "@/components/showcase/live-demos";
 
 export default function Home() {
   return (
     <>
       <SiteHeader />
       <main>
-        <HomeSections heroAside={<AskBox />} />
+        <LabHero />
+        <LiveDemos />
+        <Bench />
+        <AboutTeaser />
+        <Contact />
       </main>
       <SiteFooter />
     </>

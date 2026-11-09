@@ -9,7 +9,7 @@ The mascot: a ginger tabby in a navy suit who answers questions about Reljod usi
 _Avoid_: Bot, assistant, agent, chatbot
 
 **Ask session**:
-One visitor's conversation with Ledger, kept at its own address so the home page is never changed. Holds every Build in order.
+One visitor's conversation with Ledger, kept at its own address so the About page is never changed. Holds every Build in order.
 _Avoid_: Chat, thread, conversation
 
 **Build**:
