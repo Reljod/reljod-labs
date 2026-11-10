@@ -5,6 +5,7 @@ import {
 } from "@/features/casework/domain/chat-events";
 import { chat } from "@/features/casework/server/chat";
 import { countMessages } from "@/features/casework/server/repository";
+import { checkSpend, LimitError } from "@/features/casework/server/runs";
 import { E2E_VISITOR, ensureSession } from "@/features/casework/server/session";
 
 export const maxDuration = 120;
@@ -44,6 +45,16 @@ export async function POST(request: Request) {
         { headers: { "content-type": "application/x-ndjson" } },
       );
     }
+  }
+
+  // Every message calls the model, so the session's spend cap applies here too.
+  try {
+    await checkSpend(session);
+  } catch (error) {
+    if (!(error instanceof LimitError)) throw error;
+    return new Response(line({ type: "error", message: error.message }), {
+      headers: { "content-type": "application/x-ndjson" },
+    });
   }
 
   const origin = new URL(request.url).origin;

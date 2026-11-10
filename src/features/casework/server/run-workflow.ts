@@ -35,6 +35,9 @@ import {
 /** How long a Question waits for a person before the Run goes on without it. */
 const ANSWER_TIMEOUT = "30m";
 
+/** Questions one Run may put to the person; past this it records a Gap instead. */
+const MAX_QUESTIONS = 6;
+
 export type RunInput = {
   ctx: RunContext;
   pipeline: PipelineId | null;
@@ -440,7 +443,7 @@ export async function caseworkRun(input: RunInput) {
       let missing = unmet(state, JOBS[job].needs(state));
       while (missing.length > 0) {
         const wanted = missing[0];
-        if (questions >= 6) {
+        if (questions >= MAX_QUESTIONS) {
           state = {
             ...state,
             gaps: [
@@ -530,7 +533,7 @@ export async function caseworkRun(input: RunInput) {
         state = result.state;
         summary = result.summary;
         const question = "question" in result ? result.question : undefined;
-        if (question && questions < 6) {
+        if (question && questions < MAX_QUESTIONS) {
           questions++;
           const { answer, documents } = await ask(
             ctx,

@@ -185,13 +185,14 @@ export async function* chat(
     }
     const steps = await result.steps;
     let costUsd = 0;
-    for (const step of steps) {
+    // Latency is the whole message's, recorded once; each step still gets its own tokens and cost.
+    for (const [index, step] of steps.entries()) {
       const cost = await trackCall({
         purpose: "chat",
         model: settings.model,
         usage: step.usage,
         providerMetadata: step.providerMetadata,
-        started,
+        started: index === 0 ? started : Date.now(),
         sessionId: session.id,
         runId,
       });

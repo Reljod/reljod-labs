@@ -262,7 +262,6 @@ export async function loadMessages(sessionId: string, limit = 40) {
 }
 
 export async function countMessages(filter: {
-  sessionIds?: string[];
   visitorHash?: string;
   since: Date;
 }) {

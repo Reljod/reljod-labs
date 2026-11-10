@@ -3,7 +3,7 @@ import { emptyRun, reduceRun } from "../components/run-reducer";
 import { isoDate } from "./dates";
 import { planJobs } from "./jobs";
 import { nameScore, sameName, surnameChanged } from "./names";
-import { inferPipeline } from "./pipelines";
+import { inferPipeline, PIPELINES } from "./pipelines";
 import { reconcile } from "./rules/contributions";
 import { recommend } from "./rules/decision";
 import type { RunState } from "./run-state";
@@ -45,6 +45,10 @@ describe("planning", () => {
   it("runs what a job depends on first", () => {
     expect(planJobs(["screen"])).toEqual(["sort", "read", "screen"]);
     expect(planJobs(["decide"])).toEqual(["decide"]);
+  });
+  it("starts every pipeline with sort, which pipeline inference relies on", () => {
+    for (const pipeline of Object.values(PIPELINES))
+      expect(pipeline.jobs[0]).toBe("sort");
   });
   it("infers the pipeline from sorted kinds, and declines to guess on a tie", () => {
     expect(

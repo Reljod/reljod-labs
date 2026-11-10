@@ -17,7 +17,7 @@ export async function GET(
   }
   const from = Number(new URL(request.url).searchParams.get("from") ?? 0);
   const events = getWorkflowRun(run.workflow_run_id).getReadable({
-    startIndex: Number.isFinite(from) ? from : 0,
+    startIndex: Number.isFinite(from) ? Math.max(0, Math.trunc(from)) : 0,
   });
   const encoder = new TextEncoder();
   const body = events.pipeThrough(

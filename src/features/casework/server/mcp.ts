@@ -1,4 +1,5 @@
 import "server-only";
+import { timingSafeEqual } from "node:crypto";
 import type { McpServer } from "@modelcontextprotocol/server";
 import { createMcpHandler, withMcpAuth } from "mcp-handler";
 import { z } from "zod";
@@ -6,6 +7,7 @@ import { CHECKS } from "../domain/checks";
 import { kindLabel } from "../domain/document-kinds";
 import { JOB_IDS, JOBS, planJobs } from "../domain/jobs";
 import { PIPELINE_IDS, PIPELINES, type PipelineId } from "../domain/pipelines";
+import { answerSchema } from "../domain/run-events";
 import { env } from "./env";
 import {
   createSession,
@@ -22,6 +24,12 @@ import { verifySessionToken } from "./session";
 import { supabase } from "./supabase";
 
 const EXTERNAL_VISITOR = "mcp-external";
+
+function sameSecret(given: string, expected: string) {
+  const a = Buffer.from(given);
+  const b = Buffer.from(expected);
+  return a.length === b.length && timingSafeEqual(a, b);
+}
 
 type ToolContext = {
   http?: { authInfo?: { extra?: Record<string, unknown> } };
@@ -244,13 +252,7 @@ export function registerCaseworkTools(server: McpServer) {
       title: "Answer a question",
       description:
         "Answers a question a waiting run asked: with Document ids that supply what it needs, a choice from its options, a short text, or skip to go on without it.",
-      inputSchema: z.object({
-        questionId: z.string(),
-        documentIds: z.array(z.string()).max(12).optional(),
-        choice: z.string().optional(),
-        text: z.string().optional(),
-        skip: z.boolean().optional(),
-      }),
+      inputSchema: answerSchema.extend({ questionId: z.string() }),
     },
     async (args, ctx) => {
       try {
@@ -333,7 +335,7 @@ export const mcpHandler = withMcpAuth(
       };
     }
     const external = env.mcpToken();
-    if (external && bearer === external) {
+    if (external && sameSecret(bearer, external)) {
       return {
         token: bearer,
         clientId: "casework-external",

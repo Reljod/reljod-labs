@@ -33,16 +33,28 @@ export async function settingsFor(session: SessionRow) {
   return resolveSettings(org, session.model_overrides ?? {});
 }
 
+/** Stops new model work once a session has spent the demo's cap. */
+export async function checkSpend(session: SessionRow) {
+  if (session.visitor_hash === E2E_VISITOR) return;
+  const spend = await sessionSpend(session.id);
+  const spent = spend.reduce((sum, row) => sum + row.costUsd, 0);
+  if (spent >= LIMITS.spendPerSession) {
+    throw new LimitError(
+      `This session has spent $${spent.toFixed(2)} on models, the demo's cap. Start a new desk to keep going.`,
+    );
+  }
+}
+
 export async function checkLimits(session: SessionRow) {
   if (session.visitor_hash === E2E_VISITOR) return;
   const now = Date.now();
-  const [visitorRuns, dailyRuns, spend] = await Promise.all([
+  await checkSpend(session);
+  const [visitorRuns, dailyRuns] = await Promise.all([
     countRuns({
       visitorHash: session.visitor_hash,
       since: new Date(now - 3_600_000),
     }),
     countRuns({ since: new Date(now - 86_400_000) }),
-    sessionSpend(session.id),
   ]);
   if (visitorRuns >= LIMITS.runsPerVisitorPerHour) {
     throw new LimitError(
@@ -52,12 +64,6 @@ export async function checkLimits(session: SessionRow) {
   if (dailyRuns >= LIMITS.runsPerDay) {
     throw new LimitError(
       "The desk has hit today's run limit. Try again tomorrow.",
-    );
-  }
-  const spent = spend.reduce((sum, row) => sum + row.costUsd, 0);
-  if (spent >= LIMITS.spendPerSession) {
-    throw new LimitError(
-      `This session has spent $${spent.toFixed(2)} on models, the demo's cap. Start a new desk to keep going.`,
     );
   }
 }

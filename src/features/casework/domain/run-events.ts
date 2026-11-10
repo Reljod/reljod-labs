@@ -1,3 +1,4 @@
+import { z } from "zod";
 import type { DocumentKind } from "./document-kinds";
 import type { JobId } from "./jobs";
 import type { PipelineId } from "./pipelines";
@@ -79,9 +80,11 @@ type DistributiveOmit<T, K extends PropertyKey> = T extends unknown
 export type RunEventInput = DistributiveOmit<RunEvent, "at">;
 
 /** How a Question is answered: Documents, a choice, free text, or "go on without it". */
-export type Answer = {
-  documentIds?: string[];
-  choice?: string;
-  text?: string;
-  skip?: boolean;
-};
+export const answerSchema = z.object({
+  documentIds: z.array(z.string()).max(12).optional(),
+  choice: z.string().max(100).optional(),
+  text: z.string().max(500).optional(),
+  skip: z.boolean().optional(),
+});
+
+export type Answer = z.infer<typeof answerSchema>;

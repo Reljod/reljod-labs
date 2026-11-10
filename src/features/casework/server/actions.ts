@@ -8,7 +8,7 @@ import {
   PURPOSE_IDS,
   type Purpose,
 } from "../domain/model-config";
-import type { Answer } from "../domain/run-events";
+import { type Answer, answerSchema } from "../domain/run-events";
 import type { SourceFormat } from "../domain/run-state";
 import type { DeskView, DocView, SpendView } from "../view";
 import {
@@ -134,7 +134,7 @@ export async function getSpend() {
 
 export async function answer(questionId: string, reply: Answer) {
   const session = await ensureSession();
-  return answerQuestion(session, questionId, reply);
+  return answerQuestion(session, String(questionId), answerSchema.parse(reply));
 }
 
 export async function saveModelSettings(
