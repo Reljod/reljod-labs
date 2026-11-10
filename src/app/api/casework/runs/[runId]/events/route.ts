@@ -1,4 +1,5 @@
 import { getRun as getWorkflowRun } from "workflow/api";
+import { AccessDeniedError, denied } from "@/features/access/server/gate";
 import type { RunEvent } from "@/features/casework/domain/run-events";
 import { getRun } from "@/features/casework/server/repository";
 import { currentSession } from "@/features/casework/server/session";
@@ -15,7 +16,13 @@ export async function GET(
   { params }: { params: Promise<{ runId: string }> },
 ) {
   const { runId } = await params;
-  const [run, session] = await Promise.all([getRun(runId), currentSession()]);
+  // `currentSession` passes the Access gate before it reads the desk cookie.
+  const session = await currentSession().catch((error) => {
+    if (error instanceof AccessDeniedError) return denied();
+    throw error;
+  });
+  if (session instanceof Response) return session;
+  const run = await getRun(runId);
   if (!run?.workflow_run_id || !session || run.session_id !== session.id) {
     return new Response("Not found", { status: 404 });
   }

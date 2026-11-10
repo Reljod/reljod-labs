@@ -1,7 +1,9 @@
 import type { Metadata } from "next";
-import { notFound } from "next/navigation";
+import { notFound, redirect } from "next/navigation";
 import { Suspense } from "react";
 import { AboutSections } from "@/components/sections/about-sections";
+import { ACCESS_PATH } from "@/features/access/constants";
+import { currentAccess } from "@/features/access/server/gate";
 import { AskScreen } from "@/features/ledger/components/ask-screen";
 import { loadAskSession } from "@/features/ledger/server/repository";
 
@@ -34,6 +36,9 @@ async function Session({
   searchParams: Promise<Record<string, string | string[] | undefined>>;
 }) {
   const [{ sessionId }, query] = await Promise.all([params, searchParams]);
+  if (!(await currentAccess())) {
+    redirect(`${ACCESS_PATH}?next=${encodeURIComponent(`/ask/${sessionId}`)}`);
+  }
   const session = await loadAskSession(sessionId);
   if (!session) notFound();
   return (

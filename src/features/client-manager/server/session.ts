@@ -1,6 +1,7 @@
 import "server-only";
 import { randomUUID } from "node:crypto";
 import { cookies, headers } from "next/headers";
+import { requireAccess } from "@/features/access/server/gate";
 import { E2E_HEADER } from "@/features/document-compliance/constants";
 import { hashVisitor } from "@/features/document-compliance/server/rate-limit";
 import { env } from "./env";
@@ -27,8 +28,13 @@ export async function visitor(): Promise<Visitor> {
 
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
-/** This browser's session id, if it has one. Readable from any server code. */
+/**
+ * This browser's session id, if it has one. Every Client Manager route reads
+ * the session here (or through `ensureSessionId`), so this is where they all
+ * pass the Access gate: no route can reach the model or the graph without it.
+ */
 export async function currentSessionId(): Promise<string | null> {
+  await requireAccess();
   const value = (await cookies()).get(SESSION_COOKIE)?.value;
   return value && UUID.test(value) ? value : null;
 }

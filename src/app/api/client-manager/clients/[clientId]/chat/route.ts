@@ -20,6 +20,7 @@ import {
   ensureSessionId,
   visitor,
 } from "@/features/client-manager/server/session";
+import { failure } from "../../../respond";
 
 export const maxDuration = 120;
 
@@ -35,7 +36,13 @@ export async function POST(
   const parsed = bodySchema.safeParse(await request.json().catch(() => null));
   if (!parsed.success) return new Response("Bad request", { status: 400 });
   const { clientId } = await params;
-  const sessionId = await ensureSessionId();
+  let sessionId: string;
+  try {
+    // Passes the Access gate before anything is read or asked.
+    sessionId = await ensureSessionId();
+  } catch (error) {
+    return failure(error);
+  }
   const client = await viewableClient(clientId, sessionId);
   if (!client) return new Response("Not found", { status: 404 });
 

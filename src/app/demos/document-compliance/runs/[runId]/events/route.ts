@@ -1,4 +1,5 @@
 import { getRun } from "workflow/api";
+import { accessOrDenied } from "@/features/access/server/gate";
 import { workflowRunIdOf } from "@/features/document-compliance/server/repository";
 
 // Stays open while the run streams; a reconnect resumes from `from`.
@@ -9,6 +10,8 @@ export async function GET(
   request: Request,
   { params }: { params: Promise<{ runId: string }> },
 ) {
+  const access = await accessOrDenied();
+  if (access instanceof Response) return access;
   const { runId } = await params;
   const workflowRunId = await workflowRunIdOf(runId);
   if (!workflowRunId) return new Response("Not found", { status: 404 });
