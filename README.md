@@ -9,6 +9,7 @@ Reljod Oreta's lab of working AI demos for banking and financial services. Built
 | `/demos/document-compliance` | Document compliance checks demo |
 | `/demos/ledger` | Ledger, the cat banker, who rebuilds the About page into an answer |
 | `/demos/casework` | The Casework desk: a specialist agent running four review pipelines as MCP tools on durable workflows |
+| `/access` | The door to the demos: enter a guest code, or sign in. `/access/guests` issues guest passes |
 | `/api/casework/mcp` | The Casework MCP server (bearer token required) |
 
 ## Commands

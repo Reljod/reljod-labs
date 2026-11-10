@@ -1,5 +1,6 @@
 "use server";
 
+import { requireAccess } from "@/features/access/server/gate";
 import { cleanQuestion } from "../domain/presets";
 import { rateLimitMessage } from "./rate-limit";
 import { createAskSession, latestAnsweredSessionId } from "./repository";
@@ -14,6 +15,7 @@ export type StartAskResult =
 export async function startAskSession(
   question: string,
 ): Promise<StartAskResult> {
+  await requireAccess();
   if (!cleanQuestion(question)) return { status: "empty" };
   const visitor = await currentVisitor();
   const message = await rateLimitMessage(visitor);

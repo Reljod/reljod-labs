@@ -1,3 +1,4 @@
+import { accessOrDenied } from "@/features/access/server/gate";
 import { cleanQuestion } from "@/features/ledger/domain/presets";
 import { loadAskSession } from "@/features/ledger/server/repository";
 import { runBuild } from "@/features/ledger/server/run-build";
@@ -10,6 +11,8 @@ export async function POST(
   request: Request,
   { params }: { params: Promise<{ sessionId: string }> },
 ) {
+  const access = await accessOrDenied();
+  if (access instanceof Response) return access;
   const { sessionId } = await params;
   const body = (await request.json().catch(() => null)) as {
     question?: unknown;

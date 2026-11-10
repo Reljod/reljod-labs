@@ -3,6 +3,8 @@
 import { randomUUID } from "node:crypto";
 import { cookies, headers } from "next/headers";
 import { start } from "workflow/api";
+import { DENIED_MESSAGE } from "@/features/access/constants";
+import { currentAccess, requireAccess } from "@/features/access/server/gate";
 import { E2E_HEADER } from "../constants";
 import { individualOnboarding } from "../domain/rulebook";
 import { findPack } from "../packs";
@@ -63,6 +65,9 @@ async function visitor() {
  */
 export async function startPrescreen(packSlug: string): Promise<StartResult> {
   try {
+    if (!(await currentAccess())) {
+      return { status: "error", message: DENIED_MESSAGE };
+    }
     return await startRun(packSlug);
   } catch (error) {
     console.error("[document-compliance] could not start a Pre-screen", error);
@@ -118,11 +123,13 @@ async function startRun(packSlug: string): Promise<StartResult> {
 }
 
 export async function getRun(runId: string): Promise<RunView | null> {
+  await requireAccess();
   return loadRun(runId);
 }
 
 /** The runs this browser started, newest first; empty before its first run. */
 export async function getSessionRuns(): Promise<SessionRunView[]> {
+  await requireAccess();
   const sessionId = await currentSessionId();
   return sessionId ? listSessionRuns(sessionId) : [];
 }

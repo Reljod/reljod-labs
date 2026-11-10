@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { AccessDeniedError, denied } from "@/features/access/server/gate";
 import {
   type ChatEvent,
   MAX_MESSAGE_LENGTH,
@@ -26,7 +27,13 @@ export async function POST(request: Request) {
     return new Response("Empty message", { status: 400 });
   }
 
-  const session = await ensureSession();
+  let session: Awaited<ReturnType<typeof ensureSession>>;
+  try {
+    session = await ensureSession();
+  } catch (error) {
+    if (error instanceof AccessDeniedError) return denied();
+    throw error;
+  }
   const encoder = new TextEncoder();
   const line = (event: ChatEvent) =>
     encoder.encode(`${JSON.stringify(event)}\n`);

@@ -1,6 +1,7 @@
 import "server-only";
 import { createHmac, timingSafeEqual } from "node:crypto";
 import { cookies, headers } from "next/headers";
+import { requireAccess } from "@/features/access/server/gate";
 import { E2E_HEADER } from "@/features/document-compliance/constants";
 import {
   E2E_VISITOR,
@@ -42,16 +43,27 @@ async function rememberDesk(id: string) {
   jar.set(DESKS_COOKIE, ids.join("."), COOKIE);
 }
 
-/** Opens a fresh desk and keeps the old ones on the list. */
-export async function startSession() {
+async function openSession() {
   const { hash } = await visitorHash();
   const id = await createSession(hash);
   await rememberDesk(id);
   return id;
 }
 
+/*
+ * Every way to a desk session passes the Access gate here, so no server
+ * action or route of the desk can reach the model without it.
+ */
+
+/** Opens a fresh desk and keeps the old ones on the list. */
+export async function startSession() {
+  await requireAccess();
+  return openSession();
+}
+
 /** Goes back to an earlier desk, if this browser owns it. */
 export async function switchSession(id: string) {
+  await requireAccess();
   if (!(await deskIds()).includes(id)) return false;
   if (!(await getSession(id))) return false;
   await rememberDesk(id);
@@ -91,6 +103,7 @@ export async function visitorHash() {
 
 /** This browser's desk session, if it has one. */
 export async function currentSession(): Promise<SessionRow | null> {
+  await requireAccess();
   const id = (await cookies()).get(SESSION_COOKIE)?.value;
   return id ? getSession(id) : null;
 }
@@ -99,7 +112,7 @@ export async function currentSession(): Promise<SessionRow | null> {
 export async function ensureSession(): Promise<SessionRow> {
   const existing = await currentSession();
   if (existing) return existing;
-  const id = await startSession();
+  const id = await openSession();
   const session = await getSession(id);
   if (!session) throw new Error("Session was not created");
   return session;
