@@ -4,144 +4,217 @@ import {
   AnimatePresence,
   animate,
   motion,
+  useMotionValue,
   useReducedMotion,
 } from "motion/react";
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Cat, type CatPose } from "@/features/ledger/components/cat";
 import { chooseGait } from "@/features/ledger/domain/gait";
 
-const SIZE = 76;
+const SIZE = 132;
 const HEIGHT = Math.round((SIZE * 250) / 240);
+const MARGIN = 12;
 
 export type CatCue = {
-  /** Where he should stand: the element he perches on, by its top edge. */
-  target: HTMLElement | null;
-  /** What he does once there. */
+  /** What he does once he is where he is going. */
   pose: CatPose;
   /** A few words in a speech bubble, or none. */
   line?: string;
-  /** Stand left of the target's centre instead of on it. */
-  align?: "center" | "left" | "right";
+  /** Perch on top of this element; without it he goes home to the bottom right. */
+  on?: HTMLElement | null;
+  /** Take the left-to-right position from this element instead of the middle of `on`. */
+  along?: HTMLElement | null;
+  /** Nothing to do: wander anywhere on the desk between rests. */
+  roam?: boolean;
 };
 
+type Point = { x: number; y: number };
+
+function bounds(floor: number) {
+  return {
+    minX: MARGIN,
+    maxX: Math.max(MARGIN, window.innerWidth - SIZE - MARGIN),
+    minY: 52,
+    maxY: Math.max(52, window.innerHeight - floor - HEIGHT + 6),
+  };
+}
+
+function clamp(point: Point, floor: number): Point {
+  const box = bounds(floor);
+  return {
+    x: Math.min(box.maxX, Math.max(box.minX, point.x)),
+    y: Math.min(box.maxY, Math.max(box.minY, point.y)),
+  };
+}
+
 /**
- * Ledger, loose on the desk: given a cue he runs to its element (side-on,
- * up, down or flying, by direction) and strikes its pose there.
+ * Ledger, loose on the desk. He lives in his own fixed layer above every
+ * panel, drawer and dialog, so nothing on the page can move, clip or cover
+ * him, and he can go anywhere on it. Home is the bottom right. A cue sends
+ * him to perch on the element where the work is; with nothing to do he
+ * wanders, side-on, up, down or flying, by direction.
  */
-export function CatLayer({ cue }: { cue: CatCue }) {
+export function CatLayer({ cue, floor }: { cue: CatCue; floor: number }) {
   const reduceMotion = useReducedMotion();
-  const ref = useRef<HTMLDivElement>(null);
-  const position = useRef<{ x: number; y: number } | null>(null);
-  const motionRef = useRef<{ stop: () => void } | null>(null);
+  const x = useMotionValue(0);
+  const y = useMotionValue(0);
+  const placed = useRef(false);
+  const walk = useRef<{ stop: () => void }[]>([]);
   const [pose, setPose] = useState<CatPose>("wave");
   const [flip, setFlip] = useState(false);
   const [rot, setRot] = useState(0);
   const [line, setLine] = useState<string | undefined>(undefined);
+  const [ready, setReady] = useState(false);
 
-  const spot = useCallback((next: CatCue) => {
-    const rect = next.target?.getBoundingClientRect();
-    if (!rect || rect.width === 0) return null;
-    const x =
-      next.align === "left"
-        ? rect.left - SIZE * 0.6
-        : next.align === "right"
-          ? rect.right - SIZE * 0.4
-          : rect.left + rect.width / 2 - SIZE / 2;
-    return {
-      x: Math.max(4, Math.min(window.innerWidth - SIZE - 4, x)),
-      y: Math.max(4, rect.top - HEIGHT + 10),
+  // He starts at home, already standing there.
+  // biome-ignore lint/correctness/useExhaustiveDependencies: placed once, then kept inside on resize
+  useEffect(() => {
+    const home = bounds(floor);
+    x.set(home.maxX);
+    y.set(home.maxY);
+    placed.current = true;
+    setReady(true);
+    const keepInside = () => {
+      const inside = clamp({ x: x.get(), y: y.get() }, floor);
+      x.set(inside.x);
+      y.set(inside.y);
     };
-  }, []);
+    window.addEventListener("resize", keepInside);
+    return () => window.removeEventListener("resize", keepInside);
+  }, [x, y]);
 
   useEffect(() => {
-    const element = ref.current;
-    const to = spot(cue);
-    if (!element || !to) return;
-    const from = position.current;
-    motionRef.current?.stop();
-    setLine(undefined);
-    if (!from || reduceMotion) {
-      element.style.transform = `translate(${to.x}px, ${to.y}px)`;
-      position.current = to;
-      setPose(cue.pose);
-      setRot(0);
-      setLine(cue.line);
-      return;
-    }
-    const dx = to.x - from.x;
-    const dy = to.y - from.y;
-    if (Math.hypot(dx, dy) < 6) {
-      setPose(cue.pose);
-      setLine(cue.line);
-      return;
-    }
-    const gait = chooseGait(dx, dy, Math.hypot(dx, dy) > 500 ? "dash" : "trot");
-    setPose(gait.pose);
-    setFlip(gait.flip);
-    setRot(gait.rot);
-    const controls = animate(
-      element,
-      {
-        transform: [
-          `translate(${from.x}px, ${from.y}px)`,
-          `translate(${to.x}px, ${to.y}px)`,
-        ],
-      },
-      { duration: Math.min(1.4, gait.duration), ease: [0.45, 0.05, 0.25, 1] },
-    );
-    motionRef.current = controls;
-    controls.then(() => {
-      position.current = to;
-      setRot(0);
-      setFlip(false);
-      setPose(cue.pose);
-      setLine(cue.line);
-    });
-    // Mid-run, remember roughly where he is, so a new cue starts from there.
-    position.current = to;
-  }, [cue, spot, reduceMotion]);
+    if (!placed.current) return;
+    let cancelled = false;
+    let rest: ReturnType<typeof setTimeout> | undefined;
+    const halt = () => {
+      for (const controls of walk.current) controls.stop();
+      walk.current = [];
+    };
 
-  // Keep him on his perch when the layout moves under him.
-  useEffect(() => {
-    const element = ref.current;
-    if (!element || typeof ResizeObserver === "undefined") return;
+    const go = (target: Point, pace: "stroll" | "trot", arrive: () => void) => {
+      halt();
+      const from = { x: x.get(), y: y.get() };
+      const to = clamp(target, floor);
+      const dx = to.x - from.x;
+      const dy = to.y - from.y;
+      if (Math.hypot(dx, dy) < 8 || reduceMotion) {
+        x.set(to.x);
+        y.set(to.y);
+        setRot(0);
+        setFlip(false);
+        arrive();
+        return;
+      }
+      const gait = chooseGait(dx, dy, pace);
+      setLine(undefined);
+      setFlip(gait.flip);
+      setRot(gait.rot);
+      setPose(gait.pose);
+      const options = {
+        duration: Math.min(pace === "stroll" ? 7 : 2.2, gait.duration),
+        // Eases off the mark and into the stop; steady in between.
+        ease: [0.3, 0, 0.3, 1] as [number, number, number, number],
+      };
+      walk.current = [
+        animate(x, to.x, options),
+        animate(y, to.y, {
+          ...options,
+          onComplete: () => {
+            if (cancelled) return;
+            setFlip(false);
+            setRot(0);
+            arrive();
+          },
+        }),
+      ];
+    };
+
     const settle = () => {
-      const to = spot(cue);
-      if (!to) return;
-      element.style.transform = `translate(${to.x}px, ${to.y}px)`;
-      position.current = to;
+      setPose(cue.pose);
+      setLine(cue.line);
     };
-    const observer = new ResizeObserver(() => settle());
-    observer.observe(document.body);
-    if (cue.target) observer.observe(cue.target);
-    window.addEventListener("resize", settle);
+
+    const wander = () => {
+      if (cancelled) return;
+      rest = setTimeout(
+        () => {
+          if (cancelled) return;
+          const box = bounds(floor);
+          go(
+            {
+              x: box.minX + Math.random() * (box.maxX - box.minX),
+              y: box.minY + Math.random() * (box.maxY - box.minY),
+            },
+            "stroll",
+            () => {
+              setPose(Math.random() < 0.25 ? "wave" : "idle");
+              wander();
+            },
+          );
+        },
+        3500 + Math.random() * 5000,
+      );
+    };
+
+    const rect = cue.on?.getBoundingClientRect();
+    const along = cue.along?.getBoundingClientRect();
+    const middle =
+      along && along.width > 0
+        ? along.left + along.width / 2
+        : rect
+          ? rect.left + rect.width / 2
+          : 0;
+    const home = bounds(floor);
+    const target: Point =
+      rect && rect.width > 0
+        ? {
+            x: middle - SIZE / 2,
+            // His feet on the element's top edge.
+            y: rect.top - HEIGHT + 14,
+          }
+        : cue.roam
+          ? { x: x.get(), y: y.get() }
+          : { x: home.maxX, y: home.maxY };
+    go(target, "trot", () => {
+      settle();
+      if (cue.roam) wander();
+    });
+
     return () => {
-      observer.disconnect();
-      window.removeEventListener("resize", settle);
+      cancelled = true;
+      clearTimeout(rest);
+      halt();
     };
-  }, [cue, spot]);
+  }, [cue, floor, x, y, reduceMotion]);
 
   return (
-    <div
-      ref={ref}
-      className="pointer-events-none fixed top-0 left-0 z-30"
-      style={{ width: SIZE, height: HEIGHT }}
+    <motion.div
+      className="pointer-events-none fixed top-0 left-0 z-[90]"
+      style={{
+        x,
+        y,
+        width: SIZE,
+        height: HEIGHT,
+        opacity: ready ? 1 : 0,
+      }}
       aria-hidden="true"
     >
       <AnimatePresence>
         {line ? (
           <motion.p
             key={line}
-            initial={{ opacity: 0, y: 6, scale: 0.9 }}
-            animate={{ opacity: 1, y: 0, scale: 1 }}
-            exit={{ opacity: 0 }}
-            className="absolute bottom-full left-1/2 mb-1 w-max max-w-48 -translate-x-1/2 rounded-sm border-2 border-ink bg-paper px-2 py-1 text-center font-mono text-[10px] leading-tight font-bold tracking-[0.04em] uppercase shadow-hard-sm"
+            initial={{ opacity: 0, y: 4 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: 2 }}
+            transition={{ duration: 0.18, ease: "easeOut" }}
+            className="absolute right-2 bottom-full mb-0.5 w-max max-w-56 rounded-sm border-2 border-ink bg-paper px-2.5 py-1.5 text-center font-mono text-[11px] leading-tight font-bold tracking-[0.04em] uppercase shadow-hard-sm"
           >
             {line}
           </motion.p>
         ) : null}
       </AnimatePresence>
       <Cat pose={pose} flip={flip} rot={rot} size={SIZE} />
-    </div>
+    </motion.div>
   );
 }

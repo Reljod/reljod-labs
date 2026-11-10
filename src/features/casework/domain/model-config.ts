@@ -66,7 +66,7 @@ export const MODELS = {
     label: "GLM 5.3 Flash",
     input: 0.15,
     output: 0.5,
-    reasoning: false,
+    reasoning: true,
   },
 } as const;
 
@@ -84,10 +84,10 @@ export const modelSettingsSchema = z.object({
 export type ModelSettings = z.infer<typeof modelSettingsSchema>;
 export type ModelSettingsByPurpose = Record<Purpose, ModelSettings>;
 
-/** GPT-6.1 Terra everywhere: the pipelines and the chat. */
+/** GLM 5.3 Flash with a little reasoning for the chat; GPT-6.1 Terra for the jobs. */
 export const DEFAULT_SETTINGS: ModelSettingsByPurpose = {
   chat: {
-    model: "openai/gpt-6.1-terra",
+    model: "zai/glm-5.3-flash",
     reasoning: "low",
     temperature: null,
     maxOutputTokens: 2_000,

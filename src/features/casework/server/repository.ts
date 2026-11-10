@@ -28,7 +28,9 @@ export type SessionRow = {
   id: string;
   visitor_hash: string;
   model_overrides: Partial<Record<Purpose, Partial<ModelSettings>>>;
+  title: string | null;
   created_at: string;
+  last_active_at: string;
 };
 
 export async function createSession(visitorHash: string) {
@@ -47,6 +49,32 @@ export async function getSession(id: string) {
     await supabase().from("sessions").select("*").eq("id", id).limit(1),
   );
   return session ?? null;
+}
+
+/** Sessions by id, newest activity first: the desks one browser can go back to. */
+export async function sessionsByIds(ids: string[]) {
+  const valid = ids.filter((id) => /^[0-9a-f-]{36}$/i.test(id));
+  if (valid.length === 0) return [];
+  return rows<SessionRow[]>(
+    await supabase()
+      .from("sessions")
+      .select("*")
+      .in("id", valid)
+      .order("last_active_at", { ascending: false }),
+  );
+}
+
+/** Marks a desk as used now, and names it after its first request. */
+export async function touchSession(session: SessionRow, title?: string) {
+  ok(
+    await supabase()
+      .from("sessions")
+      .update({
+        last_active_at: new Date().toISOString(),
+        ...(!session.title && title ? { title: title.slice(0, 80) } : {}),
+      })
+      .eq("id", session.id),
+  );
 }
 
 export async function setModelOverrides(
@@ -97,6 +125,8 @@ export type DocumentRow = {
   page_paths: string[];
   size_bytes: number;
   label_kind: string | null;
+  /** Synthetic Documents only: the fields a correct Read returns. */
+  label?: Record<string, unknown> | null;
   created_at: string;
 };
 
@@ -126,7 +156,7 @@ export async function loadCabinetDocuments(sessionId: string) {
   return rows<DocumentRow[]>(
     await supabase()
       .from("documents")
-      .select(DOCUMENT_COLUMNS)
+      .select(`${DOCUMENT_COLUMNS}, label`)
       .or(`case_file_slug.not.is.null,session_id.eq.${sessionId}`)
       .order("name"),
   );
@@ -221,7 +251,13 @@ export type MessageRow = {
   text: string;
   document_ids: string[];
   run_id: string | null;
-  tool_calls: { name: string; input: unknown; output?: unknown }[];
+  tool_calls: {
+    name: string;
+    input: unknown;
+    output?: unknown;
+    ok?: boolean;
+    summary?: string;
+  }[];
   created_at: string;
 };
 
@@ -285,7 +321,7 @@ export type RunRow = {
   pipeline: PipelineId | null;
   jobs: JobId[];
   document_ids: string[];
-  status: "queued" | "running" | "waiting" | "completed" | "failed";
+  status: "queued" | "running" | "waiting" | "completed" | "failed" | "stopped";
   workflow_run_id: string | null;
   state: RunState | null;
   recommendation: string | null;
@@ -355,6 +391,18 @@ export async function runsForSession(sessionId: string) {
   );
 }
 
+/** Runs of a session that are still going: queued, running or waiting on the person. */
+export async function activeRuns(sessionId: string) {
+  return rows<RunRow[]>(
+    await supabase()
+      .from("runs")
+      .select("*")
+      .eq("session_id", sessionId)
+      .in("status", ["queued", "running", "waiting"])
+      .order("created_at", { ascending: false }),
+  );
+}
+
 export async function countRuns(filter: { visitorHash?: string; since: Date }) {
   let query = supabase()
     .from("runs")
@@ -370,7 +418,7 @@ export async function recordJobRun(input: {
   runId: string;
   position: number;
   job: JobId;
-  status: "running" | "waiting" | "done" | "skipped" | "failed";
+  status: "running" | "waiting" | "done" | "skipped" | "failed" | "stopped";
   summary?: string;
   output?: unknown;
 }) {
@@ -504,6 +552,62 @@ export type SpendRow = {
   outputTokens: number;
   costUsd: number;
 };
+
+/** Closes whatever a stopped Run left open: its unfinished jobs and unanswered questions. */
+export async function closeStoppedRun(runId: string) {
+  const now = new Date().toISOString();
+  ok(
+    await supabase()
+      .from("job_runs")
+      .update({ status: "stopped", finished_at: now })
+      .eq("run_id", runId)
+      .in("status", ["running", "waiting"]),
+  );
+  ok(
+    await supabase()
+      .from("questions")
+      .update({ answer: { skip: true, text: "Stopped" }, answered_at: now })
+      .eq("run_id", runId)
+      .is("answered_at", null),
+  );
+}
+
+/** What each Run cost, for the Runs given. */
+export async function runCosts(runIds: string[]) {
+  const totals = new Map<string, { costUsd: number; calls: number }>();
+  if (runIds.length === 0) return totals;
+  const calls = rows<{ run_id: string; cost_usd: number }[]>(
+    await supabase()
+      .from("model_calls")
+      .select("run_id, cost_usd")
+      .in("run_id", runIds),
+  );
+  for (const call of calls) {
+    const total = totals.get(call.run_id) ?? { costUsd: 0, calls: 0 };
+    total.costUsd += Number(call.cost_usd);
+    total.calls += 1;
+    totals.set(call.run_id, total);
+  }
+  return totals;
+}
+
+/** Total spend per session, for the list of earlier desks. */
+export async function spendBySession(sessionIds: string[]) {
+  const totals = new Map<string, number>();
+  if (sessionIds.length === 0) return totals;
+  const calls = rows<{ session_id: string; cost_usd: number }[]>(
+    await supabase()
+      .from("model_calls")
+      .select("session_id, cost_usd")
+      .in("session_id", sessionIds),
+  );
+  for (const call of calls)
+    totals.set(
+      call.session_id,
+      (totals.get(call.session_id) ?? 0) + Number(call.cost_usd),
+    );
+  return totals;
+}
 
 /** A session's spend, by purpose and model. */
 export async function sessionSpend(sessionId: string): Promise<SpendRow[]> {

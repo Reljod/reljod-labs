@@ -15,9 +15,10 @@ function reducer(view: RunView, action: Action): RunView {
 
 /**
  * Follows a Run's event stream, reconnecting from the last event seen until
- * it ends. Replays of finished runs arrive the same way, all at once.
+ * it ends. A Run that was already over when it was opened (`instant`) lands
+ * in its final state at once, with no replay of each job's moment.
  */
-export function useRun(runId: string | null): RunView {
+export function useRun(runId: string | null, instant = false): RunView {
   const [view, dispatch] = useReducer(reducer, emptyRun);
   const seen = useRef(0);
 
@@ -37,7 +38,7 @@ export function useRun(runId: string | null): RunView {
       pumping = true;
       while (queue.length > 0 && !controller.signal.aborted) {
         const event = queue[0];
-        if (event.type === "job" && event.state === "start") {
+        if (!instant && event.type === "job" && event.state === "start") {
           const wait = lastStart + DWELL_MS - Date.now();
           if (wait > 0)
             await new Promise((resolve) => setTimeout(resolve, wait));
@@ -93,7 +94,7 @@ export function useRun(runId: string | null): RunView {
     }
     void follow();
     return () => controller.abort();
-  }, [runId]);
+  }, [runId, instant]);
 
   return view;
 }

@@ -19,7 +19,14 @@ import {
   type SessionRow,
   sessionSpend,
 } from "./repository";
-import { answerQuestion, LimitError, startRun } from "./runs";
+import {
+  answerQuestion,
+  LimitError,
+  readiness,
+  startRun,
+  stopActiveRun,
+  stopRun,
+} from "./runs";
 import { verifySessionToken } from "./session";
 import { supabase } from "./supabase";
 
@@ -138,6 +145,54 @@ export function registerCaseworkTools(server: McpServer) {
   );
 
   server.registerTool(
+    "check_ready",
+    {
+      title: "Check readiness",
+      description:
+        "Checks whether a job or pipeline could start now on these Documents: that they exist, that no other run is going, and that the session has spend left. Call it before starting anything. Starts nothing.",
+      inputSchema: z.object({
+        documentIds: z.array(z.string()).max(40),
+      }),
+      annotations: { readOnlyHint: true },
+    },
+    async (args, ctx) => {
+      const ready = await readiness(await sessionOf(ctx), args.documentIds);
+      return result(
+        ready,
+        ready.ready
+          ? `Ready: ${ready.documents.map((document) => document.name).join(", ")}.`
+          : `Not ready. ${ready.problems.join(" ")}`,
+      );
+    },
+  );
+
+  server.registerTool(
+    "stop_run",
+    {
+      title: "Stop a run",
+      description:
+        "Stops a run that is going or waiting on a question. With no runId, stops whatever this desk has going. Use when the person says stop, cancel, abort or never mind.",
+      inputSchema: z.object({ runId: z.string().optional() }),
+    },
+    async (args, ctx) => {
+      try {
+        const session = await sessionOf(ctx);
+        const stopped = args.runId
+          ? await stopRun(session, args.runId)
+          : await stopActiveRun(session);
+        return result(
+          stopped,
+          stopped.stopped
+            ? `Stopped run ${stopped.runId}.`
+            : "Nothing was running.",
+        );
+      } catch (error) {
+        return failure(error);
+      }
+    },
+  );
+
+  server.registerTool(
     "find_documents",
     {
       title: "Find documents",
@@ -173,13 +228,18 @@ export function registerCaseworkTools(server: McpServer) {
         .filter((item) => item.score > 0)
         .sort((a, b) => b.score - a.score)
         .slice(0, 20);
-      return result({
-        documents: matches.map(({ document, folder }) => ({
-          id: document.id,
-          name: document.name,
-          folder: folder?.title ?? "Uploads",
-        })),
-      });
+      const found = matches.map(({ document, folder }) => ({
+        id: document.id,
+        name: document.name,
+        folder: folder?.title ?? "Uploads",
+      }));
+      const places = [...new Set(found.map((item) => item.folder))];
+      return result(
+        { documents: found },
+        found.length === 0
+          ? `Nothing in the Cabinet matches "${args.query}".`
+          : `${found.length} document${found.length === 1 ? "" : "s"} in ${places.slice(0, 3).join("; ")}${places.length > 3 ? ` and ${places.length - 3} more folders` : ""}: ${found.map((item) => `${item.name} (id ${item.id}, ${item.folder})`).join("; ")}`,
+      );
     },
   );
 

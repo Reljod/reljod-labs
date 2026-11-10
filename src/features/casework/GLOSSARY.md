@@ -1,6 +1,6 @@
 # Casework
 
-A specialist agent at the pension and onboarding desk of a (fictional) Cayman Islands bank and trust company. It reads a request, runs review work as durable Pipelines of reusable Jobs, and asks a person whenever something it needs is missing.
+A specialist agent at the pension and onboarding desk of a (fictional) Meridian bank and trust company. It reads a request, runs review work as durable Pipelines of reusable Jobs, and asks a person whenever something it needs is missing.
 
 ## Language
 
@@ -11,7 +11,7 @@ The chat agent. It reads what the person says and drops, and calls Jobs and Pipe
 _Avoid_: Bot, assistant, copilot
 
 **Desk**:
-One visitor's workspace: their chat with the Specialist, their uploads, their Runs and their Spend. Kept as a session.
+One visitor's workspace: their chat with the Specialist, their uploads, their Runs and their Spend. Kept as a session. A browser keeps a list of its Desks and can go back to an earlier one.
 _Avoid_: Workspace, account
 
 **Cabinet**:
@@ -41,7 +41,7 @@ An ordered list of Jobs for one kind of review: pension withdrawal, employer onb
 _Avoid_: Flow, workflow, chain
 
 **Run**:
-One execution of a Pipeline or of hand-picked Jobs over chosen Documents, as one durable workflow run that streams its events.
+One execution of a Pipeline or of hand-picked Jobs over chosen Documents, as one durable workflow run that streams its events. A Desk has one Run going at a time. The person can stop it; a stopped Run stays stopped.
 _Avoid_: Execution, session, job run
 
 **Need**:
@@ -52,6 +52,10 @@ _Avoid_: Requirement, input, prerequisite
 A Run pausing to ask the person for something: a missing Document, an explanation, or which Pipeline to run. Answered with Documents, a choice, a few words, or "go on without it", which records a Gap.
 _Avoid_: Prompt, interrupt, request
 
+**Choice**:
+Options the Specialist puts to the person as buttons when it lacks the Documents or the intent to start work. The pick comes back as their next message. Different from a Question, which a Run asks while it waits.
+_Avoid_: Suggestion, quick reply
+
 **Gap**:
 A Need the person told the Run to go on without. Any Gap makes the Recommendation "request information" unless a blocking Check already declines.
 _Avoid_: Missing item, exception
@@ -59,7 +63,7 @@ _Avoid_: Missing item, exception
 ### Outcomes
 
 **Check**:
-One rule applied to what was read, such as "Within the CI$50,000 cap": pass, fail or review, with the values it compared and where they came from.
+One rule applied to what was read, such as "Within the M$50,000 cap": pass, fail or review, with the values it compared and where they came from.
 _Avoid_: Finding, test, rule
 
 **Hit**:

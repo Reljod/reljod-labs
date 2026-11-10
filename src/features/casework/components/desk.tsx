@@ -1,6 +1,5 @@
 "use client";
 
-import { LayoutGroup, motion } from "motion/react";
 import Link from "next/link";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { CatPose } from "@/features/ledger/components/cat";
@@ -14,19 +13,28 @@ import {
   getSpend,
   newDesk,
   openDesk,
-  uploadDocuments,
+  openEarlierDesk,
+  stop,
 } from "../server/actions";
-import type { DeskView, DocView, SpendView } from "../view";
-import { Cabinet } from "./cabinet";
+import type { DeskView, DocView, RunSummary, SpendView } from "../view";
+import { Cabinet, SCENARIO_TONE } from "./cabinet";
 import "./casework.css";
 import { type CatCue, CatLayer } from "./cat-layer";
-import { type ChatItem, ChatPanel } from "./chat-panel";
+import {
+  type ChatItem,
+  ChatPanel,
+  type RunCard,
+  toolTitle,
+} from "./chat-panel";
 import { DecisionFile, DocViewer } from "./doc-viewer";
-import { JobGlyph, RECOMMENDATION_STYLE } from "./glyphs";
-import { prepareUpload } from "./prepare-upload";
+import { JobGlyph, RECOMMENDATION_STYLE, ScenarioGlyph } from "./glyphs";
+import { modelSummary } from "./model-form";
+import { PipelineFlow } from "./pipeline-flow";
+import { isOver } from "./run-reducer";
 import { SettingsDrawer } from "./settings-drawer";
 import { Stage } from "./stage";
 import { Terminal, type TerminalLine } from "./terminal";
+import { filesFromDrop, hasFiles, uploadFiles } from "./upload";
 import { useRun } from "./use-run";
 
 const JOB_POSE: Record<JobId, CatPose> = {
@@ -45,7 +53,7 @@ const JOB_POSE: Record<JobId, CatPose> = {
   decide: "stamp",
 };
 
-const JOB_LINE: Partial<Record<JobId, string>> = {
+const JOB_LINE: Record<JobId, string> = {
   sort: "Sorting the pile",
   read: "Reading every page",
   match_identity: "Is it really them?",
@@ -61,6 +69,19 @@ const JOB_LINE: Partial<Record<JobId, string>> = {
   decide: "Writing it up",
 };
 
+const TERMINAL_BAR = 36;
+const TERMINAL_BODY = 220;
+const TRAY_LIMIT = 12;
+
+/** Tools that start a Run; their message carries the Run's card. */
+function startsRun(name: string) {
+  return (
+    name.startsWith("pipeline_") ||
+    name.startsWith("job_") ||
+    name === "review_documents"
+  );
+}
+
 function toItems(desk: DeskView, docs: Map<string, DocView>): ChatItem[] {
   return desk.messages.map((message) => ({
     id: `m${message.id}`,
@@ -69,54 +90,82 @@ function toItems(desk: DeskView, docs: Map<string, DocView>): ChatItem[] {
     documentNames: message.documentIds.flatMap(
       (id) => docs.get(id)?.name ?? [],
     ),
-    tools: message.tools.map((name) => ({ name })),
+    tools: message.tools,
+    choices: message.choices,
+    runId: message.tools.some((tool) => startsRun(tool.name))
+      ? message.runId
+      : null,
   }));
 }
 
-/** The Casework desk: Cabinet, the Specialist's chat, and the stage where runs play out. */
+function ago(iso: string) {
+  const minutes = Math.round((Date.now() - new Date(iso).getTime()) / 60_000);
+  if (minutes < 1) return "just now";
+  if (minutes < 60) return `${minutes} min ago`;
+  if (minutes < 60 * 24) return `${Math.round(minutes / 60)} h ago`;
+  return `${Math.round(minutes / 1440)} d ago`;
+}
+
+/** The Casework desk: the Cabinet, the stage where Runs play out, and the Specialist's chat. */
 export function Desk() {
   const [desk, setDesk] = useState<DeskView | null>(null);
   const [failed, setFailed] = useState<string | null>(null);
   const [items, setItems] = useState<ChatItem[]>([]);
   const [tray, setTray] = useState<string[]>([]);
-  const [busy, setBusy] = useState(false);
+  const [busy, setBusy] = useState<{ label: string; since: number } | null>(
+    null,
+  );
   const [talking, setTalking] = useState(false);
-  const [runId, setRunId] = useState<string | null>(null);
+  /** The Run on the stage. `instant`: it was over when opened, so it lands finished. */
+  const [shown, setShown] = useState<{ id: string; instant: boolean } | null>(
+    null,
+  );
+  const [localRuns, setLocalRuns] = useState<RunSummary[]>([]);
   const [dragging, setDragging] = useState(false);
-  const [cabinetOpen, setCabinetOpen] = useState(false);
-  const [mobileCabinet, setMobileCabinet] = useState(false);
+  const [dropping, setDropping] = useState(false);
+  const [cabinetOpen, setCabinetOpen] = useState(true);
+  const [panel, setPanel] = useState<"chat" | "stage" | "cabinet">("chat");
+  const [center, setCenter] = useState<"run" | "pipelines">("run");
   const [viewing, setViewing] = useState<string | null>(null);
   const [fileOpen, setFileOpen] = useState(false);
   const [settingsOpen, setSettingsOpen] = useState(false);
+  const [desksOpen, setDesksOpen] = useState(false);
   const [settings, setSettings] = useState<ModelSettingsByPurpose | null>(null);
   const [spend, setSpend] = useState<SpendView>({ totalUsd: 0, rows: [] });
   const [terminalOpen, setTerminalOpen] = useState(false);
   const [chatLines, setChatLines] = useState<TerminalLine[]>([]);
-  const [uploading, setUploading] = useState(false);
+  const [uploading, setUploading] = useState<string | null>(null);
   const [answering, setAnswering] = useState(false);
   const [greeted, setGreeted] = useState(false);
-  const run = useRun(runId);
+  const chatAbort = useRef<AbortController | null>(null);
+  const run = useRun(shown?.id ?? null, shown?.instant ?? false);
 
   const load = useCallback(async () => {
     try {
       const view = await openDesk();
-      setDesk(view);
-      setSettings(view.settings);
-      setSpend(view.spend);
       const map = new Map(
         [
           ...view.folders.flatMap((folder) => folder.documents),
           ...view.uploads,
         ].map((doc) => [doc.id, doc]),
       );
-      setItems((current) =>
-        current.some((item) => item.pending) ? current : toItems(view, map),
+      setDesk(view);
+      setSettings(view.settings);
+      setSpend(view.spend);
+      setItems(toItems(view, map));
+      setLocalRuns([]);
+      const latest = view.runs[0];
+      setShown(
+        latest
+          ? {
+              id: latest.id,
+              instant:
+                latest.status === "completed" ||
+                latest.status === "failed" ||
+                latest.status === "stopped",
+            }
+          : null,
       );
-      const live =
-        view.runs.find(
-          (item) => item.status === "running" || item.status === "waiting",
-        ) ?? view.runs[0];
-      setRunId(live?.id ?? null);
     } catch (error) {
       setFailed(
         error instanceof Error ? error.message : "The desk could not open.",
@@ -124,9 +173,22 @@ export function Desk() {
     }
   }, []);
 
+  /** Runs and spend again, without touching the transcript. */
+  const refresh = useCallback(async () => {
+    try {
+      const view = await openDesk();
+      setDesk((current) =>
+        current ? { ...current, runs: view.runs, desks: view.desks } : view,
+      );
+      setSpend(view.spend);
+    } catch {
+      // The next refresh will catch up.
+    }
+  }, []);
+
   useEffect(() => {
     void load();
-    const timer = setTimeout(() => setGreeted(true), 2600);
+    const timer = setTimeout(() => setGreeted(true), 4000);
     return () => clearTimeout(timer);
   }, [load]);
 
@@ -141,11 +203,49 @@ export function Desk() {
   }, [desk]);
   const trayDocs = tray.flatMap((id) => docs.get(id) ?? []);
 
-  // Spend catches up whenever a run reaches a resting point.
+  const live = Boolean(shown) && !shown?.instant && run.seen > 0;
+  const going = live && !isOver(run);
+
+  // When a Run comes to rest, its cost and the session's spend catch up.
   // biome-ignore lint/correctness/useExhaustiveDependencies: refresh on status changes only
   useEffect(() => {
-    if (run.status !== "running") void getSpend().then(setSpend);
-  }, [run.status, run.decision]);
+    if (!shown || shown.instant || run.seen === 0) return;
+    if (isOver(run)) void refresh();
+    else if (run.status === "waiting") void getSpend().then(setSpend);
+  }, [run.status]);
+
+  /** Every Run of this desk as its card in the chat shows it. */
+  const runs = useMemo(() => {
+    const cards = new Map<string, RunCard>();
+    for (const summary of [...localRuns, ...(desk?.runs ?? [])]) {
+      const selected = summary.id === shown?.id;
+      const followed = selected && run.seen > 0;
+      cards.set(summary.id, {
+        ...summary,
+        selected,
+        ...(followed
+          ? {
+              pipeline: run.pipeline ?? summary.pipeline,
+              jobs: run.jobs.length
+                ? run.jobs.map((item) => item.job)
+                : summary.jobs,
+              status: run.status,
+              recommendation:
+                run.decision?.recommendation ?? summary.recommendation,
+              headline: run.decision?.headline,
+              // Events carry each call's cost; the stored total wins once it is in.
+              costUsd: Math.max(summary.costUsd, run.costUsd),
+              calls: Math.max(summary.calls, run.calls),
+              seconds:
+                run.startedAt && run.lastAt
+                  ? (run.lastAt - run.startedAt) / 1000
+                  : undefined,
+            }
+          : {}),
+      });
+    }
+    return cards;
+  }, [localRuns, desk?.runs, shown?.id, run]);
 
   const terminal: TerminalLine[] = useMemo(
     () =>
@@ -162,16 +262,24 @@ export function Desk() {
     [chatLines, run.logs],
   );
 
-  const log = (level: TerminalLine["level"], text: string) =>
-    setChatLines((lines) =>
-      [...lines, { at: Date.now(), level, text }].slice(-200),
-    );
+  const log = useCallback(
+    (level: TerminalLine["level"], text: string) =>
+      setChatLines((lines) =>
+        [...lines, { at: Date.now(), level, text }].slice(-200),
+      ),
+    [],
+  );
 
-  function addToTray(ids: string[]) {
-    setTray((current) => [...new Set([...current, ...ids])].slice(0, 12));
-  }
+  const addToTray = useCallback(
+    (ids: string[]) =>
+      setTray((current) =>
+        [...new Set([...current, ...ids])].slice(0, TRAY_LIMIT),
+      ),
+    [],
+  );
 
   async function send(text: string) {
+    if (busy) return;
     const documentIds = tray;
     const names = documentIds.flatMap((id) => docs.get(id)?.name ?? []);
     const pendingId = `p${Date.now()}`;
@@ -194,7 +302,8 @@ export function Desk() {
       },
     ]);
     setTray([]);
-    setBusy(true);
+    setBusy({ label: "Thinking", since: Date.now() });
+    setPanel("chat");
     log(
       "mcp",
       `chat → "${text || "(documents)"}" with ${documentIds.length} document${documentIds.length === 1 ? "" : "s"}`,
@@ -203,11 +312,14 @@ export function Desk() {
       setItems((current) =>
         current.map((item) => (item.id === pendingId ? fn(item) : item)),
       );
+    const controller = new AbortController();
+    chatAbort.current = controller;
     try {
       const response = await fetch("/api/casework/chat", {
         method: "POST",
         headers: { "content-type": "application/json" },
         body: JSON.stringify({ text, documentIds }),
+        signal: controller.signal,
       });
       if (!response.body) throw new Error("No response");
       const reader = response.body
@@ -226,11 +338,24 @@ export function Desk() {
           if (event.type === "delta") {
             setTalking(true);
             patch((item) => ({ ...item, text: item.text + event.text }));
+          } else if (event.type === "reasoning") {
+            patch((item) => ({
+              ...item,
+              reasoning: (item.reasoning ?? "") + event.text,
+            }));
+          } else if (event.type === "choices") {
+            patch((item) => ({
+              ...item,
+              choices: { question: event.question, options: event.options },
+            }));
           } else if (event.type === "tool") {
             patch((item) => ({
               ...item,
-              tools: [...item.tools, { name: event.name }],
+              tools: [...item.tools, { name: event.name, input: event.input }],
             }));
+            setBusy((current) =>
+              current ? { ...current, label: toolTitle(event.name) } : current,
+            );
             log(
               "mcp",
               `mcp → tools/call ${event.name} ${JSON.stringify(event.input).slice(0, 140)}`,
@@ -238,18 +363,41 @@ export function Desk() {
           } else if (event.type === "tool-result") {
             patch((item) => ({
               ...item,
+              runId:
+                event.runId && startsRun(event.name) ? event.runId : item.runId,
               tools: item.tools.map((tool, index, all) =>
                 index ===
                 all.findLastIndex((entry) => entry.name === event.name)
-                  ? { ...tool, ok: event.ok }
+                  ? { ...tool, ok: event.ok, summary: event.summary }
                   : tool,
               ),
             }));
+            setBusy((current) =>
+              current ? { ...current, label: "Thinking" } : current,
+            );
             log(
               event.ok ? "mcp" : "error",
               `mcp ← ${event.name}: ${event.summary.slice(0, 160)}`,
             );
-            if (event.runId) setRunId(event.runId);
+            const started = event.runId;
+            if (started && startsRun(event.name) && event.ok) {
+              setLocalRuns((current) => [
+                {
+                  id: started,
+                  pipeline: null,
+                  jobs: [],
+                  status: "running",
+                  recommendation: null,
+                  createdAt: new Date().toISOString(),
+                  costUsd: 0,
+                  calls: 0,
+                  documentIds: [],
+                },
+                ...current,
+              ]);
+              setShown({ id: started, instant: false });
+              setCenter("run");
+            }
           } else if (event.type === "cost") {
             log(
               "cost",
@@ -262,21 +410,62 @@ export function Desk() {
         }
       }
     } catch (error) {
-      patch((item) => ({
-        ...item,
-        text: error instanceof Error ? error.message : "Something went wrong",
-      }));
+      if (controller.signal.aborted) {
+        patch((item) => ({
+          ...item,
+          text: item.text ? `${item.text} (stopped)` : "Stopped.",
+        }));
+      } else {
+        patch((item) => ({
+          ...item,
+          text: error instanceof Error ? error.message : "Something went wrong",
+        }));
+      }
     } finally {
       patch((item) => ({
         ...item,
         pending: false,
-        text: item.text || (item.tools.length ? "" : "…"),
+        text:
+          item.text || (item.tools.length || item.choices ? "" : "No reply."),
       }));
-      setBusy(false);
+      chatAbort.current = null;
+      setBusy(null);
       setTalking(false);
       void getSpend().then(setSpend);
     }
   }
+
+  /** Stops whatever is going: the Specialist mid-answer, and the Run on the stage. */
+  const stopAll = useCallback(async () => {
+    const answering = chatAbort.current;
+    answering?.abort();
+    const runId = shown && !shown.instant ? shown.id : null;
+    log("warn", "■ stop requested");
+    try {
+      let result = await stop(runId);
+      // A Run the Specialist was just starting may only exist a moment later.
+      if (answering && !result.stopped) {
+        await new Promise((resolve) => setTimeout(resolve, 4000));
+        result = await stop(null);
+      }
+      // Stopping mid-answer already says so in the transcript.
+      if (result.stopped && !answering) {
+        setItems((current) => [
+          ...current,
+          {
+            id: `s${Date.now()}`,
+            role: "specialist",
+            text: "Stopped. Nothing else will run.",
+            documentNames: [],
+            tools: [],
+          },
+        ]);
+      }
+    } catch (error) {
+      log("error", error instanceof Error ? error.message : "Could not stop");
+    }
+    void refresh();
+  }, [shown, log, refresh]);
 
   async function reply(value: Answer) {
     if (!run.question) return;
@@ -309,89 +498,199 @@ export function Desk() {
     }
   }
 
-  async function upload(files: File[]) {
-    setUploading(true);
-    try {
-      const created = await uploadDocuments(await prepareUpload(files));
-      setDesk((current) =>
-        current
-          ? { ...current, uploads: [...current.uploads, ...created] }
-          : current,
+  const upload = useCallback(
+    async (files: File[]) => {
+      if (files.length === 0) return;
+      setUploading(
+        `Preparing ${files.length} file${files.length === 1 ? "" : "s"}…`,
       );
-      addToTray(created.map((doc) => doc.id));
-      log("info", `uploaded ${created.map((doc) => doc.name).join(", ")}`);
-    } catch (error) {
-      log("error", error instanceof Error ? error.message : "Upload failed");
-    } finally {
-      setUploading(false);
-    }
+      try {
+        const report = await uploadFiles(files, (done, total, name) =>
+          setUploading(
+            done < total
+              ? `Uploading ${done + 1} of ${total}: ${name}`
+              : "Filing them…",
+          ),
+        );
+        if (report.created.length > 0) {
+          setDesk((current) =>
+            current
+              ? { ...current, uploads: [...current.uploads, ...report.created] }
+              : current,
+          );
+          addToTray(report.created.map((doc) => doc.id));
+          log(
+            "info",
+            `uploaded ${report.created.map((doc) => doc.name).join(", ")}`,
+          );
+        }
+        for (const item of report.skipped)
+          log("warn", `skipped ${item.name}: ${item.reason}`);
+        if (report.skipped.length > 0) {
+          setItems((current) => [
+            ...current,
+            {
+              id: `k${Date.now()}`,
+              role: "specialist",
+              text: `I left out ${report.skipped.length} file${report.skipped.length === 1 ? "" : "s"}: ${report.skipped
+                .slice(0, 4)
+                .map((item) => `**${item.name}** (${item.reason})`)
+                .join(", ")}${report.skipped.length > 4 ? " and more" : ""}.`,
+              documentNames: [],
+              tools: [],
+            },
+          ]);
+        }
+        if (report.created.length > TRAY_LIMIT)
+          log(
+            "warn",
+            `a message takes ${TRAY_LIMIT} documents; the rest are in Your uploads`,
+          );
+      } catch (error) {
+        log("error", error instanceof Error ? error.message : "Upload failed");
+      } finally {
+        setUploading(null);
+      }
+    },
+    [addToTray, log],
+  );
+
+  // Files and folders dragged in from the computer land anywhere on the desk.
+  useEffect(() => {
+    let depth = 0;
+    const enter = (event: DragEvent) => {
+      if (!hasFiles(event.dataTransfer)) return;
+      depth++;
+      setDropping(true);
+    };
+    const leave = (event: DragEvent) => {
+      if (!hasFiles(event.dataTransfer)) return;
+      depth = Math.max(0, depth - 1);
+      if (depth === 0) setDropping(false);
+    };
+    const over = (event: DragEvent) => {
+      if (hasFiles(event.dataTransfer)) event.preventDefault();
+    };
+    const drop = async (event: DragEvent) => {
+      depth = 0;
+      setDropping(false);
+      if (!event.dataTransfer || !hasFiles(event.dataTransfer)) return;
+      event.preventDefault();
+      void upload(await filesFromDrop(event.dataTransfer));
+    };
+    // Panels that take the drop themselves stop it from reaching the window.
+    const clear = () => {
+      depth = 0;
+      setDropping(false);
+    };
+    window.addEventListener("dragenter", enter);
+    window.addEventListener("dragleave", leave);
+    window.addEventListener("dragover", over);
+    window.addEventListener("drop", drop);
+    window.addEventListener("drop", clear, true);
+    return () => {
+      window.removeEventListener("dragenter", enter);
+      window.removeEventListener("dragleave", leave);
+      window.removeEventListener("dragover", over);
+      window.removeEventListener("drop", drop);
+      window.removeEventListener("drop", clear, true);
+    };
+  }, [upload]);
+
+  async function switchDesk(id: string | null) {
+    chatAbort.current?.abort();
+    setDesksOpen(false);
+    setShown(null);
+    setTray([]);
+    setChatLines([]);
+    setItems([]);
+    setDesk(null);
+    if (id) await openEarlierDesk(id);
+    else await newDesk();
+    await load();
   }
 
   // Ledger's cues --------------------------------------------------------------------
-  const perchRef = useRef<HTMLDivElement>(null);
   const questionRef = useRef<HTMLDivElement>(null);
   const focusRef = useRef<HTMLElement | null>(null);
+  const stageRef = useRef<HTMLDivElement>(null);
+  const chatRef = useRef<HTMLDivElement>(null);
   const nodes = useRef(new Map<number, HTMLElement>());
-  const [cue, setCue] = useState<CatCue>({ target: null, pose: "wave" });
-  const stageOn = runId !== null && run.jobs.length > 0;
+  const [cue, setCue] = useState<CatCue>({ pose: "wave" });
+  const stageOn = shown !== null && run.jobs.length > 0;
   const currentJob = run.jobs[run.current];
 
   useEffect(() => {
     const frame = requestAnimationFrame(() => {
-      if (run.question && questionRef.current) {
+      if (going && run.question) {
         setCue({
-          target: questionRef.current,
+          on: chatRef.current,
           pose: "confused",
           line: "Need this from you",
-          align: "left",
         });
-      } else if (run.decision && focusRef.current) {
+      } else if (live && run.status === "stopped") {
+        setCue({ pose: "idle", line: "Stopped" });
+      } else if (live && run.decision) {
         const style = RECOMMENDATION_STYLE[run.decision.recommendation];
         setCue({
-          target: focusRef.current,
+          on: stageRef.current,
           pose: style.pose,
           line: style.stamp,
-          align: "right",
         });
-      } else if (stageOn && currentJob && run.status === "running") {
+      } else if (going && currentJob) {
         setCue({
-          target: nodes.current.get(run.current) ?? null,
+          // He stands on the stage's top edge, over the job being worked.
+          on: stageRef.current,
+          along:
+            center === "run" ? (nodes.current.get(run.current) ?? null) : null,
           pose: JOB_POSE[currentJob.job],
           line: JOB_LINE[currentJob.job],
         });
       } else if (busy) {
-        setCue({ target: perchRef.current, pose: talking ? "talk" : "think" });
-      } else if (dragging) {
-        setCue({
-          target: perchRef.current,
-          pose: "carry",
-          line: "Drop it here",
-        });
+        setCue({ pose: talking ? "talk" : "think" });
+      } else if (dragging || dropping) {
+        setCue({ pose: "carry", line: "Drop it on the chat" });
+      } else if (uploading) {
+        setCue({ pose: "carry", line: "Filing it" });
+      } else if (!greeted) {
+        setCue({ pose: "wave", line: desk ? "Hi! Drop me a case" : undefined });
       } else {
-        setCue({
-          target: perchRef.current,
-          pose: greeted ? "idle" : "wave",
-          line: greeted ? undefined : desk ? "Hi! Drop me a case" : undefined,
-        });
+        setCue({ pose: "idle", roam: true });
       }
     });
     return () => cancelAnimationFrame(frame);
   }, [
+    going,
+    live,
     run.question,
     run.decision,
     run.status,
     run.current,
     currentJob,
-    stageOn,
+    center,
     busy,
     talking,
     dragging,
+    dropping,
+    uploading,
     greeted,
     desk,
   ]);
 
-  // Layout --------------------------------------------------------------------------
-  const compact = stageOn && !cabinetOpen;
+  const working = busy
+    ? { label: busy.label, costUsd: 0, since: busy.since }
+    : going
+      ? {
+          label:
+            run.status === "waiting"
+              ? "Waiting on your answer"
+              : currentJob
+                ? JOBS[currentJob.job].doing
+                : "Starting the run",
+          costUsd: run.costUsd,
+          since: run.startedAt ?? Date.now(),
+        }
+      : null;
 
   if (failed) {
     return (
@@ -401,100 +700,195 @@ export function Desk() {
     );
   }
 
+  const cabinet = desk ? (
+    <Cabinet
+      folders={desk.folders}
+      uploads={desk.uploads}
+      picked={new Set(tray)}
+      onPick={(picked) => addToTray(picked.map((doc) => doc.id))}
+      onOpen={(doc) => setViewing(doc.id)}
+      onUpload={upload}
+      uploading={uploading}
+      onDragStart={() => setDragging(true)}
+      onDragEnd={() => setDragging(false)}
+      onCollapse={() => setCabinetOpen(false)}
+    />
+  ) : (
+    <div className="cw-shimmer p-4 font-mono text-xs uppercase">
+      Opening the cabinet…
+    </div>
+  );
+
   return (
-    <div className="cw-desk flex h-dvh min-h-[640px] flex-col overflow-hidden text-ink">
-      <header className="flex h-14 shrink-0 items-center gap-3 border-ink border-b-2 bg-paper px-4">
+    <div className="cw-desk flex h-dvh min-h-[620px] flex-col overflow-hidden text-ink">
+      <header className="relative z-30 flex h-12 shrink-0 items-center gap-3 bg-ink px-4 text-paper">
         <Link
           href="/#demos"
-          className="eyebrow font-bold text-federal-blue underline"
+          className="font-mono text-[11px] font-bold tracking-[0.1em] text-paper/70 uppercase hover:text-paper"
         >
           ← Labs
         </Link>
-        <h1 className="font-mono text-sm font-bold tracking-[0.12em] uppercase sm:text-base">
+        <span className="h-5 w-px bg-paper/25" />
+        <h1 className="font-mono text-sm font-bold tracking-[0.14em] uppercase">
           Casework desk
         </h1>
-        <span className="hidden rounded-sm border-2 border-ink px-1.5 font-mono text-[10px] font-bold tracking-[0.08em] uppercase md:inline">
-          Synthetic data · Cayman
+        <span className="hidden rounded-sm border border-brass/70 px-1.5 py-0.5 font-mono text-[10px] font-bold tracking-[0.08em] text-brass uppercase md:inline">
+          Synthetic data
         </span>
-        <button
-          type="button"
-          onClick={() => setMobileCabinet(true)}
-          className="outline-box ml-auto rounded-sm bg-paper px-2 py-1 font-mono text-xs font-bold uppercase lg:hidden"
-        >
-          Cabinet
-        </button>
-        <button
-          type="button"
-          onClick={() => setSettingsOpen(true)}
-          className="outline-box press flex items-center gap-2 rounded-sm bg-paper px-2.5 py-1 font-mono text-xs font-bold lg:ml-auto"
-          title="Models and spend"
-        >
-          <span className="text-ink-muted">$</span>
-          {spend.totalUsd.toFixed(4)}
-          <svg
-            viewBox="0 0 24 24"
-            width="16"
-            height="16"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="2"
-            aria-hidden="true"
+
+        <div className="ml-auto flex items-center gap-2">
+          <div className="relative">
+            <button
+              type="button"
+              onClick={() => setDesksOpen(!desksOpen)}
+              aria-expanded={desksOpen}
+              className="flex h-8 items-center gap-1.5 rounded-sm border border-paper/30 px-2.5 font-mono text-[11px] font-bold tracking-[0.06em] uppercase hover:bg-paper/10"
+            >
+              Desks
+              <span className="text-paper/60">{desk?.desks.length ?? ""}</span>
+              <span aria-hidden="true">▾</span>
+            </button>
+            {desksOpen && desk ? (
+              <>
+                <button
+                  type="button"
+                  aria-label="Close the list of desks"
+                  className="fixed inset-0 z-40 cursor-default"
+                  onClick={() => setDesksOpen(false)}
+                />
+                <div className="cw-reveal absolute top-10 right-0 z-50 w-80 rounded-sm border-2 border-ink bg-paper text-ink shadow-hard-md">
+                  <p className="border-ink/15 border-b px-3 py-2 text-xs text-ink-muted">
+                    Each desk keeps its own chat, runs and spend. Go back to one
+                    any time from this browser.
+                  </p>
+                  <ul className="cw-scroll max-h-72 overflow-y-auto">
+                    {desk.desks.map((item) => (
+                      <li key={item.id}>
+                        <button
+                          type="button"
+                          disabled={item.current}
+                          onClick={() => switchDesk(item.id)}
+                          className={`flex w-full items-baseline gap-2 border-ink/10 border-b px-3 py-2 text-left ${item.current ? "bg-morning-haze/60" : "hover:bg-marble"}`}
+                        >
+                          <span className="min-w-0 flex-1">
+                            <span className="block truncate text-[13px] font-semibold">
+                              {item.title}
+                            </span>
+                            <span className="block font-mono text-[10px] text-ink-muted">
+                              {item.current
+                                ? "This desk"
+                                : ago(item.lastActiveAt)}{" "}
+                              · ${item.spendUsd.toFixed(4)}
+                            </span>
+                          </span>
+                          {item.current ? null : (
+                            <span className="font-mono text-[10px] font-bold text-federal-blue uppercase">
+                              Open
+                            </span>
+                          )}
+                        </button>
+                      </li>
+                    ))}
+                  </ul>
+                  <button
+                    type="button"
+                    onClick={() => switchDesk(null)}
+                    className="w-full px-3 py-2 text-left font-mono text-[11px] font-bold tracking-[0.06em] text-federal-blue uppercase hover:bg-marble"
+                  >
+                    + New desk
+                  </button>
+                </div>
+              </>
+            ) : null}
+          </div>
+          <button
+            type="button"
+            onClick={() => setSettingsOpen(true)}
+            className="flex h-8 items-center gap-2 rounded-sm border border-paper/30 px-2.5 font-mono text-[11px] font-bold hover:bg-paper/10"
+            title="Spend and model settings"
           >
-            <circle cx="12" cy="12" r="3" />
-            <path d="M12 2v3M12 19v3M2 12h3M19 12h3M4.9 4.9l2.1 2.1M17 17l2.1 2.1M4.9 19.1L7 17M17 7l2.1-2.1" />
-          </svg>
-        </button>
-        <button
-          type="button"
-          onClick={async () => {
-            await newDesk();
-            setRunId(null);
-            setTray([]);
-            setChatLines([]);
-            await load();
-          }}
-          className="hidden font-mono text-xs font-bold text-ink-muted uppercase underline hover:text-ink sm:block"
-        >
-          New desk
-        </button>
+            <span className="text-paper/60 uppercase">Spend</span>$
+            {spend.totalUsd.toFixed(4)}
+          </button>
+        </div>
       </header>
 
-      <LayoutGroup>
-        <div className="relative flex min-h-0 flex-1 gap-5 px-4 py-5 lg:px-6">
-          {/* Cabinet */}
-          <motion.aside
-            layout
-            transition={{ type: "spring", stiffness: 260, damping: 32 }}
-            className={`outline-box hidden min-h-0 shrink-0 rounded-sm bg-marble/90 lg:block ${compact ? "w-16" : "w-[300px] xl:w-[320px]"}`}
-            onMouseLeave={() => stageOn && setCabinetOpen(false)}
+      {/* Phones and tablets see one panel at a time. */}
+      <nav className="flex shrink-0 border-ink border-b-2 bg-paper lg:hidden">
+        {(["chat", "stage", "cabinet"] as const).map((name) => (
+          <button
+            key={name}
+            type="button"
+            aria-pressed={panel === name}
+            onClick={() => setPanel(name)}
+            className={`flex-1 py-2 font-mono text-[11px] font-bold tracking-[0.08em] uppercase ${panel === name ? "bg-ink text-paper" : "text-ink-muted"}`}
           >
-            {desk ? (
-              <Cabinet
-                folders={desk.folders}
-                uploads={desk.uploads}
-                picked={new Set(tray)}
-                onPick={(picked) => addToTray(picked.map((doc) => doc.id))}
-                onOpen={(doc) => setViewing(doc.id)}
-                onUpload={upload}
-                uploading={uploading}
-                onDragStart={() => setDragging(true)}
-                onDragEnd={() => setDragging(false)}
-                compact={compact}
-                onExpand={() => setCabinetOpen(true)}
-              />
-            ) : (
-              <div className="p-4 font-mono text-xs text-stone uppercase">
-                Opening the cabinet…
-              </div>
-            )}
-          </motion.aside>
+            {name}
+          </button>
+        ))}
+      </nav>
 
-          {/* Stage, or the quiet middle before any work */}
-          <motion.main
-            layout
-            className={`min-h-0 min-w-0 ${stageOn ? "flex-1" : "hidden flex-1 lg:flex"}`}
-          >
+      <div className="relative flex min-h-0 flex-1 gap-4 px-3 pt-3 pb-3 lg:px-4 lg:pt-4 lg:pb-4">
+        {/* Cabinet */}
+        <aside
+          className={`min-h-0 shrink-0 overflow-hidden rounded-sm border-2 border-ink bg-marble shadow-hard-md transition-[width] duration-300 ease-out ${panel === "cabinet" ? "block w-full" : "hidden"} lg:block ${cabinetOpen ? "lg:w-[344px]" : "lg:w-12"}`}
+        >
+          {cabinetOpen || panel === "cabinet" ? (
+            cabinet
+          ) : (
+            <button
+              type="button"
+              onClick={() => setCabinetOpen(true)}
+              className="flex h-full w-full flex-col items-center gap-3 bg-ink py-3 text-paper hover:bg-ink/90"
+              aria-label="Open the Cabinet"
+              title="Open the Cabinet"
+            >
+              <span className="font-mono text-sm">»</span>
+              <span className="font-mono text-[11px] font-bold tracking-[0.2em] uppercase [writing-mode:vertical-rl]">
+                Cabinet
+              </span>
+            </button>
+          )}
+        </aside>
+
+        {/* The stage: a Run, or the pipelines as graphs */}
+        <main
+          className={`min-h-0 min-w-0 flex-1 flex-col gap-3 ${panel === "stage" ? "flex" : "hidden"} lg:flex`}
+        >
+          <div className="flex shrink-0 items-center gap-1">
+            {(
+              [
+                ["run", "Run"],
+                ["pipelines", "Pipelines"],
+              ] as const
+            ).map(([value, label]) => (
+              <button
+                key={value}
+                type="button"
+                aria-pressed={center === value}
+                onClick={() => setCenter(value)}
+                className={`rounded-sm border-2 px-3 py-1 font-mono text-[11px] font-bold tracking-[0.08em] uppercase transition-colors ${center === value ? "border-ink bg-ink text-paper" : "border-ink/30 bg-paper/60 text-ink-muted hover:border-ink hover:text-ink"}`}
+              >
+                {label}
+              </button>
+            ))}
             {stageOn ? (
+              <span className="ml-auto font-mono text-[11px] text-ink-muted">
+                {isOver(run) ? "Run cost" : "So far"}{" "}
+                <span className="font-bold text-ink">
+                  ${(runs.get(shown?.id ?? "")?.costUsd ?? 0).toFixed(4)}
+                </span>
+              </span>
+            ) : null}
+          </div>
+          <div ref={stageRef} className="min-h-0 flex-1">
+            {center === "pipelines" && settings ? (
+              <PipelineFlow
+                settings={settings}
+                onSettings={setSettings}
+                run={run}
+              />
+            ) : stageOn ? (
               <Stage
                 run={run}
                 docs={docs}
@@ -507,38 +901,59 @@ export function Desk() {
                   focusRef.current = element;
                 }}
                 onOpenFile={() => setFileOpen(true)}
+                cost={runs.get(shown?.id ?? "")}
               />
             ) : (
-              <Welcome />
+              <Welcome
+                desk={desk}
+                onPipelines={() => setCenter("pipelines")}
+                onTry={(ids) => {
+                  addToTray(ids);
+                  setPanel("chat");
+                }}
+              />
             )}
-          </motion.main>
+          </div>
+        </main>
 
-          {/* The Specialist, a little right of centre until work begins */}
-          <motion.div
-            layout
-            transition={{ type: "spring", stiffness: 260, damping: 32 }}
-            className={`flex min-h-0 w-full shrink-0 pt-16 ${stageOn ? "lg:w-[380px] xl:w-[420px]" : "lg:mr-[8vw] lg:w-[500px]"}`}
-          >
-            <ChatPanel
-              items={items}
-              tray={trayDocs}
-              onRemoveFromTray={(id) =>
-                setTray((current) => current.filter((item) => item !== id))
-              }
-              onAddToTray={addToTray}
-              onSend={send}
-              busy={busy || !desk}
-              dragging={dragging}
-              question={run.question}
-              onAnswer={reply}
-              answering={answering}
-              perchRef={perchRef}
-              questionRef={questionRef}
-              wide={!stageOn}
-            />
-          </motion.div>
+        {/* The Specialist: the same width whether or not a Run is on the stage */}
+        <div
+          ref={chatRef}
+          className={`min-h-0 w-full shrink-0 ${panel === "chat" ? "flex" : "hidden"} lg:flex lg:w-[400px] xl:w-[440px]`}
+        >
+          <ChatPanel
+            items={items}
+            tray={trayDocs}
+            onRemoveFromTray={(id) =>
+              setTray((current) => current.filter((item) => item !== id))
+            }
+            onAddToTray={addToTray}
+            onSend={send}
+            busy={Boolean(busy)}
+            disabled={!desk}
+            dragging={dragging}
+            question={going ? run.question : null}
+            onAnswer={reply}
+            answering={answering}
+            questionRef={questionRef}
+            runs={runs}
+            onSelectRun={(id) => {
+              const summary = runs.get(id);
+              setShown({
+                id,
+                instant: summary ? isOver(summary) : true,
+              });
+              setCenter("run");
+              setPanel("stage");
+            }}
+            onOpenFile={() => setFileOpen(true)}
+            working={working}
+            onStop={stopAll}
+            onDropFiles={upload}
+            model={settings ? modelSummary(settings.chat) : ""}
+          />
         </div>
-      </LayoutGroup>
+      </div>
 
       <Terminal
         lines={terminal}
@@ -547,42 +962,36 @@ export function Desk() {
         costUsd={spend.totalUsd}
       />
 
-      <CatLayer cue={cue} />
-
-      {mobileCabinet && desk ? (
-        <div className="fixed inset-0 z-40 flex lg:hidden">
-          <div className="h-full w-[88vw] max-w-sm border-ink border-r-2 bg-marble">
-            <Cabinet
-              folders={desk.folders}
-              uploads={desk.uploads}
-              picked={new Set(tray)}
-              onPick={(picked) => addToTray(picked.map((doc) => doc.id))}
-              onOpen={(doc) => setViewing(doc.id)}
-              onUpload={upload}
-              uploading={uploading}
-              onDragStart={() => setDragging(true)}
-              onDragEnd={() => setDragging(false)}
-              compact={false}
-              onExpand={() => {}}
-            />
+      {dropping ? (
+        <div className="pointer-events-none fixed inset-0 z-[70] flex items-center justify-center bg-ink/55">
+          <div className="rounded-sm border-2 border-dashed border-paper bg-ink px-10 py-8 text-center text-paper">
+            <p className="font-mono text-2xl font-bold tracking-[0.04em] uppercase">
+              Drop files or folders
+            </p>
+            <p className="mt-2 text-sm text-paper/75">
+              PDF, JPEG, PNG or CSV. They go to your uploads and onto the
+              message.
+            </p>
           </div>
-          <button
-            type="button"
-            aria-label="Close the Cabinet"
-            className="flex-1 bg-ink/30"
-            onClick={() => setMobileCabinet(false)}
-          />
         </div>
       ) : null}
 
+      <CatLayer
+        cue={cue}
+        floor={TERMINAL_BAR + (terminalOpen ? TERMINAL_BODY : 0)}
+      />
+
       <DocViewer
-        documentId={viewing}
+        doc={viewing ? (docs.get(viewing) ?? null) : null}
         run={run}
+        picked={viewing ? tray.includes(viewing) : false}
+        onPick={(id) => addToTray([id])}
         onClose={() => setViewing(null)}
       />
       <DecisionFile
         open={fileOpen}
         run={run}
+        cost={runs.get(shown?.id ?? "")}
         onClose={() => setFileOpen(false)}
       />
       {settings ? (
@@ -598,46 +1007,116 @@ export function Desk() {
   );
 }
 
-/** Before any work: what the desk can do, at a glance. */
-function Welcome() {
+/** Before any work: what the desk can do, and a case to try. */
+function Welcome({
+  desk,
+  onPipelines,
+  onTry,
+}: {
+  desk: DeskView | null;
+  onPipelines: () => void;
+  onTry: (ids: string[]) => void;
+}) {
+  // One case from each scenario, as something to click.
+  const samples = PIPELINE_IDS.flatMap((id) => {
+    const folder = desk?.folders.find((item) => item.scenario === id);
+    return folder ? [folder] : [];
+  });
   return (
-    <div className="flex h-full w-full flex-col justify-center gap-8 pl-4 xl:pl-10">
-      <div>
-        <p className="eyebrow text-federal-blue">
+    <div className="cw-scroll flex h-full flex-col gap-5 overflow-y-auto pr-1">
+      <div className="cw-reveal rounded-sm border-2 border-ink bg-ink p-6 text-paper shadow-hard-md">
+        <p className="font-mono text-[11px] font-bold tracking-[0.12em] text-brass uppercase">
           A specialist agent on four pipelines
         </p>
-        <p className="mt-3 max-w-md font-mono text-4xl leading-[1.02] font-bold tracking-[-0.02em] uppercase xl:text-5xl">
-          Drop a case.
-          <br />
-          Watch it work.
+        <p className="mt-3 max-w-xl font-mono text-3xl leading-[1.05] font-bold tracking-[-0.02em] uppercase xl:text-4xl">
+          Drop a case. Watch it work.
         </p>
+        <p className="mt-3 max-w-xl text-sm leading-relaxed text-paper/75">
+          Thirteen reusable jobs make four reviews. Models sort, read and write;
+          rules decide. Every job is a tool on an MCP server, and every run is a
+          durable workflow that stops to ask when something is missing.
+        </p>
+        <button
+          type="button"
+          onClick={onPipelines}
+          className="press mt-4 rounded-sm border-2 border-paper bg-paper px-3 py-1.5 font-mono text-[11px] font-bold tracking-[0.08em] text-ink uppercase"
+        >
+          See the pipelines as graphs →
+        </button>
       </div>
-      <ul className="grid max-w-md gap-2">
-        {PIPELINE_IDS.map((id, index) => (
-          <motion.li
-            key={id}
-            initial={{ opacity: 0, x: -16 }}
-            animate={{ opacity: 1, x: 0 }}
-            transition={{ delay: 0.2 + index * 0.08 }}
-            className="flex items-center gap-3"
-          >
-            <span className="flex -space-x-1.5">
-              {PIPELINES[id].jobs.slice(2, 5).map((job) => (
-                <span
-                  key={job}
-                  className="flex size-7 items-center justify-center rounded-sm border-2 border-ink bg-paper"
-                  title={JOBS[job].title}
-                >
-                  <JobGlyph job={job} size={14} />
-                </span>
-              ))}
-            </span>
-            <span className="font-mono text-xs font-bold tracking-[0.06em] uppercase">
-              {PIPELINES[id].title}
-            </span>
-          </motion.li>
-        ))}
-      </ul>
+
+      <div className="grid gap-3 xl:grid-cols-2">
+        {PIPELINE_IDS.map((id, index) => {
+          const tone = SCENARIO_TONE[id];
+          const sample = samples.find((folder) => folder.scenario === id);
+          return (
+            <div
+              key={id}
+              className="cw-reveal overflow-hidden rounded-sm border-2 border-ink bg-paper shadow-hard-sm"
+              style={{ animationDelay: `${index * 60}ms` }}
+            >
+              <div className={`h-1.5 ${tone.bar}`} />
+              <div className="p-3.5">
+                <div className="flex items-center gap-2">
+                  <span className={tone.text}>
+                    <ScenarioGlyph scenario={id} />
+                  </span>
+                  <p className="font-mono text-xs font-bold tracking-[0.06em] uppercase">
+                    {PIPELINES[id].title}
+                  </p>
+                </div>
+                <p className="mt-1.5 text-[13px] text-ink-muted">
+                  {PIPELINES[id].blurb}.
+                </p>
+                <div className="mt-2.5 flex flex-wrap items-center gap-1">
+                  {PIPELINES[id].jobs.map((job) => (
+                    <span
+                      key={job}
+                      className={`flex size-6 items-center justify-center rounded-sm border border-ink/40 ${JOBS[job].model ? "bg-morning-haze" : "bg-marble"}`}
+                      title={`${JOBS[job].title}${JOBS[job].model ? " (model)" : " (rules)"}`}
+                    >
+                      <JobGlyph job={job} size={13} />
+                    </span>
+                  ))}
+                </div>
+                {sample ? (
+                  <button
+                    type="button"
+                    onClick={() => onTry(sample.documents.map((doc) => doc.id))}
+                    className="mt-3 flex w-full items-center gap-2.5 rounded-sm border border-ink/25 bg-marble/60 p-1.5 text-left transition-colors hover:border-ink hover:bg-morning-haze/50"
+                  >
+                    <span className="flex -space-x-3">
+                      {sample.documents.slice(0, 3).map((doc) => (
+                        <span
+                          key={doc.id}
+                          className="block h-11 w-8 overflow-hidden rounded-[2px] border border-ink/60 bg-paper"
+                        >
+                          {doc.thumbUrl ? (
+                            // biome-ignore lint/performance/noImgElement: signed Storage URLs
+                            <img
+                              src={doc.thumbUrl}
+                              alt=""
+                              className="h-full w-full object-cover object-top"
+                            />
+                          ) : null}
+                        </span>
+                      ))}
+                    </span>
+                    <span className="min-w-0">
+                      <span className="block truncate text-xs font-semibold">
+                        Try: {sample.title}
+                      </span>
+                      <span className="block font-mono text-[10px] text-ink-muted">
+                        Adds {sample.documents.length} documents to the message
+                      </span>
+                    </span>
+                  </button>
+                ) : null}
+              </div>
+            </div>
+          );
+        })}
+      </div>
     </div>
   );
 }

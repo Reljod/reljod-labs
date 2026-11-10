@@ -19,7 +19,8 @@ export type JobState =
   | "waiting"
   | "done"
   | "skipped"
-  | "error";
+  | "error"
+  | "stopped";
 
 export type RunDocView = {
   id: string;
@@ -64,8 +65,11 @@ export type RunView = {
   logs: LogLine[];
   costUsd: number;
   calls: number;
-  status: "running" | "waiting" | "completed" | "failed";
+  status: "running" | "waiting" | "completed" | "failed" | "stopped";
   error: string | null;
+  /** When the first and the latest event happened, for how long the Run took. */
+  startedAt: number | null;
+  lastAt: number | null;
   /** How many events have been applied, to resume a stream from. */
   seen: number;
 };
@@ -90,6 +94,8 @@ export const emptyRun: RunView = {
   calls: 0,
   status: "running",
   error: null,
+  startedAt: null,
+  lastAt: null,
   seen: 0,
 };
 
@@ -113,9 +119,24 @@ function upsertDocument(
     : [...documents, next];
 }
 
+export function isOver(view: { status: string }) {
+  return (
+    view.status === "completed" ||
+    view.status === "failed" ||
+    view.status === "stopped"
+  );
+}
+
 /** Folds one streamed event into the view. Pure, so replays land in the same place. */
 export function reduceRun(view: RunView, event: RunEvent): RunView {
-  const next = { ...view, seen: view.seen + 1 };
+  // A stopped Run's last model call may still report in; nothing after the end counts.
+  if (isOver(view)) return { ...view, seen: view.seen + 1 };
+  const next = {
+    ...view,
+    seen: view.seen + 1,
+    startedAt: view.startedAt ?? event.at,
+    lastAt: event.at,
+  };
   switch (event.type) {
     case "plan": {
       const previous = new Map(
@@ -260,7 +281,15 @@ export function reduceRun(view: RunView, event: RunEvent): RunView {
         question: null,
         jobs: view.jobs.map((item) =>
           item.state === "running" || item.state === "waiting"
-            ? { ...item, state: event.status === "failed" ? "error" : "done" }
+            ? {
+                ...item,
+                state:
+                  event.status === "failed"
+                    ? "error"
+                    : event.status === "stopped"
+                      ? "stopped"
+                      : "done",
+              }
             : item,
         ),
       };

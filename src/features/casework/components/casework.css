@@ -3,8 +3,12 @@
 
 .cw-desk {
   background-color: var(--color-marble);
-  background-image: radial-gradient(rgb(20 33 61 / 0.09) 1px, transparent 1px);
-  background-size: 18px 18px;
+  background-image:
+    linear-gradient(to top, rgb(20 33 61 / 0.1), transparent 120px),
+    radial-gradient(rgb(20 33 61 / 0.09) 1px, transparent 1px);
+  background-size:
+    100% 100%,
+    18px 18px;
 }
 
 /* A rubber stamp slams onto the decision file. */
@@ -150,7 +154,8 @@
 /* Drop targets glow while something is dragged over them. */
 .cw-droppable[data-over="true"] {
   outline: 3px dashed var(--color-federal-blue);
-  outline-offset: 4px;
+  outline-offset: 3px;
+  transition: outline-offset 0.15s ease-out;
 }
 
 .cw-scroll {
@@ -158,7 +163,97 @@
   scrollbar-color: rgb(20 33 61 / 0.35) transparent;
 }
 
+/* Things arrive with a short fade and a small rise: no bounce, no tilt. */
+@keyframes cw-reveal {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+.cw-reveal {
+  animation: cw-reveal 0.26s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+/* A live dot: something is running or waiting. */
+@keyframes cw-pulse {
+  50% {
+    opacity: 0.35;
+  }
+}
+.cw-pulse {
+  animation: cw-pulse 1.4s ease-in-out infinite;
+}
+
+/* Text that is still being worked out. */
+@keyframes cw-shimmer {
+  from {
+    background-position: 200% 0;
+  }
+  to {
+    background-position: -200% 0;
+  }
+}
+.cw-shimmer {
+  background: linear-gradient(
+    90deg,
+    var(--color-ink-muted) 35%,
+    var(--color-clear-sky) 50%,
+    var(--color-ink-muted) 65%
+  );
+  background-size: 200% 100%;
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  animation: cw-shimmer 2.2s linear infinite;
+}
+
+@keyframes cw-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+.cw-spin {
+  display: inline-block;
+  animation: cw-spin 2.4s linear infinite;
+}
+
+/* The step a Run is on, in the pipeline graph. */
+@keyframes cw-node-live {
+  50% {
+    box-shadow: 0 0 0 5px rgb(29 78 137 / 0.18);
+  }
+}
+.cw-node-live {
+  animation: cw-node-live 1.6s ease-in-out infinite;
+}
+
+/* The pipeline graph, in the desk's ink and paper. */
+.cw-desk .react-flow__handle {
+  opacity: 0;
+  pointer-events: none;
+}
+.cw-desk .react-flow__node {
+  cursor: pointer;
+}
+.cw-desk .react-flow__controls {
+  border: 2px solid var(--color-ink);
+  border-radius: 2px;
+  box-shadow: var(--shadow-hard-sm);
+}
+.cw-desk .react-flow__controls-button {
+  border-bottom-color: rgb(20 33 61 / 0.2);
+}
+
 @media (prefers-reduced-motion: reduce) {
+  .cw-reveal,
+  .cw-pulse,
+  .cw-shimmer,
+  .cw-spin,
+  .cw-node-live,
   .cw-stamp,
   .cw-ink,
   .cw-wait,

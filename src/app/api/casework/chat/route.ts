@@ -65,6 +65,7 @@ export async function POST(request: Request) {
           text: text.trim(),
           documentIds,
           origin,
+          signal: request.signal,
         })) {
           controller.enqueue(line(event));
         }

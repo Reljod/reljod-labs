@@ -70,7 +70,7 @@ export type RunEvent = { at: number } & (
       ms: number;
     }
   | { type: "log"; level: "info" | "warn" | "error"; text: string }
-  | { type: "end"; status: "completed" | "failed"; error?: string }
+  | { type: "end"; status: "completed" | "failed" | "stopped"; error?: string }
 );
 
 type DistributiveOmit<T, K extends PropertyKey> = T extends unknown

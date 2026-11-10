@@ -10,6 +10,7 @@ import { PIPELINES } from "../domain/pipelines";
 import type { Evidence, FieldValue, Ownership } from "../domain/run-state";
 import { documentPages } from "../server/actions";
 import type { DocView } from "../view";
+import type { RunCard } from "./chat-panel";
 import { JobGlyph, OUTCOME_STYLE, RECOMMENDATION_STYLE } from "./glyphs";
 import { type Focus, focusOf, type RunView } from "./run-reducer";
 
@@ -20,6 +21,8 @@ type StageProps = {
   registerNode: (index: number, element: HTMLElement | null) => void;
   focusRef: (element: HTMLElement | null) => void;
   onOpenFile: () => void;
+  /** What the Run has cost, so far or in total. */
+  cost?: RunCard;
 };
 
 /** The stage: the pipeline as a track of jobs, and one thing at a time below it. */
@@ -32,20 +35,24 @@ export function Stage(props: StageProps) {
       ? run.jobs.map((item) => JOBS[item.job].title).join(" → ")
       : "Working it out";
   return (
-    <section aria-label="Run" className="flex h-full min-h-0 flex-col gap-5">
+    <section
+      aria-label="Run"
+      className="flex h-full min-h-0 flex-col gap-4 rounded-sm border-2 border-ink bg-paper/80 p-4 shadow-hard-md"
+    >
       <header className="flex flex-wrap items-baseline gap-x-3 gap-y-1">
         <motion.h2
           key={title}
-          initial={{ opacity: 0, y: -8 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="font-mono text-xl font-bold tracking-[-0.01em] uppercase sm:text-2xl"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ duration: 0.25 }}
+          className="font-mono text-lg font-bold tracking-[-0.01em] uppercase sm:text-xl"
         >
           {title}
         </motion.h2>
         {run.inferred ? (
           <motion.span
-            initial={{ scale: 0 }}
-            animate={{ scale: 1 }}
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
             className="rounded-sm border-2 border-ink bg-morning-haze px-1.5 py-0.5 font-mono text-[10px] font-bold tracking-[0.08em] uppercase"
           >
             Inferred from the documents
@@ -56,22 +63,25 @@ export function Stage(props: StageProps) {
             ? "Done"
             : run.status === "failed"
               ? "Failed"
-              : run.status === "waiting"
-                ? "Waiting on you"
-                : "Running"}
+              : run.status === "stopped"
+                ? "Stopped"
+                : run.status === "waiting"
+                  ? "Waiting on you"
+                  : "Running"}
         </span>
       </header>
 
       <Track {...props} />
+      <DocStrip {...props} />
 
       <div ref={props.focusRef} className="relative min-h-0 flex-1">
         <AnimatePresence mode="wait">
           <motion.div
             key={focusKey(focus)}
-            initial={{ opacity: 0, y: 18 }}
+            initial={{ opacity: 0, y: 8 }}
             animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -12 }}
-            transition={{ duration: 0.28, ease: [0.2, 0.8, 0.2, 1] }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.24, ease: [0.22, 1, 0.36, 1] }}
             className="h-full"
           >
             <FocusView focus={focus} {...props} />
@@ -98,7 +108,7 @@ function focusKey(focus: Focus) {
 function Track({ run, registerNode }: StageProps) {
   return (
     <ol
-      className="cw-scroll relative mt-10 flex items-start gap-0 overflow-x-auto pt-1 pb-2"
+      className="cw-scroll relative flex shrink-0 items-start gap-0 overflow-x-auto rounded-sm border border-ink/15 bg-marble/60 px-2 pt-3 pb-2"
       aria-label="Jobs"
     >
       {run.jobs.map((item, index) => {
@@ -111,21 +121,20 @@ function Track({ run, registerNode }: StageProps) {
               ? "bg-brass text-ink cw-wait"
               : item.state === "running"
                 ? "bg-federal-blue text-paper"
-                : item.state === "error"
+                : item.state === "error" || item.state === "stopped"
                   ? "bg-seal-red text-paper"
                   : "bg-paper text-ink-muted";
         return (
           <motion.li
             key={`${index}-${item.job}`}
-            initial={{ opacity: 0, y: -14, scale: 0.6 }}
-            animate={{ opacity: 1, y: 0, scale: 1 }}
+            initial={{ opacity: 0, y: 6 }}
+            animate={{ opacity: 1, y: 0 }}
             transition={{
-              delay: index * 0.07,
-              type: "spring",
-              stiffness: 380,
-              damping: 22,
+              delay: index * 0.04,
+              duration: 0.25,
+              ease: [0.22, 1, 0.36, 1],
             }}
-            className="relative flex min-w-[76px] flex-1 flex-col items-center"
+            className="relative flex min-w-[60px] flex-1 flex-col items-center"
           >
             {index > 0 ? (
               <span
@@ -139,7 +148,7 @@ function Track({ run, registerNode }: StageProps) {
             ) : null}
             <span
               ref={(element) => registerNode(index, element)}
-              className={`relative z-10 flex size-10 items-center justify-center rounded-sm border-2 border-ink transition-[transform,background-color] duration-300 ${tone} ${active ? "scale-110 shadow-hard-sm" : ""}`}
+              className={`relative z-10 flex size-10 items-center justify-center rounded-sm border-2 border-ink transition-[background-color,box-shadow] duration-300 ${tone} ${active ? "shadow-hard-sm ring-2 ring-federal-blue/40 ring-offset-2 ring-offset-marble" : ""}`}
               title={spec.description}
             >
               {item.state === "done" ? (
@@ -159,6 +168,59 @@ function Track({ run, registerNode }: StageProps) {
         );
       })}
     </ol>
+  );
+}
+
+/** Every Document in the Run as a thumbnail: what it was sorted as, and which is being read. */
+function DocStrip({ run, docs, onOpenDoc }: StageProps) {
+  if (run.documents.length === 0) return null;
+  const reading =
+    run.jobs[run.current]?.job === "read" &&
+    run.jobs[run.current]?.state === "running"
+      ? run.reading
+      : null;
+  return (
+    <ul
+      className="cw-scroll flex shrink-0 gap-2 overflow-x-auto pb-1"
+      aria-label="Documents in this run"
+    >
+      {run.documents.map((item) => {
+        const doc = docs.get(item.id);
+        return (
+          <li key={item.id} className="cw-reveal shrink-0">
+            <button
+              type="button"
+              onClick={() => onOpenDoc(item.id)}
+              title={`Inspect ${item.name}`}
+              className={`flex w-[136px] items-center gap-2 rounded-sm border-2 bg-paper p-1 text-left transition-colors hover:border-ink ${reading === item.id ? "border-federal-blue bg-morning-haze" : "border-ink/30"}`}
+            >
+              <span className="block h-12 w-9 shrink-0 overflow-hidden rounded-[2px] border border-ink/40 bg-limestone/50">
+                {doc?.thumbUrl ? (
+                  // biome-ignore lint/performance/noImgElement: signed Storage URLs
+                  <img
+                    src={doc.thumbUrl}
+                    alt=""
+                    className="h-full w-full object-cover object-top"
+                  />
+                ) : null}
+              </span>
+              <span className="min-w-0">
+                <span className="line-clamp-2 text-[10.5px] leading-[1.2] font-semibold">
+                  {kindLabel(item.kind ?? "other")}
+                </span>
+                <span className="block font-mono text-[9px] text-ink-muted">
+                  {item.fields.length > 0
+                    ? `${item.fields.length} fields`
+                    : reading === item.id
+                      ? "Reading…"
+                      : "Sorted"}
+                </span>
+              </span>
+            </button>
+          </li>
+        );
+      })}
+    </ul>
   );
 }
 
@@ -230,9 +292,13 @@ function SortView({ run, docs, onOpenDoc }: StageProps) {
             type="button"
             key={item.id}
             onClick={() => onOpenDoc(item.id)}
-            initial={{ opacity: 0, rotate: index % 2 ? 4 : -4, y: 20 }}
-            animate={{ opacity: 1, rotate: index % 2 ? 1 : -1, y: 0 }}
-            transition={{ delay: index * 0.06 }}
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{
+              delay: index * 0.05,
+              duration: 0.28,
+              ease: [0.22, 1, 0.36, 1],
+            }}
             className="outline-box relative overflow-hidden rounded-sm bg-paper text-left shadow-hard-md"
           >
             <div className="aspect-[4/3] overflow-hidden bg-limestone/50">
@@ -386,9 +452,10 @@ function ReadView({
               <motion.li
                 key={field.name}
                 layout
-                initial={{ opacity: 0, x: 24 }}
-                animate={{ opacity: 1, x: 0 }}
-                exit={{ opacity: 0, height: 0 }}
+                initial={{ opacity: 0, y: 6 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0 }}
+                transition={{ duration: 0.2 }}
                 className="rounded-sm border-2 border-ink bg-paper px-3 py-2"
               >
                 <p className="font-mono text-[10px] tracking-[0.08em] text-ink-muted uppercase">
@@ -429,8 +496,12 @@ function WorkingView({ run }: StageProps) {
   return (
     <div className="flex h-full flex-col items-center justify-center gap-4">
       <motion.span
-        animate={{ rotate: [0, -6, 6, 0], scale: [1, 1.06, 1] }}
-        transition={{ duration: 1.6, repeat: Number.POSITIVE_INFINITY }}
+        animate={{ opacity: [1, 0.55, 1] }}
+        transition={{
+          duration: 1.8,
+          repeat: Number.POSITIVE_INFINITY,
+          ease: "easeInOut",
+        }}
         className="flex size-20 items-center justify-center rounded-sm border-2 border-ink bg-paper shadow-hard-md"
       >
         <JobGlyph job={job} size={40} />
@@ -450,49 +521,44 @@ function ChecksView(props: StageProps) {
   if (mine.length === 0 && run.jobs[run.current]?.state === "running") {
     return <WorkingView {...props} />;
   }
-  const shown = (mine.length ? mine : run.checks).slice(-3);
+  const earlier = run.checks.filter((check) => !mine.includes(check));
+  const shown = [...mine.toReversed(), ...earlier.toReversed()];
   return (
-    <div className="flex h-full flex-col justify-center gap-4">
-      <div className="flex items-center justify-between">
+    <div className="flex h-full min-h-0 flex-col gap-3">
+      <div className="flex shrink-0 items-center justify-between">
         <p className="eyebrow text-ink-muted">
-          {job ? JOBS[job].doing : "Checking"}
+          {run.status === "stopped"
+            ? "Stopped here"
+            : job
+              ? JOBS[job].doing
+              : "Checking"}
         </p>
         <Tally run={run} />
       </div>
-      <ol className="grid gap-3">
-        <AnimatePresence initial={false}>
-          {shown.map((check, index) => (
-            <motion.li
-              key={check.id}
-              layout
-              initial={{ opacity: 0, rotateX: -80, y: 10 }}
-              animate={{ opacity: 1, rotateX: 0, y: 0 }}
-              transition={{
-                delay: index * 0.08,
-                type: "spring",
-                stiffness: 300,
-                damping: 24,
-              }}
-              style={{ transformPerspective: 600 }}
+      <ol className="cw-scroll grid min-h-0 content-start gap-2 overflow-y-auto pr-1 pb-1">
+        {shown.map((check) => (
+          <li
+            key={check.id}
+            className={`cw-reveal flex items-start gap-3 rounded-sm border-2 bg-paper p-3 ${mine.includes(check) ? "border-ink shadow-hard-sm" : "border-ink/25"}`}
+          >
+            <span
+              className={`flex size-7 shrink-0 items-center justify-center rounded-sm font-mono text-sm font-bold ${OUTCOME_STYLE[check.outcome].tone}`}
             >
-              <Card className="flex items-start gap-3">
-                <span
-                  className={`flex size-8 shrink-0 items-center justify-center rounded-sm font-mono text-base font-bold ${OUTCOME_STYLE[check.outcome].tone}`}
-                >
-                  {OUTCOME_STYLE[check.outcome].mark}
+              {OUTCOME_STYLE[check.outcome].mark}
+            </span>
+            <div className="min-w-0">
+              <p className="font-mono text-xs font-bold tracking-[0.04em] uppercase">
+                {CHECKS[check.id].title}
+                <span className="ml-2 font-normal text-ink-muted normal-case">
+                  {JOBS[check.job].title}
                 </span>
-                <div className="min-w-0">
-                  <p className="font-mono text-sm font-bold tracking-[0.04em] uppercase">
-                    {CHECKS[check.id].title}
-                  </p>
-                  <p className="mt-0.5 text-sm text-ink-muted">
-                    {check.detail}
-                  </p>
-                </div>
-              </Card>
-            </motion.li>
-          ))}
-        </AnimatePresence>
+              </p>
+              <p className="mt-0.5 text-[13px] text-ink-muted">
+                {check.detail}
+              </p>
+            </div>
+          </li>
+        ))}
         {shown.length === 0 ? (
           <p className="text-center font-mono text-xs text-stone uppercase">
             Nothing to check yet
@@ -519,9 +585,9 @@ function HitsView({ run }: StageProps) {
       {hits.map((hit, index) => (
         <motion.div
           key={`${hit.reference}-${hit.screenedName}`}
-          initial={{ opacity: 0, x: 30 }}
-          animate={{ opacity: 1, x: 0 }}
-          transition={{ delay: index * 0.1 }}
+          initial={{ opacity: 0, y: 8 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: index * 0.07, duration: 0.26 }}
         >
           <Card className="relative">
             <div className="flex items-baseline justify-between gap-3">
@@ -638,8 +704,8 @@ function ArrearsView({ run }: StageProps) {
         <div>
           <p className="eyebrow text-ink-muted">Arrears</p>
           <motion.p
-            initial={{ scale: 0.7, opacity: 0 }}
-            animate={{ scale: 1, opacity: 1 }}
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
             className={`font-mono text-4xl font-bold ${arrears.total > 0 ? "text-seal-red" : "text-ivy"}`}
           >
             {formatMoney(arrears.total)}
@@ -686,14 +752,13 @@ function ArrearsView({ run }: StageProps) {
   );
 }
 
-function DecisionView({ run, onOpenFile }: StageProps) {
+function DecisionView({ run, onOpenFile, cost }: StageProps) {
   const decision = run.decision;
   if (!decision) return null;
   const style = RECOMMENDATION_STYLE[decision.recommendation];
   return (
     <div className="flex h-full items-start pt-2">
       <Card className="relative w-full overflow-hidden p-6">
-        <span data-cat-perch className="absolute top-0 left-6 h-px w-24" />
         <span
           className={`cw-ink pointer-events-none absolute top-6 right-8 size-36 rounded-full ${decision.recommendation === "approve" ? "bg-ivy" : decision.recommendation === "decline" ? "bg-seal-red" : "bg-federal-blue"}`}
         />
@@ -703,10 +768,10 @@ function DecisionView({ run, onOpenFile }: StageProps) {
           {style.stamp}
         </span>
         <p className="eyebrow text-ink-muted">Decision file</p>
-        <h3 className="mt-2 max-w-[70%] font-mono text-lg leading-snug font-bold uppercase">
+        <h3 className="mt-2 max-w-[58%] font-mono text-lg leading-snug font-bold uppercase">
           {decision.headline}
         </h3>
-        <p className="mt-3 max-w-[62ch] text-sm leading-relaxed">
+        <p className="mt-3 max-w-[62%] text-sm leading-relaxed">
           {decision.summary}
         </p>
         {decision.nextSteps.length > 0 ? (
@@ -732,6 +797,15 @@ function DecisionView({ run, onOpenFile }: StageProps) {
           {run.risk ? (
             <span className="rounded-sm border-2 border-ink px-2 py-1 font-mono text-xs font-bold uppercase">
               {run.risk.rating} risk
+            </span>
+          ) : null}
+          {cost ? (
+            <span
+              className="rounded-sm border-2 border-ink bg-marble px-2 py-1 font-mono text-xs font-bold"
+              title="What this run's model calls cost"
+            >
+              Cost ${cost.costUsd.toFixed(4)} · {cost.calls} call
+              {cost.calls === 1 ? "" : "s"}
             </span>
           ) : null}
           <button
