@@ -8,10 +8,10 @@ import { kindLabel } from "../domain/document-kinds";
 import { JOBS } from "../domain/jobs";
 import { PIPELINES } from "../domain/pipelines";
 import type { Evidence, FieldValue, Ownership } from "../domain/run-state";
-import { preloadPages, usePages } from "./page-cache";
 import type { DocView } from "../view";
 import type { RunCard } from "./chat-panel";
 import { JobGlyph, OUTCOME_STYLE } from "./glyphs";
+import { preloadPages, usePages } from "./page-cache";
 import { ResultPage } from "./result-page";
 import { type Focus, focusOf, isOver, type RunView } from "./run-reducer";
 
