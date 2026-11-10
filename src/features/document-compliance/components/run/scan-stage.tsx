@@ -4,17 +4,18 @@ import { AnimatePresence, motion } from "motion/react";
 import type { FieldCheck } from "../../domain/field-checks";
 import type { Box, FieldReading } from "../../domain/types";
 import type { PackDocument } from "../../packs";
+import type { DocumentPlay } from "../../playhead";
 import type { DocumentScan } from "../../scan-state";
+import { ConfidenceBar } from "../confidence";
 import { CHECK_STYLES, DOCUMENT_LABELS, FIELD_LABELS } from "../labels";
 import { pageImageUrl } from "../page-image";
 import { PageImage } from "../page-image-loader";
-import type { Playhead } from "./use-playhead";
 
 type ScanStageProps = {
   packSlug: string;
   pack: PackDocument;
   scan: DocumentScan;
-  head: Playhead;
+  play: DocumentPlay;
   reduceMotion: boolean;
 };
 
@@ -33,12 +34,12 @@ type Phase =
   | "checked"
   | "error";
 
-function phaseOf(scan: DocumentScan, head: Playhead): Phase {
+function phaseOf(scan: DocumentScan, play: DocumentPlay): Phase {
   if (scan.stages.parse === "error" || scan.stages.read === "error") {
     return "error";
   }
-  if (head.stamped) return "checked";
-  if (scan.checks && head.revealed >= scan.readings.length) return "checking";
+  if (play.stamped) return "checked";
+  if (scan.checks && play.revealed >= scan.readings.length) return "checking";
   if (scan.stages.read !== "idle" || scan.readings.length > 0) return "reading";
   if (scan.stages.parse !== "idle") return "parsing";
   return "waiting";
@@ -58,13 +59,13 @@ export function ScanStage({
   packSlug,
   pack,
   scan,
-  head,
+  play,
   reduceMotion,
 }: ScanStageProps) {
-  const phase = phaseOf(scan, head);
-  const revealed = scan.readings.slice(0, head.revealed);
+  const phase = phaseOf(scan, play);
+  const revealed = scan.readings.slice(0, play.revealed);
   const checkOf = (name: string) =>
-    head.stamped
+    play.stamped
       ? scan.checks?.find((check) => check.fieldName === name)
       : undefined;
   const spanByRef = new Map(scan.spans.map((span) => [span.ref, span]));
@@ -72,8 +73,6 @@ export function ScanStage({
   const page = latest
     ? (spanByRef.get(latest.spanRefs[0] ?? "")?.page ?? 1)
     : 1;
-  const scanning = phase === "parsing" || phase === "reading";
-
   return (
     <div
       data-testid="scan-stage"
@@ -113,8 +112,8 @@ export function ScanStage({
                       page={page}
                       revealed={revealed}
                       checkOf={checkOf}
-                      stamped={head.stamped}
-                      scanning={scanning}
+                      stamped={play.stamped}
+                      phase={phase}
                       reduceMotion={reduceMotion}
                     />
                   ) : null
@@ -142,7 +141,7 @@ function ScanOverlay({
   revealed,
   checkOf,
   stamped,
-  scanning,
+  phase,
   reduceMotion,
 }: {
   scan: DocumentScan;
@@ -150,9 +149,10 @@ function ScanOverlay({
   revealed: FieldReading[];
   checkOf: (name: string) => FieldCheck | undefined;
   stamped: boolean;
-  scanning: boolean;
+  phase: Phase;
   reduceMotion: boolean;
 }) {
+  const scanning = phase === "parsing" || phase === "reading";
   const spans = scan.spans.filter((span) => span.page === page);
   const spanByRef = new Map(spans.map((span) => [span.ref, span]));
   const locked = revealed.flatMap((reading) =>
@@ -234,28 +234,110 @@ function ScanOverlay({
             ))
         : null}
 
-      {scanning && !reduceMotion ? <Scanline /> : null}
+      {phase === "waiting" ? <WaitingVeil reduceMotion={reduceMotion} /> : null}
+      <Viewfinder
+        active={scanning || phase === "checking"}
+        reduceMotion={reduceMotion}
+      />
+      {scanning && !reduceMotion ? (
+        <Scanline fast={phase === "reading"} />
+      ) : null}
     </div>
   );
 }
 
-function Scanline() {
+/** A beam sweeping down the page, leaving a fading grid of read points behind it. */
+function Scanline({ fast }: { fast: boolean }) {
   return (
     <motion.div
       aria-hidden
-      className="absolute inset-x-0 h-24"
-      initial={{ top: "-15%" }}
+      data-testid="scanline"
+      className="absolute inset-x-0 h-28"
+      initial={{ top: "-20%" }}
       animate={{ top: "105%" }}
       transition={{
-        duration: 2.4,
+        duration: fast ? 1.8 : 2.6,
         ease: "easeInOut",
         repeat: Number.POSITIVE_INFINITY,
-        repeatDelay: 0.2,
+        repeatDelay: 0.15,
       }}
     >
-      <div className="h-full bg-gradient-to-b from-transparent via-clear-sky/25 to-clear-sky/45" />
-      <div className="h-0.5 bg-federal-blue shadow-[0_0_12px_2px_var(--color-clear-sky)]" />
+      <div className="h-full bg-[radial-gradient(var(--color-federal-blue)_1px,transparent_1.5px)] bg-[length:10px_10px] opacity-40 [mask-image:linear-gradient(to_bottom,transparent,black)]" />
+      <div className="absolute inset-0 bg-gradient-to-b from-transparent via-clear-sky/20 to-clear-sky/45" />
+      <div className="relative h-0.5 bg-federal-blue shadow-[0_0_14px_3px_var(--color-clear-sky)]">
+        <motion.span
+          className="absolute -top-1 size-2.5 rounded-full bg-paper shadow-[0_0_10px_3px_var(--color-clear-sky)]"
+          animate={{ left: ["0%", "98%", "0%"] }}
+          transition={{
+            duration: 1.6,
+            ease: "easeInOut",
+            repeat: Number.POSITIVE_INFINITY,
+          }}
+        />
+      </div>
     </motion.div>
+  );
+}
+
+/** Corner brackets that lock onto the page while it is being scanned. */
+function Viewfinder({
+  active,
+  reduceMotion,
+}: {
+  active: boolean;
+  reduceMotion: boolean;
+}) {
+  const corners = [
+    "left-1.5 top-1.5 border-t-4 border-l-4",
+    "right-1.5 top-1.5 border-t-4 border-r-4",
+    "bottom-1.5 left-1.5 border-b-4 border-l-4",
+    "right-1.5 bottom-1.5 border-r-4 border-b-4",
+  ];
+  return (
+    <AnimatePresence>
+      {active
+        ? corners.map((corner) => (
+            <motion.span
+              key={corner}
+              aria-hidden
+              className={`absolute size-7 border-federal-blue ${corner}`}
+              initial={reduceMotion ? false : { opacity: 0, scale: 1.8 }}
+              animate={
+                reduceMotion
+                  ? { opacity: 1 }
+                  : { opacity: [1, 0.55, 1], scale: [1, 0.92, 1] }
+              }
+              exit={{ opacity: 0, scale: 1.4 }}
+              transition={{
+                duration: 1.4,
+                repeat: reduceMotion ? 0 : Number.POSITIVE_INFINITY,
+                ease: "easeInOut",
+              }}
+            />
+          ))
+        : null}
+    </AnimatePresence>
+  );
+}
+
+/** A Document still waiting its turn: dimmed, with a slow shimmer across it. */
+function WaitingVeil({ reduceMotion }: { reduceMotion: boolean }) {
+  return (
+    <div aria-hidden className="absolute inset-0 overflow-hidden bg-ink/15">
+      {reduceMotion ? null : (
+        <motion.div
+          className="absolute inset-y-0 w-1/3 -skew-x-12 bg-gradient-to-r from-transparent via-paper/50 to-transparent"
+          initial={{ left: "-40%" }}
+          animate={{ left: "120%" }}
+          transition={{
+            duration: 1.8,
+            ease: "easeInOut",
+            repeat: Number.POSITIVE_INFINITY,
+            repeatDelay: 0.4,
+          }}
+        />
+      )}
+    </div>
   );
 }
 
@@ -423,22 +505,5 @@ function FieldChip({
         )}
       </AnimatePresence>
     </motion.li>
-  );
-}
-
-function ConfidenceBar({ value }: { value: number }) {
-  return (
-    <span
-      role="img"
-      aria-label={`Confidence ${Math.round(value * 100)}%`}
-      className="mt-1 h-1 w-full overflow-hidden rounded-full bg-limestone"
-    >
-      <motion.span
-        className="block h-full bg-federal-blue"
-        initial={{ width: 0 }}
-        animate={{ width: `${value * 100}%` }}
-        transition={{ duration: 0.6, ease: "easeOut" }}
-      />
-    </span>
   );
 }

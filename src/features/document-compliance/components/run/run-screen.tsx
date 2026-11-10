@@ -5,13 +5,16 @@ import { AnimatePresence, motion, useReducedMotion } from "motion/react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { useEffect, useState } from "react";
+import { formatTokens, formatUsd, runTotals } from "../../metrics";
 import { findPack } from "../../packs";
 import { DOCUMENT_ORDER } from "../../scan-events";
 import { getRun } from "../../server/actions";
 import type { RunView } from "../../view";
 import { Caveats } from "../caveats";
-import { FindingsReport } from "./findings-report";
+import { DOCUMENT_LABELS } from "../labels";
+import { SESSION_RUNS_KEY, SessionRuns } from "../session-runs";
 import { ProgressRail } from "./progress-rail";
+import { RunResults } from "./run-results";
 import { ScanStage } from "./scan-stage";
 import { Terminal } from "./terminal";
 import { usePlayhead } from "./use-playhead";
@@ -58,7 +61,7 @@ export function RunScreen({ runId }: { runId: string }) {
   const kinds = DOCUMENT_ORDER.filter((kind) =>
     pack?.documents.some((document) => document.kind === kind),
   );
-  const { head, skip } = usePlayhead(scan, kinds, {
+  const { head, skip, pin, follow } = usePlayhead(scan, kinds, {
     tickMs: reduceMotion ? 120 : 380,
     resetKey: `${mode}-${replay?.key ?? 0}`,
   });
@@ -69,6 +72,7 @@ export function RunScreen({ runId }: { runId: string }) {
   useEffect(() => {
     if (ended && mode === "live") {
       void queryClient.invalidateQueries({ queryKey });
+      void queryClient.invalidateQueries({ queryKey: SESSION_RUNS_KEY });
     }
   }, [ended, mode]);
 
@@ -94,9 +98,14 @@ export function RunScreen({ runId }: { runId: string }) {
   if (!view || !pack || !mode) return <RunSkeleton />;
 
   const scanning = mode !== "results";
-  const onScreen = Math.min(head.index, kinds.length - 1);
-  const kind = kinds[onScreen];
+  const kind = head.onScreen ?? kinds[0];
   const document = pack.documents.find((item) => item.kind === kind);
+  const totals = runTotals(kinds.map((item) => scan.documents[item].usage));
+  const allRead = kinds.every(
+    (item) =>
+      scan.documents[item].checks !== null ||
+      scan.documents[item].stages.read === "error",
+  );
 
   return (
     <div className="flex flex-col gap-6">
@@ -112,6 +121,18 @@ export function RunScreen({ runId }: { runId: string }) {
           {pack.title}
         </h1>
         <ModeBadge mode={mode} ended={ended} />
+        {scanning &&
+        (mode === "live" ||
+          kinds.some((item) => scan.documents[item].usage)) ? (
+          <span
+            data-testid="live-cost"
+            className="eyebrow rounded-sm border border-ink bg-paper px-2 py-1"
+            title={`${formatTokens(totals.inputTokens)} input · ${formatTokens(totals.outputTokens)} output tokens`}
+          >
+            {formatUsd(totals.costUsd ?? (totals.inputTokens ? null : 0))} ·{" "}
+            {formatTokens(totals.inputTokens + totals.outputTokens)} tok
+          </span>
+        ) : null}
         <span className="ml-auto flex gap-2">
           {scanning && (ended || mode === "replay") && !head.finished ? (
             <button
@@ -120,7 +141,7 @@ export function RunScreen({ runId }: { runId: string }) {
               onClick={skip}
               className="outline-box press min-h-10 rounded-sm bg-paper px-3 font-mono text-xs font-bold uppercase"
             >
-              Skip ▸▸
+              {head.pinned && allRead && ended ? "Findings ▸▸" : "Skip ▸▸"}
             </button>
           ) : null}
           {mode === "results" && view.status === "completed" ? (
@@ -162,9 +183,37 @@ export function RunScreen({ runId }: { runId: string }) {
               pack={pack}
               kinds={kinds}
               documents={scan.documents}
-              onScreen={head.finished ? null : onScreen}
+              onScreen={head.finished ? null : kind}
+              onSelect={pin}
               reduceMotion={reduceMotion}
             />
+            <div
+              data-testid="scan-follow"
+              data-pinned={head.pinned}
+              className="-mt-2 flex min-h-8 flex-wrap items-center gap-2 font-mono text-xs text-ink-muted"
+            >
+              {head.pinned ? (
+                <>
+                  <span>
+                    Pinned to the {DOCUMENT_LABELS[kind].toLowerCase()}. Pick
+                    any Document above to look at it.
+                  </span>
+                  <button
+                    type="button"
+                    data-testid="follow-run"
+                    onClick={follow}
+                    className="outline-box press rounded-sm bg-paper px-2 py-1 font-bold text-ink uppercase"
+                  >
+                    Follow run ▸
+                  </button>
+                </>
+              ) : (
+                <span>
+                  Following the run: each Document comes on screen as soon as it
+                  has output. Pick one above to stay on it.
+                </span>
+              )}
+            </div>
             {kind && document ? (
               <AnimatePresence mode="wait">
                 <motion.div
@@ -178,7 +227,7 @@ export function RunScreen({ runId }: { runId: string }) {
                     packSlug={pack.slug}
                     pack={document}
                     scan={scan.documents[kind]}
-                    head={head}
+                    play={head.documents[kind]}
                     reduceMotion={reduceMotion}
                   />
                 </motion.div>
@@ -191,7 +240,7 @@ export function RunScreen({ runId }: { runId: string }) {
             initial={reduceMotion ? false : { opacity: 0, y: 24 }}
             animate={{ opacity: 1, y: 0 }}
           >
-            <FindingsReport view={view} reduceMotion={reduceMotion} />
+            <RunResults view={view} reduceMotion={reduceMotion} />
           </motion.div>
         )}
       </AnimatePresence>
@@ -202,6 +251,8 @@ export function RunScreen({ runId }: { runId: string }) {
         live={mode === "live" && !ended}
         reduceMotion={reduceMotion}
       />
+
+      <SessionRuns currentRunId={runId} />
 
       <Caveats />
     </div>

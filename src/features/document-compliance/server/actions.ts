@@ -1,11 +1,12 @@
 "use server";
 
-import { headers } from "next/headers";
+import { randomUUID } from "node:crypto";
+import { cookies, headers } from "next/headers";
 import { start } from "workflow/api";
 import { E2E_HEADER } from "../constants";
 import { individualOnboarding } from "../domain/rulebook";
 import { findPack } from "../packs";
-import type { RunView, StartResult } from "../view";
+import type { RunView, SessionRunView, StartResult } from "../view";
 import { env } from "./env";
 import { prescreenWorkflow } from "./prescreen-workflow";
 import { E2E_VISITOR, hashVisitor, rateLimitMessage } from "./rate-limit";
@@ -13,9 +14,35 @@ import {
   createRun,
   failRun,
   latestCompletedRunId,
+  listSessionRuns,
   loadRun,
   setWorkflowRunId,
 } from "./repository";
+
+/** The cookie that groups one browser's Pre-screen runs into a Session (ADR 0007). */
+const SESSION_COOKIE = "prescreen_session";
+const SESSION_DAYS = 30;
+const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/;
+
+async function currentSessionId() {
+  const value = (await cookies()).get(SESSION_COOKIE)?.value ?? "";
+  return UUID.test(value) ? value : null;
+}
+
+/** The visitor's Session id, starting a Session (and its cookie) if there is none. */
+async function ensureSessionId() {
+  const existing = await currentSessionId();
+  const id = existing ?? randomUUID();
+  // Refreshed on every run, so a Session lasts as long as its newest run is kept.
+  (await cookies()).set(SESSION_COOKIE, id, {
+    httpOnly: true,
+    sameSite: "lax",
+    secure: process.env.NODE_ENV === "production",
+    path: "/demos/document-compliance",
+    maxAge: SESSION_DAYS * 24 * 60 * 60,
+  });
+  return id;
+}
 
 async function visitor() {
   const requestHeaders = await headers();
@@ -51,6 +78,7 @@ export async function startPrescreen(packSlug: string): Promise<StartResult> {
     rulebook: individualOnboarding,
     declaration: pack.clientDeclaration,
     visitorHash: hash,
+    sessionId: await ensureSessionId(),
     model: env.model(),
   });
   try {
@@ -74,4 +102,10 @@ export async function startPrescreen(packSlug: string): Promise<StartResult> {
 
 export async function getRun(runId: string): Promise<RunView | null> {
   return loadRun(runId);
+}
+
+/** The runs this browser started, newest first; empty before its first run. */
+export async function getSessionRuns(): Promise<SessionRunView[]> {
+  const sessionId = await currentSessionId();
+  return sessionId ? listSessionRuns(sessionId) : [];
 }

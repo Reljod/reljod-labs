@@ -4,6 +4,7 @@ import type {
   DocumentKind,
   FieldReading,
 } from "./domain/types";
+import { formatTokens, formatUsd, type ReadUsage } from "./metrics";
 import { DOCUMENT_ORDER, type ScanEvent, type ScanStage } from "./scan-events";
 import type { FindingView, RunView } from "./view";
 
@@ -19,6 +20,12 @@ export type DocumentScan = {
   checks: FieldCheck[] | null;
   judgments: DocumentJudgments | null;
   stages: Record<ScanStage, StageState>;
+  /** When its first reading (or Field check) arrived: who has output first. */
+  firstOutputAt: number | null;
+  usage: ReadUsage | null;
+  parseMs: number | null;
+  readMs: number | null;
+  corrections: number;
 };
 
 export type LogTone = "muted" | "info" | "ok" | "warn" | "bad";
@@ -57,6 +64,11 @@ function emptyDocument(kind: DocumentKind): DocumentScan {
     checks: null,
     judgments: null,
     stages: { parse: "idle", read: "idle", check: "idle" },
+    firstOutputAt: null,
+    usage: null,
+    parseMs: null,
+    readMs: null,
+    corrections: 0,
   };
 }
 
@@ -131,6 +143,18 @@ function linesFor(event: ScanEvent): Omit<LogLine, "id" | "at">[] {
           tone: "muted",
           kind: event.kind,
           text: `  ↳ ${name} = "${value}" ← [${spanRefs.join(",")}] ${confidence.toFixed(2)}`,
+        },
+      ];
+    }
+    case "usage": {
+      const { usage } = event;
+      const tokens = `${formatTokens(usage.inputTokens)} in · ${formatTokens(usage.outputTokens)} out`;
+      const via = usage.provider ? ` via ${usage.provider}` : "";
+      return [
+        {
+          tone: "muted",
+          kind: event.kind,
+          text: `  $ ${formatUsd(usage.costUsd)} · ${tokens} · ${usage.model ?? "model"}${via}`,
         },
       ];
     }
@@ -209,10 +233,16 @@ function applyToDocuments(state: ScanState, event: ScanEvent) {
         };
         // A retried read starts over, so its earlier readings go.
         const restart = event.stage === "read" && event.state === "retry";
+        const done = event.state === "done" ? (event.ms ?? null) : null;
         return {
           ...document,
           stages,
           readings: restart ? [] : document.readings,
+          firstOutputAt: restart ? null : document.firstOutputAt,
+          parseMs:
+            event.stage === "parse" && done !== null ? done : document.parseMs,
+          readMs:
+            event.stage === "read" && done !== null ? done : document.readMs,
         };
       });
     case "spans":
@@ -222,9 +252,15 @@ function applyToDocuments(state: ScanState, event: ScanEvent) {
         pageCount: event.pageCount,
         spans: event.spans,
       }));
+    case "usage":
+      return withDocument(state, event.kind, (document) => ({
+        ...document,
+        usage: event.usage,
+      }));
     case "field":
       return withDocument(state, event.kind, (document) => ({
         ...document,
+        firstOutputAt: document.firstOutputAt ?? event.at,
         readings: [
           ...document.readings.filter(
             (reading) => reading.name !== event.reading.name,
@@ -240,11 +276,13 @@ function applyToDocuments(state: ScanState, event: ScanEvent) {
           ...span,
           text: fixed.get(span.ref) ?? span.text,
         })),
+        corrections: document.corrections + event.corrections.length,
       }));
     }
     case "checks":
       return withDocument(state, event.kind, (document) => ({
         ...document,
+        firstOutputAt: document.firstOutputAt ?? event.at,
         checks: event.checks,
         judgments: event.judgments,
         stages: { ...document.stages, check: "done" },
@@ -274,19 +312,25 @@ export function scanReducer(state: ScanState, event: ScanEvent): ScanState {
   };
 }
 
-/** Rebuilds the events of a stored run, so it can be replayed like a live one. */
+/**
+ * Rebuilds the events of a stored run, so it can be replayed like a live one.
+ * Each Document's events carry the time they first happened, relative to the
+ * run's start, so the replay finds output in the same order the run did.
+ */
 export function replayEvents(view: RunView): ScanEvent[] {
   const events: ScanEvent[] = [];
-  const at = 0;
   const ordered = [...view.documents].sort(
     (a, b) => DOCUMENT_ORDER.indexOf(a.kind) - DOCUMENT_ORDER.indexOf(b.kind),
   );
   for (const document of ordered) {
     const kind = document.kind;
+    const metrics = document.metrics;
+    const parsed = metrics?.parseMs ?? 0;
+    const read = parsed + (metrics?.readMs ?? 0);
     events.push(
-      { at, type: "stage", kind, stage: "parse", state: "start" },
+      { at: 0, type: "stage", kind, stage: "parse", state: "start" },
       {
-        at,
+        at: parsed,
         type: "spans",
         kind,
         parser: document.parser,
@@ -294,17 +338,18 @@ export function replayEvents(view: RunView): ScanEvent[] {
         spans: document.spans,
       },
       {
-        at,
+        at: parsed,
         type: "stage",
         kind,
         stage: "parse",
         state: "done",
+        ms: metrics?.parseMs ?? undefined,
         detail: `${document.parser} · ${document.spans.length} spans`,
       },
-      { at, type: "stage", kind, stage: "read", state: "start" },
+      { at: parsed, type: "stage", kind, stage: "read", state: "start" },
       ...document.fields.map(
         (field): ScanEvent => ({
-          at,
+          at: read,
           type: "field",
           kind,
           reading: {
@@ -315,36 +360,38 @@ export function replayEvents(view: RunView): ScanEvent[] {
           },
         }),
       ),
+      ...(metrics
+        ? [{ at: read, type: "usage" as const, kind, usage: metrics }]
+        : []),
       {
-        at,
+        at: read,
         type: "stage",
         kind,
         stage: "read",
         state: "done",
+        ms: metrics?.readMs ?? undefined,
         detail: `${document.fields.length} fields`,
       },
       {
-        at,
+        at: read,
         type: "checks",
         kind,
         checks: document.checks,
-        judgments: {
-          legible: true,
-          tamperingSuspected: false,
-          tamperingSpanRefs: [],
-          signaturePresent: null,
-          notes: "",
-        },
+        judgments: document.judgments,
       },
     );
   }
+  // Interleave Documents by when things happened; a stable sort keeps each
+  // Document's own events in order.
+  events.sort((a, b) => a.at - b.at);
+  const last = events.at(-1)?.at ?? 0;
   if (view.status === "completed") {
-    events.push({ at, type: "findings", findings: view.findings });
+    events.push({ at: last, type: "findings", findings: view.findings });
   }
   events.push(
     view.status === "failed"
-      ? { at, type: "end", status: "failed", error: view.error ?? "" }
-      : { at, type: "end", status: "completed" },
+      ? { at: last, type: "end", status: "failed", error: view.error ?? "" }
+      : { at: last, type: "end", status: "completed" },
   );
   return events;
 }

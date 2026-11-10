@@ -74,6 +74,14 @@ _Avoid_: Approval, verification, decision
 One execution of a Pre-screen against a Document pack, holding everything it produced: Spans, Extracted fields and Findings.
 _Avoid_: Job, check, session
 
+**Session**:
+The Pre-screen runs started from one browser, listed together so a visitor can go back to any of them. It groups runs and decides nothing.
+_Avoid_: History, workspace, account
+
+**Run metrics**:
+What reading each Document took: the model and provider that answered, its tokens, the price the gateway reported and how long parsing and reading took.
+_Avoid_: Telemetry, stats, billing
+
 **Reviewer**:
 The person who owns the decision on a Document pack and resolves every `Fail` and `Needs review` Finding.
 _Avoid_: Approver, checker, analyst

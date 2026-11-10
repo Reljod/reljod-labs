@@ -2,11 +2,13 @@ import type { FieldCheck } from "./domain/field-checks";
 import type { RequirementId, Rulebook } from "./domain/rulebook";
 import type {
   Box,
+  DocumentJudgments,
   DocumentKind,
   FieldName,
   Finding,
   Outcome,
 } from "./domain/types";
+import type { DocumentMetrics } from "./metrics";
 
 /** Everything the Reviewer view needs to show one Pre-screen run. */
 export type RunView = {
@@ -22,6 +24,7 @@ export type RunView = {
   error: string | null;
   model: string | null;
   createdAt: string;
+  completedAt: string | null;
   prescreenDate: string;
   documents: DocumentView[];
   findings: FindingView[];
@@ -32,7 +35,14 @@ export type DocumentView = {
   parser: string;
   pageCount: number;
   pages: { page: number; imageUrl: string }[];
-  spans: { ref: string; page: number; text: string; box: Box }[];
+  spans: {
+    ref: string;
+    page: number;
+    text: string;
+    box: Box;
+    /** The OCR engine's confidence; null for a PDF text layer. */
+    confidence: number | null;
+  }[];
   fields: {
     name: FieldName;
     value: string;
@@ -41,6 +51,24 @@ export type DocumentView = {
     spanRefs: string[];
   }[];
   checks: FieldCheck[];
+  judgments: DocumentJudgments;
+  /** Null for a Document saved before run metrics were kept. */
+  metrics: DocumentMetrics | null;
+  /** The model's structured answer exactly as returned, when it was kept. */
+  raw: unknown;
+};
+
+/** One run in the visitor's Session list. */
+export type SessionRunView = {
+  id: string;
+  packSlug: string;
+  status: RunView["status"];
+  createdAt: string;
+  completedAt: string | null;
+  model: string | null;
+  costUsd: number | null;
+  tokens: number;
+  counts: Record<Outcome, number>;
 };
 
 export type FindingView = {

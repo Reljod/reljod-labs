@@ -4,7 +4,9 @@ import { animate, motion, useMotionValue, useTransform } from "motion/react";
 import { useEffect, useState } from "react";
 import type { FieldCheck } from "../../domain/field-checks";
 import type { DocumentKind, Outcome } from "../../domain/types";
-import type { FindingView, RunView } from "../../view";
+import { formatPercent } from "../../metrics";
+import type { DocumentView, FindingView, RunView } from "../../view";
+import { LOW_CONFIDENCE } from "../confidence";
 import { DocumentViewer } from "../document-viewer";
 import {
   CHECK_STYLES,
@@ -30,10 +32,17 @@ function CountUp({ to, reduceMotion }: { to: number; reduceMotion: boolean }) {
 function EvidenceDiff({
   finding,
   checks,
+  documents,
 }: {
   finding: FindingView;
   checks: FieldCheck[];
+  documents: DocumentView[];
 }) {
+  const confidenceOf = (check: FieldCheck) =>
+    documents
+      .find((document) => document.kind === check.documentKind)
+      ?.fields.find((field) => field.name === check.fieldName)?.confidence ??
+    null;
   const cited = finding.evidence.flatMap((evidence) => {
     const check = checks.find(
       (item) =>
@@ -76,9 +85,24 @@ function EvidenceDiff({
                 ≠ {check.expected}
               </span>
             ) : null}
+            <ConfidenceTag value={confidenceOf(check)} />
           </span>
         );
       })}
+    </span>
+  );
+}
+
+/** How sure the model was of a reading, flagged when it is low. */
+function ConfidenceTag({ value }: { value: number | null }) {
+  if (value === null) return null;
+  const low = value < LOW_CONFIDENCE;
+  return (
+    <span
+      title="Model confidence in this reading"
+      className={`shrink-0 rounded-[2px] px-1 ${low ? "bg-brass text-ink" : "bg-limestone text-ink-muted"}`}
+    >
+      {formatPercent(value)}
     </span>
   );
 }
@@ -185,7 +209,11 @@ export function FindingsReport({ view, reduceMotion }: FindingsReportProps) {
                     </span>
                   </span>
                   <span className="text-sm">{finding.reason}</span>
-                  <EvidenceDiff finding={finding} checks={checks} />
+                  <EvidenceDiff
+                    finding={finding}
+                    checks={checks}
+                    documents={view.documents}
+                  />
                 </button>
               </motion.li>
             );
