@@ -164,13 +164,37 @@ function addEvidence(list: Evidence[], evidence: Evidence) {
   }
 }
 
-function attributeName(name: string) {
-  return name
+/**
+ * Names Sources use for the same fact, folded to one, so two Sources that
+ * disagree are caught as a conflict instead of kept side by side.
+ */
+const ATTRIBUTE_ALIASES: Record<string, string> = {
+  rate: "interest_rate",
+  fixed_rate: "interest_rate",
+  apr: "interest_rate",
+  dob: "date_of_birth",
+  birthday: "date_of_birth",
+  birth_date: "date_of_birth",
+  occupation: "role",
+  job_title: "role",
+  email_address: "email",
+  phone_number: "phone",
+  telephone: "phone",
+  mobile: "phone",
+  stake: "ownership",
+  stake_percent: "ownership",
+  ownership_percent: "ownership",
+  shareholding: "ownership",
+};
+
+export function attributeName(name: string) {
+  const plain = name
     .trim()
     .toLowerCase()
     .replace(/[^a-z0-9]+/g, "_")
     .replace(/^_+|_+$/g, "")
     .slice(0, 40);
+  return ATTRIBUTE_ALIASES[plain] ?? plain;
 }
 
 function mergeAttributes(

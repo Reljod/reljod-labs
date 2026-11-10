@@ -158,6 +158,55 @@ describe("mergeExtraction", () => {
     ]);
   });
 
+  it("catches a conflict even when two Sources name the attribute differently", () => {
+    const one = mergeExtraction(
+      emptyGraph("Rafael"),
+      extraction({
+        entities: [
+          entity(
+            "liability:mortgage",
+            "Mortgage",
+            "wealth.liabilities",
+            "4.1%",
+            {
+              attributes: [{ name: "Rate", value: "4.1%" }],
+            },
+          ),
+        ],
+      }),
+      "note",
+    );
+    const two = mergeExtraction(
+      one.graph,
+      extraction({
+        entities: [
+          entity(
+            "liability:mortgage",
+            "Mortgage",
+            "wealth.liabilities",
+            "4.15%",
+            {
+              attributes: [
+                { name: "interest_rate", value: "4.15% fixed until 2028" },
+              ],
+            },
+          ),
+        ],
+      }),
+      "statement",
+    );
+    const mortgage = two.graph.nodes.find(
+      (node) => node.key === "liability:mortgage",
+    );
+    expect(Object.keys(mortgage?.attributes ?? {})).toEqual(["interest_rate"]);
+    expect(mortgage?.conflicts).toEqual([
+      {
+        attribute: "interest_rate",
+        values: ["4.1%", "4.15% fixed until 2028"],
+      },
+    ]);
+  });
+
   it("merges a new Key with the same type and label into the existing Node", () => {
     const one = mergeExtraction(
       emptyGraph("Maria"),
