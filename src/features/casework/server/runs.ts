@@ -268,7 +268,12 @@ export async function stopRun(session: SessionRow, runId: string) {
   }
   if (run.workflow_run_id) {
     const workflow = getWorkflowRun(run.workflow_run_id);
-    await workflow.cancel({ cancelReason: "Stopped by the person" });
+    try {
+      await workflow.cancel({ cancelReason: "Stopped by the person" });
+    } catch {
+      // The workflow already ended (finished or died) without updating the
+      // Run row. Stopping must still close the row, or the desk stays blocked.
+    }
     try {
       const writer = workflow.getWritable<RunEvent>().getWriter();
       const at = Date.now();
