@@ -212,6 +212,38 @@ describe("Joins", () => {
     ).toBe("");
   });
 
+  it("drops the Join after a dropped fetch, so the sentence never reads wrong", () => {
+    const validate = createStepValidator();
+    expect(
+      validate(step({ source: "experience.99", join: "Reljod is now" })),
+    ).toBeNull();
+    expect(
+      validate(step({ source: sourcePath.job(0), join: "after" }))?.join,
+    ).toBe("");
+    expect(
+      validate(step({ source: sourcePath.job(MAYA), join: "and then" }))?.join,
+    ).toBe("and then");
+  });
+
+  it("keeps the next Join when only a toss was dropped", () => {
+    const validate = createStepValidator();
+    for (let index = 0; index < MAX_TOSSES; index++) {
+      validate(step({ source: sourcePath.job(index + 1), action: "toss" }));
+    }
+    expect(
+      validate(step({ source: sourcePath.job(4), action: "toss" })),
+    ).toBeNull();
+    expect(validate(step({ join: "He worked as" }))?.join).toBe("He worked as");
+  });
+
+  it("drops a Join over eight words", () => {
+    expect(
+      createStepValidator()(
+        step({ join: "and then after all of that he went on to" }),
+      )?.join,
+    ).toBe("");
+  });
+
   it("reads a stored plan from before Joins as empty Joins", () => {
     const { join: _, ...old } = step();
     const plan = finalizePlan({

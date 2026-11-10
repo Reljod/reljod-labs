@@ -4,7 +4,7 @@ import { motion } from "motion/react";
 import { Fragment, type ReactNode } from "react";
 import { type Layout, sentenceJoins } from "../domain/build-plan";
 import { contentTree } from "../domain/content-tree";
-import { BlockPhrase, BlockView } from "./block-view";
+import { BlockPhrase, BlockView, phraseText } from "./block-view";
 import type { PlacedBlock } from "./placed-block";
 
 type AnswerPageProps = {
@@ -24,23 +24,8 @@ const sectionOf = (item: PlacedBlock) =>
 
 /* Punctuation hugs the piece before it; words get a space. */
 const opensWithPunctuation = (text: string) => /^[,.;:!?)]/.test(text);
-/** The last words a block shows in the sentence, so the full stop is not doubled. */
-function lastWords(block: PlacedBlock["block"]) {
-  switch (block.kind) {
-    case "figure":
-      return block.label;
-    case "quote":
-      return block.text;
-    case "card":
-      return block.title;
-    case "job":
-      return block.company;
-    case "contact":
-      return block.heading;
-  }
-}
 const endsWithPunctuation = (item: PlacedBlock) =>
-  /[.!?]$/.test(lastWords(item.block).trim());
+  /[.!?]$/.test(phraseText(item.block).trim());
 
 /**
  * The page Reform makes. The placed blocks line up, in answer order, between
@@ -127,7 +112,11 @@ export function AnswerPage({
                 className="outline-box relative my-1.5 inline-block max-w-full rounded-sm bg-paper px-3 pt-1 pb-1.5 align-middle leading-snug shadow-hard-sm"
                 transition={{ type: "spring", stiffness: 140, damping: 20 }}
               >
-                <span className="eyebrow block text-[0.625rem] text-ink-muted">
+                {/* The pieces in full below name the number and section for screen readers. */}
+                <span
+                  aria-hidden="true"
+                  className="eyebrow block text-[0.625rem] text-ink-muted"
+                >
                   {number(index)} · from {sectionOf(item)}
                 </span>
                 <span className="font-semibold">

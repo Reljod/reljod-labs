@@ -60,7 +60,10 @@ export function gripFor(kind: ContentKind): Grip {
   return kind === "figure" || kind === "quote" ? "carry" : "push";
 }
 
-/** Hauling: he faces where he goes, the block overhead or in front of his paws. */
+/**
+ * How long a haul takes; he goes slower loaded. Which way he faces is the
+ * stage's call: it knows where the block sits and where its slot is.
+ */
 export function haulGait(
   dx: number,
   dy: number,
@@ -69,7 +72,6 @@ export function haulGait(
 ) {
   return {
     pose: grip,
-    flip: dx < 0,
     duration: travelTime(
       Math.hypot(dx, dy),
       SPEED.run * PACE[pace] * LOAD[grip],

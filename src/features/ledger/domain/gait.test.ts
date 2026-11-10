@@ -44,9 +44,7 @@ describe("hauling", () => {
     expect(gripFor("card")).toBe("push");
   });
 
-  it("faces where he goes, and pushing is slower than carrying", () => {
-    expect(haulGait(300, 0, "push").flip).toBe(false);
-    expect(haulGait(-300, 0, "carry").flip).toBe(true);
+  it("is slower pushing than carrying", () => {
     expect(haulGait(600, 0, "push").duration).toBeGreaterThan(
       haulGait(600, 0, "carry").duration,
     );
