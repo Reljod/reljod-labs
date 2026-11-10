@@ -147,6 +147,18 @@ export async function createBuild(input: {
   return row.id;
 }
 
+/**
+ * Moves a Build from queued to running, once: of two concurrent starts, only
+ * the one that gets the row back may start a workflow.
+ */
+export async function claimBuild(id: string): Promise<boolean> {
+  const rows = await sql()<{ id: string }[]>`
+    update client_manager.builds set status = 'running'
+    where id = ${id} and status = 'queued'
+    returning id`;
+  return rows.length > 0;
+}
+
 export async function getBuild(id: string): Promise<BuildRow | null> {
   if (!isUuid(id)) return null;
   const [row] = await sql()<BuildRow[]>`

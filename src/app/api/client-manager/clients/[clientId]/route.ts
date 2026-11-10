@@ -1,7 +1,7 @@
-import { deleteClient } from "@/features/client-manager/server/repository";
 import {
   clientView,
   ownedClient,
+  removeClient,
   viewableClient,
 } from "@/features/client-manager/server/service";
 import {
@@ -37,7 +37,7 @@ export async function DELETE(
       await visitor(),
     );
     if (!client) return notFound();
-    await deleteClient(client.id);
+    await removeClient(client);
     return Response.json({ deleted: true });
   } catch (error) {
     return failure(error);

@@ -299,12 +299,21 @@ export function Workspace({ clientId }: { clientId: string }) {
         note,
         files: files.map(metaOf),
       });
-      await Promise.all(
-        created.uploads.map((upload) => {
-          const file = files.find((item) => item.name === upload.name);
-          return file ? putFile(upload.url, file) : Promise.resolve();
-        }),
-      );
+      try {
+        await Promise.all(
+          created.uploads.map((upload) => {
+            const file = files.find((item) => item.name === upload.name);
+            return file ? putFile(upload.url, file) : Promise.resolve();
+          }),
+        );
+      } catch (failure) {
+        // Leave nothing queued behind: a queued Build blocks the next addition.
+        await postJson(
+          `/api/client-manager/builds/${created.buildId}/stop`,
+          {},
+        ).catch(() => {});
+        throw failure;
+      }
       await postJson(`/api/client-manager/builds/${created.buildId}/start`, {});
       await queryClient.invalidateQueries({
         queryKey: ["client-manager", "client", clientId],

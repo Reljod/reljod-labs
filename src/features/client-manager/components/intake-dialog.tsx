@@ -117,6 +117,7 @@ export function IntakeDialog({ onClose }: { onClose: () => void }) {
     }
     setError(null);
     setPhase("sending");
+    let createdId: string | null = null;
     try {
       setStage("Opening a file for the client");
       const created = await postJson<Created>("/api/client-manager/clients", {
@@ -125,6 +126,7 @@ export function IntakeDialog({ onClose }: { onClose: () => void }) {
         files: files.map(metaOf),
         portrait: portrait ? metaOf(portrait) : null,
       });
+      createdId = created.clientId;
       setStage(
         files.length || portrait
           ? "Uploading to Supabase Storage"
@@ -150,6 +152,12 @@ export function IntakeDialog({ onClose }: { onClose: () => void }) {
       await postJson(`/api/client-manager/builds/${created.buildId}/start`, {});
       router.push(`/demos/client-manager/${created.clientId}`);
     } catch (failure) {
+      // A client whose files never arrived would sit in the Catalog as failed.
+      if (createdId) {
+        void fetch(`/api/client-manager/clients/${createdId}`, {
+          method: "DELETE",
+        });
+      }
       setPhase("form");
       setError(
         failure instanceof Error

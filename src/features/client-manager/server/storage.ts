@@ -64,3 +64,26 @@ export async function signedUrls(paths: string[], expiresInSeconds = 3600) {
 export async function signedUrl(path: string, expiresInSeconds = 3600) {
   return (await signedUrls([path], expiresInSeconds)).get(path) ?? null;
 }
+
+/** Every object under a folder, depth first; Storage lists one level at a time. */
+async function listAll(prefix: string, depth = 0): Promise<string[]> {
+  if (depth > 4) return [];
+  const { data, error } = await bucket().list(prefix, { limit: 1000 });
+  if (error || !data) return [];
+  const paths: string[] = [];
+  for (const item of data) {
+    const path = `${prefix}/${item.name}`;
+    // Folders come back without an id.
+    if (item.id) paths.push(path);
+    else paths.push(...(await listAll(path, depth + 1)));
+  }
+  return paths;
+}
+
+export async function removeFolder(prefix: string) {
+  const paths = await listAll(prefix);
+  for (let index = 0; index < paths.length; index += 100) {
+    await bucket().remove(paths.slice(index, index + 100));
+  }
+  return paths.length;
+}

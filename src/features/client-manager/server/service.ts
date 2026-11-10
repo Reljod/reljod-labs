@@ -20,10 +20,12 @@ import {
   type CatalogRow,
   type ClientRow,
   canView,
+  claimBuild,
   clientSpend,
   createBuild,
   createClientRow,
   createSources,
+  deleteClient,
   getBuild,
   getClient,
   latestBuild,
@@ -39,7 +41,7 @@ import {
   usageSince,
 } from "./repository";
 import type { Visitor } from "./session";
-import { signedUrl, signedUrls, uploadUrl } from "./storage";
+import { removeFolder, signedUrl, signedUrls, uploadUrl } from "./storage";
 
 export const LIMITS = {
   files: 8,
@@ -239,7 +241,10 @@ export async function createAddition(
     );
   }
   const running = await latestBuild(client.id);
-  if (running && ["queued", "running"].includes(running.status)) {
+  if (running && isAbandoned(running)) {
+    // Its browser never started it (an upload failed, the tab closed).
+    await updateBuild(running.id, { status: "failed", error: "Never started" });
+  } else if (running && ["queued", "running"].includes(running.status)) {
     throw new LimitError("A build is already running for this client.");
   }
   await checkLimits(visitor, "build");
@@ -271,7 +276,7 @@ export async function createAddition(
 
 /** Starts the Build's workflow once the browser has uploaded its files. */
 export async function startBuild(build: BuildRow, visitor: Visitor) {
-  if (build.status !== "queued") return;
+  if (!(await claimBuild(build.id))) return;
   try {
     const run = await start(buildWorkflow, [
       {
@@ -289,6 +294,32 @@ export async function startBuild(build: BuildRow, visitor: Visitor) {
     });
     throw error;
   }
+}
+
+/** How long a Build may wait for its browser to call `/start`. */
+const START_GRACE_MS = 5 * 60 * 1000;
+
+function isAbandoned(build: BuildRow) {
+  return (
+    build.status === "queued" &&
+    !build.workflow_run_id &&
+    Date.now() - build.created_at.getTime() > START_GRACE_MS
+  );
+}
+
+/**
+ * Deletes a Client: stops a Build still going, removes their files and
+ * portraits from Storage, then the rows (everything else cascades).
+ */
+export async function removeClient(client: ClientRow) {
+  const build = await latestBuild(client.id);
+  if (build && ["queued", "running"].includes(build.status)) {
+    await stopBuild(build).catch(() => {});
+  }
+  await removeFolder(`clients/${client.id}`).catch(() => {
+    // Storage clean-up never blocks the delete; the bucket is private.
+  });
+  await deleteClient(client.id);
 }
 
 /**

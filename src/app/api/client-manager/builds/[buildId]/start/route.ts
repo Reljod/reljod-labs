@@ -1,4 +1,5 @@
 import {
+  ownedClient,
   startBuild,
   viewableBuild,
 } from "@/features/client-manager/server/service";
@@ -15,9 +16,14 @@ export async function POST(
 ) {
   try {
     const { buildId } = await params;
-    const found = await viewableBuild(buildId, await currentSessionId());
-    if (!found) return notFound();
-    await startBuild(found.build, await visitor());
+    const sessionId = await currentSessionId();
+    const who = await visitor();
+    const found = await viewableBuild(buildId, sessionId);
+    // Like Stop: only the session that owns the client may start its Builds.
+    if (!found || !(await ownedClient(found.client.id, sessionId, who))) {
+      return notFound();
+    }
+    await startBuild(found.build, who);
     return Response.json({ started: true });
   } catch (error) {
     return failure(error);
