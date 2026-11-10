@@ -8,7 +8,7 @@ import { kindLabel } from "../domain/document-kinds";
 import { JOBS } from "../domain/jobs";
 import { PIPELINES } from "../domain/pipelines";
 import type { Evidence, FieldValue, Ownership } from "../domain/run-state";
-import { documentPages } from "../server/actions";
+import { preloadPages, usePages } from "./page-cache";
 import type { DocView } from "../view";
 import type { RunCard } from "./chat-panel";
 import { JobGlyph, OUTCOME_STYLE } from "./glyphs";
@@ -37,6 +37,11 @@ export function Stage(props: StageProps) {
   const [picked, setPicked] = useState<number | null>(null);
   // biome-ignore lint/correctness/useExhaustiveDependencies: a new step takes the stage back
   useEffect(() => setPicked(null), [run.current]);
+  // Fetch every page as soon as the Run names its Documents, so the read shows them at once.
+  const documentIds = run.documents.map((document) => document.id).join(",");
+  useEffect(() => {
+    if (documentIds) preloadPages(documentIds.split(","));
+  }, [documentIds]);
   const index = picked ?? run.current;
   const shown = run.jobs[index];
   const view: RunView =
@@ -333,26 +338,6 @@ function formatValue(value: FieldValue): string {
     return `${value.length} rows`;
   }
   return value === "" ? "Not shown" : String(value);
-}
-
-const pageCache = new Map<
-  string,
-  Promise<Awaited<ReturnType<typeof documentPages>>>
->();
-
-function usePages(documentId: string) {
-  const [pages, setPages] =
-    useState<Awaited<ReturnType<typeof documentPages>>>(null);
-  useEffect(() => {
-    let live = true;
-    if (!pageCache.has(documentId))
-      pageCache.set(documentId, documentPages(documentId));
-    pageCache.get(documentId)?.then((result) => live && setPages(result));
-    return () => {
-      live = false;
-    };
-  }, [documentId]);
-  return pages;
 }
 
 export function PageWithEvidence({

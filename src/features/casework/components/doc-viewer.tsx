@@ -3,12 +3,10 @@
 import { AnimatePresence, motion } from "motion/react";
 import { type ReactNode, useEffect, useState } from "react";
 import { kindLabel } from "../domain/document-kinds";
-import { documentPages } from "../server/actions";
 import type { DocView } from "../view";
+import { usePages } from "./page-cache";
 import type { RunDocView, RunView } from "./run-reducer";
 import { PageWithEvidence } from "./stage";
-
-type Pages = Awaited<ReturnType<typeof documentPages>>;
 
 function Modal({
   children,
@@ -103,16 +101,15 @@ export function DocViewer({
   onClose: () => void;
 }) {
   const documentId = doc?.id ?? null;
-  const [pages, setPages] = useState<Pages>(null);
+  const pages = usePages(documentId);
   const [field, setField] = useState<string | null>(null);
   const [page, setPage] = useState(1);
   const [zoom, setZoom] = useState(1);
+  // biome-ignore lint/correctness/useExhaustiveDependencies: another Document starts the view afresh
   useEffect(() => {
-    setPages(null);
     setField(null);
     setPage(1);
     setZoom(1);
-    if (documentId) void documentPages(documentId).then(setPages);
   }, [documentId]);
   const read: RunDocView | undefined = run.documents.find(
     (document) => document.id === documentId,
