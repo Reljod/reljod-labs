@@ -64,7 +64,7 @@ describe("hauling", () => {
   });
 
   it("never takes so long that he crawls", () => {
-    expect(chooseGait(5000, 0, "stroll").duration).toBeLessThanOrEqual(4);
+    expect(chooseGait(5000, 0, "stroll").duration).toBeLessThanOrEqual(2.8);
   });
 });
 

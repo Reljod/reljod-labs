@@ -152,7 +152,7 @@ export function useDirector(refs: {
       const fadeMove = async (moves: [Element, Record<string, number>][]) => {
         await Promise.all(
           moves.map(([element]) =>
-            animate(element, { opacity: 0 }, { duration: 0.25 }),
+            animate(element, { opacity: 0 }, { duration: 0.15 }),
           ),
         );
         await Promise.all(
@@ -160,7 +160,7 @@ export function useDirector(refs: {
         );
         await Promise.all(
           moves.map(([element]) =>
-            animate(element, { opacity: 1 }, { duration: 0.25 }),
+            animate(element, { opacity: 1 }, { duration: 0.15 }),
           ),
         );
         check();
@@ -223,12 +223,12 @@ export function useDirector(refs: {
         if (reduceMotion) {
           await fadeMove([[element, { x: to.x, y: to.y }]]);
           position.current = to;
-          await wait(520);
+          await wait(250);
           return;
         }
         const gait = chooseGait(dx, dy, pace);
         setCat({ pose: "idle", flip: false, rot: 0, body: "lgr-crouch" });
-        await wait(300);
+        await wait(220);
         addFx(
           gait.pose === "fly" ? "fx-smoke" : "fx-dust",
           catAt(from),
@@ -263,7 +263,7 @@ export function useDirector(refs: {
           catAt(to),
           skid ? "SKRRT!" : gait.pose === "fly" ? "THUD!" : "",
         );
-        await wait(520);
+        await wait(360);
       };
 
       /**
@@ -395,13 +395,13 @@ export function useDirector(refs: {
           );
         }
         addFx("fx-dust", { x: rect.left + 24, y: rect.top + 12 }, "RIIIP!");
-        await wait(800);
+        await wait(420);
       };
 
       const toss = async () => {
         const flyer = flightRef.current;
         setCat({ pose: "toss" });
-        await wait(360);
+        await wait(280);
         if (flyer) {
           const away = position.current.x > window.innerWidth / 2 ? -1 : 1;
           await animate(
@@ -426,7 +426,7 @@ export function useDirector(refs: {
         setFlight(null);
         flying = null;
         addFx("fx-dust", catAt(position.current), "NOPE!");
-        await wait(450);
+        await wait(350);
       };
 
       const haul = async (grip: Grip, pace: Pace) => {
@@ -452,13 +452,13 @@ export function useDirector(refs: {
         if (reduceMotion) {
           // Picks it up and appears with it on the board, no sliding.
           setCat({ pose: grip, flip, say: null });
-          await wait(450);
+          await wait(200);
           await fadeMove([
             [cat, { x: to.x, y: to.y }],
             [flyer, { x: target.left, y: target.top, rotate: 0, scale: 1 }],
           ]);
           position.current = to;
-          await wait(450);
+          await wait(150);
           return;
         }
 
@@ -493,7 +493,7 @@ export function useDirector(refs: {
       const stamp = async () => {
         const slot = refs.slot.current?.getBoundingClientRect();
         setCat({ pose: "stamp", flip: false });
-        await wait(320);
+        await wait(240);
         if (flying) {
           input.onPlace({
             id: flying.id,
@@ -512,7 +512,7 @@ export function useDirector(refs: {
             { x: slot.left + slot.width / 2, y: slot.top + 20 },
             "FILED!",
           );
-        await wait(650);
+        await wait(320);
       };
 
       const reform = async () => {
