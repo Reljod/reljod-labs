@@ -183,30 +183,54 @@ export async function openDesk(): Promise<DeskView> {
   };
 }
 
-/** Signed page images for one Document, for the viewer. */
-export async function documentPages(documentId: string) {
+export type DocumentPages = {
+  id: string;
+  name: string;
+  sourceFormat: DocumentRow["source_format"];
+  pages: string[];
+  csv: string | null;
+};
+
+/**
+ * Signed page images for several Documents in one call, so a Run's pages can
+ * be fetched up front rather than one by one as each is shown.
+ */
+export async function documentsPages(
+  documentIds: string[],
+): Promise<Record<string, DocumentPages>> {
   const session = await ensureSession();
-  const [row] = await documentsByIds([documentId], session.id);
-  if (!row) return null;
-  const paths = row.page_paths.length ? row.page_paths : [row.storage_path];
-  const urls = await signedUrls(paths, 3600);
-  let csv: string | null = null;
-  if (row.source_format === "csv") {
-    const { data } = await supabase()
-      .storage.from(BUCKET)
-      .download(row.storage_path);
-    csv = data ? (await data.text()).slice(0, 20_000) : null;
-  }
-  return {
-    id: row.id,
-    name: row.name,
-    sourceFormat: row.source_format,
-    pages:
-      row.source_format === "csv"
-        ? []
-        : paths.map((path) => urls.get(path) ?? ""),
-    csv,
-  };
+  const found = await documentsByIds(documentIds.slice(0, 60), session.id);
+  const pathsOf = (row: DocumentRow) =>
+    row.page_paths.length ? row.page_paths : [row.storage_path];
+  const urls = await signedUrls(
+    found.flatMap((row) => (row.source_format === "csv" ? [] : pathsOf(row))),
+    3600,
+  );
+  const entries = await Promise.all(
+    found.map(async (row): Promise<[string, DocumentPages]> => {
+      let csv: string | null = null;
+      if (row.source_format === "csv") {
+        const { data } = await supabase()
+          .storage.from(BUCKET)
+          .download(row.storage_path);
+        csv = data ? (await data.text()).slice(0, 20_000) : null;
+      }
+      return [
+        row.id,
+        {
+          id: row.id,
+          name: row.name,
+          sourceFormat: row.source_format,
+          pages:
+            row.source_format === "csv"
+              ? []
+              : pathsOf(row).map((path) => urls.get(path) ?? ""),
+          csv,
+        },
+      ];
+    }),
+  );
+  return Object.fromEntries(entries);
 }
 
 export async function getSpend() {
