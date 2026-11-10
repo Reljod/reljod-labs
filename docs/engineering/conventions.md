@@ -15,3 +15,10 @@ A stop, cancel or cleanup path exists for when something went wrong, so it must 
 
 - Wrap the external call in try/catch and keep going to the database update.
 - When you add a gate that refuses new work while old work is "active", make sure the way to clear it cannot fail on the cases that make it stale.
+
+## Storage paths never carry raw browser input
+
+A file name, extension or type sent by the browser is untrusted. Before any of it goes into a Supabase Storage key (or any path), reduce it to a safe token: use `safeExtension` in `src/features/client-manager/domain/file-name.ts` for extensions and `slugify` for stems. In Client Manager, three call sites each built an extension with `name.split(".").pop()`, and only one of them sanitised it. So a name like `a./../x` reached the key of a signed upload URL.
+
+- Use one shared helper; don't re-derive the extension at each call site.
+- Keep every key the browser can influence under the owning record's prefix (`clients/<id>/…`).

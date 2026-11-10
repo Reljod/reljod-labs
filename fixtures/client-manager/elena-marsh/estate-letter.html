@@ -1,0 +1,207 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Nair &amp; Cole estate administration letter</title>
+<style>
+  @page { size: A4; margin: 0; }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+  body { font-family: Helvetica, Arial, sans-serif; color: #1c2430; font-size: 10.5px; line-height: 1.45; background: #fff; }
+  .page { position: relative; width: 210mm; height: 296mm; padding: 15mm 16mm 26mm; overflow: hidden; break-after: page; }
+  .page:last-of-type { break-after: auto; }
+  .letterhead { display: flex; justify-content: space-between; align-items: flex-start; padding-bottom: 9px; border-bottom: 3px solid var(--brand); }
+  .logo { display: flex; align-items: center; gap: 10px; }
+  .mark { width: 34px; height: 34px; border-radius: 6px; background: var(--brand); color: #fff; font-weight: 800; font-size: 15px; display: flex; align-items: center; justify-content: center; letter-spacing: 0.5px; }
+  .brand { font-size: 19px; font-weight: 700; color: var(--brand); line-height: 1.1; }
+  .brand small { display: block; font-size: 9.5px; font-weight: 400; color: #5b6672; letter-spacing: 0.3px; margin-top: 2px; }
+  .doc-meta { text-align: right; font-size: 9.5px; color: #3a4552; }
+  .doc-meta strong { display: block; font-size: 13px; color: #1c2430; margin-bottom: 2px; }
+  .running { display: flex; justify-content: space-between; font-size: 9.5px; color: #5b6672; padding-bottom: 6px; border-bottom: 1px solid #d6dbe1; }
+  .running b { color: var(--brand); }
+  h1 { font-size: 16px; margin-top: 14px; color: #1c2430; }
+  h2 { font-size: 12px; margin-top: 16px; color: var(--brand); text-transform: uppercase; letter-spacing: 0.6px; }
+  h3 { font-size: 11px; margin-top: 12px; }
+  p { margin-top: 6px; }
+  .two { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-top: 14px; }
+  .box { border: 1px solid #d6dbe1; padding: 9px 11px; }
+  .box .label, .kv dt { font-size: 8.5px; text-transform: uppercase; letter-spacing: 0.5px; color: #5b6672; }
+  .kv { display: grid; grid-template-columns: 38% 62%; row-gap: 3px; margin-top: 4px; }
+  .kv dd { font-weight: 600; }
+  .tiles { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; margin-top: 12px; }
+  .tiles div { background: var(--tint); padding: 8px 9px; }
+  .tiles span { display: block; font-size: 8.5px; color: #5b6672; text-transform: uppercase; letter-spacing: 0.4px; }
+  .tiles b { font-size: 13.5px; }
+  table { width: 100%; border-collapse: collapse; margin-top: 7px; font-size: 9.8px; }
+  th, td { text-align: left; padding: 4.5px 5px; border-bottom: 1px solid #e1e5ea; vertical-align: top; }
+  th { font-size: 8.5px; color: #5b6672; font-weight: 700; text-transform: uppercase; letter-spacing: 0.3px; background: var(--tint); border-bottom: 1px solid #c7ced6; }
+  .num { text-align: right; white-space: nowrap; }
+  tr.total td { font-weight: 700; border-top: 1.5px solid #1c2430; border-bottom: 2px solid #1c2430; }
+  tr.sub td { font-weight: 700; background: #f7f9fb; }
+  .neg { color: #9b1c1c; }
+  .note { font-size: 9px; color: #4a5561; }
+  .small { font-size: 9px; }
+  ol.notes, ul.notes { margin: 6px 0 0 16px; font-size: 9.2px; color: #333d48; }
+  ol.notes li, ul.notes li { margin-top: 3px; }
+  .bar { height: 9px; background: var(--brand); display: inline-block; vertical-align: middle; }
+  .sig { display: grid; grid-template-columns: 1fr 1fr; gap: 26px; margin-top: 26px; }
+  .sig > div { font-size: 9.5px; }
+  .sig .scrawl { border-bottom: 1px solid #1c2430; margin-bottom: 4px; }
+  .scrawl { font-family: "Brush Script MT", "Segoe Script", cursive; font-size: 20px; font-style: italic; color: #20366b; height: 30px; }
+  .stamp { display: inline-block; border: 2px solid var(--brand); color: var(--brand); padding: 4px 10px; font-weight: 700; font-size: 9.5px; letter-spacing: 0.8px; transform: rotate(-4deg); text-transform: uppercase; }
+  footer.foot { position: absolute; left: 16mm; right: 16mm; bottom: 9mm; font-size: 8.3px; color: #5b6672; border-top: 1px solid #d6dbe1; padding-top: 5px; }
+  footer.foot .row { display: flex; justify-content: space-between; gap: 12px; }
+  footer.foot .issuer { margin-bottom: 2px; }
+  .specimen { position: absolute; left: 18mm; top: 122mm; transform: rotate(-32deg); font-size: 108px; font-weight: 800; letter-spacing: 16px; color: rgba(200, 30, 40, 0.15); pointer-events: none; z-index: 10; }
+  :root { --brand: #7a1f2b; --tint: #f7eef0; }
+  .letter p { margin-top: 8px; font-size: 11px; line-height: 1.55; }
+  .summary { background: var(--tint); border-left: 4px solid var(--brand); padding: 9px 12px; margin-top: 12px; }
+  .summary li { margin-top: 3px; }
+</style>
+</head>
+<body>
+
+<section class="page letter">
+  <div class="letterhead">
+    <div class="logo"><div class="mark">N&amp;C</div><div class="brand">Nair &amp; Cole<small>Solicitors and notaries · 18 Harbour Street, Port Calder PC-3002 · +590 23 640 1180</small></div></div>
+    <div class="doc-meta"><strong>Private and confidential</strong>Our ref. PN/MARSH/2026/034<br>28 October 2026</div>
+  </div>
+
+  <div style="margin-top:14px">
+    Mrs Elena Marsh<br>Linden House<br>3 Orchard Lane<br>Henlow HN-4402
+  </div>
+
+  <p style="margin-top:14px"><b>Estate of Daniel James Marsh, died 14 March 2026: where we are</b></p>
+  <p>Dear Elena,</p>
+  <p>You asked for everything on one page, so the box below is the whole story. The pages that follow give the detail for your records and for your wealth manager, who you have asked us to copy.</p>
+
+  <div class="summary">
+    <ul class="notes" style="margin-left:14px;font-size:10.5px;color:#1c2430">
+      <li><b>Probate</b> was granted to you and me as executors on 9 September 2026.</li>
+      <li><b>No inheritance tax is payable</b> on Daniel's estate. Almost everything passes to you, which is exempt, and the gifts to Tom, Ivy and Tidewatch Trust fall within his tax-free allowance.</li>
+      <li><b>Still to do:</b> pay the legacies, transfer the yacht to Tom, put the Saltmere cottage fully in your name, and collect Daniel's share of the sale money held back by the buyer (due from March 2027).</li>
+      <li><b>Your own position needs attention.</b> Your 2019 will leaves everything to Daniel and should be replaced now. At today's values, inheritance tax on your own estate could be about M$7.3 million.</li>
+      <li><b>Target:</b> estate accounts finished by 30 June 2027.</li>
+    </ul>
+  </div>
+
+  <h2>Executors and the will</h2>
+  <p>Daniel's will is dated 4 November 2019. It appoints you and me as executors. Probate was granted by the Meridia High Court Probate Registry, Port Calder, on 9 September 2026 (grant no. PR-PC-2026-08817). Under the will:</p>
+  <ul class="notes">
+    <li>Tom Marsh receives M$100,000 and the yacht "Ivy May" (clause 4).</li>
+    <li>Ivy Marsh receives M$100,000 (clause 5).</li>
+    <li>Tidewatch Trust, registered charity no. MRC-1093, receives M$50,000 (clause 6).</li>
+    <li>You receive everything else, the residuary estate (clause 7).</li>
+  </ul>
+
+  <h2>Progress since my letter of 30 May 2026</h2>
+  <ul class="notes">
+    <li>Joint accounts at Calder Private Bank and Linden House passed to you by survivorship and are now in your sole name.</li>
+    <li>The Meridia Marine Pension Scheme paid you Daniel's death benefit of M$620,000 on 22 July 2026. It is outside the estate and not taxed.</li>
+    <li>We paid Daniel's capital gains tax on the 2025 sale and his final income tax from his sole account at Calder (70402219) on 31 July 2026.</li>
+    <li>Property and the yacht were valued in September and August 2026; see the separate schedule of 21 October 2026.</li>
+  </ul>
+
+  <footer class="foot">
+    <div class="issuer">Nair &amp; Cole · 18 Harbour Street, Port Calder PC-3002 · Regulated by the Meridia Law Society, firm no. MLS-4417 · Partners: Priya Nair, Edwin Cole</div>
+    <div class="row"><span>Synthetic document for the Reljod Labs Client Manager demo. Not a real record.</span><span>Page 1 of 3</span></div>
+  </footer>
+  <div class="specimen">SPECIMEN</div>
+</section>
+
+<section class="page">
+  <div class="running"><span><b>Nair &amp; Cole</b> · Estate of Daniel James Marsh</span><span>Mrs Elena Marsh · PN/MARSH/2026/034</span></div>
+
+  <h2>Daniel's estate at the date of death (14 March 2026)</h2>
+  <table>
+    <tr><th>Asset</th><th>How it passes</th><th class="num">Value M$</th></tr>
+    <tr><td>Half share of Linden House, Henlow</td><td>Survivorship to Elena</td><td class="num">1,175,000</td></tr>
+    <tr><td>Half share of joint deposits at Calder Private Bank</td><td>Survivorship to Elena</td><td class="num">4,560,000</td></tr>
+    <tr><td>Sole Reserve account, Calder Private Bank 70402219</td><td>Under the will</td><td class="num">1,240,000</td></tr>
+    <tr><td>Half share of Gull Cottage, Saltmere (after 10% joint ownership discount)</td><td>Under the will, residue</td><td class="num">351,000</td></tr>
+    <tr><td>Yacht "Ivy May"</td><td>Under the will, to Tom</td><td class="num">95,000</td></tr>
+    <tr><td>Right to 60% of the Marsh Dynamics escrow retention (M$1,080,000, valued at 95%)</td><td>Under the will, residue</td><td class="num">1,026,000</td></tr>
+    <tr><td>Right to 60% of the deferred consideration (up to M$1,080,000, valued at 50%)</td><td>Under the will, residue</td><td class="num">540,000</td></tr>
+    <tr><td>Personal possessions</td><td>Under the will, residue</td><td class="num">40,000</td></tr>
+    <tr class="sub"><td colspan="2">Gross estate</td><td class="num">9,027,000</td></tr>
+    <tr><td>Less: capital gains tax 2025 on the Marsh Dynamics sale</td><td></td><td class="num neg">(835,275)</td></tr>
+    <tr><td>Less: income tax to 14 March 2026</td><td></td><td class="num neg">(42,300)</td></tr>
+    <tr><td>Less: funeral expenses</td><td></td><td class="num neg">(18,500)</td></tr>
+    <tr class="total"><td colspan="2">Net estate</td><td class="num">8,130,925</td></tr>
+  </table>
+  <p class="note">Not included: the M$620,000 pension death benefit (paid at the trustees' discretion, outside the estate) and assets already in your sole name before Daniel's death, including the discretionary portfolio held with your wealth manager since October 2025.</p>
+
+  <h2>Inheritance tax on Daniel's estate</h2>
+  <table>
+    <tr><th>Item</th><th class="num">M$</th></tr>
+    <tr><td>Net estate</td><td class="num">8,130,925</td></tr>
+    <tr><td>Less: passing to Elena (spouse exemption)</td><td class="num neg">(7,785,925)</td></tr>
+    <tr><td>Less: gift to Tidewatch Trust (charity exemption)</td><td class="num neg">(50,000)</td></tr>
+    <tr class="sub"><td>Chargeable: gifts to Tom (M$195,000 with the yacht) and Ivy (M$100,000)</td><td class="num">295,000</td></tr>
+    <tr><td>Nil-rate band available</td><td class="num">500,000</td></tr>
+    <tr class="total"><td>Inheritance tax payable</td><td class="num">0</td></tr>
+  </table>
+  <p>Daniel used 59% of his nil-rate band, so <b>41% (M$205,000 at today's band) transfers to you</b> and can be claimed against your own estate. We filed the inheritance tax account (form MIT-400) on 16 October 2026 and expect clearance by January 2027.</p>
+
+  <h2>Remaining administration</h2>
+  <table>
+    <tr><th>Step</th><th>Who</th><th>Target date</th></tr>
+    <tr><td>Pay legacies of M$100,000 each to Tom and Ivy, and M$50,000 to Tidewatch Trust</td><td>Executors</td><td>By 15 December 2026</td></tr>
+    <tr><td>Transfer the yacht "Ivy May" to Tom on the Small Ships Register</td><td>Nair &amp; Cole</td><td>November 2026</td></tr>
+    <tr><td>Assent of Daniel's half of Gull Cottage to Elena</td><td>Nair &amp; Cole</td><td>December 2026</td></tr>
+    <tr><td>Transfer mooring licence SH-114 to Elena</td><td>Saltmere Harbour Commissioners</td><td>At renewal, 1 April 2027</td></tr>
+    <tr><td>Claim release of escrow (Daniel's 60% and your 40%)</td><td>Nair &amp; Cole with Ashby Venn LLP</td><td>31 March 2027</td></tr>
+    <tr><td>Agree deferred consideration on Marsh Dynamics FY2026 accounts</td><td>Executors, Quayside Corporate Finance</td><td>By 30 June 2027</td></tr>
+    <tr><td>Inheritance tax clearance and final estate accounts</td><td>Nair &amp; Cole</td><td>30 June 2027</td></tr>
+  </table>
+
+  <footer class="foot">
+    <div class="issuer">Nair &amp; Cole · 18 Harbour Street, Port Calder PC-3002 · Regulated by the Meridia Law Society, firm no. MLS-4417 · Partners: Priya Nair, Edwin Cole</div>
+    <div class="row"><span>Synthetic document for the Reljod Labs Client Manager demo. Not a real record.</span><span>Page 2 of 3</span></div>
+  </footer>
+  <div class="specimen">SPECIMEN</div>
+</section>
+
+<section class="page letter">
+  <div class="running"><span><b>Nair &amp; Cole</b> · Estate of Daniel James Marsh</span><span>Mrs Elena Marsh · PN/MARSH/2026/034</span></div>
+
+  <h2>Your own estate: an estimate</h2>
+  <table>
+    <tr><th>Asset (after the administration is finished)</th><th class="num">Estimated value M$</th></tr>
+    <tr><td>Linden House, Henlow</td><td class="num">2,350,000</td></tr>
+    <tr><td>Gull Cottage, Saltmere (whole)</td><td class="num">780,000</td></tr>
+    <tr><td>Deposits at Calder Private Bank</td><td class="num">9,010,000</td></tr>
+    <tr><td>Discretionary portfolio with your wealth manager</td><td class="num">4,000,000</td></tr>
+    <tr><td>Marsh Dynamics escrow and deferred consideration (Daniel's and your shares: full escrow, half the earn-out)</td><td class="num">2,700,000</td></tr>
+    <tr><td>Residue of Daniel's sole account after tax and legacies, and possessions</td><td class="num">134,000</td></tr>
+    <tr class="sub"><td>Estimated estate</td><td class="num">18,974,000</td></tr>
+    <tr><td>Less: your nil-rate band plus Daniel's unused 41%</td><td class="num neg">(705,000)</td></tr>
+    <tr class="sub"><td>Taxable</td><td class="num">18,269,000</td></tr>
+    <tr class="total"><td>Inheritance tax at 40%</td><td class="num">about 7,308,000</td></tr>
+  </table>
+  <p class="note">An estimate for planning only, at today's values and rates. If you leave at least 10% of the taxable estate to charity, the rate falls to 36%.</p>
+
+  <h2>What I recommend next</h2>
+  <ol class="notes" style="font-size:10px">
+    <li><b>A new will, now.</b> Your will of 4 November 2019 leaves everything to Daniel, so at present your estate would pass under the intestacy rules. I suggest a meeting in November to agree new terms, including your wishes for Tom, Ivy and Ivy's baby, due in January.</li>
+    <li><b>Lasting powers of attorney</b> for property and for health, so that Tom or Ivy can act for you if ever needed.</li>
+    <li><b>The giving fund in Daniel's name.</b> A donor-advised fund, for example the Daniel Marsh Coastal Fund with the Meridia Community Foundation, can receive gifts now and make grants to Tidewatch Trust over time. As you sit on the Tidewatch board, we should record how conflicts are handled.</li>
+    <li><b>Gull Cottage for Ivy.</b> Once the assent is done, a gift or a trust for Ivy and her children can be considered. Please read the planning points in our property schedule first; the seven-year rule and capital gains tax both apply.</li>
+    <li><b>Regular gifts from income</b> are exempt from inheritance tax if they are regular and leave your standard of living unchanged. Your wealth manager can confirm your surplus income.</li>
+  </ol>
+
+  <p>I know this has been a hard year, and that you have said more than once that you cannot lose what Daniel built. Nothing here needs a rushed decision. I will telephone on Tuesday morning to talk it through.</p>
+  <p>With kind regards,</p>
+  <div class="scrawl" style="margin-top:4px">Priya Nair</div>
+  <p style="margin-top:0">Priya Nair<br>Partner, Nair &amp; Cole<br>Executor of the estate of Daniel James Marsh</p>
+  <p class="note" style="margin-top:10px">Copy: your wealth manager (with your consent of 3 October 2026).</p>
+
+  <footer class="foot">
+    <div class="issuer">Nair &amp; Cole · 18 Harbour Street, Port Calder PC-3002 · Regulated by the Meridia Law Society, firm no. MLS-4417 · Partners: Priya Nair, Edwin Cole</div>
+    <div class="row"><span>Synthetic document for the Reljod Labs Client Manager demo. Not a real record.</span><span>Page 3 of 3</span></div>
+  </footer>
+  <div class="specimen">SPECIMEN</div>
+</section>
+
+</body>
+</html>

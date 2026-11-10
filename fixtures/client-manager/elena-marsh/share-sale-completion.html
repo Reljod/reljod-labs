@@ -1,0 +1,159 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Marsh Dynamics completion statement</title>
+<style>
+  @page { size: A4; margin: 0; }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+  body { font-family: Helvetica, Arial, sans-serif; color: #1c2430; font-size: 10.5px; line-height: 1.45; background: #fff; }
+  .page { position: relative; width: 210mm; height: 296mm; padding: 15mm 16mm 26mm; overflow: hidden; break-after: page; }
+  .page:last-of-type { break-after: auto; }
+  .letterhead { display: flex; justify-content: space-between; align-items: flex-start; padding-bottom: 9px; border-bottom: 3px solid var(--brand); }
+  .logo { display: flex; align-items: center; gap: 10px; }
+  .mark { width: 34px; height: 34px; border-radius: 6px; background: var(--brand); color: #fff; font-weight: 800; font-size: 15px; display: flex; align-items: center; justify-content: center; letter-spacing: 0.5px; }
+  .brand { font-size: 19px; font-weight: 700; color: var(--brand); line-height: 1.1; }
+  .brand small { display: block; font-size: 9.5px; font-weight: 400; color: #5b6672; letter-spacing: 0.3px; margin-top: 2px; }
+  .doc-meta { text-align: right; font-size: 9.5px; color: #3a4552; }
+  .doc-meta strong { display: block; font-size: 13px; color: #1c2430; margin-bottom: 2px; }
+  .running { display: flex; justify-content: space-between; font-size: 9.5px; color: #5b6672; padding-bottom: 6px; border-bottom: 1px solid #d6dbe1; }
+  .running b { color: var(--brand); }
+  h1 { font-size: 16px; margin-top: 14px; color: #1c2430; }
+  h2 { font-size: 12px; margin-top: 16px; color: var(--brand); text-transform: uppercase; letter-spacing: 0.6px; }
+  h3 { font-size: 11px; margin-top: 12px; }
+  p { margin-top: 6px; }
+  .two { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-top: 14px; }
+  .box { border: 1px solid #d6dbe1; padding: 9px 11px; }
+  .box .label, .kv dt { font-size: 8.5px; text-transform: uppercase; letter-spacing: 0.5px; color: #5b6672; }
+  .kv { display: grid; grid-template-columns: 38% 62%; row-gap: 3px; margin-top: 4px; }
+  .kv dd { font-weight: 600; }
+  .tiles { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; margin-top: 12px; }
+  .tiles div { background: var(--tint); padding: 8px 9px; }
+  .tiles span { display: block; font-size: 8.5px; color: #5b6672; text-transform: uppercase; letter-spacing: 0.4px; }
+  .tiles b { font-size: 13.5px; }
+  table { width: 100%; border-collapse: collapse; margin-top: 7px; font-size: 9.8px; }
+  th, td { text-align: left; padding: 4.5px 5px; border-bottom: 1px solid #e1e5ea; vertical-align: top; }
+  th { font-size: 8.5px; color: #5b6672; font-weight: 700; text-transform: uppercase; letter-spacing: 0.3px; background: var(--tint); border-bottom: 1px solid #c7ced6; }
+  .num { text-align: right; white-space: nowrap; }
+  tr.total td { font-weight: 700; border-top: 1.5px solid #1c2430; border-bottom: 2px solid #1c2430; }
+  tr.sub td { font-weight: 700; background: #f7f9fb; }
+  .neg { color: #9b1c1c; }
+  .note { font-size: 9px; color: #4a5561; }
+  .small { font-size: 9px; }
+  ol.notes, ul.notes { margin: 6px 0 0 16px; font-size: 9.2px; color: #333d48; }
+  ol.notes li, ul.notes li { margin-top: 3px; }
+  .bar { height: 9px; background: var(--brand); display: inline-block; vertical-align: middle; }
+  .sig { display: grid; grid-template-columns: 1fr 1fr; gap: 26px; margin-top: 26px; }
+  .sig > div { font-size: 9.5px; }
+  .sig .scrawl { border-bottom: 1px solid #1c2430; margin-bottom: 4px; }
+  .scrawl { font-family: "Brush Script MT", "Segoe Script", cursive; font-size: 20px; font-style: italic; color: #20366b; height: 30px; }
+  .stamp { display: inline-block; border: 2px solid var(--brand); color: var(--brand); padding: 4px 10px; font-weight: 700; font-size: 9.5px; letter-spacing: 0.8px; transform: rotate(-4deg); text-transform: uppercase; }
+  footer.foot { position: absolute; left: 16mm; right: 16mm; bottom: 9mm; font-size: 8.3px; color: #5b6672; border-top: 1px solid #d6dbe1; padding-top: 5px; }
+  footer.foot .row { display: flex; justify-content: space-between; gap: 12px; }
+  footer.foot .issuer { margin-bottom: 2px; }
+  .specimen { position: absolute; left: 18mm; top: 122mm; transform: rotate(-32deg); font-size: 108px; font-weight: 800; letter-spacing: 16px; color: rgba(200, 30, 40, 0.15); pointer-events: none; z-index: 10; }
+  :root { --brand: #3a3f47; --tint: #f0f1f3; }
+</style>
+</head>
+<body>
+
+<section class="page">
+  <div class="letterhead">
+    <div class="logo"><div class="mark" style="background:#7a1f2b">N&amp;C</div><div class="brand" style="color:#7a1f2b">Nair &amp; Cole<small>Solicitors and notaries · 18 Harbour Street, Port Calder PC-3002</small></div></div>
+    <div class="doc-meta"><strong>Completion Statement</strong>Sale of the entire issued share capital of<br>Marsh Dynamics Ltd<br>Completion date: 30 September 2025</div>
+  </div>
+
+  <h2>Parties</h2>
+  <table>
+    <tr><th>Role</th><th>Party</th><th>Details</th></tr>
+    <tr><td>Company</td><td>Marsh Dynamics Ltd</td><td>Marine engineering. Company no. MC-0207733. Registered office: Unit 4, Slipway Yard, Port Calder PC-3010. Incorporated 19 April 1996.</td></tr>
+    <tr><td>Seller 1</td><td>Daniel James Marsh</td><td>6,000 ordinary shares of M$1 (60%), founder and managing director</td></tr>
+    <tr><td>Seller 2</td><td>Elena Marsh</td><td>4,000 ordinary shares of M$1 (40%), company secretary and finance director</td></tr>
+    <tr><td>Buyer</td><td>Brennock Marine Group plc</td><td>Company no. MC-0150962, Dock Road, Westmere WM-5001</td></tr>
+    <tr><td>Sellers' solicitors</td><td>Nair &amp; Cole</td><td>Priya Nair, partner</td></tr>
+    <tr><td>Buyer's solicitors</td><td>Ashby Venn LLP</td><td>Marcus Ashby, partner</td></tr>
+    <tr><td>Sellers' adviser</td><td>Quayside Corporate Finance Ltd</td><td>Lead adviser and broker</td></tr>
+    <tr><td>Escrow agent</td><td>Portwell Trust Company Ltd</td><td>Escrow account PTC-ESC-25-0417</td></tr>
+  </table>
+  <p class="note">Share purchase agreement dated 12 August 2025 (the "SPA"). Clause references are to the SPA.</p>
+
+  <h2>Consideration (clause 3)</h2>
+  <table>
+    <tr><th>Element</th><th>Timing</th><th class="num">M$</th></tr>
+    <tr><td>Initial consideration, paid at completion</td><td>30 September 2025</td><td class="num">14,400,000.00</td></tr>
+    <tr><td>Retention held in escrow against warranty claims</td><td>Release due 31 March 2027</td><td class="num">1,800,000.00</td></tr>
+    <tr><td>Deferred consideration (earn-out), maximum</td><td>Payable by 30 June 2027 if FY2026 EBITDA is at least M$2,400,000</td><td class="num">1,800,000.00</td></tr>
+    <tr class="total"><td colspan="2">Headline equity value</td><td class="num">18,000,000.00</td></tr>
+  </table>
+
+  <h2>Completion adjustments (clause 4 and schedule 5)</h2>
+  <table>
+    <tr><th>Item</th><th class="num">M$</th></tr>
+    <tr><td>Initial consideration</td><td class="num">14,400,000.00</td></tr>
+    <tr><td>Add: net cash at completion above target</td><td class="num">212,400.00</td></tr>
+    <tr><td>Less: working capital shortfall against target of M$1,150,000</td><td class="num neg">(86,150.00)</td></tr>
+    <tr><td>Less: employee transaction bonuses borne by the sellers</td><td class="num neg">(150,000.00)</td></tr>
+    <tr class="sub"><td>Adjusted completion payment</td><td class="num">14,376,250.00</td></tr>
+    <tr><td>Less: Quayside Corporate Finance fee (1.5% of headline value)</td><td class="num neg">(270,000.00)</td></tr>
+    <tr><td>Less: Nair &amp; Cole fees and disbursements</td><td class="num neg">(185,000.00)</td></tr>
+    <tr class="total"><td>Net proceeds to the sellers at completion</td><td class="num">13,921,250.00</td></tr>
+  </table>
+
+  <footer class="foot">
+    <div class="issuer">Nair &amp; Cole · 18 Harbour Street, Port Calder PC-3002 · Regulated by the Meridia Law Society, firm no. MLS-4417</div>
+    <div class="row"><span>Synthetic document for the Reljod Labs Client Manager demo. Not a real record.</span><span>Page 1 of 2</span></div>
+  </footer>
+  <div class="specimen">SPECIMEN</div>
+</section>
+
+<section class="page">
+  <div class="running"><span><b style="color:#7a1f2b">Nair &amp; Cole</b> · Completion Statement · Marsh Dynamics Ltd</span><span>Our ref. PN/MARSH/2025/014</span></div>
+
+  <h2>Funds flow at completion</h2>
+  <table>
+    <tr><th>Payee</th><th>Account</th><th class="num">Shareholding</th><th class="num">M$</th></tr>
+    <tr><td>Daniel James Marsh</td><td rowspan="2">Calder Private Bank, joint account 30-11-42 70418825 (D J and E Marsh)</td><td class="num">60%</td><td class="num">8,352,750.00</td></tr>
+    <tr><td>Elena Marsh</td><td class="num">40%</td><td class="num">5,568,500.00</td></tr>
+    <tr><td>Portwell Trust Company Ltd (escrow)</td><td>PTC-ESC-25-0417</td><td class="num">-</td><td class="num">1,800,000.00</td></tr>
+    <tr><td>Quayside Corporate Finance Ltd</td><td>Fee account</td><td class="num">-</td><td class="num">270,000.00</td></tr>
+    <tr><td>Nair &amp; Cole</td><td>Office account</td><td class="num">-</td><td class="num">185,000.00</td></tr>
+    <tr><td>Marsh Dynamics Ltd payroll</td><td>Employee bonuses (12 staff)</td><td class="num">-</td><td class="num">150,000.00</td></tr>
+    <tr class="total"><td colspan="3">Total funds paid by the buyer at completion</td><td class="num">16,326,250.00</td></tr>
+  </table>
+  <p class="note">The buyer's payment equals the adjusted completion payment of M$14,376,250.00 plus the M$1,800,000.00 retention paid into escrow and the M$150,000.00 of employee bonuses paid through payroll. Funds were received at 11:42 on 30 September 2025.</p>
+
+  <h2>Outstanding entitlements</h2>
+  <table>
+    <tr><th>Entitlement</th><th class="num">Total M$</th><th class="num">D J Marsh 60% M$</th><th class="num">E Marsh 40% M$</th><th>Status</th></tr>
+    <tr><td>Escrow retention</td><td class="num">1,800,000.00</td><td class="num">1,080,000.00</td><td class="num">720,000.00</td><td>Release 31 Mar 2027, less any agreed warranty claims. No claims notified.</td></tr>
+    <tr><td>Deferred consideration</td><td class="num">up to 1,800,000.00</td><td class="num">up to 1,080,000.00</td><td class="num">up to 720,000.00</td><td>Depends on audited FY2026 accounts of Marsh Dynamics Ltd</td></tr>
+  </table>
+  <p class="note">If a seller dies before payment, that seller's entitlement is paid to his or her personal representatives (clause 3.9).</p>
+
+  <h2>Key post-completion terms</h2>
+  <ol class="notes">
+    <li><b>Warranties (clause 9).</b> General warranty claims must be notified by 31 March 2027, tax claims by 30 September 2031. Liability is capped at the headline value; the de minimis per claim is M$25,000.</li>
+    <li><b>Restrictive covenants (clause 12).</b> Each seller may not compete with the business in the Republic of Meridia for 3 years from completion, until 30 September 2028.</li>
+    <li><b>Transitional services (clause 13).</b> Daniel Marsh to act as consultant to the buyer for 6 months at M$15,000 a month. This ended on 31 March 2026.</li>
+    <li><b>Sellers' tax (clause 16).</b> Each seller is responsible for his or her own capital gains tax. Business asset relief at 10% is expected to apply to each seller's gain up to the lifetime limit.</li>
+  </ol>
+
+  <h2>Signatures</h2>
+  <p>Agreed as a true statement of the sums payable and paid at completion.</p>
+  <div class="sig">
+    <div><div class="scrawl">Daniel Marsh</div>Daniel James Marsh, Seller<br>30 September 2025</div>
+    <div><div class="scrawl">Elena Marsh</div>Elena Marsh, Seller<br>30 September 2025</div>
+    <div><div class="scrawl">R. Brennock</div>Rhiannon Brennock, Director<br>for Brennock Marine Group plc</div>
+    <div><div class="scrawl">Priya Nair</div>Priya Nair, Partner, Nair &amp; Cole<br>Sellers' solicitors</div>
+  </div>
+
+  <footer class="foot">
+    <div class="issuer">Nair &amp; Cole · 18 Harbour Street, Port Calder PC-3002 · Regulated by the Meridia Law Society, firm no. MLS-4417</div>
+    <div class="row"><span>Synthetic document for the Reljod Labs Client Manager demo. Not a real record.</span><span>Page 2 of 2</span></div>
+  </footer>
+  <div class="specimen">SPECIMEN</div>
+</section>
+
+</body>
+</html>

@@ -1,0 +1,227 @@
+/* Client Manager: the Graph view's motion. Every animation stops under reduced motion. */
+
+.cm-canvas {
+  touch-action: none;
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+.cm-canvas text {
+  pointer-events: none;
+  paint-order: stroke;
+  stroke: #f5f1e8;
+  stroke-linejoin: round;
+  transition:
+    font-size 0.35s ease,
+    opacity 0.35s ease;
+}
+
+.cm-fade {
+  transition:
+    opacity 0.45s ease,
+    stroke-opacity 0.45s ease,
+    fill-opacity 0.45s ease;
+}
+
+/* A seed found by search sends out a ripple. */
+.cm-ripple {
+  transform-box: fill-box;
+  transform-origin: center;
+  animation: cm-ripple 1.6s ease-out infinite;
+}
+@keyframes cm-ripple {
+  0% {
+    transform: scale(1);
+    opacity: 0.7;
+  }
+  100% {
+    transform: scale(3.2);
+    opacity: 0;
+  }
+}
+
+/* A comet runs along every Edge the Navigator walked. */
+.cm-comet {
+  stroke-dasharray: 0.12 0.88;
+  animation: cm-comet 1.4s linear infinite;
+}
+@keyframes cm-comet {
+  from {
+    stroke-dashoffset: 1;
+  }
+  to {
+    stroke-dashoffset: 0;
+  }
+}
+
+/* The marching dashes of the Category tree. */
+.cm-march {
+  stroke-dasharray: 2 6;
+  animation: cm-march 14s linear infinite;
+}
+@keyframes cm-march {
+  to {
+    stroke-dashoffset: -160;
+  }
+}
+
+/* Reading: a dashed ring turns around the Node. */
+.cm-read {
+  transform-box: fill-box;
+  transform-origin: center;
+  stroke-dasharray: 4 4;
+  animation: cm-spin 3s linear infinite;
+}
+@keyframes cm-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* The Root breathes while a Build runs. */
+.cm-breathe {
+  transform-box: fill-box;
+  transform-origin: center;
+  animation: cm-breathe 2.4s ease-in-out infinite;
+}
+@keyframes cm-breathe {
+  0%,
+  100% {
+    transform: scale(1);
+    opacity: 0.55;
+  }
+  50% {
+    transform: scale(1.18);
+    opacity: 0.15;
+  }
+}
+
+.cm-orbit {
+  transform-box: view-box;
+  transform-origin: 0 0;
+}
+
+/* Cards and placeholders shimmer while they load or build. */
+.cm-shimmer {
+  background: linear-gradient(
+    100deg,
+    rgb(228 220 203 / 0.6) 20%,
+    rgb(255 255 255 / 0.9) 40%,
+    rgb(228 220 203 / 0.6) 60%
+  );
+  background-size: 300% 100%;
+  animation: cm-shimmer 1.6s ease-in-out infinite;
+}
+@keyframes cm-shimmer {
+  from {
+    background-position: 100% 0;
+  }
+  to {
+    background-position: -100% 0;
+  }
+}
+
+/* The ring around a card's portrait spins while its graph builds. */
+.cm-building-ring {
+  background: conic-gradient(from 0deg, #d9a84e, #1d4e89, #2f6b3f, #d9a84e);
+  animation: cm-spin 2.2s linear infinite;
+}
+
+/* A word of the answer arrives. */
+.cm-caret::after {
+  content: "";
+  display: inline-block;
+  width: 0.5em;
+  height: 1em;
+  margin-left: 2px;
+  vertical-align: -0.15em;
+  background: #1d4e89;
+  animation: cm-blink 1s steps(1) infinite;
+}
+@keyframes cm-blink {
+  50% {
+    opacity: 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .cm-ripple,
+  .cm-comet,
+  .cm-march,
+  .cm-read,
+  .cm-breathe,
+  .cm-shimmer,
+  .cm-building-ring,
+  .cm-caret::after {
+    animation: none;
+  }
+  .cm-canvas text,
+  .cm-fade {
+    transition: none;
+  }
+}
+
+/* The transcript, in the Casework desk's manner: things arrive with a short rise. */
+.cm-scroll {
+  scrollbar-width: thin;
+  scrollbar-color: rgb(20 33 61 / 0.35) transparent;
+}
+.cm-reveal {
+  animation: cm-reveal 0.26s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+@keyframes cm-reveal {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+/* A live dot: something is running. */
+.cm-pulse {
+  animation: cm-pulse 1.4s ease-in-out infinite;
+}
+@keyframes cm-pulse {
+  50% {
+    opacity: 0.35;
+  }
+}
+/* Text still being worked out. */
+.cm-text-shimmer {
+  background: linear-gradient(90deg, #14213d 30%, #d9a84e 50%, #14213d 70%);
+  background-size: 200% 100%;
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  animation: cm-text-shimmer 2s linear infinite;
+}
+@keyframes cm-text-shimmer {
+  from {
+    background-position: 200% 0;
+  }
+  to {
+    background-position: -200% 0;
+  }
+}
+.cm-spin {
+  display: inline-block;
+  animation: cm-spin 2.4s linear infinite;
+}
+.cm-droppable[data-over="true"] {
+  outline: 3px dashed #1d4e89;
+  outline-offset: -6px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .cm-reveal,
+  .cm-pulse,
+  .cm-text-shimmer,
+  .cm-spin {
+    animation: none;
+  }
+  .cm-text-shimmer {
+    color: #14213d;
+  }
+}

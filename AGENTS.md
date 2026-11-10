@@ -27,6 +27,14 @@
 - Fixtures: `fixtures/casework/` (README there). Labels follow `domain/document-kinds.ts`; `golden.test.ts` scores the rules against them per train/validation/test split. Tune rules on train and validation only.
 - Env: optional `CASEWORK_AI_GATEWAY_API_KEY` (falls back to `DOCUMENT_COMPLIANCE_AI_GATEWAY_API_KEY`), optional `CASEWORK_MCP_TOKEN` for outside MCP clients, optional `CASEWORK_OCR=0`; shares `RATE_LIMIT_SALT` and `E2E_BYPASS_TOKEN`. Data lives in the Supabase `casework` schema (listed under Data API > Exposed schemas) and the private `casework` bucket.
 
+## Client Manager
+
+- A live demo at `/demos/client-manager`: the Catalog, an Intake that builds a Client graph, and GraphRAG chat over it.
+- Domain language: `src/features/client-manager/GLOSSARY.md`. Decisions: `docs/adr/0008-client-graph-on-pgrouting.md`, `docs/adr/0009-self-correcting-build.md`.
+- The graph is in the `client_manager` schema (`supabase/migrations/20261110200000_client_manager.sql`) and needs the `vector` and `pgrouting` extensions. The app connects directly with `CLIENT_MANAGER_DATABASE_URL` (Supabase transaction pooler, port 6543), not the Data API. Files and portraits go to the private `client-manager` bucket through signed upload URLs.
+- Env: `CLIENT_MANAGER_DATABASE_URL`; optional `CLIENT_MANAGER_AI_GATEWAY_API_KEY` (falls back to `DOCUMENT_COMPLIANCE_AI_GATEWAY_API_KEY`), `CLIENT_MANAGER_MODEL`, `CLIENT_MANAGER_CRITIC_MODEL`, `CLIENT_MANAGER_CHAT_MODEL`, `CLIENT_MANAGER_IMAGE_MODEL`; shares `RATE_LIMIT_SALT` and `E2E_BYPASS_TOKEN`.
+- Sample documents: `fixtures/client-manager/` (HTML sources, Meridia, SPECIMEN), rendered to `public/client-manager/samples/` with `pnpm render:client-manager-samples`. Sample clients: `pnpm seed:client-manager` against a running app.
+
 <!-- BEGIN:nextjs-agent-rules -->
 
 ## This is NOT the Next.js you know

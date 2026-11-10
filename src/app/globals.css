@@ -36,6 +36,38 @@
   --animate-scan-sweep: scan-sweep 5.6s linear infinite;
   --animate-find-box: find-box 5.6s ease-out infinite both;
   --animate-haul: haul 5.6s cubic-bezier(0.45, 0.05, 0.25, 1) infinite both;
+  --animate-walk: walk 5.6s ease-in-out infinite;
+  --animate-bloom: bloom 5.6s ease-out infinite both;
+
+  /* Client Manager's preview: a walk draws across the graph, Nodes bloom in. */
+  @keyframes walk {
+    0% {
+      stroke-dashoffset: 1;
+      opacity: 0;
+    }
+    10% {
+      opacity: 1;
+    }
+    60%,
+    85% {
+      stroke-dashoffset: 0;
+      opacity: 1;
+    }
+    100% {
+      stroke-dashoffset: 0;
+      opacity: 0;
+    }
+  }
+
+  @keyframes bloom {
+    0% {
+      opacity: 0;
+    }
+    12%,
+    100% {
+      opacity: 1;
+    }
+  }
 
   /* Soon-to-ship work drifts on the bench; `--tilt` sets each card's lean. */
   @keyframes bench-float {

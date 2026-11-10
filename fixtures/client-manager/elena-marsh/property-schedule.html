@@ -1,0 +1,160 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Marsh schedule of real property</title>
+<style>
+  @page { size: A4; margin: 0; }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+  body { font-family: Helvetica, Arial, sans-serif; color: #1c2430; font-size: 10.5px; line-height: 1.45; background: #fff; }
+  .page { position: relative; width: 210mm; height: 296mm; padding: 15mm 16mm 26mm; overflow: hidden; break-after: page; }
+  .page:last-of-type { break-after: auto; }
+  .letterhead { display: flex; justify-content: space-between; align-items: flex-start; padding-bottom: 9px; border-bottom: 3px solid var(--brand); }
+  .logo { display: flex; align-items: center; gap: 10px; }
+  .mark { width: 34px; height: 34px; border-radius: 6px; background: var(--brand); color: #fff; font-weight: 800; font-size: 15px; display: flex; align-items: center; justify-content: center; letter-spacing: 0.5px; }
+  .brand { font-size: 19px; font-weight: 700; color: var(--brand); line-height: 1.1; }
+  .brand small { display: block; font-size: 9.5px; font-weight: 400; color: #5b6672; letter-spacing: 0.3px; margin-top: 2px; }
+  .doc-meta { text-align: right; font-size: 9.5px; color: #3a4552; }
+  .doc-meta strong { display: block; font-size: 13px; color: #1c2430; margin-bottom: 2px; }
+  .running { display: flex; justify-content: space-between; font-size: 9.5px; color: #5b6672; padding-bottom: 6px; border-bottom: 1px solid #d6dbe1; }
+  .running b { color: var(--brand); }
+  h1 { font-size: 16px; margin-top: 14px; color: #1c2430; }
+  h2 { font-size: 12px; margin-top: 16px; color: var(--brand); text-transform: uppercase; letter-spacing: 0.6px; }
+  h3 { font-size: 11px; margin-top: 12px; }
+  p { margin-top: 6px; }
+  .two { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-top: 14px; }
+  .box { border: 1px solid #d6dbe1; padding: 9px 11px; }
+  .box .label, .kv dt { font-size: 8.5px; text-transform: uppercase; letter-spacing: 0.5px; color: #5b6672; }
+  .kv { display: grid; grid-template-columns: 38% 62%; row-gap: 3px; margin-top: 4px; }
+  .kv dd { font-weight: 600; }
+  .tiles { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; margin-top: 12px; }
+  .tiles div { background: var(--tint); padding: 8px 9px; }
+  .tiles span { display: block; font-size: 8.5px; color: #5b6672; text-transform: uppercase; letter-spacing: 0.4px; }
+  .tiles b { font-size: 13.5px; }
+  table { width: 100%; border-collapse: collapse; margin-top: 7px; font-size: 9.8px; }
+  th, td { text-align: left; padding: 4.5px 5px; border-bottom: 1px solid #e1e5ea; vertical-align: top; }
+  th { font-size: 8.5px; color: #5b6672; font-weight: 700; text-transform: uppercase; letter-spacing: 0.3px; background: var(--tint); border-bottom: 1px solid #c7ced6; }
+  .num { text-align: right; white-space: nowrap; }
+  tr.total td { font-weight: 700; border-top: 1.5px solid #1c2430; border-bottom: 2px solid #1c2430; }
+  tr.sub td { font-weight: 700; background: #f7f9fb; }
+  .neg { color: #9b1c1c; }
+  .note { font-size: 9px; color: #4a5561; }
+  .small { font-size: 9px; }
+  ol.notes, ul.notes { margin: 6px 0 0 16px; font-size: 9.2px; color: #333d48; }
+  ol.notes li, ul.notes li { margin-top: 3px; }
+  .bar { height: 9px; background: var(--brand); display: inline-block; vertical-align: middle; }
+  .sig { display: grid; grid-template-columns: 1fr 1fr; gap: 26px; margin-top: 26px; }
+  .sig > div { font-size: 9.5px; }
+  .sig .scrawl { border-bottom: 1px solid #1c2430; margin-bottom: 4px; }
+  .scrawl { font-family: "Brush Script MT", "Segoe Script", cursive; font-size: 20px; font-style: italic; color: #20366b; height: 30px; }
+  .stamp { display: inline-block; border: 2px solid var(--brand); color: var(--brand); padding: 4px 10px; font-weight: 700; font-size: 9.5px; letter-spacing: 0.8px; transform: rotate(-4deg); text-transform: uppercase; }
+  footer.foot { position: absolute; left: 16mm; right: 16mm; bottom: 9mm; font-size: 8.3px; color: #5b6672; border-top: 1px solid #d6dbe1; padding-top: 5px; }
+  footer.foot .row { display: flex; justify-content: space-between; gap: 12px; }
+  footer.foot .issuer { margin-bottom: 2px; }
+  .specimen { position: absolute; left: 18mm; top: 122mm; transform: rotate(-32deg); font-size: 108px; font-weight: 800; letter-spacing: 16px; color: rgba(200, 30, 40, 0.15); pointer-events: none; z-index: 10; }
+  :root { --brand: #7a1f2b; --tint: #f7eef0; }
+</style>
+</head>
+<body>
+
+<section class="page">
+  <div class="letterhead">
+    <div class="logo"><div class="mark">N&amp;C</div><div class="brand">Nair &amp; Cole<small>Solicitors and notaries · 18 Harbour Street, Port Calder PC-3002</small></div></div>
+    <div class="doc-meta"><strong>Schedule of Real Property and Registered Assets</strong>Client: Mrs Elena Marsh<br>Re: Estate of Daniel James Marsh, deceased<br>Prepared 21 October 2026 · Ref. PN/MARSH/2026/031</div>
+  </div>
+
+  <p style="margin-top:12px">This schedule records the land and registered assets owned by Mrs Elena Marsh, alone or with the late Mr Daniel James Marsh (died 14 March 2026), with title details from official copies of the Meridia Land Registry obtained on 15 October 2026. It supports the estate account and Mrs Marsh's own planning.</p>
+
+  <h2>1. Linden House, Henlow (family home)</h2>
+  <table>
+    <tr><th style="width:30%">Item</th><th>Detail</th></tr>
+    <tr><td>Address</td><td>Linden House, 3 Orchard Lane, Henlow HN-4402</td></tr>
+    <tr><td>Title number and tenure</td><td>MR-HN-118204, freehold, title absolute</td></tr>
+    <tr><td>Description</td><td>Detached five-bedroom house of 1908 with garden of about 0.6 hectares, garage and greenhouse</td></tr>
+    <tr><td>Acquired</td><td>14 September 1998 for M$410,000</td></tr>
+    <tr><td>Registered proprietor</td><td>Elena Marsh. Previously Daniel James Marsh and Elena Marsh as beneficial joint tenants; Mr Marsh's name removed by survivorship on 2 June 2026.</td></tr>
+    <tr><td>Charges register</td><td>Legal charge dated 3 May 2019 in favour of Calder Private Bank plc securing a M$350,000 facility. No discharge registered.</td></tr>
+    <tr><td>Restrictions and covenants</td><td>Covenant of 1908 against use as a public house; right of way for the neighbouring Orchard Farm over the eastern drive</td></tr>
+    <tr><td>Valuation</td><td>M$2,350,000 at 12 September 2026, Pelham &amp; Rowe Chartered Surveyors (probate valuation)</td></tr>
+    <tr><td>Insurance</td><td>Harrowgate Mutual Home, policy HM-2271934, in Mrs Marsh's sole name since 1 June 2026</td></tr>
+    <tr><td>Estate treatment</td><td>Passed to Mrs Marsh by survivorship. Outside the estate for administration; included in the value of Mr Marsh's estate for inheritance tax at 50% (M$1,175,000), covered by the spouse exemption.</td></tr>
+  </table>
+
+  <h2>2. Gull Cottage, Saltmere (coastal cottage)</h2>
+  <table>
+    <tr><th style="width:30%">Item</th><th>Detail</th></tr>
+    <tr><td>Address</td><td>Gull Cottage, 7 Shingle Row, Saltmere SM-7710</td></tr>
+    <tr><td>Title number and tenure</td><td>MR-SM-040917, freehold, title absolute</td></tr>
+    <tr><td>Description</td><td>Two-bedroom fisherman's cottage of about 1870 with sea-facing garden and boat store</td></tr>
+    <tr><td>Acquired</td><td>2 July 2012 for M$345,000</td></tr>
+    <tr><td>Registered proprietors</td><td>Daniel James Marsh and Elena Marsh as tenants in common in equal shares (declaration of trust dated 2 July 2012)</td></tr>
+    <tr><td>Charges register</td><td>None</td></tr>
+    <tr><td>Use</td><td>Family holiday use only; not let</td></tr>
+    <tr><td>Valuation</td><td>M$780,000 at 12 September 2026, Pelham &amp; Rowe (Mr Marsh's half share: M$390,000 before a 10% discount for joint ownership, M$351,000)</td></tr>
+    <tr><td>Estate treatment</td><td>Mr Marsh's half share passes under his will to Mrs Marsh as residuary beneficiary. An assent to Mrs Marsh is in preparation; after it she will own the whole cottage.</td></tr>
+    <tr><td>Client's intention</td><td>Mrs Marsh intends to give the cottage to her daughter, Ms Ivy Marsh. See the planning points on page 2 before any transfer.</td></tr>
+  </table>
+
+  <footer class="foot">
+    <div class="issuer">Nair &amp; Cole · 18 Harbour Street, Port Calder PC-3002 · Regulated by the Meridia Law Society, firm no. MLS-4417</div>
+    <div class="row"><span>Synthetic document for the Reljod Labs Client Manager demo. Not a real record.</span><span>Page 1 of 2</span></div>
+  </footer>
+  <div class="specimen">SPECIMEN</div>
+</section>
+
+<section class="page">
+  <div class="running"><span><b>Nair &amp; Cole</b> · Schedule of Real Property and Registered Assets</span><span>Mrs Elena Marsh · PN/MARSH/2026/031</span></div>
+
+  <h2>3. Swing mooring SH-114, Saltmere Harbour</h2>
+  <table>
+    <tr><th style="width:30%">Item</th><th>Detail</th></tr>
+    <tr><td>Licensor</td><td>Saltmere Harbour Commissioners</td></tr>
+    <tr><td>Licence</td><td>Annual mooring licence SH-114, East Pool, for a vessel up to 10 m</td></tr>
+    <tr><td>Licensee</td><td>Daniel James Marsh. Transfer to Mrs Marsh applied for on 9 August 2026; the Commissioners have confirmed it will be approved at renewal.</td></tr>
+    <tr><td>Fee and term</td><td>M$1,450 a year; current licence ends 31 March 2027</td></tr>
+    <tr><td>Value</td><td>Nil for probate (licence is personal and not saleable)</td></tr>
+  </table>
+
+  <h2>4. Yacht "Ivy May"</h2>
+  <table>
+    <tr><th style="width:30%">Item</th><th>Detail</th></tr>
+    <tr><td>Vessel</td><td>9.8 m Bermudan sloop, built 2011 by Fenwick Boatworks, Saltmere</td></tr>
+    <tr><td>Registration</td><td>Meridia Small Ships Register no. MR-SS-20419</td></tr>
+    <tr><td>Registered owner</td><td>Daniel James Marsh (sole)</td></tr>
+    <tr><td>Location</td><td>Afloat on mooring SH-114; winter storage booked at Saltmere Boatyard from 1 November 2026</td></tr>
+    <tr><td>Valuation</td><td>M$95,000, condition survey by Saltmere Marine Surveys, 20 August 2026</td></tr>
+    <tr><td>Estate treatment</td><td>Specific gift under clause 4 of Mr Marsh's will to his son, Mr Tom Marsh. Mrs Marsh has asked whether she may keep sailing the yacht; Mr Tom Marsh has agreed in principle to share use.</td></tr>
+  </table>
+
+  <h2>Summary</h2>
+  <table>
+    <tr><th>Asset</th><th>Owner now</th><th class="num">Value M$</th><th class="num">In Mr Marsh's estate M$</th></tr>
+    <tr><td>Linden House, Henlow</td><td>Elena Marsh</td><td class="num">2,350,000</td><td class="num">1,175,000</td></tr>
+    <tr><td>Gull Cottage, Saltmere</td><td>Elena Marsh (50%), estate (50%)</td><td class="num">780,000</td><td class="num">351,000</td></tr>
+    <tr><td>Mooring SH-114</td><td>Estate (transfer pending)</td><td class="num">0</td><td class="num">0</td></tr>
+    <tr><td>Yacht "Ivy May"</td><td>Estate (to Tom Marsh)</td><td class="num">95,000</td><td class="num">95,000</td></tr>
+    <tr class="total"><td colspan="2">Total</td><td class="num">3,225,000</td><td class="num">1,621,000</td></tr>
+  </table>
+
+  <h2>Planning points for Gull Cottage</h2>
+  <ol class="notes">
+    <li>A gift of the cottage to Ms Ivy Marsh would be a potentially exempt transfer: free of inheritance tax if Mrs Marsh survives seven years, with taper relief from year three.</li>
+    <li>If Mrs Marsh keeps using the cottage after the gift without paying a market rent, it would be a gift with reservation and stay in her estate.</li>
+    <li>Capital gains tax may be due on the gift on the rise in value since 2012 for Mrs Marsh's original half, and since 14 March 2026 for the inherited half.</li>
+    <li>Ms Ivy Marsh is expecting her first child in January 2027. A transfer into a trust for Ms Marsh and her children could be considered instead of an outright gift.</li>
+  </ol>
+
+  <p style="margin-top:18px">Prepared by</p>
+  <div class="scrawl" style="margin-top:2px">Priya Nair</div>
+  <p style="margin-top:0">Priya Nair, Partner, Nair &amp; Cole<br>Executor of the estate of Daniel James Marsh</p>
+
+  <footer class="foot">
+    <div class="issuer">Nair &amp; Cole · 18 Harbour Street, Port Calder PC-3002 · Regulated by the Meridia Law Society, firm no. MLS-4417</div>
+    <div class="row"><span>Synthetic document for the Reljod Labs Client Manager demo. Not a real record.</span><span>Page 2 of 2</span></div>
+  </footer>
+  <div class="specimen">SPECIMEN</div>
+</section>
+
+</body>
+</html>

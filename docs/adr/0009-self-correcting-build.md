@@ -1,0 +1,11 @@
+# A Build corrects itself: code checks, a second model critiques, Repairs are data
+
+Turning free text and files into a graph is where a single model call goes wrong: the same person appears twice, a bank is merged into its own account, a fact is filed under the wrong Category, or a link is invented. A Build therefore runs as a Vercel Workflow with review rounds between Extract and Commit. **Check** is code: every Edge must join two Nodes, every Node must be reachable, every fact's quote must be in its Source (exact after normalising, or four in five words), and an attribute may not hold two values. Code fixes what it can on its own (unlinks dangling Edges, connects orphans to the client). **Critique** is a different model (`anthropic/claude-sonnet-5.5` by default, while `openai/gpt-6.1-terra` extracts) that sees the Sources, the Draft graph and code's findings, and answers only with structured **Repairs**: remove, merge, move, update, settle a conflict, add or remove an Edge. **Repair** is code again: `applyRepairs` applies them, skipping any that name a missing Node or touch the client's identity. A second round runs only if the Critic changed something, and it sees the first round's Repairs so it does not undo them. Before Commit, facts no Source supports and that were read with low confidence are dropped.
+
+We chose Repairs as data over asking the Critic to rewrite the graph: a rewrite can silently lose Nodes, cannot be checked, and cannot be animated. As a list of operations, every change is recorded (`client_manager.repairs`), explained in a sentence, and replayed by the browser with the same pure function the server ran, so the live view matches what gets committed.
+
+## Consequences
+
+- An Intake costs two to four model calls more than a single extraction (about $0.07 to $0.09 for a one-page note) and takes 60 to 100 seconds, mostly in Extract. Nodes stream in during Extract, so there is always something to watch.
+- Images and scanned PDFs have no text to check quotes against; their facts pass Check and are left to the Critic.
+- Additions (new notes or files later, or facts the Navigator records from chat) run the same Build over the committed graph, so they are deduplicated against it and reviewed the same way.
