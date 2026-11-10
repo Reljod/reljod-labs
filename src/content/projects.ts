@@ -153,18 +153,6 @@ export const projects: Project[] = [
   },
 ];
 
-/**
- * The About page's Projects: the first entries, then every live demo not
- * already among them, in list order. Appending keeps each entry's
- * `projects.<index>` source path stable for Ledger.
- */
-export const featuredProjects = [
-  ...projects.slice(0, FEATURED_PROJECT_LIMIT),
-  ...projects
-    .slice(FEATURED_PROJECT_LIMIT)
-    .filter((project) => project.status === "Live"),
-];
-
 /** The landing page's split: live demos take the stage, the rest wait on the bench. */
 export const liveDemos = projects.filter(
   (project) => project.status === "Live",
@@ -172,3 +160,17 @@ export const liveDemos = projects.filter(
 export const benchProjects = projects.filter(
   (project) => project.status !== "Live",
 );
+
+const leadingProjects = projects.slice(0, FEATURED_PROJECT_LIMIT);
+
+/**
+ * The About page's Projects: the first entries, then every live demo not
+ * already among them, in list order. The first entries keep their
+ * `projects.<index>` source paths; the appended demos are numbered by their
+ * order among live demos, so add a new live demo at the end of `projects` to
+ * keep the others' paths stable.
+ */
+export const featuredProjects = [
+  ...leadingProjects,
+  ...liveDemos.filter((project) => !leadingProjects.includes(project)),
+];

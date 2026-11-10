@@ -19,6 +19,14 @@ describe("featuredProjects", () => {
     );
   });
 
+  it("ends with the live demos past the first entries, in list order", () => {
+    expect(
+      featuredProjects
+        .slice(FEATURED_PROJECT_LIMIT)
+        .map((project) => project.slug),
+    ).toEqual(["ledger", "casework-desk", "client-manager"]);
+  });
+
   it("lists each project once", () => {
     const slugs = featuredProjects.map((project) => project.slug);
     expect(new Set(slugs).size).toBe(slugs.length);
