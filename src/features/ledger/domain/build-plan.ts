@@ -17,6 +17,7 @@ export const PACES = ["stroll", "trot", "dash"] as const;
 export const MAX_STEPS = 14;
 export const MAX_TOSSES = 2;
 const MAX_LINE = 60;
+const MAX_JOIN = 60;
 const MIN_EXCERPT = 8;
 
 export type Layout = (typeof LAYOUTS)[number];
@@ -41,6 +42,11 @@ export const planStepSchema = z.object({
     .nullable()
     .describe(
       "For an excerptable source only: the exact words to cut, copied character for character. null takes the whole piece.",
+    ),
+  join: z
+    .string()
+    .describe(
+      "Fetch only: Ledger's own words, at most 8, that come before this piece so the joins and pieces read in order form one sentence. No numbers or facts. Empty for toss.",
     ),
   pace: z.enum(PACES).describe("How fast Ledger runs to this piece."),
   line: z
@@ -90,6 +96,15 @@ export function matchExcerpt(text: string, excerpt: string): string | null {
   if (wanted.length < MIN_EXCERPT) return null;
   const at = fold(text).indexOf(wanted);
   return at === -1 ? null : text.slice(at, at + wanted.length);
+}
+
+/**
+ * A Join only links pieces: it may not carry a fact of its own, so one with a
+ * number in it, or one too long to be a few linking words, is dropped.
+ */
+function trimJoin(join: string | null | undefined) {
+  const clean = (join ?? "").replace(/\s+/g, " ").trim();
+  return clean.length > MAX_JOIN || /\d/.test(clean) ? "" : clean;
 }
 
 function trimLine(line: string) {
@@ -143,6 +158,7 @@ export function createStepValidator(tree: ContentTree = contentTree) {
       action: step.action,
       source: node.path,
       excerpt,
+      join: step.action === "fetch" ? trimJoin(step.join) : "",
       pace: PACES.includes(step.pace) ? step.pace : "trot",
       line: trimLine(step.line ?? ""),
     };
@@ -191,4 +207,17 @@ export function cutBlock(
     };
   }
   return { ...node.block, text: excerpt };
+}
+
+/**
+ * The words to show before each placed block on the answer page, so the
+ * blocks read as one sentence. Builds stored before Joins existed, or a Join
+ * that was dropped, fall back to plain list words.
+ */
+export function sentenceJoins(joins: readonly string[]): string[] {
+  return joins.map((join, index) => {
+    if (join) return join;
+    if (index === 0) return "";
+    return index === joins.length - 1 ? "and" : ",";
+  });
 }

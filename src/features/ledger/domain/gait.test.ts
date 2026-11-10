@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { beatsForStep, closingBeats, openingBeats } from "./choreography";
-import { chooseGait, gripFor, haulGait } from "./gait";
+import { chooseGait, gripFor, haulGait, holdOffset } from "./gait";
 
 describe("chooseGait", () => {
   it("gallops side-on under 25° and faces the way he runs", () => {
@@ -37,19 +37,36 @@ describe("chooseGait", () => {
 });
 
 describe("hauling", () => {
-  it("carries small pieces and drags big ones", () => {
+  it("carries small pieces and pushes big ones", () => {
     expect(gripFor("figure")).toBe("carry");
     expect(gripFor("quote")).toBe("carry");
-    expect(gripFor("job")).toBe("drag");
-    expect(gripFor("card")).toBe("drag");
+    expect(gripFor("job")).toBe("push");
+    expect(gripFor("card")).toBe("push");
   });
 
-  it("walks backwards when dragging, so he faces the block", () => {
-    expect(haulGait(300, 0, "drag").flip).toBe(true);
-    expect(haulGait(300, 0, "carry").flip).toBe(false);
-    expect(haulGait(600, 0, "drag").duration).toBeGreaterThan(
+  it("faces where he goes, and pushing is slower than carrying", () => {
+    expect(haulGait(300, 0, "push").flip).toBe(false);
+    expect(haulGait(-300, 0, "carry").flip).toBe(true);
+    expect(haulGait(600, 0, "push").duration).toBeGreaterThan(
       haulGait(600, 0, "carry").duration,
     );
+  });
+
+  it("holds the block on his raised paws or against the paws he faces with", () => {
+    const cat = { w: 120, h: 125 };
+    const block = { w: 360, h: 100 };
+    const overhead = holdOffset("carry", false, cat, block);
+    expect(overhead.x + block.w / 2).toBe(cat.w / 2);
+    expect(overhead.y + block.h).toBeLessThan(cat.h * 0.4);
+    expect(holdOffset("push", false, cat, block).x).toBeGreaterThan(
+      cat.w * 0.8,
+    );
+    const left = holdOffset("push", true, cat, block);
+    expect(left.x + block.w).toBeLessThan(cat.w * 0.2);
+  });
+
+  it("never takes so long that he crawls", () => {
+    expect(chooseGait(5000, 0, "stroll").duration).toBeLessThanOrEqual(4);
   });
 });
 
@@ -58,6 +75,7 @@ describe("choreography", () => {
     action: "fetch" as const,
     source: "experience.3",
     excerpt: null,
+    join: "He worked as",
     pace: "trot" as const,
     line: "This one!",
   };

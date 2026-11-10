@@ -6,5 +6,7 @@ export type PlacedBlock = {
   id: string;
   source: string;
   excerpt: string | null;
+  /** Ledger's words before this block on the answer page; may be empty. */
+  join: string;
   block: ContentBlock;
 };

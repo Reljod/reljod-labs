@@ -127,3 +127,31 @@ export function BlockView({ block, size }: BlockViewProps) {
       );
   }
 }
+
+/**
+ * A Content block cut down to the words it adds to the answer sentence. Every
+ * word is still the site's own.
+ */
+export function BlockPhrase({ block }: { block: ContentBlock }) {
+  switch (block.kind) {
+    case "figure":
+      return (
+        <>
+          <span className="font-mono font-bold text-ivy">{block.figure}</span>{" "}
+          {block.label}
+        </>
+      );
+    case "quote":
+      return <>{block.text}</>;
+    case "card":
+      return <>{block.title}</>;
+    case "job":
+      return (
+        <>
+          {block.role} <span className="text-ink-muted">· {block.company}</span>
+        </>
+      );
+    case "contact":
+      return <>{block.heading}</>;
+  }
+}
