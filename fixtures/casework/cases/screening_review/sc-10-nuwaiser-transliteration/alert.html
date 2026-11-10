@@ -1,0 +1,77 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8">
+<link rel="stylesheet" href="../../../templates/base.css">
+<style>
+.tm { font:8.8pt/1.4 "Inter","Liberation Sans",sans-serif; color:#14302e; padding:.55in .6in; }
+.tm-head { display:flex; justify-content:space-between; align-items:flex-end; border-bottom:4px solid #0f766e; padding-bottom:8px; }
+.tm-brand { font:800 18pt "Inter",sans-serif; letter-spacing:.16em; color:#0f766e; display:flex; align-items:center; gap:9px; }
+.tm-brand small { display:block; font:500 7.3pt "Inter",sans-serif; letter-spacing:.02em; color:#4b635f; }
+.tm-case { text-align:right; font-size:7.8pt; color:#4b635f; }
+.tm-case b { display:block; font:700 12pt "Inter",sans-serif; color:#14302e; }
+.tm h1 { font:700 12pt "Inter",sans-serif; margin:12px 0 6px; }
+.tm-sum { display:grid; grid-template-columns:1fr 1fr 1fr; border:1px solid #cfe0dd; border-radius:6px; background:#f5faf9; overflow:hidden; }
+.tm-sum div { padding:5px 9px; border-bottom:1px solid #e1ecea; border-right:1px solid #e1ecea; }
+.tm-sum b { display:block; font:600 6.6pt "Inter",sans-serif; text-transform:uppercase; color:#5d7773; letter-spacing:.06em; }
+.hit { margin-top:12px; border:1px solid #cfe0dd; border-radius:6px; overflow:hidden; }
+.hit-h { background:#0f766e; color:#fff; display:flex; justify-content:space-between; align-items:center; padding:5px 10px; font:600 9pt "Inter",sans-serif; }
+.hit-h .sc { background:#fff; color:#0f766e; border-radius:10px; padding:1px 8px; font:700 8.5pt "Inter",sans-serif; }
+.hit-s { padding:5px 10px; font-size:7.8pt; color:#4b635f; border-bottom:1px solid #e1ecea; background:#f5faf9; display:flex; flex-wrap:wrap; gap:4px 16px; }
+.hit-s b { color:#14302e; font-weight:600; }
+.cmp { width:100%; font-size:8.4pt; }
+.cmp th { text-align:left; font:600 6.8pt "Inter",sans-serif; text-transform:uppercase; color:#5d7773; padding:4px 10px; border-bottom:1px solid #e1ecea; letter-spacing:.05em; }
+.cmp td { padding:3.5px 10px; border-bottom:1px solid #eef4f3; }
+.cmp td:first-child { color:#5d7773; width:20%; }
+.cmp td.hl { background:#fdf3c4; }
+.r-m { color:#0f766e; font-weight:700; } .r-p { color:#a16207; font-weight:700; } .r-x { color:#b91c1c; font-weight:700; } .r-u { color:#8a9a97; }
+.tm-foot { position:absolute; left:.6in; right:.6in; bottom:.5in; border-top:1px solid #cfe0dd; padding-top:5px; font-size:7pt; color:#5d7773; display:flex; justify-content:space-between; }
+.hit-x { padding:5px 10px 7px; font-size:7.8pt; color:#4b635f; border-top:1px solid #e1ecea; }
+.hit-x b { color:#14302e; font-weight:600; }
+.tm-disp { margin-top:12px; border:1px solid #cfe0dd; border-radius:6px; padding:7px 10px; font-size:8.2pt; }
+.tm-disp h4 { margin:0 0 5px; font:600 7pt "Inter",sans-serif; text-transform:uppercase; letter-spacing:.06em; color:#5d7773; }
+.tm-disp .opts { display:flex; gap:22px; }
+.tm-disp .cb { display:inline-block; width:10px; height:10px; border:1px solid #4b635f; border-radius:2px; margin-right:5px; vertical-align:-1px; }
+.tm-wf { margin-top:12px; font-size:7.8pt; color:#4b635f; border:1px dashed #cfe0dd; border-radius:6px; padding:6px 10px; }
+.tm-wf b { color:#14302e; }
+</style>
+</head>
+<body>
+<section class="page tm">
+  <div class="tm-head">
+    <div class="tm-brand"><svg width="30" height="22" viewBox="0 0 30 22"><path d="M1 15 C6 7 10 7 15 15 C20 23 24 23 29 15" fill="none" stroke="#0f766e" stroke-width="3"/><path d="M1 8 C6 0 10 0 15 8 C20 16 24 16 29 8" fill="none" stroke="#5eead4" stroke-width="2.4"/></svg><div>TIDEMARK<small>Screening Console · Ostrander Compliance Software</small></div></div>
+    <div class="tm-case">Case report<b>TMK-A-26-118751</b>Generated 2026-11-10 10:12</div>
+  </div>
+  <h1>Name screening case: 1 potential match</h1>
+  <div class="tm-sum">
+    <div><b>Screened party</b>Tarek Abdelaziz Al-Nuwaiser</div>
+    <div><b>Customer ID</b>CTP-C-511378</div>
+    <div><b>Party type</b>Individual</div>
+    <div><b>Screened on</b>06 Nov 2026</div>
+    <div><b>Trigger</b>Periodic rescreen</div>
+    <div><b>Highest score</b>78</div>
+    <div><b>Institution</b>Corallis Trust &amp; Pensions</div>
+    <div><b>Queue</b>Trust &amp; fiduciary L1</div>
+    <div><b>Case status</b>Pending review</div>
+  </div>
+  <div class="hit">
+    <div class="hit-h"><span>Hit 1 of 1 · SANCTIONS</span><span class="sc">Score 78</span></div>
+    <div class="hit-s"><span>Source: <b>Consolidated Sanctions List (synthetic)</b></span><span>Record: <b>WL-SAN-0149</b></span><span>List date: <b>2026-11-05</b></span></div>
+    <table class="cmp">
+      <tr><th>Field</th><th>Screened party</th><th>Listed record</th><th>Result</th></tr>
+      <tr><td>Name</td><td>Tarek Abdelaziz Al-Nuwaiser</td><td class="hl"><b>Tariq Abd al-Aziz AL-NUWAYSIR</b></td><td><span class="r-p">&#8776; Fuzzy 78</span></td></tr>
+      <tr><td>Date of birth</td><td>19 Mar 1974</td><td class="hl">c. 1974</td><td><span class="r-p">&#8776; Year only</span></td></tr>
+      <tr><td>Nationality</td><td>Jordan</td><td class="hl">Jordan</td><td><span class="r-m">&#10003; Exact</span></td></tr>
+      <tr><td>Place of birth</td><td>Amman, Jordan</td><td>Not listed</td><td><span class="r-u">&#8211; Not available</span></td></tr>
+      <tr><td>ID number</td><td>Passport R418273</td><td>Not listed</td><td><span class="r-u">&#8211; Not available</span></td></tr>
+      <tr><td>Gender</td><td>Male</td><td>Male</td><td><span class="r-m">&#10003; Same</span></td></tr>
+    </table>
+    <div class="hit-x"><b>List aliases:</b> Tarik Abdulaziz Nuwesir; Abu Yasin<br><b>Listing reason:</b> Financial facilitator for a designated armed group (synthetic programme TFN-2)</div>
+  </div>
+  <div class="tm-disp"><h4>Disposition (per hit)</h4><div class="opts"><span><span class="cb"></span>False positive</span><span><span class="cb"></span>True match</span><span><span class="cb"></span>Escalate (inconclusive)</span></div><div style="margin-top:5px;color:#8a9a97">Analyst rationale: not yet entered</div></div>
+  <div class="tm-wf"><b>Workflow:</b> 06 Nov 2026 03:10 case created &nbsp;·&nbsp; 06 Nov 2026 03:10 routed to Trust &amp; fiduciary L1 &nbsp;·&nbsp; 10 Nov 2026 10:08 claimed by m.ortiz</div>
+  <div class="tm-foot"><span>Tidereach 3.12 · matching profile INDV-STD · lists: CSL-SYN 2026-11-05</span><span>Page 1 / 1</span></div>
+  <div class="synthetic-note">Synthetic document created for a software demonstration. Corallis Trust &amp; Pensions, every person, list, product and publication named here are fictional.</div>
+</section>
+</body>
+</html>

@@ -1,0 +1,149 @@
+{
+  "slug": "sc-12-herrera-castillo-multi-hit",
+  "scenario": "screening_review",
+  "title": "Herrera Castillo · PEP and sanctions namesake",
+  "summary": "A Panamanian trust settlor hit twice: a PEP record that is him (former Director General of Panama's customs authority, same DOB and birthplace) and a sanctions record for a Colombian accountant born in 1958 with a different second surname: refer for EDD.",
+  "asOf": "2026-11-10",
+  "documents": [
+    {
+      "source": "alert.html",
+      "name": "Tidereach case report TMK-A-26-118702.pdf",
+      "kind": "screening_alert",
+      "render": "scan",
+      "label": {
+        "alert_id": "TMK-A-26-118702",
+        "customer_name": "José Luis Herrera Castillo",
+        "customer_id": "CTP-C-433187",
+        "screened_on": "2026-11-05",
+        "hits": [
+          {
+            "hit_name": "José Luis Herrera Castillo",
+            "list_type": "pep",
+            "list_source": "Global PEP Register (synthetic)",
+            "match_score": 96,
+            "hit_date_of_birth": "27 Aug 1966",
+            "hit_nationality": "Panama",
+            "hit_reference": "WL-PEP-0355"
+          },
+          {
+            "hit_name": "José Luis Herrera Ocampo",
+            "list_type": "sanctions",
+            "list_source": "Consolidated Sanctions List (synthetic)",
+            "match_score": 85,
+            "hit_date_of_birth": "14 Jan 1958",
+            "hit_nationality": "Colombia",
+            "hit_reference": "WL-SAN-0172"
+          }
+        ]
+      }
+    },
+    {
+      "source": "profile.html",
+      "name": "CoralCore KYC profile CTP-C-433187.pdf",
+      "kind": "customer_profile",
+      "render": "pdf",
+      "label": {
+        "customer_name": "José Luis Herrera Castillo",
+        "customer_id": "CTP-C-433187",
+        "date_of_birth": "1966-08-27",
+        "nationality": "Panama",
+        "residence": "Panama",
+        "occupation": "Financial consultant",
+        "id_number": "PA0871264",
+        "other_names": [
+          "José Luis Herrera"
+        ]
+      }
+    },
+    {
+      "source": "passport.html",
+      "name": "Passport photo - Herrera Castillo.jpg",
+      "kind": "identity_document",
+      "render": "photo",
+      "label": {
+        "document_type": "passport",
+        "full_name": "José Luis Herrera Castillo",
+        "date_of_birth": "1966-08-27",
+        "nationality": "Panamanian",
+        "id_number": "PA0871264",
+        "date_of_expiry": "2030-11-02",
+        "certified": false,
+        "certifier_name": "",
+        "certifier_occupation": "",
+        "certification_date": ""
+      }
+    },
+    {
+      "source": "entry-wl-pep-0355.html",
+      "name": "Global PEP Register profile WL-PEP-0355.pdf",
+      "kind": "watchlist_entry",
+      "render": "pdf",
+      "label": {
+        "entry_name": "José Luis Herrera Castillo",
+        "aliases": [
+          "José Herrera Castillo",
+          "Pepe Herrera"
+        ],
+        "date_of_birth": "1966-08-27",
+        "place_of_birth": "David, Chiriquí, Panama",
+        "nationality": "Panama",
+        "list_source": "Global PEP Register (synthetic)",
+        "listing_reason": "Former Director General, National Customs Authority, Panama (2014-2019)",
+        "reference": "WL-PEP-0355"
+      }
+    },
+    {
+      "source": "entry-wl-san-0172.html",
+      "name": "CSL record WL-SAN-0172.pdf",
+      "kind": "watchlist_entry",
+      "render": "pdf",
+      "label": {
+        "entry_name": "José Luis Herrera Ocampo",
+        "aliases": [
+          "El Contador",
+          "Jose Luis Herrera"
+        ],
+        "date_of_birth": "14 Jan 1958",
+        "place_of_birth": "Cali, Valle del Cauca, Colombia",
+        "nationality": "Colombia",
+        "list_source": "Consolidated Sanctions List (synthetic)",
+        "listing_reason": "Accountant for a designated narcotics trafficking organisation (synthetic programme NTO-9)",
+        "reference": "WL-SAN-0172"
+      }
+    }
+  ],
+  "expected": {
+    "pipeline": "screening_review",
+    "recommendation": "refer",
+    "missingKinds": [],
+    "checks": [
+      {
+        "id": "screening_clear",
+        "outcome": "review",
+        "note": "Former foreign PEP confirmed; sanctions namesake discounted"
+      },
+      {
+        "id": "identity_matches_record",
+        "outcome": "pass",
+        "note": "Passport name, DOB 27 Aug 1966 and number PA0871264 agree with the KYC record"
+      },
+      {
+        "id": "id_in_date",
+        "outcome": "pass",
+        "note": "Passport expires 02 Nov 2030"
+      }
+    ],
+    "hits": [
+      {
+        "name": "José Luis Herrera Castillo",
+        "disposition": "true_match",
+        "reason": "Same person. Register DOB 1966-08-27 and place of birth David, Chiriquí match passport PA0871264; the register role, Director General of the National Customs Authority 2014-2019, is in his KYC employment history and he self-declared as a former public official. Former foreign PEP within the lookback: refer for EDD, source of wealth corroboration and senior management sign-off, not a decline."
+      },
+      {
+        "name": "José Luis Herrera Ocampo",
+        "disposition": "false_positive",
+        "reason": "Sanctions record is José Luis Herrera Ocampo, a Colombian born 14 Jan 1958 in Cali, identified by a Colombian cedula. The list alias Jose Luis Herrera equals the customer's recorded other name José Luis Herrera, but that is only his first names and first surname. The customer's second surname is Castillo, he is Panamanian, born 27 Aug 1966 in David, Chiriquí. Second surname, nationality, DOB and place of birth all differ. Discount."
+      }
+    ]
+  }
+}

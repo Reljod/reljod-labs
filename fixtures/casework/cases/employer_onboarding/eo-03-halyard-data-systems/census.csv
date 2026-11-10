@@ -1,0 +1,9 @@
+employee_id,name,date_of_birth,hire_date,monthly_base_kyd,passport_no,work_permit_no,pension_plan
+HDS-001,Priya Raghavan,1986-11-02,2023-10-01,9500.00,Z4719320,SEZ-WP-23-0412,Corallis CMEP (new)
+HDS-002,Jonathan Clarke,1983-04-17,2023-10-01,9500.00,AB219874,SEZ-WP-23-0413,Corallis CMEP (new)
+HDS-004,Marco Antonio Rivera,1991-08-30,2024-01-15,6200.00,F1182047,SEZ-WP-24-0058,Corallis CMEP (new)
+HDS-005,Aisha Bodden,1994-02-11,2024-03-04,3900.00,C0518829,,Corallis CMEP (new)
+HDS-007,Vikram Shenoy,1992-12-19,2024-06-10,6800.00,Y3390421,SEZ-WP-24-0217,Corallis CMEP (new)
+HDS-008,Joanne Marie Aquino,1996-05-27,2025-01-06,4750.00,P7730215B,SEZ-WP-25-0009,Corallis CMEP (new)
+HDS-010,Callum Fraser,1998-09-09,2025-08-18,5600.00,561920384,SEZ-WP-25-0344,Corallis CMEP (new)
+HDS-011,Tiffany Scott,2001-01-22,2026-02-02,3400.00,C0702260,,Corallis CMEP (new)

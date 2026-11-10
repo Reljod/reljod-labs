@@ -1,0 +1,164 @@
+{
+  "slug": "sr-07-coralline-110-percent",
+  "scenario": "structure_review",
+  "title": "Coralline Logistics · register adds to 110%",
+  "summary": "Cayman exempted company with two founder-directors whose handwritten register gives 6,000 and 5,000 shares (60% and 50%) against 10,000 issued, while the total line says 100%; the true split must be resolved before the ownership can be relied on.",
+  "asOf": "2026-11-09",
+  "documents": [
+    {
+      "source": "certificate-of-incorporation.html",
+      "name": "Coralline - Certificate of Incorporation.pdf",
+      "kind": "certificate_of_incorporation",
+      "render": "scan",
+      "label": {
+        "entity_name": "Coralline Logistics Holdings Ltd.",
+        "registration_number": "CR-402559",
+        "jurisdiction": "Cayman Islands",
+        "entity_type": "exempted",
+        "incorporation_date": "2023-11-07"
+      }
+    },
+    {
+      "source": "register-of-members.html",
+      "name": "Coralline - Register of Members (scan).pdf",
+      "kind": "register_of_members",
+      "render": "scan",
+      "label": {
+        "entity_name": "Coralline Logistics Holdings Ltd.",
+        "as_of_date": "2026-10-19",
+        "members": [
+          {
+            "holder_name": "Arjun Mehta-Castellanos",
+            "holder_type": "individual",
+            "shares": 6000,
+            "share_class": "Ordinary",
+            "percentage": 60
+          },
+          {
+            "holder_name": "Folake Adeyemi-Grant",
+            "holder_type": "individual",
+            "shares": 5000,
+            "share_class": "Ordinary",
+            "percentage": 50
+          }
+        ]
+      }
+    },
+    {
+      "source": "register-of-directors.html",
+      "name": "Coralline - Register of Directors.pdf",
+      "kind": "register_of_directors",
+      "render": "pdf",
+      "label": {
+        "entity_name": "Coralline Logistics Holdings Ltd.",
+        "as_of_date": "2026-10-19",
+        "directors": [
+          {
+            "name": "Arjun Mehta-Castellanos",
+            "role": "director",
+            "date_of_birth": "1981-07-26",
+            "nationality": "Indian",
+            "appointed": "2023-11-07"
+          },
+          {
+            "name": "Folake Adeyemi-Grant",
+            "role": "director",
+            "date_of_birth": "1983-03-15",
+            "nationality": "British",
+            "appointed": "2023-11-07"
+          },
+          {
+            "name": "Seabreeze Corporate Secretaries Ltd.",
+            "role": "secretary",
+            "date_of_birth": "",
+            "nationality": "",
+            "appointed": "2023-11-07"
+          }
+        ]
+      }
+    },
+    {
+      "source": "passport-mehta-castellanos.html",
+      "name": "Passport - A Mehta-Castellanos (certified).pdf",
+      "kind": "identity_document",
+      "render": "scan",
+      "label": {
+        "document_type": "passport",
+        "full_name": "Arjun Mehta-Castellanos",
+        "date_of_birth": "1981-07-26",
+        "nationality": "Indian",
+        "id_number": "Z4417283",
+        "date_of_expiry": "2032-08-03",
+        "certified": true,
+        "certifier_name": "Sunil Kapadia",
+        "certifier_occupation": "Chartered Accountant",
+        "certification_date": "2026-10-09"
+      }
+    },
+    {
+      "source": "passport-adeyemi-grant.html",
+      "name": "Passport - F Adeyemi-Grant (certified).pdf",
+      "kind": "identity_document",
+      "render": "scan",
+      "label": {
+        "document_type": "passport",
+        "full_name": "Folake Adeyemi-Grant",
+        "date_of_birth": "1983-03-15",
+        "nationality": "British Citizen",
+        "id_number": "129847365",
+        "date_of_expiry": "2030-12-01",
+        "certified": true,
+        "certifier_name": "Hannah Oduya-Price",
+        "certifier_occupation": "Solicitor",
+        "certification_date": "2026-10-13"
+      }
+    }
+  ],
+  "expected": {
+    "pipeline": "structure_review",
+    "recommendation": "refer",
+    "risk": "standard",
+    "ubos": [
+      "Arjun Mehta-Castellanos",
+      "Folake Adeyemi-Grant"
+    ],
+    "missingKinds": [],
+    "checks": [
+      {
+        "id": "ownership_reconciles",
+        "outcome": "fail",
+        "note": "Register rows give 6,000 + 5,000 = 11,000 shares and 60% + 50% = 110%, but issued capital is 10,000 shares and the total line says 10,000 / 100%. At least one entry is wrong; a corrected, certified register and any transfer records are needed."
+      },
+      {
+        "id": "entity_documents_consistent",
+        "outcome": "pass",
+        "note": "Coralline Logistics Holdings Ltd., CR-402559, incorporated 7 Nov 2023, agrees across the certificate and both registers."
+      },
+      {
+        "id": "ubos_identified",
+        "outcome": "pass",
+        "note": "Arjun Mehta-Castellanos and Folake Adeyemi-Grant are the only members; each is above 10% on any reading (60%/50% as written, or 6,000/11,000 = 54.5% and 5,000/11,000 = 45.5%), so both are UBOs, but the exact split is unknown."
+      },
+      {
+        "id": "controllers_identified",
+        "outcome": "pass",
+        "note": "The two shareholders are the two directors; secretary is Seabreeze Corporate Secretaries Ltd."
+      },
+      {
+        "id": "ubos_verified",
+        "outcome": "pass",
+        "note": "Certified passports for both (certified 9 Oct 2026 and 13 Oct 2026, both in date)."
+      },
+      {
+        "id": "screening_clear",
+        "outcome": "pass",
+        "note": "No watchlist matches."
+      },
+      {
+        "id": "edd_required",
+        "outcome": "pass",
+        "note": "No PEP or high-risk factor; the issue is a records defect, not a risk factor."
+      }
+    ]
+  }
+}

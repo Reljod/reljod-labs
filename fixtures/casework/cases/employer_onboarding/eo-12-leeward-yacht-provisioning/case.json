@@ -1,0 +1,128 @@
+{
+  "slug": "eo-12-leeward-yacht-provisioning",
+  "scenario": "employer_onboarding",
+  "title": "Leeward Yacht Provisioning · new employer",
+  "summary": "Yacht chandler joining the plan; a director appointed in Nov 2025 is a sanctioned person, so the application must be declined (the census was never sent).",
+  "asOf": "2026-11-10",
+  "documents": [
+    {
+      "source": "application.html",
+      "name": "Leeward Yacht Provisioning - CT-E1.pdf",
+      "kind": "employer_application",
+      "render": "pdf",
+      "label": {
+        "employer_name": "Leeward Yacht Provisioning Ltd.",
+        "registration_number": "309982",
+        "trade_name": "Leeward Provisions",
+        "business_address": "Unit 3, Harbour Industrial Park, North Sound Road, George Town, Grand Cayman KY1-1208",
+        "nature_of_business": "Yacht provisioning, chandlery and marine supplies",
+        "employee_count": 11,
+        "contact_name": "Melanie Watler",
+        "signatory_names": [
+          "Paul Anderson Watler"
+        ],
+        "signed_date": "2026-10-19"
+      }
+    },
+    {
+      "source": "certificate-of-incorporation.html",
+      "name": "LYP Certificate of Incorporation.pdf",
+      "kind": "certificate_of_incorporation",
+      "render": "scan",
+      "label": {
+        "entity_name": "Leeward Yacht Provisioning Ltd.",
+        "registration_number": "309982",
+        "jurisdiction": "Cayman Islands",
+        "entity_type": "ordinary resident company",
+        "incorporation_date": "2016-04-04"
+      }
+    },
+    {
+      "source": "trade-licence.html",
+      "name": "TBL 2026-27 Leeward.pdf",
+      "kind": "trade_business_licence",
+      "render": "scan",
+      "label": {
+        "licensee_name": "Leeward Yacht Provisioning Ltd.",
+        "licence_number": "TB-26-055620",
+        "business_activity": "Yacht provisioning, chandlery and sale of marine supplies",
+        "expiry_date": "2027-03-31"
+      }
+    },
+    {
+      "source": "certificate-of-incumbency.html",
+      "name": "Certificate of Incumbency LYP.pdf",
+      "kind": "register_of_directors",
+      "render": "pdf",
+      "label": {
+        "entity_name": "Leeward Yacht Provisioning Ltd.",
+        "as_of_date": "2026-10-16",
+        "directors": [
+          {
+            "name": "Paul Anderson Watler",
+            "role": "director",
+            "date_of_birth": "1972-12-01",
+            "nationality": "Caymanian",
+            "appointed": "2016-04-04"
+          },
+          {
+            "name": "Rafael Ignacio Montaño Ruiz",
+            "role": "director",
+            "date_of_birth": "1969-03-08",
+            "nationality": "Venezuelan",
+            "appointed": "2025-11-03"
+          },
+          {
+            "name": "Northwind Registered Office Services Ltd.",
+            "role": "secretary",
+            "date_of_birth": "",
+            "nationality": "",
+            "appointed": "2016-04-04"
+          }
+        ]
+      }
+    }
+  ],
+  "expected": {
+    "pipeline": "employer_onboarding",
+    "recommendation": "decline",
+    "missingKinds": [
+      "member_census"
+    ],
+    "risk": "high",
+    "hits": [
+      {
+        "name": "Rafael Ignacio Montaño Ruiz",
+        "disposition": "true_match",
+        "reason": "Certificate of incumbency gives the same name, date of birth (8 Mar 1969) and Venezuelan nationality as sanctions entry WL-SAN-EO-001."
+      }
+    ],
+    "checks": [
+      {
+        "id": "screening_clear",
+        "outcome": "fail",
+        "note": "Director Rafael Ignacio Montaño Ruiz (appointed 3 Nov 2025) matches sanctions entry WL-SAN-EO-001 on name, DOB 8 Mar 1969 and Venezuelan nationality. Blocking: decline and report internally."
+      },
+      {
+        "id": "edd_required",
+        "outcome": "review",
+        "note": "Sanctions exposure through a director; escalate to the MLRO."
+      },
+      {
+        "id": "entity_documents_consistent",
+        "outcome": "pass",
+        "note": "Application, certificate, licence and incumbency certificate all name Leeward Yacht Provisioning Ltd., registration no. 309982."
+      },
+      {
+        "id": "licence_in_date",
+        "outcome": "pass",
+        "note": "Licence TB-26-055620 expires 31 Mar 2027."
+      },
+      {
+        "id": "signatories_authorised",
+        "outcome": "pass",
+        "note": "Signed by Paul Anderson Watler, a director on the certificate of incumbency."
+      }
+    ]
+  }
+}

@@ -1,0 +1,160 @@
+{
+  "slug": "sr-03-mahogany-bay-trust",
+  "scenario": "structure_review",
+  "title": "Mahogany Bay Trust · protector changed",
+  "summary": "Cayman discretionary trust with a licensed corporate trustee holding an underlying company; the 2019 deed names the first protector, but a 2024 deed replaced him, so the current protector is the one to identify and verify.",
+  "asOf": "2026-11-10",
+  "documents": [
+    {
+      "source": "trust-deed.html",
+      "name": "Mahogany Bay Trust - Settlement 2019.pdf",
+      "kind": "trust_deed",
+      "render": "scan",
+      "label": {
+        "trust_name": "The Mahogany Bay Trust",
+        "deed_date": "2019-07-22",
+        "governing_law": "Cayman Islands",
+        "trust_type": "discretionary",
+        "settlor_names": [
+          "Isabela Duarte Kimura"
+        ],
+        "trustee_names": [
+          "Seagrape Fiduciary Services Ltd."
+        ],
+        "protector_names": [
+          "Augustine Rivers-McLaughlin"
+        ],
+        "beneficiary_names": [],
+        "beneficiary_class": "the children and remoter issue of the Settlor, whether born before or after the date of this Settlement, and any person or charity added under clause 7"
+      }
+    },
+    {
+      "source": "deed-of-appointment.html",
+      "name": "Deed of Retirement and Appointment of Protector 2024.pdf",
+      "kind": "deed_of_appointment",
+      "render": "pdf",
+      "label": {
+        "trust_name": "The Mahogany Bay Trust",
+        "deed_date": "2024-02-05",
+        "role": "protector",
+        "appointed_names": [
+          "Malcolm Ebanks-Thornton"
+        ],
+        "removed_names": [
+          "Augustine Rivers-McLaughlin"
+        ]
+      }
+    },
+    {
+      "source": "letter-of-wishes.html",
+      "name": "Letter of wishes - I Duarte Kimura.pdf",
+      "kind": "letter_of_wishes",
+      "render": "scan",
+      "label": {
+        "author_name": "Isabela Duarte Kimura",
+        "letter_date": "2019-07-25",
+        "named_persons": [
+          "Luca Duarte Kimura",
+          "Helena Duarte Kimura"
+        ]
+      }
+    },
+    {
+      "source": "register-of-members.html",
+      "name": "Mahogany Bay Holdings - Register of Members.pdf",
+      "kind": "register_of_members",
+      "render": "pdf",
+      "label": {
+        "entity_name": "Mahogany Bay Holdings Ltd.",
+        "as_of_date": "2026-10-01",
+        "members": [
+          {
+            "holder_name": "Seagrape Fiduciary Services Ltd. as trustee of The Mahogany Bay Trust",
+            "holder_type": "trust",
+            "shares": 50000,
+            "share_class": "Ordinary",
+            "percentage": 100
+          }
+        ]
+      }
+    },
+    {
+      "source": "passport-duarte-kimura.html",
+      "name": "Passport - I Duarte Kimura (certified).pdf",
+      "kind": "identity_document",
+      "render": "scan",
+      "label": {
+        "document_type": "passport",
+        "full_name": "Isabela Duarte Kimura",
+        "date_of_birth": "1968-12-03",
+        "nationality": "Brazilian",
+        "id_number": "GD274610",
+        "date_of_expiry": "2030-06-18",
+        "certified": true,
+        "certifier_name": "Pradeep Ramcharan",
+        "certifier_occupation": "Chartered Professional Accountant",
+        "certification_date": "2026-10-12"
+      }
+    },
+    {
+      "source": "passport-ebanks-thornton.html",
+      "name": "Passport - M Ebanks-Thornton (certified).pdf",
+      "kind": "identity_document",
+      "render": "scan",
+      "label": {
+        "document_type": "passport",
+        "full_name": "Malcolm Ebanks-Thornton",
+        "date_of_birth": "1961-08-30",
+        "nationality": "British Overseas Territories Citizen",
+        "id_number": "C21904578",
+        "date_of_expiry": "2028-04-02",
+        "certified": true,
+        "certifier_name": "Lisette Bodden",
+        "certifier_occupation": "Attorney-at-Law",
+        "certification_date": "2026-09-29"
+      }
+    }
+  ],
+  "expected": {
+    "pipeline": "structure_review",
+    "recommendation": "approve",
+    "risk": "standard",
+    "ubos": [
+      "Isabela Duarte Kimura",
+      "Malcolm Ebanks-Thornton"
+    ],
+    "missingKinds": [],
+    "checks": [
+      {
+        "id": "ownership_reconciles",
+        "outcome": "pass",
+        "note": "Seagrape Fiduciary Services Ltd. as trustee of The Mahogany Bay Trust holds 50,000 of 50,000 shares (100%) of Mahogany Bay Holdings Ltd., matching Recital (B) of the deed."
+      },
+      {
+        "id": "controllers_identified",
+        "outcome": "pass",
+        "note": "Trustee: Seagrape Fiduciary Services Ltd., CIMA trust licence T-0731 (its two signatories sign as authorised signatories, not controllers). Protector: Malcolm Ebanks-Thornton since the deed of 5 Feb 2024, which removed Augustine Rivers-McLaughlin, the protector named in the 2019 deed."
+      },
+      {
+        "id": "ubos_identified",
+        "outcome": "pass",
+        "note": "Settlor Isabela Duarte Kimura and current protector Malcolm Ebanks-Thornton. Beneficiaries are a class (children and remoter issue) with nobody named in the deed; Luca and Helena Duarte Kimura appear only in the non-binding letter of wishes and are identified when a distribution is made."
+      },
+      {
+        "id": "ubos_verified",
+        "outcome": "pass",
+        "note": "Certified passports for the settlor (certified 12 Oct 2026, expires 18 Jun 2030) and the current protector (certified 29 Sep 2026, expires 2 Apr 2028). No ID is needed for the retired protector."
+      },
+      {
+        "id": "screening_clear",
+        "outcome": "pass",
+        "note": "No watchlist matches for the settlor, protectors past or present, trustee or underlying company."
+      },
+      {
+        "id": "edd_required",
+        "outcome": "pass",
+        "note": "Licensed Cayman trustee, irrevocable discretionary trust, no PEP; standard CDD."
+      }
+    ]
+  }
+}

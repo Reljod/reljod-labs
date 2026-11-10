@@ -1,0 +1,29 @@
+[
+  {
+    "id": "WL-PEP-EO-001",
+    "name": "Everett Lionel Parchment",
+    "aliases": [
+      "Hon. Everett Parchment",
+      "E. L. Parchment"
+    ],
+    "date_of_birth": "1964-07-19",
+    "nationality": "Caymanian",
+    "list_type": "pep",
+    "list_source": "Domestic PEP register (synthetic)",
+    "reason": "Sitting Member of Parliament, Cayman Islands (fictional person)"
+  },
+  {
+    "id": "WL-SAN-EO-001",
+    "name": "Rafael Ignacio Montaño Ruiz",
+    "aliases": [
+      "Rafael Ignacio Montano Ruiz",
+      "Rafael Montaño",
+      "R. I. Montano"
+    ],
+    "date_of_birth": "1969-03-08",
+    "nationality": "Venezuelan",
+    "list_type": "sanctions",
+    "list_source": "Consolidated Sanctions List (synthetic)",
+    "reason": "Asset freeze: procurement agent for a sanctioned state-owned fuel network (fictional listing)"
+  }
+]

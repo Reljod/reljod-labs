@@ -1,0 +1,118 @@
+{
+  "slug": "wd-04-campbell-early-retirement",
+  "scenario": "pension_withdrawal",
+  "title": "Campbell · early retirement at 61",
+  "summary": "Jamaican permanent resident aged 61 taking a CI$120,000 early retirement lump sum to her own bank account; non-Caymanians may retire early, and every document agrees.",
+  "asOf": "2026-11-05",
+  "documents": [
+    {
+      "source": "retirement-request.html",
+      "name": "CT-R1 early retirement - Campbell.pdf",
+      "kind": "withdrawal_request_form",
+      "render": "scan",
+      "label": {
+        "member_name": "Marcia Elaine Campbell",
+        "member_number": "CT-077314",
+        "date_of_birth": "1965-03-08",
+        "withdrawal_type": "early_retirement",
+        "amount_requested": 120000,
+        "property_address": "",
+        "payee_name": "Marcia Elaine Campbell",
+        "payee_bank": "Leeward Commercial Bank Ltd.",
+        "payee_account_number": "0031-559201-02",
+        "caymanian_status_declared": false,
+        "primary_residence_declared": false,
+        "signature_present": true,
+        "signed_date": "2026-10-30"
+      }
+    },
+    {
+      "source": "member-statement.html",
+      "name": "Corallis Q3 2026 statement - CT-077314.pdf",
+      "kind": "member_statement",
+      "render": "pdf",
+      "label": {
+        "member_name": "Marcia Elaine Campbell",
+        "member_number": "CT-077314",
+        "date_of_birth": "1965-03-08",
+        "employer_name": "Eastern Avenue Hardware Ltd.",
+        "statement_date": "2026-09-30",
+        "total_balance": 163582.4,
+        "prior_property_withdrawals": 0,
+        "prior_withdrawals_repaid": true
+      }
+    },
+    {
+      "source": "passport-certified.html",
+      "name": "Campbell passport certified.pdf",
+      "kind": "identity_document",
+      "render": "scan",
+      "label": {
+        "document_type": "passport",
+        "full_name": "Marcia Elaine Campbell",
+        "date_of_birth": "1965-03-08",
+        "nationality": "Jamaican",
+        "id_number": "A4417092",
+        "date_of_expiry": "2030-07-22",
+        "certified": true,
+        "certifier_name": "Lorraine Patrice Connolly",
+        "certifier_occupation": "Attorney-at-Law",
+        "certification_date": "2026-10-28"
+      }
+    },
+    {
+      "source": "bank-letter.html",
+      "name": "IMG_20261029_bank_letter.jpg",
+      "kind": "bank_letter",
+      "render": "photo",
+      "label": {
+        "account_holder": "Marcia Elaine Campbell",
+        "bank_name": "Leeward Commercial Bank Ltd.",
+        "account_number": "0031-559201-02",
+        "letter_date": "2026-10-27"
+      }
+    }
+  ],
+  "expected": {
+    "pipeline": "pension_withdrawal",
+    "recommendation": "approve",
+    "missingKinds": [],
+    "checks": [
+      {
+        "id": "identity_matches_record",
+        "outcome": "pass",
+        "note": "Passport, form and statement read Marcia Elaine Campbell, born 8 Mar 1965"
+      },
+      {
+        "id": "id_in_date",
+        "outcome": "pass",
+        "note": "Passport A4417092 expires 22 Jul 2030"
+      },
+      {
+        "id": "id_certified",
+        "outcome": "pass",
+        "note": "Certified by Lorraine Patrice Connolly, Attorney-at-Law, on 28 Oct 2026"
+      },
+      {
+        "id": "withdrawal_purpose_supported",
+        "outcome": "pass",
+        "note": "Early retirement at 61 (born 8 Mar 1965); the minimum is 60 and Caymanian status is not needed for retirement"
+      },
+      {
+        "id": "amount_within_balance",
+        "outcome": "pass",
+        "note": "CI$120,000 against a balance of CI$163,582.40 at 30 Sep 2026"
+      },
+      {
+        "id": "payee_permitted",
+        "outcome": "pass",
+        "note": "Paid to her own account 0031-559201-02; bank letter confirms she is the sole holder"
+      },
+      {
+        "id": "screening_clear",
+        "outcome": "pass",
+        "note": "No watchlist matches"
+      }
+    ]
+  }
+}

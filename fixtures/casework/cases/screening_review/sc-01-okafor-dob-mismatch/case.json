@@ -1,0 +1,114 @@
+{
+  "slug": "sc-01-okafor-dob-mismatch",
+  "scenario": "screening_review",
+  "title": "Okafor · sanctions name hit",
+  "summary": "Periodic rescreen of a Nigerian fund accountant in George Town hit a sanctions record with the same first name and surname, but the listed person was born in 1958 in Onitsha and the customer in 1989 in Enugu: a false positive on date of birth.",
+  "asOf": "2026-11-10",
+  "documents": [
+    {
+      "source": "alert.html",
+      "name": "Sentinel Watch alert SW-26-1105-00412.pdf",
+      "kind": "screening_alert",
+      "render": "pdf",
+      "label": {
+        "alert_id": "SW-26-1105-00412",
+        "customer_name": "Chinedu Emmanuel Okafor",
+        "customer_id": "CTP-C-418207",
+        "screened_on": "2026-11-05",
+        "hits": [
+          {
+            "hit_name": "Chinedu Obinna Okafor",
+            "list_type": "sanctions",
+            "list_source": "Consolidated Sanctions List (synthetic)",
+            "match_score": 86,
+            "hit_date_of_birth": "1958-02-11",
+            "hit_nationality": "Nigeria",
+            "hit_reference": "WL-SAN-0107"
+          }
+        ]
+      }
+    },
+    {
+      "source": "profile.html",
+      "name": "CoralCore KYC profile CTP-C-418207.pdf",
+      "kind": "customer_profile",
+      "render": "pdf",
+      "label": {
+        "customer_name": "Chinedu Emmanuel Okafor",
+        "customer_id": "CTP-C-418207",
+        "date_of_birth": "1989-07-23",
+        "nationality": "Nigeria",
+        "residence": "Cayman Islands",
+        "occupation": "Fund accountant",
+        "id_number": "B04417829",
+        "other_names": []
+      }
+    },
+    {
+      "source": "passport.html",
+      "name": "Passport certified copy - Okafor.pdf",
+      "kind": "identity_document",
+      "render": "scan",
+      "label": {
+        "document_type": "passport",
+        "full_name": "Chinedu Emmanuel Okafor",
+        "date_of_birth": "1989-07-23",
+        "nationality": "Nigerian",
+        "id_number": "B04417829",
+        "date_of_expiry": "2030-03-01",
+        "certified": true,
+        "certifier_name": "Sandra Lyn Pierre",
+        "certifier_occupation": "Attorney-at-Law",
+        "certification_date": "2026-06-30"
+      }
+    },
+    {
+      "source": "entry-wl-san-0107.html",
+      "name": "CSL record WL-SAN-0107.pdf",
+      "kind": "watchlist_entry",
+      "render": "pdf",
+      "label": {
+        "entry_name": "Chinedu Obinna Okafor",
+        "aliases": [
+          "Obinna Okafor",
+          "Chief C. O. Okafor"
+        ],
+        "date_of_birth": "11 Feb 1958",
+        "place_of_birth": "Onitsha, Anambra State, Nigeria",
+        "nationality": "Nigeria",
+        "list_source": "Consolidated Sanctions List (synthetic)",
+        "listing_reason": "Laundered proceeds of illegal crude oil bunkering for a designated network (synthetic programme NRB-2)",
+        "reference": "WL-SAN-0107"
+      }
+    }
+  ],
+  "expected": {
+    "pipeline": "screening_review",
+    "recommendation": "approve",
+    "missingKinds": [],
+    "checks": [
+      {
+        "id": "screening_clear",
+        "outcome": "pass",
+        "note": "Single sanctions hit discounted on date of birth, middle name and place of birth"
+      },
+      {
+        "id": "identity_matches_record",
+        "outcome": "pass",
+        "note": "Passport name, DOB 23 Jul 1989 and number B04417829 agree with the KYC record"
+      },
+      {
+        "id": "id_in_date",
+        "outcome": "pass",
+        "note": "Passport expires 01 Mar 2030"
+      }
+    ],
+    "hits": [
+      {
+        "name": "Chinedu Obinna Okafor",
+        "disposition": "false_positive",
+        "reason": "Different person. List DOB 11 Feb 1958 against customer DOB 23 Jul 1989 (passport B04417829): 31 years apart. Middle name differs (Obinna vs Emmanuel) and place of birth differs (Onitsha vs Enugu). Only first name, surname and Nigerian nationality coincide; the list has no passport number. Discount."
+      }
+    ]
+  }
+}

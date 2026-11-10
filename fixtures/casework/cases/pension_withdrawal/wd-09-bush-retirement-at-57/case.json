@@ -1,0 +1,101 @@
+{
+  "slug": "wd-09-bush-retirement-at-57",
+  "scenario": "pension_withdrawal",
+  "title": "Bush · early retirement at 57",
+  "summary": "Savannah member aged 57 applies to take CI$75,000 as early retirement to start a business; the earliest retirement age is 60.",
+  "asOf": "2026-11-10",
+  "documents": [
+    {
+      "source": "retirement-request.html",
+      "name": "MemberLink CT-R1 R1-2026-00817.pdf",
+      "kind": "withdrawal_request_form",
+      "render": "pdf",
+      "label": {
+        "member_name": "Lourdes Patricia Bush",
+        "member_number": "CT-131477",
+        "date_of_birth": "1969-06-21",
+        "withdrawal_type": "early_retirement",
+        "amount_requested": 75000,
+        "property_address": "",
+        "payee_name": "Lourdes Patricia Bush",
+        "payee_bank": "Turtle Reef Bank Ltd.",
+        "payee_account_number": "4410-90127-6",
+        "caymanian_status_declared": true,
+        "primary_residence_declared": false,
+        "signature_present": true,
+        "signed_date": "2026-11-02"
+      }
+    },
+    {
+      "source": "member-statement.html",
+      "name": "Member account statement - CT-131477.pdf",
+      "kind": "member_statement",
+      "render": "pdf",
+      "label": {
+        "member_name": "Lourdes Patricia Bush",
+        "member_number": "CT-131477",
+        "date_of_birth": "1969-06-21",
+        "employer_name": "Savannah Gardens Supermarket Ltd.",
+        "statement_date": "2026-11-03",
+        "total_balance": 92450.18,
+        "prior_property_withdrawals": 0,
+        "prior_withdrawals_repaid": true
+      }
+    },
+    {
+      "source": "voter-card.html",
+      "name": "voter card.jpg",
+      "kind": "identity_document",
+      "render": "photo",
+      "label": {
+        "document_type": "voter_card",
+        "full_name": "Lourdes Patricia Bush",
+        "date_of_birth": "1969-06-21",
+        "nationality": "",
+        "id_number": "SAV-004418",
+        "date_of_expiry": "2033-02-13",
+        "certified": false,
+        "certifier_name": "",
+        "certifier_occupation": "",
+        "certification_date": ""
+      }
+    }
+  ],
+  "expected": {
+    "pipeline": "pension_withdrawal",
+    "recommendation": "decline",
+    "missingKinds": ["bank_letter"],
+    "checks": [
+      {
+        "id": "withdrawal_purpose_supported",
+        "outcome": "fail",
+        "note": "Born 21 Jun 1969, so 57 at review; early retirement needs age 60 (not before 21 Jun 2029)"
+      },
+      {
+        "id": "identity_matches_record",
+        "outcome": "pass",
+        "note": "Voter's card, form and statement read Lourdes Patricia Bush, born 21 Jun 1969"
+      },
+      {
+        "id": "id_in_date",
+        "outcome": "pass",
+        "note": "Card valid until 13 Feb 2033"
+      },
+      {
+        "id": "id_certified",
+        "outcome": "review",
+        "note": "A phone photo of the card, not a certified copy"
+      },
+      {
+        "id": "amount_within_balance",
+        "outcome": "pass",
+        "note": "CI$75,000 against a balance of CI$92,450.18"
+      },
+      {
+        "id": "payee_permitted",
+        "outcome": "pass",
+        "note": "The form names her own account 4410-90127-6 at Turtle Reef Bank Ltd.; the bank letter the CT-R1 form asks for is not supplied"
+      }
+    ]
+  }
+}

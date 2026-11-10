@@ -1,0 +1,154 @@
+/*
+ * Shared base for every synthetic casework Document. Each Document is one HTML
+ * file whose pages are `<section class="page">` elements. The renderer inlines
+ * this file, so link it as `<link rel="stylesheet" href="../../../templates/base.css">`.
+ *
+ * Page sizes:
+ *   .page            US Letter, portrait (8.5in x 11in)
+ *   .page.landscape  US Letter, landscape (11in x 8.5in)
+ *   .page.card       an ID card at 2x (6.75in x 4.25in), for photo renders
+ *
+ * Fonts available offline: Liberation Serif/Sans/Mono, DejaVu Serif/Sans/Mono,
+ * Caladea, Carlito, Bitstream Charter, Courier 10 Pitch, FreeSerif/Sans/Mono,
+ * Inter, JetBrains Mono. Never load web fonts or remote images.
+ */
+
+@page {
+  size: 8.5in 11in;
+  margin: 0;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  margin: 0;
+  padding: 0;
+  background: #fff;
+  color: #111;
+  -webkit-print-color-adjust: exact;
+  print-color-adjust: exact;
+}
+
+.page {
+  position: relative;
+  width: 8.5in;
+  height: 11in;
+  overflow: hidden;
+  page-break-after: always;
+  break-after: page;
+  background: #fff;
+  padding: 0.75in;
+  font:
+    11pt / 1.4 "Liberation Serif",
+    "DejaVu Serif",
+    serif;
+}
+
+.page.landscape {
+  width: 11in;
+  height: 8.5in;
+}
+
+.page.card {
+  width: 6.75in;
+  height: 4.25in;
+  padding: 0.25in;
+  border-radius: 0.25in;
+}
+
+.page:last-of-type {
+  page-break-after: auto;
+  break-after: auto;
+}
+
+/* Every page says it is fake, twice: a diagonal watermark and a footer line. */
+.page::after {
+  content: "SPECIMEN";
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font:
+    700 110px / 1 "Liberation Sans",
+    sans-serif;
+  letter-spacing: 0.12em;
+  color: rgb(178 58 43 / 0.09);
+  transform: rotate(-32deg);
+  pointer-events: none;
+  z-index: 50;
+}
+
+.page.card::after {
+  font-size: 64px;
+}
+
+.synthetic-note {
+  position: absolute;
+  left: 0.75in;
+  right: 0.75in;
+  bottom: 0.3in;
+  font:
+    7pt / 1.2 "Liberation Sans",
+    sans-serif;
+  color: #888;
+  text-align: center;
+}
+
+.page.card .synthetic-note {
+  left: 0.25in;
+  right: 0.25in;
+  bottom: 0.08in;
+  font-size: 6pt;
+}
+
+/* A handwritten-looking signature. */
+.signature {
+  font:
+    italic 22pt / 1 "Caladea",
+    "Bitstream Charter",
+    serif;
+  transform: rotate(-4deg);
+  display: inline-block;
+  color: #1a2a6c;
+}
+
+/* A rubber stamp, for certifications and registry seals. */
+.stamp {
+  display: inline-block;
+  border: 3px double rgb(29 78 137 / 0.85);
+  color: rgb(29 78 137 / 0.85);
+  padding: 6px 10px;
+  font:
+    700 9pt / 1.25 "Liberation Sans",
+    sans-serif;
+  text-transform: uppercase;
+  transform: rotate(-6deg);
+  border-radius: 4px;
+}
+
+table {
+  border-collapse: collapse;
+}
+
+/* Pages of other sizes print on their own sheet size. */
+@page landscape {
+  size: 11in 8.5in;
+  margin: 0;
+}
+
+@page card {
+  size: 6.75in 4.25in;
+  margin: 0;
+}
+
+.page.landscape {
+  page: landscape;
+}
+
+.page.card {
+  page: card;
+}

@@ -1,0 +1,152 @@
+{
+  "slug": "wd-07-kirkconnell-private-lender",
+  "scenario": "pension_withdrawal",
+  "title": "Kirkconnell · Cayman Brac mortgage",
+  "summary": "Brac member wants CI$35,000 paid to the private lender holding the charge on his house; private lenders are not permitted, and his ID certification is also 259 days old.",
+  "asOf": "2026-11-10",
+  "documents": [
+    {
+      "source": "withdrawal-request.html",
+      "name": "CT-W2 withdrawal request - Kirkconnell.pdf",
+      "kind": "withdrawal_request_form",
+      "render": "scan",
+      "label": {
+        "member_name": "Ronald Errol Kirkconnell",
+        "member_number": "CT-118903",
+        "date_of_birth": "1971-01-29",
+        "withdrawal_type": "mortgage_reduction",
+        "amount_requested": 35000,
+        "property_address": "27 Cotton Tree Lane, West End, Cayman Brac",
+        "payee_name": "Harbourview Private Finance Ltd.",
+        "payee_bank": "Grand Anchor Bank (Cayman)",
+        "payee_account_number": "0118-220561-01",
+        "caymanian_status_declared": true,
+        "primary_residence_declared": true,
+        "signature_present": true,
+        "signed_date": "2026-10-20"
+      }
+    },
+    {
+      "source": "member-statement.html",
+      "name": "Member account statement - CT-118903.pdf",
+      "kind": "member_statement",
+      "render": "pdf",
+      "label": {
+        "member_name": "Ronald Errol Kirkconnell",
+        "member_number": "CT-118903",
+        "date_of_birth": "1971-01-29",
+        "employer_name": "Stake Bay Marine & Hardware Ltd.",
+        "statement_date": "2026-10-08",
+        "total_balance": 97615.09,
+        "prior_property_withdrawals": 0,
+        "prior_withdrawals_repaid": true
+      }
+    },
+    {
+      "source": "licence-certified.html",
+      "name": "Kirkconnell DL copy.pdf",
+      "kind": "identity_document",
+      "render": "scan",
+      "label": {
+        "document_type": "drivers_licence",
+        "full_name": "Ronald Errol Kirkconnell",
+        "date_of_birth": "1971-01-29",
+        "nationality": "",
+        "id_number": "DL 0281446",
+        "date_of_expiry": "2030-01-28",
+        "certified": true,
+        "certifier_name": "Marilyn Joy Scott",
+        "certifier_occupation": "Justice of the Peace",
+        "certification_date": "2026-02-24"
+      }
+    },
+    {
+      "source": "lender-letter.html",
+      "name": "Harbourview letter 13 Oct 2026.pdf",
+      "kind": "lender_letter",
+      "render": "pdf",
+      "label": {
+        "lender_name": "Harbourview Private Finance Ltd.",
+        "lender_type": "private_lender",
+        "borrower_names": [
+          "Ronald Errol Kirkconnell"
+        ],
+        "property_address": "27 Cotton Tree Lane, West End, Cayman Brac",
+        "amount": 35000,
+        "letter_date": "2026-10-13"
+      }
+    },
+    {
+      "source": "land-register.html",
+      "name": "Land register CBW 98A-47.pdf",
+      "kind": "land_registry_extract",
+      "render": "scan",
+      "label": {
+        "block_parcel": "Cayman Brac West Block 98A Parcel 47",
+        "property_address": "27 Cotton Tree Lane, West End, Cayman Brac",
+        "registered_proprietors": [
+          "Ronald Errol Kirkconnell"
+        ],
+        "charge_holder": "Harbourview Private Finance Ltd.",
+        "extract_date": "2026-10-09"
+      }
+    }
+  ],
+  "expected": {
+    "pipeline": "pension_withdrawal",
+    "recommendation": "decline",
+    "missingKinds": ["caymanian_status_evidence"],
+    "checks": [
+      {
+        "id": "lender_permitted",
+        "outcome": "fail",
+        "note": "Harbourview Private Finance Ltd. is a private lender (not a bank, building society, credit union or development bank); it holds the only charge on the land register"
+      },
+      {
+        "id": "id_certified",
+        "outcome": "fail",
+        "note": "Certified by Marilyn Joy Scott, Justice of the Peace, on 24 Feb 2026: 259 days before review, over the 183-day limit"
+      },
+      {
+        "id": "identity_matches_record",
+        "outcome": "pass",
+        "note": "Licence, form and statement read Ronald Errol Kirkconnell, born 29 Jan 1971"
+      },
+      {
+        "id": "id_in_date",
+        "outcome": "pass",
+        "note": "Licence DL 0281446 expires 28 Jan 2030"
+      },
+      {
+        "id": "withdrawal_purpose_supported",
+        "outcome": "pass",
+        "note": "Mortgage reduction on his home"
+      },
+      {
+        "id": "amount_within_cap",
+        "outcome": "pass",
+        "note": "CI$35,000 is under CI$50,000"
+      },
+      {
+        "id": "amount_within_balance",
+        "outcome": "pass",
+        "note": "CI$35,000 against a balance of CI$97,615.09"
+      },
+      {
+        "id": "purpose_evidence_consistent",
+        "outcome": "pass",
+        "note": "Lender letter, land register and form all give 27 Cotton Tree Lane, Cayman Brac West Block 98A Parcel 47, proprietor Ronald Errol Kirkconnell"
+      },
+      {
+        "id": "payee_permitted",
+        "outcome": "pass",
+        "note": "Paid to the chargee's own account 0118-220561-01 as its letter instructs; the lender itself is the problem"
+      },
+      {
+        "id": "caymanian_status",
+        "outcome": "review",
+        "note": "Declared on the form; no status evidence supplied, moot as the lender is not permitted"
+      }
+    ]
+  }
+}

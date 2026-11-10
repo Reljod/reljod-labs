@@ -1,0 +1,149 @@
+{
+  "slug": "sr-10-ironwood-bearer-nominee",
+  "scenario": "structure_review",
+  "title": "Ironwood Peak Trading · bearer-style nominee",
+  "summary": "Cayman trading company whose 90% holder is a Hong Kong nominee acting for whoever holds a certificate transferable by delivery, a bearer-share equivalent; the only identified owner holds exactly 10%, and an unexplained attorney-in-fact can sign alone.",
+  "asOf": "2026-11-10",
+  "documents": [
+    {
+      "source": "register-of-members.html",
+      "name": "Ironwood Peak - Register of Members.pdf",
+      "kind": "register_of_members",
+      "render": "scan",
+      "label": {
+        "entity_name": "Ironwood Peak Trading Ltd.",
+        "as_of_date": "2026-10-25",
+        "members": [
+          {
+            "holder_name": "Talwin Nominees Limited",
+            "holder_type": "nominee",
+            "shares": 9000,
+            "share_class": "Ordinary",
+            "percentage": 90
+          },
+          {
+            "holder_name": "Hao Lin Tsang",
+            "holder_type": "individual",
+            "shares": 1000,
+            "share_class": "Ordinary",
+            "percentage": 10
+          }
+        ]
+      }
+    },
+    {
+      "source": "board-resolution.html",
+      "name": "Ironwood Peak - Directors resolution (signatories).pdf",
+      "kind": "authorised_signatories",
+      "render": "pdf",
+      "label": {
+        "entity_name": "Ironwood Peak Trading Ltd.",
+        "resolution_date": "2026-10-27",
+        "signatories": [
+          {
+            "name": "Hao Lin Tsang",
+            "title": "Director"
+          },
+          {
+            "name": "Rodrigo Esteves Pinheiro",
+            "title": "Attorney-in-fact"
+          }
+        ]
+      }
+    },
+    {
+      "source": "structure-chart.html",
+      "name": "Ironwood Peak - group structure.pdf",
+      "kind": "structure_chart",
+      "render": "scan",
+      "label": {
+        "top_entity": "Ironwood Peak Trading Ltd.",
+        "links": [
+          {
+            "owner": "Talwin Nominees Limited",
+            "owned": "Ironwood Peak Trading Ltd.",
+            "percentage": 90,
+            "relation": "shareholding"
+          },
+          {
+            "owner": "Hao Lin Tsang",
+            "owned": "Ironwood Peak Trading Ltd.",
+            "percentage": 10,
+            "relation": "shareholding"
+          },
+          {
+            "owner": "Hao Lin Tsang",
+            "owned": "Ironwood Peak Trading Ltd.",
+            "percentage": 0,
+            "relation": "director_of"
+          },
+          {
+            "owner": "Talwin Directors Limited",
+            "owned": "Ironwood Peak Trading Ltd.",
+            "percentage": 0,
+            "relation": "director_of"
+          }
+        ]
+      }
+    },
+    {
+      "source": "passport-tsang.html",
+      "name": "Passport - Tsang Hao Lin (certified).pdf",
+      "kind": "identity_document",
+      "render": "scan",
+      "label": {
+        "document_type": "passport",
+        "full_name": "Hao Lin Tsang",
+        "date_of_birth": "1979-04-30",
+        "nationality": "Chinese",
+        "id_number": "K29481736",
+        "date_of_expiry": "2033-06-19",
+        "certified": true,
+        "certifier_name": "Edmund Cheung",
+        "certifier_occupation": "Solicitor",
+        "certification_date": "2026-10-20"
+      }
+    }
+  ],
+  "expected": {
+    "pipeline": "structure_review",
+    "recommendation": "refer",
+    "risk": "high",
+    "ubos": [
+      "Hao Lin Tsang"
+    ],
+    "missingKinds": [],
+    "checks": [
+      {
+        "id": "ownership_reconciles",
+        "outcome": "pass",
+        "note": "9,000 + 1,000 = 10,000 shares; 90% + 10% = 100%; the chart agrees with the register."
+      },
+      {
+        "id": "ubos_identified",
+        "outcome": "fail",
+        "note": "90% is held by Talwin Nominees Limited to the order of whoever holds Nominee Certificate TN-0447, transferable by delivery: the beneficial owner of 90% is not recorded and can change without notice, which works like a bearer share. Only Hao Lin Tsang (exactly 10%, which meets the 10% threshold) is identified."
+      },
+      {
+        "id": "controllers_identified",
+        "outcome": "review",
+        "note": "Directors are Hao Lin Tsang and corporate director Talwin Directors Limited (natural persons behind it not given). Rodrigo Esteves Pinheiro, attorney-in-fact under a POA of 2 Sep 2026, can sign alone without limit and has no stated link to the owners."
+      },
+      {
+        "id": "ubos_verified",
+        "outcome": "review",
+        "note": "Hao Lin Tsang has a certified passport (20 Oct 2026, expires 19 Jun 2033); the 90% owner cannot be verified because he or she is unknown."
+      },
+      {
+        "id": "screening_clear",
+        "outcome": "pass",
+        "note": "No matches for the named persons and companies; the unidentified certificate holder has not been screened."
+      },
+      {
+        "id": "edd_required",
+        "outcome": "review",
+        "note": "Bearer-style nominee arrangement, corporate director and a sole-signing attorney-in-fact: EDD, and the nominee certificate must be immobilised or the holder disclosed before onboarding."
+      }
+    ]
+  }
+}

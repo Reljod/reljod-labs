@@ -1,0 +1,164 @@
+{
+  "slug": "sr-01-halcyon-reef-two-founders",
+  "scenario": "structure_review",
+  "title": "Halcyon Reef Ventures · two founders",
+  "summary": "Cayman exempted company owned 60/40 by its two founder-directors, both with certified passports; every document agrees and nothing is hidden.",
+  "asOf": "2026-11-10",
+  "documents": [
+    {
+      "source": "certificate-of-incorporation.html",
+      "name": "Halcyon Reef - Certificate of Incorporation.pdf",
+      "kind": "certificate_of_incorporation",
+      "render": "scan",
+      "label": {
+        "entity_name": "Halcyon Reef Ventures Ltd.",
+        "registration_number": "CR-418273",
+        "jurisdiction": "Cayman Islands",
+        "entity_type": "exempted",
+        "incorporation_date": "2024-03-18"
+      }
+    },
+    {
+      "source": "register-of-members.html",
+      "name": "Halcyon Reef - Register of Members.pdf",
+      "kind": "register_of_members",
+      "render": "pdf",
+      "label": {
+        "entity_name": "Halcyon Reef Ventures Ltd.",
+        "as_of_date": "2026-10-30",
+        "members": [
+          {
+            "holder_name": "Marisol Bodden-Ortega",
+            "holder_type": "individual",
+            "shares": 6000,
+            "share_class": "Ordinary",
+            "percentage": 60
+          },
+          {
+            "holder_name": "Kwame Asante-Lindo",
+            "holder_type": "individual",
+            "shares": 4000,
+            "share_class": "Ordinary",
+            "percentage": 40
+          }
+        ]
+      }
+    },
+    {
+      "source": "register-of-directors.html",
+      "name": "Halcyon Reef - Register of Directors.pdf",
+      "kind": "register_of_directors",
+      "render": "scan",
+      "label": {
+        "entity_name": "Halcyon Reef Ventures Ltd.",
+        "as_of_date": "2026-10-30",
+        "directors": [
+          {
+            "name": "Marisol Bodden-Ortega",
+            "role": "director",
+            "date_of_birth": "1984-02-11",
+            "nationality": "Caymanian",
+            "appointed": "2024-03-18"
+          },
+          {
+            "name": "Kwame Asante-Lindo",
+            "role": "director",
+            "date_of_birth": "1979-09-23",
+            "nationality": "Canadian",
+            "appointed": "2024-03-18"
+          },
+          {
+            "name": "Pelican Point Corporate Services Ltd.",
+            "role": "secretary",
+            "date_of_birth": "",
+            "nationality": "",
+            "appointed": "2024-03-18"
+          }
+        ]
+      }
+    },
+    {
+      "source": "passport-bodden-ortega.html",
+      "name": "Passport - M Bodden-Ortega (certified).pdf",
+      "kind": "identity_document",
+      "render": "scan",
+      "label": {
+        "document_type": "passport",
+        "full_name": "Marisol Bodden-Ortega",
+        "date_of_birth": "1984-02-11",
+        "nationality": "British Overseas Territories Citizen",
+        "id_number": "C04719236",
+        "date_of_expiry": "2031-05-06",
+        "certified": true,
+        "certifier_name": "Andrea Whittaker-Solomon",
+        "certifier_occupation": "Attorney-at-Law",
+        "certification_date": "2026-10-21"
+      }
+    },
+    {
+      "source": "passport-asante-lindo.html",
+      "name": "Passport - K Asante-Lindo (certified).pdf",
+      "kind": "identity_document",
+      "render": "scan",
+      "label": {
+        "document_type": "passport",
+        "full_name": "Kwame Asante-Lindo",
+        "date_of_birth": "1979-09-23",
+        "nationality": "Canadian",
+        "id_number": "AK482915",
+        "date_of_expiry": "2029-11-30",
+        "certified": true,
+        "certifier_name": "Rohan Ebanks",
+        "certifier_occupation": "Notary Public",
+        "certification_date": "2026-10-19"
+      }
+    }
+  ],
+  "expected": {
+    "pipeline": "structure_review",
+    "recommendation": "approve",
+    "risk": "low",
+    "ubos": [
+      "Marisol Bodden-Ortega",
+      "Kwame Asante-Lindo"
+    ],
+    "missingKinds": [],
+    "checks": [
+      {
+        "id": "entity_documents_consistent",
+        "outcome": "pass",
+        "note": "Halcyon Reef Ventures Ltd., CR-418273, exempted, incorporated 18 Mar 2024: the certificate, register of members and register of directors agree."
+      },
+      {
+        "id": "ownership_reconciles",
+        "outcome": "pass",
+        "note": "6,000 + 4,000 = 10,000 issued ordinary shares; 60% + 40% = 100%."
+      },
+      {
+        "id": "ubos_identified",
+        "outcome": "pass",
+        "note": "Marisol Bodden-Ortega 60% and Kwame Asante-Lindo 40%, both held directly, both above the 10% AML threshold."
+      },
+      {
+        "id": "controllers_identified",
+        "outcome": "pass",
+        "note": "The two directors are the two shareholders; the secretary is the corporate registered office provider."
+      },
+      {
+        "id": "ubos_verified",
+        "outcome": "pass",
+        "note": "Certified passports for both: Bodden-Ortega certified 21 Oct 2026 (expires 6 May 2031), Asante-Lindo certified 19 Oct 2026 (expires 30 Nov 2029)."
+      },
+      {
+        "id": "screening_clear",
+        "outcome": "pass",
+        "note": "No watchlist matches for either owner or the company."
+      },
+      {
+        "id": "edd_required",
+        "outcome": "pass",
+        "note": "Simple one-layer structure, no PEP, no nominee, no high-risk jurisdiction: standard CDD is enough."
+      }
+    ]
+  }
+}

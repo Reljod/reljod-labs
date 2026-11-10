@@ -1,0 +1,207 @@
+{
+  "slug": "eo-01-bonefish-point-divers",
+  "scenario": "employer_onboarding",
+  "title": "Bonefish Point Divers · new employer",
+  "summary": "West Bay dive operator joining the plan with a complete, consistent pack: nothing wrong.",
+  "asOf": "2026-11-10",
+  "documents": [
+    {
+      "source": "application.html",
+      "name": "CT-E1 application - Bonefish Point Divers.pdf",
+      "kind": "employer_application",
+      "render": "scan",
+      "label": {
+        "employer_name": "Bonefish Point Divers Ltd.",
+        "registration_number": "331857",
+        "trade_name": "",
+        "business_address": "382 North West Point Road, West Bay, Grand Cayman KY1-1301",
+        "nature_of_business": "Recreational dive operator: boat dives, dive training and equipment rental",
+        "employee_count": 9,
+        "contact_name": "Thomas Pritchard",
+        "signatory_names": [
+          "Lorna Yvette Bodden"
+        ],
+        "signed_date": "2026-10-20"
+      }
+    },
+    {
+      "source": "certificate-of-incorporation.html",
+      "name": "Certificate of Incorporation.pdf",
+      "kind": "certificate_of_incorporation",
+      "render": "scan",
+      "label": {
+        "entity_name": "Bonefish Point Divers Ltd.",
+        "registration_number": "331857",
+        "jurisdiction": "Cayman Islands",
+        "entity_type": "ordinary resident company",
+        "incorporation_date": "2014-03-11"
+      }
+    },
+    {
+      "source": "trade-licence.html",
+      "name": "Licence on wall.jpg",
+      "kind": "trade_business_licence",
+      "render": "photo",
+      "label": {
+        "licensee_name": "Bonefish Point Divers Ltd.",
+        "licence_number": "TB-26-118730",
+        "business_activity": "Dive operator: boat diving, dive instruction and equipment rental",
+        "expiry_date": "2027-06-30"
+      }
+    },
+    {
+      "source": "register-of-directors.html",
+      "name": "Register of directors.pdf",
+      "kind": "register_of_directors",
+      "render": "pdf",
+      "label": {
+        "entity_name": "Bonefish Point Divers Ltd.",
+        "as_of_date": "2026-10-02",
+        "directors": [
+          {
+            "name": "Lorna Yvette Bodden",
+            "role": "director",
+            "date_of_birth": "1971-08-22",
+            "nationality": "Caymanian",
+            "appointed": "2014-03-11"
+          },
+          {
+            "name": "Thomas Rhys Pritchard",
+            "role": "director",
+            "date_of_birth": "1979-01-05",
+            "nationality": "British",
+            "appointed": "2016-07-01"
+          },
+          {
+            "name": "Cayside Corporate Secretaries Ltd.",
+            "role": "secretary",
+            "date_of_birth": "",
+            "nationality": "",
+            "appointed": "2014-03-11"
+          }
+        ]
+      }
+    },
+    {
+      "source": "census.csv",
+      "name": "BPD staff list for Corallis.csv",
+      "kind": "member_census",
+      "render": "csv",
+      "label": {
+        "employer_name": "",
+        "members": [
+          {
+            "employee_id": "BPD-001",
+            "full_name": "Lorna Bodden",
+            "date_of_birth": "1971-08-22",
+            "hire_date": "2014-03-11",
+            "monthly_salary": 6850,
+            "id_number": "C0381194"
+          },
+          {
+            "employee_id": "BPD-002",
+            "full_name": "Thomas Pritchard",
+            "date_of_birth": "1979-01-05",
+            "hire_date": "2016-07-01",
+            "monthly_salary": 5400,
+            "id_number": "548812037"
+          },
+          {
+            "employee_id": "BPD-004",
+            "full_name": "Kemar Anthony Grant",
+            "date_of_birth": "1990-05-17",
+            "hire_date": "2018-11-05",
+            "monthly_salary": 3150,
+            "id_number": "A2271904"
+          },
+          {
+            "employee_id": "BPD-007",
+            "full_name": "Mariel Santos Villanueva",
+            "date_of_birth": "1993-02-09",
+            "hire_date": "2019-04-15",
+            "monthly_salary": 2480,
+            "id_number": "P2981734A"
+          },
+          {
+            "employee_id": "BPD-009",
+            "full_name": "Jordan Ebanks",
+            "date_of_birth": "1997-10-30",
+            "hire_date": "2021-06-01",
+            "monthly_salary": 2960,
+            "id_number": "C0592216"
+          },
+          {
+            "employee_id": "BPD-011",
+            "full_name": "Siobhan Clarke",
+            "date_of_birth": "1995-12-03",
+            "hire_date": "2022-01-10",
+            "monthly_salary": 3150,
+            "id_number": "553071926"
+          },
+          {
+            "employee_id": "BPD-012",
+            "full_name": "Luis Fernando Zelaya",
+            "date_of_birth": "1988-07-21",
+            "hire_date": "2022-09-19",
+            "monthly_salary": 2240,
+            "id_number": "F0915523"
+          },
+          {
+            "employee_id": "BPD-014",
+            "full_name": "Aiden Tremblay",
+            "date_of_birth": "1999-03-14",
+            "hire_date": "2024-02-05",
+            "monthly_salary": 2860,
+            "id_number": "AK448190"
+          },
+          {
+            "employee_id": "BPD-015",
+            "full_name": "Renee McLaughlin",
+            "date_of_birth": "2003-06-25",
+            "hire_date": "2025-05-12",
+            "monthly_salary": 2100,
+            "id_number": "C0644871"
+          }
+        ]
+      }
+    }
+  ],
+  "expected": {
+    "pipeline": "employer_onboarding",
+    "recommendation": "approve",
+    "missingKinds": [],
+    "risk": "low",
+    "checks": [
+      {
+        "id": "entity_documents_consistent",
+        "outcome": "pass",
+        "note": "Application, certificate, licence and register all name Bonefish Point Divers Ltd., registration no. 331857."
+      },
+      {
+        "id": "licence_in_date",
+        "outcome": "pass",
+        "note": "Licence TB-26-118730 expires 30 Jun 2027, after the review date of 10 Nov 2026."
+      },
+      {
+        "id": "signatories_authorised",
+        "outcome": "pass",
+        "note": "Application signed by Lorna Yvette Bodden, a director on the 2 Oct 2026 register."
+      },
+      {
+        "id": "census_valid",
+        "outcome": "pass",
+        "note": "9 census rows match the 9 employees declared; no duplicates; all dates valid; ages 23 to 55."
+      },
+      {
+        "id": "screening_clear",
+        "outcome": "pass",
+        "note": "No director, signatory or contact matches the watchlist."
+      },
+      {
+        "id": "edd_required",
+        "outcome": "pass",
+        "note": "Local dive operator with Caymanian and British directors, no PEP or sanctions link: standard due diligence."
+      }
+    ]
+  }
+}

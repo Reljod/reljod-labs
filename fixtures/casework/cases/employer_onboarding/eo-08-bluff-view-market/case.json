@@ -1,0 +1,214 @@
+{
+  "slug": "eo-08-bluff-view-market",
+  "scenario": "employer_onboarding",
+  "title": "Bluff View Family Market · Aug-Sep 2026",
+  "summary": "Cayman Brac supermarket's August and September contributions: August is fine, but the September transfer is short of the schedule by the two part-timers' contributions.",
+  "asOf": "2026-11-10",
+  "documents": [
+    {
+      "source": "contribution-schedule.csv",
+      "name": "Bluff View pension Aug Sep 2026.csv",
+      "kind": "contribution_schedule",
+      "render": "csv",
+      "label": {
+        "employer_name": "",
+        "lines": [
+          {
+            "period": "2026-08",
+            "employee_id": "BVM-01",
+            "full_name": "Ernestine Scott",
+            "gross_earnings": 4250,
+            "employee_contribution": 212.5,
+            "employer_contribution": 212.5,
+            "date_paid": "2026-09-11"
+          },
+          {
+            "period": "2026-08",
+            "employee_id": "BVM-02",
+            "full_name": "Clive Tatum",
+            "gross_earnings": 2980,
+            "employee_contribution": 149,
+            "employer_contribution": 149,
+            "date_paid": "2026-09-11"
+          },
+          {
+            "period": "2026-08",
+            "employee_id": "BVM-03",
+            "full_name": "Rosalind Ritch",
+            "gross_earnings": 2620,
+            "employee_contribution": 131,
+            "employer_contribution": 131,
+            "date_paid": "2026-09-11"
+          },
+          {
+            "period": "2026-08",
+            "employee_id": "BVM-04",
+            "full_name": "Glenroy Powell",
+            "gross_earnings": 2200,
+            "employee_contribution": 110,
+            "employer_contribution": 110,
+            "date_paid": "2026-09-11"
+          },
+          {
+            "period": "2026-08",
+            "employee_id": "BVM-05",
+            "full_name": "Lovely Joy Navarro",
+            "gross_earnings": 2060,
+            "employee_contribution": 103,
+            "employer_contribution": 103,
+            "date_paid": "2026-09-11"
+          },
+          {
+            "period": "2026-08",
+            "employee_id": "BVM-06",
+            "full_name": "Sherwin Bautista",
+            "gross_earnings": 2140,
+            "employee_contribution": 107,
+            "employer_contribution": 107,
+            "date_paid": "2026-09-11"
+          },
+          {
+            "period": "2026-08",
+            "employee_id": "BVM-07",
+            "full_name": "Kayla Christian",
+            "gross_earnings": 1180,
+            "employee_contribution": 59,
+            "employer_contribution": 59,
+            "date_paid": "2026-09-11"
+          },
+          {
+            "period": "2026-08",
+            "employee_id": "BVM-08",
+            "full_name": "Dorian Ebanks",
+            "gross_earnings": 1060,
+            "employee_contribution": 53,
+            "employer_contribution": 53,
+            "date_paid": "2026-09-11"
+          },
+          {
+            "period": "2026-09",
+            "employee_id": "BVM-01",
+            "full_name": "Ernestine Scott",
+            "gross_earnings": 4250,
+            "employee_contribution": 212.5,
+            "employer_contribution": 212.5,
+            "date_paid": "2026-10-13"
+          },
+          {
+            "period": "2026-09",
+            "employee_id": "BVM-02",
+            "full_name": "Clive Tatum",
+            "gross_earnings": 2980,
+            "employee_contribution": 149,
+            "employer_contribution": 149,
+            "date_paid": "2026-10-13"
+          },
+          {
+            "period": "2026-09",
+            "employee_id": "BVM-03",
+            "full_name": "Rosalind Ritch",
+            "gross_earnings": 2620,
+            "employee_contribution": 131,
+            "employer_contribution": 131,
+            "date_paid": "2026-10-13"
+          },
+          {
+            "period": "2026-09",
+            "employee_id": "BVM-04",
+            "full_name": "Glenroy Powell",
+            "gross_earnings": 2280.4,
+            "employee_contribution": 114.02,
+            "employer_contribution": 114.02,
+            "date_paid": "2026-10-13"
+          },
+          {
+            "period": "2026-09",
+            "employee_id": "BVM-05",
+            "full_name": "Lovely Joy Navarro",
+            "gross_earnings": 2060,
+            "employee_contribution": 103,
+            "employer_contribution": 103,
+            "date_paid": "2026-10-13"
+          },
+          {
+            "period": "2026-09",
+            "employee_id": "BVM-06",
+            "full_name": "Sherwin Bautista",
+            "gross_earnings": 2140,
+            "employee_contribution": 107,
+            "employer_contribution": 107,
+            "date_paid": "2026-10-13"
+          },
+          {
+            "period": "2026-09",
+            "employee_id": "BVM-07",
+            "full_name": "Kayla Christian",
+            "gross_earnings": 1240,
+            "employee_contribution": 62,
+            "employer_contribution": 62,
+            "date_paid": "2026-10-13"
+          },
+          {
+            "period": "2026-09",
+            "employee_id": "BVM-08",
+            "full_name": "Dorian Ebanks",
+            "gross_earnings": 1060,
+            "employee_contribution": 53,
+            "employer_contribution": 53,
+            "date_paid": "2026-10-13"
+          }
+        ]
+      }
+    },
+    {
+      "source": "remittance-2026-08.html",
+      "name": "SICB confirmation August.pdf",
+      "kind": "remittance_advice",
+      "render": "pdf",
+      "label": {
+        "payer_name": "Bluff View Family Market Ltd.",
+        "amount": 1849,
+        "value_date": "2026-09-11",
+        "reference": "BVFM ER10276 AUG26",
+        "period": "2026-08"
+      }
+    },
+    {
+      "source": "remittance-2026-09.html",
+      "name": "September remittance advice BVFM.pdf",
+      "kind": "remittance_advice",
+      "render": "scan",
+      "label": {
+        "payer_name": "Bluff View Family Market Ltd.",
+        "amount": 1633.04,
+        "value_date": "2026-10-13",
+        "reference": "BVFM ER10276 SEP26",
+        "period": "2026-09"
+      }
+    }
+  ],
+  "expected": {
+    "pipeline": "employer_onboarding",
+    "recommendation": "refer",
+    "missingKinds": [],
+    "risk": "standard",
+    "arrears": 230,
+    "checks": [
+      {
+        "id": "no_arrears",
+        "outcome": "fail",
+        "note": "September schedule total CI$1,863.04 (8 lines) but the remittance advice shows CI$1,633.04 for 6 members. The difference CI$230.00 equals the two part-timers' lines: Kayla Christian (BVM-07) CI$124.00, Dorian Ebanks (BVM-08) CI$106.00. Arrears CI$230.00 before interest. August CI$1,849.00 matches."
+      },
+      {
+        "id": "contributions_at_rate",
+        "outcome": "pass",
+        "note": "Every schedule line is 5% + 5% of gross; no one is above the CI$7,250 cap."
+      },
+      {
+        "id": "contributions_on_time",
+        "outcome": "pass",
+        "note": "August paid 11 Sep 2026 and September paid 13 Oct 2026, both by the 15th (for the amount actually sent)."
+      }
+    ]
+  }
+}

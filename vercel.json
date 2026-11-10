@@ -2,6 +2,12 @@
   "functions": {
     "src/app/demos/document-compliance/runs/[runId]/events/route.ts": {
       "supportsCancellation": true
+    },
+    "src/app/api/casework/runs/[runId]/events/route.ts": {
+      "supportsCancellation": true
+    },
+    "src/app/api/casework/chat/route.ts": {
+      "supportsCancellation": true
     }
   }
 }

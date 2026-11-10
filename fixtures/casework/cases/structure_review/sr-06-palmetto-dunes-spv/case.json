@@ -1,0 +1,134 @@
+{
+  "slug": "sr-06-palmetto-dunes-spv",
+  "scenario": "structure_review",
+  "title": "Palmetto Dunes SPV · nominee shareholders",
+  "summary": "Real-estate development SPV whose register shows only two nominee companies; the adviser's chart reveals the people behind them, and the 40% co-investor is a sanctioned person listed under a longer form of his name.",
+  "asOf": "2026-11-10",
+  "documents": [
+    {
+      "source": "certificate-of-incorporation.html",
+      "name": "Palmetto Dunes SPV - Certificate of Incorporation.pdf",
+      "kind": "certificate_of_incorporation",
+      "render": "pdf",
+      "label": {
+        "entity_name": "Palmetto Dunes Development SPV Ltd.",
+        "registration_number": "CR-441802",
+        "jurisdiction": "Cayman Islands",
+        "entity_type": "exempted",
+        "incorporation_date": "2026-06-11"
+      }
+    },
+    {
+      "source": "register-of-members.html",
+      "name": "Palmetto Dunes SPV - Register of Members.pdf",
+      "kind": "register_of_members",
+      "render": "pdf",
+      "label": {
+        "entity_name": "Palmetto Dunes Development SPV Ltd.",
+        "as_of_date": "2026-10-28",
+        "members": [
+          {
+            "holder_name": "Corvina Nominees Ltd.",
+            "holder_type": "nominee",
+            "shares": 600,
+            "share_class": "Ordinary",
+            "percentage": 60
+          },
+          {
+            "holder_name": "Ashgrove Nominees (HK) Limited",
+            "holder_type": "nominee",
+            "shares": 400,
+            "share_class": "Ordinary",
+            "percentage": 40
+          }
+        ]
+      }
+    },
+    {
+      "source": "structure-chart.html",
+      "name": "Breakwater - Palmetto Dunes ownership chart.pdf",
+      "kind": "structure_chart",
+      "render": "pdf",
+      "label": {
+        "top_entity": "Palmetto Dunes Development SPV Ltd.",
+        "links": [
+          {
+            "owner": "Lucía Mendoza Arriaga",
+            "owned": "Palmetto Dunes Development SPV Ltd.",
+            "percentage": 60,
+            "relation": "shareholding"
+          },
+          {
+            "owner": "Marek Halloran",
+            "owned": "Palmetto Dunes Development SPV Ltd.",
+            "percentage": 40,
+            "relation": "shareholding"
+          },
+          {
+            "owner": "Kenji Albarran Soto",
+            "owned": "Palmetto Dunes Development SPV Ltd.",
+            "percentage": 0,
+            "relation": "director_of"
+          }
+        ]
+      }
+    },
+    {
+      "source": "source-of-wealth-halloran.html",
+      "name": "CT-K7 source of wealth - M Halloran.pdf",
+      "kind": "source_of_wealth",
+      "render": "scan",
+      "label": {
+        "person_name": "Marek Halloran",
+        "declared_sources": "shipping and freight logistics business, sale of tanker fleet interests (2021), investment income from listed securities and property",
+        "estimated_net_worth": 39360000,
+        "corroborated": false,
+        "declaration_date": "2026-10-24"
+      }
+    }
+  ],
+  "expected": {
+    "pipeline": "structure_review",
+    "recommendation": "decline",
+    "risk": "high",
+    "ubos": [
+      "Lucía Mendoza Arriaga",
+      "Marek Halloran"
+    ],
+    "missingKinds": ["identity_document"],
+    "hits": [
+      {
+        "name": "Marek Vesely Halloran",
+        "disposition": "true_match",
+        "reason": "Listed alias Marek Halloran, same date of birth (19 Mar 1966) and nationality (Irish) as the 40% beneficial owner, and the listing (tanker ship-to-ship transfers) matches his declared tanker business."
+      }
+    ],
+    "checks": [
+      {
+        "id": "screening_clear",
+        "outcome": "fail",
+        "note": "Marek Halloran (40% via Ashgrove Nominees (HK) Limited) is a true match to sanctions entry Marek Vesely Halloran: alias, DOB 19 Mar 1966 and Irish nationality agree. Blocking."
+      },
+      {
+        "id": "ownership_reconciles",
+        "outcome": "pass",
+        "note": "Register: Corvina Nominees Ltd. 600 + Ashgrove Nominees (HK) Limited 400 = 1,000 shares (60% + 40%). Chart: the same 60/40 split to the beneficial owners."
+      },
+      {
+        "id": "ubos_identified",
+        "outcome": "pass",
+        "note": "Behind the nominees: Lucía Mendoza Arriaga 60% (via Corvina Nominees Ltd.) and Marek Halloran 40% (via Ashgrove Nominees (HK) Limited); both above 10%. Kenji Albarran Soto is sole director with no ownership."
+      },
+      {
+        "id": "ubos_verified",
+        "outcome": "fail",
+        "note": "No identity document in the file for either beneficial owner; academic given the sanctions match."
+      },
+      {
+        "id": "edd_required",
+        "outcome": "review",
+        "note": "Nominee shareholders, a Cyprus-resident co-investor with an uncorroborated US$48m (CI$39.36m) source of wealth, and a sanctions match."
+      }
+    ]
+  }
+}

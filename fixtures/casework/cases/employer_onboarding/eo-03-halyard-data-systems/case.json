@@ -1,0 +1,193 @@
+{
+  "slug": "eo-03-halyard-data-systems",
+  "scenario": "employer_onboarding",
+  "title": "Halyard Data Systems · new employer",
+  "summary": "Special economic zone software LLC joining the plan; managers sign, trade certificate in date, census clean: nothing wrong.",
+  "asOf": "2026-11-10",
+  "documents": [
+    {
+      "source": "application.html",
+      "name": "Corallis_CT-E1_HalyardDataSystems_signed.pdf",
+      "kind": "employer_application",
+      "render": "pdf",
+      "label": {
+        "employer_name": "Halyard Data Systems LLC",
+        "registration_number": "LL-5821",
+        "trade_name": "",
+        "business_address": "Suite 214, Innovation House, Seaview Technology Park, George Town KY1-1104",
+        "nature_of_business": "Software development and data analytics for clients outside the Islands",
+        "employee_count": 8,
+        "contact_name": "Aisha Bodden",
+        "signatory_names": [
+          "Priya Raghavan",
+          "Jonathan Ashby Clarke"
+        ],
+        "signed_date": "2026-10-29"
+      }
+    },
+    {
+      "source": "certificate-of-registration.html",
+      "name": "Certificate of Registration LLC.pdf",
+      "kind": "certificate_of_incorporation",
+      "render": "pdf",
+      "label": {
+        "entity_name": "Halyard Data Systems LLC",
+        "registration_number": "LL-5821",
+        "jurisdiction": "Cayman Islands",
+        "entity_type": "limited liability company",
+        "incorporation_date": "2023-09-18"
+      }
+    },
+    {
+      "source": "trade-certificate.html",
+      "name": "SEZ trade certificate 2026-27.pdf",
+      "kind": "trade_business_licence",
+      "render": "pdf",
+      "label": {
+        "licensee_name": "Halyard Data Systems LLC",
+        "licence_number": "SEZ-TC-0912",
+        "business_activity": "Software development and data analytics services",
+        "expiry_date": "2027-03-31"
+      }
+    },
+    {
+      "source": "register-of-managers.html",
+      "name": "Register of Managers - certified.pdf",
+      "kind": "register_of_directors",
+      "render": "scan",
+      "label": {
+        "entity_name": "Halyard Data Systems LLC",
+        "as_of_date": "2026-10-27",
+        "directors": [
+          {
+            "name": "Priya Raghavan",
+            "role": "manager",
+            "date_of_birth": "1986-11-02",
+            "nationality": "Indian",
+            "appointed": "2023-09-18"
+          },
+          {
+            "name": "Jonathan Ashby Clarke",
+            "role": "manager",
+            "date_of_birth": "1983-04-17",
+            "nationality": "Canadian",
+            "appointed": "2023-09-18"
+          }
+        ]
+      }
+    },
+    {
+      "source": "census.csv",
+      "name": "halyard_census_export_2026-10-28.csv",
+      "kind": "member_census",
+      "render": "csv",
+      "label": {
+        "employer_name": "",
+        "members": [
+          {
+            "employee_id": "HDS-001",
+            "full_name": "Priya Raghavan",
+            "date_of_birth": "1986-11-02",
+            "hire_date": "2023-10-01",
+            "monthly_salary": 9500,
+            "id_number": "Z4719320"
+          },
+          {
+            "employee_id": "HDS-002",
+            "full_name": "Jonathan Clarke",
+            "date_of_birth": "1983-04-17",
+            "hire_date": "2023-10-01",
+            "monthly_salary": 9500,
+            "id_number": "AB219874"
+          },
+          {
+            "employee_id": "HDS-004",
+            "full_name": "Marco Antonio Rivera",
+            "date_of_birth": "1991-08-30",
+            "hire_date": "2024-01-15",
+            "monthly_salary": 6200,
+            "id_number": "F1182047"
+          },
+          {
+            "employee_id": "HDS-005",
+            "full_name": "Aisha Bodden",
+            "date_of_birth": "1994-02-11",
+            "hire_date": "2024-03-04",
+            "monthly_salary": 3900,
+            "id_number": "C0518829"
+          },
+          {
+            "employee_id": "HDS-007",
+            "full_name": "Vikram Shenoy",
+            "date_of_birth": "1992-12-19",
+            "hire_date": "2024-06-10",
+            "monthly_salary": 6800,
+            "id_number": "Y3390421"
+          },
+          {
+            "employee_id": "HDS-008",
+            "full_name": "Joanne Marie Aquino",
+            "date_of_birth": "1996-05-27",
+            "hire_date": "2025-01-06",
+            "monthly_salary": 4750,
+            "id_number": "P7730215B"
+          },
+          {
+            "employee_id": "HDS-010",
+            "full_name": "Callum Fraser",
+            "date_of_birth": "1998-09-09",
+            "hire_date": "2025-08-18",
+            "monthly_salary": 5600,
+            "id_number": "561920384"
+          },
+          {
+            "employee_id": "HDS-011",
+            "full_name": "Tiffany Scott",
+            "date_of_birth": "2001-01-22",
+            "hire_date": "2026-02-02",
+            "monthly_salary": 3400,
+            "id_number": "C0702260"
+          }
+        ]
+      }
+    }
+  ],
+  "expected": {
+    "pipeline": "employer_onboarding",
+    "recommendation": "approve",
+    "missingKinds": [],
+    "risk": "low",
+    "checks": [
+      {
+        "id": "entity_documents_consistent",
+        "outcome": "pass",
+        "note": "Application, certificate of registration, trade certificate and register of managers all name Halyard Data Systems LLC, no. LL-5821."
+      },
+      {
+        "id": "licence_in_date",
+        "outcome": "pass",
+        "note": "Special economic zone trade certificate SEZ-TC-0912 valid until 31 Mar 2027."
+      },
+      {
+        "id": "signatories_authorised",
+        "outcome": "pass",
+        "note": "Signed by Priya Raghavan and Jonathan Ashby Clarke, the two managers on the 27 Oct 2026 register of managers."
+      },
+      {
+        "id": "census_valid",
+        "outcome": "pass",
+        "note": "8 rows match the 8 employees declared; no duplicates; ages 25 to 43."
+      },
+      {
+        "id": "screening_clear",
+        "outcome": "pass",
+        "note": "No manager or signatory matches the watchlist."
+      },
+      {
+        "id": "edd_required",
+        "outcome": "pass",
+        "note": "Zone software firm, Indian and Canadian managers, no PEP: standard due diligence."
+      }
+    ]
+  }
+}

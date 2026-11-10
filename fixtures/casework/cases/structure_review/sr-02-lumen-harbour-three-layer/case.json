@@ -1,0 +1,230 @@
+{
+  "slug": "sr-02-lumen-harbour-three-layer",
+  "scenario": "structure_review",
+  "title": "Lumen Harbour Capital · three-layer chain",
+  "summary": "Cayman company owned through a BVI holding company and a Delaware LLC; multiplied through, four people hold 10% or more (one at exactly 12%), but the client applied the 25% register test and sent only one passport.",
+  "asOf": "2026-11-10",
+  "documents": [
+    {
+      "source": "structure-chart.html",
+      "name": "Lumen Harbour - group structure (slide 4).pdf",
+      "kind": "structure_chart",
+      "render": "pdf",
+      "label": {
+        "top_entity": "Lumen Harbour Capital Ltd.",
+        "links": [
+          {
+            "owner": "Daniel Okafor-Reyes",
+            "owned": "Bellmont Ridge LLC",
+            "percentage": 50,
+            "relation": "shareholding"
+          },
+          {
+            "owner": "Wen-Li Chao",
+            "owned": "Bellmont Ridge LLC",
+            "percentage": 30,
+            "relation": "shareholding"
+          },
+          {
+            "owner": "Gareth Pemberton",
+            "owned": "Bellmont Ridge LLC",
+            "percentage": 20,
+            "relation": "shareholding"
+          },
+          {
+            "owner": "Bellmont Ridge LLC",
+            "owned": "Northcay Holdings Ltd.",
+            "percentage": 50,
+            "relation": "shareholding"
+          },
+          {
+            "owner": "Henrique Sallum Prado",
+            "owned": "Northcay Holdings Ltd.",
+            "percentage": 50,
+            "relation": "shareholding"
+          },
+          {
+            "owner": "Northcay Holdings Ltd.",
+            "owned": "Lumen Harbour Capital Ltd.",
+            "percentage": 80,
+            "relation": "shareholding"
+          },
+          {
+            "owner": "Priya Raghunathan",
+            "owned": "Lumen Harbour Capital Ltd.",
+            "percentage": 20,
+            "relation": "shareholding"
+          }
+        ]
+      }
+    },
+    {
+      "source": "certificate-of-incorporation.html",
+      "name": "Lumen Harbour - Certificate of Incorporation.pdf",
+      "kind": "certificate_of_incorporation",
+      "render": "pdf",
+      "label": {
+        "entity_name": "Lumen Harbour Capital Ltd.",
+        "registration_number": "CR-427755",
+        "jurisdiction": "Cayman Islands",
+        "entity_type": "exempted",
+        "incorporation_date": "2025-06-02"
+      }
+    },
+    {
+      "source": "register-of-members-lumen.html",
+      "name": "Lumen_ROM_2026-10.pdf",
+      "kind": "register_of_members",
+      "render": "pdf",
+      "label": {
+        "entity_name": "Lumen Harbour Capital Ltd.",
+        "as_of_date": "2026-10-15",
+        "members": [
+          {
+            "holder_name": "Northcay Holdings Ltd.",
+            "holder_type": "company",
+            "shares": 8000,
+            "share_class": "Ordinary",
+            "percentage": 80
+          },
+          {
+            "holder_name": "Priya Raghunathan",
+            "holder_type": "individual",
+            "shares": 2000,
+            "share_class": "Ordinary",
+            "percentage": 20
+          }
+        ]
+      }
+    },
+    {
+      "source": "register-of-members-northcay.html",
+      "name": "Northcay Holdings - Register of Members (BVI).pdf",
+      "kind": "register_of_members",
+      "render": "scan",
+      "label": {
+        "entity_name": "Northcay Holdings Ltd.",
+        "as_of_date": "2026-09-30",
+        "members": [
+          {
+            "holder_name": "Bellmont Ridge LLC",
+            "holder_type": "company",
+            "shares": 500,
+            "share_class": "Ordinary",
+            "percentage": 50
+          },
+          {
+            "holder_name": "Henrique Sallum Prado",
+            "holder_type": "individual",
+            "shares": 500,
+            "share_class": "Ordinary",
+            "percentage": 50
+          }
+        ]
+      }
+    },
+    {
+      "source": "schedule-a-bellmont.html",
+      "name": "Bellmont Ridge LLC - Schedule A members.pdf",
+      "kind": "register_of_members",
+      "render": "pdf",
+      "label": {
+        "entity_name": "Bellmont Ridge LLC",
+        "as_of_date": "2026-09-01",
+        "members": [
+          {
+            "holder_name": "Daniel Okafor-Reyes",
+            "holder_type": "individual",
+            "shares": 5000,
+            "share_class": "Common Units",
+            "percentage": 50
+          },
+          {
+            "holder_name": "Wen-Li Chao",
+            "holder_type": "individual",
+            "shares": 3000,
+            "share_class": "Common Units",
+            "percentage": 30
+          },
+          {
+            "holder_name": "Gareth Pemberton",
+            "holder_type": "individual",
+            "shares": 2000,
+            "share_class": "Common Units",
+            "percentage": 20
+          }
+        ]
+      }
+    },
+    {
+      "source": "passport-sallum-prado.html",
+      "name": "Passport - H Sallum Prado (certified).pdf",
+      "kind": "identity_document",
+      "render": "scan",
+      "label": {
+        "document_type": "passport",
+        "full_name": "Henrique Sallum Prado",
+        "date_of_birth": "1971-04-17",
+        "nationality": "Brazilian",
+        "id_number": "FX938271",
+        "date_of_expiry": "2032-01-09",
+        "certified": true,
+        "certifier_name": "Beatriz Moura Lessa",
+        "certifier_occupation": "Notary Public",
+        "certification_date": "2026-10-08"
+      }
+    }
+  ],
+  "expected": {
+    "pipeline": "structure_review",
+    "recommendation": "request_info",
+    "risk": "standard",
+    "ubos": [
+      "Henrique Sallum Prado",
+      "Priya Raghunathan",
+      "Daniel Okafor-Reyes",
+      "Wen-Li Chao"
+    ],
+    "missingKinds": [
+      "identity_document",
+      "register_of_directors"
+    ],
+    "checks": [
+      {
+        "id": "entity_documents_consistent",
+        "outcome": "pass",
+        "note": "Lumen Harbour Capital Ltd., CR-427755, agrees between the certificate and the register; Northcay and Bellmont names match across their registers and the chart."
+      },
+      {
+        "id": "ownership_reconciles",
+        "outcome": "pass",
+        "note": "Every layer sums to 100%: Lumen 80% + 20%; Northcay 500 + 500 of 1,000 shares (50% + 50%); Bellmont 5,000 + 3,000 + 2,000 of 10,000 units (50% + 30% + 20%). The chart matches all three registers."
+      },
+      {
+        "id": "ubos_identified",
+        "outcome": "pass",
+        "note": "Effective interests: Henrique Sallum Prado 80% x 50% = 40%; Priya Raghunathan 20% direct; Daniel Okafor-Reyes 80% x 50% x 50% = 20%; Wen-Li Chao 80% x 50% x 30% = 12%; Gareth Pemberton 80% x 50% x 20% = 8% (below 10%, not a UBO). Total 100%. The chart's note uses the 25% beneficial ownership register test, not the 10% AML threshold."
+      },
+      {
+        "id": "controllers_identified",
+        "outcome": "review",
+        "note": "Daniel Okafor-Reyes controls Bellmont Ridge LLC as Managing Member, but there is no register of directors for Lumen Harbour Capital Ltd., so its directors are unknown."
+      },
+      {
+        "id": "ubos_verified",
+        "outcome": "fail",
+        "note": "Only Henrique Sallum Prado (40%) has a certified passport. No identity document for Priya Raghunathan (20%), Daniel Okafor-Reyes (20%) or Wen-Li Chao (12%)."
+      },
+      {
+        "id": "screening_clear",
+        "outcome": "pass",
+        "note": "No watchlist matches for any person or entity in the chain."
+      },
+      {
+        "id": "edd_required",
+        "outcome": "pass",
+        "note": "Three layers across Cayman, BVI and Delaware with transparent registers; no PEP or nominee. Standard CDD once the missing IDs arrive."
+      }
+    ]
+  }
+}

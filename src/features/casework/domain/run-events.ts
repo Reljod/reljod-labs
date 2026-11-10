@@ -1,0 +1,87 @@
+import type { DocumentKind } from "./document-kinds";
+import type { JobId } from "./jobs";
+import type { PipelineId } from "./pipelines";
+import type {
+  Arrears,
+  Check,
+  Decision,
+  Evidence,
+  FieldValue,
+  Hit,
+  Ownership,
+  Risk,
+} from "./run-state";
+
+/** What a Run streams to whoever is watching: the desk, the terminal, an MCP client. */
+export type RunEvent = { at: number } & (
+  | {
+      type: "plan";
+      pipeline: PipelineId | null;
+      jobs: JobId[];
+      /** True when the pipeline was worked out from the sorted Documents. */
+      inferred: boolean;
+    }
+  | {
+      type: "job";
+      index: number;
+      job: JobId;
+      state: "start" | "done" | "skipped" | "waiting" | "error";
+      summary?: string;
+      ms?: number;
+    }
+  | {
+      type: "document";
+      documentId: string;
+      name: string;
+      kind: DocumentKind | null;
+      gist: string;
+    }
+  | {
+      type: "field";
+      documentId: string;
+      name: string;
+      value: FieldValue;
+      evidence?: Evidence;
+    }
+  | { type: "check"; check: Check }
+  | {
+      type: "question";
+      questionId: string;
+      job: JobId;
+      prompt: string;
+      kinds: DocumentKind[];
+      /** Choices offered as buttons, such as which pipeline to run. */
+      options: { value: string; label: string }[];
+    }
+  | { type: "answer"; questionId: string; summary: string }
+  | { type: "hits"; hits: Hit[] }
+  | { type: "ownership"; ownership: Ownership }
+  | { type: "arrears"; arrears: Arrears }
+  | { type: "risk"; risk: Risk }
+  | { type: "decision"; decision: Decision }
+  | {
+      type: "cost";
+      purpose: string;
+      model: string;
+      costUsd: number;
+      inputTokens: number;
+      outputTokens: number;
+      ms: number;
+    }
+  | { type: "log"; level: "info" | "warn" | "error"; text: string }
+  | { type: "end"; status: "completed" | "failed"; error?: string }
+);
+
+type DistributiveOmit<T, K extends PropertyKey> = T extends unknown
+  ? Omit<T, K>
+  : never;
+
+export type RunEventInput = DistributiveOmit<RunEvent, "at">;
+
+/** How a Question is answered: Documents, a choice, free text, or "go on without it". */
+export type Answer = {
+  documentIds?: string[];
+  choice?: string;
+  text?: string;
+  skip?: boolean;
+};

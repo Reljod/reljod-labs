@@ -1,0 +1,126 @@
+{
+  "slug": "sr-04-kittiwake-star-trust",
+  "scenario": "structure_review",
+  "title": "Kittiwake STAR Trust · enforcer, no protector",
+  "summary": "A Cayman STAR trust holding a family shipping company; it has no protector, and the enforcer named in the deed is the person with standing and veto powers, so he must be identified and verified alongside the settlor.",
+  "asOf": "2026-11-06",
+  "documents": [
+    {
+      "source": "trust-deed.html",
+      "name": "Kittiwake STAR Trust - Declaration of Trust.pdf",
+      "kind": "trust_deed",
+      "render": "pdf",
+      "label": {
+        "trust_name": "The Kittiwake STAR Trust",
+        "deed_date": "2022-04-14",
+        "governing_law": "Cayman Islands",
+        "trust_type": "STAR",
+        "settlor_names": [
+          "Adaeze Okonkwo-Bell"
+        ],
+        "trustee_names": [
+          "Bluewater Bight Trust Company Ltd."
+        ],
+        "protector_names": [],
+        "beneficiary_names": [],
+        "beneficiary_class": "the descendants of the Settlor"
+      }
+    },
+    {
+      "source": "certificate-of-incorporation.html",
+      "name": "Kittiwake Marine Holdings - COI.pdf",
+      "kind": "certificate_of_incorporation",
+      "render": "pdf",
+      "label": {
+        "entity_name": "Kittiwake Marine Holdings Ltd.",
+        "registration_number": "CR-389514",
+        "jurisdiction": "Cayman Islands",
+        "entity_type": "exempted",
+        "incorporation_date": "2022-03-28"
+      }
+    },
+    {
+      "source": "passport-okonkwo-bell.html",
+      "name": "Passport - A Okonkwo-Bell (certified).pdf",
+      "kind": "identity_document",
+      "render": "scan",
+      "label": {
+        "document_type": "passport",
+        "full_name": "Adaeze Okonkwo-Bell",
+        "date_of_birth": "1975-01-29",
+        "nationality": "British Citizen",
+        "id_number": "553871204",
+        "date_of_expiry": "2033-03-11",
+        "certified": true,
+        "certifier_name": "Tobias Merren",
+        "certifier_occupation": "Attorney-at-Law",
+        "certification_date": "2026-10-26"
+      }
+    },
+    {
+      "source": "passport-abara-whyte.html",
+      "name": "Passport - C Abara-Whyte (certified).pdf",
+      "kind": "identity_document",
+      "render": "scan",
+      "label": {
+        "document_type": "passport",
+        "full_name": "Chinedu Abara-Whyte",
+        "date_of_birth": "1969-06-07",
+        "nationality": "Nigerian",
+        "id_number": "A07418293",
+        "date_of_expiry": "2030-09-21",
+        "certified": true,
+        "certifier_name": "Folasade Ogunleye",
+        "certifier_occupation": "Notary Public",
+        "certification_date": "2026-10-14"
+      }
+    }
+  ],
+  "expected": {
+    "pipeline": "structure_review",
+    "recommendation": "approve",
+    "risk": "standard",
+    "ubos": [
+      "Adaeze Okonkwo-Bell",
+      "Chinedu Abara-Whyte"
+    ],
+    "missingKinds": [],
+    "checks": [
+      {
+        "id": "entity_documents_consistent",
+        "outcome": "pass",
+        "note": "Kittiwake Marine Holdings Ltd., CR-389514, incorporated 28 Mar 2022, matches the Schedule to the deed of 14 Apr 2022."
+      },
+      {
+        "id": "ownership_reconciles",
+        "outcome": "pass",
+        "note": "The Schedule puts all 50,000 shares (100%) of the company in the name of Bluewater Bight Trust Company Ltd. as trustee."
+      },
+      {
+        "id": "controllers_identified",
+        "outcome": "pass",
+        "note": "STAR trust with no protector (clause 1.2). The enforcer, Chinedu Abara-Whyte, alone has standing, can remove the trustee and must approve any sale or capital distribution (clause 5), so he is a controller. Trustee Bluewater Bight Trust Company Ltd. holds CIMA licence T-0918."
+      },
+      {
+        "id": "ubos_identified",
+        "outcome": "pass",
+        "note": "Settlor Adaeze Okonkwo-Bell and enforcer Chinedu Abara-Whyte. Beneficiaries are an unnamed class (the descendants of the Settlor) with no standing or interest."
+      },
+      {
+        "id": "ubos_verified",
+        "outcome": "pass",
+        "note": "Certified passports for the settlor (certified 26 Oct 2026, expires 11 Mar 2033) and the enforcer (certified 14 Oct 2026, expires 21 Sep 2030)."
+      },
+      {
+        "id": "screening_clear",
+        "outcome": "pass",
+        "note": "No watchlist matches for the settlor, enforcer, trustee or company."
+      },
+      {
+        "id": "edd_required",
+        "outcome": "pass",
+        "note": "A STAR trust is not high risk in itself; licensed trustee, no PEP, UK-resident parties. Standard CDD."
+      }
+    ]
+  }
+}

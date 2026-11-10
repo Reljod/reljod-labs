@@ -1,0 +1,32 @@
+[
+  {
+    "id": "WL-SR-PEP-0002",
+    "name": "Anand Vikram Rao",
+    "aliases": ["A. V. Rao", "Anand V. Rao"],
+    "date_of_birth": "1964-11-02",
+    "nationality": "Indian",
+    "list_type": "pep",
+    "list_source": "Global PEP Register (synthetic)",
+    "reason": "Member of Parliament, India, since 2014; chair of a parliamentary standing committee (synthetic)"
+  },
+  {
+    "id": "WL-SR-PEP-0003",
+    "name": "Ricardo Ferreira Lacerda",
+    "aliases": ["Ricardo F. Lacerda"],
+    "date_of_birth": "1949",
+    "nationality": "Portuguese",
+    "list_type": "pep",
+    "list_source": "Global PEP Register (synthetic)",
+    "reason": "Former member of a municipal assembly in northern Portugal, 1997-2009 (synthetic)"
+  },
+  {
+    "id": "WL-SR-SAN-0001",
+    "name": "Marek Vesely Halloran",
+    "aliases": ["Marek Halloran", "Marek V. Halloran"],
+    "date_of_birth": "1966-03-19",
+    "nationality": "Irish",
+    "list_type": "sanctions",
+    "list_source": "Consolidated Sanctions List (synthetic)",
+    "reason": "Owner and manager of tankers used in ship-to-ship transfers to evade sanctions; asset freeze (synthetic)"
+  }
+]

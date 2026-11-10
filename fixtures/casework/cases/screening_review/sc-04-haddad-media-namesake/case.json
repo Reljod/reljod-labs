@@ -1,0 +1,100 @@
+{
+  "slug": "sc-04-haddad-media-namesake",
+  "scenario": "screening_review",
+  "title": "Haddad · Cyprus bribery story",
+  "summary": "A 34-year-old Canadian software engineer in West Bay hit an adverse-media profile about a 61-year-old Cypriot freight broker of the same name charged with bribery in Limassol: a false positive on age, nationality and location.",
+  "asOf": "2026-11-10",
+  "documents": [
+    {
+      "source": "alert.html",
+      "name": "Tidereach case report TMK-A-26-118890.pdf",
+      "kind": "screening_alert",
+      "render": "pdf",
+      "label": {
+        "alert_id": "TMK-A-26-118890",
+        "customer_name": "Karim Nabil Haddad",
+        "customer_id": "CTP-C-529861",
+        "screened_on": "2026-11-07",
+        "hits": [
+          {
+            "hit_name": "Karim Haddad",
+            "list_type": "adverse_media",
+            "list_source": "Global Adverse Media Index (synthetic)",
+            "match_score": 90,
+            "hit_date_of_birth": "c. 1965",
+            "hit_nationality": "Cyprus",
+            "hit_reference": "WL-AM-0214"
+          }
+        ]
+      }
+    },
+    {
+      "source": "profile.html",
+      "name": "CoralCore KYC profile CTP-C-529861.pdf",
+      "kind": "customer_profile",
+      "render": "pdf",
+      "label": {
+        "customer_name": "Karim Nabil Haddad",
+        "customer_id": "CTP-C-529861",
+        "date_of_birth": "1992-04-18",
+        "nationality": "Canada",
+        "residence": "Cayman Islands",
+        "occupation": "Software engineer",
+        "id_number": "AK582913",
+        "other_names": []
+      }
+    },
+    {
+      "source": "entry-wl-am-0214.html",
+      "name": "GAMI profile WL-AM-0214.pdf",
+      "kind": "watchlist_entry",
+      "render": "pdf",
+      "label": {
+        "entry_name": "Karim Haddad",
+        "aliases": [
+          "Kareem Haddad"
+        ],
+        "date_of_birth": "c. 1965",
+        "place_of_birth": "",
+        "nationality": "Cyprus",
+        "list_source": "Global Adverse Media Index (synthetic)",
+        "listing_reason": "Charged with bribing customs officials at Limassol port (2026)",
+        "reference": "WL-AM-0214"
+      }
+    },
+    {
+      "source": "article.html",
+      "name": "Levant Coast Courier - Limassol freight broker charged in customs bribery probe.pdf",
+      "kind": "adverse_media_article",
+      "render": "pdf",
+      "label": {
+        "headline": "Limassol freight broker charged in customs bribery probe",
+        "publication": "Levant Coast Courier",
+        "published_date": "2026-10-21",
+        "subject_name": "Karim Haddad",
+        "subject_age_or_dob": "61",
+        "subject_location": "Limassol, Cyprus",
+        "allegation": "Paying bribes to customs officers to clear undeclared shipments"
+      }
+    }
+  ],
+  "expected": {
+    "pipeline": "screening_review",
+    "recommendation": "approve",
+    "missingKinds": [],
+    "checks": [
+      {
+        "id": "screening_clear",
+        "outcome": "pass",
+        "note": "Adverse media hit is about a different, older person in Cyprus"
+      }
+    ],
+    "hits": [
+      {
+        "name": "Karim Haddad",
+        "disposition": "false_positive",
+        "reason": "The article and index profile concern Karim Haddad, aged 61 (born c. 1965), a Cypriot freight broker living in Limassol, Cyprus. The customer is Karim Nabil Haddad, born 18 Apr 1992 (34), a Canadian national working as a software engineer in Grand Cayman since 2019. Age differs by about 27 years and nationality, location and occupation all differ. Discount."
+      }
+    ]
+  }
+}

@@ -1,0 +1,215 @@
+{
+  "slug": "eo-09-quillon-corporate-support",
+  "scenario": "employer_onboarding",
+  "title": "Quillon Corporate Support · new employer",
+  "summary": "Law-firm support company joining the plan; the certificate of incorporation is in a former name with no change-of-name certificate, and the application is signed only by the office manager, who is neither a director nor an authorised signatory.",
+  "asOf": "2026-11-10",
+  "documents": [
+    {
+      "source": "application.html",
+      "name": "Quillon - CT-E1 application.pdf",
+      "kind": "employer_application",
+      "render": "pdf",
+      "label": {
+        "employer_name": "Quillon Corporate Support Ltd.",
+        "registration_number": "248115",
+        "trade_name": "",
+        "business_address": "2nd Floor, Mahogany Court, 17 Fort Street, George Town, Grand Cayman KY1-1003",
+        "nature_of_business": "Legal support services to law firms: document production, paralegal staffing and corporate secretarial support",
+        "employee_count": 7,
+        "contact_name": "Natalie Grace Rivers",
+        "signatory_names": [
+          "Natalie Grace Rivers"
+        ],
+        "signed_date": "2026-10-22"
+      }
+    },
+    {
+      "source": "certificate-of-incorporation.html",
+      "name": "Certificate of Incorporation (scan).pdf",
+      "kind": "certificate_of_incorporation",
+      "render": "scan",
+      "label": {
+        "entity_name": "Quill & Ledger Legal Services Ltd.",
+        "registration_number": "248115",
+        "jurisdiction": "Cayman Islands",
+        "entity_type": "ordinary resident company",
+        "incorporation_date": "2011-02-08"
+      }
+    },
+    {
+      "source": "trade-licence.html",
+      "name": "Trade and Business Licence 2026-2027.pdf",
+      "kind": "trade_business_licence",
+      "render": "pdf",
+      "label": {
+        "licensee_name": "Quillon Corporate Support Ltd.",
+        "licence_number": "TB-26-024811",
+        "business_activity": "Legal support services: document production, paralegal staffing and corporate secretarial support",
+        "expiry_date": "2027-04-30"
+      }
+    },
+    {
+      "source": "register-of-directors.html",
+      "name": "Register of Directors.pdf",
+      "kind": "register_of_directors",
+      "render": "pdf",
+      "label": {
+        "entity_name": "Quillon Corporate Support Ltd.",
+        "as_of_date": "2026-10-15",
+        "directors": [
+          {
+            "name": "Andrew Malcolm Kirk",
+            "role": "director",
+            "date_of_birth": "1969-06-12",
+            "nationality": "British",
+            "appointed": "2011-02-08"
+          },
+          {
+            "name": "Celestine Marie Bodden",
+            "role": "director",
+            "date_of_birth": "1977-09-30",
+            "nationality": "Caymanian",
+            "appointed": "2018-05-14"
+          },
+          {
+            "name": "Rajesh Iyer",
+            "role": "secretary",
+            "date_of_birth": "1981-01-25",
+            "nationality": "Indian",
+            "appointed": "2020-03-01"
+          }
+        ]
+      }
+    },
+    {
+      "source": "board-resolution.html",
+      "name": "Board resolution - pension signatories.pdf",
+      "kind": "authorised_signatories",
+      "render": "scan",
+      "label": {
+        "entity_name": "Quillon Corporate Support Ltd.",
+        "resolution_date": "2026-09-21",
+        "signatories": [
+          {
+            "name": "Andrew Malcolm Kirk",
+            "title": "Director"
+          },
+          {
+            "name": "Celestine Marie Bodden",
+            "title": "Director"
+          },
+          {
+            "name": "Rajesh Iyer",
+            "title": "Finance Controller and Company Secretary"
+          }
+        ]
+      }
+    },
+    {
+      "source": "census.csv",
+      "name": "Quillon staff census.csv",
+      "kind": "member_census",
+      "render": "csv",
+      "label": {
+        "employer_name": "",
+        "members": [
+          {
+            "employee_id": "QCS-01",
+            "full_name": "Andrew Malcolm Kirk",
+            "date_of_birth": "1969-06-12",
+            "hire_date": "2011-02-08",
+            "monthly_salary": 11000,
+            "id_number": "529917305"
+          },
+          {
+            "employee_id": "QCS-02",
+            "full_name": "Celestine Marie Bodden",
+            "date_of_birth": "1977-09-30",
+            "hire_date": "2013-08-19",
+            "monthly_salary": 7400,
+            "id_number": "C0284466"
+          },
+          {
+            "employee_id": "QCS-03",
+            "full_name": "Rajesh Iyer",
+            "date_of_birth": "1981-01-25",
+            "hire_date": "2020-03-01",
+            "monthly_salary": 6250,
+            "id_number": "Z3302871"
+          },
+          {
+            "employee_id": "QCS-04",
+            "full_name": "Natalie Grace Rivers",
+            "date_of_birth": "1984-07-04",
+            "hire_date": "2015-10-05",
+            "monthly_salary": 4600,
+            "id_number": "C0349960"
+          },
+          {
+            "employee_id": "QCS-05",
+            "full_name": "Krystal McLaughlin",
+            "date_of_birth": "1993-03-16",
+            "hire_date": "2019-01-07",
+            "monthly_salary": 3900,
+            "id_number": "C0577421"
+          },
+          {
+            "employee_id": "QCS-06",
+            "full_name": "Mark Anthony Villanueva",
+            "date_of_birth": "1988-11-29",
+            "hire_date": "2021-06-14",
+            "monthly_salary": 3300,
+            "id_number": "P6625508A"
+          },
+          {
+            "employee_id": "QCS-07",
+            "full_name": "Tamara Reid",
+            "date_of_birth": "1996-05-08",
+            "hire_date": "2023-11-20",
+            "monthly_salary": 3450,
+            "id_number": "A2802913"
+          }
+        ]
+      }
+    }
+  ],
+  "expected": {
+    "pipeline": "employer_onboarding",
+    "recommendation": "refer",
+    "missingKinds": [],
+    "risk": "standard",
+    "checks": [
+      {
+        "id": "entity_documents_consistent",
+        "outcome": "fail",
+        "note": "Certificate of incorporation no. 248115 (8 Feb 2011) is in the name Quill & Ledger Legal Services Ltd.; the application, licence and register say Quillon Corporate Support Ltd. Same number, so probably a change of name, but no certificate of incorporation on change of name is on file."
+      },
+      {
+        "id": "signatories_authorised",
+        "outcome": "fail",
+        "note": "Application signed only by Natalie Grace Rivers, Office Manager. She is not a director or officer on the 15 Oct 2026 register and not one of the three signatories in the 21 Sep 2026 resolution, which also requires two signatures."
+      },
+      {
+        "id": "licence_in_date",
+        "outcome": "pass",
+        "note": "Licence TB-26-024811 expires 30 Apr 2027."
+      },
+      {
+        "id": "census_valid",
+        "outcome": "pass",
+        "note": "7 rows match the 7 employees declared; no duplicates; ages 30 to 57."
+      },
+      {
+        "id": "screening_clear",
+        "outcome": "pass",
+        "note": "No director, officer or signer matches the watchlist."
+      },
+      {
+        "id": "edd_required",
+        "outcome": "pass",
+        "note": "Local support company, no PEP or sanctions link: standard due diligence."
+      }
+    ]
+  }
+}

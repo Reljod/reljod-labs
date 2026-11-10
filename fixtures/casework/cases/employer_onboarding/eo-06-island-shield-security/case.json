@@ -1,0 +1,286 @@
+{
+  "slug": "eo-06-island-shield-security",
+  "scenario": "employer_onboarding",
+  "title": "Island Shield Security · Aug-Sep 2026",
+  "summary": "Security company's August and September contributions: on time and fully remitted, but payroll caps pensionable earnings at CI$5,000 a month instead of CI$7,250, so four managers are under-contributed.",
+  "asOf": "2026-11-10",
+  "documents": [
+    {
+      "source": "contribution-schedule.csv",
+      "name": "ISS Corallis upload 2026-08_2026-09.csv",
+      "kind": "contribution_schedule",
+      "render": "csv",
+      "label": {
+        "employer_name": "Island Shield Security Services Ltd.",
+        "lines": [
+          {
+            "period": "2026-08",
+            "employee_id": "ISS-01",
+            "full_name": "Calvin Errol Watler",
+            "gross_earnings": 9750,
+            "employee_contribution": 250,
+            "employer_contribution": 250,
+            "date_paid": "2026-09-10"
+          },
+          {
+            "period": "2026-08",
+            "employee_id": "ISS-02",
+            "full_name": "Nadine Ebanks-Rose",
+            "gross_earnings": 6400,
+            "employee_contribution": 250,
+            "employer_contribution": 250,
+            "date_paid": "2026-09-10"
+          },
+          {
+            "period": "2026-08",
+            "employee_id": "ISS-03",
+            "full_name": "Michael Barker",
+            "gross_earnings": 8200,
+            "employee_contribution": 250,
+            "employer_contribution": 250,
+            "date_paid": "2026-09-10"
+          },
+          {
+            "period": "2026-08",
+            "employee_id": "ISS-04",
+            "full_name": "Devon Thompson",
+            "gross_earnings": 5800,
+            "employee_contribution": 250,
+            "employer_contribution": 250,
+            "date_paid": "2026-09-10"
+          },
+          {
+            "period": "2026-08",
+            "employee_id": "ISS-05",
+            "full_name": "Marlon Gayle",
+            "gross_earnings": 2904,
+            "employee_contribution": 145.2,
+            "employer_contribution": 145.2,
+            "date_paid": "2026-09-10"
+          },
+          {
+            "period": "2026-08",
+            "employee_id": "ISS-06",
+            "full_name": "Ronaldo Zelaya",
+            "gross_earnings": 2640,
+            "employee_contribution": 132,
+            "employer_contribution": 132,
+            "date_paid": "2026-09-10"
+          },
+          {
+            "period": "2026-08",
+            "employee_id": "ISS-07",
+            "full_name": "Jennifer Solomon",
+            "gross_earnings": 3120,
+            "employee_contribution": 156,
+            "employer_contribution": 156,
+            "date_paid": "2026-09-10"
+          },
+          {
+            "period": "2026-08",
+            "employee_id": "ISS-08",
+            "full_name": "Rommel Gonzales",
+            "gross_earnings": 2640,
+            "employee_contribution": 132,
+            "employer_contribution": 132,
+            "date_paid": "2026-09-10"
+          },
+          {
+            "period": "2026-08",
+            "employee_id": "ISS-09",
+            "full_name": "Tashana Brown",
+            "gross_earnings": 2772,
+            "employee_contribution": 138.6,
+            "employer_contribution": 138.6,
+            "date_paid": "2026-09-10"
+          },
+          {
+            "period": "2026-08",
+            "employee_id": "ISS-10",
+            "full_name": "Hector Ramírez",
+            "gross_earnings": 2880,
+            "employee_contribution": 144,
+            "employer_contribution": 144,
+            "date_paid": "2026-09-10"
+          },
+          {
+            "period": "2026-08",
+            "employee_id": "ISS-11",
+            "full_name": "Dameon Clarke",
+            "gross_earnings": 3060,
+            "employee_contribution": 153,
+            "employer_contribution": 153,
+            "date_paid": "2026-09-10"
+          },
+          {
+            "period": "2026-08",
+            "employee_id": "ISS-12",
+            "full_name": "Patricia Hurlstone",
+            "gross_earnings": 2950,
+            "employee_contribution": 147.5,
+            "employer_contribution": 147.5,
+            "date_paid": "2026-09-10"
+          },
+          {
+            "period": "2026-09",
+            "employee_id": "ISS-01",
+            "full_name": "Calvin Errol Watler",
+            "gross_earnings": 9750,
+            "employee_contribution": 250,
+            "employer_contribution": 250,
+            "date_paid": "2026-10-09"
+          },
+          {
+            "period": "2026-09",
+            "employee_id": "ISS-02",
+            "full_name": "Nadine Ebanks-Rose",
+            "gross_earnings": 6400,
+            "employee_contribution": 250,
+            "employer_contribution": 250,
+            "date_paid": "2026-10-09"
+          },
+          {
+            "period": "2026-09",
+            "employee_id": "ISS-03",
+            "full_name": "Michael Barker",
+            "gross_earnings": 8200,
+            "employee_contribution": 250,
+            "employer_contribution": 250,
+            "date_paid": "2026-10-09"
+          },
+          {
+            "period": "2026-09",
+            "employee_id": "ISS-04",
+            "full_name": "Devon Thompson",
+            "gross_earnings": 5800,
+            "employee_contribution": 250,
+            "employer_contribution": 250,
+            "date_paid": "2026-10-09"
+          },
+          {
+            "period": "2026-09",
+            "employee_id": "ISS-05",
+            "full_name": "Marlon Gayle",
+            "gross_earnings": 2640,
+            "employee_contribution": 132,
+            "employer_contribution": 132,
+            "date_paid": "2026-10-09"
+          },
+          {
+            "period": "2026-09",
+            "employee_id": "ISS-06",
+            "full_name": "Ronaldo Zelaya",
+            "gross_earnings": 2772,
+            "employee_contribution": 138.6,
+            "employer_contribution": 138.6,
+            "date_paid": "2026-10-09"
+          },
+          {
+            "period": "2026-09",
+            "employee_id": "ISS-07",
+            "full_name": "Jennifer Solomon",
+            "gross_earnings": 3120,
+            "employee_contribution": 156,
+            "employer_contribution": 156,
+            "date_paid": "2026-10-09"
+          },
+          {
+            "period": "2026-09",
+            "employee_id": "ISS-08",
+            "full_name": "Rommel Gonzales",
+            "gross_earnings": 2640,
+            "employee_contribution": 132,
+            "employer_contribution": 132,
+            "date_paid": "2026-10-09"
+          },
+          {
+            "period": "2026-09",
+            "employee_id": "ISS-09",
+            "full_name": "Tashana Brown",
+            "gross_earnings": 2640,
+            "employee_contribution": 132,
+            "employer_contribution": 132,
+            "date_paid": "2026-10-09"
+          },
+          {
+            "period": "2026-09",
+            "employee_id": "ISS-10",
+            "full_name": "Hector Ramírez",
+            "gross_earnings": 3060,
+            "employee_contribution": 153,
+            "employer_contribution": 153,
+            "date_paid": "2026-10-09"
+          },
+          {
+            "period": "2026-09",
+            "employee_id": "ISS-11",
+            "full_name": "Dameon Clarke",
+            "gross_earnings": 2880,
+            "employee_contribution": 144,
+            "employer_contribution": 144,
+            "date_paid": "2026-10-09"
+          },
+          {
+            "period": "2026-09",
+            "employee_id": "ISS-12",
+            "full_name": "Patricia Hurlstone",
+            "gross_earnings": 2950,
+            "employee_contribution": 147.5,
+            "employer_contribution": 147.5,
+            "date_paid": "2026-10-09"
+          }
+        ]
+      }
+    },
+    {
+      "source": "remittance-2026-08.html",
+      "name": "NSCB payment 2026-08.pdf",
+      "kind": "remittance_advice",
+      "render": "pdf",
+      "label": {
+        "payer_name": "Island Shield Security Services Ltd.",
+        "amount": 4296.6,
+        "value_date": "2026-09-10",
+        "reference": "ISS-ER10933-2026-08",
+        "period": "2026-08"
+      }
+    },
+    {
+      "source": "remittance-2026-09.html",
+      "name": "NSCB payment 2026-09.pdf",
+      "kind": "remittance_advice",
+      "render": "scan",
+      "label": {
+        "payer_name": "Island Shield Security Services Ltd.",
+        "amount": 4270.2,
+        "value_date": "2026-10-09",
+        "reference": "ISS-ER10933-2026-09",
+        "period": "2026-09"
+      }
+    }
+  ],
+  "expected": {
+    "pipeline": "employer_onboarding",
+    "recommendation": "refer",
+    "missingKinds": [],
+    "risk": "standard",
+    "arrears": 1340,
+    "checks": [
+      {
+        "id": "contributions_at_rate",
+        "outcome": "fail",
+        "note": "Schedule caps pensionable earnings at CI$5,000.00 instead of CI$7,250. Lines above CI$5,000 pay CI$250.00 each side instead of 5% of min(gross, 7,250)."
+      },
+      {
+        "id": "no_arrears",
+        "outcome": "fail",
+        "note": "Shortfall per month, both sides together: Calvin Errol Watler CI$9,750.00: CI$225.00, Nadine Ebanks-Rose CI$6,400.00: CI$140.00, Michael Barker CI$8,200.00: CI$225.00, Devon Thompson CI$5,800.00: CI$80.00; CI$670.00 a month for August and September. Arrears CI$1,340.00 before interest."
+      },
+      {
+        "id": "contributions_on_time",
+        "outcome": "pass",
+        "note": "August paid 10 Sep 2026 and September paid 9 Oct 2026; remittances equal the schedule totals as filed."
+      }
+    ]
+  }
+}

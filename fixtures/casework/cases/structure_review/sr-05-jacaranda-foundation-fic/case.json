@@ -1,0 +1,193 @@
+{
+  "slug": "sr-05-jacaranda-foundation-fic",
+  "scenario": "structure_review",
+  "title": "Jacaranda Family Investments · foundation owner",
+  "summary": "Family investment company wholly owned by a memberless Cayman foundation company; control sits with the foundation's two directors (the founder and his wife), and the founder's name gives a watchlist hit that is a false positive.",
+  "asOf": "2026-11-10",
+  "documents": [
+    {
+      "source": "structure-chart-whiteboard.html",
+      "name": "IMG_4471 whiteboard.jpg",
+      "kind": "structure_chart",
+      "render": "photo",
+      "label": {
+        "top_entity": "Jacaranda Family Investments Ltd.",
+        "links": [
+          {
+            "owner": "Ricardo Ferreira Lacerda",
+            "owned": "Lacerda Family Foundation",
+            "percentage": 0,
+            "relation": "director_of"
+          },
+          {
+            "owner": "Yuki Nakamura Ferreira",
+            "owned": "Lacerda Family Foundation",
+            "percentage": 0,
+            "relation": "director_of"
+          },
+          {
+            "owner": "Lacerda Family Foundation",
+            "owned": "Jacaranda Family Investments Ltd.",
+            "percentage": 100,
+            "relation": "shareholding"
+          }
+        ]
+      }
+    },
+    {
+      "source": "certificate-of-incorporation.html",
+      "name": "Jacaranda FIC - Certificate of Incorporation.pdf",
+      "kind": "certificate_of_incorporation",
+      "render": "scan",
+      "label": {
+        "entity_name": "Jacaranda Family Investments Ltd.",
+        "registration_number": "CR-436120",
+        "jurisdiction": "Cayman Islands",
+        "entity_type": "exempted",
+        "incorporation_date": "2025-09-09"
+      }
+    },
+    {
+      "source": "register-of-members.html",
+      "name": "Jacaranda FIC - Register of Members.pdf",
+      "kind": "register_of_members",
+      "render": "pdf",
+      "label": {
+        "entity_name": "Jacaranda Family Investments Ltd.",
+        "as_of_date": "2026-10-20",
+        "members": [
+          {
+            "holder_name": "Lacerda Family Foundation",
+            "holder_type": "company",
+            "shares": 1000,
+            "share_class": "Ordinary",
+            "percentage": 100
+          }
+        ]
+      }
+    },
+    {
+      "source": "incumbency-foundation.html",
+      "name": "Lacerda Family Foundation - Certificate of Incumbency.pdf",
+      "kind": "register_of_directors",
+      "render": "pdf",
+      "label": {
+        "entity_name": "Lacerda Family Foundation",
+        "as_of_date": "2026-10-20",
+        "directors": [
+          {
+            "name": "Ricardo Ferreira Lacerda",
+            "role": "director",
+            "date_of_birth": "1972-05-14",
+            "nationality": "Brazilian",
+            "appointed": "2025-08-04"
+          },
+          {
+            "name": "Yuki Nakamura Ferreira",
+            "role": "director",
+            "date_of_birth": "1975-10-08",
+            "nationality": "Brazilian",
+            "appointed": "2025-08-04"
+          },
+          {
+            "name": "Harbourline Secretaries Ltd.",
+            "role": "secretary",
+            "date_of_birth": "",
+            "nationality": "",
+            "appointed": "2025-08-04"
+          }
+        ]
+      }
+    },
+    {
+      "source": "passport-ferreira-lacerda.html",
+      "name": "Passport - R Ferreira Lacerda (certified).pdf",
+      "kind": "identity_document",
+      "render": "scan",
+      "label": {
+        "document_type": "passport",
+        "full_name": "Ricardo Ferreira Lacerda",
+        "date_of_birth": "1972-05-14",
+        "nationality": "Brazilian",
+        "id_number": "FP571203",
+        "date_of_expiry": "2031-02-25",
+        "certified": true,
+        "certifier_name": "Mariana Couto Rebelo",
+        "certifier_occupation": "Attorney-at-Law",
+        "certification_date": "2026-10-02"
+      }
+    },
+    {
+      "source": "passport-nakamura-ferreira.html",
+      "name": "Passport - Y Nakamura Ferreira (certified).pdf",
+      "kind": "identity_document",
+      "render": "scan",
+      "label": {
+        "document_type": "passport",
+        "full_name": "Yuki Nakamura Ferreira",
+        "date_of_birth": "1975-10-08",
+        "nationality": "Brazilian",
+        "id_number": "FT662049",
+        "date_of_expiry": "2029-07-17",
+        "certified": true,
+        "certifier_name": "Mariana Couto Rebelo",
+        "certifier_occupation": "Attorney-at-Law",
+        "certification_date": "2026-10-02"
+      }
+    }
+  ],
+  "expected": {
+    "pipeline": "structure_review",
+    "recommendation": "approve",
+    "risk": "standard",
+    "ubos": [
+      "Ricardo Ferreira Lacerda",
+      "Yuki Nakamura Ferreira"
+    ],
+    "missingKinds": [],
+    "hits": [
+      {
+        "name": "Ricardo Ferreira Lacerda",
+        "disposition": "false_positive",
+        "reason": "The listed Ricardo Ferreira Lacerda is a Portuguese former municipal official born 1949; our founder is Brazilian and born 14 May 1972."
+      }
+    ],
+    "checks": [
+      {
+        "id": "entity_documents_consistent",
+        "outcome": "pass",
+        "note": "Jacaranda Family Investments Ltd., CR-436120, agrees between the certificate and the register; Lacerda Family Foundation, FC-12087, agrees between the register and the incumbency certificate."
+      },
+      {
+        "id": "ownership_reconciles",
+        "outcome": "pass",
+        "note": "Lacerda Family Foundation holds 1,000 of 1,000 shares (100%) of the family investment company, as the whiteboard chart shows."
+      },
+      {
+        "id": "controllers_identified",
+        "outcome": "pass",
+        "note": "The foundation company has no members, so nobody owns it through shares; it is controlled by its directors Ricardo Ferreira Lacerda (also the founder) and Yuki Nakamura Ferreira. No supervisor; beneficiaries are an unnamed class of the founder's descendants."
+      },
+      {
+        "id": "ubos_identified",
+        "outcome": "pass",
+        "note": "Ricardo Ferreira Lacerda (founder and director) and Yuki Nakamura Ferreira (director) control 100% of the company through the foundation."
+      },
+      {
+        "id": "ubos_verified",
+        "outcome": "pass",
+        "note": "Certified passports for both, certified 2 Oct 2026; expiries 25 Feb 2031 and 17 Jul 2029."
+      },
+      {
+        "id": "screening_clear",
+        "outcome": "pass",
+        "note": "One name hit on Ricardo Ferreira Lacerda (PEP list, Portuguese, born 1949): a false positive on nationality and date of birth (ours Brazilian, born 14 May 1972)."
+      },
+      {
+        "id": "edd_required",
+        "outcome": "pass",
+        "note": "Two layers, both Cayman, controllers identified and verified, no true PEP or sanctions match: standard CDD."
+      }
+    ]
+  }
+}

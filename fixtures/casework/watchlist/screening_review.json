@@ -1,0 +1,517 @@
+[
+  {
+    "id": "WL-AM-0201",
+    "name": "John Patrick Doherty",
+    "aliases": [],
+    "date_of_birth": "1970",
+    "nationality": "Ireland",
+    "list_type": "adverse_media",
+    "list_source": "Global Adverse Media Index (synthetic)",
+    "reason": "Convicted of VAT carousel fraud (2018)"
+  },
+  {
+    "id": "WL-AM-0205",
+    "name": "Vikram Anand Joshi",
+    "aliases": [],
+    "date_of_birth": "1981",
+    "nationality": "India",
+    "list_type": "adverse_media",
+    "list_source": "Global Adverse Media Index (synthetic)",
+    "reason": "Investigated over an unregistered investment scheme (2024)"
+  },
+  {
+    "id": "WL-AM-0209",
+    "name": "Chen Haoran",
+    "aliases": [],
+    "date_of_birth": "1986",
+    "nationality": "China",
+    "list_type": "adverse_media",
+    "list_source": "Global Adverse Media Index (synthetic)",
+    "reason": "Arrested over illegal online lending platform (2023)"
+  },
+  {
+    "id": "WL-AM-0214",
+    "name": "Karim Haddad",
+    "aliases": [
+      "Kareem Haddad"
+    ],
+    "date_of_birth": "1965",
+    "nationality": "Cyprus",
+    "list_type": "adverse_media",
+    "list_source": "Global Adverse Media Index (synthetic)",
+    "reason": "Charged with bribing customs officials at Limassol port (2026)"
+  },
+  {
+    "id": "WL-AM-0219",
+    "name": "Mark Anthony Delgado",
+    "aliases": [],
+    "date_of_birth": "1977-03-15",
+    "nationality": "United States",
+    "list_type": "adverse_media",
+    "list_source": "Global Adverse Media Index (synthetic)",
+    "reason": "Convicted of wire fraud in a timeshare resale scheme (2022)"
+  },
+  {
+    "id": "WL-AM-0223",
+    "name": "Olumide Adeyemi",
+    "aliases": [
+      "Olu Adeyemi"
+    ],
+    "date_of_birth": "1984",
+    "nationality": "Nigeria",
+    "list_type": "adverse_media",
+    "list_source": "Global Adverse Media Index (synthetic)",
+    "reason": "Charged over a romance scam network (2025)"
+  },
+  {
+    "id": "WL-AM-0228",
+    "name": "Ma. Teresa D. Villanueva",
+    "aliases": [
+      "Maria Teresa Dimaculangan Villanueva",
+      "Tess Villanueva"
+    ],
+    "date_of_birth": "1979",
+    "nationality": "Philippines",
+    "list_type": "adverse_media",
+    "list_source": "Global Adverse Media Index (synthetic)",
+    "reason": "Convicted of estafa (fraud) for misappropriating cooperative funds, Regional Trial Court, Pasig City (2021)"
+  },
+  {
+    "id": "WL-AM-0232",
+    "name": "Svetlana Igorevna Lebedeva",
+    "aliases": [],
+    "date_of_birth": "1973",
+    "nationality": "Russia",
+    "list_type": "adverse_media",
+    "list_source": "Global Adverse Media Index (synthetic)",
+    "reason": "Named in a procurement bribery investigation (2021)"
+  },
+  {
+    "id": "WL-AM-0236",
+    "name": "Patrick Gallagher",
+    "aliases": [],
+    "date_of_birth": "1969-08-02",
+    "nationality": "United Kingdom",
+    "list_type": "adverse_media",
+    "list_source": "Global Adverse Media Index (synthetic)",
+    "reason": "Convicted of investment fraud (2020)"
+  },
+  {
+    "id": "WL-PEP-0301",
+    "name": "Patricia Ann Gomes",
+    "aliases": [],
+    "date_of_birth": "1957-02-19",
+    "nationality": "Trinidad and Tobago",
+    "list_type": "pep",
+    "list_source": "Caribbean PEP Register (synthetic)",
+    "reason": "Former Senator, Trinidad and Tobago (2010-2015)"
+  },
+  {
+    "id": "WL-PEP-0304",
+    "name": "Marcus Leroy Pinder",
+    "aliases": [],
+    "date_of_birth": "1964",
+    "nationality": "Bahamas",
+    "list_type": "pep",
+    "list_source": "Caribbean PEP Register (synthetic)",
+    "reason": "Member of Parliament, Bahamas"
+  },
+  {
+    "id": "WL-PEP-0306",
+    "name": "Desmond A. Thorne",
+    "aliases": [
+      "Desmond Aloysius Thorne",
+      "Des Thorne"
+    ],
+    "date_of_birth": "1946",
+    "nationality": "Jamaica",
+    "list_type": "pep",
+    "list_source": "Caribbean PEP Register (synthetic)",
+    "reason": "Former Member of the House of Representatives, Jamaica (1989-2002)"
+  },
+  {
+    "id": "WL-PEP-0308",
+    "name": "Claudette Marie Fontaine",
+    "aliases": [
+      "Claudette Fontaine-Joseph"
+    ],
+    "date_of_birth": "1960-10-11",
+    "nationality": "Haiti",
+    "list_type": "pep",
+    "list_source": "Caribbean PEP Register (synthetic)",
+    "reason": "Former Minister of Commerce, Haiti (2012-2014)"
+  },
+  {
+    "id": "WL-PEP-0311",
+    "name": "Lorna Beverley Dacosta",
+    "aliases": [
+      "Lorna Merren",
+      "Lorna Merren-Dacosta"
+    ],
+    "date_of_birth": "1968-12-03",
+    "nationality": "Cayman Islands",
+    "list_type": "pep",
+    "list_source": "Caribbean PEP Register (synthetic)",
+    "reason": "Permanent Secretary, Ministry of Infrastructure and Ports, Cayman Islands Government (domestic PEP)"
+  },
+  {
+    "id": "WL-PEP-0314",
+    "name": "Errol Augustus Fleming",
+    "aliases": [],
+    "date_of_birth": "1952",
+    "nationality": "British Virgin Islands",
+    "list_type": "pep",
+    "list_source": "Caribbean PEP Register (synthetic)",
+    "reason": "Former Member of the House of Assembly, British Virgin Islands"
+  },
+  {
+    "id": "WL-PEP-0318",
+    "name": "Rosa Elena Quispe Mamani",
+    "aliases": [],
+    "date_of_birth": "1969",
+    "nationality": "Peru",
+    "list_type": "pep",
+    "list_source": "Global PEP Register (synthetic)",
+    "reason": "Regional Governor, Peru (2019-2022)"
+  },
+  {
+    "id": "WL-PEP-0322",
+    "name": "Arvind Prakash Nair",
+    "aliases": [
+      "A. P. Nair"
+    ],
+    "date_of_birth": "1958-12-01",
+    "nationality": "India",
+    "list_type": "pep",
+    "list_source": "Global PEP Register (synthetic)",
+    "reason": "State Minister for Ports, India (synthetic record)"
+  },
+  {
+    "id": "WL-PEP-0327",
+    "name": "Grace Wanjiru Kamau",
+    "aliases": [],
+    "date_of_birth": "1971-07-30",
+    "nationality": "Kenya",
+    "list_type": "pep",
+    "list_source": "Global PEP Register (synthetic)",
+    "reason": "Member of County Assembly, Kenya"
+  },
+  {
+    "id": "WL-PEP-0333",
+    "name": "Hendrik Jan de Vries",
+    "aliases": [
+      "Henk de Vries"
+    ],
+    "date_of_birth": "1962",
+    "nationality": "Netherlands",
+    "list_type": "pep",
+    "list_source": "Global PEP Register (synthetic)",
+    "reason": "Mayor of a Dutch municipality (synthetic record)"
+  },
+  {
+    "id": "WL-PEP-0339",
+    "name": "Luis Fernando Ortega Vidal",
+    "aliases": [],
+    "date_of_birth": "1965-04-25",
+    "nationality": "Mexico",
+    "list_type": "pep",
+    "list_source": "Global PEP Register (synthetic)",
+    "reason": "Federal Deputy, Mexico (2018-2024)"
+  },
+  {
+    "id": "WL-PEP-0342",
+    "name": "Maria Teresa Villanueva",
+    "aliases": [
+      "Maritess Villanueva"
+    ],
+    "date_of_birth": "1958-09-08",
+    "nationality": "Philippines",
+    "list_type": "pep",
+    "list_source": "Global PEP Register (synthetic)",
+    "reason": "Municipal councillor, Ilocos Norte (2016-2025)"
+  },
+  {
+    "id": "WL-PEP-0351",
+    "name": "Nadia Benali",
+    "aliases": [],
+    "date_of_birth": "1975",
+    "nationality": "Morocco",
+    "list_type": "pep",
+    "list_source": "Global PEP Register (synthetic)",
+    "reason": "Member of Parliament, Morocco"
+  },
+  {
+    "id": "WL-PEP-0355",
+    "name": "José Luis Herrera Castillo",
+    "aliases": [
+      "José Herrera Castillo",
+      "Pepe Herrera"
+    ],
+    "date_of_birth": "1966-08-27",
+    "nationality": "Panama",
+    "list_type": "pep",
+    "list_source": "Global PEP Register (synthetic)",
+    "reason": "Former Director General, National Customs Authority, Panama (2014-2019)"
+  },
+  {
+    "id": "WL-SAN-0101",
+    "name": "Viktor Andreyevich Morozov",
+    "aliases": [
+      "Viktor Morozoff"
+    ],
+    "date_of_birth": "1961-04-02",
+    "nationality": "Russia",
+    "list_type": "sanctions",
+    "list_source": "Consolidated Sanctions List (synthetic)",
+    "reason": "Shareholder of a designated arms exporter (synthetic programme DSR-6)"
+  },
+  {
+    "id": "WL-SAN-0103",
+    "name": "Ali Reza Tehrani",
+    "aliases": [
+      "A. R. Tehrani"
+    ],
+    "date_of_birth": "1959",
+    "nationality": "Iran",
+    "list_type": "sanctions",
+    "list_source": "Consolidated Sanctions List (synthetic)",
+    "reason": "Procurement officer for a designated missile programme (synthetic programme PRL-1)"
+  },
+  {
+    "id": "WL-SAN-0107",
+    "name": "Chinedu Obinna Okafor",
+    "aliases": [
+      "Obinna Okafor",
+      "Chief C. O. Okafor"
+    ],
+    "date_of_birth": "1958-02-11",
+    "nationality": "Nigeria",
+    "list_type": "sanctions",
+    "list_source": "Consolidated Sanctions List (synthetic)",
+    "reason": "Laundered proceeds of illegal crude oil bunkering for a designated network (synthetic programme NRB-2)"
+  },
+  {
+    "id": "WL-SAN-0110",
+    "name": "Hamid Yusuf Karimi",
+    "aliases": [
+      "Haji Hamid"
+    ],
+    "date_of_birth": "1967-09-14",
+    "nationality": "Afghanistan",
+    "list_type": "sanctions",
+    "list_source": "Consolidated Sanctions List (synthetic)",
+    "reason": "Narcotics trafficker and financier (synthetic programme NTO-9)"
+  },
+  {
+    "id": "WL-SAN-0114",
+    "name": "Juan Carlos Restrepo Duque",
+    "aliases": [
+      "El Ingeniero"
+    ],
+    "date_of_birth": "1963-03-30",
+    "nationality": "Colombia",
+    "list_type": "sanctions",
+    "list_source": "Consolidated Sanctions List (synthetic)",
+    "reason": "Money launderer for a designated cartel (synthetic programme NTO-9)"
+  },
+  {
+    "id": "WL-SAN-0118",
+    "name": "Mohammed Salim Al-Harbi",
+    "aliases": [
+      "Muhammad Salim al-Harbi"
+    ],
+    "date_of_birth": "1977",
+    "nationality": "Yemen",
+    "list_type": "sanctions",
+    "list_source": "Consolidated Sanctions List (synthetic)",
+    "reason": "Arms smuggler supplying a designated militia (synthetic programme ARM-7)"
+  },
+  {
+    "id": "WL-SAN-0122",
+    "name": "Maria Fernanda Santos Reyes",
+    "aliases": [
+      "Mafe Santos",
+      "Maria F. Santos de Ruiz"
+    ],
+    "date_of_birth": "1980",
+    "nationality": "Venezuela",
+    "list_type": "sanctions",
+    "list_source": "Consolidated Sanctions List (synthetic)",
+    "reason": "Senior manager of a designated state-linked fuel import intermediary (synthetic programme VFI-1)"
+  },
+  {
+    "id": "WL-SAN-0126",
+    "name": "Abdullahi Musa Bello",
+    "aliases": [
+      "Abdullahi Bello"
+    ],
+    "date_of_birth": "1966",
+    "nationality": "Nigeria",
+    "list_type": "sanctions",
+    "list_source": "Consolidated Sanctions List (synthetic)",
+    "reason": "Financier of an armed group (synthetic programme TFN-2)"
+  },
+  {
+    "id": "WL-SAN-0129",
+    "name": "Wang Jian",
+    "aliases": [
+      "Wong Kin"
+    ],
+    "date_of_birth": "1979-11-02",
+    "nationality": "China",
+    "list_type": "sanctions",
+    "list_source": "Consolidated Sanctions List (synthetic)",
+    "reason": "Supplier of dual-use machine tools to a designated end user (synthetic programme DUX-4)"
+  },
+  {
+    "id": "WL-SAN-0131",
+    "name": "Andrea Marchetti",
+    "aliases": [
+      "Il Ragioniere",
+      "Andrea Marchetto"
+    ],
+    "date_of_birth": "1977",
+    "nationality": "Italy",
+    "list_type": "sanctions",
+    "list_source": "Consolidated Sanctions List (synthetic)",
+    "reason": "Arranged maritime transport of embargoed arms consignments (synthetic programme ARM-7)"
+  },
+  {
+    "id": "WL-SAN-0135",
+    "name": "Sergei Nikolaevich Volkov",
+    "aliases": [
+      "Sergey Volkov"
+    ],
+    "date_of_birth": "1968-06-21",
+    "nationality": "Russia",
+    "list_type": "sanctions",
+    "list_source": "Consolidated Sanctions List (synthetic)",
+    "reason": "Board member of a designated shipping company (synthetic programme MTS-5)"
+  },
+  {
+    "id": "WL-SAN-0139",
+    "name": "Ibrahim Khalil Mansour",
+    "aliases": [
+      "Abu Khalil"
+    ],
+    "date_of_birth": "1955",
+    "nationality": "Syria",
+    "list_type": "sanctions",
+    "list_source": "Consolidated Sanctions List (synthetic)",
+    "reason": "Former official linked to a designated security agency (synthetic programme PRL-1)"
+  },
+  {
+    "id": "WL-SAN-0145",
+    "name": "Emil Radu Sârbescu",
+    "aliases": [
+      "Emilio Sarbes",
+      "Emil Sarbescu",
+      "Radu Sarbescu"
+    ],
+    "date_of_birth": "1969-10-02",
+    "nationality": "Romania",
+    "list_type": "sanctions",
+    "list_source": "Consolidated Sanctions List (synthetic)",
+    "reason": "Procurement agent arranging ship-to-ship transfers for a designated tanker network (synthetic programme MTS-5)"
+  },
+  {
+    "id": "WL-SAN-0149",
+    "name": "Tariq Abd al-Aziz al-Nuwaysir",
+    "aliases": [
+      "Tarik Abdulaziz Nuwesir",
+      "Abu Yasin"
+    ],
+    "date_of_birth": "1974",
+    "nationality": "Jordan",
+    "list_type": "sanctions",
+    "list_source": "Consolidated Sanctions List (synthetic)",
+    "reason": "Financial facilitator for a designated armed group (synthetic programme TFN-2)"
+  },
+  {
+    "id": "WL-SAN-0153",
+    "name": "Nguyen Van Hung",
+    "aliases": [],
+    "date_of_birth": "1970-05-05",
+    "nationality": "Viet Nam",
+    "list_type": "sanctions",
+    "list_source": "Consolidated Sanctions List (synthetic)",
+    "reason": "Owner of a front company for a designated wildlife trafficking network (synthetic programme WLT-2)"
+  },
+  {
+    "id": "WL-SAN-0158",
+    "name": "Suresh Bhandari",
+    "aliases": [
+      "S. K. Bhandari",
+      "Suresh Kumar"
+    ],
+    "date_of_birth": "1975",
+    "nationality": "India",
+    "list_type": "sanctions",
+    "list_source": "Consolidated Sanctions List (synthetic)",
+    "reason": "Director of front companies used in a trade-based money laundering scheme routed through Dubai (synthetic programme TBM-3)"
+  },
+  {
+    "id": "WL-SAN-0163",
+    "name": "Liang Zhi Wei",
+    "aliases": [
+      "Leung Chi Wai",
+      "Liang Zhiwei"
+    ],
+    "date_of_birth": "1983-05-07",
+    "nationality": "China",
+    "list_type": "sanctions",
+    "list_source": "Consolidated Sanctions List (synthetic)",
+    "reason": "Director of a front company supplying controlled electronic components to a designated end user (synthetic programme DUX-4)"
+  },
+  {
+    "id": "WL-SAN-0167",
+    "name": "Rafael Antonio Medina Rojas",
+    "aliases": [
+      "Rafa Medina"
+    ],
+    "date_of_birth": "1971-12-08",
+    "nationality": "Venezuela",
+    "list_type": "sanctions",
+    "list_source": "Consolidated Sanctions List (synthetic)",
+    "reason": "Military officer linked to illicit gold exports (synthetic programme VFI-1)"
+  },
+  {
+    "id": "WL-SAN-0172",
+    "name": "José Luis Herrera Ocampo",
+    "aliases": [
+      "El Contador",
+      "Jose Luis Herrera"
+    ],
+    "date_of_birth": "1958-01-14",
+    "nationality": "Colombia",
+    "list_type": "sanctions",
+    "list_source": "Consolidated Sanctions List (synthetic)",
+    "reason": "Accountant for a designated narcotics trafficking organisation (synthetic programme NTO-9)"
+  },
+  {
+    "id": "WL-SAN-0176",
+    "name": "Omar Farouk Siddiqui",
+    "aliases": [
+      "O. F. Siddiqui"
+    ],
+    "date_of_birth": "1980",
+    "nationality": "Pakistan",
+    "list_type": "sanctions",
+    "list_source": "Consolidated Sanctions List (synthetic)",
+    "reason": "Fundraiser for a designated armed group (synthetic programme TFN-2)"
+  },
+  {
+    "id": "WL-SAN-0181",
+    "name": "Yevgeniy Olegovich Shirokov",
+    "aliases": [
+      "Evgenii Shirokov",
+      "Eugene Shirokoff",
+      "Евгений Олегович Широков"
+    ],
+    "date_of_birth": "1966-02-23",
+    "nationality": "Russia",
+    "list_type": "sanctions",
+    "list_source": "Consolidated Sanctions List (synthetic)",
+    "reason": "Director of a designated defence-sector supplier (synthetic programme DSR-6)"
+  }
+]

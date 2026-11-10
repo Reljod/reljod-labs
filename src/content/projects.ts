@@ -113,6 +113,23 @@ export const projects: Project[] = [
       "Ledger hauls them over and reforms the page",
     ],
   },
+  {
+    slug: "casework-desk",
+    icon: "agents",
+    title: "Casework desk",
+    sector: "Pensions and trust operations",
+    summary:
+      "A specialist agent for a Cayman bank and trust company: drop a case and it picks one of four review pipelines, runs its jobs, asks for what's missing and writes the decision file.",
+    outcome: "Every job a tool on an MCP server",
+    tags: ["Agents", "MCP", "Durable workflows"],
+    status: "Live",
+    href: "/demos/casework",
+    features: [
+      "200 labelled synthetic documents across four reviews",
+      "Jobs run alone or chained, and pause to ask you",
+      "Model, temperature and spend per job, live",
+    ],
+  },
 ];
 
 export const featuredProjects = projects.slice(0, FEATURED_PROJECT_LIMIT);

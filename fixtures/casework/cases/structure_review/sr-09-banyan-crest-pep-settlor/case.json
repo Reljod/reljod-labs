@@ -1,0 +1,165 @@
+{
+  "slug": "sr-09-banyan-crest-pep-settlor",
+  "scenario": "structure_review",
+  "title": "Banyan Crest Trust · PEP settlor",
+  "summary": "New Cayman discretionary trust settled by a sitting Indian member of parliament who reserves wide powers and is himself a named beneficiary with his wife; the PEP match is real, the source of wealth is uncorroborated, so the case needs enhanced due diligence and senior sign-off.",
+  "asOf": "2026-11-10",
+  "documents": [
+    {
+      "source": "trust-deed.html",
+      "name": "Banyan Crest Trust - Declaration of Trust 2026.pdf",
+      "kind": "trust_deed",
+      "render": "pdf",
+      "label": {
+        "trust_name": "The Banyan Crest Trust",
+        "deed_date": "2026-08-30",
+        "governing_law": "Cayman Islands",
+        "trust_type": "discretionary",
+        "settlor_names": [
+          "Anand Vikram Rao"
+        ],
+        "trustee_names": [
+          "Cinnamon Bay Trustees Ltd."
+        ],
+        "protector_names": [],
+        "beneficiary_names": [
+          "Anand Vikram Rao",
+          "Lakshmi Rao"
+        ],
+        "beneficiary_class": "the children and remoter issue of the Settlor"
+      }
+    },
+    {
+      "source": "source-of-wealth-rao.html",
+      "name": "Source of wealth statement - A V Rao.pdf",
+      "kind": "source_of_wealth",
+      "render": "scan",
+      "label": {
+        "person_name": "Anand Vikram Rao",
+        "declared_sources": "dividends from Rao Textiles Private Limited, sale of a commercial property in Bengaluru in 2024, parliamentary salary and allowances",
+        "estimated_net_worth": 11890000,
+        "corroborated": false,
+        "declaration_date": "2026-09-05"
+      }
+    },
+    {
+      "source": "structure-chart.html",
+      "name": "IMG_20261103_slide2.jpg",
+      "kind": "structure_chart",
+      "render": "photo",
+      "label": {
+        "top_entity": "Banyan Crest Holdings Ltd.",
+        "links": [
+          {
+            "owner": "Anand Vikram Rao",
+            "owned": "The Banyan Crest Trust",
+            "percentage": 0,
+            "relation": "settlor_of"
+          },
+          {
+            "owner": "Cinnamon Bay Trustees Ltd.",
+            "owned": "The Banyan Crest Trust",
+            "percentage": 0,
+            "relation": "trustee_of"
+          },
+          {
+            "owner": "The Banyan Crest Trust",
+            "owned": "Banyan Crest Holdings Ltd.",
+            "percentage": 100,
+            "relation": "shareholding"
+          }
+        ]
+      }
+    },
+    {
+      "source": "passport-anand-rao.html",
+      "name": "Passport - A V Rao (attested).pdf",
+      "kind": "identity_document",
+      "render": "scan",
+      "label": {
+        "document_type": "passport",
+        "full_name": "Anand Vikram Rao",
+        "date_of_birth": "1964-11-02",
+        "nationality": "Indian",
+        "id_number": "Z7038514",
+        "date_of_expiry": "2031-04-13",
+        "certified": true,
+        "certifier_name": "Ramesh Iyengar",
+        "certifier_occupation": "Notary Public",
+        "certification_date": "2026-09-10"
+      }
+    },
+    {
+      "source": "passport-lakshmi-rao.html",
+      "name": "Passport - L Rao (attested).pdf",
+      "kind": "identity_document",
+      "render": "scan",
+      "label": {
+        "document_type": "passport",
+        "full_name": "Lakshmi Rao",
+        "date_of_birth": "1967-03-21",
+        "nationality": "Indian",
+        "id_number": "Z7038629",
+        "date_of_expiry": "2030-01-15",
+        "certified": true,
+        "certifier_name": "Ramesh Iyengar",
+        "certifier_occupation": "Notary Public",
+        "certification_date": "2026-09-10"
+      }
+    }
+  ],
+  "expected": {
+    "pipeline": "structure_review",
+    "recommendation": "refer",
+    "risk": "high",
+    "ubos": [
+      "Anand Vikram Rao",
+      "Lakshmi Rao"
+    ],
+    "missingKinds": ["register_of_members"],
+    "hits": [
+      {
+        "name": "Anand Vikram Rao",
+        "disposition": "true_match",
+        "reason": "PEP entry for a sitting Indian member of parliament, born 2 Nov 1964: same name, date of birth and nationality as the settlor, who also declares the office himself."
+      },
+      {
+        "name": "Vikram Anand Joshi",
+        "disposition": "false_positive",
+        "reason": "Shares only the given names Anand and Vikram; different surname (Joshi), born 1981 against the settlor's 2 Nov 1964, and an adverse-media entry unrelated to him."
+      }
+    ],
+    "checks": [
+      {
+        "id": "screening_clear",
+        "outcome": "review",
+        "note": "True PEP match for the settlor Anand Vikram Rao (DOB 2 Nov 1964, Indian, sitting MP). Not a sanctions hit, so not blocking; Lakshmi Rao is a PEP family member. A weak name hit on Vikram Anand Joshi (born 1981, adverse media) is a false positive."
+      },
+      {
+        "id": "edd_required",
+        "outcome": "review",
+        "note": "Foreign PEP settlor and beneficiary with reserved powers; source of wealth (US$14.5m, CI$11.89m) is declared but uncorroborated, and funds come via a Dubai account. EDD and senior management approval required."
+      },
+      {
+        "id": "controllers_identified",
+        "outcome": "pass",
+        "note": "Trustee Cinnamon Bay Trustees Ltd. (licence T-1044). No protector; the settlor reserves powers to remove trustees, direct investment and veto capital distributions over US$100,000 (clause 9), so he controls the trust."
+      },
+      {
+        "id": "ubos_identified",
+        "outcome": "pass",
+        "note": "Settlor Anand Vikram Rao (also a named beneficiary) and named beneficiary Lakshmi Rao; the remaining class (children and remoter issue) is unnamed."
+      },
+      {
+        "id": "ownership_reconciles",
+        "outcome": "review",
+        "note": "The trustee's chart shows the trust holding 100% of Banyan Crest Holdings Ltd. and the settlor's letter says the trustee holds the shares, but the deed's Schedule (30 Aug 2026) lists the 10,000 shares only as 'to be added' and there is no register of members for Banyan Crest Holdings Ltd. to confirm the transfer."
+      },
+      {
+        "id": "ubos_verified",
+        "outcome": "pass",
+        "note": "Notarised passports for both, attested 10 Sep 2026 (within 183 days of 10 Nov 2026), expiring 13 Apr 2031 and 15 Jan 2030."
+      }
+    ]
+  }
+}

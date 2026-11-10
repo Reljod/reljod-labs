@@ -1,0 +1,91 @@
+{
+  "slug": "sc-13-shirokov-no-id",
+  "scenario": "screening_review",
+  "title": "Shirokov · legacy record, no ID",
+  "summary": "A legacy non-resident brokerage client recorded as Eugene O. Shirokov hit a new Russian sanctions listing (Yevgeniy Olegovich Shirokov); the migrated record has no date of birth, nationality or ID, so nothing can be compared: request a certified passport.",
+  "asOf": "2026-11-10",
+  "documents": [
+    {
+      "source": "alert.html",
+      "name": "Sentinel Watch alert SW-26-1109-00486.pdf",
+      "kind": "screening_alert",
+      "render": "pdf",
+      "label": {
+        "alert_id": "SW-26-1109-00486",
+        "customer_name": "Eugene O. Shirokov",
+        "customer_id": "CTP-C-091726",
+        "screened_on": "2026-11-09",
+        "hits": [
+          {
+            "hit_name": "Yevgeniy Olegovich Shirokov",
+            "list_type": "sanctions",
+            "list_source": "Consolidated Sanctions List (synthetic)",
+            "match_score": 87,
+            "hit_date_of_birth": "1966-02-23",
+            "hit_nationality": "Russia",
+            "hit_reference": "WL-SAN-0181"
+          }
+        ]
+      }
+    },
+    {
+      "source": "profile.html",
+      "name": "CoralCore KYC profile CTP-C-091726.pdf",
+      "kind": "customer_profile",
+      "render": "pdf",
+      "label": {
+        "customer_name": "Eugene O. Shirokov",
+        "customer_id": "CTP-C-091726",
+        "date_of_birth": "",
+        "nationality": "",
+        "residence": "Latvia",
+        "occupation": "Investor",
+        "id_number": "",
+        "other_names": [
+          "Evgeny Shirokov"
+        ]
+      }
+    },
+    {
+      "source": "entry-wl-san-0181.html",
+      "name": "CSL record WL-SAN-0181.pdf",
+      "kind": "watchlist_entry",
+      "render": "pdf",
+      "label": {
+        "entry_name": "Yevgeniy Olegovich Shirokov",
+        "aliases": [
+          "Evgenii Shirokov",
+          "Eugene Shirokoff",
+          "Евгений Олегович Широков"
+        ],
+        "date_of_birth": "23 Feb 1966",
+        "place_of_birth": "Perm, Russia",
+        "nationality": "Russia",
+        "list_source": "Consolidated Sanctions List (synthetic)",
+        "listing_reason": "Director of a designated defence-sector supplier (synthetic programme DSR-6)",
+        "reference": "WL-SAN-0181"
+      }
+    }
+  ],
+  "expected": {
+    "pipeline": "screening_review",
+    "recommendation": "request_info",
+    "missingKinds": [
+      "identity_document"
+    ],
+    "checks": [
+      {
+        "id": "screening_clear",
+        "outcome": "review",
+        "note": "Sanctions hit cannot be assessed: no DOB, nationality or ID on the record"
+      }
+    ],
+    "hits": [
+      {
+        "name": "Yevgeniy Olegovich Shirokov",
+        "disposition": "inconclusive",
+        "reason": "Eugene and Evgeny are transliterations of Yevgeniy, the listed alias Eugene Shirokoff is close, the record's middle initial O. fits the patronymic Olegovich, and the client lives in Riga, a reported address of the listed person. The migrated record has no date of birth, nationality or ID, so the list's DOB 23 Feb 1966, birthplace Perm and passport 754418209 cannot be compared. Cannot discount or confirm: keep the account restricted and obtain a certified passport."
+      }
+    ]
+  }
+}

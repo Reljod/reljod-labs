@@ -7,6 +7,7 @@ import { Section } from "@/components/ui/section";
 import { liveDemos } from "@/content/projects";
 import type { Project } from "@/content/types";
 import { BrowserFrame } from "./browser-frame";
+import { CaseworkPreview } from "./previews/casework-preview";
 import { DocumentCompliancePreview } from "./previews/document-compliance-preview";
 import { LedgerPreview } from "./previews/ledger-preview";
 
@@ -16,6 +17,7 @@ const previews: Record<string, (project: Project) => ReactNode> = {
     <DocumentCompliancePreview project={project} />
   ),
   ledger: () => <LedgerPreview />,
+  "casework-desk": () => <CaseworkPreview />,
 };
 
 export function LiveDemos() {
