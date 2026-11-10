@@ -1,0 +1,114 @@
+{
+  "slug": "sc-03-marchetti-gender",
+  "scenario": "screening_review",
+  "title": "Marchetti · male sanctions record",
+  "summary": "An Italian physiotherapist in Grand Meridia named Andrea hit a sanctions record for an Italian arms broker also called Andrea Marchetti, born the same year, but the listed person is male and the customer is female: a false positive on gender.",
+  "asOf": "2026-11-10",
+  "documents": [
+    {
+      "source": "alert.html",
+      "name": "Sentinel Watch alert SW-26-1103-00377.pdf",
+      "kind": "screening_alert",
+      "render": "pdf",
+      "label": {
+        "alert_id": "SW-26-1103-00377",
+        "customer_name": "Andrea Giulia Marchetti",
+        "customer_id": "CTP-C-377054",
+        "screened_on": "2026-11-03",
+        "hits": [
+          {
+            "hit_name": "Andrea Marchetti",
+            "list_type": "sanctions",
+            "list_source": "Consolidated Sanctions List (synthetic)",
+            "match_score": 92,
+            "hit_date_of_birth": "1977",
+            "hit_nationality": "Italy",
+            "hit_reference": "WL-SAN-0131"
+          }
+        ]
+      }
+    },
+    {
+      "source": "profile.html",
+      "name": "CoralCore KYC profile CTP-C-377054.pdf",
+      "kind": "customer_profile",
+      "render": "pdf",
+      "label": {
+        "customer_name": "Andrea Giulia Marchetti",
+        "customer_id": "CTP-C-377054",
+        "date_of_birth": "1977-10-15",
+        "nationality": "Italy",
+        "residence": "Meridia",
+        "occupation": "Physiotherapist",
+        "id_number": "YB4419275",
+        "other_names": []
+      }
+    },
+    {
+      "source": "passport.html",
+      "name": "Passport photo - Marchetti.jpg",
+      "kind": "identity_document",
+      "render": "photo",
+      "label": {
+        "document_type": "passport",
+        "full_name": "Andrea Giulia Marchetti",
+        "date_of_birth": "1977-10-15",
+        "nationality": "Italian",
+        "id_number": "YB4419275",
+        "date_of_expiry": "2029-04-07",
+        "certified": false,
+        "certifier_name": "",
+        "certifier_occupation": "",
+        "certification_date": ""
+      }
+    },
+    {
+      "source": "entry-wl-san-0131.html",
+      "name": "CSL record WL-SAN-0131.pdf",
+      "kind": "watchlist_entry",
+      "render": "pdf",
+      "label": {
+        "entry_name": "Andrea Marchetti",
+        "aliases": [
+          "Il Ragioniere",
+          "Andrea Marchetto"
+        ],
+        "date_of_birth": "1977",
+        "place_of_birth": "Italy",
+        "nationality": "Italy",
+        "list_source": "Consolidated Sanctions List (synthetic)",
+        "listing_reason": "Arranged maritime transport of embargoed arms consignments (synthetic programme ARM-7)",
+        "reference": "WL-SAN-0131"
+      }
+    }
+  ],
+  "expected": {
+    "pipeline": "screening_review",
+    "recommendation": "approve",
+    "missingKinds": [],
+    "checks": [
+      {
+        "id": "screening_clear",
+        "outcome": "pass",
+        "note": "Sanctions hit discounted on gender"
+      },
+      {
+        "id": "identity_matches_record",
+        "outcome": "pass",
+        "note": "Passport photo agrees with the KYC record: name, DOB 15 Oct 1977, female"
+      },
+      {
+        "id": "id_in_date",
+        "outcome": "pass",
+        "note": "Passport expires 07 Apr 2029"
+      }
+    ],
+    "hits": [
+      {
+        "name": "Andrea Marchetti",
+        "disposition": "false_positive",
+        "reason": "The list record is male (gender: male, statement refers to 'he'); the customer is female (sex F on passport YB4419275, title Ms, given names Andrea Giulia). Year of birth 1977 and Italian nationality coincide, but the gender difference rules out the match; the listed man is reported in Montenegro while the customer has lived in Grand Meridia since 2018. Discount."
+      }
+    ]
+  }
+}

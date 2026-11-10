@@ -1,0 +1,117 @@
+{
+  "slug": "sc-06-sarbescu-sanctions-match",
+  "scenario": "screening_review",
+  "title": "Sarbes · sanctions alias and passport match",
+  "summary": "A new brokerage applicant calling himself Emilio Sarbes hit a sanctions record on an exact alias; his certified passport is in the listed name Emil Radu Sârbescu with the listed passport number and date of birth: a confirmed sanctions match, decline.",
+  "asOf": "2026-11-10",
+  "documents": [
+    {
+      "source": "alert.html",
+      "name": "Tidereach case report TMK-A-26-118967.pdf",
+      "kind": "screening_alert",
+      "render": "pdf",
+      "label": {
+        "alert_id": "TMK-A-26-118967",
+        "customer_name": "Emilio Sarbes",
+        "customer_id": "CTP-C-561042",
+        "screened_on": "2026-11-08",
+        "hits": [
+          {
+            "hit_name": "Emil Radu Sârbescu",
+            "list_type": "sanctions",
+            "list_source": "Consolidated Sanctions List (synthetic)",
+            "match_score": 98,
+            "hit_date_of_birth": "02 Oct 1969",
+            "hit_nationality": "Romania",
+            "hit_reference": "WL-SAN-0145"
+          }
+        ]
+      }
+    },
+    {
+      "source": "profile.html",
+      "name": "CoralCore KYC profile CTP-C-561042.pdf",
+      "kind": "customer_profile",
+      "render": "pdf",
+      "label": {
+        "customer_name": "Emilio Sarbes",
+        "customer_id": "CTP-C-561042",
+        "date_of_birth": "1969-10-02",
+        "nationality": "Romania",
+        "residence": "Malta",
+        "occupation": "Shipping consultant",
+        "id_number": "058213746",
+        "other_names": [
+          "Emil Radu Sârbescu"
+        ]
+      }
+    },
+    {
+      "source": "passport.html",
+      "name": "Passport certified copy - Sarbes.pdf",
+      "kind": "identity_document",
+      "render": "scan",
+      "label": {
+        "document_type": "passport",
+        "full_name": "Emil Radu Sârbescu",
+        "date_of_birth": "1969-10-02",
+        "nationality": "Romanian",
+        "id_number": "058213746",
+        "date_of_expiry": "2031-05-19",
+        "certified": true,
+        "certifier_name": "Joseph M. Camilleri",
+        "certifier_occupation": "Notary Public, Malta",
+        "certification_date": "2026-10-29"
+      }
+    },
+    {
+      "source": "entry-wl-san-0145.html",
+      "name": "CSL record WL-SAN-0145.pdf",
+      "kind": "watchlist_entry",
+      "render": "pdf",
+      "label": {
+        "entry_name": "Emil Radu Sârbescu",
+        "aliases": [
+          "Emilio Sarbes",
+          "Emil Sarbescu",
+          "Radu Sarbescu"
+        ],
+        "date_of_birth": "02 Oct 1969",
+        "place_of_birth": "Constanța, Romania",
+        "nationality": "Romania",
+        "list_source": "Consolidated Sanctions List (synthetic)",
+        "listing_reason": "Procurement agent arranging ship-to-ship transfers for a designated tanker network (synthetic programme MTS-5)",
+        "reference": "WL-SAN-0145"
+      }
+    }
+  ],
+  "expected": {
+    "pipeline": "screening_review",
+    "recommendation": "decline",
+    "missingKinds": [],
+    "checks": [
+      {
+        "id": "screening_clear",
+        "outcome": "fail",
+        "note": "Confirmed sanctions match on alias, passport number and date of birth"
+      },
+      {
+        "id": "identity_matches_record",
+        "outcome": "review",
+        "note": "Applicant gave the name Emilio Sarbes; the passport is in the name Emil Radu Sârbescu. DOB and passport number agree with the application"
+      },
+      {
+        "id": "id_in_date",
+        "outcome": "pass",
+        "note": "Passport expires 19 May 2031"
+      }
+    ],
+    "hits": [
+      {
+        "name": "Emil Radu Sârbescu",
+        "disposition": "true_match",
+        "reason": "Confirmed. The applicant applied as Emilio Sarbes, an exact listed alias. His certified passport is in the listed name Emil Radu Sârbescu, and its number 058213746 is the passport number on the list record. Date of birth 02 Oct 1969, place of birth Constanța and Romanian nationality also agree. Sanctions true match: do not onboard, escalate to the MLRO and report."
+      }
+    ]
+  }
+}

@@ -1,0 +1,286 @@
+{
+  "slug": "eo-05-seven-mile-table-group",
+  "scenario": "employer_onboarding",
+  "title": "Long Strand Table Group · Aug-Sep 2026",
+  "summary": "Restaurant group's August and September contributions: paid on time and the remittances match the schedule, but the employer share is 4% of pensionable earnings instead of 5%.",
+  "asOf": "2026-11-10",
+  "documents": [
+    {
+      "source": "contribution-schedule.csv",
+      "name": "SMTG_pension_Aug_Sep_2026.csv",
+      "kind": "contribution_schedule",
+      "render": "csv",
+      "label": {
+        "employer_name": "",
+        "lines": [
+          {
+            "period": "2026-08",
+            "employee_id": "SMT-102",
+            "full_name": "Nicola Harrington",
+            "gross_earnings": 7900,
+            "employee_contribution": 362.5,
+            "employer_contribution": 290,
+            "date_paid": "2026-09-14"
+          },
+          {
+            "period": "2026-08",
+            "employee_id": "SMT-108",
+            "full_name": "Ravi Kumar Nair",
+            "gross_earnings": 6750,
+            "employee_contribution": 337.5,
+            "employer_contribution": 270,
+            "date_paid": "2026-09-14"
+          },
+          {
+            "period": "2026-08",
+            "employee_id": "SMT-115",
+            "full_name": "Jerome Campbell",
+            "gross_earnings": 4380,
+            "employee_contribution": 219,
+            "employer_contribution": 175.2,
+            "date_paid": "2026-09-14"
+          },
+          {
+            "period": "2026-08",
+            "employee_id": "SMT-121",
+            "full_name": "Maricel Reyes",
+            "gross_earnings": 3214,
+            "employee_contribution": 160.7,
+            "employer_contribution": 128.56,
+            "date_paid": "2026-09-14"
+          },
+          {
+            "period": "2026-08",
+            "employee_id": "SMT-122",
+            "full_name": "Joanna Mae Mendoza",
+            "gross_earnings": 3092,
+            "employee_contribution": 154.6,
+            "employer_contribution": 123.68,
+            "date_paid": "2026-09-14"
+          },
+          {
+            "period": "2026-08",
+            "employee_id": "SMT-130",
+            "full_name": "Shawn Ebanks",
+            "gross_earnings": 3566,
+            "employee_contribution": 178.3,
+            "employer_contribution": 142.64,
+            "date_paid": "2026-09-14"
+          },
+          {
+            "period": "2026-08",
+            "employee_id": "SMT-134",
+            "full_name": "Kerry-Ann Gordon",
+            "gross_earnings": 2944,
+            "employee_contribution": 147.2,
+            "employer_contribution": 117.76,
+            "date_paid": "2026-09-14"
+          },
+          {
+            "period": "2026-08",
+            "employee_id": "SMT-139",
+            "full_name": "Oscar Ramos",
+            "gross_earnings": 2610,
+            "employee_contribution": 130.5,
+            "employer_contribution": 104.4,
+            "date_paid": "2026-09-14"
+          },
+          {
+            "period": "2026-08",
+            "employee_id": "SMT-141",
+            "full_name": "Ana Lucía Martínez",
+            "gross_earnings": 1980,
+            "employee_contribution": 99,
+            "employer_contribution": 79.2,
+            "date_paid": "2026-09-14"
+          },
+          {
+            "period": "2026-08",
+            "employee_id": "SMT-144",
+            "full_name": "Brandon Tibbetts",
+            "gross_earnings": 2330,
+            "employee_contribution": 116.5,
+            "employer_contribution": 93.2,
+            "date_paid": "2026-09-14"
+          },
+          {
+            "period": "2026-08",
+            "employee_id": "SMT-150",
+            "full_name": "Imran D'Souza",
+            "gross_earnings": 4860,
+            "employee_contribution": 243,
+            "employer_contribution": 194.4,
+            "date_paid": "2026-09-14"
+          },
+          {
+            "period": "2026-08",
+            "employee_id": "SMT-153",
+            "full_name": "Leanne Forbes",
+            "gross_earnings": 2788,
+            "employee_contribution": 139.4,
+            "employer_contribution": 111.52,
+            "date_paid": "2026-09-14"
+          },
+          {
+            "period": "2026-09",
+            "employee_id": "SMT-102",
+            "full_name": "Nicola Harrington",
+            "gross_earnings": 7900,
+            "employee_contribution": 362.5,
+            "employer_contribution": 290,
+            "date_paid": "2026-10-15"
+          },
+          {
+            "period": "2026-09",
+            "employee_id": "SMT-108",
+            "full_name": "Ravi Kumar Nair",
+            "gross_earnings": 6750,
+            "employee_contribution": 337.5,
+            "employer_contribution": 270,
+            "date_paid": "2026-10-15"
+          },
+          {
+            "period": "2026-09",
+            "employee_id": "SMT-115",
+            "full_name": "Jerome Campbell",
+            "gross_earnings": 4520,
+            "employee_contribution": 226,
+            "employer_contribution": 180.8,
+            "date_paid": "2026-10-15"
+          },
+          {
+            "period": "2026-09",
+            "employee_id": "SMT-121",
+            "full_name": "Maricel Reyes",
+            "gross_earnings": 2876,
+            "employee_contribution": 143.8,
+            "employer_contribution": 115.04,
+            "date_paid": "2026-10-15"
+          },
+          {
+            "period": "2026-09",
+            "employee_id": "SMT-122",
+            "full_name": "Joanna Mae Mendoza",
+            "gross_earnings": 2958,
+            "employee_contribution": 147.9,
+            "employer_contribution": 118.32,
+            "date_paid": "2026-10-15"
+          },
+          {
+            "period": "2026-09",
+            "employee_id": "SMT-130",
+            "full_name": "Shawn Ebanks",
+            "gross_earnings": 3310,
+            "employee_contribution": 165.5,
+            "employer_contribution": 132.4,
+            "date_paid": "2026-10-15"
+          },
+          {
+            "period": "2026-09",
+            "employee_id": "SMT-134",
+            "full_name": "Kerry-Ann Gordon",
+            "gross_earnings": 2712,
+            "employee_contribution": 135.6,
+            "employer_contribution": 108.48,
+            "date_paid": "2026-10-15"
+          },
+          {
+            "period": "2026-09",
+            "employee_id": "SMT-139",
+            "full_name": "Oscar Ramos",
+            "gross_earnings": 2610,
+            "employee_contribution": 130.5,
+            "employer_contribution": 104.4,
+            "date_paid": "2026-10-15"
+          },
+          {
+            "period": "2026-09",
+            "employee_id": "SMT-141",
+            "full_name": "Ana Lucía Martínez",
+            "gross_earnings": 2045,
+            "employee_contribution": 102.25,
+            "employer_contribution": 81.8,
+            "date_paid": "2026-10-15"
+          },
+          {
+            "period": "2026-09",
+            "employee_id": "SMT-144",
+            "full_name": "Brandon Tibbetts",
+            "gross_earnings": 2180,
+            "employee_contribution": 109,
+            "employer_contribution": 87.2,
+            "date_paid": "2026-10-15"
+          },
+          {
+            "period": "2026-09",
+            "employee_id": "SMT-150",
+            "full_name": "Imran D'Souza",
+            "gross_earnings": 4860,
+            "employee_contribution": 243,
+            "employer_contribution": 194.4,
+            "date_paid": "2026-10-15"
+          },
+          {
+            "period": "2026-09",
+            "employee_id": "SMT-153",
+            "full_name": "Leanne Forbes",
+            "gross_earnings": 2640,
+            "employee_contribution": 132,
+            "employer_contribution": 105.6,
+            "date_paid": "2026-10-15"
+          }
+        ]
+      }
+    },
+    {
+      "source": "remittance-2026-08.html",
+      "name": "GAB transfer advice August 2026.pdf",
+      "kind": "remittance_advice",
+      "render": "pdf",
+      "label": {
+        "payer_name": "Long Strand Table Group Ltd.",
+        "amount": 4118.76,
+        "value_date": "2026-09-14",
+        "reference": "SMTG/CMEP/ER-11207/AUG26",
+        "period": "2026-08"
+      }
+    },
+    {
+      "source": "remittance-2026-09.html",
+      "name": "GAB transfer advice September 2026.pdf",
+      "kind": "remittance_advice",
+      "render": "scan",
+      "label": {
+        "payer_name": "Long Strand Table Group Ltd.",
+        "amount": 4023.99,
+        "value_date": "2026-10-15",
+        "reference": "SMTG/CMEP/ER-11207/SEP26",
+        "period": "2026-09"
+      }
+    }
+  ],
+  "expected": {
+    "pipeline": "employer_onboarding",
+    "recommendation": "refer",
+    "missingKinds": [],
+    "risk": "standard",
+    "arrears": 904.75,
+    "checks": [
+      {
+        "id": "contributions_at_rate",
+        "outcome": "fail",
+        "note": "Employee side is 5% but the employer side is 4% of pensionable earnings on every line (e.g. Nicola Harrington: M$7,900.00 gross capped at M$7,250, employee M$362.50, employer M$290.00 instead of M$362.50)."
+      },
+      {
+        "id": "no_arrears",
+        "outcome": "fail",
+        "note": "Shortfall is 1% of pensionable earnings, line by line: August M$45,764.00 pensionable gives M$457.64; September M$44,711.00 gives M$447.11. Arrears M$904.75 before interest."
+      },
+      {
+        "id": "contributions_on_time",
+        "outcome": "pass",
+        "note": "August paid 14 Sep 2026 and September paid 15 Oct 2026, both by the 15th; remittances equal the schedule totals."
+      }
+    ]
+  }
+}

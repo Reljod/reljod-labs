@@ -1,0 +1,88 @@
+{
+  "slug": "sc-10-nuwaiser-transliteration",
+  "scenario": "screening_review",
+  "title": "Al-Nuwaiser · Arabic transliteration",
+  "summary": "A Jordanian hotel investor and trust settlor in London hit a sanctions record whose name is a different transliteration of his (Tariq Abd al-Aziz al-Nuwaysir); the list gives only c. 1974 and Jordanian nationality, both consistent: inconclusive, refer.",
+  "asOf": "2026-11-10",
+  "documents": [
+    {
+      "source": "alert.html",
+      "name": "Tidereach case report TMK-A-26-118751.pdf",
+      "kind": "screening_alert",
+      "render": "pdf",
+      "label": {
+        "alert_id": "TMK-A-26-118751",
+        "customer_name": "Tarek Abdelaziz Al-Nuwaiser",
+        "customer_id": "CTP-C-511378",
+        "screened_on": "2026-11-06",
+        "hits": [
+          {
+            "hit_name": "Tariq Abd al-Aziz al-Nuwaysir",
+            "list_type": "sanctions",
+            "list_source": "Consolidated Sanctions List (synthetic)",
+            "match_score": 78,
+            "hit_date_of_birth": "c. 1974",
+            "hit_nationality": "Jordan",
+            "hit_reference": "WL-SAN-0149"
+          }
+        ]
+      }
+    },
+    {
+      "source": "profile.html",
+      "name": "CoralCore KYC profile CTP-C-511378.pdf",
+      "kind": "customer_profile",
+      "render": "pdf",
+      "label": {
+        "customer_name": "Tarek Abdelaziz Al-Nuwaiser",
+        "customer_id": "CTP-C-511378",
+        "date_of_birth": "1974-03-19",
+        "nationality": "Jordan",
+        "residence": "United Kingdom",
+        "occupation": "Hotel investor",
+        "id_number": "R418273",
+        "other_names": [
+          "Tariq Al Nuwaiser"
+        ]
+      }
+    },
+    {
+      "source": "entry-wl-san-0149.html",
+      "name": "CSL record WL-SAN-0149.pdf",
+      "kind": "watchlist_entry",
+      "render": "pdf",
+      "label": {
+        "entry_name": "Tariq Abd al-Aziz al-Nuwaysir",
+        "aliases": [
+          "Tarik Abdulaziz Nuwesir",
+          "Abu Yasin"
+        ],
+        "date_of_birth": "circa 1974",
+        "place_of_birth": "",
+        "nationality": "Jordan",
+        "list_source": "Consolidated Sanctions List (synthetic)",
+        "listing_reason": "Financial facilitator for a designated armed group (synthetic programme TFN-2)",
+        "reference": "WL-SAN-0149"
+      }
+    }
+  ],
+  "expected": {
+    "pipeline": "screening_review",
+    "recommendation": "refer",
+    "missingKinds": [],
+    "checks": [
+      {
+        "id": "screening_clear",
+        "outcome": "review",
+        "note": "Transliterated sanctions name with consistent partial data; cannot be discounted"
+      }
+    ],
+    "hits": [
+      {
+        "name": "Tariq Abd al-Aziz al-Nuwaysir",
+        "disposition": "inconclusive",
+        "reason": "Tariq / Tarek, Abd al-Aziz / Abdelaziz and al-Nuwaysir / Al-Nuwaiser are transliterations of the same Arabic name, and the customer's recorded other name Tariq Al Nuwaiser is closer still. The list gives only circa 1974 and Jordanian nationality, both consistent with the customer (19 Mar 1974, Jordanian); it has no full DOB, place of birth or document number. Nothing discounts or confirms the match. Escalate and obtain further identifiers (certified passport, prior addresses, source of the listing)."
+      }
+    ]
+  }
+}

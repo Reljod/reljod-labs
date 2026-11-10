@@ -1,0 +1,58 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8">
+<link rel="stylesheet" href="../../../templates/base.css">
+<style>
+.pp { position:relative; width:6.3in; height:4.05in; border-radius:10px; overflow:hidden; border:1px solid #8a9aa0; color:#1a1a1a; font:8pt "Liberation Sans",sans-serif; background:linear-gradient(135deg,var(--a),var(--b) 55%,var(--c)); }
+.pp::before { content:""; position:absolute; inset:0; background:repeating-radial-gradient(circle at 70% 40%, rgb(255 255 255 / .18) 0 2px, transparent 2px 9px); }
+.pp-head { position:relative; display:flex; justify-content:space-between; padding:9px 14px 0; font:700 9pt "Liberation Sans",sans-serif; letter-spacing:.08em; color:var(--ink); }
+.pp-head small { display:block; font:400 6.5pt "Liberation Sans",sans-serif; letter-spacing:.03em; }
+.pp-photo { position:absolute; left:14px; top:46px; width:1.25in; height:1.6in; border-radius:4px; background:linear-gradient(#c6ced4,#98a4ad); overflow:hidden; }
+.pp-f { position:absolute; left:1.55in; top:42px; right:14px; display:grid; grid-template-columns:1.1fr 1fr 1fr; gap:3px 10px; }
+.pp-f b { display:block; font:400 5.8pt "Liberation Sans",sans-serif; color:#3d4a50; text-transform:uppercase; letter-spacing:.02em; }
+.pp-f span { font:700 8.6pt "Liberation Sans",sans-serif; text-transform:uppercase; }
+.pp-f .w2 { grid-column:span 2; } .pp-f .w3 { grid-column:span 3; }
+.pp-sig { position:absolute; left:14px; top:2.3in; font:italic 13pt "Caladea",serif; color:#223; }
+.mrz { position:absolute; left:14px; right:10px; bottom:10px; font:11.2pt/1.3 "DejaVu Sans Mono",monospace; letter-spacing:.04em; white-space:pre; color:#111; background:rgb(255 255 255 / .55); padding:3px 4px; }
+.cert-page { font:10pt/1.4 "Liberation Serif",serif; }
+.copyhdr { font:700 8pt "Liberation Sans",sans-serif; color:#666; letter-spacing:.2em; margin-bottom:10px; }
+.cert { margin-top:22px; display:flex; gap:30px; align-items:flex-start; }
+.cert .hand { font:13pt/1.45 "Caladea","Bitstream Charter",serif; color:#1a2a6c; flex:1; }
+.cert .stamp { margin-top:20px; }
+.page.card { background:#ebe6d8; padding:.15in .15in .3in; }
+.page.card .pp { width:100%; height:100%; }
+</style>
+</head>
+<body>
+<section class="page cert-page">
+  <div class="copyhdr">PHOTOCOPY · PASSPORT DATA PAGE</div>
+  <div class="pp" style="--a:#d9eedd;--b:#b9dcc1;--c:#eef5e6;--ink:#14532d">
+  <div class="pp-head"><div>FEDERAL REPUBLIC OF NIGERIA<small>ECOWAS</small></div><div style="text-align:right">PASSPORT<small>PASSEPORT</small></div></div>
+  <div class="pp-photo"><svg viewBox="0 0 120 154" width="100%" height="100%"><rect width="120" height="154" fill="#b4bec6"/><circle cx="60" cy="58" r="25" fill="#7f8b94"/><path d="M14 154 C18 112 40 100 60 100 C80 100 102 112 106 154 Z" fill="#6c7780"/></svg></div>
+  <div class="pp-f">
+    <div><b>Type</b><span>P</span></div><div><b>Code</b><span>NGA</span></div><div><b>Passport No.</b><span>B04417829</span></div>
+    <div class="w3"><b>Surname</b><span>OKAFOR</span></div>
+    <div class="w3"><b>Given names</b><span>CHINEDU EMMANUEL</span></div>
+    <div class="w2"><b>Nationality</b><span>NIGERIAN</span></div><div><b>Sex</b><span>M</span></div>
+    <div><b>Date of birth</b><span>23 JUL 1989</span></div><div class="w2"><b>Place of birth</b><span>ENUGU</span></div>
+    <div><b>Date of issue</b><span>02 MAR 2020</span></div><div><b>Date of expiry</b><span>01 MAR 2030</span></div><div><b>Authority</b><span style="font-size:7.4pt">NIS LAGOS</span></div>
+  </div>
+  <div class="pp-sig">C. E. Okafor</div>
+  <div class="mrz">P&lt;NGAOKAFOR&lt;&lt;CHINEDU&lt;EMMANUEL&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;
+B044178290NGA8907231M3003013&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;2</div>
+</div>
+  <div class="cert">
+    <div class="hand">I certify that this is a true copy of the original passport which I have seen, and that the photograph is a true likeness of the holder.<br><br>
+      <span class="signature">S. L. Pierre</span><br>
+      Name: Sandra Lyn Pierre<br>
+      Occupation: Attorney-at-Law<br>
+      Address: Pierre &amp; Ashby, 3rd Floor, Anchorage House, Port Selene<br>
+      Date: 30 June 2026
+    </div>
+    <div class="stamp">Pierre &amp; Ashby<br>Attorneys-at-Law<br>Port Selene · Grand Meridia<br>Certified true copy</div>
+  </div>
+  <div class="synthetic-note">Synthetic document created for a software demonstration. Not a real passport design. Every person named here is fictional.</div>
+</section>
+</body>
+</html>

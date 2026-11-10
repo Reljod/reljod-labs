@@ -1,0 +1,287 @@
+{
+  "slug": "eo-04-coral-stone-construction",
+  "scenario": "employer_onboarding",
+  "title": "Coral Stone Construction · new employer",
+  "summary": "Marlow Town contractor joining the plan; the census lists one carpenter twice, has an impossible date of birth and a 16-year-old apprentice.",
+  "asOf": "2026-11-10",
+  "documents": [
+    {
+      "source": "application.html",
+      "name": "Coral Stone - Corallis application.pdf",
+      "kind": "employer_application",
+      "render": "scan",
+      "label": {
+        "employer_name": "Coral Stone Construction Ltd.",
+        "registration_number": "297413",
+        "trade_name": "",
+        "business_address": "1147 Clover Road, Marlow Town, Grand Meridia MR1-1601",
+        "nature_of_business": "General building contractor: residential and commercial construction",
+        "employee_count": 18,
+        "contact_name": "Yolanda Connolly",
+        "signatory_names": [
+          "Dwayne Everton Connolly"
+        ],
+        "signed_date": "2026-10-26"
+      }
+    },
+    {
+      "source": "certificate-of-incorporation.html",
+      "name": "COI Coral Stone 2009.pdf",
+      "kind": "certificate_of_incorporation",
+      "render": "scan",
+      "label": {
+        "entity_name": "Coral Stone Construction Ltd.",
+        "registration_number": "297413",
+        "jurisdiction": "Meridia",
+        "entity_type": "ordinary resident company",
+        "incorporation_date": "2009-05-26"
+      }
+    },
+    {
+      "source": "trade-licence.html",
+      "name": "T&B Licence 2026.pdf",
+      "kind": "trade_business_licence",
+      "render": "scan",
+      "label": {
+        "licensee_name": "Coral Stone Construction Ltd.",
+        "licence_number": "TB-26-073114",
+        "business_activity": "General building contractor: construction, civil works and renovations",
+        "expiry_date": "2027-01-31"
+      }
+    },
+    {
+      "source": "register-of-directors.html",
+      "name": "Register of Directors and Officers.pdf",
+      "kind": "register_of_directors",
+      "render": "pdf",
+      "label": {
+        "entity_name": "Coral Stone Construction Ltd.",
+        "as_of_date": "2026-10-21",
+        "directors": [
+          {
+            "name": "Dwayne Everton Connolly",
+            "role": "director",
+            "date_of_birth": "1968-10-14",
+            "nationality": "Meridian",
+            "appointed": "2009-05-26"
+          },
+          {
+            "name": "Marlon Anthony Whittaker",
+            "role": "director",
+            "date_of_birth": "1975-02-02",
+            "nationality": "Meridian",
+            "appointed": "2015-01-12"
+          },
+          {
+            "name": "Harbour Ridge Secretarial Ltd.",
+            "role": "secretary",
+            "date_of_birth": "",
+            "nationality": "",
+            "appointed": "2009-05-26"
+          }
+        ]
+      }
+    },
+    {
+      "source": "census.csv",
+      "name": "CSC_employees_Oct2026.csv",
+      "kind": "member_census",
+      "render": "csv",
+      "label": {
+        "employer_name": "",
+        "members": [
+          {
+            "employee_id": "CSC-001",
+            "full_name": "Dwayne Connolly",
+            "date_of_birth": "1968-10-14",
+            "hire_date": "2009-05-26",
+            "monthly_salary": 7800,
+            "id_number": "C0221873"
+          },
+          {
+            "employee_id": "CSC-002",
+            "full_name": "Marlon Whittaker",
+            "date_of_birth": "1975-02-02",
+            "hire_date": "2015-01-12",
+            "monthly_salary": 6400,
+            "id_number": "C0339102"
+          },
+          {
+            "employee_id": "CSC-003",
+            "full_name": "Yolanda Connolly",
+            "date_of_birth": "1972-09-08",
+            "hire_date": "2010-06-01",
+            "monthly_salary": 3600,
+            "id_number": "C0247781"
+          },
+          {
+            "employee_id": "CSC-005",
+            "full_name": "Garfield Lindo",
+            "date_of_birth": "1980-03-21",
+            "hire_date": "2016-04-04",
+            "monthly_salary": 4200,
+            "id_number": "A1903377"
+          },
+          {
+            "employee_id": "CSC-006",
+            "full_name": "José Manuel Hernández",
+            "date_of_birth": "1985-11-30",
+            "hire_date": "2017-08-15",
+            "monthly_salary": 2980,
+            "id_number": "F0773120"
+          },
+          {
+            "employee_id": "CSC-008",
+            "full_name": "Oneil Facey",
+            "date_of_birth": "1988-07-16",
+            "hire_date": "2018-03-05",
+            "monthly_salary": 2860,
+            "id_number": "A2084412"
+          },
+          {
+            "employee_id": "CSC-009",
+            "full_name": "Ricardo Mejía",
+            "date_of_birth": "1990-04-31",
+            "hire_date": "2018-09-10",
+            "monthly_salary": 2150,
+            "id_number": "F0920165"
+          },
+          {
+            "employee_id": "CSC-010",
+            "full_name": "Desmond Reid",
+            "date_of_birth": "1979-12-12",
+            "hire_date": "2018-10-22",
+            "monthly_salary": 3450,
+            "id_number": "A1655029"
+          },
+          {
+            "employee_id": "CSC-011",
+            "full_name": "Rodel Navarro",
+            "date_of_birth": "1987-05-03",
+            "hire_date": "2019-01-07",
+            "monthly_salary": 3700,
+            "id_number": "P5520147A"
+          },
+          {
+            "employee_id": "CSC-012",
+            "full_name": "Carlos Alberto Flores",
+            "date_of_birth": "1992-06-25",
+            "hire_date": "2020-03-02",
+            "monthly_salary": 2150,
+            "id_number": "F1044287"
+          },
+          {
+            "employee_id": "CSC-013",
+            "full_name": "Andre Ebanks",
+            "date_of_birth": "1996-01-19",
+            "hire_date": "2020-05-18",
+            "monthly_salary": 3300,
+            "id_number": "C0601125"
+          },
+          {
+            "employee_id": "CSC-014",
+            "full_name": "Kevon Williams",
+            "date_of_birth": "1994-08-07",
+            "hire_date": "2021-02-08",
+            "monthly_salary": 2860,
+            "id_number": "A2617430"
+          },
+          {
+            "employee_id": "CSC-015",
+            "full_name": "Arnel Bautista",
+            "date_of_birth": "1983-02-14",
+            "hire_date": "2021-06-14",
+            "monthly_salary": 2700,
+            "id_number": "P4108822B"
+          },
+          {
+            "employee_id": "CSC-016",
+            "full_name": "Wilmer Castillo",
+            "date_of_birth": "1989-10-09",
+            "hire_date": "2022-04-11",
+            "monthly_salary": 2980,
+            "id_number": "F0866301"
+          },
+          {
+            "employee_id": "CSC-017",
+            "full_name": "Tyrese McCoy",
+            "date_of_birth": "2010-02-14",
+            "hire_date": "2026-07-06",
+            "monthly_salary": 1600,
+            "id_number": "C0812274"
+          },
+          {
+            "employee_id": "CSC-018",
+            "full_name": "Patrice Morgan",
+            "date_of_birth": "1991-03-28",
+            "hire_date": "2022-10-03",
+            "monthly_salary": 2150,
+            "id_number": "A2440918"
+          },
+          {
+            "employee_id": "CSC-019",
+            "full_name": "Sunil Pillai",
+            "date_of_birth": "1984-05-05",
+            "hire_date": "2023-01-09",
+            "monthly_salary": 5250,
+            "id_number": "Z3061187"
+          },
+          {
+            "employee_id": "CSC-020",
+            "full_name": "Kevon Williams",
+            "date_of_birth": "1994-08-07",
+            "hire_date": "2024-03-01",
+            "monthly_salary": 2860,
+            "id_number": "A2617430"
+          },
+          {
+            "employee_id": "CSC-021",
+            "full_name": "Dalton Rankin",
+            "date_of_birth": "1999-07-30",
+            "hire_date": "2024-11-04",
+            "monthly_salary": 2150,
+            "id_number": "C0688140"
+          }
+        ]
+      }
+    }
+  ],
+  "expected": {
+    "pipeline": "employer_onboarding",
+    "recommendation": "refer",
+    "missingKinds": [],
+    "risk": "standard",
+    "checks": [
+      {
+        "id": "entity_documents_consistent",
+        "outcome": "pass",
+        "note": "Application, certificate, licence and register all name Coral Stone Construction Ltd., registration no. 297413."
+      },
+      {
+        "id": "licence_in_date",
+        "outcome": "pass",
+        "note": "Licence TB-26-073114 expires 31 Jan 2027, after the review date; it falls due for renewal soon."
+      },
+      {
+        "id": "signatories_authorised",
+        "outcome": "pass",
+        "note": "Signed by Dwayne Everton Connolly, a director on the 21 Oct 2026 register."
+      },
+      {
+        "id": "census_valid",
+        "outcome": "fail",
+        "note": "19 rows against 18 employees declared. Kevon Williams appears twice (CSC-014 and CSC-020, same DOB 7 Aug 1994 and passport A2617430). Ricardo Mejía's DOB 31/04/1990 (CSC-009) is not a real date. Tyrese McCoy (CSC-017, born 14 Feb 2010) is 16, under 18 and not yet eligible for mandatory enrolment. Ask for a corrected census."
+      },
+      {
+        "id": "screening_clear",
+        "outcome": "pass",
+        "note": "No director or signatory matches the watchlist."
+      },
+      {
+        "id": "edd_required",
+        "outcome": "pass",
+        "note": "Local contractor with Meridian directors and a work-permit workforce: standard due diligence."
+      }
+    ]
+  }
+}

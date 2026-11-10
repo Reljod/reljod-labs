@@ -1,0 +1,114 @@
+{
+  "slug": "sc-02-santos-reyes-nationality",
+  "scenario": "screening_review",
+  "title": "Santos Reyes · Venezuelan sanctions namesake",
+  "summary": "A Spanish architect who settled a Corallis trust has exactly the name of a Venezuelan sanctions target, but the listed person is Venezuelan, born in Maracaibo, while the customer is Spanish, born in Sevilla: a false positive on nationality and place of birth.",
+  "asOf": "2026-11-10",
+  "documents": [
+    {
+      "source": "alert.html",
+      "name": "Tidereach case report TMK-A-26-118734.pdf",
+      "kind": "screening_alert",
+      "render": "pdf",
+      "label": {
+        "alert_id": "TMK-A-26-118734",
+        "customer_name": "María Fernanda Santos Reyes",
+        "customer_id": "CTP-C-503316",
+        "screened_on": "2026-11-06",
+        "hits": [
+          {
+            "hit_name": "Maria Fernanda Santos Reyes",
+            "list_type": "sanctions",
+            "list_source": "Consolidated Sanctions List (synthetic)",
+            "match_score": 97,
+            "hit_date_of_birth": "c. 1980",
+            "hit_nationality": "Venezuela",
+            "hit_reference": "WL-SAN-0122"
+          }
+        ]
+      }
+    },
+    {
+      "source": "profile.html",
+      "name": "CoralCore KYC profile CTP-C-503316.pdf",
+      "kind": "customer_profile",
+      "render": "pdf",
+      "label": {
+        "customer_name": "María Fernanda Santos Reyes",
+        "customer_id": "CTP-C-503316",
+        "date_of_birth": "1981-05-02",
+        "nationality": "Spain",
+        "residence": "Spain",
+        "occupation": "Architect",
+        "id_number": "PAJ481207",
+        "other_names": []
+      }
+    },
+    {
+      "source": "passport.html",
+      "name": "Passport certified copy - Santos Reyes.pdf",
+      "kind": "identity_document",
+      "render": "scan",
+      "label": {
+        "document_type": "passport",
+        "full_name": "María Fernanda Santos Reyes",
+        "date_of_birth": "1981-05-02",
+        "nationality": "Spanish",
+        "id_number": "PAJ481207",
+        "date_of_expiry": "2031-01-18",
+        "certified": true,
+        "certifier_name": "Ignacio Ferrer Olmedo",
+        "certifier_occupation": "Notary (Notario), Madrid",
+        "certification_date": "2026-09-22"
+      }
+    },
+    {
+      "source": "entry-wl-san-0122.html",
+      "name": "CSL record WL-SAN-0122.pdf",
+      "kind": "watchlist_entry",
+      "render": "pdf",
+      "label": {
+        "entry_name": "Maria Fernanda Santos Reyes",
+        "aliases": [
+          "Mafe Santos",
+          "Maria F. Santos de Ruiz"
+        ],
+        "date_of_birth": "Approx. 1980",
+        "place_of_birth": "Maracaibo, Zulia, Venezuela",
+        "nationality": "Venezuela",
+        "list_source": "Consolidated Sanctions List (synthetic)",
+        "listing_reason": "Senior manager of a designated state-linked fuel import intermediary (synthetic programme VFI-1)",
+        "reference": "WL-SAN-0122"
+      }
+    }
+  ],
+  "expected": {
+    "pipeline": "screening_review",
+    "recommendation": "approve",
+    "missingKinds": [],
+    "checks": [
+      {
+        "id": "screening_clear",
+        "outcome": "pass",
+        "note": "Sanctions hit discounted on nationality and place of birth"
+      },
+      {
+        "id": "identity_matches_record",
+        "outcome": "pass",
+        "note": "Passport agrees with the KYC record: name, DOB 02 May 1981, born Sevilla"
+      },
+      {
+        "id": "id_in_date",
+        "outcome": "pass",
+        "note": "Passport expires 18 Jan 2031"
+      }
+    ],
+    "hits": [
+      {
+        "name": "Maria Fernanda Santos Reyes",
+        "disposition": "false_positive",
+        "reason": "Name is identical but the listed person is Venezuelan, born in Maracaibo, Zulia, and identified by a Venezuelan cedula; the customer is a Spanish national born in Sevilla (passport PAJ481207) with no Venezuelan nationality, residence or ties on file. The list gives only an approximate year of birth (c. 1980), against the customer's 02 May 1981, so nothing else links them. Discount."
+      }
+    ]
+  }
+}

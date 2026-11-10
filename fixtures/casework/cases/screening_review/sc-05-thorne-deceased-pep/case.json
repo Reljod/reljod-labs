@@ -1,0 +1,86 @@
+{
+  "slug": "sc-05-thorne-deceased-pep",
+  "scenario": "screening_review",
+  "title": "Thorne · deceased PEP record",
+  "summary": "A Jamaican marine engineer in Marlow Town hit a PEP record for a former Jamaican MP with the same first name and surname (Desmond A. Thorne), but the register shows that man died in 2019 and was born in 1946: a false positive.",
+  "asOf": "2026-11-10",
+  "documents": [
+    {
+      "source": "alert.html",
+      "name": "Sentinel Watch alert SW-26-1104-00395.pdf",
+      "kind": "screening_alert",
+      "render": "scan",
+      "label": {
+        "alert_id": "SW-26-1104-00395",
+        "customer_name": "Desmond Everard Thorne",
+        "customer_id": "CTP-C-261493",
+        "screened_on": "2026-11-04",
+        "hits": [
+          {
+            "hit_name": "Desmond A. Thorne",
+            "list_type": "pep",
+            "list_source": "Caribbean PEP Register (synthetic)",
+            "match_score": 84,
+            "hit_date_of_birth": "1946",
+            "hit_nationality": "Jamaica",
+            "hit_reference": "WL-PEP-0306"
+          }
+        ]
+      }
+    },
+    {
+      "source": "profile.html",
+      "name": "CoralCore KYC profile CTP-C-261493.pdf",
+      "kind": "customer_profile",
+      "render": "pdf",
+      "label": {
+        "customer_name": "Desmond Everard Thorne",
+        "customer_id": "CTP-C-261493",
+        "date_of_birth": "1972-01-09",
+        "nationality": "Jamaica",
+        "residence": "Meridia",
+        "occupation": "Marine engineer",
+        "id_number": "A3381902",
+        "other_names": []
+      }
+    },
+    {
+      "source": "entry-wl-pep-0306.html",
+      "name": "Caribbean PEP Register profile WL-PEP-0306.pdf",
+      "kind": "watchlist_entry",
+      "render": "pdf",
+      "label": {
+        "entry_name": "Desmond A. Thorne",
+        "aliases": [
+          "Desmond Aloysius Thorne",
+          "Des Thorne"
+        ],
+        "date_of_birth": "1946",
+        "place_of_birth": "Port Antonio, Jamaica",
+        "nationality": "Jamaica",
+        "list_source": "Caribbean PEP Register (synthetic)",
+        "listing_reason": "Former Member of the House of Representatives, Jamaica (1989-2002)",
+        "reference": "WL-PEP-0306"
+      }
+    }
+  ],
+  "expected": {
+    "pipeline": "screening_review",
+    "recommendation": "approve",
+    "missingKinds": [],
+    "checks": [
+      {
+        "id": "screening_clear",
+        "outcome": "pass",
+        "note": "PEP record is for a deceased man born 1946"
+      }
+    ],
+    "hits": [
+      {
+        "name": "Desmond A. Thorne",
+        "disposition": "false_positive",
+        "reason": "The register record is for Desmond Aloysius Thorne, former Jamaican MP (1989-2002), born 1946 and recorded as deceased on 14 Jun 2019. The customer, Desmond Everard Thorne, was born 09 Jan 1972 and is alive (KYC refreshed 14 Apr 2026, account active). Middle name, age and status all differ; no family link to the former MP is recorded. Discount."
+      }
+    ]
+  }
+}

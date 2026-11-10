@@ -1,0 +1,114 @@
+{
+  "slug": "sc-09-bhandari-year-only",
+  "scenario": "screening_review",
+  "title": "Bhandari · year-of-birth-only sanctions hit",
+  "summary": "A non-resident Indian commodities trader in Dubai hit a new sanctions listing that gives only a year of birth, 1975, which matches his; nationality and Dubai link agree, nothing on the list can discount it and his passport on file has expired: inconclusive, refer.",
+  "asOf": "2026-11-10",
+  "documents": [
+    {
+      "source": "alert.html",
+      "name": "Sentinel Watch alert SW-26-1107-00458.pdf",
+      "kind": "screening_alert",
+      "render": "pdf",
+      "label": {
+        "alert_id": "SW-26-1107-00458",
+        "customer_name": "Suresh Kumar Bhandari",
+        "customer_id": "CTP-C-462915",
+        "screened_on": "2026-11-07",
+        "hits": [
+          {
+            "hit_name": "Suresh Bhandari",
+            "list_type": "sanctions",
+            "list_source": "Consolidated Sanctions List (synthetic)",
+            "match_score": 89,
+            "hit_date_of_birth": "1975",
+            "hit_nationality": "India",
+            "hit_reference": "WL-SAN-0158"
+          }
+        ]
+      }
+    },
+    {
+      "source": "profile.html",
+      "name": "CoralCore KYC profile CTP-C-462915.pdf",
+      "kind": "customer_profile",
+      "render": "pdf",
+      "label": {
+        "customer_name": "Suresh Kumar Bhandari",
+        "customer_id": "CTP-C-462915",
+        "date_of_birth": "1975-09-30",
+        "nationality": "India",
+        "residence": "United Arab Emirates",
+        "occupation": "Commodities trader",
+        "id_number": "Z4829163",
+        "other_names": []
+      }
+    },
+    {
+      "source": "passport.html",
+      "name": "Passport certified copy - Bhandari.pdf",
+      "kind": "identity_document",
+      "render": "scan",
+      "label": {
+        "document_type": "passport",
+        "full_name": "Suresh Kumar Bhandari",
+        "date_of_birth": "1975-09-30",
+        "nationality": "Indian",
+        "id_number": "Z4829163",
+        "date_of_expiry": "2026-09-14",
+        "certified": true,
+        "certifier_name": "Rahul V. Deshpande",
+        "certifier_occupation": "Chartered Accountant",
+        "certification_date": "2016-10-03"
+      }
+    },
+    {
+      "source": "entry-wl-san-0158.html",
+      "name": "CSL record WL-SAN-0158.pdf",
+      "kind": "watchlist_entry",
+      "render": "pdf",
+      "label": {
+        "entry_name": "Suresh Bhandari",
+        "aliases": [
+          "S. K. Bhandari",
+          "Suresh Kumar"
+        ],
+        "date_of_birth": "1975",
+        "place_of_birth": "",
+        "nationality": "India",
+        "list_source": "Consolidated Sanctions List (synthetic)",
+        "listing_reason": "Director of front companies used in a trade-based money laundering scheme routed through Dubai (synthetic programme TBM-3)",
+        "reference": "WL-SAN-0158"
+      }
+    }
+  ],
+  "expected": {
+    "pipeline": "screening_review",
+    "recommendation": "refer",
+    "missingKinds": [],
+    "checks": [
+      {
+        "id": "screening_clear",
+        "outcome": "review",
+        "note": "Sanctions hit cannot be discounted: year of birth, nationality and Dubai link all fit"
+      },
+      {
+        "id": "identity_matches_record",
+        "outcome": "pass",
+        "note": "Passport name, DOB 30 Sep 1975 and number Z4829163 agree with the KYC record"
+      },
+      {
+        "id": "id_in_date",
+        "outcome": "fail",
+        "note": "Passport expired 14 Sep 2026; renewal outstanding"
+      }
+    ],
+    "hits": [
+      {
+        "name": "Suresh Bhandari",
+        "disposition": "inconclusive",
+        "reason": "The list gives only a year of birth, 1975, which matches the customer's (30 Sep 1975); nationality India matches; the alias S. K. Bhandari fits Suresh Kumar Bhandari; and the listed person is linked to front companies in Dubai, where the customer runs a commodities business. The list has no full DOB, place of birth or document number to discount it, and no identifier confirms it. Escalate: obtain a current passport, company details for Gulfstar Agro Commodities FZE and the listing's named entities."
+      }
+    ]
+  }
+}

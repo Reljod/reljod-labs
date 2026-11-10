@@ -1,0 +1,150 @@
+{
+  "slug": "sr-08-silverthorn-missing-register",
+  "scenario": "structure_review",
+  "title": "Silverthorn Asset Partners · intermediate register missing",
+  "summary": "Meridian company owned 100% by a Bahamas holding company whose own register of members is missing; the 70/30 split behind it rests only on a hand-drawn meeting note, and one owner's passport is an uncertified phone photo.",
+  "asOf": "2026-11-10",
+  "documents": [
+    {
+      "source": "structure-chart-notes.html",
+      "name": "Meeting notes 3 Nov - structure sketch.pdf",
+      "kind": "structure_chart",
+      "render": "scan",
+      "label": {
+        "top_entity": "Silverthorn Asset Partners Ltd.",
+        "links": [
+          {
+            "owner": "Rahul Venkatesan",
+            "owned": "Kestrel Bay Holdings Ltd.",
+            "percentage": 70,
+            "relation": "shareholding"
+          },
+          {
+            "owner": "Simone Achterberg-Lowe",
+            "owned": "Kestrel Bay Holdings Ltd.",
+            "percentage": 30,
+            "relation": "shareholding"
+          },
+          {
+            "owner": "Kestrel Bay Holdings Ltd.",
+            "owned": "Silverthorn Asset Partners Ltd.",
+            "percentage": 100,
+            "relation": "shareholding"
+          }
+        ]
+      }
+    },
+    {
+      "source": "certificate-of-incorporation.html",
+      "name": "Silverthorn - Certificate of Incorporation.pdf",
+      "kind": "certificate_of_incorporation",
+      "render": "pdf",
+      "label": {
+        "entity_name": "Silverthorn Asset Partners Ltd.",
+        "registration_number": "CR-395066",
+        "jurisdiction": "Meridia",
+        "entity_type": "exempted",
+        "incorporation_date": "2022-09-13"
+      }
+    },
+    {
+      "source": "register-of-members.html",
+      "name": "Silverthorn - Register of Members.pdf",
+      "kind": "register_of_members",
+      "render": "pdf",
+      "label": {
+        "entity_name": "Silverthorn Asset Partners Ltd.",
+        "as_of_date": "2026-10-22",
+        "members": [
+          {
+            "holder_name": "Kestrel Bay Holdings Ltd.",
+            "holder_type": "company",
+            "shares": 25000,
+            "share_class": "Ordinary",
+            "percentage": 100
+          }
+        ]
+      }
+    },
+    {
+      "source": "passport-venkatesan.html",
+      "name": "Passport - R Venkatesan (certified).pdf",
+      "kind": "identity_document",
+      "render": "scan",
+      "label": {
+        "document_type": "passport",
+        "full_name": "Rahul Venkatesan",
+        "date_of_birth": "1977-02-19",
+        "nationality": "Indian",
+        "id_number": "U6203841",
+        "date_of_expiry": "2034-05-30",
+        "certified": true,
+        "certifier_name": "Kavita Nair",
+        "certifier_occupation": "Notary Public",
+        "certification_date": "2026-10-28"
+      }
+    },
+    {
+      "source": "passport-achterberg-lowe.html",
+      "name": "Phone photo 2026-11-04 passport.jpg",
+      "kind": "identity_document",
+      "render": "photo",
+      "label": {
+        "document_type": "passport",
+        "full_name": "Simone Achterberg-Lowe",
+        "date_of_birth": "1980-12-22",
+        "nationality": "Canadian",
+        "id_number": "HB730195",
+        "date_of_expiry": "2030-04-04",
+        "certified": false,
+        "certifier_name": "",
+        "certifier_occupation": "",
+        "certification_date": ""
+      }
+    }
+  ],
+  "expected": {
+    "pipeline": "structure_review",
+    "recommendation": "request_info",
+    "risk": "standard",
+    "ubos": [
+      "Rahul Venkatesan",
+      "Simone Achterberg-Lowe"
+    ],
+    "missingKinds": [
+      "register_of_members"
+    ],
+    "checks": [
+      {
+        "id": "entity_documents_consistent",
+        "outcome": "pass",
+        "note": "Silverthorn Asset Partners Ltd., CR-395066, agrees between the certificate and its register."
+      },
+      {
+        "id": "ownership_reconciles",
+        "outcome": "review",
+        "note": "Silverthorn's register shows Kestrel Bay Holdings Ltd. with 25,000 of 25,000 shares (100%), but there is no register of members for Kestrel Bay Holdings Ltd. The 70/30 split above it comes only from a hand-drawn meeting note."
+      },
+      {
+        "id": "ubos_identified",
+        "outcome": "review",
+        "note": "Per the sketch only: Rahul Venkatesan 100% x 70% = 70% and Simone Achterberg-Lowe 100% x 30% = 30%, both above 10%. Unconfirmed until Kestrel Bay's register is received."
+      },
+      {
+        "id": "ubos_verified",
+        "outcome": "review",
+        "note": "Rahul Venkatesan has a certified passport (28 Oct 2026). Simone Achterberg-Lowe's passport is an uncertified phone photo; a certified copy is needed."
+      },
+      {
+        "id": "id_certified",
+        "outcome": "review",
+        "note": "Simone Achterberg-Lowe: phone photo, no certification."
+      },
+      {
+        "id": "screening_clear",
+        "outcome": "pass",
+        "note": "No watchlist matches for the named people or companies."
+      }
+    ]
+  }
+}

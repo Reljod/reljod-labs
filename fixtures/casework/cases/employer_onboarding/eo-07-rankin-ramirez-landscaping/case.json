@@ -1,0 +1,340 @@
+{
+  "slug": "eo-07-rankin-ramirez-landscaping",
+  "scenario": "employer_onboarding",
+  "title": "Rankin & Ramírez Landscaping · Jul-Sep 2026",
+  "summary": "Landscaping partnership's July to September contributions: July and September were paid after the 15th (interest due) and August was deducted from wages but never paid.",
+  "asOf": "2026-11-10",
+  "documents": [
+    {
+      "source": "contribution-schedule.csv",
+      "name": "RRL pension Jul-Sep.csv",
+      "kind": "contribution_schedule",
+      "render": "csv",
+      "label": {
+        "employer_name": "",
+        "lines": [
+          {
+            "period": "2026-07",
+            "employee_id": "RRL-04",
+            "full_name": "Elvin Josué Hernández",
+            "gross_earnings": 2300,
+            "employee_contribution": 115,
+            "employer_contribution": 115,
+            "date_paid": "2026-08-27"
+          },
+          {
+            "period": "2026-07",
+            "employee_id": "RRL-05",
+            "full_name": "Nelson Ramos",
+            "gross_earnings": 2200,
+            "employee_contribution": 110,
+            "employer_contribution": 110,
+            "date_paid": "2026-08-27"
+          },
+          {
+            "period": "2026-07",
+            "employee_id": "RRL-06",
+            "full_name": "Kenroy Brown",
+            "gross_earnings": 2530,
+            "employee_contribution": 126.5,
+            "employer_contribution": 126.5,
+            "date_paid": "2026-08-27"
+          },
+          {
+            "period": "2026-07",
+            "employee_id": "RRL-07",
+            "full_name": "Fitzroy Morgan",
+            "gross_earnings": 3456,
+            "employee_contribution": 172.8,
+            "employer_contribution": 172.8,
+            "date_paid": "2026-08-27"
+          },
+          {
+            "period": "2026-07",
+            "employee_id": "RRL-08",
+            "full_name": "Darwin Mejía",
+            "gross_earnings": 2100,
+            "employee_contribution": 105,
+            "employer_contribution": 105,
+            "date_paid": "2026-08-27"
+          },
+          {
+            "period": "2026-07",
+            "employee_id": "RRL-09",
+            "full_name": "Jayson Manalo",
+            "gross_earnings": 2944,
+            "employee_contribution": 147.2,
+            "employer_contribution": 147.2,
+            "date_paid": "2026-08-27"
+          },
+          {
+            "period": "2026-07",
+            "employee_id": "RRL-11",
+            "full_name": "Orlando Castillo",
+            "gross_earnings": 2200,
+            "employee_contribution": 110,
+            "employer_contribution": 110,
+            "date_paid": "2026-08-27"
+          },
+          {
+            "period": "2026-07",
+            "employee_id": "RRL-12",
+            "full_name": "Romario Grant",
+            "gross_earnings": 2475,
+            "employee_contribution": 123.75,
+            "employer_contribution": 123.75,
+            "date_paid": "2026-08-27"
+          },
+          {
+            "period": "2026-07",
+            "employee_id": "RRL-14",
+            "full_name": "Juan Carlos Rivera",
+            "gross_earnings": 2300,
+            "employee_contribution": 115,
+            "employer_contribution": 115,
+            "date_paid": "2026-08-27"
+          },
+          {
+            "period": "2026-07",
+            "employee_id": "RRL-15",
+            "full_name": "Shirley Rankin",
+            "gross_earnings": 2600,
+            "employee_contribution": 130,
+            "employer_contribution": 130,
+            "date_paid": "2026-08-27"
+          },
+          {
+            "period": "2026-08",
+            "employee_id": "RRL-04",
+            "full_name": "Elvin Josué Hernández",
+            "gross_earnings": 2100,
+            "employee_contribution": 105,
+            "employer_contribution": 105,
+            "date_paid": ""
+          },
+          {
+            "period": "2026-08",
+            "employee_id": "RRL-05",
+            "full_name": "Nelson Ramos",
+            "gross_earnings": 2100,
+            "employee_contribution": 105,
+            "employer_contribution": 105,
+            "date_paid": ""
+          },
+          {
+            "period": "2026-08",
+            "employee_id": "RRL-06",
+            "full_name": "Kenroy Brown",
+            "gross_earnings": 2365,
+            "employee_contribution": 118.25,
+            "employer_contribution": 118.25,
+            "date_paid": ""
+          },
+          {
+            "period": "2026-08",
+            "employee_id": "RRL-07",
+            "full_name": "Fitzroy Morgan",
+            "gross_earnings": 3168,
+            "employee_contribution": 158.4,
+            "employer_contribution": 158.4,
+            "date_paid": ""
+          },
+          {
+            "period": "2026-08",
+            "employee_id": "RRL-08",
+            "full_name": "Darwin Mejía",
+            "gross_earnings": 2000,
+            "employee_contribution": 100,
+            "employer_contribution": 100,
+            "date_paid": ""
+          },
+          {
+            "period": "2026-08",
+            "employee_id": "RRL-09",
+            "full_name": "Jayson Manalo",
+            "gross_earnings": 2688,
+            "employee_contribution": 134.4,
+            "employer_contribution": 134.4,
+            "date_paid": ""
+          },
+          {
+            "period": "2026-08",
+            "employee_id": "RRL-11",
+            "full_name": "Orlando Castillo",
+            "gross_earnings": 2100,
+            "employee_contribution": 105,
+            "employer_contribution": 105,
+            "date_paid": ""
+          },
+          {
+            "period": "2026-08",
+            "employee_id": "RRL-12",
+            "full_name": "Romario Grant",
+            "gross_earnings": 2255,
+            "employee_contribution": 112.75,
+            "employer_contribution": 112.75,
+            "date_paid": ""
+          },
+          {
+            "period": "2026-08",
+            "employee_id": "RRL-14",
+            "full_name": "Juan Carlos Rivera",
+            "gross_earnings": 2000,
+            "employee_contribution": 100,
+            "employer_contribution": 100,
+            "date_paid": ""
+          },
+          {
+            "period": "2026-08",
+            "employee_id": "RRL-15",
+            "full_name": "Shirley Rankin",
+            "gross_earnings": 2600,
+            "employee_contribution": 130,
+            "employer_contribution": 130,
+            "date_paid": ""
+          },
+          {
+            "period": "2026-09",
+            "employee_id": "RRL-04",
+            "full_name": "Elvin Josué Hernández",
+            "gross_earnings": 2200,
+            "employee_contribution": 110,
+            "employer_contribution": 110,
+            "date_paid": "2026-10-21"
+          },
+          {
+            "period": "2026-09",
+            "employee_id": "RRL-05",
+            "full_name": "Nelson Ramos",
+            "gross_earnings": 2150,
+            "employee_contribution": 107.5,
+            "employer_contribution": 107.5,
+            "date_paid": "2026-10-21"
+          },
+          {
+            "period": "2026-09",
+            "employee_id": "RRL-06",
+            "full_name": "Kenroy Brown",
+            "gross_earnings": 2420,
+            "employee_contribution": 121,
+            "employer_contribution": 121,
+            "date_paid": "2026-10-21"
+          },
+          {
+            "period": "2026-09",
+            "employee_id": "RRL-07",
+            "full_name": "Fitzroy Morgan",
+            "gross_earnings": 3312,
+            "employee_contribution": 165.6,
+            "employer_contribution": 165.6,
+            "date_paid": "2026-10-21"
+          },
+          {
+            "period": "2026-09",
+            "employee_id": "RRL-08",
+            "full_name": "Darwin Mejía",
+            "gross_earnings": 2200,
+            "employee_contribution": 110,
+            "employer_contribution": 110,
+            "date_paid": "2026-10-21"
+          },
+          {
+            "period": "2026-09",
+            "employee_id": "RRL-09",
+            "full_name": "Jayson Manalo",
+            "gross_earnings": 2816,
+            "employee_contribution": 140.8,
+            "employer_contribution": 140.8,
+            "date_paid": "2026-10-21"
+          },
+          {
+            "period": "2026-09",
+            "employee_id": "RRL-11",
+            "full_name": "Orlando Castillo",
+            "gross_earnings": 2100,
+            "employee_contribution": 105,
+            "employer_contribution": 105,
+            "date_paid": "2026-10-21"
+          },
+          {
+            "period": "2026-09",
+            "employee_id": "RRL-12",
+            "full_name": "Romario Grant",
+            "gross_earnings": 2420,
+            "employee_contribution": 121,
+            "employer_contribution": 121,
+            "date_paid": "2026-10-21"
+          },
+          {
+            "period": "2026-09",
+            "employee_id": "RRL-14",
+            "full_name": "Juan Carlos Rivera",
+            "gross_earnings": 2150,
+            "employee_contribution": 107.5,
+            "employer_contribution": 107.5,
+            "date_paid": "2026-10-21"
+          },
+          {
+            "period": "2026-09",
+            "employee_id": "RRL-15",
+            "full_name": "Shirley Rankin",
+            "gross_earnings": 2600,
+            "employee_contribution": 130,
+            "employer_contribution": 130,
+            "date_paid": "2026-10-21"
+          }
+        ]
+      }
+    },
+    {
+      "source": "remittance-2026-07.html",
+      "name": "RRL remittance July 2026.pdf",
+      "kind": "remittance_advice",
+      "render": "scan",
+      "label": {
+        "payer_name": "Rankin & Ramírez Landscaping",
+        "amount": 2510.5,
+        "value_date": "2026-08-27",
+        "reference": "RRL ER11540 JUL",
+        "period": "2026-07"
+      }
+    },
+    {
+      "source": "remittance-2026-09.html",
+      "name": "RRL remittance September 2026.pdf",
+      "kind": "remittance_advice",
+      "render": "scan",
+      "label": {
+        "payer_name": "Rankin & Ramírez Landscaping",
+        "amount": 2436.8,
+        "value_date": "2026-10-21",
+        "reference": "RRL ER11540 SEP",
+        "period": "2026-09"
+      }
+    }
+  ],
+  "expected": {
+    "pipeline": "employer_onboarding",
+    "recommendation": "refer",
+    "missingKinds": [],
+    "risk": "high",
+    "arrears": 2337.6,
+    "checks": [
+      {
+        "id": "contributions_on_time",
+        "outcome": "fail",
+        "note": "July 2026 M$2,510.50 due 15 August 2026, paid 12 days late, interest about M$10.94; September 2026 M$2,436.80 due 15 October 2026, paid 6 days late, interest about M$5.31 (prime 8.25% + 5% = 13.25% a year, simple, actual/365)."
+      },
+      {
+        "id": "no_arrears",
+        "outcome": "fail",
+        "note": "August 2026 has no payment date and no remittance: 10 lines, employee M$1,168.80 + employer M$1,168.80 = M$2,337.60 unpaid since 15 Sep 2026 (56 days to the review date, interest about M$47.52). Arrears M$2,337.60 before interest; employee deductions were withheld but not paid over."
+      },
+      {
+        "id": "contributions_at_rate",
+        "outcome": "pass",
+        "note": "Every line is 5% + 5% of gross (hours x rate); no one is above the M$7,250 cap."
+      }
+    ]
+  }
+}

@@ -1,0 +1,284 @@
+{
+  "slug": "eo-11-pease-bay-aggregates",
+  "scenario": "employer_onboarding",
+  "title": "Pell Bay Aggregates · new employer",
+  "summary": "Marlow Town quarry joining the plan; the pack is complete and clean, but one director is a sitting Member of Parliament (domestic PEP), so it needs enhanced due diligence and senior sign-off.",
+  "asOf": "2026-11-10",
+  "documents": [
+    {
+      "source": "application.html",
+      "name": "PBA application Corallis.pdf",
+      "kind": "employer_application",
+      "render": "scan",
+      "label": {
+        "employer_name": "Pell Bay Aggregates Ltd.",
+        "registration_number": "276540",
+        "trade_name": "",
+        "business_address": "Quarry Road, Combers, Marlow Town, Grand Meridia MR1-1701",
+        "nature_of_business": "Quarrying, aggregate supply and trucking",
+        "employee_count": 14,
+        "contact_name": "Alicia Bodden",
+        "signatory_names": [
+          "Sandra Louise Parchment"
+        ],
+        "signed_date": "2026-10-27"
+      }
+    },
+    {
+      "source": "certificate-of-incorporation.html",
+      "name": "Certificate of Incorporation 2007.pdf",
+      "kind": "certificate_of_incorporation",
+      "render": "scan",
+      "label": {
+        "entity_name": "Pell Bay Aggregates Ltd.",
+        "registration_number": "276540",
+        "jurisdiction": "Meridia",
+        "entity_type": "ordinary resident company",
+        "incorporation_date": "2007-11-19"
+      }
+    },
+    {
+      "source": "trade-licence.html",
+      "name": "Trade licence PBA.pdf",
+      "kind": "trade_business_licence",
+      "render": "pdf",
+      "label": {
+        "licensee_name": "Pell Bay Aggregates Ltd.",
+        "licence_number": "TB-26-030185",
+        "business_activity": "Quarrying, crushing and sale of aggregate; haulage",
+        "expiry_date": "2027-02-28"
+      }
+    },
+    {
+      "source": "register-of-directors.html",
+      "name": "Register of Directors PBA.pdf",
+      "kind": "register_of_directors",
+      "render": "pdf",
+      "label": {
+        "entity_name": "Pell Bay Aggregates Ltd.",
+        "as_of_date": "2026-10-19",
+        "directors": [
+          {
+            "name": "Everett Lionel Parchment",
+            "role": "director",
+            "date_of_birth": "1964-07-19",
+            "nationality": "Meridian",
+            "appointed": "2007-11-19"
+          },
+          {
+            "name": "Sandra Louise Parchment",
+            "role": "director",
+            "date_of_birth": "1967-02-25",
+            "nationality": "Meridian",
+            "appointed": "2007-11-19"
+          },
+          {
+            "name": "Patrick Alwyn Hydes",
+            "role": "director",
+            "date_of_birth": "1973-08-08",
+            "nationality": "Meridian",
+            "appointed": "2019-06-03"
+          },
+          {
+            "name": "Saltmeadow Secretarial Services Ltd.",
+            "role": "secretary",
+            "date_of_birth": "",
+            "nationality": "",
+            "appointed": "2007-11-19"
+          }
+        ]
+      }
+    },
+    {
+      "source": "director-passport.html",
+      "name": "E Parchment passport certified.pdf",
+      "kind": "identity_document",
+      "render": "scan",
+      "label": {
+        "document_type": "passport",
+        "full_name": "Everett Lionel Parchment",
+        "date_of_birth": "1964-07-19",
+        "nationality": "Meridian",
+        "id_number": "C1047729",
+        "date_of_expiry": "2031-03-14",
+        "certified": true,
+        "certifier_name": "Kerri-Ann Lindo",
+        "certifier_occupation": "Attorney-at-Law",
+        "certification_date": "2026-10-26"
+      }
+    },
+    {
+      "source": "census.csv",
+      "name": "PBA pension census.csv",
+      "kind": "member_census",
+      "render": "csv",
+      "label": {
+        "employer_name": "Pell Bay Aggregates Ltd.",
+        "members": [
+          {
+            "employee_id": "PBA-01",
+            "full_name": "Sandra Parchment",
+            "date_of_birth": "1967-02-25",
+            "hire_date": "2007-11-19",
+            "monthly_salary": 7600,
+            "id_number": "C0233918"
+          },
+          {
+            "employee_id": "PBA-02",
+            "full_name": "Patrick Hydes",
+            "date_of_birth": "1973-08-08",
+            "hire_date": "2010-03-01",
+            "monthly_salary": 6100,
+            "id_number": "C0260447"
+          },
+          {
+            "employee_id": "PBA-03",
+            "full_name": "Conrad Watson",
+            "date_of_birth": "1979-04-04",
+            "hire_date": "2012-05-14",
+            "monthly_salary": 3800,
+            "id_number": "A1440286"
+          },
+          {
+            "employee_id": "PBA-04",
+            "full_name": "Lennox Grant",
+            "date_of_birth": "1981-09-27",
+            "hire_date": "2013-06-03",
+            "monthly_salary": 3050,
+            "id_number": "A1517730"
+          },
+          {
+            "employee_id": "PBA-05",
+            "full_name": "Jaime Rodríguez",
+            "date_of_birth": "1986-01-15",
+            "hire_date": "2015-02-02",
+            "monthly_salary": 3400,
+            "id_number": "F0712294"
+          },
+          {
+            "employee_id": "PBA-06",
+            "full_name": "Errol Parchment",
+            "date_of_birth": "1995-06-30",
+            "hire_date": "2018-08-06",
+            "monthly_salary": 2900,
+            "id_number": "C0590036"
+          },
+          {
+            "employee_id": "PBA-07",
+            "full_name": "Dennis Mejía",
+            "date_of_birth": "1990-07-07",
+            "hire_date": "2019-01-14",
+            "monthly_salary": 2200,
+            "id_number": "F0950281"
+          },
+          {
+            "employee_id": "PBA-08",
+            "full_name": "Noel Clarke",
+            "date_of_birth": "1984-11-03",
+            "hire_date": "2019-09-02",
+            "monthly_salary": 3050,
+            "id_number": "A2120448"
+          },
+          {
+            "employee_id": "PBA-09",
+            "full_name": "Reynaldo Cruz",
+            "date_of_birth": "1982-05-21",
+            "hire_date": "2020-04-20",
+            "monthly_salary": 3600,
+            "id_number": "P3871205A"
+          },
+          {
+            "employee_id": "PBA-10",
+            "full_name": "Alicia Bodden",
+            "date_of_birth": "1992-12-09",
+            "hire_date": "2021-01-11",
+            "monthly_salary": 2850,
+            "id_number": "C0627718"
+          },
+          {
+            "employee_id": "PBA-11",
+            "full_name": "Trevor Lindo",
+            "date_of_birth": "1987-03-18",
+            "hire_date": "2021-08-09",
+            "monthly_salary": 3200,
+            "id_number": "A2350917"
+          },
+          {
+            "employee_id": "PBA-12",
+            "full_name": "Marvin Flores",
+            "date_of_birth": "1993-10-02",
+            "hire_date": "2022-05-16",
+            "monthly_salary": 2200,
+            "id_number": "F1150376"
+          },
+          {
+            "employee_id": "PBA-13",
+            "full_name": "Gary Whittaker",
+            "date_of_birth": "1989-08-24",
+            "hire_date": "2023-02-06",
+            "monthly_salary": 3300,
+            "id_number": "C0551209"
+          },
+          {
+            "employee_id": "PBA-14",
+            "full_name": "Rajiv Nair",
+            "date_of_birth": "1985-04-11",
+            "hire_date": "2024-09-02",
+            "monthly_salary": 4150,
+            "id_number": "Z4482017"
+          }
+        ]
+      }
+    }
+  ],
+  "expected": {
+    "pipeline": "employer_onboarding",
+    "recommendation": "refer",
+    "missingKinds": [],
+    "risk": "high",
+    "hits": [
+      {
+        "name": "Everett Lionel Parchment",
+        "disposition": "true_match",
+        "reason": "Register and certified passport give the same full name and date of birth (19 Jul 1964) as watchlist entry WL-PEP-EO-001, a sitting Member of Parliament."
+      }
+    ],
+    "checks": [
+      {
+        "id": "screening_clear",
+        "outcome": "review",
+        "note": "Director Everett Lionel Parchment is a true match to WL-PEP-EO-001 (domestic PEP, sitting MP): same name and DOB 19 Jul 1964. A PEP is not a sanctions block."
+      },
+      {
+        "id": "edd_required",
+        "outcome": "review",
+        "note": "A director is a domestic PEP: enhanced due diligence, source of funds and senior management approval before the employer is accepted."
+      },
+      {
+        "id": "entity_documents_consistent",
+        "outcome": "pass",
+        "note": "Application, certificate, licence, register and census all name Pell Bay Aggregates Ltd., registration no. 276540."
+      },
+      {
+        "id": "licence_in_date",
+        "outcome": "pass",
+        "note": "Licence TB-26-030185 expires 28 Feb 2027."
+      },
+      {
+        "id": "signatories_authorised",
+        "outcome": "pass",
+        "note": "Signed by Sandra Louise Parchment, a director on the 19 Oct 2026 register."
+      },
+      {
+        "id": "census_valid",
+        "outcome": "pass",
+        "note": "14 rows match the 14 employees declared; no duplicates; ages 31 to 59."
+      },
+      {
+        "id": "id_in_date",
+        "outcome": "pass",
+        "note": "Director's passport C1047729 expires 14 Mar 2031; certified copy dated 26 Oct 2026."
+      }
+    ]
+  }
+}

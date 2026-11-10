@@ -1,0 +1,280 @@
+{
+  "slug": "eo-10-ironwood-bay-resort",
+  "scenario": "employer_onboarding",
+  "title": "Ironwood Bay Resort · new employer",
+  "summary": "East Reach resort partnership joining the plan without details of its general partner's directors; its trade licence lapsed on 31 Aug 2026 and the census includes a 76-year-old groundskeeper.",
+  "asOf": "2026-11-10",
+  "documents": [
+    {
+      "source": "application.html",
+      "name": "Ironwood Bay - Corallis employer application.pdf",
+      "kind": "employer_application",
+      "render": "scan",
+      "label": {
+        "employer_name": "Ironwood Bay Resort L.P.",
+        "registration_number": "LP-1873",
+        "trade_name": "Ironwood Bay Resort & Spa",
+        "business_address": "2210 Coast Highway, East Reach, Grand Meridia MR1-1801",
+        "nature_of_business": "Hotel: 64-room beach resort with restaurant, bar and spa",
+        "employee_count": 22,
+        "contact_name": "Marisol Ortega",
+        "signatory_names": [
+          "Gregory Paul Ellison"
+        ],
+        "signed_date": "2026-10-30"
+      }
+    },
+    {
+      "source": "certificate-of-registration.html",
+      "name": "Certificate of Registration LP.pdf",
+      "kind": "certificate_of_incorporation",
+      "render": "scan",
+      "label": {
+        "entity_name": "Ironwood Bay Resort L.P.",
+        "registration_number": "LP-1873",
+        "jurisdiction": "Meridia",
+        "entity_type": "limited partnership",
+        "incorporation_date": "2017-06-20"
+      }
+    },
+    {
+      "source": "trade-licence.html",
+      "name": "front desk licence.jpg",
+      "kind": "trade_business_licence",
+      "render": "photo",
+      "label": {
+        "licensee_name": "Ironwood Bay Resort L.P.",
+        "licence_number": "TB-25-022406",
+        "business_activity": "Hotel, restaurant and bar, spa services",
+        "expiry_date": "2026-08-31"
+      }
+    },
+    {
+      "source": "census.csv",
+      "name": "IBR_HR_export_pension.csv",
+      "kind": "member_census",
+      "render": "csv",
+      "label": {
+        "employer_name": "",
+        "members": [
+          {
+            "employee_id": "IBR-1001",
+            "full_name": "Gregory Paul Ellison",
+            "date_of_birth": "1970-04-18",
+            "hire_date": "2019-03-01",
+            "monthly_salary": 11500,
+            "id_number": "538820194"
+          },
+          {
+            "employee_id": "IBR-1004",
+            "full_name": "Marisol Ortega",
+            "date_of_birth": "1985-09-07",
+            "hire_date": "2017-07-03",
+            "monthly_salary": 5200,
+            "id_number": "F0640218"
+          },
+          {
+            "employee_id": "IBR-1007",
+            "full_name": "Horace Augustus Welcome",
+            "date_of_birth": "1950-05-03",
+            "hire_date": "2017-06-26",
+            "monthly_salary": 2450,
+            "id_number": "C0105572"
+          },
+          {
+            "employee_id": "IBR-1010",
+            "full_name": "Rhoda Ebanks",
+            "date_of_birth": "1982-01-30",
+            "hire_date": "2017-06-26",
+            "monthly_salary": 4900,
+            "id_number": "C0302287"
+          },
+          {
+            "employee_id": "IBR-1012",
+            "full_name": "Joel Santos Mendoza",
+            "date_of_birth": "1978-11-11",
+            "hire_date": "2017-08-14",
+            "monthly_salary": 3950,
+            "id_number": "P3348201A"
+          },
+          {
+            "employee_id": "IBR-1015",
+            "full_name": "Analyn Reyes",
+            "date_of_birth": "1990-02-14",
+            "hire_date": "2018-01-08",
+            "monthly_salary": 2080,
+            "id_number": "P5012774B"
+          },
+          {
+            "employee_id": "IBR-1016",
+            "full_name": "Leonora Bautista",
+            "date_of_birth": "1987-06-02",
+            "hire_date": "2018-01-08",
+            "monthly_salary": 2080,
+            "id_number": "P4422019A"
+          },
+          {
+            "employee_id": "IBR-1019",
+            "full_name": "Kadian Morgan",
+            "date_of_birth": "1995-10-21",
+            "hire_date": "2019-11-04",
+            "monthly_salary": 2640,
+            "id_number": "A2550347"
+          },
+          {
+            "employee_id": "IBR-1021",
+            "full_name": "Sanjay Menon",
+            "date_of_birth": "1980-08-15",
+            "hire_date": "2019-02-11",
+            "monthly_salary": 6900,
+            "id_number": "Z2918840"
+          },
+          {
+            "employee_id": "IBR-1023",
+            "full_name": "Pedro Antonio López",
+            "date_of_birth": "1989-12-05",
+            "hire_date": "2020-01-13",
+            "monthly_salary": 2520,
+            "id_number": "F0991406"
+          },
+          {
+            "employee_id": "IBR-1025",
+            "full_name": "Shericka Thompson",
+            "date_of_birth": "1993-07-29",
+            "hire_date": "2021-02-01",
+            "monthly_salary": 2760,
+            "id_number": "A2391025"
+          },
+          {
+            "employee_id": "IBR-1027",
+            "full_name": "Chantal Tremblay",
+            "date_of_birth": "1984-03-03",
+            "hire_date": "2021-02-01",
+            "monthly_salary": 4700,
+            "id_number": "AN710255"
+          },
+          {
+            "employee_id": "IBR-1028",
+            "full_name": "Delano Bodden",
+            "date_of_birth": "1976-05-19",
+            "hire_date": "2021-05-17",
+            "monthly_salary": 3350,
+            "id_number": "C0287115"
+          },
+          {
+            "employee_id": "IBR-1030",
+            "full_name": "Wilfredo Martínez",
+            "date_of_birth": "1997-01-09",
+            "hire_date": "2022-03-07",
+            "monthly_salary": 2080,
+            "id_number": "F1203318"
+          },
+          {
+            "employee_id": "IBR-1031",
+            "full_name": "Nadia Smith",
+            "date_of_birth": "2000-11-26",
+            "hire_date": "2022-06-13",
+            "monthly_salary": 2700,
+            "id_number": "C0688012"
+          },
+          {
+            "employee_id": "IBR-1033",
+            "full_name": "Ruel Gordon",
+            "date_of_birth": "1991-04-08",
+            "hire_date": "2022-11-21",
+            "monthly_salary": 2350,
+            "id_number": "A2701564"
+          },
+          {
+            "employee_id": "IBR-1034",
+            "full_name": "Carmela dela Cruz",
+            "date_of_birth": "1994-09-17",
+            "hire_date": "2023-01-09",
+            "monthly_salary": 2180,
+            "id_number": "P6390451A"
+          },
+          {
+            "employee_id": "IBR-1036",
+            "full_name": "Fiona MacDonald",
+            "date_of_birth": "1988-12-12",
+            "hire_date": "2023-04-03",
+            "monthly_salary": 5450,
+            "id_number": "AK203984"
+          },
+          {
+            "employee_id": "IBR-1038",
+            "full_name": "Dexter Ebanks",
+            "date_of_birth": "1986-02-20",
+            "hire_date": "2023-09-11",
+            "monthly_salary": 3050,
+            "id_number": "C0412290"
+          },
+          {
+            "employee_id": "IBR-1040",
+            "full_name": "Keisha Campbell",
+            "date_of_birth": "1998-06-06",
+            "hire_date": "2024-02-19",
+            "monthly_salary": 2080,
+            "id_number": "A2988173"
+          },
+          {
+            "employee_id": "IBR-1041",
+            "full_name": "Edgardo Rivera",
+            "date_of_birth": "1983-10-31",
+            "hire_date": "2024-07-01",
+            "monthly_salary": 2150,
+            "id_number": "F0817760"
+          },
+          {
+            "employee_id": "IBR-1043",
+            "full_name": "Priyanka Reddy",
+            "date_of_birth": "1996-03-25",
+            "hire_date": "2025-03-10",
+            "monthly_salary": 3200,
+            "id_number": "Z5520318"
+          }
+        ]
+      }
+    }
+  ],
+  "expected": {
+    "pipeline": "employer_onboarding",
+    "recommendation": "request_info",
+    "missingKinds": [
+      "register_of_directors"
+    ],
+    "risk": "standard",
+    "checks": [
+      {
+        "id": "entity_documents_consistent",
+        "outcome": "pass",
+        "note": "Application, certificate of registration and licence all name Ironwood Bay Resort L.P., no. LP-1873."
+      },
+      {
+        "id": "licence_in_date",
+        "outcome": "fail",
+        "note": "Licence TB-25-022406 expired on 31 Aug 2026, 71 days before the review date of 10 Nov 2026. Ask for the renewed licence."
+      },
+      {
+        "id": "signatories_authorised",
+        "outcome": "review",
+        "note": "Signed by Gregory Paul Ellison as General Manager for the general partner, Ironwood Bay GP Ltd. No register of directors of the general partner or board resolution on file to show he may sign."
+      },
+      {
+        "id": "census_valid",
+        "outcome": "review",
+        "note": "22 rows match the 22 employees declared and there are no duplicates, but Horace Augustus Welcome (IBR-1007, born 3 May 1950) is 76, over 75: confirm whether he should be enrolled."
+      },
+      {
+        "id": "screening_clear",
+        "outcome": "pass",
+        "note": "The signer and contact do not match the watchlist; the general partner's directors cannot be screened until their register arrives."
+      },
+      {
+        "id": "edd_required",
+        "outcome": "pass",
+        "note": "Local hotel partnership, no PEP or sanctions link so far: standard due diligence."
+      }
+    ]
+  }
+}

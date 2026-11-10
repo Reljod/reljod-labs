@@ -1,0 +1,116 @@
+{
+  "slug": "sc-11-liang-name-order",
+  "scenario": "screening_review",
+  "title": "Liang · family name first",
+  "summary": "A Chinese electronics distributor in Singapore hit a sanctions record printed family name first (LIANG Zhi Wei); reordered it is his name, and the listed DOB 07 May 1983 is his 05 Jul 1983 with day and month swapped: inconclusive, refer.",
+  "asOf": "2026-11-10",
+  "documents": [
+    {
+      "source": "alert.html",
+      "name": "Sentinel Watch alert SW-26-1108-00471.pdf",
+      "kind": "screening_alert",
+      "render": "pdf",
+      "label": {
+        "alert_id": "SW-26-1108-00471",
+        "customer_name": "Zhiwei Liang",
+        "customer_id": "CTP-C-498604",
+        "screened_on": "2026-11-08",
+        "hits": [
+          {
+            "hit_name": "Liang Zhi Wei",
+            "list_type": "sanctions",
+            "list_source": "Consolidated Sanctions List (synthetic)",
+            "match_score": 82,
+            "hit_date_of_birth": "1983-05-07",
+            "hit_nationality": "China",
+            "hit_reference": "WL-SAN-0163"
+          }
+        ]
+      }
+    },
+    {
+      "source": "profile.html",
+      "name": "CoralCore KYC profile CTP-C-498604.pdf",
+      "kind": "customer_profile",
+      "render": "pdf",
+      "label": {
+        "customer_name": "Zhiwei Liang",
+        "customer_id": "CTP-C-498604",
+        "date_of_birth": "1983-07-05",
+        "nationality": "China",
+        "residence": "Singapore",
+        "occupation": "Electronics distributor",
+        "id_number": "EJ5180274",
+        "other_names": [
+          "Wilson Liang"
+        ]
+      }
+    },
+    {
+      "source": "passport.html",
+      "name": "Passport certified copy - Liang.pdf",
+      "kind": "identity_document",
+      "render": "scan",
+      "label": {
+        "document_type": "passport",
+        "full_name": "Zhiwei Liang",
+        "date_of_birth": "1983-07-05",
+        "nationality": "Chinese",
+        "id_number": "EJ5180274",
+        "date_of_expiry": "2032-02-25",
+        "certified": true,
+        "certifier_name": "Tan Wei Ling",
+        "certifier_occupation": "Commissioner for Oaths, Singapore",
+        "certification_date": "2026-10-20"
+      }
+    },
+    {
+      "source": "entry-wl-san-0163.html",
+      "name": "CSL record WL-SAN-0163.pdf",
+      "kind": "watchlist_entry",
+      "render": "pdf",
+      "label": {
+        "entry_name": "Liang Zhi Wei",
+        "aliases": [
+          "Leung Chi Wai",
+          "Liang Zhiwei"
+        ],
+        "date_of_birth": "07 May 1983",
+        "place_of_birth": "Shenzhen, Guangdong, China",
+        "nationality": "China",
+        "list_source": "Consolidated Sanctions List (synthetic)",
+        "listing_reason": "Director of a front company supplying controlled electronic components to a designated end user (synthetic programme DUX-4)",
+        "reference": "WL-SAN-0163"
+      }
+    }
+  ],
+  "expected": {
+    "pipeline": "screening_review",
+    "recommendation": "refer",
+    "missingKinds": [],
+    "checks": [
+      {
+        "id": "screening_clear",
+        "outcome": "review",
+        "note": "Name order and a possible day/month swap leave the sanctions hit open"
+      },
+      {
+        "id": "identity_matches_record",
+        "outcome": "pass",
+        "note": "Passport (surname LIANG, given ZHIWEI, DOB 05 Jul 1983) agrees with the KYC record"
+      },
+      {
+        "id": "id_in_date",
+        "outcome": "pass",
+        "note": "Passport expires 25 Feb 2032"
+      }
+    ],
+    "hits": [
+      {
+        "name": "Liang Zhi Wei",
+        "disposition": "inconclusive",
+        "reason": "The list prints the name family name first (LIANG Zhi Wei, kept in that order on the alert and record); reordered it is the customer's name Zhiwei Liang, and the alias Liang Zhiwei is his name exactly. The list DOB 07 May 1983 is the customer's 05 Jul 1983 with day and month swapped, a common data-entry error that cannot be ruled out. Both are Chinese nationals born in Guangdong and both are directors in the electronic components trade. The list has no passport number. Neither discounted nor confirmed: escalate, ask the list provider for source identifiers and review Lianxin Components' customers and suppliers."
+      }
+    ]
+  }
+}

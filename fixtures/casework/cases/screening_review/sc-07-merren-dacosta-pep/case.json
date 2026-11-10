@@ -1,0 +1,116 @@
+{
+  "slug": "sc-07-merren-dacosta-pep",
+  "scenario": "screening_review",
+  "title": "Merren-Dacosta · domestic PEP",
+  "summary": "A long-standing private client opening a trust account matched the Caribbean PEP register as a serving Permanent Secretary; DOB, birthplace and her maiden name all agree: a confirmed domestic PEP to refer for enhanced due diligence, not a decline.",
+  "asOf": "2026-11-10",
+  "documents": [
+    {
+      "source": "alert.html",
+      "name": "Sentinel Watch alert SW-26-1106-00433.pdf",
+      "kind": "screening_alert",
+      "render": "pdf",
+      "label": {
+        "alert_id": "SW-26-1106-00433",
+        "customer_name": "Lorna Beverley Merren-Dacosta",
+        "customer_id": "CTP-C-188420",
+        "screened_on": "2026-11-06",
+        "hits": [
+          {
+            "hit_name": "Lorna Beverley Dacosta",
+            "list_type": "pep",
+            "list_source": "Caribbean PEP Register (synthetic)",
+            "match_score": 91,
+            "hit_date_of_birth": "1968-12-03",
+            "hit_nationality": "Meridia",
+            "hit_reference": "WL-PEP-0311"
+          }
+        ]
+      }
+    },
+    {
+      "source": "profile.html",
+      "name": "CoralCore KYC profile CTP-C-188420.pdf",
+      "kind": "customer_profile",
+      "render": "pdf",
+      "label": {
+        "customer_name": "Lorna Beverley Merren-Dacosta",
+        "customer_id": "CTP-C-188420",
+        "date_of_birth": "1968-12-03",
+        "nationality": "Meridia",
+        "residence": "Meridia",
+        "occupation": "Permanent Secretary",
+        "id_number": "C0412776",
+        "other_names": [
+          "Lorna Beverley Merren"
+        ]
+      }
+    },
+    {
+      "source": "passport.html",
+      "name": "Passport certified copy - Merren-Dacosta.pdf",
+      "kind": "identity_document",
+      "render": "scan",
+      "label": {
+        "document_type": "passport",
+        "full_name": "Lorna Beverley Merren-Dacosta",
+        "date_of_birth": "1968-12-03",
+        "nationality": "Meridian",
+        "id_number": "C0412776",
+        "date_of_expiry": "2033-08-21",
+        "certified": true,
+        "certifier_name": "Alicia M. Grant",
+        "certifier_occupation": "Notary Public",
+        "certification_date": "2026-10-15"
+      }
+    },
+    {
+      "source": "entry-wl-pep-0311.html",
+      "name": "Caribbean PEP Register profile WL-PEP-0311.pdf",
+      "kind": "watchlist_entry",
+      "render": "pdf",
+      "label": {
+        "entry_name": "Lorna Beverley Dacosta",
+        "aliases": [
+          "Lorna Merren",
+          "Lorna Merren-Dacosta"
+        ],
+        "date_of_birth": "1968-12-03",
+        "place_of_birth": "Port Selene, Grand Meridia",
+        "nationality": "Meridia",
+        "list_source": "Caribbean PEP Register (synthetic)",
+        "listing_reason": "Permanent Secretary, Ministry of Infrastructure and Ports, Government of Meridia (domestic PEP)",
+        "reference": "WL-PEP-0311"
+      }
+    }
+  ],
+  "expected": {
+    "pipeline": "screening_review",
+    "recommendation": "refer",
+    "missingKinds": [],
+    "checks": [
+      {
+        "id": "screening_clear",
+        "outcome": "review",
+        "note": "Confirmed domestic PEP: enhanced due diligence and senior approval needed"
+      },
+      {
+        "id": "identity_matches_record",
+        "outcome": "pass",
+        "note": "Passport name, DOB 03 Dec 1968 and number C0412776 agree with the KYC record"
+      },
+      {
+        "id": "id_in_date",
+        "outcome": "pass",
+        "note": "Passport expires 21 Aug 2033"
+      }
+    ],
+    "hits": [
+      {
+        "name": "Lorna Beverley Dacosta",
+        "disposition": "true_match",
+        "reason": "Same person. Register DOB 1968-12-03 and place of birth Port Selene match the certified passport; the register aliases include her maiden name Lorna Merren (on the KYC record as a former name) and the hyphenated name Merren-Dacosta she uses; her recorded occupation is Permanent Secretary, Ministry of Infrastructure and Ports, the public role on the register. Domestic PEP confirmed: not a sanctions match, so refer for enhanced due diligence and senior management approval rather than decline."
+      }
+    ]
+  }
+}

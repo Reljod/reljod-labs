@@ -33,7 +33,7 @@ _Avoid_: Attribute, entity, key-value
 ### Rules
 
 **Rulebook**:
-A named set of Requirements for one kind of Document pack in one Jurisdiction, such as "Individual onboarding, Cayman".
+A named set of Requirements for one kind of Document pack in one Jurisdiction, such as "Individual onboarding, Meridia".
 _Avoid_: Policy, checklist, ruleset
 
 **Requirement**:
