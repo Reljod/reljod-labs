@@ -43,6 +43,7 @@ export async function guestPassOf(
 /**
  * Whether a code would be accepted right now. Only a first look, so that a
  * wrong code never creates an Auth user; `redeem` decides under a lock.
+ * Mirrors the checks in `access.redeem_guest_pass`: change them together.
  */
 export async function codeLooksGood(codeHash: string, userId: string | null) {
   const { data: pass, error } = await supabase()

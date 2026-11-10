@@ -38,6 +38,8 @@ const WAIT = `Too many tries. Wait ${LIMITS.attemptWindowMinutes} minutes and tr
 const BAD_CODE =
   "That code did not open the door. It may be mistyped, expired, or already in use on as many devices as it allows.";
 
+const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
 function hashCode(code: string) {
   return createHash("sha256").update(code).digest("hex");
 }
@@ -291,6 +293,8 @@ export async function issueGuestPass(
 /** A Host ends a Guest pass now: every Guest on it loses Access at once. */
 export async function revokeGuestPass(form: FormData) {
   await requireHost();
-  await revokePass(String(form.get("id") ?? ""));
+  const id = String(form.get("id") ?? "");
+  if (!UUID.test(id)) return;
+  await revokePass(id);
   refresh();
 }
