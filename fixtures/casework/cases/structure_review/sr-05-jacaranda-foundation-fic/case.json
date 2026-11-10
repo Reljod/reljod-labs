@@ -2,7 +2,7 @@
   "slug": "sr-05-jacaranda-foundation-fic",
   "scenario": "structure_review",
   "title": "Jacaranda Family Investments · foundation owner",
-  "summary": "Family investment company wholly owned by a memberless Cayman foundation company; control sits with the foundation's two directors (the founder and his wife), and the founder's name gives a watchlist hit that is a false positive.",
+  "summary": "Family investment company wholly owned by a memberless Meridian foundation company; control sits with the foundation's two directors (the founder and his wife), and the founder's name gives a watchlist hit that is a false positive.",
   "asOf": "2026-11-10",
   "documents": [
     {
@@ -42,7 +42,7 @@
       "label": {
         "entity_name": "Jacaranda Family Investments Ltd.",
         "registration_number": "CR-436120",
-        "jurisdiction": "Cayman Islands",
+        "jurisdiction": "Meridia",
         "entity_type": "exempted",
         "incorporation_date": "2025-09-09"
       }
@@ -186,7 +186,7 @@
       {
         "id": "edd_required",
         "outcome": "pass",
-        "note": "Two layers, both Cayman, controllers identified and verified, no true PEP or sanctions match: standard CDD."
+        "note": "Two layers, both Meridian, controllers identified and verified, no true PEP or sanctions match: standard CDD."
       }
     ]
   }

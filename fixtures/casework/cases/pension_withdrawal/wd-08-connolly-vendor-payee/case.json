@@ -1,8 +1,8 @@
 {
   "slug": "wd-08-connolly-vendor-payee",
   "scenario": "pension_withdrawal",
-  "title": "Connolly · North Side purchase",
-  "summary": "Caymanian electrician buying in North Side asks for CI$42,000 to be paid to the vendor's personal credit union account, not to his attorneys' client account.",
+  "title": "Connolly · North Shore purchase",
+  "summary": "Meridian electrician buying in North Shore asks for M$42,000 to be paid to the vendor's personal credit union account, not to his attorneys' client account.",
   "asOf": "2026-11-10",
   "documents": [
     {
@@ -16,11 +16,11 @@
         "date_of_birth": "1983-05-30",
         "withdrawal_type": "property_purchase",
         "amount_requested": 42000,
-        "property_address": "56 Hutland Road, North Side",
+        "property_address": "56 Hartland Road, North Shore",
         "payee_name": "Trevor Alwyn Powery",
         "payee_bank": "Coral Coast Co-operative Credit Union",
         "payee_account_number": "77310042",
-        "caymanian_status_declared": true,
+        "meridian_status_declared": true,
         "primary_residence_declared": true,
         "signature_present": true,
         "signed_date": "2026-10-23"
@@ -35,7 +35,7 @@
         "member_name": "Dwayne Patrick Connolly",
         "member_number": "CT-240658",
         "date_of_birth": "1983-05-30",
-        "employer_name": "Frank Sound Electrical Contractors Ltd.",
+        "employer_name": "Varen Sound Electrical Contractors Ltd.",
         "statement_date": "2026-09-30",
         "total_balance": 83355.7,
         "prior_property_withdrawals": 0,
@@ -56,7 +56,7 @@
         "client_account_name": "Sandbar Pryce & Co. Client Account",
         "client_account_number": "0050-771230-01",
         "bank_name": "Leeward Commercial Bank Ltd.",
-        "property_address": "56 Hutland Road, North Side",
+        "property_address": "56 Hartland Road, North Shore",
         "letter_date": "2026-10-21"
       }
     }
@@ -64,7 +64,7 @@
   "expected": {
     "pipeline": "pension_withdrawal",
     "recommendation": "decline",
-    "missingKinds": ["identity_document", "caymanian_status_evidence"],
+    "missingKinds": ["identity_document", "meridian_status_evidence"],
     "checks": [
       {
         "id": "payee_permitted",
@@ -74,7 +74,7 @@
       {
         "id": "purpose_evidence_consistent",
         "outcome": "pass",
-        "note": "Attorney's letter confirms the purchase of 56 Hutland Road, North Side (North Side Block 59A Parcel 128) for CI$296,000"
+        "note": "Attorney's letter confirms the purchase of 56 Hartland Road, North Shore (North Shore Block 59A Parcel 128) for M$296,000"
       },
       {
         "id": "withdrawal_purpose_supported",
@@ -84,12 +84,12 @@
       {
         "id": "amount_within_cap",
         "outcome": "pass",
-        "note": "CI$42,000 is under CI$50,000"
+        "note": "M$42,000 is under M$50,000"
       },
       {
         "id": "amount_within_balance",
         "outcome": "pass",
-        "note": "CI$42,000 against a balance of CI$83,355.70"
+        "note": "M$42,000 against a balance of M$83,355.70"
       },
       {
         "id": "primary_residence",
@@ -102,7 +102,7 @@
         "note": "No earlier withdrawals"
       },
       {
-        "id": "caymanian_status",
+        "id": "meridian_status",
         "outcome": "review",
         "note": "Declared on the form; no status evidence supplied, moot as the payee is not permitted"
       }

@@ -1,8 +1,8 @@
 {
   "slug": "eo-11-pease-bay-aggregates",
   "scenario": "employer_onboarding",
-  "title": "Pease Bay Aggregates · new employer",
-  "summary": "Bodden Town quarry joining the plan; the pack is complete and clean, but one director is a sitting Member of Parliament (domestic PEP), so it needs enhanced due diligence and senior sign-off.",
+  "title": "Pell Bay Aggregates · new employer",
+  "summary": "Marlow Town quarry joining the plan; the pack is complete and clean, but one director is a sitting Member of Parliament (domestic PEP), so it needs enhanced due diligence and senior sign-off.",
   "asOf": "2026-11-10",
   "documents": [
     {
@@ -11,10 +11,10 @@
       "kind": "employer_application",
       "render": "scan",
       "label": {
-        "employer_name": "Pease Bay Aggregates Ltd.",
+        "employer_name": "Pell Bay Aggregates Ltd.",
         "registration_number": "276540",
         "trade_name": "",
-        "business_address": "Quarry Road, Breakers, Bodden Town, Grand Cayman KY1-1701",
+        "business_address": "Quarry Road, Combers, Marlow Town, Grand Meridia MR1-1701",
         "nature_of_business": "Quarrying, aggregate supply and trucking",
         "employee_count": 14,
         "contact_name": "Alicia Bodden",
@@ -30,9 +30,9 @@
       "kind": "certificate_of_incorporation",
       "render": "scan",
       "label": {
-        "entity_name": "Pease Bay Aggregates Ltd.",
+        "entity_name": "Pell Bay Aggregates Ltd.",
         "registration_number": "276540",
-        "jurisdiction": "Cayman Islands",
+        "jurisdiction": "Meridia",
         "entity_type": "ordinary resident company",
         "incorporation_date": "2007-11-19"
       }
@@ -43,7 +43,7 @@
       "kind": "trade_business_licence",
       "render": "pdf",
       "label": {
-        "licensee_name": "Pease Bay Aggregates Ltd.",
+        "licensee_name": "Pell Bay Aggregates Ltd.",
         "licence_number": "TB-26-030185",
         "business_activity": "Quarrying, crushing and sale of aggregate; haulage",
         "expiry_date": "2027-02-28"
@@ -55,28 +55,28 @@
       "kind": "register_of_directors",
       "render": "pdf",
       "label": {
-        "entity_name": "Pease Bay Aggregates Ltd.",
+        "entity_name": "Pell Bay Aggregates Ltd.",
         "as_of_date": "2026-10-19",
         "directors": [
           {
             "name": "Everett Lionel Parchment",
             "role": "director",
             "date_of_birth": "1964-07-19",
-            "nationality": "Caymanian",
+            "nationality": "Meridian",
             "appointed": "2007-11-19"
           },
           {
             "name": "Sandra Louise Parchment",
             "role": "director",
             "date_of_birth": "1967-02-25",
-            "nationality": "Caymanian",
+            "nationality": "Meridian",
             "appointed": "2007-11-19"
           },
           {
             "name": "Patrick Alwyn Hydes",
             "role": "director",
             "date_of_birth": "1973-08-08",
-            "nationality": "Caymanian",
+            "nationality": "Meridian",
             "appointed": "2019-06-03"
           },
           {
@@ -98,7 +98,7 @@
         "document_type": "passport",
         "full_name": "Everett Lionel Parchment",
         "date_of_birth": "1964-07-19",
-        "nationality": "British Overseas Territories Citizen",
+        "nationality": "Meridian",
         "id_number": "C1047729",
         "date_of_expiry": "2031-03-14",
         "certified": true,
@@ -113,7 +113,7 @@
       "kind": "member_census",
       "render": "csv",
       "label": {
-        "employer_name": "Pease Bay Aggregates Ltd.",
+        "employer_name": "Pell Bay Aggregates Ltd.",
         "members": [
           {
             "employee_id": "PBA-01",
@@ -257,7 +257,7 @@
       {
         "id": "entity_documents_consistent",
         "outcome": "pass",
-        "note": "Application, certificate, licence, register and census all name Pease Bay Aggregates Ltd., registration no. 276540."
+        "note": "Application, certificate, licence, register and census all name Pell Bay Aggregates Ltd., registration no. 276540."
       },
       {
         "id": "licence_in_date",

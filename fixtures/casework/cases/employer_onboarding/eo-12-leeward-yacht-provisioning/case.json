@@ -14,7 +14,7 @@
         "employer_name": "Leeward Yacht Provisioning Ltd.",
         "registration_number": "309982",
         "trade_name": "Leeward Provisions",
-        "business_address": "Unit 3, Harbour Industrial Park, North Sound Road, George Town, Grand Cayman KY1-1208",
+        "business_address": "Unit 3, Harbour Industrial Park, North Lagoon Road, Port Selene, Grand Meridia MR1-1208",
         "nature_of_business": "Yacht provisioning, chandlery and marine supplies",
         "employee_count": 11,
         "contact_name": "Melanie Watler",
@@ -32,7 +32,7 @@
       "label": {
         "entity_name": "Leeward Yacht Provisioning Ltd.",
         "registration_number": "309982",
-        "jurisdiction": "Cayman Islands",
+        "jurisdiction": "Meridia",
         "entity_type": "ordinary resident company",
         "incorporation_date": "2016-04-04"
       }
@@ -62,7 +62,7 @@
             "name": "Paul Anderson Watler",
             "role": "director",
             "date_of_birth": "1972-12-01",
-            "nationality": "Caymanian",
+            "nationality": "Meridian",
             "appointed": "2016-04-04"
           },
           {

@@ -1,8 +1,8 @@
 {
   "slug": "wd-11-watler-rental-duplex",
   "scenario": "pension_withdrawal",
-  "title": "Watler · George Town duplex",
-  "summary": "Caymanian member who lives in Prospect is buying a tenanted duplex on a buy-to-let mortgage and did not declare it as his home; the form also gives 9 Templeton Close while the agreement is for number 11.",
+  "title": "Watler · Port Selene duplex",
+  "summary": "Meridian member who lives in Fairholm is buying a tenanted duplex on a buy-to-let mortgage and did not declare it as his home; the form also gives 9 Templeton Close while the agreement is for number 11.",
   "asOf": "2026-11-10",
   "documents": [
     {
@@ -16,11 +16,11 @@
         "date_of_birth": "1979-08-05",
         "withdrawal_type": "property_purchase",
         "amount_requested": 48000,
-        "property_address": "9 Templeton Close, George Town",
+        "property_address": "9 Templeton Close, Port Selene",
         "payee_name": "Merren & Solomon Client Account",
-        "payee_bank": "Grand Anchor Bank (Cayman)",
+        "payee_bank": "Grand Anchor Bank (Meridia)",
         "payee_account_number": "0112-583360-01",
-        "caymanian_status_declared": true,
+        "meridian_status_declared": true,
         "primary_residence_declared": false,
         "signature_present": true,
         "signed_date": "2026-10-28"
@@ -51,7 +51,7 @@
         "document_type": "passport",
         "full_name": "Christopher Dale Watler",
         "date_of_birth": "1979-08-05",
-        "nationality": "British Overseas Territories Citizen",
+        "nationality": "Meridian",
         "id_number": "C0291553",
         "date_of_expiry": "2029-03-14",
         "certified": true,
@@ -63,13 +63,13 @@
     {
       "source": "birth-certificate.html",
       "name": "Watler birth cert.pdf",
-      "kind": "caymanian_status_evidence",
+      "kind": "meridian_status_evidence",
       "render": "scan",
       "label": {
         "full_name": "Christopher Dale Watler",
         "date_of_birth": "1979-08-05",
         "status_basis": "birth",
-        "document_number": "GT 1979/0882",
+        "document_number": "PS 1979/0882",
         "issue_date": "2003-05-19"
       }
     },
@@ -86,8 +86,8 @@
           "Ravindra Prasad Sharma",
           "Meena Sharma"
         ],
-        "property_address": "11 Templeton Close, George Town",
-        "block_parcel": "George Town South Block 14BG Parcel 302",
+        "property_address": "11 Templeton Close, Port Selene",
+        "block_parcel": "Port Selene South Block 14BG Parcel 302",
         "purchase_price": 585000,
         "deposit": 58500,
         "completion_date": "2026-12-18"
@@ -102,12 +102,12 @@
       {
         "id": "primary_residence",
         "outcome": "fail",
-        "note": "Primary residence box left blank; the duplex is sold subject to two tenancies (CI$1,950 and CI$1,850 a month) and financed by a buy-to-let mortgage; he lives in Prospect"
+        "note": "Primary residence box left blank; the duplex is sold subject to two tenancies (M$1,950 and M$1,850 a month) and financed by a buy-to-let mortgage; he lives in Fairholm"
       },
       {
         "id": "purpose_evidence_consistent",
         "outcome": "fail",
-        "note": "Form gives 9 Templeton Close, George Town; the agreement is for 11 Templeton Close (George Town South Block 14BG Parcel 302)"
+        "note": "Form gives 9 Templeton Close, Port Selene; the agreement is for 11 Templeton Close (Port Selene South Block 14BG Parcel 302)"
       },
       {
         "id": "identity_matches_record",
@@ -125,9 +125,9 @@
         "note": "Notarised by Joanne Elizabeth Kirkconnell, Notary Public, on 2 Oct 2026"
       },
       {
-        "id": "caymanian_status",
+        "id": "meridian_status",
         "outcome": "pass",
-        "note": "Birth certificate GT 1979/0882, born in George Town to Caymanian parents"
+        "note": "Birth certificate PS 1979/0882, born in Port Selene to Meridian parents"
       },
       {
         "id": "withdrawal_purpose_supported",
@@ -137,12 +137,12 @@
       {
         "id": "amount_within_cap",
         "outcome": "pass",
-        "note": "CI$48,000 is under CI$50,000"
+        "note": "M$48,000 is under M$50,000"
       },
       {
         "id": "amount_within_balance",
         "outcome": "pass",
-        "note": "CI$48,000 against a balance of CI$121,033.47"
+        "note": "M$48,000 against a balance of M$121,033.47"
       },
       {
         "id": "prior_withdrawals_repaid",

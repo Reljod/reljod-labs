@@ -1,7 +1,7 @@
 {
   "slug": "eo-05-seven-mile-table-group",
   "scenario": "employer_onboarding",
-  "title": "Seven Mile Table Group · Aug-Sep 2026",
+  "title": "Long Strand Table Group · Aug-Sep 2026",
   "summary": "Restaurant group's August and September contributions: paid on time and the remittances match the schedule, but the employer share is 4% of pensionable earnings instead of 5%.",
   "asOf": "2026-11-10",
   "documents": [
@@ -238,7 +238,7 @@
       "kind": "remittance_advice",
       "render": "pdf",
       "label": {
-        "payer_name": "Seven Mile Table Group Ltd.",
+        "payer_name": "Long Strand Table Group Ltd.",
         "amount": 4118.76,
         "value_date": "2026-09-14",
         "reference": "SMTG/CMEP/ER-11207/AUG26",
@@ -251,7 +251,7 @@
       "kind": "remittance_advice",
       "render": "scan",
       "label": {
-        "payer_name": "Seven Mile Table Group Ltd.",
+        "payer_name": "Long Strand Table Group Ltd.",
         "amount": 4023.99,
         "value_date": "2026-10-15",
         "reference": "SMTG/CMEP/ER-11207/SEP26",
@@ -269,12 +269,12 @@
       {
         "id": "contributions_at_rate",
         "outcome": "fail",
-        "note": "Employee side is 5% but the employer side is 4% of pensionable earnings on every line (e.g. Nicola Harrington: CI$7,900.00 gross capped at CI$7,250, employee CI$362.50, employer CI$290.00 instead of CI$362.50)."
+        "note": "Employee side is 5% but the employer side is 4% of pensionable earnings on every line (e.g. Nicola Harrington: M$7,900.00 gross capped at M$7,250, employee M$362.50, employer M$290.00 instead of M$362.50)."
       },
       {
         "id": "no_arrears",
         "outcome": "fail",
-        "note": "Shortfall is 1% of pensionable earnings, line by line: August CI$45,764.00 pensionable gives CI$457.64; September CI$44,711.00 gives CI$447.11. Arrears CI$904.75 before interest."
+        "note": "Shortfall is 1% of pensionable earnings, line by line: August M$45,764.00 pensionable gives M$457.64; September M$44,711.00 gives M$447.11. Arrears M$904.75 before interest."
       },
       {
         "id": "contributions_on_time",

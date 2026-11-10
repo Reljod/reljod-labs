@@ -84,7 +84,7 @@ describe("reconcile", () => {
         employer_contribution: 120,
         date_paid: "2026-09-20",
       },
-      // Above the cap: only CI$7,250 is pensionable.
+      // Above the cap: only M$7,250 is pensionable.
       {
         period: "2026-08",
         employee_id: "B",

@@ -2,7 +2,7 @@
   "slug": "sr-09-banyan-crest-pep-settlor",
   "scenario": "structure_review",
   "title": "Banyan Crest Trust · PEP settlor",
-  "summary": "New Cayman discretionary trust settled by a sitting Indian member of parliament who reserves wide powers and is himself a named beneficiary with his wife; the PEP match is real, the source of wealth is uncorroborated, so the case needs enhanced due diligence and senior sign-off.",
+  "summary": "New Meridian discretionary trust settled by a sitting Indian member of parliament who reserves wide powers and is himself a named beneficiary with his wife; the PEP match is real, the source of wealth is uncorroborated, so the case needs enhanced due diligence and senior sign-off.",
   "asOf": "2026-11-10",
   "documents": [
     {
@@ -13,7 +13,7 @@
       "label": {
         "trust_name": "The Banyan Crest Trust",
         "deed_date": "2026-08-30",
-        "governing_law": "Cayman Islands",
+        "governing_law": "Meridia",
         "trust_type": "discretionary",
         "settlor_names": [
           "Anand Vikram Rao"
@@ -138,7 +138,7 @@
       {
         "id": "edd_required",
         "outcome": "review",
-        "note": "Foreign PEP settlor and beneficiary with reserved powers; source of wealth (US$14.5m, CI$11.89m) is declared but uncorroborated, and funds come via a Dubai account. EDD and senior management approval required."
+        "note": "Foreign PEP settlor and beneficiary with reserved powers; source of wealth (US$14.5m, M$11.89m) is declared but uncorroborated, and funds come via a Dubai account. EDD and senior management approval required."
       },
       {
         "id": "controllers_identified",

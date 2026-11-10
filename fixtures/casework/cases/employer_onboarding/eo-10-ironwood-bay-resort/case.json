@@ -2,7 +2,7 @@
   "slug": "eo-10-ironwood-bay-resort",
   "scenario": "employer_onboarding",
   "title": "Ironwood Bay Resort · new employer",
-  "summary": "East End resort partnership joining the plan without details of its general partner's directors; its trade licence lapsed on 31 Aug 2026 and the census includes a 76-year-old groundskeeper.",
+  "summary": "East Reach resort partnership joining the plan without details of its general partner's directors; its trade licence lapsed on 31 Aug 2026 and the census includes a 76-year-old groundskeeper.",
   "asOf": "2026-11-10",
   "documents": [
     {
@@ -14,7 +14,7 @@
         "employer_name": "Ironwood Bay Resort L.P.",
         "registration_number": "LP-1873",
         "trade_name": "Ironwood Bay Resort & Spa",
-        "business_address": "2210 Queen's Highway, East End, Grand Cayman KY1-1801",
+        "business_address": "2210 Coast Highway, East Reach, Grand Meridia MR1-1801",
         "nature_of_business": "Hotel: 64-room beach resort with restaurant, bar and spa",
         "employee_count": 22,
         "contact_name": "Marisol Ortega",
@@ -32,7 +32,7 @@
       "label": {
         "entity_name": "Ironwood Bay Resort L.P.",
         "registration_number": "LP-1873",
-        "jurisdiction": "Cayman Islands",
+        "jurisdiction": "Meridia",
         "entity_type": "limited partnership",
         "incorporation_date": "2017-06-20"
       }

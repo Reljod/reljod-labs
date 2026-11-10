@@ -2,7 +2,7 @@
   "slug": "sr-08-silverthorn-missing-register",
   "scenario": "structure_review",
   "title": "Silverthorn Asset Partners · intermediate register missing",
-  "summary": "Cayman company owned 100% by a Bahamas holding company whose own register of members is missing; the 70/30 split behind it rests only on a hand-drawn meeting note, and one owner's passport is an uncertified phone photo.",
+  "summary": "Meridian company owned 100% by a Bahamas holding company whose own register of members is missing; the 70/30 split behind it rests only on a hand-drawn meeting note, and one owner's passport is an uncertified phone photo.",
   "asOf": "2026-11-10",
   "documents": [
     {
@@ -42,7 +42,7 @@
       "label": {
         "entity_name": "Silverthorn Asset Partners Ltd.",
         "registration_number": "CR-395066",
-        "jurisdiction": "Cayman Islands",
+        "jurisdiction": "Meridia",
         "entity_type": "exempted",
         "incorporation_date": "2022-09-13"
       }

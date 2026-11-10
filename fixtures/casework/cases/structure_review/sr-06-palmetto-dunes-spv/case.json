@@ -13,7 +13,7 @@
       "label": {
         "entity_name": "Palmetto Dunes Development SPV Ltd.",
         "registration_number": "CR-441802",
-        "jurisdiction": "Cayman Islands",
+        "jurisdiction": "Meridia",
         "entity_type": "exempted",
         "incorporation_date": "2026-06-11"
       }
@@ -127,7 +127,7 @@
       {
         "id": "edd_required",
         "outcome": "review",
-        "note": "Nominee shareholders, a Cyprus-resident co-investor with an uncorroborated US$48m (CI$39.36m) source of wealth, and a sanctions match."
+        "note": "Nominee shareholders, a Cyprus-resident co-investor with an uncorroborated US$48m (M$39.36m) source of wealth, and a sanctions match."
       }
     ]
   }

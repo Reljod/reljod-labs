@@ -14,8 +14,8 @@
         "employer_name": "Halyard Data Systems LLC",
         "registration_number": "LL-5821",
         "trade_name": "",
-        "business_address": "Suite 214, Innovation House, Seaview Technology Park, George Town KY1-1104",
-        "nature_of_business": "Software development and data analytics for clients outside the Islands",
+        "business_address": "Suite 214, Innovation House, Seaview Technology Park, Port Selene MR1-1104",
+        "nature_of_business": "Software development and data analytics for clients outside Meridia",
         "employee_count": 8,
         "contact_name": "Aisha Bodden",
         "signatory_names": [
@@ -33,7 +33,7 @@
       "label": {
         "entity_name": "Halyard Data Systems LLC",
         "registration_number": "LL-5821",
-        "jurisdiction": "Cayman Islands",
+        "jurisdiction": "Meridia",
         "entity_type": "limited liability company",
         "incorporation_date": "2023-09-18"
       }

@@ -20,7 +20,7 @@
         "payee_name": "Rajesh Kumar Nair",
         "payee_bank": "Sound Harbour Bank & Trust Ltd.",
         "payee_account_number": "200-447719-3",
-        "caymanian_status_declared": false,
+        "meridian_status_declared": false,
         "primary_residence_declared": false,
         "signature_present": true,
         "signed_date": "2026-10-26"
@@ -89,7 +89,7 @@
       {
         "id": "amount_within_balance",
         "outcome": "pass",
-        "note": "CI$140,000 against a balance of CI$212,880.64"
+        "note": "M$140,000 against a balance of M$212,880.64"
       },
       {
         "id": "payee_permitted",

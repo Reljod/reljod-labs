@@ -1,15 +1,15 @@
-Company,No.,Employee,DOB,Hired,Position,Pay Type,Monthly Equiv. KYD,ID/Passport No.,Nationality
-Pease Bay Aggregates Ltd.,PBA-01,Sandra Parchment,25.02.1967,19.11.2007,Managing Director,Salary,"7,600.00",C0233918,Caymanian
-Pease Bay Aggregates Ltd.,PBA-02,Patrick Hydes,08.08.1973,01.03.2010,Quarry Manager,Salary,"6,100.00",C0260447,Caymanian
-Pease Bay Aggregates Ltd.,PBA-03,Conrad Watson,04.04.1979,14.05.2012,Plant Operator,Hourly,"3,800.00",A1440286,Jamaican
-Pease Bay Aggregates Ltd.,PBA-04,Lennox Grant,27.09.1981,03.06.2013,Truck Driver,Hourly,"3,050.00",A1517730,Jamaican
-Pease Bay Aggregates Ltd.,PBA-05,Jaime Rodríguez,15.01.1986,02.02.2015,Excavator Operator,Hourly,"3,400.00",F0712294,Honduran
-Pease Bay Aggregates Ltd.,PBA-06,Errol Parchment,30.06.1995,06.08.2018,Weighbridge Clerk,Salary,"2,900.00",C0590036,Caymanian
-Pease Bay Aggregates Ltd.,PBA-07,Dennis Mejía,07.07.1990,14.01.2019,Labourer,Hourly,"2,200.00",F0950281,Honduran
-Pease Bay Aggregates Ltd.,PBA-08,Noel Clarke,03.11.1984,02.09.2019,Truck Driver,Hourly,"3,050.00",A2120448,Jamaican
-Pease Bay Aggregates Ltd.,PBA-09,Reynaldo Cruz,21.05.1982,20.04.2020,Mechanic,Hourly,"3,600.00",P3871205A,Filipino
-Pease Bay Aggregates Ltd.,PBA-10,Alicia Bodden,09.12.1992,11.01.2021,Accounts Clerk,Salary,"2,850.00",C0627718,Caymanian
-Pease Bay Aggregates Ltd.,PBA-11,Trevor Lindo,18.03.1987,09.08.2021,Crusher Operator,Hourly,"3,200.00",A2350917,Jamaican
-Pease Bay Aggregates Ltd.,PBA-12,Marvin Flores,02.10.1993,16.05.2022,Labourer,Hourly,"2,200.00",F1150376,Honduran
-Pease Bay Aggregates Ltd.,PBA-13,Gary Whittaker,24.08.1989,06.02.2023,Sales & Dispatch,Salary,"3,300.00",C0551209,Caymanian
-Pease Bay Aggregates Ltd.,PBA-14,Rajiv Nair,11.04.1985,02.09.2024,HSE Officer,Salary,"4,150.00",Z4482017,Indian
+Company,No.,Employee,DOB,Hired,Position,Pay Type,Monthly Equiv. MRD,ID/Passport No.,Nationality
+Pell Bay Aggregates Ltd.,PBA-01,Sandra Parchment,25.02.1967,19.11.2007,Managing Director,Salary,"7,600.00",C0233918,Meridian
+Pell Bay Aggregates Ltd.,PBA-02,Patrick Hydes,08.08.1973,01.03.2010,Quarry Manager,Salary,"6,100.00",C0260447,Meridian
+Pell Bay Aggregates Ltd.,PBA-03,Conrad Watson,04.04.1979,14.05.2012,Plant Operator,Hourly,"3,800.00",A1440286,Jamaican
+Pell Bay Aggregates Ltd.,PBA-04,Lennox Grant,27.09.1981,03.06.2013,Truck Driver,Hourly,"3,050.00",A1517730,Jamaican
+Pell Bay Aggregates Ltd.,PBA-05,Jaime Rodríguez,15.01.1986,02.02.2015,Excavator Operator,Hourly,"3,400.00",F0712294,Honduran
+Pell Bay Aggregates Ltd.,PBA-06,Errol Parchment,30.06.1995,06.08.2018,Weighbridge Clerk,Salary,"2,900.00",C0590036,Meridian
+Pell Bay Aggregates Ltd.,PBA-07,Dennis Mejía,07.07.1990,14.01.2019,Labourer,Hourly,"2,200.00",F0950281,Honduran
+Pell Bay Aggregates Ltd.,PBA-08,Noel Clarke,03.11.1984,02.09.2019,Truck Driver,Hourly,"3,050.00",A2120448,Jamaican
+Pell Bay Aggregates Ltd.,PBA-09,Reynaldo Cruz,21.05.1982,20.04.2020,Mechanic,Hourly,"3,600.00",P3871205A,Filipino
+Pell Bay Aggregates Ltd.,PBA-10,Alicia Bodden,09.12.1992,11.01.2021,Accounts Clerk,Salary,"2,850.00",C0627718,Meridian
+Pell Bay Aggregates Ltd.,PBA-11,Trevor Lindo,18.03.1987,09.08.2021,Crusher Operator,Hourly,"3,200.00",A2350917,Jamaican
+Pell Bay Aggregates Ltd.,PBA-12,Marvin Flores,02.10.1993,16.05.2022,Labourer,Hourly,"2,200.00",F1150376,Honduran
+Pell Bay Aggregates Ltd.,PBA-13,Gary Whittaker,24.08.1989,06.02.2023,Sales & Dispatch,Salary,"3,300.00",C0551209,Meridian
+Pell Bay Aggregates Ltd.,PBA-14,Rajiv Nair,11.04.1985,02.09.2024,HSE Officer,Salary,"4,150.00",Z4482017,Indian

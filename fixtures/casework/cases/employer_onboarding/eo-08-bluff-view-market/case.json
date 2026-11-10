@@ -2,7 +2,7 @@
   "slug": "eo-08-bluff-view-market",
   "scenario": "employer_onboarding",
   "title": "Bluff View Family Market · Aug-Sep 2026",
-  "summary": "Cayman Brac supermarket's August and September contributions: August is fine, but the September transfer is short of the schedule by the two part-timers' contributions.",
+  "summary": "Meridia Minor supermarket's August and September contributions: August is fine, but the September transfer is short of the schedule by the two part-timers' contributions.",
   "asOf": "2026-11-10",
   "documents": [
     {
@@ -162,7 +162,7 @@
     },
     {
       "source": "remittance-2026-08.html",
-      "name": "SICB confirmation August.pdf",
+      "name": "OICB confirmation August.pdf",
       "kind": "remittance_advice",
       "render": "pdf",
       "label": {
@@ -197,12 +197,12 @@
       {
         "id": "no_arrears",
         "outcome": "fail",
-        "note": "September schedule total CI$1,863.04 (8 lines) but the remittance advice shows CI$1,633.04 for 6 members. The difference CI$230.00 equals the two part-timers' lines: Kayla Christian (BVM-07) CI$124.00, Dorian Ebanks (BVM-08) CI$106.00. Arrears CI$230.00 before interest. August CI$1,849.00 matches."
+        "note": "September schedule total M$1,863.04 (8 lines) but the remittance advice shows M$1,633.04 for 6 members. The difference M$230.00 equals the two part-timers' lines: Kayla Christian (BVM-07) M$124.00, Dorian Ebanks (BVM-08) M$106.00. Arrears M$230.00 before interest. August M$1,849.00 matches."
       },
       {
         "id": "contributions_at_rate",
         "outcome": "pass",
-        "note": "Every schedule line is 5% + 5% of gross; no one is above the CI$7,250 cap."
+        "note": "Every schedule line is 5% + 5% of gross; no one is above the M$7,250 cap."
       },
       {
         "id": "contributions_on_time",

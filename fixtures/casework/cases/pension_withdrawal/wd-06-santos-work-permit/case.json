@@ -1,8 +1,8 @@
 {
   "slug": "wd-06-santos-work-permit",
   "scenario": "pension_withdrawal",
-  "title": "Santos · condo in Savannah",
-  "summary": "Filipino nurse on a work permit asks for CI$40,000 towards a Savannah condo; property withdrawals are only for Caymanians.",
+  "title": "Santos · condo in Saltmeadow",
+  "summary": "Filipino nurse on a work permit asks for M$40,000 towards a Saltmeadow condo; property withdrawals are only for Meridians.",
   "asOf": "2026-10-29",
   "documents": [
     {
@@ -16,11 +16,11 @@
         "date_of_birth": "1984-09-14",
         "withdrawal_type": "property_purchase",
         "amount_requested": 40000,
-        "property_address": "Unit 12, Palm Villas, 145 Pedro Castle Road, Savannah",
+        "property_address": "Unit 12, Palm Villas, 145 Pardo Castle Road, Saltmeadow",
         "payee_name": "Rowe Whittaker Attorneys Client Account",
-        "payee_bank": "Grand Anchor Bank (Cayman)",
+        "payee_bank": "Grand Anchor Bank (Meridia)",
         "payee_account_number": "0112-447093-01",
-        "caymanian_status_declared": false,
+        "meridian_status_declared": false,
         "primary_residence_declared": true,
         "signature_present": true,
         "signed_date": "2026-10-19"
@@ -67,9 +67,9 @@
     "missingKinds": ["sale_agreement"],
     "checks": [
       {
-        "id": "caymanian_status",
+        "id": "meridian_status",
         "outcome": "fail",
-        "note": "Caymanian box left blank and annotated 'work permit holder'; passport P7731042B is Filipino"
+        "note": "Meridian box left blank and annotated 'work permit holder'; passport P7731042B is Filipino"
       },
       {
         "id": "identity_matches_record",
@@ -89,12 +89,12 @@
       {
         "id": "amount_within_cap",
         "outcome": "pass",
-        "note": "CI$40,000 is under CI$50,000"
+        "note": "M$40,000 is under M$50,000"
       },
       {
         "id": "amount_within_balance",
         "outcome": "pass",
-        "note": "CI$40,000 against a balance of CI$61,204.88"
+        "note": "M$40,000 against a balance of M$61,204.88"
       },
       {
         "id": "payee_permitted",

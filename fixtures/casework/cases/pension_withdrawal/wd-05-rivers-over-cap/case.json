@@ -1,8 +1,8 @@
 {
   "slug": "wd-05-rivers-over-cap",
   "scenario": "pension_withdrawal",
-  "title": "Rivers · West Bay townhouse",
-  "summary": "Caymanian member buying a West Bay townhouse asks for CI$62,500, which is over the CI$50,000 property cap and more than her CI$47,918.60 balance.",
+  "title": "Rivers · Corran Bay townhouse",
+  "summary": "Meridian member buying a Corran Bay townhouse asks for M$62,500, which is over the M$50,000 property cap and more than her M$47,918.60 balance.",
   "asOf": "2026-11-10",
   "documents": [
     {
@@ -16,11 +16,11 @@
         "date_of_birth": "1990-07-23",
         "withdrawal_type": "property_purchase",
         "amount_requested": 62500,
-        "property_address": "Unit 7, Cypress Point, 212 Birch Tree Hill Road, West Bay",
+        "property_address": "Unit 7, Cypress Point, 212 Beech Tree Hill Road, Corran Bay",
         "payee_name": "Ironwood Legal Client Account",
         "payee_bank": "Turtle Reef Bank Ltd.",
         "payee_account_number": "4410-27781-3",
-        "caymanian_status_declared": true,
+        "meridian_status_declared": true,
         "primary_residence_declared": true,
         "signature_present": true,
         "signed_date": "2026-10-24"
@@ -35,7 +35,7 @@
         "member_name": "Tamara Lynette Rivers",
         "member_number": "CT-266041",
         "date_of_birth": "1990-07-23",
-        "employer_name": "Northwind Telecom (Cayman) Ltd.",
+        "employer_name": "Northwind Telecom (Meridia) Ltd.",
         "statement_date": "2026-10-09",
         "total_balance": 47918.6,
         "prior_property_withdrawals": 0,
@@ -55,8 +55,8 @@
         "vendor_names": [
           "Cypress Point Developments Ltd."
         ],
-        "property_address": "Unit 7, Cypress Point, 212 Birch Tree Hill Road, West Bay",
-        "block_parcel": "West Bay North West Block 5C Parcel 211H7",
+        "property_address": "Unit 7, Cypress Point, 212 Beech Tree Hill Road, Corran Bay",
+        "block_parcel": "Corran Bay North West Block 5C Parcel 211H7",
         "purchase_price": 389000,
         "deposit": 38900,
         "completion_date": "2027-01-29"
@@ -66,17 +66,17 @@
   "expected": {
     "pipeline": "pension_withdrawal",
     "recommendation": "decline",
-    "missingKinds": ["identity_document", "caymanian_status_evidence"],
+    "missingKinds": ["identity_document", "meridian_status_evidence"],
     "checks": [
       {
         "id": "amount_within_cap",
         "outcome": "fail",
-        "note": "CI$62,500 requested; the property cap is CI$50,000"
+        "note": "M$62,500 requested; the property cap is M$50,000"
       },
       {
         "id": "amount_within_balance",
         "outcome": "fail",
-        "note": "CI$62,500 requested against a balance of CI$47,918.60 at 9 Oct 2026"
+        "note": "M$62,500 requested against a balance of M$47,918.60 at 9 Oct 2026"
       },
       {
         "id": "withdrawal_purpose_supported",
@@ -86,7 +86,7 @@
       {
         "id": "purpose_evidence_consistent",
         "outcome": "pass",
-        "note": "Agreement is for Unit 7, Cypress Point, 212 Birch Tree Hill Road, West Bay (West Bay North West Block 5C Parcel 211H7), purchasers include Tamara Lynette Rivers"
+        "note": "Agreement is for Unit 7, Cypress Point, 212 Beech Tree Hill Road, Corran Bay (Corran Bay North West Block 5C Parcel 211H7), purchasers include Tamara Lynette Rivers"
       },
       {
         "id": "primary_residence",
@@ -104,7 +104,7 @@
         "note": "Ironwood Legal Client Account, the purchasers' attorneys named in the agreement"
       },
       {
-        "id": "caymanian_status",
+        "id": "meridian_status",
         "outcome": "review",
         "note": "Declared on the form; no status evidence or ID supplied, moot as the request fails on amount"
       }

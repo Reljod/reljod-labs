@@ -42,7 +42,7 @@ export const PIPELINES: Record<PipelineId, PipelineSpec> = {
       "sale_agreement",
       "mortgage_statement",
       "attorney_letter",
-      "caymanian_status_evidence",
+      "meridian_status_evidence",
     ],
   },
   employer_onboarding: {

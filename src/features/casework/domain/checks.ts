@@ -21,12 +21,12 @@ export const CHECKS = {
   id_certified: { title: "ID properly certified" },
 
   // Withdrawal rules (check_eligibility)
-  caymanian_status: { title: "Caymanian status shown", blocking: true },
+  meridian_status: { title: "Meridian status shown", blocking: true },
   withdrawal_purpose_supported: {
     title: "Purpose allowed by the Act",
     blocking: true,
   },
-  amount_within_cap: { title: "Within the CI$50,000 cap", blocking: true },
+  amount_within_cap: { title: "Within the M$50,000 cap", blocking: true },
   amount_within_balance: { title: "Within the balance", blocking: true },
   purpose_evidence_consistent: { title: "Property evidence agrees" },
   lender_permitted: { title: "Permitted lender", blocking: true },

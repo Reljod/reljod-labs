@@ -2,7 +2,7 @@
   "slug": "wd-04-campbell-early-retirement",
   "scenario": "pension_withdrawal",
   "title": "Campbell · early retirement at 61",
-  "summary": "Jamaican permanent resident aged 61 taking a CI$120,000 early retirement lump sum to her own bank account; non-Caymanians may retire early, and every document agrees.",
+  "summary": "Jamaican permanent resident aged 61 taking a M$120,000 early retirement lump sum to her own bank account; non-Meridians may retire early, and every document agrees.",
   "asOf": "2026-11-05",
   "documents": [
     {
@@ -20,7 +20,7 @@
         "payee_name": "Marcia Elaine Campbell",
         "payee_bank": "Leeward Commercial Bank Ltd.",
         "payee_account_number": "0031-559201-02",
-        "caymanian_status_declared": false,
+        "meridian_status_declared": false,
         "primary_residence_declared": false,
         "signature_present": true,
         "signed_date": "2026-10-30"
@@ -96,12 +96,12 @@
       {
         "id": "withdrawal_purpose_supported",
         "outcome": "pass",
-        "note": "Early retirement at 61 (born 8 Mar 1965); the minimum is 60 and Caymanian status is not needed for retirement"
+        "note": "Early retirement at 61 (born 8 Mar 1965); the minimum is 60 and Meridian status is not needed for retirement"
       },
       {
         "id": "amount_within_balance",
         "outcome": "pass",
-        "note": "CI$120,000 against a balance of CI$163,582.40 at 30 Sep 2026"
+        "note": "M$120,000 against a balance of M$163,582.40 at 30 Sep 2026"
       },
       {
         "id": "payee_permitted",

@@ -2,7 +2,7 @@
   "slug": "wd-12-tibbetts-earlier-withdrawal",
   "scenario": "pension_withdrawal",
   "title": "Tibbetts · second withdrawal",
-  "summary": "Caymanian (by marriage) member in East End asks for CI$25,000 off her development bank mortgage; her 2021 housing withdrawal of CI$18,000 has not been repaid since January 2023.",
+  "summary": "Meridian (by marriage) member in East Reach asks for M$25,000 off her development bank mortgage; her 2021 housing withdrawal of M$18,000 has not been repaid since January 2023.",
   "asOf": "2026-11-03",
   "documents": [
     {
@@ -16,11 +16,11 @@
         "date_of_birth": "1975-12-12",
         "withdrawal_type": "mortgage_reduction",
         "amount_requested": 25000,
-        "property_address": "22 Sea View Road, East End",
+        "property_address": "22 Sea View Road, East Reach",
         "payee_name": "Islands Housing Development Bank",
         "payee_bank": "Islands Housing Development Bank",
         "payee_account_number": "IHDB-HL-06-2271",
-        "caymanian_status_declared": true,
+        "meridian_status_declared": true,
         "primary_residence_declared": true,
         "signature_present": true,
         "signed_date": "2026-10-19"
@@ -35,7 +35,7 @@
         "member_name": "Glenda Mae Tibbetts",
         "member_number": "CT-097152",
         "date_of_birth": "1975-12-12",
-        "employer_name": "Colliers Bay Fisheries Ltd.",
+        "employer_name": "Calder Bay Fisheries Ltd.",
         "statement_date": "2026-09-30",
         "total_balance": 64280.91,
         "prior_property_withdrawals": 18000,
@@ -63,13 +63,13 @@
     {
       "source": "status-certificate.html",
       "name": "status_cert.pdf",
-      "kind": "caymanian_status_evidence",
+      "kind": "meridian_status_evidence",
       "render": "scan",
       "label": {
         "full_name": "Glenda Mae Tibbetts",
         "date_of_birth": "1975-12-12",
         "status_basis": "marriage",
-        "document_number": "CSPR/M/2014/0219",
+        "document_number": "MSPR/M/2014/0219",
         "issue_date": "2014-07-22"
       }
     },
@@ -85,7 +85,7 @@
         "lender_name": "Islands Housing Development Bank",
         "loan_account_number": "IHDB-HL-06-2271",
         "outstanding_balance": 98247.16,
-        "property_address": "22 Sea View Road, East End",
+        "property_address": "22 Sea View Road, East Reach",
         "statement_date": "2026-09-30"
       }
     }
@@ -98,17 +98,17 @@
       {
         "id": "prior_withdrawals_repaid",
         "outcome": "fail",
-        "note": "CI$18,000 withdrawn 15 Apr 2021; CI$3,150 repaid, CI$14,850 outstanding, no repayment since January 2023"
+        "note": "M$18,000 withdrawn 15 Apr 2021; M$3,150 repaid, M$14,850 outstanding, no repayment since January 2023"
       },
       {
         "id": "amount_within_cap",
         "outcome": "pass",
-        "note": "CI$25,000 requested; with the earlier CI$18,000 the total is CI$43,000, under CI$50,000"
+        "note": "M$25,000 requested; with the earlier M$18,000 the total is M$43,000, under M$50,000"
       },
       {
         "id": "amount_within_balance",
         "outcome": "pass",
-        "note": "CI$25,000 against a balance of CI$64,280.91"
+        "note": "M$25,000 against a balance of M$64,280.91"
       },
       {
         "id": "identity_matches_record",
@@ -126,9 +126,9 @@
         "note": "Certified by Sandra Yvette McLaughlin, Bank Officer, on 8 Oct 2026"
       },
       {
-        "id": "caymanian_status",
+        "id": "meridian_status",
         "outcome": "pass",
-        "note": "Certificate CSPR/M/2014/0219, Caymanian by marriage"
+        "note": "Certificate MSPR/M/2014/0219, Meridian by marriage"
       },
       {
         "id": "withdrawal_purpose_supported",
@@ -138,7 +138,7 @@
       {
         "id": "purpose_evidence_consistent",
         "outcome": "pass",
-        "note": "IHDB statement IHDB-HL-06-2271 for 22 Sea View Road, East End, borrower Glenda Mae Tibbetts, CI$98,247.16 outstanding"
+        "note": "IHDB statement IHDB-HL-06-2271 for 22 Sea View Road, East Reach, borrower Glenda Mae Tibbetts, M$98,247.16 outstanding"
       },
       {
         "id": "lender_permitted",

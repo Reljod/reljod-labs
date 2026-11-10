@@ -2,7 +2,7 @@
   "slug": "wd-09-bush-retirement-at-57",
   "scenario": "pension_withdrawal",
   "title": "Bush · early retirement at 57",
-  "summary": "Savannah member aged 57 applies to take CI$75,000 as early retirement to start a business; the earliest retirement age is 60.",
+  "summary": "Saltmeadow member aged 57 applies to take M$75,000 as early retirement to start a business; the earliest retirement age is 60.",
   "asOf": "2026-11-10",
   "documents": [
     {
@@ -20,7 +20,7 @@
         "payee_name": "Lourdes Patricia Bush",
         "payee_bank": "Turtle Reef Bank Ltd.",
         "payee_account_number": "4410-90127-6",
-        "caymanian_status_declared": true,
+        "meridian_status_declared": true,
         "primary_residence_declared": false,
         "signature_present": true,
         "signed_date": "2026-11-02"
@@ -35,7 +35,7 @@
         "member_name": "Lourdes Patricia Bush",
         "member_number": "CT-131477",
         "date_of_birth": "1969-06-21",
-        "employer_name": "Savannah Gardens Supermarket Ltd.",
+        "employer_name": "Saltmeadow Gardens Supermarket Ltd.",
         "statement_date": "2026-11-03",
         "total_balance": 92450.18,
         "prior_property_withdrawals": 0,
@@ -52,7 +52,7 @@
         "full_name": "Lourdes Patricia Bush",
         "date_of_birth": "1969-06-21",
         "nationality": "",
-        "id_number": "SAV-004418",
+        "id_number": "SLT-004418",
         "date_of_expiry": "2033-02-13",
         "certified": false,
         "certifier_name": "",
@@ -89,7 +89,7 @@
       {
         "id": "amount_within_balance",
         "outcome": "pass",
-        "note": "CI$75,000 against a balance of CI$92,450.18"
+        "note": "M$75,000 against a balance of M$92,450.18"
       },
       {
         "id": "payee_permitted",

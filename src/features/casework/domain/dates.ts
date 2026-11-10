@@ -80,7 +80,7 @@ export function formatDate(iso: string) {
 }
 
 export function formatMoney(amount: number) {
-  return `CI$${amount.toLocaleString("en-US", {
+  return `M$${amount.toLocaleString("en-US", {
     minimumFractionDigits: amount % 1 === 0 ? 0 : 2,
     maximumFractionDigits: 2,
   })}`;

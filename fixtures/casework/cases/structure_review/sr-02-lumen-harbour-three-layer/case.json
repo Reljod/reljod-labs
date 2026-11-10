@@ -2,7 +2,7 @@
   "slug": "sr-02-lumen-harbour-three-layer",
   "scenario": "structure_review",
   "title": "Lumen Harbour Capital · three-layer chain",
-  "summary": "Cayman company owned through a BVI holding company and a Delaware LLC; multiplied through, four people hold 10% or more (one at exactly 12%), but the client applied the 25% register test and sent only one passport.",
+  "summary": "Meridian company owned through a BVI holding company and a Delaware LLC; multiplied through, four people hold 10% or more (one at exactly 12%), but the client applied the 25% register test and sent only one passport.",
   "asOf": "2026-11-10",
   "documents": [
     {
@@ -66,7 +66,7 @@
       "label": {
         "entity_name": "Lumen Harbour Capital Ltd.",
         "registration_number": "CR-427755",
-        "jurisdiction": "Cayman Islands",
+        "jurisdiction": "Meridia",
         "entity_type": "exempted",
         "incorporation_date": "2025-06-02"
       }
@@ -223,7 +223,7 @@
       {
         "id": "edd_required",
         "outcome": "pass",
-        "note": "Three layers across Cayman, BVI and Delaware with transparent registers; no PEP or nominee. Standard CDD once the missing IDs arrive."
+        "note": "Three layers across Meridia, BVI and Delaware with transparent registers; no PEP or nominee. Standard CDD once the missing IDs arrive."
       }
     ]
   }

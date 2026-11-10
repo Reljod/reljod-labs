@@ -2,7 +2,7 @@
   "slug": "eo-01-bonefish-point-divers",
   "scenario": "employer_onboarding",
   "title": "Bonefish Point Divers · new employer",
-  "summary": "West Bay dive operator joining the plan with a complete, consistent pack: nothing wrong.",
+  "summary": "Corran Bay dive operator joining the plan with a complete, consistent pack: nothing wrong.",
   "asOf": "2026-11-10",
   "documents": [
     {
@@ -14,7 +14,7 @@
         "employer_name": "Bonefish Point Divers Ltd.",
         "registration_number": "331857",
         "trade_name": "",
-        "business_address": "382 North West Point Road, West Bay, Grand Cayman KY1-1301",
+        "business_address": "382 North West Head Road, Corran Bay, Grand Meridia MR1-1301",
         "nature_of_business": "Recreational dive operator: boat dives, dive training and equipment rental",
         "employee_count": 9,
         "contact_name": "Thomas Pritchard",
@@ -32,7 +32,7 @@
       "label": {
         "entity_name": "Bonefish Point Divers Ltd.",
         "registration_number": "331857",
-        "jurisdiction": "Cayman Islands",
+        "jurisdiction": "Meridia",
         "entity_type": "ordinary resident company",
         "incorporation_date": "2014-03-11"
       }
@@ -62,7 +62,7 @@
             "name": "Lorna Yvette Bodden",
             "role": "director",
             "date_of_birth": "1971-08-22",
-            "nationality": "Caymanian",
+            "nationality": "Meridian",
             "appointed": "2014-03-11"
           },
           {
@@ -200,7 +200,7 @@
       {
         "id": "edd_required",
         "outcome": "pass",
-        "note": "Local dive operator with Caymanian and British directors, no PEP or sanctions link: standard due diligence."
+        "note": "Local dive operator with Meridian and British directors, no PEP or sanctions link: standard due diligence."
       }
     ]
   }

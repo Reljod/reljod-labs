@@ -1,8 +1,8 @@
 {
   "slug": "wd-13-jackson-name-unexplained",
   "scenario": "pension_withdrawal",
-  "title": "Jackson · apartment in Prospect",
-  "summary": "Online application for CI$28,000 towards a Prospect apartment in the name Jackson, while the plan record is Whittaker with no explanation; status evidence and the sale agreement are not in yet.",
+  "title": "Jackson · apartment in Fairholm",
+  "summary": "Online application for M$28,000 towards a Fairholm apartment in the name Jackson, while the plan record is Whittaker with no explanation; status evidence and the sale agreement are not in yet.",
   "asOf": "2026-11-10",
   "documents": [
     {
@@ -16,11 +16,11 @@
         "date_of_birth": "1993-02-27",
         "withdrawal_type": "property_purchase",
         "amount_requested": 28000,
-        "property_address": "Apt 5, Jasmine Court, 76 Poindexter Road, Prospect",
+        "property_address": "Apt 5, Jasmine Court, 76 Pointer Road, Fairholm",
         "payee_name": "Ironwood Legal Client Account",
         "payee_bank": "Turtle Reef Bank Ltd.",
         "payee_account_number": "4410-27781-3",
-        "caymanian_status_declared": true,
+        "meridian_status_declared": true,
         "primary_residence_declared": true,
         "signature_present": true,
         "signed_date": "2026-11-04"
@@ -35,7 +35,7 @@
         "member_name": "Kerry-Ann Michelle Whittaker",
         "member_number": "CT-279305",
         "date_of_birth": "1993-02-27",
-        "employer_name": "Lime Tree Bay Hospitality Ltd.",
+        "employer_name": "Lemon Tree Bay Hospitality Ltd.",
         "statement_date": "2026-11-05",
         "total_balance": 39770.52,
         "prior_property_withdrawals": 0,
@@ -65,7 +65,7 @@
     "pipeline": "pension_withdrawal",
     "recommendation": "request_info",
     "missingKinds": [
-      "caymanian_status_evidence",
+      "meridian_status_evidence",
       "sale_agreement"
     ],
     "checks": [
@@ -85,19 +85,19 @@
         "note": "A phone photo, not a certified copy"
       },
       {
-        "id": "caymanian_status",
+        "id": "meridian_status",
         "outcome": "review",
         "note": "Declared on the form; no status evidence supplied"
       },
       {
         "id": "amount_within_cap",
         "outcome": "pass",
-        "note": "CI$28,000 is under CI$50,000"
+        "note": "M$28,000 is under M$50,000"
       },
       {
         "id": "amount_within_balance",
         "outcome": "pass",
-        "note": "CI$28,000 against a balance of CI$39,770.52"
+        "note": "M$28,000 against a balance of M$39,770.52"
       },
       {
         "id": "prior_withdrawals_repaid",

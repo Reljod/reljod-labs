@@ -2,7 +2,7 @@
   "slug": "eo-02-harbourline-fund-services",
   "scenario": "employer_onboarding",
   "title": "Harbourline Fund Services · Aug-Sep 2026",
-  "summary": "Exempted fund administrator's August and September contributions: every line at 5% + 5% of earnings capped at CI$7,250, paid before the 15th, remittances match: nothing wrong.",
+  "summary": "Exempted fund administrator's August and September contributions: every line at 5% + 5% of earnings capped at M$7,250, paid before the 15th, remittances match: nothing wrong.",
   "asOf": "2026-11-10",
   "documents": [
     {
@@ -233,17 +233,17 @@
       {
         "id": "contributions_at_rate",
         "outcome": "pass",
-        "note": "All 20 lines are 5% + 5% of earnings capped at CI$7,250: the 7 lines above the cap (e.g. Rebecca Anne Whitfield on CI$12,500.00, and Kimberly Watler's September CI$7,740.00 with bonus) pay CI$362.50 each side."
+        "note": "All 20 lines are 5% + 5% of earnings capped at M$7,250: the 7 lines above the cap (e.g. Rebecca Anne Whitfield on M$12,500.00, and Kimberly Watler's September M$7,740.00 with bonus) pay M$362.50 each side."
       },
       {
         "id": "contributions_on_time",
         "outcome": "pass",
-        "note": "August 2026 CI$5,287.50 paid 11 September 2026; September 2026 CI$5,388.50 paid 14 October 2026: both before the 15th of the following month."
+        "note": "August 2026 M$5,287.50 paid 11 September 2026; September 2026 M$5,388.50 paid 14 October 2026: both before the 15th of the following month."
       },
       {
         "id": "no_arrears",
         "outcome": "pass",
-        "note": "Each remittance equals the schedule total for its month; arrears CI$0.00."
+        "note": "Each remittance equals the schedule total for its month; arrears M$0.00."
       }
     ]
   }

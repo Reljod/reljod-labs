@@ -22,7 +22,7 @@
             "list_source": "Caribbean PEP Register (synthetic)",
             "match_score": 91,
             "hit_date_of_birth": "1968-12-03",
-            "hit_nationality": "Cayman Islands",
+            "hit_nationality": "Meridia",
             "hit_reference": "WL-PEP-0311"
           }
         ]
@@ -37,8 +37,8 @@
         "customer_name": "Lorna Beverley Merren-Dacosta",
         "customer_id": "CTP-C-188420",
         "date_of_birth": "1968-12-03",
-        "nationality": "Cayman Islands",
-        "residence": "Cayman Islands",
+        "nationality": "Meridia",
+        "residence": "Meridia",
         "occupation": "Permanent Secretary",
         "id_number": "C0412776",
         "other_names": [
@@ -55,7 +55,7 @@
         "document_type": "passport",
         "full_name": "Lorna Beverley Merren-Dacosta",
         "date_of_birth": "1968-12-03",
-        "nationality": "British Overseas Territories Citizen",
+        "nationality": "Meridian",
         "id_number": "C0412776",
         "date_of_expiry": "2033-08-21",
         "certified": true,
@@ -76,10 +76,10 @@
           "Lorna Merren-Dacosta"
         ],
         "date_of_birth": "1968-12-03",
-        "place_of_birth": "George Town, Grand Cayman",
-        "nationality": "Cayman Islands",
+        "place_of_birth": "Port Selene, Grand Meridia",
+        "nationality": "Meridia",
         "list_source": "Caribbean PEP Register (synthetic)",
-        "listing_reason": "Permanent Secretary, Ministry of Infrastructure and Ports, Cayman Islands Government (domestic PEP)",
+        "listing_reason": "Permanent Secretary, Ministry of Infrastructure and Ports, Government of Meridia (domestic PEP)",
         "reference": "WL-PEP-0311"
       }
     }
@@ -109,7 +109,7 @@
       {
         "name": "Lorna Beverley Dacosta",
         "disposition": "true_match",
-        "reason": "Same person. Register DOB 1968-12-03 and place of birth George Town match the certified passport; the register aliases include her maiden name Lorna Merren (on the KYC record as a former name) and the hyphenated name Merren-Dacosta she uses; her recorded occupation is Permanent Secretary, Ministry of Infrastructure and Ports, the public role on the register. Domestic PEP confirmed: not a sanctions match, so refer for enhanced due diligence and senior management approval rather than decline."
+        "reason": "Same person. Register DOB 1968-12-03 and place of birth Port Selene match the certified passport; the register aliases include her maiden name Lorna Merren (on the KYC record as a former name) and the hyphenated name Merren-Dacosta she uses; her recorded occupation is Permanent Secretary, Ministry of Infrastructure and Ports, the public role on the register. Domestic PEP confirmed: not a sanctions match, so refer for enhanced due diligence and senior management approval rather than decline."
       }
     ]
   }

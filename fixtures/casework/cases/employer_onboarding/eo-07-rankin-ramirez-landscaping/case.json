@@ -323,17 +323,17 @@
       {
         "id": "contributions_on_time",
         "outcome": "fail",
-        "note": "July 2026 CI$2,510.50 due 15 August 2026, paid 12 days late, interest about CI$10.94; September 2026 CI$2,436.80 due 15 October 2026, paid 6 days late, interest about CI$5.31 (prime 8.25% + 5% = 13.25% a year, simple, actual/365)."
+        "note": "July 2026 M$2,510.50 due 15 August 2026, paid 12 days late, interest about M$10.94; September 2026 M$2,436.80 due 15 October 2026, paid 6 days late, interest about M$5.31 (prime 8.25% + 5% = 13.25% a year, simple, actual/365)."
       },
       {
         "id": "no_arrears",
         "outcome": "fail",
-        "note": "August 2026 has no payment date and no remittance: 10 lines, employee CI$1,168.80 + employer CI$1,168.80 = CI$2,337.60 unpaid since 15 Sep 2026 (56 days to the review date, interest about CI$47.52). Arrears CI$2,337.60 before interest; employee deductions were withheld but not paid over."
+        "note": "August 2026 has no payment date and no remittance: 10 lines, employee M$1,168.80 + employer M$1,168.80 = M$2,337.60 unpaid since 15 Sep 2026 (56 days to the review date, interest about M$47.52). Arrears M$2,337.60 before interest; employee deductions were withheld but not paid over."
       },
       {
         "id": "contributions_at_rate",
         "outcome": "pass",
-        "note": "Every line is 5% + 5% of gross (hours x rate); no one is above the CI$7,250 cap."
+        "note": "Every line is 5% + 5% of gross (hours x rate); no one is above the M$7,250 cap."
       }
     ]
   }

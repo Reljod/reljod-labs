@@ -2,7 +2,7 @@
   "slug": "eo-04-coral-stone-construction",
   "scenario": "employer_onboarding",
   "title": "Coral Stone Construction · new employer",
-  "summary": "Bodden Town contractor joining the plan; the census lists one carpenter twice, has an impossible date of birth and a 16-year-old apprentice.",
+  "summary": "Marlow Town contractor joining the plan; the census lists one carpenter twice, has an impossible date of birth and a 16-year-old apprentice.",
   "asOf": "2026-11-10",
   "documents": [
     {
@@ -14,7 +14,7 @@
         "employer_name": "Coral Stone Construction Ltd.",
         "registration_number": "297413",
         "trade_name": "",
-        "business_address": "1147 Shamrock Road, Bodden Town, Grand Cayman KY1-1601",
+        "business_address": "1147 Clover Road, Marlow Town, Grand Meridia MR1-1601",
         "nature_of_business": "General building contractor: residential and commercial construction",
         "employee_count": 18,
         "contact_name": "Yolanda Connolly",
@@ -32,7 +32,7 @@
       "label": {
         "entity_name": "Coral Stone Construction Ltd.",
         "registration_number": "297413",
-        "jurisdiction": "Cayman Islands",
+        "jurisdiction": "Meridia",
         "entity_type": "ordinary resident company",
         "incorporation_date": "2009-05-26"
       }
@@ -62,14 +62,14 @@
             "name": "Dwayne Everton Connolly",
             "role": "director",
             "date_of_birth": "1968-10-14",
-            "nationality": "Caymanian",
+            "nationality": "Meridian",
             "appointed": "2009-05-26"
           },
           {
             "name": "Marlon Anthony Whittaker",
             "role": "director",
             "date_of_birth": "1975-02-02",
-            "nationality": "Caymanian",
+            "nationality": "Meridian",
             "appointed": "2015-01-12"
           },
           {
@@ -280,7 +280,7 @@
       {
         "id": "edd_required",
         "outcome": "pass",
-        "note": "Local contractor with Caymanian directors and a work-permit workforce: standard due diligence."
+        "note": "Local contractor with Meridian directors and a work-permit workforce: standard due diligence."
       }
     ]
   }

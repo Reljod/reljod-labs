@@ -4,7 +4,7 @@
  * each fixture Document's `label` uses exactly these field names and types.
  *
  * Types: `text` and `date` (ISO `YYYY-MM-DD`) are strings, `money` is a number
- * in Cayman Islands dollars (CI$), `flag` is a boolean, `list` holds objects
+ * in Meridian dollars (M$), `flag` is a boolean, `list` holds objects
  * with the listed item fields, `names` is an array of full names.
  */
 
@@ -45,12 +45,12 @@ export const DOCUMENT_KINDS = {
       withdrawal_type: t(
         "one of property_purchase, mortgage_reduction, early_retirement, other",
       ),
-      amount_requested: m("amount requested in CI$"),
+      amount_requested: m("amount requested in M$"),
       property_address: t("address of the property, if any"),
       payee_name: t("name of the account the funds are to be paid to"),
       payee_bank: t("bank of the payee account"),
       payee_account_number: t("payee account number"),
-      caymanian_status_declared: f("member ticks that they are Caymanian"),
+      meridian_status_declared: f("member ticks that they are Meridian"),
       primary_residence_declared: f(
         "member declares the property is or will be their primary residence",
       ),
@@ -68,9 +68,9 @@ export const DOCUMENT_KINDS = {
       date_of_birth: d("member's date of birth"),
       employer_name: t("current participating employer"),
       statement_date: d("statement date"),
-      total_balance: m("total account balance in CI$"),
+      total_balance: m("total account balance in M$"),
       prior_property_withdrawals: m(
-        "total of earlier property withdrawals in CI$, 0 if none",
+        "total of earlier property withdrawals in M$, 0 if none",
       ),
       prior_withdrawals_repaid: f(
         "earlier property withdrawals are repaid or being repaid on schedule; true when there are none",
@@ -94,10 +94,10 @@ export const DOCUMENT_KINDS = {
       certification_date: d("date certified, if certified"),
     },
   },
-  caymanian_status_evidence: {
-    label: "Caymanian status evidence",
+  meridian_status_evidence: {
+    label: "Meridian status evidence",
     looksLike:
-      "A certificate of Caymanian status, a Cayman Islands birth certificate or a Caymanian passport endorsement",
+      "A certificate of Meridian status, a Meridian birth certificate or a Meridian passport endorsement",
     fields: {
       full_name: t("person's full name"),
       date_of_birth: d("date of birth"),
@@ -119,23 +119,23 @@ export const DOCUMENT_KINDS = {
   sale_agreement: {
     label: "Sale agreement",
     looksLike:
-      "An agreement for sale and purchase of land in the Cayman Islands naming vendor, purchaser, parcel and price",
+      "An agreement for sale and purchase of land in Meridia naming vendor, purchaser, parcel and price",
     fields: {
       purchaser_names: names("purchasers"),
       vendor_names: names("vendors"),
       property_address: t("property address"),
       block_parcel: t(
-        "registration section, block and parcel, e.g. West Bay Beach North Block 11D Parcel 92",
+        "registration section, block and parcel, e.g. Corran Bay Beach North Block 11D Parcel 92",
       ),
-      purchase_price: m("purchase price in CI$"),
-      deposit: m("deposit in CI$"),
+      purchase_price: m("purchase price in M$"),
+      deposit: m("deposit in M$"),
       completion_date: d("agreed completion date"),
     },
   },
   land_registry_extract: {
     label: "Land register extract",
     looksLike:
-      "A Cayman Islands Land Registry extract or register of title for one parcel, with proprietors and charges",
+      "A Meridia Land Registry extract or register of title for one parcel, with proprietors and charges",
     fields: {
       block_parcel: t("block and parcel"),
       property_address: t("address or description of the land"),
@@ -152,7 +152,7 @@ export const DOCUMENT_KINDS = {
       borrower_names: names("borrowers"),
       lender_name: t("lender"),
       loan_account_number: t("loan account number"),
-      outstanding_balance: m("outstanding balance in CI$"),
+      outstanding_balance: m("outstanding balance in M$"),
       property_address: t("mortgaged property address"),
       statement_date: d("statement date"),
     },
@@ -168,7 +168,7 @@ export const DOCUMENT_KINDS = {
       ),
       borrower_names: names("borrowers"),
       property_address: t("property address"),
-      amount: m("loan or payment amount in CI$"),
+      amount: m("loan or payment amount in M$"),
       letter_date: d("letter date"),
     },
   },
@@ -233,7 +233,7 @@ export const DOCUMENT_KINDS = {
   trade_business_licence: {
     label: "Trade & business licence",
     looksLike:
-      "A Cayman Islands trade and business licence naming the licensee, activity and expiry",
+      "A Meridian trade and business licence naming the licensee, activity and expiry",
     fields: {
       licensee_name: t("licensee"),
       licence_number: t("licence number"),
@@ -289,7 +289,7 @@ export const DOCUMENT_KINDS = {
           full_name: t("employee name"),
           date_of_birth: d("date of birth"),
           hire_date: d("hire date"),
-          monthly_salary: m("monthly gross salary in CI$"),
+          monthly_salary: m("monthly gross salary in M$"),
           id_number: t("ID or passport number"),
         },
       },
@@ -308,9 +308,9 @@ export const DOCUMENT_KINDS = {
           period: t("contribution month as YYYY-MM"),
           employee_id: t("employee id"),
           full_name: t("employee name"),
-          gross_earnings: m("gross earnings for the month in CI$"),
-          employee_contribution: m("employee contribution in CI$"),
-          employer_contribution: m("employer contribution in CI$"),
+          gross_earnings: m("gross earnings for the month in M$"),
+          employee_contribution: m("employee contribution in M$"),
+          employer_contribution: m("employer contribution in M$"),
           date_paid: d("date the money reached the plan; empty if unpaid"),
         },
       },
@@ -322,7 +322,7 @@ export const DOCUMENT_KINDS = {
       "A bank payment confirmation or remittance advice for a pension contribution transfer",
     fields: {
       payer_name: t("who paid"),
-      amount: m("amount paid in CI$"),
+      amount: m("amount paid in M$"),
       value_date: d("value date"),
       reference: t("payment reference"),
       period: t("contribution month it covers as YYYY-MM"),
@@ -338,7 +338,7 @@ export const DOCUMENT_KINDS = {
       trust_name: t("name of the trust"),
       deed_date: d("date of the deed"),
       governing_law: t("governing law"),
-      trust_type: t("discretionary, fixed_interest, purpose, STAR or other"),
+      trust_type: t("discretionary, fixed_interest, purpose, PACT or other"),
       settlor_names: names("settlors"),
       trustee_names: names("trustees"),
       protector_names: names("protectors, if any"),
@@ -415,7 +415,7 @@ export const DOCUMENT_KINDS = {
       person_name: t("whose wealth"),
       declared_sources: t("the sources, comma separated"),
       estimated_net_worth: m(
-        "estimated net worth in CI$ (convert US$ at 0.82 if needed)",
+        "estimated net worth in M$ (convert US$ at 0.82 if needed)",
       ),
       corroborated: f("evidence is attached or cited for the main source"),
       declaration_date: d("date"),

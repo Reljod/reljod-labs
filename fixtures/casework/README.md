@@ -1,12 +1,12 @@
 # Casework fixtures
 
-The synthetic Cabinet for the Casework desk: 200 labelled documents, 50 per review, in 48 case files. Every person, company, bank, law firm, screening product and publication is fictional, and every page carries a SPECIMEN watermark and a synthetic-document footer. Cayman geography, land registry conventions and the National Pensions Act rules are used for realism; no real document design, seal or crest is copied.
+The synthetic Cabinet for the Casework desk: 200 labelled documents, 50 per review, in 48 case files. Every person, company, bank, law firm, screening product and publication is fictional, and every page carries a SPECIMEN watermark and a synthetic-document footer. The setting is the fictional Republic of Meridia, the country the Document compliance fixtures use: capital Port Selene, currency M$ (MRD), postcodes MR1-xxxx. Its places, registries and National Pensions Act rules are invented for the demo; no real document design, seal or crest is copied. A few case-file slugs keep older working names; titles and documents carry the Meridian ones.
 
 | Scenario | Cases | What they exercise |
 | --- | --- | --- |
-| `pension_withdrawal` | 13 | Home purchase, mortgage reduction and early retirement; the CI$50,000 cap, balances, Caymanian status, permitted lenders, payees, married names, earlier withdrawals |
+| `pension_withdrawal` | 13 | Home purchase, mortgage reduction and early retirement; the M$50,000 cap, balances, Meridian status, permitted lenders, payees, married names, earlier withdrawals |
 | `employer_onboarding` | 12 | Company papers, member censuses, signatories, PEP and sanctioned directors, and contribution files with short, late and missing months |
-| `structure_review` | 10 | Layered companies, trusts (discretionary, STAR), a foundation company, nominees, missing registers, a PEP settlor |
+| `structure_review` | 10 | Layered companies, trusts (discretionary, PACT), a foundation company, nominees, missing registers, a PEP settlor |
 | `screening_review` | 13 | False positives on date, nationality, gender, namesakes and deceased PEPs; true matches; transliteration and name-order cases |
 
 ## Layout

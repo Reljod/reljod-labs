@@ -2,7 +2,7 @@
   "slug": "eo-06-island-shield-security",
   "scenario": "employer_onboarding",
   "title": "Island Shield Security · Aug-Sep 2026",
-  "summary": "Security company's August and September contributions: on time and fully remitted, but payroll caps pensionable earnings at CI$5,000 a month instead of CI$7,250, so four managers are under-contributed.",
+  "summary": "Security company's August and September contributions: on time and fully remitted, but payroll caps pensionable earnings at M$5,000 a month instead of M$7,250, so four managers are under-contributed.",
   "asOf": "2026-11-10",
   "documents": [
     {
@@ -269,12 +269,12 @@
       {
         "id": "contributions_at_rate",
         "outcome": "fail",
-        "note": "Schedule caps pensionable earnings at CI$5,000.00 instead of CI$7,250. Lines above CI$5,000 pay CI$250.00 each side instead of 5% of min(gross, 7,250)."
+        "note": "Schedule caps pensionable earnings at M$5,000.00 instead of M$7,250. Lines above M$5,000 pay M$250.00 each side instead of 5% of min(gross, 7,250)."
       },
       {
         "id": "no_arrears",
         "outcome": "fail",
-        "note": "Shortfall per month, both sides together: Calvin Errol Watler CI$9,750.00: CI$225.00, Nadine Ebanks-Rose CI$6,400.00: CI$140.00, Michael Barker CI$8,200.00: CI$225.00, Devon Thompson CI$5,800.00: CI$80.00; CI$670.00 a month for August and September. Arrears CI$1,340.00 before interest."
+        "note": "Shortfall per month, both sides together: Calvin Errol Watler M$9,750.00: M$225.00, Nadine Ebanks-Rose M$6,400.00: M$140.00, Michael Barker M$8,200.00: M$225.00, Devon Thompson M$5,800.00: M$80.00; M$670.00 a month for August and September. Arrears M$1,340.00 before interest."
       },
       {
         "id": "contributions_on_time",

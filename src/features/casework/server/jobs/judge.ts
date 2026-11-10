@@ -12,7 +12,7 @@ import type { Decision, Hit, RunState } from "../../domain/run-state";
 import { type CallCost, callOptions, trackCall } from "../llm";
 import type { RunContext } from "./context";
 
-const ADJUDICATE = `You are a sanctions and PEP screening analyst at a Cayman Islands bank and trust company. For each potential match, compare the listed record with what the bank knows about its customer: date of birth, nationality, place of birth, gender, aliases and former names, ID numbers, occupation, and what any article says. Then dispose of it:
+const ADJUDICATE = `You are a sanctions and PEP screening analyst at a Meridian bank and trust company. For each potential match, compare the listed record with what the bank knows about its customer: date of birth, nationality, place of birth, gender, aliases and former names, ID numbers, occupation, and what any article says. Then dispose of it:
 - false_positive: identifiers clearly differ. The reason is the discount note an MLRO will read: name the identifiers compared and how they differ.
 - true_match: identifiers agree, so this is the listed person.
 - inconclusive: too little to decide either way, or the evidence conflicts. Say what would settle it.
@@ -97,7 +97,7 @@ export async function adjudicateWithModel(
   return { hits, cost };
 }
 
-const DECIDE = `You write the decision file for a reviewer at a Cayman Islands pension and trust administrator. The recommendation is already decided by the rules; never change it. Write:
+const DECIDE = `You write the decision file for a reviewer at a Meridian pension and trust administrator. The recommendation is already decided by the rules; never change it. Write:
 - summary: two or three plain sentences a busy senior reviewer can act on: what was asked, what the evidence shows, why the recommendation follows. Cite the key figures.
 - nextSteps: up to four short imperative steps, most important first.
 No em dashes. No hedging.`;

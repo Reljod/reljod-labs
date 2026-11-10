@@ -1,10 +1,10 @@
 /**
- * The demo's rules, after the Cayman Islands National Pensions Act as amended
+ * The demo's rules, after the National Pensions Act as amended
  * in 2023. Simplified for the demo: confirm against the current Act and the
  * Department of Labour and Pensions guidance before relying on any figure.
  */
 export const RULEBOOK = {
-  name: "Cayman pensions and onboarding, demo edition",
+  name: "Meridian pensions and onboarding, demo edition",
   /** Home purchase, construction or mortgage reduction. */
   propertyWithdrawalCap: 50_000,
   propertyPurposes: ["property_purchase", "mortgage_reduction"],
@@ -18,7 +18,7 @@ export const RULEBOOK = {
   /** 10% of pensionable earnings, half from each side. */
   employeeRate: 0.05,
   employerRate: 0.05,
-  /** CI$87,000 a year. */
+  /** M$87,000 a year. */
   monthlyEarningsCap: 7_250,
   /** Contributions are due by this day of the following month. */
   dueDay: 15,
@@ -28,6 +28,6 @@ export const RULEBOOK = {
   uboThreshold: 10,
   /** ID certifications older than this need a fresh one. */
   certificationMaxAgeDays: 183,
-  /** Rounding tolerance when comparing contributions, CI$. */
+  /** Rounding tolerance when comparing contributions, M$. */
   centsTolerance: 0.05,
 } as const;

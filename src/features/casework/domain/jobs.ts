@@ -97,7 +97,7 @@ export const JOBS: Record<JobId, JobSpec> = {
     title: "Check the Act",
     doing: "Checking the withdrawal against the Act",
     description:
-      "Applies the National Pensions Act withdrawal rules: purpose, Caymanian status, CI$50,000 property cap, balance, permitted lender, primary residence, earlier withdrawals repaid, and whether the property evidence agrees.",
+      "Applies the National Pensions Act withdrawal rules: purpose, Meridian status, M$50,000 property cap, balance, permitted lender, primary residence, earlier withdrawals repaid, and whether the property evidence agrees.",
     after: ["read"],
     needs: (state) => {
       const form = firstOf(state, "withdrawal_request_form");
@@ -108,7 +108,7 @@ export const JOBS: Record<JobId, JobSpec> = {
       ];
       if ((RULEBOOK.propertyPurposes as readonly string[]).includes(type)) {
         wants.push(
-          want("to show the member is Caymanian", "caymanian_status_evidence"),
+          want("to show the member is Meridian", "meridian_status_evidence"),
           type === "mortgage_reduction"
             ? want(
                 "to evidence the mortgage",
@@ -209,7 +209,7 @@ export const JOBS: Record<JobId, JobSpec> = {
     title: "Reconcile",
     doing: "Reconciling contributions",
     description:
-      "Recomputes every contribution line at 5% + 5% of pensionable earnings (capped at CI$7,250 a month), checks each month was paid by the 15th, and totals arrears and late interest.",
+      "Recomputes every contribution line at 5% + 5% of pensionable earnings (capped at M$7,250 a month), checks each month was paid by the 15th, and totals arrears and late interest.",
     after: ["read"],
     needs: (state) =>
       has(state, "member_census") && !has(state, "contribution_schedule")

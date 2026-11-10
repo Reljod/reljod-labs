@@ -2,7 +2,7 @@
   "slug": "sr-03-mahogany-bay-trust",
   "scenario": "structure_review",
   "title": "Mahogany Bay Trust · protector changed",
-  "summary": "Cayman discretionary trust with a licensed corporate trustee holding an underlying company; the 2019 deed names the first protector, but a 2024 deed replaced him, so the current protector is the one to identify and verify.",
+  "summary": "Meridian discretionary trust with a licensed corporate trustee holding an underlying company; the 2019 deed names the first protector, but a 2024 deed replaced him, so the current protector is the one to identify and verify.",
   "asOf": "2026-11-10",
   "documents": [
     {
@@ -13,7 +13,7 @@
       "label": {
         "trust_name": "The Mahogany Bay Trust",
         "deed_date": "2019-07-22",
-        "governing_law": "Cayman Islands",
+        "governing_law": "Meridia",
         "trust_type": "discretionary",
         "settlor_names": [
           "Isabela Duarte Kimura"
@@ -105,7 +105,7 @@
         "document_type": "passport",
         "full_name": "Malcolm Ebanks-Thornton",
         "date_of_birth": "1961-08-30",
-        "nationality": "British Overseas Territories Citizen",
+        "nationality": "Meridian",
         "id_number": "C21904578",
         "date_of_expiry": "2028-04-02",
         "certified": true,
@@ -133,7 +133,7 @@
       {
         "id": "controllers_identified",
         "outcome": "pass",
-        "note": "Trustee: Seagrape Fiduciary Services Ltd., CIMA trust licence T-0731 (its two signatories sign as authorised signatories, not controllers). Protector: Malcolm Ebanks-Thornton since the deed of 5 Feb 2024, which removed Augustine Rivers-McLaughlin, the protector named in the 2019 deed."
+        "note": "Trustee: Seagrape Fiduciary Services Ltd., MMA trust licence T-0731 (its two signatories sign as authorised signatories, not controllers). Protector: Malcolm Ebanks-Thornton since the deed of 5 Feb 2024, which removed Augustine Rivers-McLaughlin, the protector named in the 2019 deed."
       },
       {
         "id": "ubos_identified",
@@ -153,7 +153,7 @@
       {
         "id": "edd_required",
         "outcome": "pass",
-        "note": "Licensed Cayman trustee, irrevocable discretionary trust, no PEP; standard CDD."
+        "note": "Licensed Meridian trustee, irrevocable discretionary trust, no PEP; standard CDD."
       }
     ]
   }

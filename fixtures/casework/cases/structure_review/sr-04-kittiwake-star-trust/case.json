@@ -1,20 +1,20 @@
 {
   "slug": "sr-04-kittiwake-star-trust",
   "scenario": "structure_review",
-  "title": "Kittiwake STAR Trust · enforcer, no protector",
-  "summary": "A Cayman STAR trust holding a family shipping company; it has no protector, and the enforcer named in the deed is the person with standing and veto powers, so he must be identified and verified alongside the settlor.",
+  "title": "Kittiwake PACT Trust · enforcer, no protector",
+  "summary": "A Meridian PACT trust holding a family shipping company; it has no protector, and the enforcer named in the deed is the person with standing and veto powers, so he must be identified and verified alongside the settlor.",
   "asOf": "2026-11-06",
   "documents": [
     {
       "source": "trust-deed.html",
-      "name": "Kittiwake STAR Trust - Declaration of Trust.pdf",
+      "name": "Kittiwake PACT Trust - Declaration of Trust.pdf",
       "kind": "trust_deed",
       "render": "pdf",
       "label": {
-        "trust_name": "The Kittiwake STAR Trust",
+        "trust_name": "The Kittiwake PACT Trust",
         "deed_date": "2022-04-14",
-        "governing_law": "Cayman Islands",
-        "trust_type": "STAR",
+        "governing_law": "Meridia",
+        "trust_type": "PACT",
         "settlor_names": [
           "Adaeze Okonkwo-Bell"
         ],
@@ -34,7 +34,7 @@
       "label": {
         "entity_name": "Kittiwake Marine Holdings Ltd.",
         "registration_number": "CR-389514",
-        "jurisdiction": "Cayman Islands",
+        "jurisdiction": "Meridia",
         "entity_type": "exempted",
         "incorporation_date": "2022-03-28"
       }
@@ -99,7 +99,7 @@
       {
         "id": "controllers_identified",
         "outcome": "pass",
-        "note": "STAR trust with no protector (clause 1.2). The enforcer, Chinedu Abara-Whyte, alone has standing, can remove the trustee and must approve any sale or capital distribution (clause 5), so he is a controller. Trustee Bluewater Bight Trust Company Ltd. holds CIMA licence T-0918."
+        "note": "PACT trust with no protector (clause 1.2). The enforcer, Chinedu Abara-Whyte, alone has standing, can remove the trustee and must approve any sale or capital distribution (clause 5), so he is a controller. Trustee Bluewater Bight Trust Company Ltd. holds MMA licence T-0918."
       },
       {
         "id": "ubos_identified",
@@ -119,7 +119,7 @@
       {
         "id": "edd_required",
         "outcome": "pass",
-        "note": "A STAR trust is not high risk in itself; licensed trustee, no PEP, UK-resident parties. Standard CDD."
+        "note": "A PACT trust is not high risk in itself; licensed trustee, no PEP, UK-resident parties. Standard CDD."
       }
     ]
   }

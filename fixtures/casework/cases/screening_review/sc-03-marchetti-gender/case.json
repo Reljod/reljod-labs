@@ -2,7 +2,7 @@
   "slug": "sc-03-marchetti-gender",
   "scenario": "screening_review",
   "title": "Marchetti · male sanctions record",
-  "summary": "An Italian physiotherapist in Grand Cayman named Andrea hit a sanctions record for an Italian arms broker also called Andrea Marchetti, born the same year, but the listed person is male and the customer is female: a false positive on gender.",
+  "summary": "An Italian physiotherapist in Grand Meridia named Andrea hit a sanctions record for an Italian arms broker also called Andrea Marchetti, born the same year, but the listed person is male and the customer is female: a false positive on gender.",
   "asOf": "2026-11-10",
   "documents": [
     {
@@ -38,7 +38,7 @@
         "customer_id": "CTP-C-377054",
         "date_of_birth": "1977-10-15",
         "nationality": "Italy",
-        "residence": "Cayman Islands",
+        "residence": "Meridia",
         "occupation": "Physiotherapist",
         "id_number": "YB4419275",
         "other_names": []
@@ -107,7 +107,7 @@
       {
         "name": "Andrea Marchetti",
         "disposition": "false_positive",
-        "reason": "The list record is male (gender: male, statement refers to 'he'); the customer is female (sex F on passport YB4419275, title Ms, given names Andrea Giulia). Year of birth 1977 and Italian nationality coincide, but the gender difference rules out the match; the listed man is reported in Montenegro while the customer has lived in Grand Cayman since 2018. Discount."
+        "reason": "The list record is male (gender: male, statement refers to 'he'); the customer is female (sex F on passport YB4419275, title Ms, given names Andrea Giulia). Year of birth 1977 and Italian nationality coincide, but the gender difference rules out the match; the listed man is reported in Montenegro while the customer has lived in Grand Meridia since 2018. Discount."
       }
     ]
   }

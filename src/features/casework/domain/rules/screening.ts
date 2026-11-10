@@ -237,7 +237,7 @@ const DEMONYMS: Record<string, string> = {
   british: "united kingdom",
   jamaican: "jamaica",
   filipino: "philippines",
-  caymanian: "cayman islands",
+  meridian: "meridia",
   canadian: "canada",
   american: "united states",
   indian: "india",

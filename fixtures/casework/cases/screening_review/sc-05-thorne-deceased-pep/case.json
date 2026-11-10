@@ -2,7 +2,7 @@
   "slug": "sc-05-thorne-deceased-pep",
   "scenario": "screening_review",
   "title": "Thorne · deceased PEP record",
-  "summary": "A Jamaican marine engineer in Bodden Town hit a PEP record for a former Jamaican MP with the same first name and surname (Desmond A. Thorne), but the register shows that man died in 2019 and was born in 1946: a false positive.",
+  "summary": "A Jamaican marine engineer in Marlow Town hit a PEP record for a former Jamaican MP with the same first name and surname (Desmond A. Thorne), but the register shows that man died in 2019 and was born in 1946: a false positive.",
   "asOf": "2026-11-10",
   "documents": [
     {
@@ -38,7 +38,7 @@
         "customer_id": "CTP-C-261493",
         "date_of_birth": "1972-01-09",
         "nationality": "Jamaica",
-        "residence": "Cayman Islands",
+        "residence": "Meridia",
         "occupation": "Marine engineer",
         "id_number": "A3381902",
         "other_names": []

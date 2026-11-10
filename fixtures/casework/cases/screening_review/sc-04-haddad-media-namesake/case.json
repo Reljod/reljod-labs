@@ -2,7 +2,7 @@
   "slug": "sc-04-haddad-media-namesake",
   "scenario": "screening_review",
   "title": "Haddad · Cyprus bribery story",
-  "summary": "A 34-year-old Canadian software engineer in West Bay hit an adverse-media profile about a 61-year-old Cypriot freight broker of the same name charged with bribery in Limassol: a false positive on age, nationality and location.",
+  "summary": "A 34-year-old Canadian software engineer in Corran Bay hit an adverse-media profile about a 61-year-old Cypriot freight broker of the same name charged with bribery in Limassol: a false positive on age, nationality and location.",
   "asOf": "2026-11-10",
   "documents": [
     {
@@ -38,7 +38,7 @@
         "customer_id": "CTP-C-529861",
         "date_of_birth": "1992-04-18",
         "nationality": "Canada",
-        "residence": "Cayman Islands",
+        "residence": "Meridia",
         "occupation": "Software engineer",
         "id_number": "AK582913",
         "other_names": []
@@ -93,7 +93,7 @@
       {
         "name": "Karim Haddad",
         "disposition": "false_positive",
-        "reason": "The article and index profile concern Karim Haddad, aged 61 (born c. 1965), a Cypriot freight broker living in Limassol, Cyprus. The customer is Karim Nabil Haddad, born 18 Apr 1992 (34), a Canadian national working as a software engineer in Grand Cayman since 2019. Age differs by about 27 years and nationality, location and occupation all differ. Discount."
+        "reason": "The article and index profile concern Karim Haddad, aged 61 (born c. 1965), a Cypriot freight broker living in Limassol, Cyprus. The customer is Karim Nabil Haddad, born 18 Apr 1992 (34), a Canadian national working as a software engineer in Grand Meridia since 2019. Age differs by about 27 years and nationality, location and occupation all differ. Discount."
       }
     ]
   }

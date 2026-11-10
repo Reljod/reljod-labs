@@ -31,9 +31,9 @@ const STOP = new Set([
   "ave",
   "way",
   "grand",
-  "cayman",
+  "meridia",
   "islands",
-  "ky1",
+  "mr1",
   "the",
   "of",
 ]);
@@ -137,24 +137,24 @@ export function checkEligibility(state: RunState): JobOutcome {
   }
 
   if (isProperty(type)) {
-    // Caymanian status
-    const status = documentsOf(state, "caymanian_status_evidence").find(
+    // Meridian status
+    const status = documentsOf(state, "meridian_status_evidence").find(
       (document) => document.fields,
     );
-    const declared = flag(form, "caymanian_status_declared");
+    const declared = flag(form, "meridian_status_declared");
     if (status && sameName(text(status, "full_name"), member)) {
       checks.push(
         check(
-          "caymanian_status",
+          "meridian_status",
           "pass",
-          `${text(status, "full_name")}: Caymanian by ${text(status, "status_basis") || "status"} (${text(status, "document_number")})`,
+          `${text(status, "full_name")}: Meridian by ${text(status, "status_basis") || "status"} (${text(status, "document_number")})`,
           on(status, "full_name"),
         ),
       );
     } else if (status) {
       checks.push(
         check(
-          "caymanian_status",
+          "meridian_status",
           "review",
           `Status evidence is in the name ${text(status, "full_name")}, not ${member}`,
           on(status, "full_name"),
@@ -163,12 +163,12 @@ export function checkEligibility(state: RunState): JobOutcome {
     } else {
       checks.push(
         check(
-          "caymanian_status",
+          "meridian_status",
           declared ? "review" : "fail",
           declared
-            ? "Caymanian status ticked on the form, but no evidence is on file"
-            : "The member does not declare Caymanian status; property withdrawals are for Caymanians only",
-          on(form, "caymanian_status_declared"),
+            ? "Meridian status ticked on the form, but no evidence is on file"
+            : "The member does not declare Meridian status; property withdrawals are for Meridians only",
+          on(form, "meridian_status_declared"),
         ),
       );
     }

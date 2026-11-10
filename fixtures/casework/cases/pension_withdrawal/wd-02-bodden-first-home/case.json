@@ -1,8 +1,8 @@
 {
   "slug": "wd-02-bodden-first-home",
   "scenario": "pension_withdrawal",
-  "title": "Bodden · first home in Bodden Town",
-  "summary": "Caymanian teacher buying a first home in Bodden Town, asking for CI$45,000 paid to her attorney's client account; every document agrees.",
+  "title": "Bodden · first home in Marlow Town",
+  "summary": "Meridian teacher buying a first home in Marlow Town, asking for M$45,000 paid to her attorney's client account; every document agrees.",
   "asOf": "2026-11-10",
   "documents": [
     {
@@ -16,11 +16,11 @@
         "date_of_birth": "1992-04-17",
         "withdrawal_type": "property_purchase",
         "amount_requested": 45000,
-        "property_address": "47 Mahogany Ridge Road, Bodden Town",
+        "property_address": "47 Mahogany Ridge Road, Marlow Town",
         "payee_name": "Tradewind Chambers Client Account",
         "payee_bank": "Sound Harbour Bank & Trust Ltd.",
         "payee_account_number": "200-118734-9",
-        "caymanian_status_declared": true,
+        "meridian_status_declared": true,
         "primary_residence_declared": true,
         "signature_present": true,
         "signed_date": "2026-10-22"
@@ -51,7 +51,7 @@
         "document_type": "passport",
         "full_name": "Kimberley Rose Bodden",
         "date_of_birth": "1992-04-17",
-        "nationality": "British Overseas Territories Citizen",
+        "nationality": "Meridian",
         "id_number": "C0418827",
         "date_of_expiry": "2031-05-03",
         "certified": true,
@@ -63,19 +63,19 @@
     {
       "source": "birth-certificate.html",
       "name": "Birth certificate - Kimberley Bodden.pdf",
-      "kind": "caymanian_status_evidence",
+      "kind": "meridian_status_evidence",
       "render": "scan",
       "label": {
         "full_name": "Kimberley Rose Bodden",
         "date_of_birth": "1992-04-17",
         "status_basis": "birth",
-        "document_number": "GT 1992/0611",
+        "document_number": "PS 1992/0611",
         "issue_date": "2019-08-12"
       }
     },
     {
       "source": "sale-agreement.html",
-      "name": "Agreement for sale - BTW 44B-318.pdf",
+      "name": "Agreement for sale - MTW 44B-318.pdf",
       "kind": "sale_agreement",
       "render": "pdf",
       "label": {
@@ -86,8 +86,8 @@
           "Neville George Tatum",
           "Sharon Denise Tatum"
         ],
-        "property_address": "47 Mahogany Ridge Road, Bodden Town",
-        "block_parcel": "Bodden Town West Block 44B Parcel 318",
+        "property_address": "47 Mahogany Ridge Road, Marlow Town",
+        "block_parcel": "Marlow Town West Block 44B Parcel 318",
         "purchase_price": 318000,
         "deposit": 31800,
         "completion_date": "2026-12-15"
@@ -115,9 +115,9 @@
         "note": "Certified by Andrea Michelle Seymour, Notary Public, on 20 Oct 2026 (21 days before review)"
       },
       {
-        "id": "caymanian_status",
+        "id": "meridian_status",
         "outcome": "pass",
-        "note": "Box ticked; birth certificate GT 1992/0611 shows birth in George Town to Caymanian parents"
+        "note": "Box ticked; birth certificate PS 1992/0611 shows birth in Port Selene to Meridian parents"
       },
       {
         "id": "withdrawal_purpose_supported",
@@ -127,17 +127,17 @@
       {
         "id": "amount_within_cap",
         "outcome": "pass",
-        "note": "CI$45,000 is under CI$50,000"
+        "note": "M$45,000 is under M$50,000"
       },
       {
         "id": "amount_within_balance",
         "outcome": "pass",
-        "note": "CI$45,000 against a balance of CI$71,846.22 at 30 Sep 2026"
+        "note": "M$45,000 against a balance of M$71,846.22 at 30 Sep 2026"
       },
       {
         "id": "purpose_evidence_consistent",
         "outcome": "pass",
-        "note": "Sale agreement is for 47 Mahogany Ridge Road, Bodden Town West Block 44B Parcel 318, purchaser Kimberley Rose Bodden, price CI$318,000"
+        "note": "Sale agreement is for 47 Mahogany Ridge Road, Marlow Town West Block 44B Parcel 318, purchaser Kimberley Rose Bodden, price M$318,000"
       },
       {
         "id": "primary_residence",

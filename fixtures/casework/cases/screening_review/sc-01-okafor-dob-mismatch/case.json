@@ -2,7 +2,7 @@
   "slug": "sc-01-okafor-dob-mismatch",
   "scenario": "screening_review",
   "title": "Okafor · sanctions name hit",
-  "summary": "Periodic rescreen of a Nigerian fund accountant in George Town hit a sanctions record with the same first name and surname, but the listed person was born in 1958 in Onitsha and the customer in 1989 in Enugu: a false positive on date of birth.",
+  "summary": "Periodic rescreen of a Nigerian fund accountant in Port Selene hit a sanctions record with the same first name and surname, but the listed person was born in 1958 in Onitsha and the customer in 1989 in Enugu: a false positive on date of birth.",
   "asOf": "2026-11-10",
   "documents": [
     {
@@ -38,7 +38,7 @@
         "customer_id": "CTP-C-418207",
         "date_of_birth": "1989-07-23",
         "nationality": "Nigeria",
-        "residence": "Cayman Islands",
+        "residence": "Meridia",
         "occupation": "Fund accountant",
         "id_number": "B04417829",
         "other_names": []

@@ -152,7 +152,7 @@ export function decide(state: RunState): JobOutcome & { decision: Decision } {
     "identity_matches_record",
     "amount_within_cap",
     "amount_within_balance",
-    "caymanian_status",
+    "meridian_status",
     "payee_permitted",
     "no_arrears",
     "ubos_identified",
@@ -213,9 +213,9 @@ export function decide(state: RunState): JobOutcome & { decision: Decision } {
 
 /** For a question: the document kinds wanted, in words. */
 export function wantsInWords(kinds: Parameters<typeof kindLabel>[0][]) {
-  // Lowercase for running text, but never the proper noun "Caymanian".
+  // Lowercase for running text, but never the proper noun "Meridian".
   const labels = kinds.map((kind) =>
-    kindLabel(kind).replace(/^(?!Caymanian)\w/, (c) => c.toLowerCase()),
+    kindLabel(kind).replace(/^(?!Meridian)\w/, (c) => c.toLowerCase()),
   );
   return labels.length <= 1
     ? (labels[0] ?? "")

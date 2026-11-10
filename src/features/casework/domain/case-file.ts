@@ -58,7 +58,7 @@ export const caseFileSchema = z.object({
       )
       .optional(),
     risk: z.enum(["low", "standard", "high"]).optional(),
-    /** Employer: total arrears owed in CI$ (contributions only, before interest). */
+    /** Employer: total arrears owed in M$ (contributions only, before interest). */
     arrears: z.number().optional(),
     /** Structure: natural persons owning or controlling at 10%+ (or controllers of a trust). */
     ubos: z.array(z.string()).optional(),
