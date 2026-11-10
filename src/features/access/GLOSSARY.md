@@ -31,3 +31,7 @@ _Avoid_: Account page, dashboard
 **Door**:
 The page at `/access` where a visitor without Access lands, enters a Guest code or signs in.
 _Avoid_: Login page, paywall
+
+**Audience**:
+Which group a browser falls in for Web Analytics: host, guest or visitor (not signed in). Read from the profile hint cookie, so it groups traffic and grants nothing.
+_Avoid_: Segment, cohort, role

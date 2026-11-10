@@ -1,6 +1,8 @@
+import { SpeedInsights } from "@vercel/speed-insights/next";
 import type { Metadata } from "next";
 import { IBM_Plex_Mono, Inter } from "next/font/google";
 import { lab } from "@/content/lab";
+import { SiteAnalytics } from "@/features/access/components/site-analytics";
 import "./globals.css";
 
 const plexMono = IBM_Plex_Mono({
@@ -29,7 +31,11 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
       data-scroll-behavior="smooth"
       className={`${plexMono.variable} ${inter.variable}`}
     >
-      <body>{children}</body>
+      <body>
+        {children}
+        <SiteAnalytics />
+        <SpeedInsights />
+      </body>
     </html>
   );
 }
