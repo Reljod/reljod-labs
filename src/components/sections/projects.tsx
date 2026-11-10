@@ -13,7 +13,7 @@ export function Projects() {
       id="projects"
       eyebrow="Projects"
       title="Selected AI systems"
-      intro="Production systems I've designed and shipped. Full case studies are on the way."
+      intro="Production systems I've designed and shipped, and live demos you can open and try. Full case studies are on the way."
       ground="paper"
     >
       <ul className="grid gap-8 md:grid-cols-2 lg:grid-cols-3">

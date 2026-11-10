@@ -1,6 +1,9 @@
 import type { Project } from "./types";
 
-/** How many projects the About page shows. The rest stay in the list for a future projects page. */
+/**
+ * How many case studies the About page shows. Live demos always show too, after
+ * them; the rest stay in the list for a future projects page.
+ */
 export const FEATURED_PROJECT_LIMIT = 6;
 
 /*
@@ -150,7 +153,17 @@ export const projects: Project[] = [
   },
 ];
 
-export const featuredProjects = projects.slice(0, FEATURED_PROJECT_LIMIT);
+/**
+ * The About page's Projects: the first entries, then every live demo not
+ * already among them, in list order. Appending keeps each entry's
+ * `projects.<index>` source path stable for Ledger.
+ */
+export const featuredProjects = [
+  ...projects.slice(0, FEATURED_PROJECT_LIMIT),
+  ...projects
+    .slice(FEATURED_PROJECT_LIMIT)
+    .filter((project) => project.status === "Live"),
+];
 
 /** The landing page's split: live demos take the stage, the rest wait on the bench. */
 export const liveDemos = projects.filter(
