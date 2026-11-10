@@ -5,12 +5,16 @@ import { env } from "./env";
 let client: postgres.Sql | undefined;
 
 /**
- * One small pool per function instance. Prepared statements are off so the
- * same code works through Supabase's transaction pooler.
+ * One small pool per function instance, set up for Supabase's transaction
+ * pooler (Supavisor): prepared statements off, and one query per connection
+ * at a time. postgres.js pipelines up to 100 queries on one connection by
+ * default, and Supavisor stalls on that: a page that ran three queries at
+ * once hung with Postgres waiting for the rest of the second one.
  */
 export function sql() {
   client ??= postgres(env.databaseUrl(), {
     prepare: false,
+    max_pipeline: 1,
     max: 4,
     idle_timeout: 20,
     connect_timeout: 15,
