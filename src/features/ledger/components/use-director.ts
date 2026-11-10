@@ -142,9 +142,26 @@ export function useDirector(refs: {
       const check = () => {
         if (token !== generation.current) throw new Cancelled();
       };
+      /* Reduced motion swaps movement for fades, but keeps every pause at full length so the Build is still easy to follow. */
       const wait = async (ms: number) => {
-        await new Promise((resolve) =>
-          setTimeout(resolve, reduceMotion ? Math.min(ms, 150) : ms),
+        await new Promise((resolve) => setTimeout(resolve, ms));
+        check();
+      };
+
+      /** Reduced motion: fades the elements out, moves them while hidden, fades them back in. */
+      const fadeMove = async (moves: [Element, Record<string, number>][]) => {
+        await Promise.all(
+          moves.map(([element]) =>
+            animate(element, { opacity: 0 }, { duration: 0.25 }),
+          ),
+        );
+        await Promise.all(
+          moves.map(([element, to]) => animate(element, to, { duration: 0 })),
+        );
+        await Promise.all(
+          moves.map(([element]) =>
+            animate(element, { opacity: 1 }, { duration: 0.25 }),
+          ),
         );
         check();
       };
@@ -204,10 +221,9 @@ export function useDirector(refs: {
         const element = catRef.current;
         if (!element) return;
         if (reduceMotion) {
-          await animate(element, { opacity: 0 }, { duration: 0.12 });
-          await jump(to);
-          await animate(element, { opacity: 1 }, { duration: 0.12 });
-          check();
+          await fadeMove([[element, { x: to.x, y: to.y }]]);
+          position.current = to;
+          await wait(520);
           return;
         }
         const gait = chooseGait(dx, dy, pace);
@@ -396,7 +412,14 @@ export function useDirector(refs: {
               rotate: away * 540,
               opacity: 0,
             },
-            { duration: reduceMotion ? 0.15 : 1, ease: [0.3, 0, 0.6, 1] },
+            reduceMotion
+              ? {
+                  duration: 0.4,
+                  x: { duration: 0 },
+                  y: { duration: 0 },
+                  rotate: { duration: 0 },
+                }
+              : { duration: 1, ease: [0.3, 0, 0.6, 1] },
           );
         }
         element?.classList.remove("ldg-torn");
@@ -424,20 +447,33 @@ export function useDirector(refs: {
         // He stands where the block in his paws lands right on its slot.
         const to = clamp({ x: target.left - hold.x, y: target.top - hold.y });
         const gait = haulGait(to.x - from.x, to.y - from.y, grip, pace);
-        const duration = reduceMotion ? 0.15 : gait.duration;
+        const duration = gait.duration;
+
+        if (reduceMotion) {
+          // Picks it up and appears with it on the board, no sliding.
+          setCat({ pose: grip, flip, say: null });
+          await wait(450);
+          await fadeMove([
+            [cat, { x: to.x, y: to.y }],
+            [flyer, { x: target.left, y: target.top, rotate: 0, scale: 1 }],
+          ]);
+          position.current = to;
+          await wait(450);
+          return;
+        }
 
         // Picks it up: the block settles into his paws before he sets off.
         setCat({ pose: grip, flip, say: null });
         await animate(
           flyer,
           { ...held(from), rotate: 0, scale: 1 },
-          { duration: reduceMotion ? 0 : 0.45, ease: SMOOTH },
+          { duration: 0.45, ease: SMOOTH },
         );
         check();
 
         // Same start, duration and easing for both, so the gap between his
         // paws and the block stays the same the whole way.
-        if (!reduceMotion) leavePrints(from, to, duration);
+        leavePrints(from, to, duration);
         await Promise.all([
           animate(cat, { x: to.x, y: to.y }, { duration, ease: SMOOTH }),
           animate(flyer, held(to), { duration, ease: SMOOTH }),
@@ -449,7 +485,7 @@ export function useDirector(refs: {
         await animate(
           flyer,
           { x: target.left, y: target.top, rotate: 0, scale: 1 },
-          { duration: reduceMotion ? 0 : 0.35, ease: SMOOTH },
+          { duration: 0.35, ease: SMOOTH },
         );
         check();
       };
@@ -487,7 +523,7 @@ export function useDirector(refs: {
           say: input.title() || "Ta-da!",
         });
         window.scrollTo({ top: 0, behavior: reduceMotion ? "auto" : "smooth" });
-        await wait(reduceMotion ? 50 : 650);
+        await wait(650);
         input.onReform();
         await wait(1300);
         setCat({ pose: "found", say: null });
