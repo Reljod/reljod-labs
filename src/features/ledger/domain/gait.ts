@@ -2,7 +2,7 @@ import type { Pace } from "./build-plan";
 import type { ContentKind } from "./content-tree";
 
 export type TravelPose = "run" | "run-down" | "run-up" | "fly";
-export type Grip = "carry" | "drag";
+export type Grip = "carry" | "push";
 
 export type Gait = {
   pose: TravelPose;
@@ -14,16 +14,18 @@ export type Gait = {
   duration: number;
 };
 
+/* Pixels a second. Slow enough to follow on a big screen. */
 const SPEED: Record<TravelPose, number> = {
-  run: 400,
-  "run-down": 320,
-  "run-up": 320,
-  fly: 520,
+  run: 340,
+  "run-down": 270,
+  "run-up": 270,
+  fly: 440,
 };
-const PACE: Record<Pace, number> = { stroll: 0.65, trot: 1, dash: 1.45 };
-/** Hauling a block slows him down; dragging a big one slows him more. */
-const LOAD: Record<Grip, number> = { carry: 0.8, drag: 0.55 };
-const MIN_DURATION = 0.45;
+const PACE: Record<Pace, number> = { stroll: 0.75, trot: 1, dash: 1.3 };
+/** Hauling a block slows him down; pushing a big one slows him more. */
+const LOAD: Record<Grip, number> = { carry: 0.8, push: 0.6 };
+const MIN_DURATION = 0.55;
+const MAX_DURATION = 2.8;
 
 /**
  * Direction picks the view: under 25° from horizontal he gallops side-on,
@@ -53,12 +55,15 @@ export function chooseGait(dx: number, dy: number, pace: Pace = "trot"): Gait {
   };
 }
 
-/** Small pieces go overhead; whole cards and jobs get dragged. */
+/** Small pieces go overhead; whole cards and jobs get pushed. */
 export function gripFor(kind: ContentKind): Grip {
-  return kind === "figure" || kind === "quote" ? "carry" : "drag";
+  return kind === "figure" || kind === "quote" ? "carry" : "push";
 }
 
-/** Hauling: carrying faces where he goes; dragging walks backwards, facing the block. */
+/**
+ * How long a haul takes; he goes slower loaded. Which way he faces is the
+ * stage's call: it knows where the block sits and where its slot is.
+ */
 export function haulGait(
   dx: number,
   dy: number,
@@ -67,7 +72,6 @@ export function haulGait(
 ) {
   return {
     pose: grip,
-    flip: grip === "drag" ? dx > 0 : dx < 0,
     duration: travelTime(
       Math.hypot(dx, dy),
       SPEED.run * PACE[pace] * LOAD[grip],
@@ -76,5 +80,26 @@ export function haulGait(
 }
 
 function travelTime(distance: number, speed: number) {
-  return Math.max(MIN_DURATION, Math.round((distance / speed) * 100) / 100);
+  const seconds = Math.round((distance / speed) * 100) / 100;
+  return Math.min(MAX_DURATION, Math.max(MIN_DURATION, seconds));
+}
+
+type Size = { w: number; h: number };
+
+/**
+ * Where a hauled block sits relative to Ledger's top-left corner, so it moves
+ * with him: resting on his raised paws when carried, against his outstretched
+ * paws on the side he faces when pushed. Fractions follow the 240×250 artwork.
+ */
+export function holdOffset(
+  grip: Grip,
+  flip: boolean,
+  cat: Size,
+  block: Size,
+): { x: number; y: number } {
+  if (grip === "carry") {
+    return { x: cat.w / 2 - block.w / 2, y: cat.h * 0.34 - block.h };
+  }
+  const y = cat.h * 0.64 - Math.min(block.h, cat.h * 1.2) / 2;
+  return flip ? { x: cat.w * 0.14 - block.w, y } : { x: cat.w * 0.86, y };
 }

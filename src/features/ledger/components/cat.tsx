@@ -14,7 +14,7 @@ export type CatPose =
   | "confused"
   | "sleep"
   | "carry"
-  | "drag"
+  | "push"
   | "toss"
   | "stamp"
   | "conduct"
@@ -104,7 +104,7 @@ const POSES: Record<CatPose, PoseConfig> = {
     mouth: "mOpen",
     ey: -4,
   },
-  drag: {
+  push: {
     view: "front",
     arms: ["armsForward"],
     eyes: "eyesOpen",

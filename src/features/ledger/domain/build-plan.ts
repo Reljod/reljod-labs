@@ -17,6 +17,8 @@ export const PACES = ["stroll", "trot", "dash"] as const;
 export const MAX_STEPS = 14;
 export const MAX_TOSSES = 2;
 const MAX_LINE = 60;
+const MAX_JOIN = 60;
+const MAX_JOIN_WORDS = 8;
 const MIN_EXCERPT = 8;
 
 export type Layout = (typeof LAYOUTS)[number];
@@ -41,6 +43,11 @@ export const planStepSchema = z.object({
     .nullable()
     .describe(
       "For an excerptable source only: the exact words to cut, copied character for character. null takes the whole piece.",
+    ),
+  join: z
+    .string()
+    .describe(
+      "Fetch only: Ledger's own words, at most 8, that come before this piece so the joins and pieces read in order form one sentence. No numbers or facts. Empty for toss.",
     ),
   pace: z.enum(PACES).describe("How fast Ledger runs to this piece."),
   line: z
@@ -92,6 +99,18 @@ export function matchExcerpt(text: string, excerpt: string): string | null {
   return at === -1 ? null : text.slice(at, at + wanted.length);
 }
 
+/**
+ * A Join only links pieces: it may not carry a fact of its own, so one with a
+ * number in it, or one over 8 words or 60 characters, is dropped.
+ */
+function trimJoin(join: string | null | undefined) {
+  const clean = (join ?? "").replace(/\s+/g, " ").trim();
+  const words = clean ? clean.split(" ").length : 0;
+  return clean.length > MAX_JOIN || words > MAX_JOIN_WORDS || /\d/.test(clean)
+    ? ""
+    : clean;
+}
+
 function trimLine(line: string) {
   const clean = line.replace(/\s+/g, " ").trim();
   return clean.length <= MAX_LINE
@@ -103,7 +122,9 @@ function trimLine(line: string) {
  * Checks streamed steps one at a time, in order. Returns the step as it will
  * be played and stored, or null to drop it: an unknown source, an excerpt the
  * site doesn't say, a repeat, a piece inside one already placed (or around
- * one), or one step too many.
+ * one), or one step too many. A Join is written to follow the piece before
+ * it, so once a fetch is dropped the next kept fetch loses its Join and falls
+ * back to list words rather than read wrong.
  */
 export function createStepValidator(tree: ContentTree = contentTree) {
   const seen = new Set<string>();
@@ -113,7 +134,9 @@ export function createStepValidator(tree: ContentTree = contentTree) {
   const nested = (a: string, b: string) =>
     a.startsWith(`${b}.`) || b.startsWith(`${a}.`);
 
-  return (step: PlanStep): PlanStep | null => {
+  let dropped = false;
+
+  const accept = (step: PlanStep): PlanStep | null => {
     if (accepted >= MAX_STEPS) return null;
     const node = tree.get(step.source.trim());
     if (!node) return null;
@@ -143,9 +166,22 @@ export function createStepValidator(tree: ContentTree = contentTree) {
       action: step.action,
       source: node.path,
       excerpt,
+      join: step.action === "fetch" ? trimJoin(step.join) : "",
       pace: PACES.includes(step.pace) ? step.pace : "trot",
       line: trimLine(step.line ?? ""),
     };
+  };
+
+  return (step: PlanStep): PlanStep | null => {
+    const kept = accept(step);
+    if (step.action !== "fetch") return kept;
+    if (!kept) {
+      dropped = true;
+      return null;
+    }
+    if (!dropped) return kept;
+    dropped = false;
+    return { ...kept, join: "" };
   };
 }
 
@@ -191,4 +227,17 @@ export function cutBlock(
     };
   }
   return { ...node.block, text: excerpt };
+}
+
+/**
+ * The words to show before each placed block on the answer page, so the
+ * blocks read as one sentence. Builds stored before Joins existed, or a Join
+ * that was dropped, fall back to plain list words.
+ */
+export function sentenceJoins(joins: readonly string[]): string[] {
+  return joins.map((join, index) => {
+    if (join) return join;
+    if (index === 0) return "";
+    return index === joins.length - 1 ? "and" : ",";
+  });
 }

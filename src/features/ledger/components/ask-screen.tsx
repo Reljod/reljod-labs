@@ -43,6 +43,7 @@ function blocksOf(build: StoredBuild, buildId = build.id): PlacedBlock[] {
         id: `${buildId}-${index}`,
         source: step.source,
         excerpt: step.excerpt,
+        join: step.join,
         block: cutBlock(node, step.excerpt),
       },
     ];

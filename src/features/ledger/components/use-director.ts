@@ -9,7 +9,13 @@ import {
   openingBeats,
 } from "../domain/choreography";
 import { type ContentBlock, contentTree } from "../domain/content-tree";
-import { chooseGait, type Grip, haulGait } from "../domain/gait";
+import {
+  chooseGait,
+  type Grip,
+  gripFor,
+  haulGait,
+  holdOffset,
+} from "../domain/gait";
 import { SOURCE_ATTRIBUTE } from "../domain/source-paths";
 import type { CatPose } from "./cat";
 import type { PlacedBlock } from "./placed-block";
@@ -136,9 +142,26 @@ export function useDirector(refs: {
       const check = () => {
         if (token !== generation.current) throw new Cancelled();
       };
+      /* Reduced motion swaps movement for fades, but keeps every pause at full length so the Build is still easy to follow. */
       const wait = async (ms: number) => {
-        await new Promise((resolve) =>
-          setTimeout(resolve, reduceMotion ? Math.min(ms, 150) : ms),
+        await new Promise((resolve) => setTimeout(resolve, ms));
+        check();
+      };
+
+      /** Reduced motion: fades the elements out, moves them while hidden, fades them back in. */
+      const fadeMove = async (moves: [Element, Record<string, number>][]) => {
+        await Promise.all(
+          moves.map(([element]) =>
+            animate(element, { opacity: 0 }, { duration: 0.15 }),
+          ),
+        );
+        await Promise.all(
+          moves.map(([element, to]) => animate(element, to, { duration: 0 })),
+        );
+        await Promise.all(
+          moves.map(([element]) =>
+            animate(element, { opacity: 1 }, { duration: 0.15 }),
+          ),
         );
         check();
       };
@@ -198,10 +221,9 @@ export function useDirector(refs: {
         const element = catRef.current;
         if (!element) return;
         if (reduceMotion) {
-          await animate(element, { opacity: 0 }, { duration: 0.12 });
-          await jump(to);
-          await animate(element, { opacity: 1 }, { duration: 0.12 });
-          check();
+          await fadeMove([[element, { x: to.x, y: to.y }]]);
+          position.current = to;
+          await wait(250);
           return;
         }
         const gait = chooseGait(dx, dy, pace);
@@ -241,22 +263,46 @@ export function useDirector(refs: {
           catAt(to),
           skid ? "SKRRT!" : gait.pose === "fly" ? "THUD!" : "",
         );
-        await wait(380);
+        await wait(360);
       };
 
-      /** Scrolls the page so the piece sits in the open part of the screen. */
+      /**
+       * Scrolls the page so the piece sits in the open part of the screen, and
+       * waits until it is there: he only measures where to run once the page
+       * has stopped moving under him.
+       */
       const bringIntoView = async (element: Element) => {
         const rect = element.getBoundingClientRect();
         const visible = stageBottom();
         const height = Math.min(rect.height, visible * 0.6);
-        const top =
-          window.scrollY + rect.top - Math.max(84, (visible - height) / 2);
+        const furthest =
+          document.documentElement.scrollHeight - window.innerHeight;
+        const top = Math.round(
+          Math.min(
+            furthest,
+            Math.max(
+              0,
+              window.scrollY + rect.top - Math.max(84, (visible - height) / 2),
+            ),
+          ),
+        );
+        if (Math.abs(window.scrollY - top) < 2) return;
         window.scrollTo({ top, behavior: reduceMotion ? "auto" : "smooth" });
-        let last = -1;
-        for (let index = 0; index < 90 && window.scrollY !== last; index++) {
-          last = window.scrollY;
+        // A smooth scroll can take a few frames to start, so one still frame
+        // is not the end of it; give up only once it has been still a while.
+        let last = window.scrollY;
+        let still = 0;
+        for (
+          let index = 0;
+          index < 240 && Math.abs(window.scrollY - top) >= 2 && still < 24;
+          index++
+        ) {
           await frame();
-          await frame();
+          if (window.scrollY === last) still++;
+          else {
+            still = 0;
+            last = window.scrollY;
+          }
         }
         check();
       };
@@ -306,6 +352,7 @@ export function useDirector(refs: {
       let stepIndex = 0;
       let currentSource = "";
       let currentExcerpt: string | null = null;
+      let currentJoin = "";
       let element: Element | null = null;
       let flying: Flight | null = null;
 
@@ -327,10 +374,7 @@ export function useDirector(refs: {
         flying = {
           id: `${input.buildId}-${stepIndex}`,
           block,
-          grip:
-            block.kind === "figure" || block.kind === "quote"
-              ? "carry"
-              : "drag",
+          grip: gripFor(block.kind),
           width: slotWidth,
         };
         setFlight(flying);
@@ -357,7 +401,7 @@ export function useDirector(refs: {
       const toss = async () => {
         const flyer = flightRef.current;
         setCat({ pose: "toss" });
-        await wait(260);
+        await wait(280);
         if (flyer) {
           const away = position.current.x > window.innerWidth / 2 ? -1 : 1;
           await animate(
@@ -368,75 +412,80 @@ export function useDirector(refs: {
               rotate: away * 540,
               opacity: 0,
             },
-            { duration: reduceMotion ? 0.15 : 0.8, ease: [0.3, 0, 0.6, 1] },
+            reduceMotion
+              ? {
+                  duration: 0.4,
+                  x: { duration: 0 },
+                  y: { duration: 0 },
+                  rotate: { duration: 0 },
+                }
+              : { duration: 1, ease: [0.3, 0, 0.6, 1] },
           );
         }
         element?.classList.remove("ldg-torn");
         setFlight(null);
         flying = null;
         addFx("fx-dust", catAt(position.current), "NOPE!");
-        await wait(300);
+        await wait(350);
       };
 
       const haul = async (grip: Grip, pace: Pace) => {
         const slot = refs.slot.current;
         const flyer = flightRef.current;
-        if (!slot || !flyer) return;
+        const cat = catRef.current;
+        if (!slot || !flyer || !cat) return;
         slot.scrollIntoView({ block: "nearest", inline: "nearest" });
         await frame();
         const target = slot.getBoundingClientRect();
+        const now = flyer.getBoundingClientRect();
+        const block = { w: flyer.offsetWidth, h: flyer.offsetHeight };
+        const flip =
+          target.left + target.width / 2 < now.left + now.width / 2 - 4;
+        const hold = holdOffset(grip, flip, dims, block);
+        const held = (at: Point) => ({ x: at.x + hold.x, y: at.y + hold.y });
         const from = position.current;
-        const to = clamp(
-          target.left > dims.w + 24
-            ? {
-                x: target.left - dims.w * 0.95,
-                y: target.top + target.height / 2 - dims.h * 0.6,
-              }
-            : { x: target.left + 8, y: target.top - dims.h * 0.95 },
-        );
+        // He stands where the block in his paws lands right on its slot.
+        const to = clamp({ x: target.left - hold.x, y: target.top - hold.y });
         const gait = haulGait(to.x - from.x, to.y - from.y, grip, pace);
-        const duration = reduceMotion ? 0.15 : gait.duration;
-        const box = flyer.getBoundingClientRect();
-        const cat = catRef.current;
-        if (!cat) return;
+        const duration = gait.duration;
 
-        if (grip === "carry") {
-          const overhead = (point: Point) => ({
-            x: point.x + dims.w / 2 - box.width / 2,
-            y: point.y - box.height * 0.8,
-          });
-          setCat({ pose: "carry", flip: false, say: null });
-          await animate(
-            flyer,
-            { ...overhead(from), rotate: 0 },
-            { duration: 0.3 },
-          );
-          await Promise.all([
-            animate(cat, { x: to.x, y: to.y }, { duration, ease: SMOOTH }),
-            animate(flyer, overhead(to), { duration, ease: SMOOTH }),
+        if (reduceMotion) {
+          // Picks it up and appears with it on the board, no sliding.
+          setCat({ pose: grip, flip, say: null });
+          await wait(200);
+          await fadeMove([
+            [cat, { x: to.x, y: to.y }],
+            [flyer, { x: target.left, y: target.top, rotate: 0, scale: 1 }],
           ]);
-        } else {
-          setCat({ pose: "drag", flip: gait.flip, say: null });
-          if (!reduceMotion) leavePrints(from, to, duration);
-          await Promise.all([
-            animate(
-              cat,
-              { x: to.x, y: to.y },
-              { duration, ease: [0.4, 0, 0.6, 1] },
-            ),
-            animate(
-              flyer,
-              { x: target.left, y: target.top, rotate: [-3, -7, 2, 0] },
-              { duration: duration + 0.2, delay: 0.15, ease: [0.3, 0, 0.2, 1] },
-            ),
-          ]);
+          position.current = to;
+          await wait(150);
+          return;
         }
+
+        // Picks it up: the block settles into his paws before he sets off.
+        setCat({ pose: grip, flip, say: null });
+        await animate(
+          flyer,
+          { ...held(from), rotate: 0, scale: 1 },
+          { duration: 0.45, ease: SMOOTH },
+        );
+        check();
+
+        // Same start, duration and easing for both, so the gap between his
+        // paws and the block stays the same the whole way.
+        leavePrints(from, to, duration);
+        await Promise.all([
+          animate(cat, { x: to.x, y: to.y }, { duration, ease: SMOOTH }),
+          animate(flyer, held(to), { duration, ease: SMOOTH }),
+        ]);
         position.current = to;
         check();
+
+        // Sets it down, a nudge when the edge of the screen kept him off it.
         await animate(
           flyer,
           { x: target.left, y: target.top, rotate: 0, scale: 1 },
-          { duration: 0.22 },
+          { duration: 0.35, ease: SMOOTH },
         );
         check();
       };
@@ -444,12 +493,13 @@ export function useDirector(refs: {
       const stamp = async () => {
         const slot = refs.slot.current?.getBoundingClientRect();
         setCat({ pose: "stamp", flip: false });
-        await wait(260);
+        await wait(240);
         if (flying) {
           input.onPlace({
             id: flying.id,
             source: currentSource,
             excerpt: currentExcerpt,
+            join: currentJoin,
             block: flying.block,
           });
           placed++;
@@ -462,7 +512,7 @@ export function useDirector(refs: {
             { x: slot.left + slot.width / 2, y: slot.top + 20 },
             "FILED!",
           );
-        await wait(420);
+        await wait(320);
       };
 
       const reform = async () => {
@@ -473,7 +523,7 @@ export function useDirector(refs: {
           say: input.title() || "Ta-da!",
         });
         window.scrollTo({ top: 0, behavior: reduceMotion ? "auto" : "smooth" });
-        await wait(reduceMotion ? 50 : 650);
+        await wait(650);
         input.onReform();
         await wait(1300);
         setCat({ pose: "found", say: null });
@@ -500,6 +550,7 @@ export function useDirector(refs: {
           if (!node) continue;
           currentSource = step.source;
           currentExcerpt = step.excerpt;
+          currentJoin = step.join;
           const slotWidth =
             refs.slot.current?.getBoundingClientRect().width ?? 260;
           for (const beat of beatsForStep(step, node.block.kind)) {

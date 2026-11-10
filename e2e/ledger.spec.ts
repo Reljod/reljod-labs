@@ -91,6 +91,10 @@ async function expectAnswered(page: Page) {
   await expect(page.getByTestId("answer-page")).toBeVisible();
   await expect(screen(page)).toHaveAttribute("data-phase", "answer");
   await expectGrounded(page, page.getByTestId("answer-block"));
+  await expect(
+    page.getByTestId("answer-detail"),
+    "every piece in the sentence is shown in full beneath it",
+  ).toHaveCount(await page.getByTestId("answer-block").count());
   const reply = screen(page)
     .locator('[data-testid="chat-message"][data-role="ledger"]')
     .last();
@@ -115,7 +119,7 @@ test.describe("Ledger", () => {
       const seen = await poses(page);
       expect(seen, "tore the page apart first").toContain("unstitch");
       expect(
-        seen.some((pose) => pose === "carry" || pose === "drag"),
+        seen.some((pose) => pose === "carry" || pose === "push"),
         "hauled a block",
       ).toBe(true);
       expect(seen, "stamped it on the board").toContain("stamp");
@@ -297,9 +301,10 @@ test.describe("Ledger on a phone", () => {
     await expectAnswered(page);
     const cat = screen(page).getByTestId("ledger-cat");
     expect((await cat.boundingBox())?.width).toBe(72);
-    const blocks = page.getByTestId("answer-block");
-    const first = await blocks.nth(0).boundingBox();
-    const second = await blocks.nth(1).boundingBox();
+    // The sentence wraps; the pieces in full beneath it stack in one column.
+    const details = page.getByTestId("answer-detail");
+    const first = await details.nth(0).boundingBox();
+    const second = await details.nth(1).boundingBox();
     expect(second?.x).toBe(first?.x);
     const scrollWidth = await page.evaluate(
       () => document.documentElement.scrollWidth,

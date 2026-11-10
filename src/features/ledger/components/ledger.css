@@ -256,47 +256,47 @@
   animation: none;
 }
 .lgr-anim.pose-run .c-gbob {
-  animation: lgr-g-bob 0.48s linear infinite;
+  animation: lgr-g-bob 0.6s linear infinite;
 }
 .lgr-anim.pose-run .c-gtorso {
   transform-origin: 118px 162px;
-  animation: lgr-g-torso 0.48s ease-in-out infinite;
+  animation: lgr-g-torso 0.6s ease-in-out infinite;
 }
 .lgr-anim.pose-run .c-gfore-n {
   transform-origin: 158px 170px;
-  animation: lgr-g-fore 0.48s ease-in-out infinite;
+  animation: lgr-g-fore 0.6s ease-in-out infinite;
 }
 .lgr-anim.pose-run .c-gfore-f {
   transform-origin: 146px 170px;
-  animation: lgr-g-fore2 0.48s ease-in-out infinite;
+  animation: lgr-g-fore2 0.6s ease-in-out infinite;
 }
 .lgr-anim.pose-run .c-ghind-n {
   transform-origin: 84px 170px;
-  animation: lgr-g-hind 0.48s ease-in-out infinite;
+  animation: lgr-g-hind 0.6s ease-in-out infinite;
 }
 .lgr-anim.pose-run .c-ghind-f {
   transform-origin: 96px 170px;
-  animation: lgr-g-hind2 0.48s ease-in-out infinite;
+  animation: lgr-g-hind2 0.6s ease-in-out infinite;
 }
 .lgr-anim.pose-run .c-ghead {
   transform-origin: 176px 150px;
-  animation: lgr-g-head 0.48s ease-in-out infinite;
+  animation: lgr-g-head 0.6s ease-in-out infinite;
 }
 .lgr-anim.pose-run .c-gtail {
   transform-origin: 66px 156px;
-  animation: lgr-g-tail 0.48s ease-in-out infinite;
+  animation: lgr-g-tail 0.6s ease-in-out infinite;
 }
 .lgr-anim.pose-run .c-gcoat {
   transform-origin: 70px 170px;
-  animation: lgr-g-coat 0.24s ease-in-out infinite alternate;
+  animation: lgr-g-coat 0.3s ease-in-out infinite alternate;
 }
 .lgr-anim.pose-run .c-gtie {
   transform-origin: 166px 150px;
-  animation: lgr-g-tie 0.24s ease-in-out infinite alternate;
+  animation: lgr-g-tie 0.3s ease-in-out infinite alternate;
 }
 .lgr-anim.pose-run .c-gtongue {
   transform-origin: 216px 134px;
-  animation: lgr-g-tongue 0.24s ease-in-out infinite alternate;
+  animation: lgr-g-tongue 0.3s ease-in-out infinite alternate;
 }
 .lgr-anim.pose-run .c-blink-g {
   transform-origin: 198px 102px;
@@ -304,18 +304,18 @@
 }
 .lgr-anim.pose-run .c-gdust1 {
   transform-origin: 70px 220px;
-  animation: lgr-g-dust 0.48s ease-out infinite;
+  animation: lgr-g-dust 0.6s ease-out infinite;
 }
 .lgr-anim.pose-run .c-gdust2 {
   transform-origin: 58px 214px;
-  animation: lgr-g-dust 0.48s 0.16s ease-out infinite;
+  animation: lgr-g-dust 0.6s 0.2s ease-out infinite;
 }
 .lgr-anim.pose-run .c-gdust3 {
   transform-origin: 80px 224px;
-  animation: lgr-g-dust 0.48s 0.32s ease-out infinite;
+  animation: lgr-g-dust 0.6s 0.4s ease-out infinite;
 }
 .lgr-anim.pose-run .c-speed {
-  animation-duration: 0.24s;
+  animation-duration: 0.3s;
 }
 @keyframes lgr-g-bob {
   0% {
@@ -526,25 +526,25 @@
 
 /* ---------- run: top view (moving down the screen) ---------- */
 .lgr-anim.pose-run-down .c-runner {
-  animation: lgr-bob 0.21s ease-in-out infinite alternate;
+  animation: lgr-bob 0.26s ease-in-out infinite alternate;
 }
 .lgr-anim.pose-run-down .c-dfoot-a {
   transform-origin: 101px 190px;
-  animation: lgr-dstep 0.42s ease-in-out infinite alternate;
+  animation: lgr-dstep 0.52s ease-in-out infinite alternate;
 }
 .lgr-anim.pose-run-down .c-dfoot-b {
   transform-origin: 139px 190px;
-  animation: lgr-dstep 0.42s ease-in-out infinite alternate-reverse;
+  animation: lgr-dstep 0.52s ease-in-out infinite alternate-reverse;
 }
 .lgr-anim.pose-run-down .c-darm-a {
-  animation: lgr-pump 0.42s ease-in-out infinite alternate-reverse;
+  animation: lgr-pump 0.52s ease-in-out infinite alternate-reverse;
 }
 .lgr-anim.pose-run-down .c-darm-b {
-  animation: lgr-pump 0.42s ease-in-out infinite alternate;
+  animation: lgr-pump 0.52s ease-in-out infinite alternate;
 }
 .lgr-anim.pose-run-down .c-dtail {
   transform-origin: 120px 54px;
-  animation: lgr-tail 0.42s ease-in-out infinite;
+  animation: lgr-tail 0.52s ease-in-out infinite;
 }
 @keyframes lgr-dstep {
   from {
@@ -565,27 +565,27 @@
 
 /* ---------- run: bottom view (moving up the screen) ---------- */
 .lgr-anim.pose-run-up .c-runner {
-  animation: lgr-bob 0.21s ease-in-out infinite alternate;
+  animation: lgr-bob 0.26s ease-in-out infinite alternate;
 }
 .lgr-anim.pose-run-up .c-ufoot-a {
   transform-origin: 103px 190px;
-  animation: lgr-ustep 0.42s ease-in-out infinite alternate;
+  animation: lgr-ustep 0.52s ease-in-out infinite alternate;
 }
 .lgr-anim.pose-run-up .c-ufoot-b {
   transform-origin: 137px 190px;
-  animation: lgr-ustep 0.42s ease-in-out infinite alternate-reverse;
+  animation: lgr-ustep 0.52s ease-in-out infinite alternate-reverse;
 }
 .lgr-anim.pose-run-up .c-uarm-a {
   transform-origin: 88px 148px;
-  animation: lgr-arm 0.42s ease-in-out infinite alternate;
+  animation: lgr-arm 0.52s ease-in-out infinite alternate;
 }
 .lgr-anim.pose-run-up .c-uarm-b {
   transform-origin: 152px 148px;
-  animation: lgr-arm 0.42s ease-in-out infinite alternate-reverse;
+  animation: lgr-arm 0.52s ease-in-out infinite alternate-reverse;
 }
 .lgr-anim.pose-run-up .c-utail {
   transform-origin: 120px 194px;
-  animation: lgr-tail 0.42s ease-in-out infinite;
+  animation: lgr-tail 0.52s ease-in-out infinite;
 }
 @keyframes lgr-ustep {
   from {
@@ -1023,13 +1023,13 @@
   }
 }
 
-/* ---------- new rigs: drag, toss, stamp, conduct, unstitch, carry ---------- */
-.lgr-anim.pose-drag .c-tug {
+/* ---------- new rigs: push, toss, stamp, conduct, unstitch, carry ---------- */
+.lgr-anim.pose-push .c-tug {
   transform-origin: 120px 156px;
-  animation: lgr-tug 0.32s ease-in-out infinite alternate;
+  animation: lgr-tug 0.4s ease-in-out infinite alternate;
 }
-.lgr-anim.pose-drag .c-runner {
-  animation: lgr-shuffle 0.32s ease-in-out infinite alternate;
+.lgr-anim.pose-push .c-runner {
+  animation: lgr-shuffle 0.4s ease-in-out infinite alternate;
 }
 @keyframes lgr-tug {
   from {
@@ -1126,7 +1126,7 @@
 }
 
 .lgr-anim.pose-carry .c-runner {
-  animation: lgr-bob 0.3s ease-in-out infinite alternate;
+  animation: lgr-bob 0.38s ease-in-out infinite alternate;
 }
 
 /* ---------- Content blocks: torn out of the page, stamped, Reformed ---------- */

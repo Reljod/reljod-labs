@@ -42,6 +42,11 @@ export function BuildBoard({
             data-source={item.source}
             className="relative shrink-0 max-lg:w-56"
           >
+            {item.join ? (
+              <p className="mb-1 truncate text-ink-muted text-xs italic">
+                {item.join}…
+              </p>
+            ) : null}
             <BlockView block={item.block} size="compact" />
             <span
               aria-hidden="true"
