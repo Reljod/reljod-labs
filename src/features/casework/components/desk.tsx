@@ -26,7 +26,7 @@ import {
   type RunCard,
   toolTitle,
 } from "./chat-panel";
-import { DecisionFile, DocViewer } from "./doc-viewer";
+import { DocViewer } from "./doc-viewer";
 import { JobGlyph, RECOMMENDATION_STYLE, ScenarioGlyph } from "./glyphs";
 import { modelSummary } from "./model-form";
 import { PipelineFlow } from "./pipeline-flow";
@@ -106,7 +106,7 @@ function ago(iso: string) {
   return `${Math.round(minutes / 1440)} d ago`;
 }
 
-/** The Casework desk: the Cabinet, the stage where Runs play out, and the Specialist's chat. */
+/** Teller, the Casework desk: the Cabinet, the stage where Runs play out, and the Specialist's chat. */
 export function Desk() {
   const [desk, setDesk] = useState<DeskView | null>(null);
   const [failed, setFailed] = useState<string | null>(null);
@@ -123,11 +123,11 @@ export function Desk() {
   const [localRuns, setLocalRuns] = useState<RunSummary[]>([]);
   const [dragging, setDragging] = useState(false);
   const [dropping, setDropping] = useState(false);
-  const [cabinetOpen, setCabinetOpen] = useState(true);
+  /** The person's own choice for the Cabinet; null lets the desk decide. */
+  const [cabinetChoice, setCabinetChoice] = useState<boolean | null>(null);
   const [panel, setPanel] = useState<"chat" | "stage" | "cabinet">("chat");
-  const [center, setCenter] = useState<"run" | "pipelines">("run");
+  const [page, setPage] = useState<"desk" | "pipelines">("desk");
   const [viewing, setViewing] = useState<string | null>(null);
-  const [fileOpen, setFileOpen] = useState(false);
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [desksOpen, setDesksOpen] = useState(false);
   const [settings, setSettings] = useState<ModelSettingsByPurpose | null>(null);
@@ -396,7 +396,7 @@ export function Desk() {
                 ...current,
               ]);
               setShown({ id: started, instant: false });
-              setCenter("run");
+              setPage("desk");
             }
           } else if (event.type === "cost") {
             log(
@@ -610,72 +610,49 @@ export function Desk() {
     await load();
   }
 
-  // Ledger's cues --------------------------------------------------------------------
+  // Ledger's cues: he stays at his post; only his pose and words change. -----------
   const questionRef = useRef<HTMLDivElement>(null);
   const focusRef = useRef<HTMLElement | null>(null);
-  const stageRef = useRef<HTMLDivElement>(null);
-  const chatRef = useRef<HTMLDivElement>(null);
-  const nodes = useRef(new Map<number, HTMLElement>());
-  const [cue, setCue] = useState<CatCue>({ pose: "wave" });
   const stageOn = shown !== null && run.jobs.length > 0;
   const currentJob = run.jobs[run.current];
+  const cue: CatCue =
+    going && run.question
+      ? { pose: "confused", line: "Need this from you" }
+      : live && run.status === "stopped"
+        ? { pose: "idle", line: "Stopped" }
+        : live && run.decision
+          ? {
+              pose: RECOMMENDATION_STYLE[run.decision.recommendation].pose,
+              line: RECOMMENDATION_STYLE[run.decision.recommendation].stamp,
+            }
+          : going && currentJob
+            ? {
+                pose: JOB_POSE[currentJob.job],
+                line: JOB_LINE[currentJob.job],
+              }
+            : busy
+              ? { pose: talking ? "talk" : "think" }
+              : dragging || dropping
+                ? { pose: "carry", line: "Drop it on the chat" }
+                : uploading
+                  ? { pose: "carry", line: "Filing it" }
+                  : !greeted && desk
+                    ? { pose: "wave", line: "Hi! Hand me a case" }
+                    : { pose: "idle" };
 
-  useEffect(() => {
-    const frame = requestAnimationFrame(() => {
-      if (going && run.question) {
-        setCue({
-          on: chatRef.current,
-          pose: "confused",
-          line: "Need this from you",
-        });
-      } else if (live && run.status === "stopped") {
-        setCue({ pose: "idle", line: "Stopped" });
-      } else if (live && run.decision) {
-        const style = RECOMMENDATION_STYLE[run.decision.recommendation];
-        setCue({
-          on: stageRef.current,
-          pose: style.pose,
-          line: style.stamp,
-        });
-      } else if (going && currentJob) {
-        setCue({
-          // He stands on the stage's top edge, over the job being worked.
-          on: stageRef.current,
-          along:
-            center === "run" ? (nodes.current.get(run.current) ?? null) : null,
-          pose: JOB_POSE[currentJob.job],
-          line: JOB_LINE[currentJob.job],
-        });
-      } else if (busy) {
-        setCue({ pose: talking ? "talk" : "think" });
-      } else if (dragging || dropping) {
-        setCue({ pose: "carry", line: "Drop it on the chat" });
-      } else if (uploading) {
-        setCue({ pose: "carry", line: "Filing it" });
-      } else if (!greeted) {
-        setCue({ pose: "wave", line: desk ? "Hi! Drop me a case" : undefined });
-      } else {
-        setCue({ pose: "idle", roam: true });
-      }
-    });
-    return () => cancelAnimationFrame(frame);
-  }, [
-    going,
-    live,
-    run.question,
-    run.decision,
-    run.status,
-    run.current,
-    currentJob,
-    center,
-    busy,
-    talking,
-    dragging,
-    dropping,
-    uploading,
-    greeted,
-    desk,
-  ]);
+  // The Cabinet steps aside while a Run has the stage, and comes back when
+  // the Run asks for a Document that is on file.
+  const suggested = useMemo(
+    () =>
+      new Set(going ? run.question?.suggestions.map((item) => item.id) : []),
+    [going, run.question],
+  );
+  const cabinetOpen = cabinetChoice ?? (!stageOn || suggested.size > 0);
+  // biome-ignore lint/correctness/useExhaustiveDependencies: a new Run or a new Question hands the choice back to the desk
+  useEffect(
+    () => setCabinetChoice(null),
+    [shown?.id, run.question?.questionId],
+  );
 
   const working = busy
     ? { label: busy.label, costUsd: 0, since: busy.since }
@@ -711,7 +688,8 @@ export function Desk() {
       uploading={uploading}
       onDragStart={() => setDragging(true)}
       onDragEnd={() => setDragging(false)}
-      onCollapse={() => setCabinetOpen(false)}
+      onCollapse={() => setCabinetChoice(false)}
+      highlight={suggested}
     />
   ) : (
     <div className="cw-shimmer p-4 font-mono text-xs uppercase">
@@ -730,11 +708,29 @@ export function Desk() {
         </Link>
         <span className="h-5 w-px bg-paper/25" />
         <h1 className="font-mono text-sm font-bold tracking-[0.14em] uppercase">
-          Casework desk
+          Teller
         </h1>
         <span className="hidden rounded-sm border border-brass/70 px-1.5 py-0.5 font-mono text-[10px] font-bold tracking-[0.08em] text-brass uppercase md:inline">
           Synthetic data
         </span>
+        <nav className="ml-3 flex gap-1" aria-label="Pages">
+          {(
+            [
+              ["desk", "Desk"],
+              ["pipelines", "Pipelines"],
+            ] as const
+          ).map(([value, label]) => (
+            <button
+              key={value}
+              type="button"
+              aria-pressed={page === value}
+              onClick={() => setPage(value)}
+              className={`h-8 rounded-sm px-3 font-mono text-[11px] font-bold tracking-[0.08em] uppercase transition-colors ${page === value ? "bg-paper text-ink" : "text-paper/70 hover:bg-paper/10 hover:text-paper"}`}
+            >
+              {label}
+            </button>
+          ))}
+        </nav>
 
         <div className="ml-auto flex items-center gap-2">
           <div className="relative">
@@ -813,147 +809,123 @@ export function Desk() {
         </div>
       </header>
 
-      {/* Phones and tablets see one panel at a time. */}
-      <nav className="flex shrink-0 border-ink border-b-2 bg-paper lg:hidden">
-        {(["chat", "stage", "cabinet"] as const).map((name) => (
-          <button
-            key={name}
-            type="button"
-            aria-pressed={panel === name}
-            onClick={() => setPanel(name)}
-            className={`flex-1 py-2 font-mono text-[11px] font-bold tracking-[0.08em] uppercase ${panel === name ? "bg-ink text-paper" : "text-ink-muted"}`}
-          >
-            {name}
-          </button>
-        ))}
-      </nav>
-
-      <div className="relative flex min-h-0 flex-1 gap-4 px-3 pt-3 pb-3 lg:px-4 lg:pt-4 lg:pb-4">
-        {/* Cabinet */}
-        <aside
-          className={`min-h-0 shrink-0 overflow-hidden rounded-sm border-2 border-ink bg-marble shadow-hard-md transition-[width] duration-300 ease-out ${panel === "cabinet" ? "block w-full" : "hidden"} lg:block ${cabinetOpen ? "lg:w-[344px]" : "lg:w-12"}`}
-        >
-          {cabinetOpen || panel === "cabinet" ? (
-            cabinet
-          ) : (
-            <button
-              type="button"
-              onClick={() => setCabinetOpen(true)}
-              className="flex h-full w-full flex-col items-center gap-3 bg-ink py-3 text-paper hover:bg-ink/90"
-              aria-label="Open the Cabinet"
-              title="Open the Cabinet"
-            >
-              <span className="font-mono text-sm">»</span>
-              <span className="font-mono text-[11px] font-bold tracking-[0.2em] uppercase [writing-mode:vertical-rl]">
-                Cabinet
-              </span>
-            </button>
-          )}
-        </aside>
-
-        {/* The stage: a Run, or the pipelines as graphs */}
-        <main
-          className={`min-h-0 min-w-0 flex-1 flex-col gap-3 ${panel === "stage" ? "flex" : "hidden"} lg:flex`}
-        >
-          <div className="flex shrink-0 items-center gap-1">
-            {(
-              [
-                ["run", "Run"],
-                ["pipelines", "Pipelines"],
-              ] as const
-            ).map(([value, label]) => (
+      {page === "pipelines" ? (
+        <div className="min-h-0 flex-1 px-3 py-3 lg:px-4 lg:py-4">
+          {settings ? (
+            <PipelineFlow
+              settings={settings}
+              onSettings={setSettings}
+              run={run}
+            />
+          ) : null}
+        </div>
+      ) : (
+        <>
+          {/* Phones and tablets see one panel at a time. */}
+          <nav className="flex shrink-0 border-ink border-b-2 bg-paper lg:hidden">
+            {(["chat", "stage", "cabinet"] as const).map((name) => (
               <button
-                key={value}
+                key={name}
                 type="button"
-                aria-pressed={center === value}
-                onClick={() => setCenter(value)}
-                className={`rounded-sm border-2 px-3 py-1 font-mono text-[11px] font-bold tracking-[0.08em] uppercase transition-colors ${center === value ? "border-ink bg-ink text-paper" : "border-ink/30 bg-paper/60 text-ink-muted hover:border-ink hover:text-ink"}`}
+                aria-pressed={panel === name}
+                onClick={() => setPanel(name)}
+                className={`flex-1 py-2 font-mono text-[11px] font-bold tracking-[0.08em] uppercase ${panel === name ? "bg-ink text-paper" : "text-ink-muted"}`}
               >
-                {label}
+                {name}
               </button>
             ))}
-            {stageOn ? (
-              <span className="ml-auto font-mono text-[11px] text-ink-muted">
-                {isOver(run) ? "Run cost" : "So far"}{" "}
-                <span className="font-bold text-ink">
-                  ${(runs.get(shown?.id ?? "")?.costUsd ?? 0).toFixed(4)}
-                </span>
-              </span>
-            ) : null}
-          </div>
-          <div ref={stageRef} className="min-h-0 flex-1">
-            {center === "pipelines" && settings ? (
-              <PipelineFlow
-                settings={settings}
-                onSettings={setSettings}
-                run={run}
-              />
-            ) : stageOn ? (
-              <Stage
-                run={run}
-                docs={docs}
-                onOpenDoc={setViewing}
-                registerNode={(index, element) => {
-                  if (element) nodes.current.set(index, element);
-                  else nodes.current.delete(index);
-                }}
-                focusRef={(element) => {
-                  focusRef.current = element;
-                }}
-                onOpenFile={() => setFileOpen(true)}
-                cost={runs.get(shown?.id ?? "")}
-              />
-            ) : (
-              <Welcome
-                desk={desk}
-                onPipelines={() => setCenter("pipelines")}
-                onTry={(ids) => {
-                  addToTray(ids);
-                  setPanel("chat");
-                }}
-              />
-            )}
-          </div>
-        </main>
+          </nav>
 
-        {/* The Specialist: the same width whether or not a Run is on the stage */}
-        <div
-          ref={chatRef}
-          className={`min-h-0 w-full shrink-0 ${panel === "chat" ? "flex" : "hidden"} lg:flex lg:w-[400px] xl:w-[440px]`}
-        >
-          <ChatPanel
-            items={items}
-            tray={trayDocs}
-            onRemoveFromTray={(id) =>
-              setTray((current) => current.filter((item) => item !== id))
-            }
-            onAddToTray={addToTray}
-            onSend={send}
-            busy={Boolean(busy)}
-            disabled={!desk}
-            dragging={dragging}
-            question={going ? run.question : null}
-            onAnswer={reply}
-            answering={answering}
-            questionRef={questionRef}
-            runs={runs}
-            onSelectRun={(id) => {
-              const summary = runs.get(id);
-              setShown({
-                id,
-                instant: summary ? isOver(summary) : true,
-              });
-              setCenter("run");
-              setPanel("stage");
-            }}
-            onOpenFile={() => setFileOpen(true)}
-            working={working}
-            onStop={stopAll}
-            onDropFiles={upload}
-            model={settings ? modelSummary(settings.chat) : ""}
-          />
-        </div>
-      </div>
+          <div className="relative flex min-h-0 flex-1 gap-4 px-3 pt-3 pb-3 lg:px-4 lg:pt-4 lg:pb-4">
+            {/* Cabinet */}
+            <aside
+              className={`min-h-0 shrink-0 overflow-hidden rounded-sm border-2 border-ink bg-marble shadow-hard-md transition-[width] duration-300 ease-out ${panel === "cabinet" ? "block w-full" : "hidden"} lg:block ${cabinetOpen ? "lg:w-[344px]" : "lg:w-12"}`}
+            >
+              {cabinetOpen || panel === "cabinet" ? (
+                cabinet
+              ) : (
+                <button
+                  type="button"
+                  onClick={() => setCabinetChoice(true)}
+                  className="flex h-full w-full flex-col items-center gap-3 bg-ink py-3 text-paper hover:bg-ink/90"
+                  aria-label="Open the Cabinet"
+                  title="Open the Cabinet"
+                >
+                  <span className="font-mono text-sm">»</span>
+                  <span className="font-mono text-[11px] font-bold tracking-[0.2em] uppercase [writing-mode:vertical-rl]">
+                    Cabinet
+                  </span>
+                </button>
+              )}
+            </aside>
+
+            {/* The stage: a Run as it goes, then its result */}
+            <main
+              className={`min-h-0 min-w-0 flex-1 flex-col gap-3 ${panel === "stage" ? "flex" : "hidden"} lg:flex`}
+            >
+              <div className="min-h-0 flex-1">
+                {stageOn ? (
+                  <Stage
+                    run={run}
+                    docs={docs}
+                    onOpenDoc={setViewing}
+                    registerNode={() => {}}
+                    focusRef={(element) => {
+                      focusRef.current = element;
+                    }}
+                    cost={runs.get(shown?.id ?? "")}
+                  />
+                ) : (
+                  <Welcome
+                    desk={desk}
+                    onPipelines={() => setPage("pipelines")}
+                    onTry={(ids) => {
+                      addToTray(ids);
+                      setPanel("chat");
+                    }}
+                  />
+                )}
+              </div>
+            </main>
+
+            {/* The Specialist: the same width whether or not a Run is on the stage */}
+            <div
+              className={`min-h-0 w-full shrink-0 ${panel === "chat" ? "flex" : "hidden"} lg:flex lg:w-[400px] xl:w-[440px]`}
+            >
+              <ChatPanel
+                items={items}
+                tray={trayDocs}
+                onRemoveFromTray={(id) =>
+                  setTray((current) => current.filter((item) => item !== id))
+                }
+                onAddToTray={addToTray}
+                onSend={send}
+                busy={Boolean(busy)}
+                disabled={!desk}
+                dragging={dragging}
+                question={going ? run.question : null}
+                onAnswer={reply}
+                answering={answering}
+                questionRef={questionRef}
+                runs={runs}
+                onSelectRun={(id) => {
+                  const summary = runs.get(id);
+                  setShown({
+                    id,
+                    instant: summary ? isOver(summary) : true,
+                  });
+                  setPage("desk");
+                  setPanel("stage");
+                }}
+                working={working}
+                onStop={stopAll}
+                onDropFiles={upload}
+                model={settings ? modelSummary(settings.chat) : ""}
+              />
+            </div>
+          </div>
+        </>
+      )}
 
       <Terminal
         lines={terminal}
@@ -987,12 +959,6 @@ export function Desk() {
         picked={viewing ? tray.includes(viewing) : false}
         onPick={(id) => addToTray([id])}
         onClose={() => setViewing(null)}
-      />
-      <DecisionFile
-        open={fileOpen}
-        run={run}
-        cost={runs.get(shown?.id ?? "")}
-        onClose={() => setFileOpen(false)}
       />
       {settings ? (
         <SettingsDrawer
@@ -1029,7 +995,7 @@ function Welcome({
           A specialist agent on four pipelines
         </p>
         <p className="mt-3 max-w-xl font-mono text-3xl leading-[1.05] font-bold tracking-[-0.02em] uppercase xl:text-4xl">
-          Drop a case. Watch it work.
+          Hand Teller a case. Watch it work.
         </p>
         <p className="mt-3 max-w-xl text-sm leading-relaxed text-paper/75">
           Thirteen reusable jobs make four reviews. Models sort, read and write;

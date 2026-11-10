@@ -2,14 +2,11 @@
 
 import { AnimatePresence, motion } from "motion/react";
 import { type ReactNode, useEffect, useState } from "react";
-import { CHECKS } from "../domain/checks";
 import { kindLabel } from "../domain/document-kinds";
 import { documentPages } from "../server/actions";
 import type { DocView } from "../view";
-import type { RunCard } from "./chat-panel";
-import { OUTCOME_STYLE, RECOMMENDATION_STYLE } from "./glyphs";
 import type { RunDocView, RunView } from "./run-reducer";
-import { OwnershipView, PageWithEvidence } from "./stage";
+import { PageWithEvidence } from "./stage";
 
 type Pages = Awaited<ReturnType<typeof documentPages>>;
 
@@ -341,120 +338,5 @@ function CsvTable({ csv }: { csv: string }) {
         ))}
       </tbody>
     </table>
-  );
-}
-
-/** Every check behind the decision, grouped by outcome. */
-export function DecisionFile({
-  open,
-  run,
-  cost,
-  onClose,
-}: {
-  open: boolean;
-  run: RunView;
-  /** What the Run cost, shown with the decision. */
-  cost?: RunCard;
-  onClose: () => void;
-}) {
-  const decision = run.decision;
-  return (
-    <AnimatePresence>
-      {open && decision ? (
-        <Modal onClose={onClose} label="Decision file">
-          <header className="flex items-center gap-3 border-ink border-b-2 bg-paper px-4 py-3">
-            <p className="font-mono text-sm font-bold uppercase">
-              Decision file
-            </p>
-            <span
-              className={`rounded-sm border-[3px] px-2 font-mono text-xs font-bold uppercase ${RECOMMENDATION_STYLE[decision.recommendation].tone}`}
-            >
-              {RECOMMENDATION_STYLE[decision.recommendation].stamp}
-            </span>
-            <button
-              type="button"
-              onClick={onClose}
-              className="ml-auto px-2 font-mono text-lg font-bold"
-              aria-label="Close"
-            >
-              ×
-            </button>
-          </header>
-          <div className="cw-scroll grid min-h-0 gap-4 overflow-y-auto p-4 md:grid-cols-2">
-            <section className="grid content-start gap-2">
-              <h3 className="font-mono text-base leading-snug font-bold uppercase">
-                {decision.headline}
-              </h3>
-              <p className="text-sm">{decision.summary}</p>
-              <ol className="mt-1 grid gap-1 text-sm">
-                {decision.nextSteps.map((step, index) => (
-                  <li key={step} className="flex gap-2">
-                    <span className="font-mono font-bold">{index + 1}.</span>
-                    {step}
-                  </li>
-                ))}
-              </ol>
-              {cost ? (
-                <p className="mt-2 rounded-sm border border-ink/30 bg-paper px-3 py-2 font-mono text-xs">
-                  This run cost{" "}
-                  <span className="font-bold">${cost.costUsd.toFixed(4)}</span>{" "}
-                  over {cost.calls} model call{cost.calls === 1 ? "" : "s"}.
-                </p>
-              ) : null}
-              {run.risk ? (
-                <div className="mt-2 rounded-sm border-2 border-ink bg-paper p-3 text-sm">
-                  <p className="font-mono text-xs font-bold uppercase">
-                    {run.risk.rating} risk · score {run.risk.score}
-                  </p>
-                  <p className="text-ink-muted">
-                    {run.risk.factors.join(", ") || "No risk factors"}
-                  </p>
-                </div>
-              ) : null}
-              {run.ownership ? (
-                <div className="mt-2 rounded-sm border-2 border-ink bg-paper p-3">
-                  <OwnershipView ownership={run.ownership} />
-                </div>
-              ) : null}
-            </section>
-            <section className="grid content-start gap-2">
-              {(["fail", "review", "pass"] as const).flatMap((outcome) =>
-                run.checks
-                  .filter((check) => check.outcome === outcome)
-                  .map((check) => (
-                    <div
-                      key={check.id}
-                      className="flex gap-2 rounded-sm border-2 border-ink bg-paper p-2.5"
-                    >
-                      <span
-                        className={`flex size-6 shrink-0 items-center justify-center rounded-sm font-mono text-sm font-bold ${OUTCOME_STYLE[outcome].tone}`}
-                      >
-                        {OUTCOME_STYLE[outcome].mark}
-                      </span>
-                      <div>
-                        <p className="font-mono text-xs font-bold uppercase">
-                          {CHECKS[check.id].title}
-                        </p>
-                        <p className="text-sm text-ink-muted">{check.detail}</p>
-                      </div>
-                    </div>
-                  )),
-              )}
-              {(run.hits ?? []).map((hit) => (
-                <div
-                  key={`${hit.reference}-${hit.screenedName}`}
-                  className="rounded-sm border-2 border-ink bg-paper p-2.5 text-sm"
-                >
-                  <p className="font-mono text-xs font-bold uppercase">
-                    {hit.hitName} · {hit.disposition?.replace("_", " ")}
-                  </p>
-                  <p className="text-ink-muted">{hit.dispositionReason}</p>
-                </div>
-              ))}
-            </section>
-          </div>
-        </Modal>
-      ) : null}
-    </AnimatePresence>
   );
 }

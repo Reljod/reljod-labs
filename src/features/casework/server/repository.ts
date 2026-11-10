@@ -174,6 +174,44 @@ export async function documentsByIds(ids: string[], sessionId: string | null) {
   );
 }
 
+/**
+ * Documents on file that could meet a Need: ones of a wanted Kind in the same
+ * Case files as the Run's Documents, and this desk's uploads (whose Kind is
+ * not known until sorted). Never ones already in the Run.
+ */
+export async function candidateDocuments(
+  sessionId: string | null,
+  runDocumentIds: string[],
+  kinds: string[],
+) {
+  const inRun = await documentsByIds(runDocumentIds, sessionId);
+  const slugs = [
+    ...new Set(
+      inRun.flatMap((row) => (row.case_file_slug ? [row.case_file_slug] : [])),
+    ),
+  ];
+  const [filed, uploaded] = await Promise.all([
+    slugs.length > 0 && kinds.length > 0
+      ? supabase()
+          .from("documents")
+          .select(DOCUMENT_COLUMNS)
+          .in("case_file_slug", slugs)
+          .in("label_kind", kinds)
+      : Promise.resolve({ data: [], error: null }),
+    sessionId
+      ? supabase()
+          .from("documents")
+          .select(DOCUMENT_COLUMNS)
+          .eq("session_id", sessionId)
+      : Promise.resolve({ data: [], error: null }),
+  ]);
+  const taken = new Set(runDocumentIds);
+  return [...rows<DocumentRow[]>(filed), ...rows<DocumentRow[]>(uploaded)]
+    .filter((row) => !taken.has(row.id))
+    .slice(0, 6)
+    .map((row) => ({ id: row.id, name: row.name }));
+}
+
 export function toRunDocument(row: DocumentRow): RunDocument {
   return {
     id: row.id,
@@ -451,7 +489,12 @@ export type QuestionRow = {
   job: JobId;
   token: string;
   prompt: string;
-  wants: { kinds: string[]; options: { value: string; label: string }[] };
+  wants: {
+    kinds: string[];
+    options: { value: string; label: string }[];
+    /** Documents on file that look like what is wanted. */
+    suggestions?: { id: string; name: string }[];
+  };
   answer: Answer | null;
   created_at: string;
   answered_at: string | null;

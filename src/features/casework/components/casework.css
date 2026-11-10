@@ -221,6 +221,16 @@
   animation: cw-spin 2.4s linear infinite;
 }
 
+/* A Document a Run is asking for, ringed in the Cabinet. */
+@keyframes cw-wanted {
+  50% {
+    box-shadow: 0 0 0 5px rgb(217 168 78 / 0.35);
+  }
+}
+.cw-wanted {
+  animation: cw-wanted 1.4s ease-in-out infinite;
+}
+
 /* The step a Run is on, in the pipeline graph. */
 @keyframes cw-node-live {
   50% {
@@ -254,6 +264,7 @@
   .cw-shimmer,
   .cw-spin,
   .cw-node-live,
+  .cw-wanted,
   .cw-stamp,
   .cw-ink,
   .cw-wait,

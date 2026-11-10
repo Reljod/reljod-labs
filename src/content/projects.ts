@@ -116,10 +116,10 @@ export const projects: Project[] = [
   {
     slug: "casework-desk",
     icon: "agents",
-    title: "Casework desk",
+    title: "Teller",
     sector: "Pensions and trust operations",
     summary:
-      "A specialist agent for a Meridian bank and trust company: drop a case and it picks one of four review pipelines, runs its jobs, asks for what's missing and writes the decision file.",
+      "A specialist agent for a Meridian bank and trust company: hand it a case and it picks one of four review pipelines, runs its jobs, asks for what's missing and tells you what it found.",
     outcome: "Every job a tool on an MCP server",
     tags: ["Agents", "MCP", "Durable workflows"],
     status: "Live",

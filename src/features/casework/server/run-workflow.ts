@@ -24,6 +24,7 @@ import { readDocument } from "./jobs/read";
 import { sortDocument } from "./jobs/sort";
 import {
   asOfFor,
+  candidateDocuments,
   createQuestion,
   documentsByIds,
   markAnswered,
@@ -258,6 +259,27 @@ async function decideStep(ctx: RunContext, state: RunState) {
   return { state: { ...state, decision }, summary: decision.headline };
 }
 
+type Suggestion = { id: string; name: string };
+
+/** Documents on file that could meet a Need. With none, asking would be pointless. */
+async function candidatesStep(
+  ctx: RunContext,
+  kinds: RunDocument["kind"][],
+  have: string[],
+): Promise<Suggestion[]> {
+  "use step";
+  return candidateDocuments(
+    ctx.sessionId,
+    have,
+    kinds.filter(Boolean) as string[],
+  );
+}
+
+async function noteStep(text: string) {
+  "use step";
+  await emit({ type: "log", level: "warn", text });
+}
+
 async function askStep(
   ctx: RunContext,
   index: number,
@@ -266,6 +288,7 @@ async function askStep(
   prompt: string,
   kinds: RunDocument["kind"][],
   options: { value: string; label: string }[],
+  suggestions: Suggestion[],
 ) {
   "use step";
   const questionId = await createQuestion({
@@ -273,7 +296,7 @@ async function askStep(
     job,
     token,
     prompt,
-    wants: { kinds: kinds.filter(Boolean) as string[], options },
+    wants: { kinds: kinds.filter(Boolean) as string[], options, suggestions },
   });
   await updateRun(ctx.runId, { status: "waiting" });
   await recordJobRun({
@@ -292,6 +315,7 @@ async function askStep(
       prompt,
       kinds: kinds.filter(Boolean) as NonNullable<RunDocument["kind"]>[],
       options,
+      suggestions,
     },
     { type: "log", level: "warn", text: `? ${job} is waiting: ${prompt}` },
   ]);
@@ -361,6 +385,7 @@ async function ask(
   prompt: string,
   kinds: RunDocument["kind"][],
   options: { value: string; label: string }[] = [],
+  suggestions: Suggestion[] = [],
 ): Promise<{ answer: Answer; documents: RunDocument[] }> {
   const token = `casework:${ctx.runId}:${index}:${attempt}`;
   const hook = createHook<Answer>({ token });
@@ -372,6 +397,7 @@ async function ask(
     prompt,
     kinds,
     options,
+    suggestions,
   );
   const answer = await Promise.race([
     hook.then((payload) => payload),
@@ -454,14 +480,36 @@ export async function caseworkRun(input: RunInput) {
           missing = missing.slice(1);
           continue;
         }
+        // Ask only when something on file could answer; otherwise it is a Gap.
+        const suggestions = await candidatesStep(
+          ctx,
+          wanted.kinds,
+          state.documents.map((document) => document.id),
+        );
+        if (suggestions.length === 0) {
+          await noteStep(
+            `  no ${wantsInWords(wanted.kinds)} on file; going on without it`,
+          );
+          state = {
+            ...state,
+            gaps: [
+              ...state.gaps,
+              { job, wants: describeWant(wanted).toLowerCase() },
+            ],
+          };
+          missing = missing.slice(1);
+          continue;
+        }
         questions++;
         const { answer, documents } = await ask(
           ctx,
           index,
           job,
           questions,
-          `I need the ${wantsInWords(wanted.kinds)} ${wanted.why}. Drop it here, or tell me to go on without it.`,
+          `I need the ${wantsInWords(wanted.kinds)} ${wanted.why}. ${suggestions.length === 1 ? `"${suggestions[0].name}" looks like it.` : "These look like candidates."} Use one, drop another, or go on without it.`,
           wanted.kinds,
+          [],
+          suggestions,
         );
         if (answer.text)
           state = {
@@ -533,7 +581,21 @@ export async function caseworkRun(input: RunInput) {
         state = result.state;
         summary = result.summary;
         const question = "question" in result ? result.question : undefined;
-        if (question && questions < MAX_QUESTIONS) {
+        // A Document it would like: ask only when one on file could be it.
+        const suggestions =
+          question && question.kinds.length > 0
+            ? await candidatesStep(
+                ctx,
+                question.kinds,
+                state.documents.map((document) => document.id),
+              )
+            : [];
+        if (question && question.kinds.length > 0 && suggestions.length === 0) {
+          state = {
+            ...state,
+            gaps: [...state.gaps, { job, wants: wantsInWords(question.kinds) }],
+          };
+        } else if (question && questions < MAX_QUESTIONS) {
           questions++;
           const { answer, documents } = await ask(
             ctx,
@@ -542,6 +604,8 @@ export async function caseworkRun(input: RunInput) {
             questions,
             question.prompt,
             question.kinds,
+            [],
+            suggestions,
           );
           if (answer.text)
             state = {

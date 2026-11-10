@@ -37,6 +37,7 @@ export type OpenQuestion = {
   prompt: string;
   kinds: DocumentKind[];
   options: { value: string; label: string }[];
+  suggestions: { id: string; name: string }[];
 };
 
 export type LogLine = {
@@ -236,6 +237,7 @@ export function reduceRun(view: RunView, event: RunEvent): RunView {
           prompt: event.prompt,
           kinds: event.kinds,
           options: event.options,
+          suggestions: event.suggestions ?? [],
         },
       };
     case "answer":

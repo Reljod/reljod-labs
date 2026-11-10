@@ -53,6 +53,8 @@ export type RunEvent = { at: number } & (
       kinds: DocumentKind[];
       /** Choices offered as buttons, such as which pipeline to run. */
       options: { value: string; label: string }[];
+      /** Documents on file that look like what is wanted, to offer by name. */
+      suggestions?: { id: string; name: string }[];
     }
   | { type: "answer"; questionId: string; summary: string }
   | { type: "hits"; hits: Hit[] }

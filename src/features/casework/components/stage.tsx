@@ -11,8 +11,9 @@ import type { Evidence, FieldValue, Ownership } from "../domain/run-state";
 import { documentPages } from "../server/actions";
 import type { DocView } from "../view";
 import type { RunCard } from "./chat-panel";
-import { JobGlyph, OUTCOME_STYLE, RECOMMENDATION_STYLE } from "./glyphs";
-import { type Focus, focusOf, type RunView } from "./run-reducer";
+import { JobGlyph, OUTCOME_STYLE } from "./glyphs";
+import { ResultPage } from "./result-page";
+import { type Focus, focusOf, isOver, type RunView } from "./run-reducer";
 
 type StageProps = {
   run: RunView;
@@ -20,15 +21,29 @@ type StageProps = {
   onOpenDoc: (id: string) => void;
   registerNode: (index: number, element: HTMLElement | null) => void;
   focusRef: (element: HTMLElement | null) => void;
-  onOpenFile: () => void;
   /** What the Run has cost, so far or in total. */
   cost?: RunCard;
 };
 
-/** The stage: the pipeline as a track of jobs, and one thing at a time below it. */
+/**
+ * The stage. While a Run is going: its jobs as a track, and the step being
+ * worked (or the one clicked) explained in plain words with what it has
+ * found. Once it is over: the result page.
+ */
 export function Stage(props: StageProps) {
   const { run } = props;
-  const focus = focusOf(run);
+  const over = isOver(run);
+  // The step on show: the one clicked, or else the one being worked.
+  const [picked, setPicked] = useState<number | null>(null);
+  // biome-ignore lint/correctness/useExhaustiveDependencies: a new step takes the stage back
+  useEffect(() => setPicked(null), [run.current]);
+  const index = picked ?? run.current;
+  const shown = run.jobs[index];
+  const view: RunView =
+    picked === null
+      ? { ...run, decision: null }
+      : { ...run, current: picked, decision: null };
+  const focus = focusOf(view);
   const title = run.pipeline
     ? PIPELINES[run.pipeline].title
     : run.jobs.length
@@ -37,26 +52,16 @@ export function Stage(props: StageProps) {
   return (
     <section
       aria-label="Run"
-      className="flex h-full min-h-0 flex-col gap-4 rounded-sm border-2 border-ink bg-paper/80 p-4 shadow-hard-md"
+      className="flex h-full min-h-0 flex-col gap-4 rounded-sm border-2 border-ink bg-marble/70 p-4 shadow-hard-md"
     >
       <header className="flex flex-wrap items-baseline gap-x-3 gap-y-1">
-        <motion.h2
-          key={title}
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ duration: 0.25 }}
-          className="font-mono text-lg font-bold tracking-[-0.01em] uppercase sm:text-xl"
-        >
+        <h2 className="font-mono text-lg font-bold tracking-[-0.01em] uppercase">
           {title}
-        </motion.h2>
+        </h2>
         {run.inferred ? (
-          <motion.span
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            className="rounded-sm border-2 border-ink bg-morning-haze px-1.5 py-0.5 font-mono text-[10px] font-bold tracking-[0.08em] uppercase"
-          >
-            Inferred from the documents
-          </motion.span>
+          <span className="rounded-sm border border-ink/40 px-1.5 py-0.5 font-mono text-[10px] font-bold tracking-[0.08em] text-ink-muted uppercase">
+            Worked out from the documents
+          </span>
         ) : null}
         <span className="ml-auto font-mono text-xs text-ink-muted">
           {run.status === "completed"
@@ -68,31 +73,59 @@ export function Stage(props: StageProps) {
                 : run.status === "waiting"
                   ? "Waiting on you"
                   : "Running"}
+          {props.cost ? ` · $${props.cost.costUsd.toFixed(4)}` : ""}
         </span>
       </header>
 
-      <Track {...props} />
-      <DocStrip {...props} />
+      {over ? (
+        <ResultPage
+          run={run}
+          docs={props.docs}
+          onOpenDoc={props.onOpenDoc}
+          cost={props.cost}
+        />
+      ) : (
+        <>
+          <Track {...props} picked={index} onPick={setPicked} />
 
-      <div ref={props.focusRef} className="relative min-h-0 flex-1">
-        <AnimatePresence mode="wait">
-          <motion.div
-            key={focusKey(focus)}
-            initial={{ opacity: 0, y: 8 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0 }}
-            transition={{ duration: 0.24, ease: [0.22, 1, 0.36, 1] }}
-            className="h-full"
-          >
-            <FocusView focus={focus} {...props} />
-          </motion.div>
-        </AnimatePresence>
-      </div>
-      {run.error ? (
-        <p className="rounded-sm border-2 border-seal-red bg-paper p-3 text-sm text-seal-red">
-          {run.error}
-        </p>
-      ) : null}
+          {shown ? (
+            <div className="shrink-0 rounded-sm border-l-4 border-federal-blue bg-paper px-3 py-2.5">
+              <p className="font-mono text-[11px] font-bold tracking-[0.08em] uppercase">
+                Step {index + 1} of {run.jobs.length} · {JOBS[shown.job].title}
+                <span className="ml-2 font-normal text-ink-muted normal-case tracking-normal">
+                  {JOBS[shown.job].model
+                    ? "a model does this"
+                    : "rules, no model"}
+                </span>
+              </p>
+              <p className="mt-1 text-sm leading-relaxed">
+                {JOBS[shown.job].plain}
+              </p>
+              {shown.state === "done" && shown.summary ? (
+                <p className="mt-1 text-[13px] text-ink-muted">
+                  <span className="font-semibold text-ink">Found: </span>
+                  {shown.summary}
+                </p>
+              ) : null}
+            </div>
+          ) : null}
+
+          <div ref={props.focusRef} className="relative min-h-0 flex-1">
+            <AnimatePresence mode="wait">
+              <motion.div
+                key={focusKey(focus)}
+                initial={{ opacity: 0, y: 8 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0 }}
+                transition={{ duration: 0.24, ease: [0.22, 1, 0.36, 1] }}
+                className="h-full"
+              >
+                <FocusView focus={focus} {...props} run={view} />
+              </motion.div>
+            </AnimatePresence>
+          </div>
+        </>
+      )}
     </section>
   );
 }
@@ -105,7 +138,12 @@ function focusKey(focus: Focus) {
       : focus.kind;
 }
 
-function Track({ run, registerNode }: StageProps) {
+function Track({
+  run,
+  registerNode,
+  picked,
+  onPick,
+}: StageProps & { picked: number; onPick: (index: number) => void }) {
   return (
     <ol
       className="cw-scroll relative flex shrink-0 items-start gap-0 overflow-x-auto rounded-sm border border-ink/15 bg-marble/60 px-2 pt-3 pb-2"
@@ -113,7 +151,7 @@ function Track({ run, registerNode }: StageProps) {
     >
       {run.jobs.map((item, index) => {
         const spec = JOBS[item.job];
-        const active = index === run.current && run.status !== "completed";
+        const active = index === picked;
         const tone =
           item.state === "done"
             ? "bg-ink text-paper"
@@ -146,10 +184,13 @@ function Track({ run, registerNode }: StageProps) {
                 />
               </span>
             ) : null}
-            <span
+            <button
+              type="button"
+              onClick={() => onPick(index)}
+              aria-label={`${spec.title}: ${spec.plain}`}
               ref={(element) => registerNode(index, element)}
               className={`relative z-10 flex size-10 items-center justify-center rounded-sm border-2 border-ink transition-[background-color,box-shadow] duration-300 ${tone} ${active ? "shadow-hard-sm ring-2 ring-federal-blue/40 ring-offset-2 ring-offset-marble" : ""}`}
-              title={spec.description}
+              title={spec.plain}
             >
               {item.state === "done" ? (
                 <JobGlyph job={item.job} size={18} />
@@ -158,7 +199,7 @@ function Track({ run, registerNode }: StageProps) {
               ) : (
                 <JobGlyph job={item.job} size={18} />
               )}
-            </span>
+            </button>
             <span
               className={`mt-1.5 text-center font-mono text-[10px] leading-tight tracking-[0.06em] uppercase ${active ? "font-bold text-ink" : "text-ink-muted"}`}
             >
@@ -168,59 +209,6 @@ function Track({ run, registerNode }: StageProps) {
         );
       })}
     </ol>
-  );
-}
-
-/** Every Document in the Run as a thumbnail: what it was sorted as, and which is being read. */
-function DocStrip({ run, docs, onOpenDoc }: StageProps) {
-  if (run.documents.length === 0) return null;
-  const reading =
-    run.jobs[run.current]?.job === "read" &&
-    run.jobs[run.current]?.state === "running"
-      ? run.reading
-      : null;
-  return (
-    <ul
-      className="cw-scroll flex shrink-0 gap-2 overflow-x-auto pb-1"
-      aria-label="Documents in this run"
-    >
-      {run.documents.map((item) => {
-        const doc = docs.get(item.id);
-        return (
-          <li key={item.id} className="cw-reveal shrink-0">
-            <button
-              type="button"
-              onClick={() => onOpenDoc(item.id)}
-              title={`Inspect ${item.name}`}
-              className={`flex w-[136px] items-center gap-2 rounded-sm border-2 bg-paper p-1 text-left transition-colors hover:border-ink ${reading === item.id ? "border-federal-blue bg-morning-haze" : "border-ink/30"}`}
-            >
-              <span className="block h-12 w-9 shrink-0 overflow-hidden rounded-[2px] border border-ink/40 bg-limestone/50">
-                {doc?.thumbUrl ? (
-                  // biome-ignore lint/performance/noImgElement: signed Storage URLs
-                  <img
-                    src={doc.thumbUrl}
-                    alt=""
-                    className="h-full w-full object-cover object-top"
-                  />
-                ) : null}
-              </span>
-              <span className="min-w-0">
-                <span className="line-clamp-2 text-[10.5px] leading-[1.2] font-semibold">
-                  {kindLabel(item.kind ?? "other")}
-                </span>
-                <span className="block font-mono text-[9px] text-ink-muted">
-                  {item.fields.length > 0
-                    ? `${item.fields.length} fields`
-                    : reading === item.id
-                      ? "Reading…"
-                      : "Sorted"}
-                </span>
-              </span>
-            </button>
-          </li>
-        );
-      })}
-    </ul>
   );
 }
 
@@ -240,8 +228,6 @@ function FocusView({ focus, ...props }: StageProps & { focus: Focus }) {
       ) : null;
     case "arrears":
       return <ArrearsView {...props} />;
-    case "decision":
-      return <DecisionView {...props} />;
     default:
       return <ChecksView {...props} />;
   }
@@ -748,75 +734,6 @@ function ArrearsView({ run }: StageProps) {
           </div>
         ))}
       </div>
-    </div>
-  );
-}
-
-function DecisionView({ run, onOpenFile, cost }: StageProps) {
-  const decision = run.decision;
-  if (!decision) return null;
-  const style = RECOMMENDATION_STYLE[decision.recommendation];
-  return (
-    <div className="flex h-full items-start pt-2">
-      <Card className="relative w-full overflow-hidden p-6">
-        <span
-          className={`cw-ink pointer-events-none absolute top-6 right-8 size-36 rounded-full ${decision.recommendation === "approve" ? "bg-ivy" : decision.recommendation === "decline" ? "bg-seal-red" : "bg-federal-blue"}`}
-        />
-        <span
-          className={`cw-stamp absolute top-8 right-8 rounded-sm border-[5px] px-4 py-2 font-mono text-2xl font-bold tracking-[0.14em] uppercase ${style.tone}`}
-        >
-          {style.stamp}
-        </span>
-        <p className="eyebrow text-ink-muted">Decision file</p>
-        <h3 className="mt-2 max-w-[58%] font-mono text-lg leading-snug font-bold uppercase">
-          {decision.headline}
-        </h3>
-        <p className="mt-3 max-w-[62%] text-sm leading-relaxed">
-          {decision.summary}
-        </p>
-        {decision.nextSteps.length > 0 ? (
-          <ol className="mt-4 grid gap-1.5">
-            {decision.nextSteps.slice(0, 3).map((step, index) => (
-              <motion.li
-                key={step}
-                initial={{ opacity: 0, x: -10 }}
-                animate={{ opacity: 1, x: 0 }}
-                transition={{ delay: 0.5 + index * 0.1 }}
-                className="flex gap-2 text-sm"
-              >
-                <span className="flex size-5 shrink-0 items-center justify-center rounded-sm border-2 border-ink font-mono text-[10px] font-bold">
-                  {index + 1}
-                </span>
-                {step}
-              </motion.li>
-            ))}
-          </ol>
-        ) : null}
-        <div className="mt-5 flex flex-wrap items-center gap-3">
-          <Tally run={run} />
-          {run.risk ? (
-            <span className="rounded-sm border-2 border-ink px-2 py-1 font-mono text-xs font-bold uppercase">
-              {run.risk.rating} risk
-            </span>
-          ) : null}
-          {cost ? (
-            <span
-              className="rounded-sm border-2 border-ink bg-marble px-2 py-1 font-mono text-xs font-bold"
-              title="What this run's model calls cost"
-            >
-              Cost ${cost.costUsd.toFixed(4)} · {cost.calls} call
-              {cost.calls === 1 ? "" : "s"}
-            </span>
-          ) : null}
-          <button
-            type="button"
-            onClick={onOpenFile}
-            className="outline-box press ml-auto rounded-sm bg-paper px-3 py-1.5 font-mono text-xs font-bold tracking-[0.08em] uppercase"
-          >
-            Open full file
-          </button>
-        </div>
-      </Card>
     </div>
   );
 }

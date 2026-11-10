@@ -21,7 +21,7 @@ import { JobGlyph, ScenarioGlyph } from "./glyphs";
 import { ModelForm, modelSummary } from "./model-form";
 import type { JobState, RunView } from "./run-reducer";
 
-const PER_ROW = 3;
+const PER_ROW = 4;
 const NODE_WIDTH = 176;
 const GAP_X = 64;
 const ROW_HEIGHT = 136;
@@ -123,7 +123,7 @@ const TAB_LABEL: Record<PipelineId, string> = {
   screening_review: "Screening",
 };
 
-/** Rows of three that snake: left to right, then down, then right to left. */
+/** Rows of four that snake: left to right, then down, then right to left. */
 function place(index: number) {
   const row = Math.floor(index / PER_ROW);
   const column = index % PER_ROW;
@@ -262,8 +262,8 @@ export function PipelineFlow({
         ))}
       </div>
 
-      <div className="flex min-h-0 flex-1 flex-col">
-        <div className="relative min-h-[230px] min-w-0 flex-[5]">
+      <div className="flex min-h-0 flex-1 flex-col lg:flex-row">
+        <div className="relative min-h-[260px] min-w-0 flex-1">
           <div
             className={`absolute top-0 right-0 left-0 z-10 h-1 ${tone.bar}`}
           />
@@ -303,7 +303,7 @@ export function PipelineFlow({
           </ReactFlow>
         </div>
 
-        <aside className="cw-scroll grid min-h-0 flex-[6] grid-cols-[minmax(0,1fr)] content-start gap-4 overflow-y-auto border-ink border-t-2 bg-marble/60 p-4 xl:grid-cols-[minmax(0,1fr)_minmax(0,1.15fr)]">
+        <aside className="cw-scroll grid min-h-0 shrink-0 grid-cols-[minmax(0,1fr)] content-start gap-4 overflow-y-auto border-ink border-t-2 bg-marble/60 p-5 lg:w-[400px] lg:border-t-0 lg:border-l-2">
           <div className="min-w-0">
             <div className="flex items-center gap-2.5">
               <span

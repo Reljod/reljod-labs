@@ -124,7 +124,6 @@ type ChatPanelProps = {
   questionRef: Ref<HTMLDivElement>;
   runs: Map<string, RunCard>;
   onSelectRun: (id: string) => void;
-  onOpenFile: (id: string) => void;
   /** What is going on right now, or null when nothing is. */
   working: { label: string; costUsd: number; since: number } | null;
   onStop: () => void;
@@ -275,7 +274,10 @@ export function ChatPanel(props: ChatPanelProps) {
 
       {working ? <Working {...working} onStop={props.onStop} /> : null}
 
-      <form onSubmit={submit} className="border-ink border-t-2 bg-marble/50">
+      <form
+        onSubmit={submit}
+        className="border-ink border-t-2 bg-marble/50 lg:pr-28"
+      >
         {tray.length > 0 ? (
           <ul className="flex flex-wrap gap-1.5 px-3 pt-2.5">
             {tray.map((doc) => (
@@ -623,22 +625,13 @@ function RunCardView({ run, ...props }: ChatPanelProps & { run: RunCard }) {
         </span>
         {run.seconds ? <span>{formatSeconds(run.seconds)}</span> : null}
         <span className="ml-auto flex gap-3">
-          {run.status === "completed" && run.recommendation && run.selected ? (
-            <button
-              type="button"
-              onClick={() => props.onOpenFile(run.id)}
-              className="font-bold text-federal-blue underline"
-            >
-              Decision file
-            </button>
-          ) : null}
           {run.selected ? null : (
             <button
               type="button"
               onClick={() => props.onSelectRun(run.id)}
               className="font-bold text-federal-blue underline"
             >
-              Show on stage
+              {over ? "See the result" : "Show on stage"}
             </button>
           )}
         </span>
@@ -670,7 +663,7 @@ function Working({
     return () => clearInterval(timer);
   }, []);
   return (
-    <div className="flex items-center gap-2 border-ink/15 border-t bg-paper px-4 py-2 font-mono text-xs">
+    <div className="flex items-center gap-2 border-ink/15 border-t bg-paper px-4 py-2 font-mono text-xs lg:pr-32">
       <span className="cw-spin text-brass" aria-hidden="true">
         ✻
       </span>
@@ -722,11 +715,17 @@ function QuestionCard(props: ChatPanelProps & { question: OpenQuestion }) {
       <p className="px-3 pt-2 text-[13px] font-medium">{question.prompt}</p>
       {question.kinds.length > 0 ? (
         <p className="mx-3 mt-2 rounded-sm border border-dashed border-ink/50 bg-paper/70 px-2 py-2 text-center font-mono text-[11px] tracking-[0.04em] text-ink-muted uppercase">
-          Drop {question.kinds.map(kindLabel).join(" or ")} here
+          {question.suggestions.length > 0
+            ? "Highlighted in the Cabinet · or drop another here"
+            : `Drop ${question.kinds.map(kindLabel).join(" or ")} here`}
         </p>
       ) : null}
       <ol className="mt-2 grid border-ink/20 border-t bg-paper/60">
         {[
+          ...question.suggestions.map((item) => ({
+            label: `Use ${item.name}`,
+            answer: { documentIds: [item.id] } as Answer,
+          })),
           ...question.options.map((option) => ({
             label: option.label,
             answer: { choice: option.value } as Answer,

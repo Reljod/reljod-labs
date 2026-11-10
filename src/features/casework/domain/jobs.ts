@@ -27,6 +27,8 @@ export type JobSpec = {
   title: string;
   /** What the Specialist is doing, shown while it runs. */
   doing: string;
+  /** For the person watching: what this step is for, in plain words. */
+  plain: string;
   /** For MCP clients: what the Job does, what it needs and what it gives back. */
   description: string;
   /** Jobs whose output this one reads; planning adds them when missing. */
@@ -54,6 +56,8 @@ export function describeWant(item: Want) {
 export const JOBS: Record<JobId, JobSpec> = {
   sort: {
     title: "Sort",
+    plain:
+      "Looks at each document and works out what it is: a passport, a request form, a bank statement and so on.",
     doing: "Sorting documents",
     description:
       "Looks at each Document and decides what it is (withdrawal request, passport, trust deed, contribution schedule and 25 other kinds). Needs at least one Document.",
@@ -66,6 +70,8 @@ export const JOBS: Record<JobId, JobSpec> = {
   },
   read: {
     title: "Read",
+    plain:
+      "Reads every page and pulls out the facts that matter, such as names, dates and amounts, noting where each one sits on the page.",
     doing: "Reading every page",
     description:
       "Parses each sorted Document (PDF text layer, OCR for scans and photos, CSV for spreadsheets) and extracts the fields its kind defines, each traced to where it sits on the page.",
@@ -75,6 +81,8 @@ export const JOBS: Record<JobId, JobSpec> = {
   },
   match_identity: {
     title: "Match identity",
+    plain:
+      "Checks the ID really belongs to the person on the record: same name and date of birth, not expired, and properly certified.",
     doing: "Matching the ID to the record",
     description:
       "Compares the identity document with the record (member statement, request form, customer profile or register): name, date of birth, expiry and certification. Asks for a marriage certificate when only the surname differs.",
@@ -95,6 +103,8 @@ export const JOBS: Record<JobId, JobSpec> = {
   },
   check_eligibility: {
     title: "Check the Act",
+    plain:
+      "Checks the request against the pension law: is the reason allowed, is the member entitled, and is the amount within the limit.",
     doing: "Checking the withdrawal against the Act",
     description:
       "Applies the National Pensions Act withdrawal rules: purpose, Meridian status, M$50,000 property cap, balance, permitted lender, primary residence, earlier withdrawals repaid, and whether the property evidence agrees.",
@@ -127,6 +137,8 @@ export const JOBS: Record<JobId, JobSpec> = {
   },
   verify_payee: {
     title: "Verify payee",
+    plain:
+      "Follows the money: checks it is going to the right account, such as the lender, and never to an unrelated third party.",
     doing: "Following the money",
     description:
       "Checks the money goes to the right place: the lender or the attorney's client account for property withdrawals, the member's own account otherwise, never a third party.",
@@ -137,6 +149,8 @@ export const JOBS: Record<JobId, JobSpec> = {
   },
   screen: {
     title: "Screen",
+    plain:
+      "Looks up every person and company in the case on sanctions, politically exposed person and bad-press lists.",
     doing: "Screening every name",
     description:
       "Screens every person and company in the case (members, payees, directors, signatories, owners, controllers) against the sanctions, PEP and adverse media watchlist.",
@@ -145,6 +159,8 @@ export const JOBS: Record<JobId, JobSpec> = {
   },
   adjudicate: {
     title: "Adjudicate hits",
+    plain:
+      "Takes each name the lists flagged and decides whether it is really the same person, or just someone with a similar name.",
     doing: "Weighing each hit",
     description:
       "Compares each screening hit with the customer on date of birth, nationality, aliases and identifiers, and disposes of it as a false positive (with a written discount reason), a true match or inconclusive.",
@@ -163,6 +179,8 @@ export const JOBS: Record<JobId, JobSpec> = {
   },
   verify_entity: {
     title: "Verify company",
+    plain:
+      "Checks the company's papers agree with each other, its licence is in date and the people signing are allowed to.",
     doing: "Checking the company papers",
     description:
       "Checks the company's papers agree (name and number across the application, certificate and registers), the trade licence is in date and the signatories are authorised.",
@@ -196,6 +214,8 @@ export const JOBS: Record<JobId, JobSpec> = {
   },
   check_census: {
     title: "Check census",
+    plain:
+      "Checks the employer's staff list for duplicates, impossible birth dates and missing IDs or salaries.",
     doing: "Checking the member census",
     description:
       "Validates an employer's member census: duplicates, impossible or out-of-range dates of birth, missing IDs and salaries.",
@@ -207,6 +227,8 @@ export const JOBS: Record<JobId, JobSpec> = {
   },
   reconcile: {
     title: "Reconcile",
+    plain:
+      "Recalculates what the employer should have paid each month and compares it with what arrived, to find shortfalls and late payments.",
     doing: "Reconciling contributions",
     description:
       "Recomputes every contribution line at 5% + 5% of pensionable earnings (capped at M$7,250 a month), checks each month was paid by the 15th, and totals arrears and late interest.",
@@ -218,6 +240,8 @@ export const JOBS: Record<JobId, JobSpec> = {
   },
   map_ownership: {
     title: "Map ownership",
+    plain:
+      "Traces a company or trust back through its layers to the real people who own or control it.",
     doing: "Unwinding the structure",
     description:
       "Unwinds a company or trust to every natural person who owns 10% or more (multiplying through each layer) or controls it, and checks the registers add up.",
@@ -233,6 +257,8 @@ export const JOBS: Record<JobId, JobSpec> = {
   },
   rate_risk: {
     title: "Rate risk",
+    plain:
+      "Scores how risky the relationship is (low, standard or high) from everything found so far.",
     doing: "Rating the risk",
     description:
       "Scores the relationship low, standard or high from jurisdictions, structure depth, PEPs, screening, arrears and gaps, and says whether enhanced due diligence applies.",
@@ -241,6 +267,8 @@ export const JOBS: Record<JobId, JobSpec> = {
   },
   decide: {
     title: "Decision file",
+    plain:
+      "Weighs every check and writes the recommendation: approve, refer, decline or ask for more information.",
     doing: "Writing the decision file",
     description:
       "Turns every check into a recommendation (approve, refer, decline or request information) and a one-page decision file with next steps.",

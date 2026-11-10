@@ -1,6 +1,6 @@
 "use client";
 
-import { type DragEvent, useMemo, useRef, useState } from "react";
+import { type DragEvent, useEffect, useMemo, useRef, useState } from "react";
 import { SCENARIOS, type Scenario } from "../domain/case-file";
 import { kindLabel } from "../domain/document-kinds";
 import type { DocView, FolderView } from "../view";
@@ -78,6 +78,8 @@ type CabinetProps = {
   onDragStart: () => void;
   onDragEnd: () => void;
   onCollapse?: () => void;
+  /** Documents a Run is asking for: opened to, scrolled to and ringed. */
+  highlight?: Set<string>;
 };
 
 type Group = {
@@ -110,6 +112,29 @@ export function Cabinet(props: CabinetProps) {
   const [over, setOver] = useState(false);
   const fileInput = useRef<HTMLInputElement>(null);
   const folderInput = useRef<HTMLInputElement>(null);
+  // A Run asked for Documents that are on file: open their case and bring them into view.
+  const wanted = props.highlight;
+  useEffect(() => {
+    const first = wanted ? [...wanted][0] : undefined;
+    if (!first) return;
+    const folder = folders.find((item) =>
+      item.documents.some((doc) => doc.id === first),
+    );
+    setQuery("");
+    setGroupBy("scenario");
+    if (folder)
+      setClosed((current) => {
+        const next = new Set(current);
+        next.delete(folder.scenario);
+        return next;
+      });
+    const timer = setTimeout(() => {
+      document
+        .querySelector(`[data-doc="${first}"]`)
+        ?.scrollIntoView({ block: "center", behavior: "smooth" });
+    }, 350);
+    return () => clearTimeout(timer);
+  }, [wanted, folders]);
   const words = query.toLowerCase().split(/\s+/).filter(Boolean);
   const searching = words.length > 0;
   const total = folders.reduce(
@@ -457,9 +482,13 @@ const FORMAT_LABEL: Record<DocView["sourceFormat"], string> = {
 
 function DocTile({ doc, ...props }: CabinetProps & { doc: DocView }) {
   const picked = props.picked.has(doc.id);
+  const wanted = props.highlight?.has(doc.id) ?? false;
   const label = doc.kind ? kindLabel(doc.kind) : doc.name;
   return (
-    <li>
+    <li data-doc={doc.id} className="relative">
+      {wanted ? (
+        <span className="cw-wanted pointer-events-none absolute -inset-1 z-10 rounded-sm border-2 border-brass" />
+      ) : null}
       {/* biome-ignore lint/a11y/noStaticElementInteractions: a drag source; its buttons carry keyboard access */}
       <div
         draggable

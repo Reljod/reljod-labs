@@ -1,5 +1,7 @@
 # Casework
 
+Shown to visitors as **Teller**; the code, routes and database keep the name Casework.
+
 A specialist agent at the pension and onboarding desk of a (fictional) Meridian bank and trust company. It reads a request, runs review work as durable Pipelines of reusable Jobs, and asks a person whenever something it needs is missing.
 
 ## Language
@@ -49,7 +51,7 @@ What a Job must have before it can run: a Document of one of some Kinds. An unme
 _Avoid_: Requirement, input, prerequisite
 
 **Question**:
-A Run pausing to ask the person for something: a missing Document, an explanation, or which Pipeline to run. Answered with Documents, a choice, a few words, or "go on without it", which records a Gap.
+A Run pausing to ask the person for something: a missing Document, an explanation, or which Pipeline to run. It asks for a Document only when one on file could be it (the same Case file, or the Desk's uploads) and names that Document; with nothing on file it records a Gap without asking. Answered with Documents, a choice, a few words, or "go on without it", which records a Gap.
 _Avoid_: Prompt, interrupt, request
 
 **Choice**:
