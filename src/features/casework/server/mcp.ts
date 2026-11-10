@@ -246,7 +246,7 @@ export function registerCaseworkTools(server: McpServer) {
         "Answers a question a waiting run asked: with Document ids that supply what it needs, a choice from its options, a short text, or skip to go on without it.",
       inputSchema: z.object({
         questionId: z.string(),
-        documentIds: z.array(z.string()).optional(),
+        documentIds: z.array(z.string()).max(12).optional(),
         choice: z.string().optional(),
         text: z.string().optional(),
         skip: z.boolean().optional(),

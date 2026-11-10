@@ -3,6 +3,7 @@
 ## Testing
 
 - Verify changes with `pnpm test` (unit tests), `pnpm lint` and `pnpm build`.
+- Conventions learned in review (read before adding a paid model call or a user-facing limit): `docs/engineering/conventions.md`.
 - Run the Playwright end-to-end suite (`pnpm test:e2e`) only when the user explicitly asks for it in the current conversation. It calls the paid model through Vercel AI Gateway, writes to the live Supabase project and takes several minutes per run. It needs the parser running on `PARSER_URL` (see `services/parser/README.md`).
 
 ## Document compliance

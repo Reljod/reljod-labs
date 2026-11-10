@@ -148,10 +148,14 @@ export async function answerQuestion(
     throw new Error("No such question");
   }
   if (question.answered_at) return { runId: run.id, alreadyAnswered: true };
+  // Every answered Document is sorted and read by a model: cap it like a new Run.
   const documentIds = answer.documentIds?.length
-    ? (await documentsByIds(answer.documentIds, session.id)).map(
-        (document) => document.id,
-      )
+    ? (
+        await documentsByIds(
+          [...new Set(answer.documentIds)].slice(0, LIMITS.documentsPerRun),
+          session.id,
+        )
+      ).map((document) => document.id)
     : undefined;
   await resumeHook(question.token, {
     documentIds,
