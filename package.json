@@ -11,15 +11,18 @@
     "test": "vitest run",
     "test:e2e": "playwright test",
     "test:e2e:record": "E2E_RECORD=1 playwright test",
-    "seed:document-compliance": "node --env-file=.env.local scripts/seed-document-compliance.mts"
+    "seed:document-compliance": "node --env-file=.env.local scripts/seed-document-compliance.mts",
+    "seed:client-manager": "node --env-file-if-exists=.env.local scripts/seed-client-manager.mts"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.119.0",
     "@tanstack/react-query": "^5.106.1",
     "ai": "^7.0.163",
+    "fflate": "^0.8.3",
     "motion": "^14.10.1",
     "next": "16.4.5",
     "pdfjs-dist": "^6.5.438",
+    "postgres": "^4.1.0",
     "react": "19.3.0",
     "react-dom": "19.3.0",
     "server-only": "^0.0.1",

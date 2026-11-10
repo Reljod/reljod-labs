@@ -113,6 +113,24 @@ export const projects: Project[] = [
       "Ledger hauls them over and reforms the page",
     ],
   },
+  // Appended after Ledger so Ledger's `projects.<index>` source paths keep naming the same entries.
+  {
+    slug: "client-manager",
+    icon: "agents",
+    title: "Client Manager",
+    sector: "Wealth management",
+    summary:
+      "Tell it about a client in your own words, add their files, and a self-correcting pipeline builds a graph of their life and money in Postgres. Then ask it anything and watch the answer walk the graph.",
+    outcome: "Every answer cites the facts it walked through",
+    tags: ["GraphRAG", "pgRouting", "pgvector", "Workflow"],
+    status: "Live",
+    href: "/demos/client-manager",
+    features: [
+      "Add a client: a name, free text, PDFs, spreadsheets, images",
+      "A Critic model checks the graph and repairs it while you watch",
+      "Ask questions and watch the traversal light up the graph",
+    ],
+  },
 ];
 
 export const featuredProjects = projects.slice(0, FEATURED_PROJECT_LIMIT);

@@ -2,6 +2,9 @@
   "functions": {
     "src/app/demos/document-compliance/runs/[runId]/events/route.ts": {
       "supportsCancellation": true
+    },
+    "src/app/api/client-manager/builds/[buildId]/events/route.ts": {
+      "supportsCancellation": true
     }
   }
 }
