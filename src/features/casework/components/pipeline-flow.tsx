@@ -14,11 +14,7 @@ import {
 import "@xyflow/react/dist/style.css";
 import { useEffect, useMemo, useState } from "react";
 import { JOBS, type JobId } from "../domain/jobs";
-import {
-  type ModelSettingsByPurpose,
-  PURPOSES,
-  type Purpose,
-} from "../domain/model-config";
+import type { ModelSettingsByPurpose, Purpose } from "../domain/model-config";
 import { PIPELINE_IDS, PIPELINES, type PipelineId } from "../domain/pipelines";
 import { SCENARIO_TONE } from "./cabinet";
 import { JobGlyph, ScenarioGlyph } from "./glyphs";
@@ -118,7 +114,7 @@ function StepNode({ data }: NodeProps<Node<StepData>>) {
 
 const NODE_TYPES = { step: StepNode };
 
-const FIT = { padding: 0.16, maxZoom: 1.1 };
+const FIT = { padding: 0.2, maxZoom: 1.1 };
 
 const TAB_LABEL: Record<PipelineId, string> = {
   pension_withdrawal: "Withdrawal",
@@ -267,11 +263,11 @@ export function PipelineFlow({
       </div>
 
       <div className="flex min-h-0 flex-1 flex-col">
-        <div className="relative min-h-[240px] min-w-0 flex-[3]">
+        <div className="relative min-h-[230px] min-w-0 flex-[5]">
           <div
             className={`absolute top-0 right-0 left-0 z-10 h-1 ${tone.bar}`}
           />
-          <p className="absolute top-3 left-3 z-10 max-w-[70%] text-xs text-ink-muted">
+          <p className="absolute top-1 right-0 left-0 z-10 border-ink/15 border-b bg-paper/95 px-3 py-1.5 text-xs text-ink-muted">
             {PIPELINES[pipeline].blurb}.
             {live ? (
               <span className="ml-1 font-bold text-federal-blue">
@@ -307,59 +303,86 @@ export function PipelineFlow({
           </ReactFlow>
         </div>
 
-        <aside className="cw-scroll grid min-h-0 flex-[2] content-start gap-x-5 gap-y-3 overflow-y-auto border-ink border-t-2 bg-marble/60 p-4 xl:grid-cols-2">
-          <div>
-            <p className="eyebrow text-ink-muted">
-              {selected === "chat"
-                ? "Before the pipeline"
-                : `Step ${PIPELINES[pipeline].jobs.indexOf(selected) + 1} of ${PIPELINES[pipeline].jobs.length}`}
-            </p>
-            <h3 className="mt-1 font-mono text-base font-bold tracking-[0.02em] uppercase">
-              {job ? job.title : "Specialist"}
-            </h3>
-            <p className="mt-2 text-[13px] leading-relaxed text-ink-muted">
+        <aside className="cw-scroll grid min-h-0 flex-[6] grid-cols-[minmax(0,1fr)] content-start gap-4 overflow-y-auto border-ink border-t-2 bg-marble/60 p-4 xl:grid-cols-[minmax(0,1fr)_minmax(0,1.15fr)]">
+          <div className="min-w-0">
+            <div className="flex items-center gap-2.5">
+              <span
+                className={`flex size-9 shrink-0 items-center justify-center rounded-sm border-2 border-ink ${selected === "chat" ? "bg-ink text-paper" : purpose ? "bg-federal-blue text-paper" : "bg-limestone"}`}
+              >
+                {selected === "chat" ? (
+                  <span className="font-mono text-sm font-bold">❯</span>
+                ) : (
+                  <JobGlyph job={selected} size={18} />
+                )}
+              </span>
+              <div className="min-w-0">
+                <p className="font-mono text-[10px] tracking-[0.1em] text-ink-muted uppercase">
+                  {selected === "chat"
+                    ? "Before the pipeline"
+                    : `Step ${PIPELINES[pipeline].jobs.indexOf(selected) + 1} of ${PIPELINES[pipeline].jobs.length}`}
+                </p>
+                <h3 className="truncate font-mono text-base leading-tight font-bold uppercase">
+                  {job ? job.title : "Specialist"}
+                </h3>
+              </div>
+              <span
+                className={`ml-auto shrink-0 rounded-sm border px-1.5 py-0.5 font-mono text-[10px] font-bold tracking-[0.06em] uppercase ${purpose ? "border-federal-blue text-federal-blue" : "border-ink/40 text-ink-muted"}`}
+              >
+                {purpose ? "Model" : "Rules"}
+              </span>
+            </div>
+            <p className="mt-3 text-[13px] leading-relaxed text-ink-muted">
               {job
                 ? job.description
                 : "The chat agent. It checks it has the documents and knows what is wanted, then calls a pipeline or a single job as a tool on the MCP server. It never decides a case."}
             </p>
-            {job && job.after.length > 0 ? (
-              <p className="mt-2 text-xs">
-                <span className="eyebrow text-ink-muted">Reads from </span>
-                {job.after.map((id) => JOBS[id].title).join(", ")}
-              </p>
-            ) : null}
-            {sharedWith.length > 0 ? (
-              <p className="mt-1 text-xs">
-                <span className="eyebrow text-ink-muted">Also in </span>
-                {sharedWith
-                  .map((id) => PIPELINES[id].title.replace(" review", ""))
-                  .join(", ")}
-              </p>
+            {(job && job.after.length > 0) || sharedWith.length > 0 ? (
+              <dl className="mt-3 grid gap-1 text-xs">
+                {job && job.after.length > 0 ? (
+                  <div className="flex gap-2">
+                    <dt className="w-16 shrink-0 font-mono text-[10px] tracking-[0.08em] text-ink-muted uppercase">
+                      Reads
+                    </dt>
+                    <dd>{job.after.map((id) => JOBS[id].title).join(", ")}</dd>
+                  </div>
+                ) : null}
+                {sharedWith.length > 0 ? (
+                  <div className="flex gap-2">
+                    <dt className="w-16 shrink-0 font-mono text-[10px] tracking-[0.08em] text-ink-muted uppercase">
+                      Also in
+                    </dt>
+                    <dd>{sharedWith.map((id) => TAB_LABEL[id]).join(", ")}</dd>
+                  </div>
+                ) : null}
+              </dl>
             ) : null}
           </div>
-          <div>
+          <div className="min-w-0">
             {purpose ? (
               <>
-                <p className="mb-2 font-mono text-xs font-bold tracking-[0.06em] uppercase">
-                  {PURPOSES[purpose].label} model
-                </p>
                 <ModelForm
                   purpose={purpose}
                   settings={settings}
                   onSettings={onSettings}
                 />
-                <p className="mt-2 text-[11px] text-ink-muted">
-                  Saved for this desk. Applies from the next call; the same job
-                  in other pipelines uses it too.
+                <p className="mt-2 text-[11px] leading-snug text-ink-muted">
+                  Applies from this desk's next call
+                  {selected === "chat"
+                    ? "."
+                    : ", in every pipeline that has this job."}
                 </p>
               </>
             ) : (
-              <p className="rounded-sm border border-ink/25 bg-paper p-2.5 text-xs text-ink-muted">
-                <span className="font-bold text-ink">Rules, no model.</span>{" "}
-                This step is pure functions over what was read, so the same
-                documents always give the same checks. There is nothing to
-                configure.
-              </p>
+              <div className="rounded-sm border-2 border-ink/25 bg-paper p-3 text-xs leading-relaxed text-ink-muted">
+                <p className="font-mono text-[11px] font-bold tracking-[0.06em] text-ink uppercase">
+                  Nothing to configure
+                </p>
+                <p className="mt-1">
+                  This step is rules: pure functions over what was read. The
+                  same documents always give the same checks, and it costs
+                  nothing to run.
+                </p>
+              </div>
             )}
           </div>
         </aside>

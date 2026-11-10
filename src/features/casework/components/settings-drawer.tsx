@@ -86,9 +86,12 @@ export function SettingsDrawer({
                       key={purpose}
                       className="outline-box rounded-sm bg-paper p-3"
                     >
-                      <h3 className="mb-2 font-mono text-sm font-bold tracking-[0.06em] uppercase">
+                      <h3 className="font-mono text-sm font-bold tracking-[0.06em] uppercase">
                         {PURPOSES[purpose].label}
                       </h3>
+                      <p className="mb-2 text-xs text-ink-muted">
+                        {PURPOSES[purpose].hint}
+                      </p>
                       <ModelForm
                         purpose={purpose}
                         settings={settings}
