@@ -6,6 +6,7 @@ import { cookies, headers } from "next/headers";
 import { redirect, unstable_rethrow } from "next/navigation";
 import { hashVisitor } from "@/features/document-compliance/server/rate-limit";
 import { ACCESS_PATH, PROFILE_HINT_COOKIE, PROFILE_PATH } from "../constants";
+import type { Audience } from "../domain/audience";
 import {
   CODE_LENGTH,
   guestCodeFrom,
@@ -18,6 +19,7 @@ import {
   passwordProblem,
   safeNextPath,
 } from "../domain/guest-pass";
+import { trackAccess } from "./analytics";
 import { env } from "./env";
 import { currentAccess, hostOf, requestCookies, requireHost } from "./gate";
 import {
@@ -53,11 +55,15 @@ async function visitorHash() {
   return hashVisitor(ip, env.rateLimitSalt());
 }
 
-/** Tells the header's profile menu there is, or no longer is, someone to show. */
-async function hintProfile(present: boolean) {
+/**
+ * Tells the header's profile menu there is, or no longer is, someone to show,
+ * and Web Analytics which Audience this browser is in. Pass null on the way out.
+ */
+async function hintProfile(audience: Exclude<Audience, "visitor"> | null) {
   const jar = await cookies();
-  if (!present) return jar.delete(PROFILE_HINT_COOKIE);
-  jar.set(PROFILE_HINT_COOKIE, "1", {
+  if (!audience) return jar.delete(PROFILE_HINT_COOKIE);
+  if (jar.get(PROFILE_HINT_COOKIE)?.value === audience) return;
+  jar.set(PROFILE_HINT_COOKIE, audience, {
     sameSite: "lax",
     secure: process.env.NODE_ENV === "production",
     path: "/",
@@ -74,12 +80,14 @@ export type Profile =
 export async function currentProfile(): Promise<Profile> {
   const access = await currentAccess();
   if (access?.kind === "host") {
+    await hintProfile("host");
     return { kind: "host", email: access.email, name: access.name };
   }
   if (access?.kind === "guest") {
+    await hintProfile("guest");
     return { kind: "guest", label: access.label, expiresAt: access.expiresAt };
   }
-  if (!access) await hintProfile(false);
+  if (!access) await hintProfile(null);
   return null;
 }
 
@@ -160,7 +168,11 @@ async function redeemCode(form: FormData): Promise<DoorState> {
     }
     return { error: BAD_CODE };
   }
-  await hintProfile(true);
+  await hintProfile("guest");
+  await trackAccess("Guest code redeemed", {
+    audience: "guest",
+    returning: returning !== null,
+  });
   redirect(next);
 }
 
@@ -194,7 +206,8 @@ async function signInHost(form: FormData): Promise<DoorState> {
     if (!error) await client.auth.signOut({ scope: "local" });
     return wrong;
   }
-  await hintProfile(true);
+  await hintProfile("host");
+  await trackAccess("Host signed in", { audience: "host" });
   redirect(PROFILE_PATH);
 }
 
@@ -203,7 +216,7 @@ export async function signOut() {
   if (env.supabasePublishableKey()) {
     await authClient(requestCookies()).auth.signOut({ scope: "local" });
   }
-  await hintProfile(false);
+  await hintProfile(null);
   redirect(ACCESS_PATH);
 }
 

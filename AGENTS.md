@@ -45,6 +45,12 @@
 - A daily cron job deletes every anonymous Auth user older than a day that is not on a live Guest pass, project-wide. A new feature that uses anonymous sign-ins must narrow that job first.
 - Limits live in `LIMITS` in `src/features/access/domain/guest-pass.ts`; the migration's check constraints repeat the duration and device caps.
 
+## Analytics
+
+- Vercel Web Analytics and Speed Insights load in `src/app/layout.tsx`. Turn both on in the Vercel project (Analytics and Speed Insights tabs); they collect only on Vercel deployments.
+- Every pageview carries the flag `audience` (`host`, `guest` or `visitor`), read from the `labs_profile` hint cookie by `features/access/components/site-analytics.tsx`. Filter by it under Flags in the Analytics dashboard. The hint carries no authority, so the flag groups traffic and decides nothing.
+- Sign-ins are custom events from `features/access/server/analytics.ts`: `Host signed in` and `Guest code redeemed`. Never put an email, a name or a Guest pass label in an event.
+
 <!-- BEGIN:nextjs-agent-rules -->
 
 ## This is NOT the Next.js you know
