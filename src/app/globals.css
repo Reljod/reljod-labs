@@ -154,7 +154,14 @@
 @layer base {
   html {
     scroll-behavior: smooth;
-    scroll-padding-top: 5rem;
+  }
+
+  /* Anchor targets clear the sticky header. This lives on the targets, not
+     as scroll-padding-top on <html>: Next's navigation scroll treats anything
+     above the root scroll padding as out of view, so the sticky header (top
+     0) sent every route change scrolling to the footer. */
+  [id] {
+    scroll-margin-top: 5rem;
   }
 
   body {
