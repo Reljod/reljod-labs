@@ -1,0 +1,176 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Halvard Building Society mortgage statement</title>
+<style>
+  @page { size: A4; margin: 0; }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+  body { font-family: Helvetica, Arial, sans-serif; color: #1c2430; font-size: 10.5px; line-height: 1.45; background: #fff; }
+  .page { position: relative; width: 210mm; height: 296mm; padding: 15mm 16mm 26mm; overflow: hidden; break-after: page; }
+  .page:last-of-type { break-after: auto; }
+  .letterhead { display: flex; justify-content: space-between; align-items: flex-start; padding-bottom: 9px; border-bottom: 3px solid var(--brand); }
+  .logo { display: flex; align-items: center; gap: 10px; }
+  .mark { width: 34px; height: 34px; border-radius: 6px; background: var(--brand); color: #fff; font-weight: 800; font-size: 15px; display: flex; align-items: center; justify-content: center; letter-spacing: 0.5px; }
+  .brand { font-size: 19px; font-weight: 700; color: var(--brand); line-height: 1.1; }
+  .brand small { display: block; font-size: 9.5px; font-weight: 400; color: #5b6672; letter-spacing: 0.3px; margin-top: 2px; }
+  .doc-meta { text-align: right; font-size: 9.5px; color: #3a4552; }
+  .doc-meta strong { display: block; font-size: 13px; color: #1c2430; margin-bottom: 2px; }
+  .running { display: flex; justify-content: space-between; font-size: 9.5px; color: #5b6672; padding-bottom: 6px; border-bottom: 1px solid #d6dbe1; }
+  .running b { color: var(--brand); }
+  h1 { font-size: 16px; margin-top: 14px; color: #1c2430; }
+  h2 { font-size: 12px; margin-top: 16px; color: var(--brand); text-transform: uppercase; letter-spacing: 0.6px; }
+  h3 { font-size: 11px; margin-top: 12px; }
+  p { margin-top: 6px; }
+  .two { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-top: 14px; }
+  .box { border: 1px solid #d6dbe1; padding: 9px 11px; }
+  .box .label, .kv dt { font-size: 8.5px; text-transform: uppercase; letter-spacing: 0.5px; color: #5b6672; }
+  .kv { display: grid; grid-template-columns: 38% 62%; row-gap: 3px; margin-top: 4px; }
+  .kv dd { font-weight: 600; }
+  .tiles { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; margin-top: 12px; }
+  .tiles div { background: var(--tint); padding: 8px 9px; }
+  .tiles span { display: block; font-size: 8.5px; color: #5b6672; text-transform: uppercase; letter-spacing: 0.4px; }
+  .tiles b { font-size: 13.5px; }
+  table { width: 100%; border-collapse: collapse; margin-top: 7px; font-size: 9.8px; }
+  th, td { text-align: left; padding: 4.5px 5px; border-bottom: 1px solid #e1e5ea; vertical-align: top; }
+  th { font-size: 8.5px; color: #5b6672; font-weight: 700; text-transform: uppercase; letter-spacing: 0.3px; background: var(--tint); border-bottom: 1px solid #c7ced6; }
+  .num { text-align: right; white-space: nowrap; }
+  tr.total td { font-weight: 700; border-top: 1.5px solid #1c2430; border-bottom: 2px solid #1c2430; }
+  tr.sub td { font-weight: 700; background: #f7f9fb; }
+  .neg { color: #9b1c1c; }
+  .note { font-size: 9px; color: #4a5561; }
+  .small { font-size: 9px; }
+  ol.notes, ul.notes { margin: 6px 0 0 16px; font-size: 9.2px; color: #333d48; }
+  ol.notes li, ul.notes li { margin-top: 3px; }
+  .bar { height: 9px; background: var(--brand); display: inline-block; vertical-align: middle; }
+  .sig { display: grid; grid-template-columns: 1fr 1fr; gap: 26px; margin-top: 26px; }
+  .sig > div { font-size: 9.5px; }
+  .sig .scrawl { border-bottom: 1px solid #1c2430; margin-bottom: 4px; }
+  .scrawl { font-family: "Brush Script MT", "Segoe Script", cursive; font-size: 20px; font-style: italic; color: #20366b; height: 30px; }
+  .stamp { display: inline-block; border: 2px solid var(--brand); color: var(--brand); padding: 4px 10px; font-weight: 700; font-size: 9.5px; letter-spacing: 0.8px; transform: rotate(-4deg); text-transform: uppercase; }
+  footer.foot { position: absolute; left: 16mm; right: 16mm; bottom: 9mm; font-size: 8.3px; color: #5b6672; border-top: 1px solid #d6dbe1; padding-top: 5px; }
+  footer.foot .row { display: flex; justify-content: space-between; gap: 12px; }
+  footer.foot .issuer { margin-bottom: 2px; }
+  .specimen { position: absolute; left: 18mm; top: 122mm; transform: rotate(-32deg); font-size: 108px; font-weight: 800; letter-spacing: 16px; color: rgba(200, 30, 40, 0.15); pointer-events: none; z-index: 10; }
+  :root { --brand: #2f5d3a; --tint: #edf4ee; }
+</style>
+</head>
+<body>
+
+<section class="page">
+  <div class="letterhead">
+    <div class="logo"><div class="mark">HB</div><div class="brand">Halvard Building Society<small>Home loans since 1911 · Authorised by the Meridia Financial Conduct Board, ref. MFCB-ML-0042</small></div></div>
+    <div class="doc-meta"><strong>Mortgage Statement</strong>Period: 1 May 2026 to 31 October 2026<br>Issued: 6 November 2026<br>Mortgage account: HBS-ML-2207-55190</div>
+  </div>
+
+  <div class="two">
+    <div>
+      <div class="note">Borrowers</div>
+      <div style="font-size:12px;font-weight:700;margin-top:3px">Mr Rafael Okoro and Dr Ada Okoro</div>
+      <div>14 Aster Rise</div>
+      <div>Kestrel Heights</div>
+      <div>Meridia City MC-2207</div>
+      <div>Republic of Meridia</div>
+    </div>
+    <div class="box">
+      <dl class="kv">
+        <dt>Mortgaged property</dt><dd>14 Aster Rise, Kestrel Heights, Meridia City MC-2207</dd>
+        <dt>Title number</dt><dd>MR-MC-552071 (freehold, joint names)</dd>
+        <dt>Liability</dt><dd>Joint and several</dd>
+        <dt>Repayment type</dt><dd>Capital and interest</dd>
+        <dt>Paid by</dt><dd>Direct debit, Meridia Commerce Bank a/c ending 2041, on the 1st</dd>
+      </dl>
+    </div>
+  </div>
+
+  <h2>Your mortgage at a glance</h2>
+  <div class="tiles">
+    <div><span>Balance at 31 Oct 2026</span><b>M$1,887,183.30</b></div>
+    <div><span>Interest rate</span><b>4.15% fixed</b></div>
+    <div><span>Fixed until</span><b>31 Aug 2028</b></div>
+    <div><span>Monthly payment</span><b>M$11,834.62</b></div>
+  </div>
+
+  <h2>Account activity</h2>
+  <table>
+    <tr><th>Date</th><th>Description</th><th class="num">Interest charged M$</th><th class="num">Payment M$</th><th class="num">Balance M$</th></tr>
+    <tr><td>30 Apr 2026</td><td>Opening balance</td><td class="num"></td><td class="num"></td><td class="num">1,918,650.00</td></tr>
+    <tr><td>01 May 2026</td><td>Monthly payment, direct debit</td><td class="num">6,635.33</td><td class="num">11,834.62</td><td class="num">1,913,450.71</td></tr>
+    <tr><td>01 Jun 2026</td><td>Monthly payment, direct debit</td><td class="num">6,617.35</td><td class="num">11,834.62</td><td class="num">1,908,233.44</td></tr>
+    <tr><td>01 Jul 2026</td><td>Monthly payment, direct debit</td><td class="num">6,599.31</td><td class="num">11,834.62</td><td class="num">1,902,998.13</td></tr>
+    <tr><td>01 Aug 2026</td><td>Monthly payment, direct debit</td><td class="num">6,581.20</td><td class="num">11,834.62</td><td class="num">1,897,744.71</td></tr>
+    <tr><td>01 Sep 2026</td><td>Monthly payment, direct debit</td><td class="num">6,563.03</td><td class="num">11,834.62</td><td class="num">1,892,473.12</td></tr>
+    <tr><td>01 Oct 2026</td><td>Monthly payment, direct debit</td><td class="num">6,544.80</td><td class="num">11,834.62</td><td class="num">1,887,183.30</td></tr>
+    <tr class="total"><td colspan="2">Totals for the period</td><td class="num">39,541.02</td><td class="num">71,007.72</td><td class="num">1,887,183.30</td></tr>
+  </table>
+  <p class="note">Of the M$71,007.72 you paid this period, M$39,541.02 was interest and M$31,466.70 reduced your balance. No arrears. No overpayments were made.</p>
+
+  <h2>Loan history</h2>
+  <table>
+    <tr><th>Event</th><th>Date</th><th>Detail</th></tr>
+    <tr><td>Original advance</td><td>1 Mar 2021</td><td>M$2,400,000 over 25 years to purchase the property for M$3,050,000</td></tr>
+    <tr><td>Product switch</td><td>1 Sep 2023</td><td>Five-year fixed rate, 4.15%, ending 31 August 2028</td></tr>
+    <tr><td>Scheduled end of term</td><td>1 Mar 2046</td><td>233 monthly payments remain at the current rate</td></tr>
+  </table>
+
+  <footer class="foot">
+    <div class="issuer">Halvard Building Society · Halvard House, 1 Mercer Street, Meridia City MC-1001 · Member of the Meridia Deposit Guarantee Scheme</div>
+    <div class="row"><span>Synthetic document for the Reljod Labs Client Manager demo. Not a real record.</span><span>Page 1 of 2</span></div>
+  </footer>
+  <div class="specimen">SPECIMEN</div>
+</section>
+
+<section class="page">
+  <div class="running"><span><b>Halvard Building Society</b> · Mortgage Statement · 1 May to 31 Oct 2026</span><span>R &amp; A Okoro · HBS-ML-2207-55190</span></div>
+
+  <h2>Your current product</h2>
+  <table>
+    <tr><th>Feature</th><th>Detail</th></tr>
+    <tr><td>Product</td><td>Halvard Five-Year Fixed, product code HF5-2023-09</td></tr>
+    <tr><td>Rate</td><td>4.15% fixed until 31 August 2028</td></tr>
+    <tr><td>After the fixed period</td><td>Halvard Standard Variable Rate, currently 6.49%. At that rate your payment would rise to about M$14,060 a month.</td></tr>
+    <tr><td>Overpayments</td><td>Up to 10% of the balance each year without charge (M$188,718 until 31 August 2027)</td></tr>
+    <tr><td>Early repayment charge</td><td>3% of the amount repaid until 31 August 2027, then 2% until 31 August 2028. Repaying in full today would cost about M$56,615.</td></tr>
+    <tr><td>Portability</td><td>The product may be moved to a new property, subject to lending criteria</td></tr>
+  </table>
+
+  <h2>Property and security</h2>
+  <table>
+    <tr><th>Item</th><th>Detail</th></tr>
+    <tr><td>Indexed valuation</td><td>M$3,450,000 (Halvard house price index, September 2026)</td></tr>
+    <tr><td>Loan to value</td><td>54.7%</td></tr>
+    <tr><td>Charge</td><td>First legal charge registered 4 March 2021, title MR-MC-552071</td></tr>
+    <tr><td>Buildings insurance on file</td><td>Tessaly Home Insurance, policy TH-88410273, rebuild sum M$1,600,000, renews 1 March 2027</td></tr>
+    <tr><td>Interested parties</td><td>None. No second charges registered.</td></tr>
+  </table>
+
+  <h2>Looking ahead</h2>
+  <ul class="notes">
+    <li>We will write to you by 31 May 2028 with product options before your fixed rate ends. You can choose a new product up to six months early without an early repayment charge.</li>
+    <li>If you are expecting a lump sum and want to reduce your balance, call us first: payments above your overpayment allowance before 31 August 2028 attract the early repayment charge.</li>
+    <li>Your annual tax certificate of mortgage interest for 2026 will be issued in January 2027.</li>
+  </ul>
+
+  <h2>Important information</h2>
+  <ol class="notes">
+    <li>Interest is calculated daily on the outstanding balance and charged monthly.</li>
+    <li>Your home may be repossessed if you do not keep up repayments on your mortgage.</li>
+    <li>Both borrowers are responsible for the whole debt. On the death of one borrower the debt remains payable by the other and by the estate.</li>
+    <li>If you are struggling to pay, contact our Customer Support Team on +590 21 300 1911.</li>
+    <li>Complaints can be referred to the Meridia Financial Ombudsman after our final response.</li>
+  </ol>
+
+  <p style="margin-top:20px">Yours sincerely,</p>
+  <div class="scrawl" style="margin-top:4px">T. Lindqvist</div>
+  <p style="margin-top:0">Tomas Lindqvist<br>Head of Mortgage Servicing, Halvard Building Society</p>
+
+  <footer class="foot">
+    <div class="issuer">Halvard Building Society · Halvard House, 1 Mercer Street, Meridia City MC-1001 · Member of the Meridia Deposit Guarantee Scheme</div>
+    <div class="row"><span>Synthetic document for the Reljod Labs Client Manager demo. Not a real record.</span><span>Page 2 of 2</span></div>
+  </footer>
+  <div class="specimen">SPECIMEN</div>
+</section>
+
+</body>
+</html>
