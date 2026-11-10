@@ -19,6 +19,7 @@ import {
 import { findPack, storagePath } from "../packs";
 import type { FindingView, RunView, SessionRunView } from "../view";
 import type { Database } from "./database.types";
+import type { RawExtraction } from "./extract";
 import { signedUrls, supabase } from "./supabase";
 
 type Tables = Database["document_compliance"]["Tables"];
@@ -121,7 +122,7 @@ export async function saveDocument(
     parseMs: number;
     readMs: number;
     usage: ReadUsage;
-    raw: unknown;
+    raw: RawExtraction;
   },
   document: ExtractedDocument,
 ): Promise<SavedDocument> {
@@ -145,8 +146,7 @@ export async function saveDocument(
         cost_usd: meta.usage.costUsd,
         parse_ms: Math.round(meta.parseMs),
         read_ms: Math.round(meta.readMs),
-        raw_output: (meta.raw ??
-          null) as Tables["documents"]["Row"]["raw_output"],
+        raw_output: meta.raw,
       })
       .select("id")
       .single(),
@@ -301,16 +301,38 @@ export async function deleteRunsByVisitor(visitorHash: string) {
   );
 }
 
-async function selectIn<Name extends keyof Tables>(
+async function selectIn<
+  Name extends keyof Tables,
+  Column extends keyof Tables[Name]["Row"] &
+    string = keyof Tables[Name]["Row"] & string,
+>(
   table: Name,
   column: string,
   values: (string | number)[],
-): Promise<Tables[Name]["Row"][]> {
+  columns?: readonly Column[],
+): Promise<Pick<Tables[Name]["Row"], Column>[]> {
   if (values.length === 0) return [];
-  return rows<Tables[Name]["Row"][]>(
-    await supabase().from(table).select("*").in(column, values),
+  return rows<Pick<Tables[Name]["Row"], Column>[]>(
+    await supabase()
+      .from(table)
+      .select(columns ? columns.join(", ") : "*")
+      .in(column, values),
   );
 }
+
+/** What a Session list needs from each Document: its metrics, never its raw answer. */
+const METRIC_COLUMNS = [
+  "run_id",
+  "model",
+  "provider",
+  "input_tokens",
+  "output_tokens",
+  "reasoning_tokens",
+  "cached_input_tokens",
+  "cost_usd",
+  "parse_ms",
+  "read_ms",
+] as const;
 
 /** Loads a run and everything it produced, shaped for the Reviewer view. */
 export async function loadRun(runId: string): Promise<RunView | null> {
@@ -474,10 +496,13 @@ export async function loadRun(runId: string): Promise<RunView | null> {
   };
 }
 
-type DocumentRow = Tables["documents"]["Row"];
+type MetricRow = Pick<
+  Tables["documents"]["Row"],
+  (typeof METRIC_COLUMNS)[number]
+>;
 
 /** Null for a Document saved before run metrics were kept (ADR 0007). */
-function documentMetrics(row: DocumentRow): DocumentMetrics | null {
+function documentMetrics(row: MetricRow): DocumentMetrics | null {
   // `?? null` too: a database without the metrics columns returns none at all.
   if ((row.read_ms ?? null) === null && (row.model ?? null) === null) {
     return null;
@@ -531,8 +556,8 @@ export async function listSessionRuns(
   );
   const runIds = runs.map((run) => run.id);
   const [documents, findings] = await Promise.all([
-    selectIn("documents", "run_id", runIds),
-    selectIn("findings", "run_id", runIds),
+    selectIn("documents", "run_id", runIds, METRIC_COLUMNS),
+    selectIn("findings", "run_id", runIds, ["run_id", "outcome"] as const),
   ]);
   return runs.map((run) => {
     const totals = runTotals(

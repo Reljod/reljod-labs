@@ -9,7 +9,7 @@ import { formatTokens, formatUsd, runTotals } from "../../metrics";
 import { findPack } from "../../packs";
 import { DOCUMENT_ORDER } from "../../scan-events";
 import { getRun } from "../../server/actions";
-import type { RunView } from "../../view";
+import { isFinished as isFinishedStatus, type RunView } from "../../view";
 import { Caveats } from "../caveats";
 import { DOCUMENT_LABELS } from "../labels";
 import { SESSION_RUNS_KEY, SessionRuns } from "../session-runs";
@@ -22,8 +22,7 @@ import { type FeedSource, useScanFeed } from "./use-scan-feed";
 
 type Mode = "live" | "replay" | "results";
 
-const isFinished = (view: RunView) =>
-  view.status === "completed" || view.status === "failed";
+const isFinished = (view: RunView) => isFinishedStatus(view.status);
 
 /** One Pre-screen run: the live (or replayed) scan, then its Findings. */
 export function RunScreen({ runId }: { runId: string }) {

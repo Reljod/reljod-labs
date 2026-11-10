@@ -130,6 +130,8 @@ export function stepPlayhead(
   if (play.stamped || (failed(document) && scan.end)) {
     if (play.hold > 0) return update({ hold: play.hold - 1 });
     const seen = update({ seen: true });
+    // Pinned, the head never finishes by itself: the visitor stays on the
+    // Document they chose and leaves with Follow run or the Findings button.
     if (head.pinned) return seen;
     const next = nextDocument(seen, scan, kinds, onScreen);
     return next ? { ...seen, onScreen: next } : { ...seen, finished: true };

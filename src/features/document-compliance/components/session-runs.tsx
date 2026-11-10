@@ -6,7 +6,7 @@ import type { Outcome } from "../domain/types";
 import { formatTokens, formatUsd } from "../metrics";
 import { findPack } from "../packs";
 import { getSessionRuns } from "../server/actions";
-import type { SessionRunView } from "../view";
+import { isFinished } from "../view";
 import { OUTCOME_STYLES } from "./labels";
 
 export const SESSION_RUNS_KEY = ["prescreen-session-runs"];
@@ -21,13 +21,6 @@ const time = (iso: string) =>
     minute: "2-digit",
   });
 
-const RUNNING: SessionRunView["status"][] = [
-  "queued",
-  "parsing",
-  "extracting",
-  "evaluating",
-];
-
 /**
  * The Pre-screen runs this browser started, newest first, so a visitor can go
  * back to any of them. Hidden until the Session has its first run.
@@ -38,14 +31,17 @@ export function SessionRuns({ currentRunId }: { currentRunId?: string }) {
     queryFn: () => getSessionRuns(),
     // A run still going shows its status; check back until it settles.
     refetchInterval: (query) =>
-      query.state.data?.some((run) => RUNNING.includes(run.status))
-        ? 5000
-        : false,
+      query.state.data?.some((run) => !isFinished(run.status)) ? 5000 : false,
   });
   const list = runs.data ?? [];
   if (list.length === 0) return null;
 
-  const total = list.reduce((sum, run) => sum + (run.costUsd ?? 0), 0);
+  // "-" when no run reported a cost: a missing price is never shown as $0.
+  const costs = list.flatMap((run) =>
+    run.costUsd === null ? [] : [run.costUsd],
+  );
+  const total =
+    costs.length === 0 ? null : costs.reduce((sum, cost) => sum + cost, 0);
 
   return (
     <section

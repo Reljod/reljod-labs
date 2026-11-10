@@ -58,6 +58,10 @@ export type DocumentView = {
   raw: unknown;
 };
 
+/** Whether a run has stopped: completed or failed, never to change again. */
+export const isFinished = (status: RunView["status"]) =>
+  status === "completed" || status === "failed";
+
 /** One run in the visitor's Session list. */
 export type SessionRunView = {
   id: string;

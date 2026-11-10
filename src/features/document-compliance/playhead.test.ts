@@ -115,6 +115,20 @@ describe("stepPlayhead", () => {
     expect(head.onScreen).toBe("certified_copy");
   });
 
+  it("never finishes by itself while pinned, even once everything is seen", () => {
+    const scan = fold(
+      KINDS.flatMap((kind, index) => [field(kind, index), checks(kind, index)]),
+    );
+    let head = startPlayhead("k");
+    for (const kind of KINDS) {
+      head = tick(pinDocument(head, kind), scan, 2 + HOLD_TICKS + 1);
+    }
+    head = tick(head, scan, 20);
+    expect(KINDS.every((kind) => head.documents[kind].seen)).toBe(true);
+    expect(head.finished).toBe(false);
+    expect(tick(followRun(head), scan).finished).toBe(true);
+  });
+
   it("does not jump away from a pinned Document that is still waiting", () => {
     const scan = fold([field("proof_of_address", 1)]);
     const head = tick(

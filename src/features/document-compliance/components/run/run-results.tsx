@@ -226,7 +226,8 @@ function download(view: RunView) {
   link.href = url;
   link.download = `prescreen-run-${view.id}.json`;
   link.click();
-  URL.revokeObjectURL(url);
+  // Revoked after the click has been handled; some browsers read it late.
+  setTimeout(() => URL.revokeObjectURL(url), 0);
 }
 
 /** Where the run's time and money went, Document by Document. */

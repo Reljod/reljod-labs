@@ -8,7 +8,7 @@ import type { ReadUsage } from "../metrics";
 import { findPack, type Pack, type PackDocument, storagePath } from "../packs";
 import type { ScanEvent } from "../scan-events";
 import { findingViews } from "../view";
-import { extractDocument } from "./extract";
+import { extractDocument, type RawExtraction } from "./extract";
 import { type ParsedDocument, parseDocument } from "./parsers";
 import {
   failRun,
@@ -143,7 +143,7 @@ parseStep.maxRetries = 2;
 export type ReadRecord = {
   usage: ReadUsage;
   readMs: number;
-  raw: unknown;
+  raw: RawExtraction;
 };
 
 /**
@@ -159,9 +159,7 @@ async function readStep(
 ): Promise<{ extracted: ExtractedDocument; read: ReadRecord }> {
   "use step";
   const { pack, document } = packAndDocument(packSlug, kind);
-  let usage: ReadUsage | null = null;
-  let raw: unknown = null;
-  const { value: extracted, ms } = await staged(kind, "read", async () => {
+  const { value: read, ms } = await staged(kind, "read", async () => {
     const extraction = await extractDocument({
       kind,
       spans: ocrSpans,
@@ -169,9 +167,6 @@ async function readStep(
       pageImages: await pageImages(pack, document),
       onReading: (reading) => emit({ type: "field", kind, reading }),
     });
-    usage = extraction.usage;
-    raw = extraction.raw;
-    await emit({ type: "usage", kind, usage: extraction.usage });
     const { spans, applied } = correctSpans(ocrSpans, extraction.corrections);
     if (applied.length > 0) {
       await emit({ type: "corrections", kind, corrections: applied });
@@ -185,10 +180,13 @@ async function readStep(
       judgments: extraction.judgments,
     };
     return {
-      value,
+      value: { extracted: value, usage: extraction.usage, raw: extraction.raw },
       detail: `${value.fields.length} fields${applied.length > 0 ? ` · ${applied.length} OCR fixes` : ""}`,
     };
   });
+  const { extracted, usage, raw } = read;
+  // Only the attempt that succeeded is kept, so only its usage is streamed.
+  await emit({ type: "usage", kind, usage });
 
   await emit({
     type: "checks",
@@ -200,22 +198,9 @@ async function readStep(
     }),
     judgments: extracted.judgments,
   });
-  return {
-    extracted,
-    read: { usage: usage ?? EMPTY_USAGE, readMs: ms, raw },
-  };
+  return { extracted, read: { usage, readMs: ms, raw } };
 }
 readStep.maxRetries = 2;
-
-const EMPTY_USAGE: ReadUsage = {
-  model: null,
-  provider: null,
-  inputTokens: null,
-  outputTokens: null,
-  reasoningTokens: null,
-  cachedInputTokens: null,
-  costUsd: null,
-};
 
 type ProcessedDocument = {
   parsed: Omit<TimedParse, "spans">;

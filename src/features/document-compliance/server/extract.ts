@@ -97,6 +97,9 @@ Judgments, from the page images:
 - signaturePresent: for a certified copy, whether the certification carries a handwritten signature; null for other documents.
 - notes: one sentence explaining any tampering or legibility concern, otherwise empty.`;
 
+/** The model's structured answer, exactly as the schema parsed it. */
+export type RawExtraction = z.infer<typeof extractionSchema>;
+
 export type DocumentExtraction = {
   readings: FieldReading[];
   judgments: DocumentJudgments;
@@ -104,7 +107,7 @@ export type DocumentExtraction = {
   corrections: SpanCorrection[];
   usage: ReadUsage;
   /** The model's structured answer exactly as it returned it. */
-  raw: z.infer<typeof extractionSchema>;
+  raw: RawExtraction;
 };
 
 type ExtractedItem = z.infer<typeof extractionSchema>["fields"][number];
