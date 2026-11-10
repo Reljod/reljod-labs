@@ -3,7 +3,7 @@
 import { createHash, randomBytes } from "node:crypto";
 import { refresh } from "next/cache";
 import { cookies, headers } from "next/headers";
-import { redirect } from "next/navigation";
+import { redirect, unstable_rethrow } from "next/navigation";
 import { hashVisitor } from "@/features/document-compliance/server/rate-limit";
 import { ACCESS_PATH, PROFILE_HINT_COOKIE, PROFILE_PATH } from "../constants";
 import {
@@ -83,11 +83,34 @@ export async function currentProfile(): Promise<Profile> {
   return null;
 }
 
+const UNAVAILABLE =
+  "The door is not working right now, so nobody can be let in. Try again in a moment.";
+
+/**
+ * A production build hides a thrown Server Action error behind a bare error
+ * page, so a failure at the door (Supabase down, the `access` schema not
+ * exposed) is logged and told to the visitor instead. Nobody is let in.
+ */
+async function atTheDoor(work: () => Promise<DoorState>): Promise<DoorState> {
+  try {
+    return await work();
+  } catch (error) {
+    // Redirects are thrown too; let them through.
+    unstable_rethrow(error);
+    console.error("[access] the door failed", error);
+    return { error: UNAVAILABLE };
+  }
+}
+
 /** A Guest enters a code: this browser becomes a Guest on that pass. */
 export async function redeemGuestCode(
   _previous: DoorState,
   form: FormData,
 ): Promise<DoorState> {
+  return atTheDoor(() => redeemCode(form));
+}
+
+async function redeemCode(form: FormData): Promise<DoorState> {
   const next = safeNextPath(form.get("next"));
   const access = await currentAccess();
   if (access && access.kind !== "guest") redirect(next);
@@ -146,6 +169,10 @@ export async function signIn(
   _previous: DoorState,
   form: FormData,
 ): Promise<DoorState> {
+  return atTheDoor(() => signInHost(form));
+}
+
+async function signInHost(form: FormData): Promise<DoorState> {
   const email = String(form.get("email") ?? "").trim();
   const password = String(form.get("password") ?? "");
   const wrong = { error: "Wrong email or password." };
