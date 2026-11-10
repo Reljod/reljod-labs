@@ -16,16 +16,16 @@ export type Gait = {
 
 /* Pixels a second. Slow enough to follow on a big screen. */
 const SPEED: Record<TravelPose, number> = {
-  run: 260,
-  "run-down": 210,
-  "run-up": 210,
-  fly: 340,
+  run: 340,
+  "run-down": 270,
+  "run-up": 270,
+  fly: 440,
 };
 const PACE: Record<Pace, number> = { stroll: 0.75, trot: 1, dash: 1.3 };
 /** Hauling a block slows him down; pushing a big one slows him more. */
 const LOAD: Record<Grip, number> = { carry: 0.8, push: 0.6 };
-const MIN_DURATION = 0.7;
-const MAX_DURATION = 4;
+const MIN_DURATION = 0.55;
+const MAX_DURATION = 2.8;
 
 /**
  * Direction picks the view: under 25° from horizontal he gallops side-on,
