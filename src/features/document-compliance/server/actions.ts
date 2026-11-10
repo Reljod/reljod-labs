@@ -57,7 +57,24 @@ async function visitor() {
   return { hash: hashVisitor(ip, env.rateLimitSalt()), limited: true };
 }
 
+/**
+ * A production build hides a thrown Server Action error behind a bare React
+ * error code, so a failure to start is logged here and returned as a message.
+ */
 export async function startPrescreen(packSlug: string): Promise<StartResult> {
+  try {
+    return await startRun(packSlug);
+  } catch (error) {
+    console.error("[document-compliance] could not start a Pre-screen", error);
+    return {
+      status: "error",
+      message:
+        "The Pre-screen could not start because of a server error. Try again in a moment.",
+    };
+  }
+}
+
+async function startRun(packSlug: string): Promise<StartResult> {
   const pack = findPack(packSlug);
   if (!pack) throw new Error(`Unknown pack ${packSlug}`);
 

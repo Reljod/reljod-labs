@@ -89,7 +89,9 @@ export type FindingView = {
 
 export type StartResult =
   | { status: "started"; runId: string }
-  | { status: "limited"; runId: string | null; message: string };
+  | { status: "limited"; runId: string | null; message: string }
+  /** Starting failed on the server; the cause is in the server logs. */
+  | { status: "error"; message: string };
 
 /** Shapes the Findings an evaluation just produced, in Rulebook order. */
 export function findingViews(

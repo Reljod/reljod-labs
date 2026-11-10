@@ -48,7 +48,7 @@ export function PackPicker({ packs }: { packs: PackSummary[] }) {
       const base = "/demos/document-compliance/runs";
       if (result.status === "started") {
         startNavigation(() => router.push(`${base}/${result.runId}`));
-      } else if (result.runId) {
+      } else if (result.status === "limited" && result.runId) {
         const href = `${base}/${result.runId}?replay=limited`;
         startNavigation(() => router.push(href));
       } else setNotice(result.message);
