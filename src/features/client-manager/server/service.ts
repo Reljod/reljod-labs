@@ -8,6 +8,7 @@ import type {
   SourceKind,
   SourceView,
 } from "../domain/events";
+import { safeExtension } from "../domain/file-name";
 import type { DraftGraph } from "../domain/graph";
 import { slugify } from "../domain/graph";
 import { buildWorkflow } from "./build-workflow";
@@ -112,7 +113,7 @@ function fileSources(
       throw new LimitError(
         `${file.name}: use PDF, images, xlsx, csv, docx, txt or md.`,
       );
-    const extension = file.name.toLowerCase().split(".").pop() ?? "bin";
+    const extension = safeExtension(file.name, "bin");
     const stem = slugify(file.name.replace(/\.[^.]+$/, "")) || "file";
     return {
       clientId,
@@ -196,8 +197,7 @@ export async function createIntake(
   });
   let portraitUpload: { url: string } | null = null;
   if (input.portrait) {
-    const extension =
-      input.portrait.name.toLowerCase().split(".").pop() ?? "jpg";
+    const extension = safeExtension(input.portrait.name, "jpg");
     const path = `clients/${clientId}/portrait-uploaded.${extension}`;
     portraitUpload = { url: await uploadUrl(path) };
     await setPortrait(clientId, path, "uploaded");

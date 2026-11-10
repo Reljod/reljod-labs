@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { safeExtension } from "@/features/client-manager/domain/file-name";
 import { paintPortrait } from "@/features/client-manager/server/persona";
 import {
   getClient,
@@ -47,12 +48,7 @@ export async function POST(
     const body = bodySchema.parse(await request.json());
 
     if (body.mode === "upload") {
-      const extension =
-        body.name
-          .toLowerCase()
-          .split(".")
-          .pop()
-          ?.replace(/[^a-z0-9]/g, "") || "jpg";
+      const extension = safeExtension(body.name, "jpg");
       const path = `clients/${client.id}/portrait-uploaded-${Date.now()}.${extension}`;
       return Response.json({ path, url: await uploadUrl(path) });
     }

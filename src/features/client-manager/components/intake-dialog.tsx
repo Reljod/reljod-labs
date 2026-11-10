@@ -376,7 +376,9 @@ export function IntakeDialog({ onClose }: { onClose: () => void }) {
                   <SampleFiles
                     onAdd={addFiles}
                     onFill={(client) => {
-                      const index = EXAMPLE_INTAKES.findIndex((example) => example.name === client);
+                      const index = EXAMPLE_INTAKES.findIndex(
+                        (example) => example.name === client,
+                      );
                       if (index >= 0 && !note.trim()) fillExample(index);
                       else if (!name.trim()) setName(client);
                     }}

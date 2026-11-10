@@ -20,7 +20,9 @@ export async function sampleFile(sample: Pick<Sample, "path" | "kind">) {
   if (!response.ok) throw new Error(`Could not load ${sample.path}`);
   const blob = await response.blob();
   const name = sample.path.split("/").pop() ?? "sample";
-  return new File([blob], name, { type: MEDIA_TYPES[sample.kind] ?? blob.type });
+  return new File([blob], name, {
+    type: MEDIA_TYPES[sample.kind] ?? blob.type,
+  });
 }
 
 /** Files from a drop: real files, or sample chips dragged from the page. */
@@ -38,7 +40,9 @@ export async function filesFromDrop(data: DataTransfer): Promise<File[]> {
   return Array.from(data.files);
 }
 
-export const clientsWithSamples = [...new Set(SAMPLE_FILES.map((sample) => sample.client))];
+export const clientsWithSamples = [
+  ...new Set(SAMPLE_FILES.map((sample) => sample.client)),
+];
 
 /**
  * Sample documents for the Intake: drag one onto the drop zone (or the
@@ -59,7 +63,9 @@ export function SampleFiles({
     setLoading(client);
     try {
       const files = await Promise.all(
-        SAMPLE_FILES.filter((sample) => sample.client === client).map(sampleFile),
+        SAMPLE_FILES.filter((sample) => sample.client === client).map(
+          sampleFile,
+        ),
       );
       onFill?.(client);
       onAdd(files);
@@ -85,62 +91,83 @@ export function SampleFiles({
       {open ? (
         <div className="cm-reveal space-y-3 border-ink/15 border-t px-3 py-3">
           <p className="text-xs text-ink-muted">
-            Synthetic statements, registers and letters (SPECIMEN, fictional Meridia). Drag one into the box above, drag it to your desktop to keep it, or add a client's whole pack.
+            Synthetic statements, registers and letters (SPECIMEN, fictional
+            Meridia). Drag one into the box above, drag it to your desktop to
+            keep it, or add a client's whole pack.
           </p>
           {clientsWithSamples.map((client) => (
             <div key={client}>
               <div className="flex items-center justify-between gap-2">
-                <p className="font-mono text-xs font-bold uppercase">{client}</p>
+                <p className="font-mono text-xs font-bold uppercase">
+                  {client}
+                </p>
                 <button
                   type="button"
                   disabled={loading !== null}
                   onClick={() => void addClient(client)}
                   className="eyebrow rounded-sm px-1.5 py-0.5 text-[0.6rem] font-bold text-federal-blue hover:bg-morning-haze disabled:opacity-50"
                 >
-                  {loading === client ? "Adding…" : `Use ${client.split(" ")[0]}'s note and files`}
+                  {loading === client
+                    ? "Adding…"
+                    : `Use ${client.split(" ")[0]}'s note and files`}
                 </button>
               </div>
               <ul className="mt-1.5 grid gap-1.5 sm:grid-cols-2">
-                {SAMPLE_FILES.filter((sample) => sample.client === client).map((sample) => {
-                  const name = sample.path.split("/").pop() ?? sample.name;
-                  return (
-                    <li key={sample.path}>
-                      <div
-                        draggable
-                        onDragStart={(event) => {
-                          event.dataTransfer.effectAllowed = "copy";
-                          event.dataTransfer.setData(SAMPLE_DRAG_TYPE, sample.path);
-                          // Chrome: dragging onto the desktop saves the file.
-                          event.dataTransfer.setData(
-                            "DownloadURL",
-                            `${MEDIA_TYPES[sample.kind]}:${name}:${new URL(sample.path, window.location.href).href}`,
-                          );
-                          event.dataTransfer.setData("text/uri-list", new URL(sample.path, window.location.href).href);
-                        }}
-                        className="group flex cursor-grab items-center gap-2 rounded-sm border border-ink/40 bg-marble px-2 py-1.5 text-xs hover:border-ink active:cursor-grabbing"
-                        title={sample.description}
-                      >
-                        <span className="outline-box shrink-0 rounded-sm bg-paper px-1 font-mono text-[0.55rem] font-bold uppercase">
-                          {sample.kind === "sheet" ? "XLS" : "PDF"}
-                        </span>
-                        <span className="min-w-0 flex-1">
-                          <span className="block truncate font-semibold">{sample.name}</span>
-                          <span className="block truncate text-[0.65rem] text-ink-muted">{sample.description}</span>
-                        </span>
-                        <span className="shrink-0 font-mono text-[0.6rem] text-stone">{formatBytes(sample.size)}</span>
-                        <a
-                          href={sample.path}
-                          download={name}
-                          onClick={(event) => event.stopPropagation()}
-                          aria-label={`Download ${sample.name}`}
-                          className="shrink-0 font-mono text-sm font-bold text-federal-blue opacity-60 group-hover:opacity-100"
+                {SAMPLE_FILES.filter((sample) => sample.client === client).map(
+                  (sample) => {
+                    const name = sample.path.split("/").pop() ?? sample.name;
+                    return (
+                      <li key={sample.path}>
+                        {/* biome-ignore lint/a11y/noStaticElementInteractions: drag is a shortcut; the download link and "Use … files" button are the keyboard route */}
+                        <div
+                          draggable
+                          onDragStart={(event) => {
+                            event.dataTransfer.effectAllowed = "copy";
+                            event.dataTransfer.setData(
+                              SAMPLE_DRAG_TYPE,
+                              sample.path,
+                            );
+                            // Chrome: dragging onto the desktop saves the file.
+                            event.dataTransfer.setData(
+                              "DownloadURL",
+                              `${MEDIA_TYPES[sample.kind]}:${name}:${new URL(sample.path, window.location.href).href}`,
+                            );
+                            event.dataTransfer.setData(
+                              "text/uri-list",
+                              new URL(sample.path, window.location.href).href,
+                            );
+                          }}
+                          className="group flex cursor-grab items-center gap-2 rounded-sm border border-ink/40 bg-marble px-2 py-1.5 text-xs hover:border-ink active:cursor-grabbing"
+                          title={sample.description}
                         >
-                          ⤓
-                        </a>
-                      </div>
-                    </li>
-                  );
-                })}
+                          <span className="outline-box shrink-0 rounded-sm bg-paper px-1 font-mono text-[0.55rem] font-bold uppercase">
+                            {sample.kind === "sheet" ? "XLS" : "PDF"}
+                          </span>
+                          <span className="min-w-0 flex-1">
+                            <span className="block truncate font-semibold">
+                              {sample.name}
+                            </span>
+                            <span className="block truncate text-[0.65rem] text-ink-muted">
+                              {sample.description}
+                            </span>
+                          </span>
+                          <span className="shrink-0 font-mono text-[0.6rem] text-stone">
+                            {formatBytes(sample.size)}
+                          </span>
+                          <a
+                            href={sample.path}
+                            download={name}
+                            onClick={(event) => event.stopPropagation()}
+                            aria-label={`Download ${sample.name}`}
+                            className="shrink-0 font-mono text-sm font-bold text-federal-blue opacity-60 group-hover:opacity-100"
+                          >
+                            ⤓
+                          </a>
+                        </div>
+                      </li>
+                    );
+                  },
+                )}
               </ul>
             </div>
           ))}
