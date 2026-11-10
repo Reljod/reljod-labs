@@ -2,89 +2,48 @@
 
 import { useEffect, useReducer, useRef } from "react";
 import type { DocumentKind } from "../../domain/types";
+import {
+  followRun,
+  type Playhead,
+  pinDocument,
+  startPlayhead,
+  stepPlayhead,
+} from "../../playhead";
 import type { ScanState } from "../../scan-state";
-
-export type Playhead = {
-  /** The playback this head belongs to; a stale one is never shown. */
-  key: unknown;
-  /** Which Document is on screen, as an index into the pack's display order. */
-  index: number;
-  /** How many of its readings have been revealed. */
-  revealed: number;
-  /** Whether its Field checks have been stamped. */
-  stamped: boolean;
-  hold: number;
-  finished: boolean;
-};
-
-const START: Playhead = {
-  key: null,
-  index: 0,
-  revealed: 0,
-  stamped: false,
-  hold: 0,
-  finished: false,
-};
-
-/** Ticks spent on a stamped Document before moving to the next. */
-const HOLD_TICKS = 5;
-
-function advance(head: Playhead, total: number): Playhead {
-  const index = head.index + 1;
-  return index >= total
-    ? { ...head, finished: true }
-    : { ...START, key: head.key, index };
-}
-
-function step(head: Playhead, scan: ScanState, kinds: DocumentKind[]) {
-  if (head.finished) return head;
-  const kind = kinds[head.index];
-  if (!kind) return { ...head, finished: true };
-  const document = scan.documents[kind];
-  const failed =
-    document.stages.parse === "error" || document.stages.read === "error";
-
-  if (head.revealed < document.readings.length) {
-    return { ...head, revealed: head.revealed + 1 };
-  }
-  if (document.checks && !head.stamped) {
-    return { ...head, stamped: true, hold: HOLD_TICKS };
-  }
-  if (head.stamped || (failed && scan.end)) {
-    return head.hold > 0
-      ? { ...head, hold: head.hold - 1 }
-      : advance(head, kinds.length);
-  }
-  if (scan.end?.status === "failed") return { ...head, finished: true };
-  return head;
-}
 
 type Action =
   | { type: "tick"; scan: ScanState; kinds: DocumentKind[] }
   | { type: "reset"; key: unknown }
+  | { type: "pin"; kind: DocumentKind }
+  | { type: "follow" }
   | { type: "skip" };
 
 function reducer(head: Playhead, action: Action): Playhead {
   switch (action.type) {
     case "reset":
-      return { ...START, key: action.key };
+      return startPlayhead(action.key);
     case "skip":
       return { ...head, finished: true };
+    case "pin":
+      return pinDocument(head, action.kind);
+    case "follow":
+      return followRun(head);
     case "tick":
-      return step(head, action.scan, action.kinds);
+      return stepPlayhead(head, action.scan, action.kinds);
   }
 }
 
 /**
- * Plays Documents one at a time in display order, revealing each reading and
- * then its Field checks, however far ahead the real run has got.
+ * Plays the run's Documents one at a time, revealing each reading and then its
+ * Field checks. It follows whichever Document has output first, unless the
+ * visitor pins one to look at.
  */
 export function usePlayhead(
   scan: ScanState,
   kinds: DocumentKind[],
   options: { tickMs: number; resetKey: unknown },
 ) {
-  const [head, dispatch] = useReducer(reducer, START);
+  const [head, dispatch] = useReducer(reducer, null, () => startPlayhead(null));
   const latest = useRef({ scan, kinds });
   latest.current = { scan, kinds };
 
@@ -102,7 +61,10 @@ export function usePlayhead(
 
   return {
     // Until the reset for a new playback lands, the old head must not leak through.
-    head: head.key === options.resetKey ? head : START,
+    head:
+      head.key === options.resetKey ? head : startPlayhead(options.resetKey),
     skip: () => dispatch({ type: "skip" }),
+    pin: (kind: DocumentKind) => dispatch({ type: "pin", kind }),
+    follow: () => dispatch({ type: "follow" }),
   };
 }

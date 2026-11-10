@@ -1,0 +1,114 @@
+{
+  "slug": "wd-13-jackson-name-unexplained",
+  "scenario": "pension_withdrawal",
+  "title": "Jackson · apartment in Fairholm",
+  "summary": "Online application for M$28,000 towards a Fairholm apartment in the name Jackson, while the plan record is Whittaker with no explanation; status evidence and the sale agreement are not in yet.",
+  "asOf": "2026-11-10",
+  "documents": [
+    {
+      "source": "withdrawal-request.html",
+      "name": "MemberLink CT-W2 W2-2026-04588.pdf",
+      "kind": "withdrawal_request_form",
+      "render": "pdf",
+      "label": {
+        "member_name": "Kerry-Ann Michelle Jackson",
+        "member_number": "CT-279305",
+        "date_of_birth": "1993-02-27",
+        "withdrawal_type": "property_purchase",
+        "amount_requested": 28000,
+        "property_address": "Apt 5, Jasmine Court, 76 Pointer Road, Fairholm",
+        "payee_name": "Ironwood Legal Client Account",
+        "payee_bank": "Turtle Reef Bank Ltd.",
+        "payee_account_number": "4410-27781-3",
+        "meridian_status_declared": true,
+        "primary_residence_declared": true,
+        "signature_present": true,
+        "signed_date": "2026-11-04"
+      }
+    },
+    {
+      "source": "member-statement.html",
+      "name": "Member account statement - CT-279305.pdf",
+      "kind": "member_statement",
+      "render": "pdf",
+      "label": {
+        "member_name": "Kerry-Ann Michelle Whittaker",
+        "member_number": "CT-279305",
+        "date_of_birth": "1993-02-27",
+        "employer_name": "Lemon Tree Bay Hospitality Ltd.",
+        "statement_date": "2026-11-05",
+        "total_balance": 39770.52,
+        "prior_property_withdrawals": 0,
+        "prior_withdrawals_repaid": true
+      }
+    },
+    {
+      "source": "licence-photo.html",
+      "name": "licence_photo.jpg",
+      "kind": "identity_document",
+      "render": "photo",
+      "label": {
+        "document_type": "drivers_licence",
+        "full_name": "Kerry-Ann Michelle Jackson",
+        "date_of_birth": "1993-02-27",
+        "nationality": "",
+        "id_number": "DL 0815532",
+        "date_of_expiry": "2030-02-26",
+        "certified": false,
+        "certifier_name": "",
+        "certifier_occupation": "",
+        "certification_date": ""
+      }
+    }
+  ],
+  "expected": {
+    "pipeline": "pension_withdrawal",
+    "recommendation": "request_info",
+    "missingKinds": [
+      "meridian_status_evidence",
+      "sale_agreement"
+    ],
+    "checks": [
+      {
+        "id": "identity_matches_record",
+        "outcome": "review",
+        "note": "Form and licence read Kerry-Ann Michelle Jackson; the record for CT-279305 is Kerry-Ann Michelle Whittaker. Date of birth 27 Feb 1993 matches, 'other names' left blank, no marriage certificate or deed poll"
+      },
+      {
+        "id": "id_in_date",
+        "outcome": "pass",
+        "note": "Licence DL 0815532 expires 26 Feb 2030"
+      },
+      {
+        "id": "id_certified",
+        "outcome": "review",
+        "note": "A phone photo, not a certified copy"
+      },
+      {
+        "id": "meridian_status",
+        "outcome": "review",
+        "note": "Declared on the form; no status evidence supplied"
+      },
+      {
+        "id": "amount_within_cap",
+        "outcome": "pass",
+        "note": "M$28,000 is under M$50,000"
+      },
+      {
+        "id": "amount_within_balance",
+        "outcome": "pass",
+        "note": "M$28,000 against a balance of M$39,770.52"
+      },
+      {
+        "id": "prior_withdrawals_repaid",
+        "outcome": "pass",
+        "note": "No earlier withdrawals"
+      },
+      {
+        "id": "payee_permitted",
+        "outcome": "pass",
+        "note": "Ironwood Legal Client Account at Turtle Reef Bank Ltd. (no attorney's letter yet)"
+      }
+    ]
+  }
+}

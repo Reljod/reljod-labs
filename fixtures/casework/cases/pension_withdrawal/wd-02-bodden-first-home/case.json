@@ -1,0 +1,164 @@
+{
+  "slug": "wd-02-bodden-first-home",
+  "scenario": "pension_withdrawal",
+  "title": "Bodden · first home in Marlow Town",
+  "summary": "Meridian teacher buying a first home in Marlow Town, asking for M$45,000 paid to her attorney's client account; every document agrees.",
+  "asOf": "2026-11-10",
+  "documents": [
+    {
+      "source": "withdrawal-request.html",
+      "name": "CT-W2 withdrawal request - Bodden.pdf",
+      "kind": "withdrawal_request_form",
+      "render": "scan",
+      "label": {
+        "member_name": "Kimberley Rose Bodden",
+        "member_number": "CT-318552",
+        "date_of_birth": "1992-04-17",
+        "withdrawal_type": "property_purchase",
+        "amount_requested": 45000,
+        "property_address": "47 Mahogany Ridge Road, Marlow Town",
+        "payee_name": "Tradewind Chambers Client Account",
+        "payee_bank": "Sound Harbour Bank & Trust Ltd.",
+        "payee_account_number": "200-118734-9",
+        "meridian_status_declared": true,
+        "primary_residence_declared": true,
+        "signature_present": true,
+        "signed_date": "2026-10-22"
+      }
+    },
+    {
+      "source": "member-statement.html",
+      "name": "Corallis Q3 2026 statement - CT-318552.pdf",
+      "kind": "member_statement",
+      "render": "pdf",
+      "label": {
+        "member_name": "Kimberley Rose Bodden",
+        "member_number": "CT-318552",
+        "date_of_birth": "1992-04-17",
+        "employer_name": "Harbourlight Learning Centre Ltd.",
+        "statement_date": "2026-09-30",
+        "total_balance": 71846.22,
+        "prior_property_withdrawals": 0,
+        "prior_withdrawals_repaid": true
+      }
+    },
+    {
+      "source": "passport-certified.html",
+      "name": "Passport certified copy - K Bodden.pdf",
+      "kind": "identity_document",
+      "render": "scan",
+      "label": {
+        "document_type": "passport",
+        "full_name": "Kimberley Rose Bodden",
+        "date_of_birth": "1992-04-17",
+        "nationality": "Meridian",
+        "id_number": "C0418827",
+        "date_of_expiry": "2031-05-03",
+        "certified": true,
+        "certifier_name": "Andrea Michelle Seymour",
+        "certifier_occupation": "Notary Public",
+        "certification_date": "2026-10-20"
+      }
+    },
+    {
+      "source": "birth-certificate.html",
+      "name": "Birth certificate - Kimberley Bodden.pdf",
+      "kind": "meridian_status_evidence",
+      "render": "scan",
+      "label": {
+        "full_name": "Kimberley Rose Bodden",
+        "date_of_birth": "1992-04-17",
+        "status_basis": "birth",
+        "document_number": "PS 1992/0611",
+        "issue_date": "2019-08-12"
+      }
+    },
+    {
+      "source": "sale-agreement.html",
+      "name": "Agreement for sale - MTW 44B-318.pdf",
+      "kind": "sale_agreement",
+      "render": "pdf",
+      "label": {
+        "purchaser_names": [
+          "Kimberley Rose Bodden"
+        ],
+        "vendor_names": [
+          "Neville George Tatum",
+          "Sharon Denise Tatum"
+        ],
+        "property_address": "47 Mahogany Ridge Road, Marlow Town",
+        "block_parcel": "Marlow Town West Block 44B Parcel 318",
+        "purchase_price": 318000,
+        "deposit": 31800,
+        "completion_date": "2026-12-15"
+      }
+    }
+  ],
+  "expected": {
+    "pipeline": "pension_withdrawal",
+    "recommendation": "approve",
+    "missingKinds": [],
+    "checks": [
+      {
+        "id": "identity_matches_record",
+        "outcome": "pass",
+        "note": "Passport, form and statement all read Kimberley Rose Bodden, born 17 Apr 1992"
+      },
+      {
+        "id": "id_in_date",
+        "outcome": "pass",
+        "note": "Passport C0418827 expires 3 May 2031"
+      },
+      {
+        "id": "id_certified",
+        "outcome": "pass",
+        "note": "Certified by Andrea Michelle Seymour, Notary Public, on 20 Oct 2026 (21 days before review)"
+      },
+      {
+        "id": "meridian_status",
+        "outcome": "pass",
+        "note": "Box ticked; birth certificate PS 1992/0611 shows birth in Port Selene to Meridian parents"
+      },
+      {
+        "id": "withdrawal_purpose_supported",
+        "outcome": "pass",
+        "note": "Purchase of a home"
+      },
+      {
+        "id": "amount_within_cap",
+        "outcome": "pass",
+        "note": "M$45,000 is under M$50,000"
+      },
+      {
+        "id": "amount_within_balance",
+        "outcome": "pass",
+        "note": "M$45,000 against a balance of M$71,846.22 at 30 Sep 2026"
+      },
+      {
+        "id": "purpose_evidence_consistent",
+        "outcome": "pass",
+        "note": "Sale agreement is for 47 Mahogany Ridge Road, Marlow Town West Block 44B Parcel 318, purchaser Kimberley Rose Bodden, price M$318,000"
+      },
+      {
+        "id": "primary_residence",
+        "outcome": "pass",
+        "note": "Primary residence box ticked; vacant possession on completion"
+      },
+      {
+        "id": "prior_withdrawals_repaid",
+        "outcome": "pass",
+        "note": "Statement shows no earlier withdrawals"
+      },
+      {
+        "id": "payee_permitted",
+        "outcome": "pass",
+        "note": "Paid to Tradewind Chambers Client Account, the purchaser's attorneys named in the agreement"
+      },
+      {
+        "id": "screening_clear",
+        "outcome": "pass",
+        "note": "No watchlist matches"
+      }
+    ]
+  }
+}

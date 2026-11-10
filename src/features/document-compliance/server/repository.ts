@@ -4,14 +4,22 @@ import type { Rulebook } from "../domain/rulebook";
 import { individualOnboarding } from "../domain/rulebook";
 import type {
   ClientDeclaration,
+  DocumentJudgments,
   DocumentKind,
   ExtractedDocument,
   FieldName,
   Finding,
 } from "../domain/types";
+import {
+  asNumber,
+  type DocumentMetrics,
+  type ReadUsage,
+  runTotals,
+} from "../metrics";
 import { findPack, storagePath } from "../packs";
-import type { FindingView, RunView } from "../view";
+import type { FindingView, RunView, SessionRunView } from "../view";
 import type { Database } from "./database.types";
+import type { RawExtraction } from "./extract";
 import { signedUrls, supabase } from "./supabase";
 
 type Tables = Database["document_compliance"]["Tables"];
@@ -39,6 +47,7 @@ export async function createRun(input: {
   rulebook: Rulebook;
   declaration: ClientDeclaration;
   visitorHash: string;
+  sessionId: string;
   model: string;
 }) {
   const run = rows<{ id: string }>(
@@ -50,6 +59,7 @@ export async function createRun(input: {
         rulebook_version: input.rulebook.version,
         client_declaration: input.declaration,
         visitor_hash: input.visitorHash,
+        session_id: input.sessionId,
         model: input.model,
         status: "queued",
       })
@@ -109,6 +119,10 @@ export async function saveDocument(
     sourceFormat: Tables["documents"]["Row"]["source_format"];
     parser: Tables["documents"]["Row"]["parser"];
     pageCount: number;
+    parseMs: number;
+    readMs: number;
+    usage: ReadUsage;
+    raw: RawExtraction;
   },
   document: ExtractedDocument,
 ): Promise<SavedDocument> {
@@ -123,6 +137,16 @@ export async function saveDocument(
         source_format: meta.sourceFormat,
         parser: meta.parser,
         page_count: meta.pageCount,
+        model: meta.usage.model,
+        provider: meta.usage.provider,
+        input_tokens: meta.usage.inputTokens,
+        output_tokens: meta.usage.outputTokens,
+        reasoning_tokens: meta.usage.reasoningTokens,
+        cached_input_tokens: meta.usage.cachedInputTokens,
+        cost_usd: meta.usage.costUsd,
+        parse_ms: Math.round(meta.parseMs),
+        read_ms: Math.round(meta.readMs),
+        raw_output: meta.raw,
       })
       .select("id")
       .single(),
@@ -277,16 +301,38 @@ export async function deleteRunsByVisitor(visitorHash: string) {
   );
 }
 
-async function selectIn<Name extends keyof Tables>(
+async function selectIn<
+  Name extends keyof Tables,
+  Column extends keyof Tables[Name]["Row"] &
+    string = keyof Tables[Name]["Row"] & string,
+>(
   table: Name,
   column: string,
   values: (string | number)[],
-): Promise<Tables[Name]["Row"][]> {
+  columns?: readonly Column[],
+): Promise<Pick<Tables[Name]["Row"], Column>[]> {
   if (values.length === 0) return [];
-  return rows<Tables[Name]["Row"][]>(
-    await supabase().from(table).select("*").in(column, values),
+  return rows<Pick<Tables[Name]["Row"], Column>[]>(
+    await supabase()
+      .from(table)
+      .select(columns ? columns.join(", ") : "*")
+      .in(column, values),
   );
 }
+
+/** What a Session list needs from each Document: its metrics, never its raw answer. */
+const METRIC_COLUMNS = [
+  "run_id",
+  "model",
+  "provider",
+  "input_tokens",
+  "output_tokens",
+  "reasoning_tokens",
+  "cached_input_tokens",
+  "cost_usd",
+  "parse_ms",
+  "read_ms",
+] as const;
 
 /** Loads a run and everything it produced, shaped for the Reviewer view. */
 export async function loadRun(runId: string): Promise<RunView | null> {
@@ -384,6 +430,7 @@ export async function loadRun(runId: string): Promise<RunView | null> {
     error: run.error,
     model: run.model,
     createdAt: run.created_at,
+    completedAt: run.completed_at,
     prescreenDate: pack?.prescreenDate ?? "",
     documents: documents.map((document) => {
       const documentFields = fields
@@ -398,6 +445,15 @@ export async function loadRun(runId: string): Promise<RunView | null> {
             .map((link) => refBySpanId.get(link.span_id) ?? ""),
         }));
       const tampering = tamperingRefs(document.kind);
+      // Runs saved with the model's raw answer keep its judgments; older ones
+      // rebuild suspected tampering from the no-tampering Finding.
+      const judgments = storedJudgments(document.raw_output) ?? {
+        legible: true,
+        tamperingSuspected: tampering.length > 0,
+        tamperingSpanRefs: tampering,
+        signaturePresent: null,
+        notes: "",
+      };
       return {
         kind: document.kind,
         parser: document.parser,
@@ -416,8 +472,12 @@ export async function loadRun(runId: string): Promise<RunView | null> {
             page: span.page,
             text: span.text,
             box: { x0: span.x0, y0: span.y0, x1: span.x1, y1: span.y1 },
+            confidence: span.confidence,
           })),
         fields: documentFields,
+        judgments,
+        metrics: documentMetrics(document),
+        raw: document.raw_output ?? null,
         checks: fieldChecks(
           {
             kind: document.kind,
@@ -426,13 +486,7 @@ export async function loadRun(runId: string): Promise<RunView | null> {
               ...field,
               confidence: field.confidence ?? 0,
             })),
-            judgments: {
-              legible: true,
-              tamperingSuspected: tampering.length > 0,
-              tamperingSpanRefs: tampering,
-              signaturePresent: null,
-              notes: "",
-            },
+            judgments,
           },
           checkContext,
         ),
@@ -440,4 +494,96 @@ export async function loadRun(runId: string): Promise<RunView | null> {
     }),
     findings: runFindings,
   };
+}
+
+type MetricRow = Pick<
+  Tables["documents"]["Row"],
+  (typeof METRIC_COLUMNS)[number]
+>;
+
+/** Null for a Document saved before run metrics were kept (ADR 0007). */
+function documentMetrics(row: MetricRow): DocumentMetrics | null {
+  // `?? null` too: a database without the metrics columns returns none at all.
+  if ((row.read_ms ?? null) === null && (row.model ?? null) === null) {
+    return null;
+  }
+  return {
+    model: row.model ?? null,
+    provider: row.provider ?? null,
+    inputTokens: row.input_tokens ?? null,
+    outputTokens: row.output_tokens ?? null,
+    reasoningTokens: row.reasoning_tokens ?? null,
+    cachedInputTokens: row.cached_input_tokens ?? null,
+    costUsd: asNumber(row.cost_usd),
+    parseMs: row.parse_ms ?? null,
+    readMs: row.read_ms ?? null,
+  };
+}
+
+function storedJudgments(raw: unknown): DocumentJudgments | null {
+  if (typeof raw !== "object" || raw === null || !("judgments" in raw)) {
+    return null;
+  }
+  const judgments = (raw as { judgments: unknown }).judgments;
+  if (typeof judgments !== "object" || judgments === null) return null;
+  const value = judgments as Partial<DocumentJudgments>;
+  return {
+    legible: value.legible !== false,
+    tamperingSuspected: value.tamperingSuspected === true,
+    tamperingSpanRefs: Array.isArray(value.tamperingSpanRefs)
+      ? value.tamperingSpanRefs.filter((ref) => typeof ref === "string")
+      : [],
+    signaturePresent:
+      typeof value.signaturePresent === "boolean"
+        ? value.signaturePresent
+        : null,
+    notes: typeof value.notes === "string" ? value.notes : "",
+  };
+}
+
+/** A Session's runs, newest first, each with its cost and Finding counts. */
+export async function listSessionRuns(
+  sessionId: string,
+  limit = 20,
+): Promise<SessionRunView[]> {
+  const runs = rows<Tables["prescreen_runs"]["Row"][]>(
+    await supabase()
+      .from("prescreen_runs")
+      .select("*")
+      .eq("session_id", sessionId)
+      .order("created_at", { ascending: false })
+      .limit(limit),
+  );
+  const runIds = runs.map((run) => run.id);
+  const [documents, findings] = await Promise.all([
+    selectIn("documents", "run_id", runIds, METRIC_COLUMNS),
+    selectIn("findings", "run_id", runIds, ["run_id", "outcome"] as const),
+  ]);
+  return runs.map((run) => {
+    const totals = runTotals(
+      documents
+        .filter((document) => document.run_id === run.id)
+        .map(documentMetrics),
+    );
+    const outcomes = findings
+      .filter((finding) => finding.run_id === run.id)
+      .map((finding) => finding.outcome);
+    const count = (outcome: string) =>
+      outcomes.filter((item) => item === outcome).length;
+    return {
+      id: run.id,
+      packSlug: run.pack_slug,
+      status: run.status,
+      createdAt: run.created_at,
+      completedAt: run.completed_at,
+      model: totals.models[0] ?? run.model,
+      costUsd: totals.costUsd,
+      tokens: totals.inputTokens + totals.outputTokens,
+      counts: {
+        pass: count("pass"),
+        fail: count("fail"),
+        needs_review: count("needs_review"),
+      },
+    };
+  });
 }

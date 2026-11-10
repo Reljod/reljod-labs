@@ -1,0 +1,178 @@
+{
+  "slug": "wd-03-hydes-mortgage-married-name",
+  "scenario": "pension_withdrawal",
+  "title": "Hydes · mortgage reduction after marriage",
+  "summary": "Meridian nurse reducing her Corran Bay mortgage by M$30,000; her plan record is still in her maiden name Yates, and the marriage certificate links the two names.",
+  "asOf": "2026-11-10",
+  "documents": [
+    {
+      "source": "withdrawal-request.html",
+      "name": "MemberLink CT-W2 W2-2026-04471.pdf",
+      "kind": "withdrawal_request_form",
+      "render": "pdf",
+      "label": {
+        "member_name": "Shanice Marie Hydes",
+        "member_number": "CT-152290",
+        "date_of_birth": "1987-11-02",
+        "withdrawal_type": "mortgage_reduction",
+        "amount_requested": 30000,
+        "property_address": "19 Sea Grape Lane, Corran Bay",
+        "payee_name": "Long Strand Building Society",
+        "payee_bank": "Long Strand Building Society",
+        "payee_account_number": "SMB-40-118265",
+        "meridian_status_declared": true,
+        "primary_residence_declared": true,
+        "signature_present": true,
+        "signed_date": "2026-10-16"
+      }
+    },
+    {
+      "source": "member-statement.html",
+      "name": "Member account statement - CT-152290.pdf",
+      "kind": "member_statement",
+      "render": "pdf",
+      "label": {
+        "member_name": "Shanice Marie Yates",
+        "member_number": "CT-152290",
+        "date_of_birth": "1987-11-02",
+        "employer_name": "Northwest Head Medical Clinic Ltd.",
+        "statement_date": "2026-10-12",
+        "total_balance": 58940.15,
+        "prior_property_withdrawals": 0,
+        "prior_withdrawals_repaid": true
+      }
+    },
+    {
+      "source": "licence-certified.html",
+      "name": "licence_certified.pdf",
+      "kind": "identity_document",
+      "render": "scan",
+      "label": {
+        "document_type": "drivers_licence",
+        "full_name": "Shanice Marie Hydes",
+        "date_of_birth": "1987-11-02",
+        "nationality": "",
+        "id_number": "DL 0592087",
+        "date_of_expiry": "2029-11-01",
+        "certified": true,
+        "certifier_name": "Dwight Oliver Powery",
+        "certifier_occupation": "Justice of the Peace",
+        "certification_date": "2026-10-14"
+      }
+    },
+    {
+      "source": "marriage-certificate.html",
+      "name": "marriage_cert.pdf",
+      "kind": "marriage_certificate",
+      "render": "scan",
+      "label": {
+        "party_one_name": "Darren Keith Hydes",
+        "party_two_name": "Shanice Marie Yates",
+        "date_of_marriage": "2021-06-19",
+        "certificate_number": "M 2021/0388"
+      }
+    },
+    {
+      "source": "status-certificate.html",
+      "name": "status_certificate.pdf",
+      "kind": "meridian_status_evidence",
+      "render": "scan",
+      "label": {
+        "full_name": "Shanice Marie Yates",
+        "date_of_birth": "1987-11-02",
+        "status_basis": "descent",
+        "document_number": "MSPR/D/2009/0417",
+        "issue_date": "2009-03-11"
+      }
+    },
+    {
+      "source": "mortgage-statement.html",
+      "name": "SMBS_statement_Sep2026.pdf",
+      "kind": "mortgage_statement",
+      "render": "pdf",
+      "label": {
+        "borrower_names": [
+          "Darren Keith Hydes",
+          "Shanice Marie Hydes"
+        ],
+        "lender_name": "Long Strand Building Society",
+        "loan_account_number": "SMB-40-118265",
+        "outstanding_balance": 223418.07,
+        "property_address": "19 Sea Grape Lane, Corran Bay",
+        "statement_date": "2026-09-30"
+      }
+    }
+  ],
+  "expected": {
+    "pipeline": "pension_withdrawal",
+    "recommendation": "approve",
+    "missingKinds": [],
+    "checks": [
+      {
+        "id": "identity_matches_record",
+        "outcome": "pass",
+        "note": "Licence and form read Shanice Marie Hydes, the record reads Shanice Marie Yates; marriage certificate M 2021/0388 (19 Jun 2021) links the names and the date of birth 2 Nov 1987 matches"
+      },
+      {
+        "id": "id_in_date",
+        "outcome": "pass",
+        "note": "Licence DL 0592087 expires 1 Nov 2029"
+      },
+      {
+        "id": "id_certified",
+        "outcome": "pass",
+        "note": "Certified by Dwight Oliver Powery, Justice of the Peace, on 14 Oct 2026"
+      },
+      {
+        "id": "meridian_status",
+        "outcome": "pass",
+        "note": "Certificate MSPR/D/2009/0417: Meridian by descent, in the maiden name Yates"
+      },
+      {
+        "id": "withdrawal_purpose_supported",
+        "outcome": "pass",
+        "note": "Reduction of the mortgage on her home"
+      },
+      {
+        "id": "amount_within_cap",
+        "outcome": "pass",
+        "note": "M$30,000 is under M$50,000"
+      },
+      {
+        "id": "amount_within_balance",
+        "outcome": "pass",
+        "note": "M$30,000 against a balance of M$58,940.15 at 12 Oct 2026"
+      },
+      {
+        "id": "purpose_evidence_consistent",
+        "outcome": "pass",
+        "note": "Mortgage statement SMB-40-118265 is for 19 Sea Grape Lane, Corran Bay, borrowers include Shanice Marie Hydes, M$223,418.07 outstanding"
+      },
+      {
+        "id": "lender_permitted",
+        "outcome": "pass",
+        "note": "Long Strand Building Society is a building society"
+      },
+      {
+        "id": "primary_residence",
+        "outcome": "pass",
+        "note": "Primary residence declared"
+      },
+      {
+        "id": "prior_withdrawals_repaid",
+        "outcome": "pass",
+        "note": "No earlier withdrawals"
+      },
+      {
+        "id": "payee_permitted",
+        "outcome": "pass",
+        "note": "Paid to the lender's loan account SMB-40-118265"
+      },
+      {
+        "id": "screening_clear",
+        "outcome": "pass",
+        "note": "No watchlist matches"
+      }
+    ]
+  }
+}

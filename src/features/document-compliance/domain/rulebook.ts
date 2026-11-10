@@ -34,7 +34,7 @@ export const individualOnboarding: Rulebook = {
   id: "individual-onboarding",
   version: "1",
   title: "Individual onboarding",
-  jurisdiction: "Cayman-style AML/CFT customer due diligence",
+  jurisdiction: "Meridian AML/CFT customer due diligence",
   proofOfAddressMaxAgeMonths: 3,
   minFieldConfidence: 0.6,
   requirements: [

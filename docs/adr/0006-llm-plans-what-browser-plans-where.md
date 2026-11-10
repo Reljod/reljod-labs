@@ -9,3 +9,4 @@ Ledger answers a visitor's question by rebuilding the site into an answer page. 
 - A stored Build keeps paths and excerpts, not words. Plans are validated again on read, so a source the site no longer shows is dropped from replays instead of rendering stale text.
 - Adding content to `src/content` adds Content blocks automatically, but a new piece only becomes cuttable once its section marks it with `source(...)`.
 - Stubbed e2e runs replace the model with canned plans that go through the same validation, storage and stream; only requests carrying the e2e bypass token can reach them.
+- ADR 0007 amends this: Joins, the model's few linking words between blocks, are the only words on the answer page that are not the site's own.

@@ -1,0 +1,160 @@
+{
+  "slug": "wd-12-tibbetts-earlier-withdrawal",
+  "scenario": "pension_withdrawal",
+  "title": "Tibbetts · second withdrawal",
+  "summary": "Meridian (by marriage) member in East Reach asks for M$25,000 off her development bank mortgage; her 2021 housing withdrawal of M$18,000 has not been repaid since January 2023.",
+  "asOf": "2026-11-03",
+  "documents": [
+    {
+      "source": "withdrawal-request.html",
+      "name": "MemberLink CT-W2 W2-2026-04502.pdf",
+      "kind": "withdrawal_request_form",
+      "render": "pdf",
+      "label": {
+        "member_name": "Glenda Mae Tibbetts",
+        "member_number": "CT-097152",
+        "date_of_birth": "1975-12-12",
+        "withdrawal_type": "mortgage_reduction",
+        "amount_requested": 25000,
+        "property_address": "22 Sea View Road, East Reach",
+        "payee_name": "Islands Housing Development Bank",
+        "payee_bank": "Islands Housing Development Bank",
+        "payee_account_number": "IHDB-HL-06-2271",
+        "meridian_status_declared": true,
+        "primary_residence_declared": true,
+        "signature_present": true,
+        "signed_date": "2026-10-19"
+      }
+    },
+    {
+      "source": "member-statement.html",
+      "name": "Corallis Q3 2026 statement - CT-097152.pdf",
+      "kind": "member_statement",
+      "render": "pdf",
+      "label": {
+        "member_name": "Glenda Mae Tibbetts",
+        "member_number": "CT-097152",
+        "date_of_birth": "1975-12-12",
+        "employer_name": "Calder Bay Fisheries Ltd.",
+        "statement_date": "2026-09-30",
+        "total_balance": 64280.91,
+        "prior_property_withdrawals": 18000,
+        "prior_withdrawals_repaid": false
+      }
+    },
+    {
+      "source": "licence-certified.html",
+      "name": "DL_certified.pdf",
+      "kind": "identity_document",
+      "render": "scan",
+      "label": {
+        "document_type": "drivers_licence",
+        "full_name": "Glenda Mae Tibbetts",
+        "date_of_birth": "1975-12-12",
+        "nationality": "",
+        "id_number": "DL 0447610",
+        "date_of_expiry": "2027-12-11",
+        "certified": true,
+        "certifier_name": "Sandra Yvette McLaughlin",
+        "certifier_occupation": "Bank Officer",
+        "certification_date": "2026-10-08"
+      }
+    },
+    {
+      "source": "status-certificate.html",
+      "name": "status_cert.pdf",
+      "kind": "meridian_status_evidence",
+      "render": "scan",
+      "label": {
+        "full_name": "Glenda Mae Tibbetts",
+        "date_of_birth": "1975-12-12",
+        "status_basis": "marriage",
+        "document_number": "MSPR/M/2014/0219",
+        "issue_date": "2014-07-22"
+      }
+    },
+    {
+      "source": "mortgage-statement.html",
+      "name": "IHDB_Sep2026.pdf",
+      "kind": "mortgage_statement",
+      "render": "pdf",
+      "label": {
+        "borrower_names": [
+          "Glenda Mae Tibbetts"
+        ],
+        "lender_name": "Islands Housing Development Bank",
+        "loan_account_number": "IHDB-HL-06-2271",
+        "outstanding_balance": 98247.16,
+        "property_address": "22 Sea View Road, East Reach",
+        "statement_date": "2026-09-30"
+      }
+    }
+  ],
+  "expected": {
+    "pipeline": "pension_withdrawal",
+    "recommendation": "refer",
+    "missingKinds": [],
+    "checks": [
+      {
+        "id": "prior_withdrawals_repaid",
+        "outcome": "fail",
+        "note": "M$18,000 withdrawn 15 Apr 2021; M$3,150 repaid, M$14,850 outstanding, no repayment since January 2023"
+      },
+      {
+        "id": "amount_within_cap",
+        "outcome": "pass",
+        "note": "M$25,000 requested; with the earlier M$18,000 the total is M$43,000, under M$50,000"
+      },
+      {
+        "id": "amount_within_balance",
+        "outcome": "pass",
+        "note": "M$25,000 against a balance of M$64,280.91"
+      },
+      {
+        "id": "identity_matches_record",
+        "outcome": "pass",
+        "note": "Licence, form and statement read Glenda Mae Tibbetts, born 12 Dec 1975"
+      },
+      {
+        "id": "id_in_date",
+        "outcome": "pass",
+        "note": "Licence DL 0447610 expires 11 Dec 2027"
+      },
+      {
+        "id": "id_certified",
+        "outcome": "pass",
+        "note": "Certified by Sandra Yvette McLaughlin, Bank Officer, on 8 Oct 2026"
+      },
+      {
+        "id": "meridian_status",
+        "outcome": "pass",
+        "note": "Certificate MSPR/M/2014/0219, Meridian by marriage"
+      },
+      {
+        "id": "withdrawal_purpose_supported",
+        "outcome": "pass",
+        "note": "Mortgage reduction on her home"
+      },
+      {
+        "id": "purpose_evidence_consistent",
+        "outcome": "pass",
+        "note": "IHDB statement IHDB-HL-06-2271 for 22 Sea View Road, East Reach, borrower Glenda Mae Tibbetts, M$98,247.16 outstanding"
+      },
+      {
+        "id": "lender_permitted",
+        "outcome": "pass",
+        "note": "Islands Housing Development Bank is a development bank"
+      },
+      {
+        "id": "primary_residence",
+        "outcome": "pass",
+        "note": "Primary residence declared"
+      },
+      {
+        "id": "payee_permitted",
+        "outcome": "pass",
+        "note": "Paid to the lender's loan account IHDB-HL-06-2271"
+      }
+    ]
+  }
+}

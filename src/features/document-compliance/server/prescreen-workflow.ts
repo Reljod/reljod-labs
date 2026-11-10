@@ -4,10 +4,11 @@ import { fieldChecks } from "../domain/field-checks";
 import { individualOnboarding } from "../domain/rulebook";
 import type { DocumentKind, ExtractedDocument, Span } from "../domain/types";
 import { correctSpans, verifyReading } from "../domain/verify";
+import type { ReadUsage } from "../metrics";
 import { findPack, type Pack, type PackDocument, storagePath } from "../packs";
 import type { ScanEvent } from "../scan-events";
 import { findingViews } from "../view";
-import { extractDocument } from "./extract";
+import { extractDocument, type RawExtraction } from "./extract";
 import { type ParsedDocument, parseDocument } from "./parsers";
 import {
   failRun,
@@ -40,13 +41,14 @@ function packAndDocument(packSlug: string, kind: DocumentKind) {
 
 /**
  * Runs one stage of one Document inside a step, streaming its start (or retry),
- * finish and failure so the run page can show them as they happen.
+ * finish and failure so the run page can show them as they happen. Returns the
+ * stage's value and how long it took.
  */
 async function staged<T>(
   kind: DocumentKind,
   stage: "parse" | "read",
   work: () => Promise<{ value: T; detail: string }>,
-): Promise<T> {
+): Promise<{ value: T; ms: number }> {
   const { attempt } = getStepMetadata();
   const started = Date.now();
   await emit({
@@ -58,15 +60,9 @@ async function staged<T>(
   });
   try {
     const { value, detail } = await work();
-    await emit({
-      type: "stage",
-      kind,
-      stage,
-      state: "done",
-      ms: Date.now() - started,
-      detail,
-    });
-    return value;
+    const ms = Date.now() - started;
+    await emit({ type: "stage", kind, stage, state: "done", ms, detail });
+    return { value, ms };
   } catch (error) {
     await emit({
       type: "stage",
@@ -103,14 +99,16 @@ function pageImages(pack: Pack, document: PackDocument) {
   );
 }
 
+type TimedParse = ParsedDocument & { parseMs: number };
+
 /** The Document's text and where each piece sits on the page (ADR 0004). */
 async function parseStep(
   packSlug: string,
   kind: DocumentKind,
-): Promise<ParsedDocument> {
+): Promise<TimedParse> {
   "use step";
   const { pack, document } = packAndDocument(packSlug, kind);
-  return staged(kind, "parse", async () => {
+  const { value, ms } = await staged(kind, "parse", async () => {
     const [file, pages] = await Promise.all([
       download(storagePath(pack.slug, document.file)),
       pageImages(pack, document),
@@ -137,8 +135,16 @@ async function parseStep(
       detail: `${parsed.parser} · ${parsed.spans.length} spans`,
     };
   });
+  return { ...value, parseMs: ms };
 }
 parseStep.maxRetries = 2;
+
+/** What reading a Document cost and returned, kept with the run (ADR 0007). */
+export type ReadRecord = {
+  usage: ReadUsage;
+  readMs: number;
+  raw: RawExtraction;
+};
 
 /**
  * The model corrects OCR'd Span text and reads each field as Span references,
@@ -150,10 +156,10 @@ async function readStep(
   kind: DocumentKind,
   ocrSpans: Span[],
   ocr: boolean,
-): Promise<ExtractedDocument> {
+): Promise<{ extracted: ExtractedDocument; read: ReadRecord }> {
   "use step";
   const { pack, document } = packAndDocument(packSlug, kind);
-  const extracted = await staged(kind, "read", async () => {
+  const { value: read, ms } = await staged(kind, "read", async () => {
     const extraction = await extractDocument({
       kind,
       spans: ocrSpans,
@@ -174,10 +180,13 @@ async function readStep(
       judgments: extraction.judgments,
     };
     return {
-      value,
+      value: { extracted: value, usage: extraction.usage, raw: extraction.raw },
       detail: `${value.fields.length} fields${applied.length > 0 ? ` · ${applied.length} OCR fixes` : ""}`,
     };
   });
+  const { extracted, usage, raw } = read;
+  // Only the attempt that succeeded is kept, so only its usage is streamed.
+  await emit({ type: "usage", kind, usage });
 
   await emit({
     type: "checks",
@@ -189,13 +198,14 @@ async function readStep(
     }),
     judgments: extracted.judgments,
   });
-  return extracted;
+  return { extracted, read: { usage, readMs: ms, raw } };
 }
 readStep.maxRetries = 2;
 
 type ProcessedDocument = {
-  parsed: Omit<ParsedDocument, "spans">;
+  parsed: Omit<TimedParse, "spans">;
   extracted: ExtractedDocument;
+  read: ReadRecord;
 };
 
 /** Evaluates the Rulebook, persists the whole chain and ends the stream. */
@@ -210,7 +220,7 @@ async function saveStep(
   const rulebook = individualOnboarding;
 
   const saved = new Map<DocumentKind, SavedDocument>();
-  for (const { parsed, extracted } of processed) {
+  for (const { parsed, extracted, read } of processed) {
     const document = pack.documents.find(
       (item) => item.kind === extracted.kind,
     );
@@ -225,6 +235,8 @@ async function saveStep(
           sourceFormat: document.sourceFormat,
           parser: parsed.parser,
           pageCount: parsed.pageCount,
+          parseMs: parsed.parseMs,
+          ...read,
         },
         extracted,
       ),
@@ -266,15 +278,13 @@ export async function prescreenWorkflow(input: {
     const processed = await Promise.all(
       kinds.map(async (kind): Promise<ProcessedDocument> => {
         const { spans, ...parsed } = await parseStep(packSlug, kind);
-        return {
-          parsed,
-          extracted: await readStep(
-            packSlug,
-            kind,
-            spans,
-            parsed.parser === "tesseract",
-          ),
-        };
+        const { extracted, read } = await readStep(
+          packSlug,
+          kind,
+          spans,
+          parsed.parser === "tesseract",
+        );
+        return { parsed, extracted, read };
       }),
     );
     await markStatus(runId, "evaluating");

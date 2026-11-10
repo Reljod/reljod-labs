@@ -182,3 +182,34 @@
 @utility eyebrow {
   @apply font-mono text-xs font-medium tracking-[0.1em] uppercase;
 }
+
+/* Casework desk preview: each job lights up in turn, then the stamp lands. */
+@keyframes node-lit {
+  0%,
+  8% {
+    background-color: var(--color-paper);
+    color: var(--color-ink-muted);
+  }
+  12%,
+  100% {
+    background-color: var(--color-ink);
+    color: var(--color-paper);
+  }
+}
+
+@keyframes preview-stamp {
+  0%,
+  72% {
+    opacity: 0;
+    transform: scale(2.4) rotate(-14deg);
+  }
+  78%,
+  96% {
+    opacity: 1;
+    transform: scale(1) rotate(-8deg);
+  }
+  100% {
+    opacity: 0;
+    transform: scale(1) rotate(-8deg);
+  }
+}

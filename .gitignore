@@ -51,3 +51,6 @@ __pycache__/
 /playwright-report/
 /playwright/.cache/
 /.swc
+
+# Rendered casework fixtures (sources are committed; `pnpm seed:casework` renders and uploads them)
+/fixtures/casework/out/

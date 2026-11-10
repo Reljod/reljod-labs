@@ -1,0 +1,117 @@
+{
+  "slug": "sc-08-villanueva-fraud-conviction",
+  "scenario": "screening_review",
+  "title": "Villanueva · fraud conviction and PEP namesake",
+  "summary": "A Filipino accounts supervisor hit twice: an adverse-media profile on a 2021 estafa conviction of a Pasig cooperative treasurer, which is her (same name, nickname, age and former job), and a PEP record for a councillor born in 1958, which is not: refer.",
+  "asOf": "2026-11-10",
+  "documents": [
+    {
+      "source": "alert.html",
+      "name": "Tidereach case report TMK-A-26-119044.pdf",
+      "kind": "screening_alert",
+      "render": "pdf",
+      "label": {
+        "alert_id": "TMK-A-26-119044",
+        "customer_name": "Maria Teresa Dimaculangan Villanueva",
+        "customer_id": "CTP-C-547702",
+        "screened_on": "2026-11-09",
+        "hits": [
+          {
+            "hit_name": "Ma. Teresa D. Villanueva",
+            "list_type": "adverse_media",
+            "list_source": "Global Adverse Media Index (synthetic)",
+            "match_score": 95,
+            "hit_date_of_birth": "1979",
+            "hit_nationality": "Philippines",
+            "hit_reference": "WL-AM-0228"
+          },
+          {
+            "hit_name": "Maria Teresa Villanueva",
+            "list_type": "pep",
+            "list_source": "Global PEP Register (synthetic)",
+            "match_score": 81,
+            "hit_date_of_birth": "08 Sep 1958",
+            "hit_nationality": "Philippines",
+            "hit_reference": "WL-PEP-0342"
+          }
+        ]
+      }
+    },
+    {
+      "source": "profile.html",
+      "name": "CoralCore KYC profile CTP-C-547702.pdf",
+      "kind": "customer_profile",
+      "render": "pdf",
+      "label": {
+        "customer_name": "Maria Teresa Dimaculangan Villanueva",
+        "customer_id": "CTP-C-547702",
+        "date_of_birth": "1979-02-14",
+        "nationality": "Philippines",
+        "residence": "Meridia",
+        "occupation": "Accounts supervisor",
+        "id_number": "P4471028B",
+        "other_names": [
+          "Tess Villanueva"
+        ]
+      }
+    },
+    {
+      "source": "entry-wl-am-0228.html",
+      "name": "GAMI profile WL-AM-0228.pdf",
+      "kind": "watchlist_entry",
+      "render": "pdf",
+      "label": {
+        "entry_name": "Ma. Teresa D. Villanueva",
+        "aliases": [
+          "Maria Teresa Dimaculangan Villanueva",
+          "Tess Villanueva"
+        ],
+        "date_of_birth": "1979",
+        "place_of_birth": "",
+        "nationality": "Philippines",
+        "list_source": "Global Adverse Media Index (synthetic)",
+        "listing_reason": "Convicted of estafa (fraud) for misappropriating cooperative funds, Regional Trial Court, Pasig City (2021)",
+        "reference": "WL-AM-0228"
+      }
+    },
+    {
+      "source": "article.html",
+      "name": "The Metro Pasig Chronicle clipping 2021-08-19.pdf",
+      "kind": "adverse_media_article",
+      "render": "scan",
+      "label": {
+        "headline": "Ex-coop treasurer convicted of P12-M estafa",
+        "publication": "The Metro Pasig Chronicle",
+        "published_date": "2021-08-19",
+        "subject_name": "Ma. Teresa D. Villanueva",
+        "subject_age_or_dob": "42",
+        "subject_location": "Pasig City",
+        "allegation": "Convicted of estafa over nearly P12 million of cooperative savings"
+      }
+    }
+  ],
+  "expected": {
+    "pipeline": "screening_review",
+    "recommendation": "refer",
+    "missingKinds": [],
+    "checks": [
+      {
+        "id": "screening_clear",
+        "outcome": "review",
+        "note": "Adverse media true match (fraud conviction); PEP hit discounted"
+      }
+    ],
+    "hits": [
+      {
+        "name": "Ma. Teresa D. Villanueva",
+        "disposition": "true_match",
+        "reason": "Same person. Article and index profile name Ma. Teresa D. Villanueva, known as Tess, aged 42 in Aug 2021 (born c. 1979), treasurer of the Kalayaan Workers Multi-Purpose Cooperative in Pasig City 2011-2019. The customer is Maria Teresa Dimaculangan Villanueva, alias Tess, born 14 Feb 1979 in Pasig City, whose KYC record shows the same treasurer role 2011-2019. Fraud (estafa) conviction confirmed: refer for EDD and an MLRO decision on the relationship."
+      },
+      {
+        "name": "Maria Teresa Villanueva",
+        "disposition": "false_positive",
+        "reason": "PEP record is a municipal councillor in Ilocos Norte, born 08 Sep 1958 in Laoag City; the customer was born 14 Feb 1979 in Pasig City and holds no public role. Twenty years apart. Discount."
+      }
+    ]
+  }
+}

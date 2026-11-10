@@ -1,0 +1,58 @@
+{
+  "slug": "wd-01-ebanks-first-home",
+  "scenario": "pension_withdrawal",
+  "title": "Ebanks · first home",
+  "summary": "Meridian member buying a first home in Saltmeadow, asking for M$38,500 paid to his attorney's client account; the sale agreement, status evidence and statement are not in yet.",
+  "asOf": "2026-11-10",
+  "documents": [
+    {
+      "source": "withdrawal-request.html",
+      "name": "CT-W2 withdrawal request - Ebanks.pdf",
+      "kind": "withdrawal_request_form",
+      "render": "scan",
+      "label": {
+        "member_name": "Delroy Anthony Ebanks",
+        "member_number": "CT-204417",
+        "date_of_birth": "1988-06-09",
+        "withdrawal_type": "property_purchase",
+        "amount_requested": 38500,
+        "property_address": "14 Frangipani Close, Saltmeadow",
+        "payee_name": "Rowe Whittaker Attorneys Client Account",
+        "payee_bank": "Grand Anchor Bank (Meridia)",
+        "payee_account_number": "0112-447093-01",
+        "meridian_status_declared": true,
+        "primary_residence_declared": true,
+        "signature_present": true,
+        "signed_date": "2026-10-27"
+      }
+    },
+    {
+      "source": "drivers-licence.html",
+      "name": "Licence photo.jpg",
+      "kind": "identity_document",
+      "render": "photo",
+      "label": {
+        "document_type": "drivers_licence",
+        "full_name": "Delroy Anthony Ebanks",
+        "date_of_birth": "1988-06-09",
+        "nationality": "",
+        "id_number": "DL 0738214",
+        "date_of_expiry": "2028-02-13",
+        "certified": false,
+        "certifier_name": "",
+        "certifier_occupation": "",
+        "certification_date": ""
+      }
+    }
+  ],
+  "expected": {
+    "pipeline": "pension_withdrawal",
+    "recommendation": "request_info",
+    "missingKinds": ["sale_agreement", "meridian_status_evidence", "member_statement"],
+    "checks": [
+      { "id": "id_in_date", "outcome": "pass", "note": "Licence expires 13 Feb 2028" },
+      { "id": "id_certified", "outcome": "review", "note": "A phone photo, not a certified copy" },
+      { "id": "amount_within_cap", "outcome": "pass", "note": "M$38,500 is under M$50,000" }
+    ]
+  }
+}

@@ -1,0 +1,159 @@
+{
+  "slug": "wd-11-watler-rental-duplex",
+  "scenario": "pension_withdrawal",
+  "title": "Watler · Port Selene duplex",
+  "summary": "Meridian member who lives in Fairholm is buying a tenanted duplex on a buy-to-let mortgage and did not declare it as his home; the form also gives 9 Templeton Close while the agreement is for number 11.",
+  "asOf": "2026-11-10",
+  "documents": [
+    {
+      "source": "withdrawal-request.html",
+      "name": "CT-W2 withdrawal request - Watler.pdf",
+      "kind": "withdrawal_request_form",
+      "render": "scan",
+      "label": {
+        "member_name": "Christopher Dale Watler",
+        "member_number": "CT-183420",
+        "date_of_birth": "1979-08-05",
+        "withdrawal_type": "property_purchase",
+        "amount_requested": 48000,
+        "property_address": "9 Templeton Close, Port Selene",
+        "payee_name": "Merren & Solomon Client Account",
+        "payee_bank": "Grand Anchor Bank (Meridia)",
+        "payee_account_number": "0112-583360-01",
+        "meridian_status_declared": true,
+        "primary_residence_declared": false,
+        "signature_present": true,
+        "signed_date": "2026-10-28"
+      }
+    },
+    {
+      "source": "member-statement.html",
+      "name": "Corallis Q3 2026 statement - CT-183420.pdf",
+      "kind": "member_statement",
+      "render": "pdf",
+      "label": {
+        "member_name": "Christopher Dale Watler",
+        "member_number": "CT-183420",
+        "date_of_birth": "1979-08-05",
+        "employer_name": "Mangrove Point Insurance Brokers Ltd.",
+        "statement_date": "2026-09-30",
+        "total_balance": 121033.47,
+        "prior_property_withdrawals": 0,
+        "prior_withdrawals_repaid": true
+      }
+    },
+    {
+      "source": "passport-certified.html",
+      "name": "Watler passport notarised.pdf",
+      "kind": "identity_document",
+      "render": "scan",
+      "label": {
+        "document_type": "passport",
+        "full_name": "Christopher Dale Watler",
+        "date_of_birth": "1979-08-05",
+        "nationality": "Meridian",
+        "id_number": "C0291553",
+        "date_of_expiry": "2029-03-14",
+        "certified": true,
+        "certifier_name": "Joanne Elizabeth Kirkconnell",
+        "certifier_occupation": "Notary Public",
+        "certification_date": "2026-10-02"
+      }
+    },
+    {
+      "source": "birth-certificate.html",
+      "name": "Watler birth cert.pdf",
+      "kind": "meridian_status_evidence",
+      "render": "scan",
+      "label": {
+        "full_name": "Christopher Dale Watler",
+        "date_of_birth": "1979-08-05",
+        "status_basis": "birth",
+        "document_number": "PS 1979/0882",
+        "issue_date": "2003-05-19"
+      }
+    },
+    {
+      "source": "sale-agreement.html",
+      "name": "ASP 11 Templeton Close - executed.pdf",
+      "kind": "sale_agreement",
+      "render": "pdf",
+      "label": {
+        "purchaser_names": [
+          "Christopher Dale Watler"
+        ],
+        "vendor_names": [
+          "Ravindra Prasad Sharma",
+          "Meena Sharma"
+        ],
+        "property_address": "11 Templeton Close, Port Selene",
+        "block_parcel": "Port Selene South Block 14BG Parcel 302",
+        "purchase_price": 585000,
+        "deposit": 58500,
+        "completion_date": "2026-12-18"
+      }
+    }
+  ],
+  "expected": {
+    "pipeline": "pension_withdrawal",
+    "recommendation": "refer",
+    "missingKinds": [],
+    "checks": [
+      {
+        "id": "primary_residence",
+        "outcome": "fail",
+        "note": "Primary residence box left blank; the duplex is sold subject to two tenancies (M$1,950 and M$1,850 a month) and financed by a buy-to-let mortgage; he lives in Fairholm"
+      },
+      {
+        "id": "purpose_evidence_consistent",
+        "outcome": "fail",
+        "note": "Form gives 9 Templeton Close, Port Selene; the agreement is for 11 Templeton Close (Port Selene South Block 14BG Parcel 302)"
+      },
+      {
+        "id": "identity_matches_record",
+        "outcome": "pass",
+        "note": "Passport, form and statement read Christopher Dale Watler, born 5 Aug 1979"
+      },
+      {
+        "id": "id_in_date",
+        "outcome": "pass",
+        "note": "Passport C0291553 expires 14 Mar 2029"
+      },
+      {
+        "id": "id_certified",
+        "outcome": "pass",
+        "note": "Notarised by Joanne Elizabeth Kirkconnell, Notary Public, on 2 Oct 2026"
+      },
+      {
+        "id": "meridian_status",
+        "outcome": "pass",
+        "note": "Birth certificate PS 1979/0882, born in Port Selene to Meridian parents"
+      },
+      {
+        "id": "withdrawal_purpose_supported",
+        "outcome": "pass",
+        "note": "Property purchase is an allowed purpose; whether it is his home is the primary_residence question"
+      },
+      {
+        "id": "amount_within_cap",
+        "outcome": "pass",
+        "note": "M$48,000 is under M$50,000"
+      },
+      {
+        "id": "amount_within_balance",
+        "outcome": "pass",
+        "note": "M$48,000 against a balance of M$121,033.47"
+      },
+      {
+        "id": "prior_withdrawals_repaid",
+        "outcome": "pass",
+        "note": "No earlier withdrawals"
+      },
+      {
+        "id": "payee_permitted",
+        "outcome": "pass",
+        "note": "Merren & Solomon Client Account, the purchaser's attorneys named in the agreement"
+      }
+    ]
+  }
+}

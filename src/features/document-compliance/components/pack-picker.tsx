@@ -1,7 +1,7 @@
 "use client";
 
 import { useMutation } from "@tanstack/react-query";
-import { motion } from "motion/react";
+import { AnimatePresence, motion, useReducedMotion } from "motion/react";
 import { useRouter } from "next/navigation";
 import { useEffect, useState, useTransition } from "react";
 import type { Pack } from "../packs";
@@ -48,7 +48,7 @@ export function PackPicker({ packs }: { packs: PackSummary[] }) {
       const base = "/demos/document-compliance/runs";
       if (result.status === "started") {
         startNavigation(() => router.push(`${base}/${result.runId}`));
-      } else if (result.runId) {
+      } else if (result.status === "limited" && result.runId) {
         const href = `${base}/${result.runId}?replay=limited`;
         startNavigation(() => router.push(href));
       } else setNotice(result.message);
@@ -209,16 +209,56 @@ export function PackPicker({ packs }: { packs: PackSummary[] }) {
               </button>
             ))}
           </div>
-          <PageFrame
-            src={pageImageUrl(pack.slug, current.file)}
-            alt={`${pack.title}: ${DOCUMENT_LABELS[current.kind]}, page ${current.page}`}
-            hasPrevious={pageIndex > 0}
-            hasNext={pageIndex < pages.length - 1}
-            onPrevious={() => setPageIndex((index) => index - 1)}
-            onNext={() => setPageIndex((index) => index + 1)}
-          />
+          <div className="relative flex flex-col lg:min-h-0 lg:flex-1">
+            <PageFrame
+              src={pageImageUrl(pack.slug, current.file)}
+              alt={`${pack.title}: ${DOCUMENT_LABELS[current.kind]}, page ${current.page}`}
+              hasPrevious={pageIndex > 0}
+              hasNext={pageIndex < pages.length - 1}
+              onPrevious={() => setPageIndex((index) => index - 1)}
+              onNext={() => setPageIndex((index) => index + 1)}
+            />
+            <AnimatePresence>
+              {starting ? <StartingScan key="scan" /> : null}
+            </AnimatePresence>
+          </div>
         </section>
       ) : null}
     </div>
+  );
+}
+
+/** Laid over the preview while a run starts: the pack goes under the scanner. */
+function StartingScan() {
+  const reduceMotion = useReducedMotion() ?? false;
+  return (
+    <motion.div
+      aria-hidden
+      data-testid="starting-scan"
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      exit={{ opacity: 0 }}
+      className="pointer-events-none absolute inset-0 overflow-hidden rounded-sm bg-federal-blue/10"
+    >
+      <div className="absolute inset-0 bg-[linear-gradient(var(--color-federal-blue)_1px,transparent_1px),linear-gradient(90deg,var(--color-federal-blue)_1px,transparent_1px)] bg-[length:24px_24px] opacity-10" />
+      {reduceMotion ? null : (
+        <motion.div
+          className="absolute inset-x-0 h-32"
+          initial={{ top: "-25%" }}
+          animate={{ top: "100%" }}
+          transition={{
+            duration: 1.4,
+            ease: "easeInOut",
+            repeat: Number.POSITIVE_INFINITY,
+          }}
+        >
+          <div className="h-full bg-gradient-to-b from-transparent via-clear-sky/30 to-clear-sky/60" />
+          <div className="h-1 bg-federal-blue shadow-[0_0_18px_4px_var(--color-clear-sky)]" />
+        </motion.div>
+      )}
+      <span className="eyebrow absolute bottom-3 left-3 rounded-sm bg-ink px-2 py-1 text-paper">
+        Scanning pack…
+      </span>
+    </motion.div>
   );
 }

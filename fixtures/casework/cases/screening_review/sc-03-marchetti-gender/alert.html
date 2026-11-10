@@ -1,0 +1,123 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8">
+<link rel="stylesheet" href="../../../templates/base.css">
+<style>
+.sw { padding:0; font:9.3pt/1.35 "Liberation Sans",sans-serif; color:#1d2733; }
+.sw-top { background:#18222f; color:#cfd8e3; display:flex; align-items:center; gap:22px; padding:9px .45in; font-size:8.3pt; }
+.sw-logo { display:flex; align-items:center; gap:8px; color:#fff; font:700 13pt "Liberation Sans",sans-serif; }
+.sw-logo small { font:400 7.5pt "Liberation Sans",sans-serif; color:#8fa3b8; }
+.sw-nav { flex:1; color:#9fb2c6; }
+.sw-body { padding:12px .45in 0; }
+.sw-title { display:flex; align-items:center; gap:12px; border-bottom:1px solid #d5dce4; padding-bottom:9px; }
+.sw-title h1 { font:700 15pt "Liberation Sans",sans-serif; margin:0; }
+.pill { font:700 7.5pt "Liberation Sans",sans-serif; padding:3px 8px; border-radius:10px; background:#fff3cd; color:#7a5a00; border:1px solid #e6c65a; letter-spacing:.04em; }
+.pill.grey { background:#eef2f6; color:#4a5a6b; border-color:#c9d3dd; }
+.risk { margin-left:auto; display:flex; align-items:center; gap:8px; }
+.risk b { font:700 19pt "Liberation Sans",sans-serif; color:#fff; background:#c0392b; border-radius:6px; padding:2px 10px; }
+.risk.med b { background:#d68910; }
+.risk span { font-size:7.8pt; color:#5b6b7c; width:78px; line-height:1.2; }
+.meta { display:grid; grid-template-columns:repeat(4,1fr); border:1px solid #d5dce4; border-right:0; margin-top:10px; }
+.meta div { padding:4px 8px; border-right:1px solid #e1e7ed; border-bottom:1px solid #e1e7ed; min-height:32px; }
+.meta div:nth-last-child(-n+4) { border-bottom:0; }
+.meta b { display:block; font:400 6.8pt "Liberation Sans",sans-serif; text-transform:uppercase; color:#6b7b8c; letter-spacing:.05em; }
+.sw h2 { font:700 10pt "Liberation Sans",sans-serif; margin:12px 0 5px; color:#18222f; display:flex; justify-content:space-between; }
+.sw h2 small { font:400 7.8pt "Liberation Sans",sans-serif; color:#6b7b8c; }
+table.hits { width:100%; font-size:8.6pt; }
+table.hits th { background:#eef2f6; text-align:left; font:700 7pt "Liberation Sans",sans-serif; text-transform:uppercase; color:#4a5a6b; padding:5px 6px; border-bottom:2px solid #c9d3dd; }
+table.hits td { padding:6px; border-bottom:1px solid #e1e7ed; vertical-align:top; }
+table.hits td.n { font-weight:700; }
+table.hits .via { display:block; font-weight:400; font-size:7.5pt; color:#5b6b7c; margin-top:2px; }
+mark { background:#ffe58a; color:inherit; padding:0 1px; }
+td.m { background:#fff2b3; font-weight:700; }
+td.p { background:#fff8db; }
+td.x, td.u { color:#46525e; }
+.score { display:flex; align-items:center; gap:6px; font-weight:700; }
+.bar { width:54px; height:7px; background:#e3e8ee; border-radius:4px; overflow:hidden; }
+.bar i { display:block; height:100%; background:#c0392b; }
+.chip { display:inline-block; font-size:6.8pt; border:1px solid #c9a227; background:#fff6d1; border-radius:3px; padding:0 4px; margin:1px 2px 0 0; }
+.chip.off { border-color:#c9d3dd; background:#f3f5f8; color:#6b7b8c; }
+.legend { font-size:7.5pt; color:#5b6b7c; margin-top:5px; }
+.legend i { display:inline-block; width:10px; height:10px; vertical-align:-1px; margin:0 3px 0 10px; border:1px solid #d8c070; }
+.review { display:grid; grid-template-columns:1.1fr 2fr; gap:14px; margin-top:12px; }
+.input { margin-top:12px; }
+.input table { width:100%; font-size:8.3pt; }
+.input td { padding:3px 6px; border-bottom:1px solid #eef2f6; }
+.input td:first-child { color:#6b7b8c; width:22%; }
+.box { border:1px solid #d5dce4; border-radius:4px; padding:7px 9px; font-size:8.3pt; }
+.box h4 { margin:0 0 5px; font:700 7.5pt "Liberation Sans",sans-serif; text-transform:uppercase; color:#4a5a6b; letter-spacing:.05em; }
+.cb { display:inline-block; width:10px; height:10px; border:1px solid #6b7b8c; margin-right:5px; vertical-align:-1px; }
+.log { font:7.8pt/1.45 "DejaVu Sans Mono",monospace; color:#334; }
+.sw-foot { position:absolute; left:.45in; right:.45in; bottom:.5in; font-size:7.3pt; color:#5b6b7c; border-top:1px solid #d5dce4; padding-top:5px; display:flex; justify-content:space-between; gap:20px; }
+</style>
+</head>
+<body>
+<section class="page landscape sw">
+  <div class="sw-top">
+    <div class="sw-logo"><svg width="22" height="24" viewBox="0 0 22 24"><path d="M11 1 L20 5 V11 C20 17 16 21 11 23 C6 21 2 17 2 11 V5 Z" fill="#2e86c1" stroke="#9fd0f0" stroke-width="1.2"/><circle cx="11" cy="11.5" r="4.2" fill="#18222f"/><circle cx="11" cy="11.5" r="1.8" fill="#f4d03f"/></svg><span>Sentinel Watch</span><small>by Halyard Risk Systems · v7.4.2</small></div>
+    <div class="sw-nav">Case Manager &rsaquo; Alerts &rsaquo; Alert detail</div>
+    <div>Corallis Trust &amp; Pensions · Compliance · l1.analyst02</div>
+  </div>
+  <div class="sw-body">
+    <div class="sw-title">
+      <h1>Alert SW-26-1103-00377</h1>
+      <span class="pill">OPEN · LEVEL 1 REVIEW</span>
+      <span class="pill grey">PERIODIC RESCREEN</span>
+      <div class="risk"><b>92</b><span>Alert risk score (0-100)</span></div>
+    </div>
+    <div class="meta">
+      <div><b>Customer name</b>Andrea Giulia Marchetti</div>
+      <div><b>Customer ID</b>CTP-C-377054</div>
+      <div><b>Date of birth (record)</b>1977-10-15</div>
+      <div><b>Nationality (record)</b>Italy</div>
+      <div><b>Country of residence</b>Meridia</div>
+      <div><b>Business unit</b>Brokerage</div>
+      <div><b>Screening run</b>Nightly full CSL-SYN</div>
+      <div><b>Screened on</b>2026-11-03</div>
+    </div>
+    <h2>Potential matches (1) <small>Fuzzy name threshold 75 · Rule set CTP-INDV-03</small></h2>
+    <table class="hits">
+      <tr><th>#</th><th>Matched name</th><th>List type</th><th>Source</th><th>Reference</th><th>Match score</th><th>DOB (list)</th><th>Nationality (list)</th><th>Matched on</th></tr>
+      <tr>
+      <td>1</td>
+      <td class="n"><mark>Andrea</mark> <mark>MARCHETTI</mark></td>
+      <td>Sanctions</td>
+      <td>Consolidated Sanctions List (synthetic)</td>
+      <td>WL-SAN-0131</td>
+      <td><div class="score">92<div class="bar"><i style="width:92%"></i></div></div></td>
+      <td class="p">1977</td>
+      <td class="m">Italy</td>
+      <td><span class="chip">Name</span><span class="chip">YOB</span><span class="chip">Nationality</span></td>
+    </tr>
+    </table>
+    <div class="legend">Highlighting: <i style="background:#fff2b3"></i>field agrees with customer record <i style="background:#fff8db"></i>partial agreement (year only) <i style="background:#ffe58a"></i>matched name token</div>
+    <div class="box input"><h4>Screening input</h4>
+      <table>
+        <tr><td>Names screened</td><td>Andrea Giulia Marchetti</td></tr>
+        <tr><td>Date of birth sent</td><td>1977-10-15</td></tr>
+        <tr><td>Country attributes</td><td>Nationality: Italy · Residence: Meridia</td></tr>
+        <tr><td>Lists screened</td><td>Sanctions (CSL-SYN) · PEP (CPR-SYN, GPR-SYN) · Adverse media (GAMI-SYN)</td></tr>
+        <tr><td>Suppression rules</td><td>None applied · no prior good-guy decision for this customer and list record</td></tr>
+      </table>
+    </div>
+    <div class="review">
+      <div class="box"><h4>Analyst decision</h4>
+        <div><span class="cb"></span>Discount as false positive</div>
+        <div><span class="cb"></span>Confirm true match</div>
+        <div><span class="cb"></span>Escalate to Level 2 / MLRO</div>
+        <div style="margin-top:5px;color:#6b7b8c">Reason: <i>(not yet recorded)</i></div>
+      </div>
+      <div class="box"><h4>Alert history</h4>
+        <div class="log">2026-11-03 02:09  Alert generated: full rescreen<br>2026-11-03 02:09  Auto-assigned: L1 queue<br>2026-11-10 10:26  Opened by l1.analyst02</div>
+      </div>
+    </div>
+  </div>
+  <div class="sw-foot">
+    <span>List versions used: CSL-SYN 2026-11-02 · CPR-SYN 2026-11-01 · GPR-SYN 2026-11-02 · GAMI-SYN 2026-11-02</span>
+    <span>Exported 2026-11-10 10:31 · Page 1 of 1</span>
+  </div>
+  <div class="synthetic-note">Synthetic document created for a software demonstration. Corallis Trust &amp; Pensions, every person, list, product and publication named here are fictional.</div>
+</section>
+</body>
+</html>

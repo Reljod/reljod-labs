@@ -17,7 +17,7 @@ Ledger answering one question in an Ask session: taking the page apart, carrying
 _Avoid_: Run, response, turn
 
 **Build plan**:
-The ordered steps Ledger follows for one Build, and the short answer he says in chat. Names Content blocks and what happens to each, never where things are on screen.
+The ordered steps Ledger follows for one Build, and the short answer he says in chat. Names Content blocks, what happens to each and the Join before it, never where things are on screen.
 _Avoid_: Script, choreography, actions
 
 **Content block**:
@@ -28,6 +28,10 @@ _Avoid_: Card, chunk, section, widget
 The empty space Ledger places Content blocks onto, in answer order, during a Build.
 _Avoid_: Canvas, stage, workspace
 
+**Join**:
+Ledger's own few linking words before a Content block on the answer page, so the placed blocks read in order as one sentence. A Join never carries a fact: the facts stay in the blocks.
+_Avoid_: Connector, glue, filler
+
 **Reform**:
-The closing beat of a Build, when the placed Content blocks reshape into one answer page that reads as a whole.
+The closing beat of a Build, when the placed Content blocks line up between their Joins as one answer sentence, with each piece shown in full beneath it.
 _Avoid_: Morph, transform, render

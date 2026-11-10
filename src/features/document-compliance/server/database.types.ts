@@ -1,6 +1,6 @@
 /**
  * Types for the `document_compliance` schema, written by hand to match
- * `supabase/migrations/20261107120000_document_compliance.sql` (the type
+ * `supabase/migrations/` for the `document_compliance` schema (the type
  * generator only covers `public`). Update both together.
  */
 
@@ -36,6 +36,7 @@ type RunRow = {
   error: string | null;
   workflow_run_id: string | null;
   visitor_hash: string;
+  session_id: string | null;
   created_at: string;
   completed_at: string | null;
   expires_at: string;
@@ -50,6 +51,17 @@ type DocumentRow = {
   source_format: "image" | "pdf_digital" | "pdf_scanned";
   parser: "paddleocr" | "opendataloader_pdf" | "tesseract" | "pdfjs";
   page_count: number;
+  model: string | null;
+  provider: string | null;
+  input_tokens: number | null;
+  output_tokens: number | null;
+  reasoning_tokens: number | null;
+  cached_input_tokens: number | null;
+  /** `numeric` arrives as a number from PostgREST. */
+  cost_usd: number | null;
+  parse_ms: number | null;
+  read_ms: number | null;
+  raw_output: Json | null;
 };
 
 type SpanRow = {
@@ -121,6 +133,7 @@ export type Database = {
           | "model"
           | "error"
           | "workflow_run_id"
+          | "session_id"
           | "created_at"
           | "completed_at"
           | "expires_at"

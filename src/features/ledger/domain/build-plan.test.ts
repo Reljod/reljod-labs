@@ -6,6 +6,7 @@ import {
   MAX_TOSSES,
   matchExcerpt,
   type PlanStep,
+  sentenceJoins,
 } from "./build-plan";
 import { contentTree } from "./content-tree";
 import { sourcePath } from "./source-paths";
@@ -17,6 +18,7 @@ const step = (overrides: Partial<PlanStep> = {}): PlanStep => ({
   action: "fetch",
   source: sourcePath.job(MAYA),
   excerpt: null,
+  join: "He worked as",
   pace: "trot",
   line: "Got it!",
   ...overrides,
@@ -183,5 +185,84 @@ describe("cutBlock", () => {
     const node = contentTree.get(sourcePath.job(MAYA));
     if (!node) throw new Error("missing job");
     expect(cutBlock(node, null)).toBe(node.block);
+  });
+});
+
+describe("Joins", () => {
+  it("keeps a fetch's linking words, tidied", () => {
+    const validate = createStepValidator();
+    expect(validate(step({ join: "  after   that " }))?.join).toBe(
+      "after that",
+    );
+  });
+
+  it("drops a Join that carries a number or runs too long, and any on a toss", () => {
+    const validate = createStepValidator();
+    expect(validate(step({ join: "after 3 years as" }))?.join).toBe("");
+    expect(
+      validate(
+        step({
+          source: sourcePath.job(0),
+          join: "and this is a very long run of words that is no longer a join at all",
+        }),
+      )?.join,
+    ).toBe("");
+    expect(
+      validate(step({ source: sourcePath.job(4), action: "toss" }))?.join,
+    ).toBe("");
+  });
+
+  it("drops the Join after a dropped fetch, so the sentence never reads wrong", () => {
+    const validate = createStepValidator();
+    expect(
+      validate(step({ source: "experience.99", join: "Reljod is now" })),
+    ).toBeNull();
+    expect(
+      validate(step({ source: sourcePath.job(0), join: "after" }))?.join,
+    ).toBe("");
+    expect(
+      validate(step({ source: sourcePath.job(MAYA), join: "and then" }))?.join,
+    ).toBe("and then");
+  });
+
+  it("keeps the next Join when only a toss was dropped", () => {
+    const validate = createStepValidator();
+    for (let index = 0; index < MAX_TOSSES; index++) {
+      validate(step({ source: sourcePath.job(index + 1), action: "toss" }));
+    }
+    expect(
+      validate(step({ source: sourcePath.job(4), action: "toss" })),
+    ).toBeNull();
+    expect(validate(step({ join: "He worked as" }))?.join).toBe("He worked as");
+  });
+
+  it("drops a Join over eight words", () => {
+    expect(
+      createStepValidator()(
+        step({ join: "and then after all of that he went on to" }),
+      )?.join,
+    ).toBe("");
+  });
+
+  it("reads a stored plan from before Joins as empty Joins", () => {
+    const { join: _, ...old } = step();
+    const plan = finalizePlan({
+      verdict: "answer",
+      title: "Old",
+      layout: "timeline",
+      answer: "Old answer.",
+      steps: [old as PlanStep],
+    });
+    expect(plan.steps[0].join).toBe("");
+  });
+
+  it("falls back to list words where a Join is missing", () => {
+    expect(sentenceJoins(["", "", ""])).toEqual(["", ",", "and"]);
+    expect(sentenceJoins(["Reljod is now", "", "and before that"])).toEqual([
+      "Reljod is now",
+      ",",
+      "and before that",
+    ]);
+    expect(sentenceJoins(["", ""])).toEqual(["", "and"]);
   });
 });

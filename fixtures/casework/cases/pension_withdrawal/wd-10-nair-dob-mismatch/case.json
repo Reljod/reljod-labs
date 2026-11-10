@@ -1,0 +1,101 @@
+{
+  "slug": "wd-10-nair-dob-mismatch",
+  "scenario": "pension_withdrawal",
+  "title": "Nair · early retirement at 62",
+  "summary": "Indian permanent resident aged 62 retiring early; his passport gives 3 Nov 1964 but the plan record has 11 Mar 1964 (day and month swapped), and the certified passport expired in August.",
+  "asOf": "2026-11-12",
+  "documents": [
+    {
+      "source": "retirement-request.html",
+      "name": "CT-R1 early retirement - Nair.pdf",
+      "kind": "withdrawal_request_form",
+      "render": "scan",
+      "label": {
+        "member_name": "Rajesh Kumar Nair",
+        "member_number": "CT-064228",
+        "date_of_birth": "1964-11-03",
+        "withdrawal_type": "early_retirement",
+        "amount_requested": 140000,
+        "property_address": "",
+        "payee_name": "Rajesh Kumar Nair",
+        "payee_bank": "Sound Harbour Bank & Trust Ltd.",
+        "payee_account_number": "200-447719-3",
+        "meridian_status_declared": false,
+        "primary_residence_declared": false,
+        "signature_present": true,
+        "signed_date": "2026-10-26"
+      }
+    },
+    {
+      "source": "member-statement.html",
+      "name": "Corallis Q3 2026 statement - CT-064228.pdf",
+      "kind": "member_statement",
+      "render": "pdf",
+      "label": {
+        "member_name": "Rajesh Kumar Nair",
+        "member_number": "CT-064228",
+        "date_of_birth": "1964-03-11",
+        "employer_name": "Coralstone Engineering Services Ltd.",
+        "statement_date": "2026-09-30",
+        "total_balance": 212880.64,
+        "prior_property_withdrawals": 0,
+        "prior_withdrawals_repaid": true
+      }
+    },
+    {
+      "source": "passport-certified.html",
+      "name": "Nair passport certified copy.pdf",
+      "kind": "identity_document",
+      "render": "scan",
+      "label": {
+        "document_type": "passport",
+        "full_name": "Rajesh Kumar Nair",
+        "date_of_birth": "1964-11-03",
+        "nationality": "Indian",
+        "id_number": "Z4471893",
+        "date_of_expiry": "2026-08-19",
+        "certified": true,
+        "certifier_name": "Anil Mathew Varghese",
+        "certifier_occupation": "Chartered Accountant",
+        "certification_date": "2026-10-23"
+      }
+    }
+  ],
+  "expected": {
+    "pipeline": "pension_withdrawal",
+    "recommendation": "refer",
+    "missingKinds": ["bank_letter"],
+    "checks": [
+      {
+        "id": "identity_matches_record",
+        "outcome": "review",
+        "note": "Name and member number match, but the passport and form give 3 Nov 1964 while the plan record has 11 Mar 1964; looks like day and month swapped in the record, needs correcting"
+      },
+      {
+        "id": "id_in_date",
+        "outcome": "fail",
+        "note": "Passport Z4471893 expired 19 Aug 2026, before the 12 Nov 2026 review"
+      },
+      {
+        "id": "id_certified",
+        "outcome": "pass",
+        "note": "Certified by Anil Mathew Varghese, Chartered Accountant, on 23 Oct 2026"
+      },
+      {
+        "id": "withdrawal_purpose_supported",
+        "outcome": "pass",
+        "note": "Early retirement: 62 on either date of birth, over the minimum of 60"
+      },
+      {
+        "id": "amount_within_balance",
+        "outcome": "pass",
+        "note": "M$140,000 against a balance of M$212,880.64"
+      },
+      {
+        "id": "payee_permitted",
+        "outcome": "pass",
+        "note": "The form names his own account 200-447719-3 at Sound Harbour Bank & Trust Ltd.; the bank letter the CT-R1 form asks for is not supplied"
+      }
+    ]
+  }
+}

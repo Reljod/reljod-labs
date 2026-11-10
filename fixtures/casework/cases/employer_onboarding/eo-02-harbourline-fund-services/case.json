@@ -1,0 +1,250 @@
+{
+  "slug": "eo-02-harbourline-fund-services",
+  "scenario": "employer_onboarding",
+  "title": "Harbourline Fund Services · Aug-Sep 2026",
+  "summary": "Exempted fund administrator's August and September contributions: every line at 5% + 5% of earnings capped at M$7,250, paid before the 15th, remittances match: nothing wrong.",
+  "asOf": "2026-11-10",
+  "documents": [
+    {
+      "source": "contribution-schedule.csv",
+      "name": "HFS pension schedule Aug-Sep 2026.csv",
+      "kind": "contribution_schedule",
+      "render": "csv",
+      "label": {
+        "employer_name": "",
+        "lines": [
+          {
+            "period": "2026-08",
+            "employee_id": "HFS-0103",
+            "full_name": "Rebecca Anne Whitfield",
+            "gross_earnings": 12500,
+            "employee_contribution": 362.5,
+            "employer_contribution": 362.5,
+            "date_paid": "2026-09-11"
+          },
+          {
+            "period": "2026-08",
+            "employee_id": "HFS-0117",
+            "full_name": "Arjun Menon",
+            "gross_earnings": 9166.67,
+            "employee_contribution": 362.5,
+            "employer_contribution": 362.5,
+            "date_paid": "2026-09-11"
+          },
+          {
+            "period": "2026-08",
+            "employee_id": "HFS-0121",
+            "full_name": "Kimberly Watler",
+            "gross_earnings": 6240,
+            "employee_contribution": 312,
+            "employer_contribution": 312,
+            "date_paid": "2026-09-11"
+          },
+          {
+            "period": "2026-08",
+            "employee_id": "HFS-0128",
+            "full_name": "Paolo Reyes Bautista",
+            "gross_earnings": 4860,
+            "employee_contribution": 243,
+            "employer_contribution": 243,
+            "date_paid": "2026-09-11"
+          },
+          {
+            "period": "2026-08",
+            "employee_id": "HFS-0130",
+            "full_name": "Shaneka Powery",
+            "gross_earnings": 3975,
+            "employee_contribution": 198.75,
+            "employer_contribution": 198.75,
+            "date_paid": "2026-09-11"
+          },
+          {
+            "period": "2026-08",
+            "employee_id": "HFS-0134",
+            "full_name": "Daniel Gagnon",
+            "gross_earnings": 8050,
+            "employee_contribution": 362.5,
+            "employer_contribution": 362.5,
+            "date_paid": "2026-09-11"
+          },
+          {
+            "period": "2026-08",
+            "employee_id": "HFS-0139",
+            "full_name": "Trudy-Ann Campbell",
+            "gross_earnings": 4120,
+            "employee_contribution": 206,
+            "employer_contribution": 206,
+            "date_paid": "2026-09-11"
+          },
+          {
+            "period": "2026-08",
+            "employee_id": "HFS-0141",
+            "full_name": "Christopher Hydes",
+            "gross_earnings": 3250,
+            "employee_contribution": 162.5,
+            "employer_contribution": 162.5,
+            "date_paid": "2026-09-11"
+          },
+          {
+            "period": "2026-08",
+            "employee_id": "HFS-0145",
+            "full_name": "Melissa Joy dela Cruz",
+            "gross_earnings": 3480,
+            "employee_contribution": 174,
+            "employer_contribution": 174,
+            "date_paid": "2026-09-11"
+          },
+          {
+            "period": "2026-08",
+            "employee_id": "HFS-0150",
+            "full_name": "Rohan Patel",
+            "gross_earnings": 5200,
+            "employee_contribution": 260,
+            "employer_contribution": 260,
+            "date_paid": "2026-09-11"
+          },
+          {
+            "period": "2026-09",
+            "employee_id": "HFS-0103",
+            "full_name": "Rebecca Anne Whitfield",
+            "gross_earnings": 12500,
+            "employee_contribution": 362.5,
+            "employer_contribution": 362.5,
+            "date_paid": "2026-10-14"
+          },
+          {
+            "period": "2026-09",
+            "employee_id": "HFS-0117",
+            "full_name": "Arjun Menon",
+            "gross_earnings": 9166.67,
+            "employee_contribution": 362.5,
+            "employer_contribution": 362.5,
+            "date_paid": "2026-10-14"
+          },
+          {
+            "period": "2026-09",
+            "employee_id": "HFS-0121",
+            "full_name": "Kimberly Watler",
+            "gross_earnings": 7740,
+            "employee_contribution": 362.5,
+            "employer_contribution": 362.5,
+            "date_paid": "2026-10-14"
+          },
+          {
+            "period": "2026-09",
+            "employee_id": "HFS-0128",
+            "full_name": "Paolo Reyes Bautista",
+            "gross_earnings": 4860,
+            "employee_contribution": 243,
+            "employer_contribution": 243,
+            "date_paid": "2026-10-14"
+          },
+          {
+            "period": "2026-09",
+            "employee_id": "HFS-0130",
+            "full_name": "Shaneka Powery",
+            "gross_earnings": 3975,
+            "employee_contribution": 198.75,
+            "employer_contribution": 198.75,
+            "date_paid": "2026-10-14"
+          },
+          {
+            "period": "2026-09",
+            "employee_id": "HFS-0134",
+            "full_name": "Daniel Gagnon",
+            "gross_earnings": 8050,
+            "employee_contribution": 362.5,
+            "employer_contribution": 362.5,
+            "date_paid": "2026-10-14"
+          },
+          {
+            "period": "2026-09",
+            "employee_id": "HFS-0139",
+            "full_name": "Trudy-Ann Campbell",
+            "gross_earnings": 4120,
+            "employee_contribution": 206,
+            "employer_contribution": 206,
+            "date_paid": "2026-10-14"
+          },
+          {
+            "period": "2026-09",
+            "employee_id": "HFS-0141",
+            "full_name": "Christopher Hydes",
+            "gross_earnings": 3250,
+            "employee_contribution": 162.5,
+            "employer_contribution": 162.5,
+            "date_paid": "2026-10-14"
+          },
+          {
+            "period": "2026-09",
+            "employee_id": "HFS-0145",
+            "full_name": "Melissa Joy dela Cruz",
+            "gross_earnings": 3480,
+            "employee_contribution": 174,
+            "employer_contribution": 174,
+            "date_paid": "2026-10-14"
+          },
+          {
+            "period": "2026-09",
+            "employee_id": "HFS-0150",
+            "full_name": "Rohan Patel",
+            "gross_earnings": 5200,
+            "employee_contribution": 260,
+            "employer_contribution": 260,
+            "date_paid": "2026-10-14"
+          }
+        ]
+      }
+    },
+    {
+      "source": "remittance-2026-08.html",
+      "name": "Tidewater payment confirmation Aug-2026.pdf",
+      "kind": "remittance_advice",
+      "render": "pdf",
+      "label": {
+        "payer_name": "Harbourline Fund Services Ltd.",
+        "amount": 5287.5,
+        "value_date": "2026-09-11",
+        "reference": "ER10482 AUG2026 HARBOURLINE",
+        "period": "2026-08"
+      }
+    },
+    {
+      "source": "remittance-2026-09.html",
+      "name": "Tidewater payment confirmation Sep-2026.pdf",
+      "kind": "remittance_advice",
+      "render": "pdf",
+      "label": {
+        "payer_name": "Harbourline Fund Services Ltd.",
+        "amount": 5388.5,
+        "value_date": "2026-10-14",
+        "reference": "ER10482 SEP2026 HARBOURLINE",
+        "period": "2026-09"
+      }
+    }
+  ],
+  "expected": {
+    "pipeline": "employer_onboarding",
+    "recommendation": "approve",
+    "missingKinds": [],
+    "risk": "low",
+    "arrears": 0,
+    "checks": [
+      {
+        "id": "contributions_at_rate",
+        "outcome": "pass",
+        "note": "All 20 lines are 5% + 5% of earnings capped at M$7,250: the 7 lines above the cap (e.g. Rebecca Anne Whitfield on M$12,500.00, and Kimberly Watler's September M$7,740.00 with bonus) pay M$362.50 each side."
+      },
+      {
+        "id": "contributions_on_time",
+        "outcome": "pass",
+        "note": "August 2026 M$5,287.50 paid 11 September 2026; September 2026 M$5,388.50 paid 14 October 2026: both before the 15th of the following month."
+      },
+      {
+        "id": "no_arrears",
+        "outcome": "pass",
+        "note": "Each remittance equals the schedule total for its month; arrears M$0.00."
+      }
+    ]
+  }
+}

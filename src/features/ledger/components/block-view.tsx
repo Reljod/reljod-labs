@@ -127,3 +127,47 @@ export function BlockView({ block, size }: BlockViewProps) {
       );
   }
 }
+
+/** The plain words BlockPhrase shows, so the sentence knows how it ends. */
+export function phraseText(block: ContentBlock): string {
+  switch (block.kind) {
+    case "figure":
+      return `${block.figure} ${block.label}`;
+    case "quote":
+      return block.text;
+    case "card":
+      return block.title;
+    case "job":
+      return `${block.role} · ${block.company}`;
+    case "contact":
+      return block.heading;
+  }
+}
+
+/**
+ * A Content block cut down to the words it adds to the answer sentence. Every
+ * word is still the site's own. Keep in step with phraseText.
+ */
+export function BlockPhrase({ block }: { block: ContentBlock }) {
+  switch (block.kind) {
+    case "figure":
+      return (
+        <>
+          <span className="font-mono font-bold text-ivy">{block.figure}</span>{" "}
+          {block.label}
+        </>
+      );
+    case "quote":
+      return <>{block.text}</>;
+    case "card":
+      return <>{block.title}</>;
+    case "job":
+      return (
+        <>
+          {block.role} <span className="text-ink-muted">· {block.company}</span>
+        </>
+      );
+    case "contact":
+      return <>{block.heading}</>;
+  }
+}
