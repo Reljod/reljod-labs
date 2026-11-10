@@ -2,6 +2,7 @@
 
 import { AnimatePresence, motion } from "motion/react";
 import type { DocumentKind } from "../domain/types";
+import { formatPercent } from "../metrics";
 import type { DocumentView, FindingView } from "../view";
 import { DOCUMENT_LABELS, FIELD_LABELS } from "./labels";
 import { PageImage } from "./page-image-loader";
@@ -69,6 +70,14 @@ export function DocumentViewer({
                 {FIELD_LABELS[field.name]}:
               </span>{" "}
               {field.value}{" "}
+              {field.confidence !== null ? (
+                <span
+                  title="Model confidence"
+                  className="font-mono text-xs text-ink-muted"
+                >
+                  {formatPercent(field.confidence)}{" "}
+                </span>
+              ) : null}
               <span
                 title={
                   field.verified ? "Found in source" : "Not found in source"

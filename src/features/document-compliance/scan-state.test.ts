@@ -79,6 +79,7 @@ describe("replayEvents", () => {
     error: null,
     model: "m",
     createdAt: "",
+    completedAt: null,
     prescreenDate: "2026-11-07",
     documents: [
       {
@@ -92,6 +93,7 @@ describe("replayEvents", () => {
             page: 1,
             text: "A",
             box: { x0: 0, y0: 0, x1: 1, y1: 1 },
+            confidence: 0.8,
           },
         ],
         fields: [
@@ -114,6 +116,25 @@ describe("replayEvents", () => {
             note: "matches declaration",
           },
         ],
+        judgments: {
+          legible: true,
+          tamperingSuspected: false,
+          tamperingSpanRefs: [],
+          signaturePresent: null,
+          notes: "",
+        },
+        metrics: {
+          model: "openai/model",
+          provider: "openai",
+          inputTokens: 1200,
+          outputTokens: 300,
+          reasoningTokens: null,
+          cachedInputTokens: null,
+          costUsd: 0.0042,
+          parseMs: 800,
+          readMs: 4200,
+        },
+        raw: null,
       },
     ],
     findings: [],
@@ -132,5 +153,75 @@ describe("replayEvents", () => {
     });
     expect(state.findings).toEqual([]);
     expect(state.end).toEqual({ status: "completed", error: undefined });
+  });
+
+  it("replays what reading cost and how long each stage took", () => {
+    const identity = fold(replayEvents(view)).documents.identity_document;
+    expect(identity.usage?.costUsd).toBe(0.0042);
+    expect(identity.parseMs).toBe(800);
+    expect(identity.readMs).toBe(4200);
+    expect(identity.firstOutputAt).toBe(5000);
+  });
+
+  it("interleaves Documents in the order their output first arrived", () => {
+    const [identity] = view.documents;
+    const slow = {
+      ...identity,
+      metrics: identity.metrics && { ...identity.metrics, readMs: 9000 },
+    };
+    const fast = {
+      ...identity,
+      kind: "proof_of_address" as const,
+      metrics: identity.metrics && { ...identity.metrics, readMs: 1000 },
+    };
+    const fields = replayEvents({ ...view, documents: [slow, fast] }).filter(
+      (event) => event.type === "field",
+    );
+    expect(fields.map((event) => event.kind)).toEqual([
+      "proof_of_address",
+      "identity_document",
+    ]);
+  });
+});
+
+describe("usage events", () => {
+  it("keep a Document's usage and log its price and model", () => {
+    const state = fold([
+      {
+        at: 0,
+        type: "usage",
+        kind: "certified_copy",
+        usage: {
+          model: "openai/model",
+          provider: "azure",
+          inputTokens: 2000,
+          outputTokens: 120,
+          reasoningTokens: 40,
+          cachedInputTokens: 0,
+          costUsd: 0.00311,
+        },
+      },
+    ]);
+    expect(state.documents.certified_copy.usage?.provider).toBe("azure");
+    expect(state.log[0].text).toContain("$0.0031");
+    expect(state.log[0].text).toContain("openai/model via azure");
+  });
+
+  it("record the first output time once, from the first reading", () => {
+    const state = fold([
+      {
+        at: 10,
+        type: "field",
+        kind: "identity_document",
+        reading: reading("full_name", "A"),
+      },
+      {
+        at: 20,
+        type: "field",
+        kind: "identity_document",
+        reading: reading("date_of_birth", "B"),
+      },
+    ]);
+    expect(state.documents.identity_document.firstOutputAt).toBe(10);
   });
 });

@@ -5,6 +5,7 @@ import type {
   FieldReading,
   Span,
 } from "./domain/types";
+import type { ReadUsage } from "./metrics";
 import type { FindingView } from "./view";
 
 export type ScanStage = "parse" | "read" | "check";
@@ -32,6 +33,7 @@ export type ScanEvent = { at: number } & (
       spans: Pick<Span, "ref" | "page" | "text" | "box">[];
     }
   | { type: "field"; kind: DocumentKind; reading: FieldReading }
+  | { type: "usage"; kind: DocumentKind; usage: ReadUsage }
   | {
       type: "corrections";
       kind: DocumentKind;

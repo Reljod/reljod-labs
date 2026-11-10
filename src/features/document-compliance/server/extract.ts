@@ -10,7 +10,9 @@ import {
   type Span,
   type SpanCorrection,
 } from "../domain/types";
+import type { ReadUsage } from "../metrics";
 import { env } from "./env";
+import { readUsage } from "./usage";
 
 /** The fields worth reading from each kind of Document. */
 const FIELDS_BY_KIND: Record<DocumentKind, FieldName[]> = {
@@ -95,11 +97,17 @@ Judgments, from the page images:
 - signaturePresent: for a certified copy, whether the certification carries a handwritten signature; null for other documents.
 - notes: one sentence explaining any tampering or legibility concern, otherwise empty.`;
 
+/** The model's structured answer, exactly as the schema parsed it. */
+export type RawExtraction = z.infer<typeof extractionSchema>;
+
 export type DocumentExtraction = {
   readings: FieldReading[];
   judgments: DocumentJudgments;
   /** The model's fixes to OCR text, by Span ref; never to where a Span sits. */
   corrections: SpanCorrection[];
+  usage: ReadUsage;
+  /** The model's structured answer exactly as it returned it. */
+  raw: RawExtraction;
 };
 
 type ExtractedItem = z.infer<typeof extractionSchema>["fields"][number];
@@ -172,10 +180,22 @@ export async function extractDocument(input: {
 
   const output = await result.output;
   await report(output.fields);
+  const [usage, providerMetadata, response] = await Promise.all([
+    result.totalUsage,
+    result.providerMetadata,
+    result.response,
+  ]);
   return {
     readings: output.fields.flatMap((field) => toReading(field) ?? []),
     judgments: output.judgments,
     corrections: input.ocr ? output.corrections : [],
+    usage: readUsage({
+      requested: env.model(),
+      modelId: response.modelId,
+      usage,
+      gateway: providerMetadata?.gateway,
+    }),
+    raw: output,
   };
 }
 

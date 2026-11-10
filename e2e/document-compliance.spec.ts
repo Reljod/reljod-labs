@@ -48,6 +48,12 @@ async function runPrescreen(page: Page, slug: string) {
 
   await expectFindingsReport(page);
   await expect(page.getByTestId("run-notice")).toHaveCount(0);
+  // What the run cost and which model read it, and the run kept in this Session.
+  await expect(page.getByTestId("run-summary")).toBeVisible();
+  await expect(page.getByTestId("stat-tokens")).not.toContainText("not kept");
+  await expect(
+    page.locator('[data-testid="session-run"][aria-current="page"]'),
+  ).toHaveCount(1);
   await expect(page.getByTestId("terminal")).toContainText(
     "pre-screen complete",
   );
