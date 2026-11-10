@@ -8,6 +8,7 @@ import { liveDemos } from "@/content/projects";
 import type { Project } from "@/content/types";
 import { BrowserFrame } from "./browser-frame";
 import { CaseworkPreview } from "./previews/casework-preview";
+import { ClientManagerPreview } from "./previews/client-manager-preview";
 import { DocumentCompliancePreview } from "./previews/document-compliance-preview";
 import { LedgerPreview } from "./previews/ledger-preview";
 
@@ -18,6 +19,7 @@ const previews: Record<string, (project: Project) => ReactNode> = {
   ),
   ledger: () => <LedgerPreview />,
   "casework-desk": () => <CaseworkPreview />,
+  "client-manager": () => <ClientManagerPreview />,
 };
 
 export function LiveDemos() {

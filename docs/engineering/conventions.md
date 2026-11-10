@@ -22,3 +22,10 @@ A tool that writes a block between markers owns everything between them and rewr
 
 - Add project notes above the `BEGIN:` marker, never between the markers.
 - Before editing a file another tool writes to, look for its markers or "generated" header and keep to the parts it leaves alone.
+
+## Storage paths never carry raw browser input
+
+A file name, extension or type sent by the browser is untrusted. Before any of it goes into a Supabase Storage key (or any path), reduce it to a safe token: use `safeExtension` in `src/features/client-manager/domain/file-name.ts` for extensions and `slugify` for stems. In Client Manager, three call sites each built an extension with `name.split(".").pop()`, and only one of them sanitised it. So a name like `a./../x` reached the key of a signed upload URL.
+
+- Use one shared helper; don't re-derive the extension at each call site.
+- Keep every key the browser can influence under the owning record's prefix (`clients/<id>/…`).

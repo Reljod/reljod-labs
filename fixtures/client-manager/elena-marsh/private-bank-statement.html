@@ -1,0 +1,216 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Calder Private Bank statement, Q3 2026</title>
+<style>
+  @page { size: A4; margin: 0; }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+  body { font-family: Helvetica, Arial, sans-serif; color: #1c2430; font-size: 10.5px; line-height: 1.45; background: #fff; }
+  .page { position: relative; width: 210mm; height: 296mm; padding: 15mm 16mm 26mm; overflow: hidden; break-after: page; }
+  .page:last-of-type { break-after: auto; }
+  .letterhead { display: flex; justify-content: space-between; align-items: flex-start; padding-bottom: 9px; border-bottom: 3px solid var(--brand); }
+  .logo { display: flex; align-items: center; gap: 10px; }
+  .mark { width: 34px; height: 34px; border-radius: 6px; background: var(--brand); color: #fff; font-weight: 800; font-size: 15px; display: flex; align-items: center; justify-content: center; letter-spacing: 0.5px; }
+  .brand { font-size: 19px; font-weight: 700; color: var(--brand); line-height: 1.1; }
+  .brand small { display: block; font-size: 9.5px; font-weight: 400; color: #5b6672; letter-spacing: 0.3px; margin-top: 2px; }
+  .doc-meta { text-align: right; font-size: 9.5px; color: #3a4552; }
+  .doc-meta strong { display: block; font-size: 13px; color: #1c2430; margin-bottom: 2px; }
+  .running { display: flex; justify-content: space-between; font-size: 9.5px; color: #5b6672; padding-bottom: 6px; border-bottom: 1px solid #d6dbe1; }
+  .running b { color: var(--brand); }
+  h1 { font-size: 16px; margin-top: 14px; color: #1c2430; }
+  h2 { font-size: 12px; margin-top: 16px; color: var(--brand); text-transform: uppercase; letter-spacing: 0.6px; }
+  h3 { font-size: 11px; margin-top: 12px; }
+  p { margin-top: 6px; }
+  .two { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-top: 14px; }
+  .box { border: 1px solid #d6dbe1; padding: 9px 11px; }
+  .box .label, .kv dt { font-size: 8.5px; text-transform: uppercase; letter-spacing: 0.5px; color: #5b6672; }
+  .kv { display: grid; grid-template-columns: 38% 62%; row-gap: 3px; margin-top: 4px; }
+  .kv dd { font-weight: 600; }
+  .tiles { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; margin-top: 12px; }
+  .tiles div { background: var(--tint); padding: 8px 9px; }
+  .tiles span { display: block; font-size: 8.5px; color: #5b6672; text-transform: uppercase; letter-spacing: 0.4px; }
+  .tiles b { font-size: 13.5px; }
+  table { width: 100%; border-collapse: collapse; margin-top: 7px; font-size: 9.8px; }
+  th, td { text-align: left; padding: 4.5px 5px; border-bottom: 1px solid #e1e5ea; vertical-align: top; }
+  th { font-size: 8.5px; color: #5b6672; font-weight: 700; text-transform: uppercase; letter-spacing: 0.3px; background: var(--tint); border-bottom: 1px solid #c7ced6; }
+  .num { text-align: right; white-space: nowrap; }
+  tr.total td { font-weight: 700; border-top: 1.5px solid #1c2430; border-bottom: 2px solid #1c2430; }
+  tr.sub td { font-weight: 700; background: #f7f9fb; }
+  .neg { color: #9b1c1c; }
+  .note { font-size: 9px; color: #4a5561; }
+  .small { font-size: 9px; }
+  ol.notes, ul.notes { margin: 6px 0 0 16px; font-size: 9.2px; color: #333d48; }
+  ol.notes li, ul.notes li { margin-top: 3px; }
+  .bar { height: 9px; background: var(--brand); display: inline-block; vertical-align: middle; }
+  .sig { display: grid; grid-template-columns: 1fr 1fr; gap: 26px; margin-top: 26px; }
+  .sig > div { font-size: 9.5px; }
+  .sig .scrawl { border-bottom: 1px solid #1c2430; margin-bottom: 4px; }
+  .scrawl { font-family: "Brush Script MT", "Segoe Script", cursive; font-size: 20px; font-style: italic; color: #20366b; height: 30px; }
+  .stamp { display: inline-block; border: 2px solid var(--brand); color: var(--brand); padding: 4px 10px; font-weight: 700; font-size: 9.5px; letter-spacing: 0.8px; transform: rotate(-4deg); text-transform: uppercase; }
+  footer.foot { position: absolute; left: 16mm; right: 16mm; bottom: 9mm; font-size: 8.3px; color: #5b6672; border-top: 1px solid #d6dbe1; padding-top: 5px; }
+  footer.foot .row { display: flex; justify-content: space-between; gap: 12px; }
+  footer.foot .issuer { margin-bottom: 2px; }
+  .specimen { position: absolute; left: 18mm; top: 122mm; transform: rotate(-32deg); font-size: 108px; font-weight: 800; letter-spacing: 16px; color: rgba(200, 30, 40, 0.15); pointer-events: none; z-index: 10; }
+  :root { --brand: #0f3b4a; --tint: #eaf2f4; }
+  .gold { color: #9a7b2f; }
+</style>
+</head>
+<body>
+
+<section class="page">
+  <div class="letterhead">
+    <div class="logo"><div class="mark" style="background:#0f3b4a;border:2px solid #9a7b2f">C</div><div class="brand">Calder Private Bank<small>Est. 1874 · Port Calder · Licensed by the Meridia Financial Conduct Board, ref. MFCB-PB-0007</small></div></div>
+    <div class="doc-meta"><strong>Consolidated Client Statement</strong>Period: 1 July 2026 to 30 September 2026<br>Issued: 5 October 2026<br>Client number: CPB-208114</div>
+  </div>
+
+  <div class="two">
+    <div>
+      <div class="note">Prepared for</div>
+      <div style="font-size:12px;font-weight:700;margin-top:3px">Mrs Elena Marsh</div>
+      <div>Linden House</div>
+      <div>3 Orchard Lane</div>
+      <div>Henlow HN-4402</div>
+      <div>Republic of Meridia</div>
+    </div>
+    <div class="box">
+      <dl class="kv">
+        <dt>Relationship manager</dt><dd>Owen Hartigan, Director</dd>
+        <dt>Direct line</dt><dd>+590 23 610 2245</dd>
+        <dt>Branch</dt><dd>1 Customs House Quay, Port Calder PC-3001</dd>
+        <dt>Contact preference</dt><dd>Telephone, mornings</dd>
+        <dt>Account mandate</dt><dd>Sole signatory (from 22 May 2026)</dd>
+      </dl>
+    </div>
+  </div>
+
+  <h2>Relationship summary</h2>
+  <div class="tiles">
+    <div><span>Total at 30 Jun 2026</span><b>M$8,444,742.91</b></div>
+    <div><span>Total at 30 Sep 2026</span><b>M$9,008,963.06</b></div>
+    <div><span>Interest earned (Q3)</span><b>M$28,380.65</b></div>
+    <div><span>Next maturity</span><b>15 Dec 2026</b></div>
+  </div>
+
+  <table>
+    <tr><th>Account</th><th>Number</th><th class="num">Rate</th><th class="num">30 Jun 2026 M$</th><th class="num">30 Sep 2026 M$</th></tr>
+    <tr><td>Private current account</td><td>30-11-42 70418825</td><td class="num">0.10%</td><td class="num">180,542.91</td><td class="num">186,420.55</td></tr>
+    <tr><td>Premier Reserve (instant access)</td><td>30-11-42 70418833</td><td class="num">3.10%</td><td class="num">2,264,200.00</td><td class="num">2,813,612.40</td></tr>
+    <tr><td>95-day notice account</td><td>30-11-42 70418841</td><td class="num">3.55%</td><td class="num">1,000,000.00</td><td class="num">1,008,930.11</td></tr>
+    <tr><td>Fixed term deposit, 12 months</td><td>TD-208114-01</td><td class="num">3.85%</td><td class="num">3,000,000.00</td><td class="num">3,000,000.00</td></tr>
+    <tr><td>Fixed term deposit, 6 months</td><td>TD-208114-02</td><td class="num">3.60%</td><td class="num">2,000,000.00</td><td class="num">2,000,000.00</td></tr>
+    <tr class="total"><td colspan="3">Total deposits</td><td class="num">8,444,742.91</td><td class="num">9,008,963.06</td></tr>
+  </table>
+  <p class="note">Term deposit interest is paid at maturity and is not included in the balances above. Accrued but unpaid interest at 30 September 2026: M$102,812.50.</p>
+
+  <h2>Change of account ownership</h2>
+  <div class="box" style="margin-top:6px">
+    All accounts in this statement were previously held jointly by <b>Mr Daniel James Marsh and Mrs Elena Marsh</b>. Following the death of Mr Marsh on 14 March 2026, and on receipt of the death certificate, the accounts passed to Mrs Marsh by survivorship and were re-registered in her sole name on <b>22 May 2026</b>. Account numbers are unchanged. Mr Marsh's sole-name Reserve account 70402219 is held separately for his executors and is not shown here.
+  </div>
+
+  <footer class="foot">
+    <div class="issuer">Calder Private Bank plc · 1 Customs House Quay, Port Calder PC-3001 · Registered in the Republic of Meridia no. MC-0000318</div>
+    <div class="row"><span>Synthetic document for the Reljod Labs Client Manager demo. Not a real record.</span><span>Page 1 of 3</span></div>
+  </footer>
+  <div class="specimen">SPECIMEN</div>
+</section>
+
+<section class="page">
+  <div class="running"><span><b class="gold">Calder Private Bank</b> · Consolidated Client Statement · 1 Jul to 30 Sep 2026</span><span>Mrs Elena Marsh · CPB-208114</span></div>
+
+  <h2>Private current account 30-11-42 70418825</h2>
+  <table>
+    <tr><th style="width:13%">Date</th><th>Description</th><th class="num">Paid out M$</th><th class="num">Paid in M$</th><th class="num">Balance M$</th></tr>
+    <tr><td>30 Jun 2026</td><td>Opening balance</td><td class="num"></td><td class="num"></td><td class="num">180,542.91</td></tr>
+    <tr><td>01 Jul 2026</td><td>Transfer from Premier Reserve 70418833</td><td class="num"></td><td class="num">40,000.00</td><td class="num">220,542.91</td></tr>
+    <tr><td>02 Jul 2026</td><td>Henlow Borough Council, property rates Q3, Linden House</td><td class="num">1,240.00</td><td class="num"></td><td class="num">219,302.91</td></tr>
+    <tr><td>05 Jul 2026</td><td>Harbour Club Port Calder, annual subscription</td><td class="num">3,600.00</td><td class="num"></td><td class="num">215,702.91</td></tr>
+    <tr><td>10 Jul 2026</td><td>Nair &amp; Cole client account, estate of D J Marsh, costs on account</td><td class="num">25,000.00</td><td class="num"></td><td class="num">190,702.91</td></tr>
+    <tr><td>15 Jul 2026</td><td>Mordaunt Gardens Ltd, garden maintenance</td><td class="num">1,180.00</td><td class="num"></td><td class="num">189,522.91</td></tr>
+    <tr><td>22 Jul 2026</td><td>Meridia Marine Pension Scheme, death benefit lump sum (D J Marsh)</td><td class="num"></td><td class="num">620,000.00</td><td class="num">809,522.91</td></tr>
+    <tr><td>24 Jul 2026</td><td>Transfer to Premier Reserve 70418833</td><td class="num">600,000.00</td><td class="num"></td><td class="num">209,522.91</td></tr>
+    <tr><td>28 Jul 2026</td><td>Calder Private card, monthly settlement</td><td class="num">4,215.70</td><td class="num"></td><td class="num">205,307.21</td></tr>
+    <tr><td>01 Aug 2026</td><td>Saltmere District Council, property rates, Gull Cottage</td><td class="num">640.00</td><td class="num"></td><td class="num">204,667.21</td></tr>
+    <tr><td>09 Aug 2026</td><td>Saltmere Boatyard, winter storage deposit, yacht Ivy May</td><td class="num">1,850.00</td><td class="num"></td><td class="num">202,817.21</td></tr>
+    <tr><td>14 Aug 2026</td><td>Tidewatch Trust, donation</td><td class="num">25,000.00</td><td class="num"></td><td class="num">177,817.21</td></tr>
+    <tr><td>28 Aug 2026</td><td>Calder Private card, monthly settlement</td><td class="num">3,880.12</td><td class="num"></td><td class="num">173,937.09</td></tr>
+    <tr><td>01 Sep 2026</td><td>Transfer from Premier Reserve 70418833</td><td class="num"></td><td class="num">30,000.00</td><td class="num">203,937.09</td></tr>
+    <tr><td>03 Sep 2026</td><td>Coastline Power &amp; Water, Linden House</td><td class="num">612.35</td><td class="num"></td><td class="num">203,324.74</td></tr>
+    <tr><td>18 Sep 2026</td><td>Westmere Travel, flights</td><td class="num">2,340.00</td><td class="num"></td><td class="num">200,984.74</td></tr>
+    <tr><td>25 Sep 2026</td><td>Ivy Marsh, gift</td><td class="num">10,000.00</td><td class="num"></td><td class="num">190,984.74</td></tr>
+    <tr><td>28 Sep 2026</td><td>Calder Private card, monthly settlement</td><td class="num">4,602.33</td><td class="num"></td><td class="num">186,382.41</td></tr>
+    <tr><td>30 Sep 2026</td><td>Credit interest, 0.10% p.a.</td><td class="num"></td><td class="num">38.14</td><td class="num">186,420.55</td></tr>
+    <tr class="total"><td colspan="2">Totals for the period</td><td class="num">684,160.50</td><td class="num">690,038.14</td><td class="num">186,420.55</td></tr>
+  </table>
+
+  <h2>Premier Reserve 30-11-42 70418833</h2>
+  <table>
+    <tr><th style="width:13%">Date</th><th>Description</th><th class="num">Paid out M$</th><th class="num">Paid in M$</th><th class="num">Balance M$</th></tr>
+    <tr><td>30 Jun 2026</td><td>Opening balance</td><td class="num"></td><td class="num"></td><td class="num">2,264,200.00</td></tr>
+    <tr><td>01 Jul 2026</td><td>Transfer to current account 70418825</td><td class="num">40,000.00</td><td class="num"></td><td class="num">2,224,200.00</td></tr>
+    <tr><td>24 Jul 2026</td><td>Transfer from current account 70418825</td><td class="num"></td><td class="num">600,000.00</td><td class="num">2,824,200.00</td></tr>
+    <tr><td>01 Sep 2026</td><td>Transfer to current account 70418825</td><td class="num">30,000.00</td><td class="num"></td><td class="num">2,794,200.00</td></tr>
+    <tr><td>30 Sep 2026</td><td>Credit interest, 3.10% p.a.</td><td class="num"></td><td class="num">19,412.40</td><td class="num">2,813,612.40</td></tr>
+  </table>
+
+  <h2>95-day notice account 30-11-42 70418841</h2>
+  <table>
+    <tr><th style="width:13%">Date</th><th>Description</th><th class="num">Paid out M$</th><th class="num">Paid in M$</th><th class="num">Balance M$</th></tr>
+    <tr><td>30 Jun 2026</td><td>Opening balance</td><td class="num"></td><td class="num"></td><td class="num">1,000,000.00</td></tr>
+    <tr><td>30 Sep 2026</td><td>Credit interest, 3.55% p.a. (capitalised)</td><td class="num"></td><td class="num">8,930.11</td><td class="num">1,008,930.11</td></tr>
+  </table>
+  <p class="note">No notice of withdrawal is pending. A withdrawal requested today would be available on 4 January 2027.</p>
+
+  <footer class="foot">
+    <div class="issuer">Calder Private Bank plc · 1 Customs House Quay, Port Calder PC-3001 · Registered in the Republic of Meridia no. MC-0000318</div>
+    <div class="row"><span>Synthetic document for the Reljod Labs Client Manager demo. Not a real record.</span><span>Page 2 of 3</span></div>
+  </footer>
+  <div class="specimen">SPECIMEN</div>
+</section>
+
+<section class="page">
+  <div class="running"><span><b class="gold">Calder Private Bank</b> · Consolidated Client Statement · 1 Jul to 30 Sep 2026</span><span>Mrs Elena Marsh · CPB-208114</span></div>
+
+  <h2>Fixed term deposits</h2>
+  <table>
+    <tr><th>Deposit</th><th class="num">Principal M$</th><th class="num">Rate</th><th>Start</th><th>Maturity</th><th class="num">Interest at maturity M$</th><th>Maturity instruction</th></tr>
+    <tr><td>TD-208114-01, 12 months</td><td class="num">3,000,000.00</td><td class="num">3.85%</td><td>15 Jan 2026</td><td>15 Jan 2027</td><td class="num">115,500.00</td><td>Pay principal and interest to Premier Reserve</td></tr>
+    <tr><td>TD-208114-02, 6 months</td><td class="num">2,000,000.00</td><td class="num">3.60%</td><td>15 Jun 2026</td><td>15 Dec 2026</td><td class="num">36,000.00</td><td>Awaiting instruction</td></tr>
+    <tr class="total"><td>Total</td><td class="num">5,000,000.00</td><td colspan="3"></td><td class="num">151,500.00</td><td></td></tr>
+  </table>
+  <p class="note">TD-208114-01 was opened in joint names with the proceeds of the Marsh Dynamics share sale and re-registered to Mrs Marsh on 22 May 2026. Please give maturity instructions for TD-208114-02 by 8 December 2026; without them the principal will roll into a new 6-month deposit at the prevailing rate.</p>
+
+  <h2>Expected receipts</h2>
+  <table>
+    <tr><th>Expected</th><th>Source</th><th class="num">Amount M$</th><th>Note</th></tr>
+    <tr><td>15 Dec 2026</td><td>Maturity of TD-208114-02</td><td class="num">2,036,000.00</td><td>Principal and interest</td></tr>
+    <tr><td>15 Jan 2027</td><td>Maturity of TD-208114-01</td><td class="num">3,115,500.00</td><td>Principal and interest</td></tr>
+    <tr><td>31 Mar 2027</td><td>Marsh Dynamics escrow release (Mrs Marsh's 40% share)</td><td class="num">up to 720,000.00</td><td>Advised by Nair &amp; Cole; subject to warranty claims</td></tr>
+  </table>
+
+  <h2>Deposit protection</h2>
+  <p>Eligible deposits with Calder Private Bank are protected by the Meridia Deposit Guarantee Scheme up to <b>M$100,000</b> per depositor. Temporary high balances arising from a bereavement, such as the pension death benefit received on 22 July 2026, are protected up to M$1,000,000 for six months from receipt. Your total deposits exceed the protected limits by about M$8.3 million. Your relationship manager can discuss ways to spread this exposure.</p>
+
+  <h2>Notes and disclosures</h2>
+  <ol class="notes">
+    <li>Interest rates are gross annual rates. Interest is paid without deduction of tax; Meridian residents must declare it on their annual return.</li>
+    <li>Variable rates on the Premier Reserve and notice accounts may change with 14 days' notice. Fixed term deposit rates are fixed until maturity and early withdrawal is not permitted except in cases of hardship.</li>
+    <li>Joint-to-sole conversions on death are made under clause 9.3 of the Calder Account Terms. Balances passing by survivorship do not form part of the deceased's estate for administration but may be relevant to estate valuations.</li>
+    <li>A copy of this statement has been sent, with your consent of 30 May 2026, to Ms Priya Nair of Nair &amp; Cole, 18 Harbour Street, Port Calder.</li>
+    <li>Please check this statement and tell us of any error within 30 days.</li>
+  </ol>
+
+  <div class="sig" style="grid-template-columns:1fr">
+    <div style="max-width:60%"><div class="scrawl">Owen Hartigan</div>Owen Hartigan, Director, Private Clients<br>Calder Private Bank plc</div>
+  </div>
+
+  <footer class="foot">
+    <div class="issuer">Calder Private Bank plc · 1 Customs House Quay, Port Calder PC-3001 · Registered in the Republic of Meridia no. MC-0000318</div>
+    <div class="row"><span>Synthetic document for the Reljod Labs Client Manager demo. Not a real record.</span><span>Page 3 of 3</span></div>
+  </footer>
+  <div class="specimen">SPECIMEN</div>
+</section>
+
+</body>
+</html>

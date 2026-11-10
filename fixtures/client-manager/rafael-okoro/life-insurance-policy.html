@@ -1,0 +1,172 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Corvane Life policy schedule</title>
+<style>
+  @page { size: A4; margin: 0; }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+  body { font-family: Helvetica, Arial, sans-serif; color: #1c2430; font-size: 10.5px; line-height: 1.45; background: #fff; }
+  .page { position: relative; width: 210mm; height: 296mm; padding: 15mm 16mm 26mm; overflow: hidden; break-after: page; }
+  .page:last-of-type { break-after: auto; }
+  .letterhead { display: flex; justify-content: space-between; align-items: flex-start; padding-bottom: 9px; border-bottom: 3px solid var(--brand); }
+  .logo { display: flex; align-items: center; gap: 10px; }
+  .mark { width: 34px; height: 34px; border-radius: 6px; background: var(--brand); color: #fff; font-weight: 800; font-size: 15px; display: flex; align-items: center; justify-content: center; letter-spacing: 0.5px; }
+  .brand { font-size: 19px; font-weight: 700; color: var(--brand); line-height: 1.1; }
+  .brand small { display: block; font-size: 9.5px; font-weight: 400; color: #5b6672; letter-spacing: 0.3px; margin-top: 2px; }
+  .doc-meta { text-align: right; font-size: 9.5px; color: #3a4552; }
+  .doc-meta strong { display: block; font-size: 13px; color: #1c2430; margin-bottom: 2px; }
+  .running { display: flex; justify-content: space-between; font-size: 9.5px; color: #5b6672; padding-bottom: 6px; border-bottom: 1px solid #d6dbe1; }
+  .running b { color: var(--brand); }
+  h1 { font-size: 16px; margin-top: 14px; color: #1c2430; }
+  h2 { font-size: 12px; margin-top: 16px; color: var(--brand); text-transform: uppercase; letter-spacing: 0.6px; }
+  h3 { font-size: 11px; margin-top: 12px; }
+  p { margin-top: 6px; }
+  .two { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-top: 14px; }
+  .box { border: 1px solid #d6dbe1; padding: 9px 11px; }
+  .box .label, .kv dt { font-size: 8.5px; text-transform: uppercase; letter-spacing: 0.5px; color: #5b6672; }
+  .kv { display: grid; grid-template-columns: 38% 62%; row-gap: 3px; margin-top: 4px; }
+  .kv dd { font-weight: 600; }
+  .tiles { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; margin-top: 12px; }
+  .tiles div { background: var(--tint); padding: 8px 9px; }
+  .tiles span { display: block; font-size: 8.5px; color: #5b6672; text-transform: uppercase; letter-spacing: 0.4px; }
+  .tiles b { font-size: 13.5px; }
+  table { width: 100%; border-collapse: collapse; margin-top: 7px; font-size: 9.8px; }
+  th, td { text-align: left; padding: 4.5px 5px; border-bottom: 1px solid #e1e5ea; vertical-align: top; }
+  th { font-size: 8.5px; color: #5b6672; font-weight: 700; text-transform: uppercase; letter-spacing: 0.3px; background: var(--tint); border-bottom: 1px solid #c7ced6; }
+  .num { text-align: right; white-space: nowrap; }
+  tr.total td { font-weight: 700; border-top: 1.5px solid #1c2430; border-bottom: 2px solid #1c2430; }
+  tr.sub td { font-weight: 700; background: #f7f9fb; }
+  .neg { color: #9b1c1c; }
+  .note { font-size: 9px; color: #4a5561; }
+  .small { font-size: 9px; }
+  ol.notes, ul.notes { margin: 6px 0 0 16px; font-size: 9.2px; color: #333d48; }
+  ol.notes li, ul.notes li { margin-top: 3px; }
+  .bar { height: 9px; background: var(--brand); display: inline-block; vertical-align: middle; }
+  .sig { display: grid; grid-template-columns: 1fr 1fr; gap: 26px; margin-top: 26px; }
+  .sig > div { font-size: 9.5px; }
+  .sig .scrawl { border-bottom: 1px solid #1c2430; margin-bottom: 4px; }
+  .scrawl { font-family: "Brush Script MT", "Segoe Script", cursive; font-size: 20px; font-style: italic; color: #20366b; height: 30px; }
+  .stamp { display: inline-block; border: 2px solid var(--brand); color: var(--brand); padding: 4px 10px; font-weight: 700; font-size: 9.5px; letter-spacing: 0.8px; transform: rotate(-4deg); text-transform: uppercase; }
+  footer.foot { position: absolute; left: 16mm; right: 16mm; bottom: 9mm; font-size: 8.3px; color: #5b6672; border-top: 1px solid #d6dbe1; padding-top: 5px; }
+  footer.foot .row { display: flex; justify-content: space-between; gap: 12px; }
+  footer.foot .issuer { margin-bottom: 2px; }
+  .specimen { position: absolute; left: 18mm; top: 122mm; transform: rotate(-32deg); font-size: 108px; font-weight: 800; letter-spacing: 16px; color: rgba(200, 30, 40, 0.15); pointer-events: none; z-index: 10; }
+  :root { --brand: #4b2c78; --tint: #f1edf7; }
+</style>
+</head>
+<body>
+
+<section class="page">
+  <div class="letterhead">
+    <div class="logo"><div class="mark">CL</div><div class="brand">Corvane Life Assurance<small>Corvane Life Assurance Co. Ltd · Licensed insurer, Meridia Insurance Authority no. MIA-L-0118</small></div></div>
+    <div class="doc-meta"><strong>Policy Schedule</strong>Policy no. CLA-TL-0091847<br>Schedule issued: 15 January 2026 (annual reissue)<br>Supersedes schedule of 15 January 2025</div>
+  </div>
+
+  <h2>Policyholder and life assured</h2>
+  <div class="two" style="margin-top:6px">
+    <div class="box">
+      <dl class="kv">
+        <dt>Policyholder</dt><dd>Mr Rafael Okoro</dd>
+        <dt>Life assured</dt><dd>Mr Rafael Okoro</dd>
+        <dt>Date of birth</dt><dd>19 June 1982</dd>
+        <dt>Address</dt><dd>14 Aster Rise, Kestrel Heights, Meridia City MC-2207</dd>
+        <dt>Occupation</dt><dd>Chief executive, Lumen Freight Holdings Ltd</dd>
+      </dl>
+    </div>
+    <div class="box">
+      <dl class="kv">
+        <dt>Smoker status</dt><dd>Non-smoker</dd>
+        <dt>Underwriting</dt><dd>Standard rates, full medical 11 Jan 2022</dd>
+        <dt>Adviser</dt><dd>Kestrel Protection Partners, ref. KPP-3391</dd>
+        <dt>Premium payer</dt><dd>Mr Rafael Okoro, Meridia Commerce Bank a/c ending 2041</dd>
+      </dl>
+    </div>
+  </div>
+
+  <h2>Cover</h2>
+  <table>
+    <tr><th>Benefit</th><th class="num">Sum assured M$</th><th>Basis</th><th>Start</th><th>End</th></tr>
+    <tr><td>Life cover (term assurance)</td><td class="num">8,000,000</td><td>Level, paid as a lump sum on death</td><td>1 Feb 2022</td><td>1 Feb 2042</td></tr>
+    <tr><td>Critical illness cover (accelerated)</td><td class="num">1,000,000</td><td>Level, 46 defined conditions; reduces life cover when paid</td><td>1 Feb 2022</td><td>1 Feb 2042</td></tr>
+    <tr><td>Terminal illness benefit</td><td class="num">8,000,000</td><td>Paid early if life expectancy under 12 months</td><td>1 Feb 2022</td><td>1 Feb 2041</td></tr>
+    <tr><td>Children's critical illness benefit</td><td class="num">50,000</td><td>Per child, for Kemi, Tobi and Zara Okoro</td><td>1 Feb 2022</td><td>1 Feb 2042</td></tr>
+  </table>
+
+  <h2>Premium</h2>
+  <div class="tiles">
+    <div><span>Monthly premium</span><b>M$1,184.60</b></div>
+    <div><span>Premium basis</span><b>Guaranteed</b></div>
+    <div><span>Collected</span><b>1st of month</b></div>
+    <div><span>Status</span><b>In force</b></div>
+  </div>
+  <p class="note">Premiums are guaranteed for the full term and do not increase with age. The policy has no cash value at any time and lapses if premiums are not paid within 60 days of the due date.</p>
+
+  <h2>Beneficiary nomination</h2>
+  <table>
+    <tr><th>Beneficiary</th><th>Relationship</th><th>Date of birth</th><th class="num">Share</th><th>Type</th></tr>
+    <tr><td>Dr Ada Okoro</td><td>Spouse</td><td>2 November 1984</td><td class="num">100%</td><td>Primary</td></tr>
+    <tr><td>Kemi Okoro</td><td>Daughter</td><td>8 April 2014</td><td class="num">33.34%</td><td>Contingent</td></tr>
+    <tr><td>Tobi Okoro</td><td>Son</td><td>21 September 2017</td><td class="num">33.33%</td><td>Contingent</td></tr>
+    <tr><td>Zara Okoro</td><td>Daughter</td><td>30 May 2021</td><td class="num">33.33%</td><td>Contingent</td></tr>
+  </table>
+  <p class="note">Contingent beneficiaries receive the benefit only if the primary beneficiary dies before the life assured. Shares for beneficiaries under 18 are paid to their legal guardian unless a trust is in place.</p>
+
+  <footer class="foot">
+    <div class="issuer">Corvane Life Assurance Co. Ltd · 7 Lantern Square, Meridia City MC-1006 · Registered in the Republic of Meridia no. MC-0021187</div>
+    <div class="row"><span>Synthetic document for the Reljod Labs Client Manager demo. Not a real record.</span><span>Page 1 of 2</span></div>
+  </footer>
+  <div class="specimen">SPECIMEN</div>
+</section>
+
+<section class="page">
+  <div class="running"><span><b>Corvane Life Assurance</b> · Policy Schedule</span><span>Mr Rafael Okoro · CLA-TL-0091847</span></div>
+
+  <h2>Trust status</h2>
+  <div class="box" style="margin-top:8px;border-color:#b4540f;background:#fdf6ee">
+    <b>This policy is not written in trust.</b> On a claim, the benefit is paid to the nominated beneficiaries but forms part of the policyholder's estate for Meridian inheritance tax purposes. A trust can be added at any time at no cost using form CL-TR2.
+  </div>
+
+  <h2>Disclosures at application</h2>
+  <table>
+    <tr><th>Question</th><th>Answer given</th></tr>
+    <tr><td>Height and weight</td><td>1.82 m, 74 kg</td></tr>
+    <tr><td>Hazardous pursuits</td><td>Marathon running (amateur, about four races a year). No loading applied.</td></tr>
+    <tr><td>Family history</td><td>Father diagnosed with Parkinson's disease (age 69). Mother living, no disclosed conditions.</td></tr>
+    <tr><td>Foreign travel</td><td>Business travel up to 10 weeks a year. No exclusions.</td></tr>
+    <tr><td>Other cover in force</td><td>Key person policy CLA-KP-0102233, M$5,000,000, owned by Lumen Freight Holdings Ltd on Mr Okoro's life (company is policyholder and beneficiary)</td></tr>
+  </table>
+
+  <h2>Key exclusions</h2>
+  <ol class="notes">
+    <li>Death by suicide within 12 months of the start date.</li>
+    <li>Critical illness not meeting the policy definitions in the Corvane Critical Illness Guide, edition 2022.</li>
+    <li>Claims arising from facts that were not disclosed or were misstated at application.</li>
+  </ol>
+
+  <h2>Making a claim</h2>
+  <p>Call the Corvane claims line on +590 21 700 4400. We will need the policy number, a death certificate or medical evidence, and identification for each beneficiary. Most life claims are paid within 10 business days of receiving complete documents.</p>
+
+  <h2>Changes to your policy</h2>
+  <table>
+    <tr><th>Date</th><th>Change</th></tr>
+    <tr><td>1 Feb 2022</td><td>Policy started</td></tr>
+    <tr><td>14 Jun 2022</td><td>Contingent beneficiaries updated to add Zara Okoro</td></tr>
+    <tr><td>15 Jan 2026</td><td>Annual schedule reissued; no change to cover</td></tr>
+  </table>
+
+  <p style="margin-top:22px">Issued on behalf of Corvane Life Assurance Co. Ltd.</p>
+  <div class="scrawl" style="margin-top:4px">H. Mbeki-Sorensen</div>
+  <p style="margin-top:0">Helena Mbeki-Sorensen<br>Chief Underwriting Officer</p>
+  <p style="margin-top:16px"><span class="stamp">Policy in force · verified</span></p>
+
+  <footer class="foot">
+    <div class="issuer">Corvane Life Assurance Co. Ltd · 7 Lantern Square, Meridia City MC-1006 · Registered in the Republic of Meridia no. MC-0021187</div>
+    <div class="row"><span>Synthetic document for the Reljod Labs Client Manager demo. Not a real record.</span><span>Page 2 of 2</span></div>
+  </footer>
+  <div class="specimen">SPECIMEN</div>
+</section>
+
+</body>
+</html>

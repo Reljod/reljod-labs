@@ -41,6 +41,9 @@ describe("decide", () => {
       ["/demos/document-compliance/runs/1/events", "GET"],
       ["/demos/document-compliance/packs/clean/id.jpg", "GET"],
       ["/ask/abc/builds", "POST"],
+      ["/api/client-manager/clients", "GET"],
+      ["/api/client-manager/clients/1/chat", "POST"],
+      ["/api/client-manager/builds/1/events", "GET"],
       ["/ask/abc/builds", "GET"],
       ["/demos/casework", "DELETE"],
     ]) {

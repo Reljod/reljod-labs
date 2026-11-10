@@ -1,0 +1,211 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Lumen Freight Holdings Ltd cap table summary</title>
+<style>
+  @page { size: A4; margin: 0; }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+  body { font-family: Helvetica, Arial, sans-serif; color: #1c2430; font-size: 10.5px; line-height: 1.45; background: #fff; }
+  .page { position: relative; width: 210mm; height: 296mm; padding: 15mm 16mm 26mm; overflow: hidden; break-after: page; }
+  .page:last-of-type { break-after: auto; }
+  .letterhead { display: flex; justify-content: space-between; align-items: flex-start; padding-bottom: 9px; border-bottom: 3px solid var(--brand); }
+  .logo { display: flex; align-items: center; gap: 10px; }
+  .mark { width: 34px; height: 34px; border-radius: 6px; background: var(--brand); color: #fff; font-weight: 800; font-size: 15px; display: flex; align-items: center; justify-content: center; letter-spacing: 0.5px; }
+  .brand { font-size: 19px; font-weight: 700; color: var(--brand); line-height: 1.1; }
+  .brand small { display: block; font-size: 9.5px; font-weight: 400; color: #5b6672; letter-spacing: 0.3px; margin-top: 2px; }
+  .doc-meta { text-align: right; font-size: 9.5px; color: #3a4552; }
+  .doc-meta strong { display: block; font-size: 13px; color: #1c2430; margin-bottom: 2px; }
+  .running { display: flex; justify-content: space-between; font-size: 9.5px; color: #5b6672; padding-bottom: 6px; border-bottom: 1px solid #d6dbe1; }
+  .running b { color: var(--brand); }
+  h1 { font-size: 16px; margin-top: 14px; color: #1c2430; }
+  h2 { font-size: 12px; margin-top: 16px; color: var(--brand); text-transform: uppercase; letter-spacing: 0.6px; }
+  h3 { font-size: 11px; margin-top: 12px; }
+  p { margin-top: 6px; }
+  .two { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-top: 14px; }
+  .box { border: 1px solid #d6dbe1; padding: 9px 11px; }
+  .box .label, .kv dt { font-size: 8.5px; text-transform: uppercase; letter-spacing: 0.5px; color: #5b6672; }
+  .kv { display: grid; grid-template-columns: 38% 62%; row-gap: 3px; margin-top: 4px; }
+  .kv dd { font-weight: 600; }
+  .tiles { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; margin-top: 12px; }
+  .tiles div { background: var(--tint); padding: 8px 9px; }
+  .tiles span { display: block; font-size: 8.5px; color: #5b6672; text-transform: uppercase; letter-spacing: 0.4px; }
+  .tiles b { font-size: 13.5px; }
+  table { width: 100%; border-collapse: collapse; margin-top: 7px; font-size: 9.8px; }
+  th, td { text-align: left; padding: 4.5px 5px; border-bottom: 1px solid #e1e5ea; vertical-align: top; }
+  th { font-size: 8.5px; color: #5b6672; font-weight: 700; text-transform: uppercase; letter-spacing: 0.3px; background: var(--tint); border-bottom: 1px solid #c7ced6; }
+  .num { text-align: right; white-space: nowrap; }
+  tr.total td { font-weight: 700; border-top: 1.5px solid #1c2430; border-bottom: 2px solid #1c2430; }
+  tr.sub td { font-weight: 700; background: #f7f9fb; }
+  .neg { color: #9b1c1c; }
+  .note { font-size: 9px; color: #4a5561; }
+  .small { font-size: 9px; }
+  ol.notes, ul.notes { margin: 6px 0 0 16px; font-size: 9.2px; color: #333d48; }
+  ol.notes li, ul.notes li { margin-top: 3px; }
+  .bar { height: 9px; background: var(--brand); display: inline-block; vertical-align: middle; }
+  .sig { display: grid; grid-template-columns: 1fr 1fr; gap: 26px; margin-top: 26px; }
+  .sig > div { font-size: 9.5px; }
+  .sig .scrawl { border-bottom: 1px solid #1c2430; margin-bottom: 4px; }
+  .scrawl { font-family: "Brush Script MT", "Segoe Script", cursive; font-size: 20px; font-style: italic; color: #20366b; height: 30px; }
+  .stamp { display: inline-block; border: 2px solid var(--brand); color: var(--brand); padding: 4px 10px; font-weight: 700; font-size: 9.5px; letter-spacing: 0.8px; transform: rotate(-4deg); text-transform: uppercase; }
+  footer.foot { position: absolute; left: 16mm; right: 16mm; bottom: 9mm; font-size: 8.3px; color: #5b6672; border-top: 1px solid #d6dbe1; padding-top: 5px; }
+  footer.foot .row { display: flex; justify-content: space-between; gap: 12px; }
+  footer.foot .issuer { margin-bottom: 2px; }
+  .specimen { position: absolute; left: 18mm; top: 122mm; transform: rotate(-32deg); font-size: 108px; font-weight: 800; letter-spacing: 16px; color: rgba(200, 30, 40, 0.15); pointer-events: none; z-index: 10; }
+  :root { --brand: #b4540f; --tint: #fbf1e8; }
+</style>
+</head>
+<body>
+
+<section class="page">
+  <div class="letterhead">
+    <div class="logo"><div class="mark">LF</div><div class="brand">Lumen Freight Holdings Ltd<small>Company no. MC-0418827 · 9 Foundry Wharf, Meridia City MC-1012</small></div></div>
+    <div class="doc-meta"><strong>Register of Members: Extract and Capitalisation Table</strong>As at 30 June 2026 (post Series C)<br>Prepared by the Company Secretary<br>Ref. LF-SEC-2026-031</div>
+  </div>
+
+  <p style="margin-top:12px">Extract prepared at the request of Mr Rafael Okoro, shareholder and director, for his financial adviser. It summarises the register of members and the fully diluted capitalisation of the company following completion of the Series C round on 18 June 2026.</p>
+
+  <div class="tiles">
+    <div><span>Series C price per share</span><b>M$12.50</b></div>
+    <div><span>Post-money valuation</span><b>M$600,000,000</b></div>
+    <div><span>Series C raised</span><b>M$120,000,000</b></div>
+    <div><span>Fully diluted shares</span><b>48,000,000</b></div>
+  </div>
+
+  <h2>Fully diluted capitalisation</h2>
+  <table>
+    <tr><th>Holder</th><th>Class</th><th class="num">Shares</th><th class="num">Fully diluted</th><th class="num">Value at M$12.50</th><th>Board seat</th></tr>
+    <tr><td><b>Rafael Okoro</b> (founder, CEO)</td><td>Ordinary</td><td class="num">10,560,000</td><td class="num">22.00%</td><td class="num">132,000,000</td><td>Yes (chair)</td></tr>
+    <tr><td>Mireille Danso (co-founder, CTO)</td><td>Ordinary</td><td class="num">5,280,000</td><td class="num">11.00%</td><td class="num">66,000,000</td><td>Yes</td></tr>
+    <tr><td>Harbourline Capital Fund II LP (Series A lead)</td><td>Series A preferred</td><td class="num">7,680,000</td><td class="num">16.00%</td><td class="num">96,000,000</td><td>Yes</td></tr>
+    <tr><td>Vantor Growth Partners III LP (Series B lead)</td><td>Series B preferred</td><td class="num">8,160,000</td><td class="num">17.00%</td><td class="num">102,000,000</td><td>Yes</td></tr>
+    <tr><td>Silverpine Ventures IV LP (Series C lead)</td><td>Series C preferred</td><td class="num">7,200,000</td><td class="num">15.00%</td><td class="num">90,000,000</td><td>Yes</td></tr>
+    <tr><td>Arkwell Opportunities Fund (Series C)</td><td>Series C preferred</td><td class="num">2,400,000</td><td class="num">5.00%</td><td class="num">30,000,000</td><td>Observer</td></tr>
+    <tr><td>Seed and angel investors (7 holders)</td><td>Seed preferred</td><td class="num">960,000</td><td class="num">2.00%</td><td class="num">12,000,000</td><td>-</td></tr>
+    <tr><td>Employee share option pool (3,910,000 granted; 1,850,000 unallocated)</td><td>Options over ordinary</td><td class="num">5,760,000</td><td class="num">12.00%</td><td class="num">72,000,000</td><td>-</td></tr>
+    <tr class="total"><td colspan="2">Total fully diluted</td><td class="num">48,000,000</td><td class="num">100.00%</td><td class="num">600,000,000</td><td></td></tr>
+  </table>
+  <p class="note">Shares in issue: 42,240,000. Fully diluted figures include the whole option pool. Preferred shares carry a 1x non-participating liquidation preference and convert to ordinary shares one for one.</p>
+
+  <h2>Financing history</h2>
+  <table>
+    <tr><th>Round</th><th>Closed</th><th>Lead investor</th><th class="num">Price per share M$</th><th class="num">Raised M$</th><th class="num">Post-money M$</th></tr>
+    <tr><td>Founding</td><td>4 May 2017</td><td>Founders</td><td class="num">0.0001</td><td class="num">1,584</td><td class="num">-</td></tr>
+    <tr><td>Seed</td><td>12 Oct 2018</td><td>Angel syndicate</td><td class="num">1.25</td><td class="num">1,200,000</td><td class="num">22,000,000</td></tr>
+    <tr><td>Series A</td><td>3 Mar 2020</td><td>Harbourline Capital</td><td class="num">2.60</td><td class="num">19,968,000</td><td class="num">88,000,000</td></tr>
+    <tr><td>Series B</td><td>15 Sep 2022</td><td>Vantor Growth Partners</td><td class="num">6.20</td><td class="num">50,592,000</td><td class="num">260,000,000</td></tr>
+    <tr><td>Series C</td><td>18 Jun 2026</td><td>Silverpine Ventures</td><td class="num">12.50</td><td class="num">120,000,000</td><td class="num">600,000,000</td></tr>
+  </table>
+
+  <footer class="foot">
+    <div class="issuer">Lumen Freight Holdings Ltd · Registered in the Republic of Meridia no. MC-0418827 · Strictly confidential</div>
+    <div class="row"><span>Synthetic document for the Reljod Labs Client Manager demo. Not a real record.</span><span>Page 1 of 3</span></div>
+  </footer>
+  <div class="specimen">SPECIMEN</div>
+</section>
+
+<section class="page">
+  <div class="running"><span><b>Lumen Freight Holdings Ltd</b> · Register extract and cap table · as at 30 June 2026</span><span>Ref. LF-SEC-2026-031</span></div>
+
+  <h2>Founder holding: Rafael Okoro</h2>
+  <div class="two">
+    <div class="box">
+      <dl class="kv">
+        <dt>Registered holder</dt><dd>Rafael Okoro</dd>
+        <dt>Address on register</dt><dd>14 Aster Rise, Kestrel Heights, Meridia City MC-2207</dd>
+        <dt>Shares held</dt><dd>10,560,000 ordinary of M$0.0001</dd>
+        <dt>Certificates</dt><dd>Nos. 001, 014 and 027</dd>
+        <dt>Custodian</dt><dd>Northgate Securities Ltd (custody only, a/c NGS-4471-0928-R)</dd>
+      </dl>
+    </div>
+    <div class="box">
+      <dl class="kv">
+        <dt>Fully diluted stake</dt><dd>22.00%</dd>
+        <dt>Vested at 30 Jun 2026</dt><dd>9,360,000 shares</dd>
+        <dt>Unvested</dt><dd>1,200,000 shares</dd>
+        <dt>Lock-up ends</dt><dd>31 March 2027</dd>
+        <dt>Encumbrances</dt><dd>None registered</dd>
+      </dl>
+    </div>
+  </div>
+
+  <h3>Founder re-vesting schedule</h3>
+  <p>As a condition of the Series B extension in December 2024, Mr Okoro agreed that 2,400,000 of his shares would re-vest in 12 equal quarterly instalments of 200,000 from 31 March 2025 to 31 December 2027. Unvested shares may be bought back at nominal value if he leaves as a bad leaver.</p>
+  <table>
+    <tr><th>Date</th><th class="num">Vesting in period</th><th class="num">Cumulative vested</th><th class="num">Unvested</th></tr>
+    <tr><td>30 Jun 2026 (this extract)</td><td class="num">-</td><td class="num">9,360,000</td><td class="num">1,200,000</td></tr>
+    <tr><td>30 Sep 2026</td><td class="num">200,000</td><td class="num">9,560,000</td><td class="num">1,000,000</td></tr>
+    <tr><td>31 Dec 2026</td><td class="num">200,000</td><td class="num">9,760,000</td><td class="num">800,000</td></tr>
+    <tr><td>31 Mar 2027 (lock-up ends)</td><td class="num">200,000</td><td class="num">9,960,000</td><td class="num">600,000</td></tr>
+    <tr><td>30 Jun 2027</td><td class="num">200,000</td><td class="num">10,160,000</td><td class="num">400,000</td></tr>
+    <tr><td>31 Dec 2027 (fully vested)</td><td class="num">400,000</td><td class="num">10,560,000</td><td class="num">0</td></tr>
+  </table>
+  <p class="note">Acceleration: unvested shares vest in full on a sale of the company (double trigger).</p>
+
+  <h3>Transfer restrictions (shareholders' agreement dated 18 June 2026)</h3>
+  <ol class="notes">
+    <li><b>Lock-up (clause 14.2).</b> No founder may sell, pledge or otherwise transfer shares before 31 March 2027 without investor majority consent.</li>
+    <li><b>Permitted secondary (clause 14.5).</b> After the lock-up, each founder may sell up to 1,200,000 ordinary shares in one company-organised secondary window. At the Series C price this is M$15,000,000 for Mr Okoro. The board has pencilled in April to May 2027 for the window.</li>
+    <li><b>Right of first refusal (clause 15).</b> Silverpine Ventures IV LP, then the other preferred holders pro rata, may buy any shares offered at the same price within 20 business days.</li>
+    <li><b>Co-sale (clause 16).</b> Preferred holders may join any founder sale above 5% of that founder's holding.</li>
+    <li><b>Drag-along (clause 18).</b> A sale approved by the board and 60% of preferred holders binds all shareholders.</li>
+    <li><b>Estate planning transfers (clause 14.8).</b> Transfers to a family trust or a wholly owned holding company are permitted with notice, provided the transferee signs a deed of adherence.</li>
+  </ol>
+
+  <h3>Other interests</h3>
+  <p>Mr Okoro also holds 120,000 options (exercise price M$6.20, granted 1 October 2022, fully vested) under the 2019 Share Option Plan; they are counted within the option pool above. Dr Ada Okoro holds no shares in the company.</p>
+
+  <footer class="foot">
+    <div class="issuer">Lumen Freight Holdings Ltd · Registered in the Republic of Meridia no. MC-0418827 · Strictly confidential</div>
+    <div class="row"><span>Synthetic document for the Reljod Labs Client Manager demo. Not a real record.</span><span>Page 2 of 3</span></div>
+  </footer>
+  <div class="specimen">SPECIMEN</div>
+</section>
+
+<section class="page">
+  <div class="running"><span><b>Lumen Freight Holdings Ltd</b> · Register extract and cap table · as at 30 June 2026</span><span>Ref. LF-SEC-2026-031</span></div>
+
+  <h2>Associated company: Okoro Ventures Ltd</h2>
+  <p>Disclosed under the directors' interests register. Okoro Ventures Ltd is Mr Okoro's personal holding company for his angel investments. It holds no shares in Lumen Freight Holdings Ltd.</p>
+  <div class="box" style="margin-top:8px">
+    <dl class="kv">
+      <dt>Company number</dt><dd>MC-0533190</dd>
+      <dt>Incorporated</dt><dd>2 March 2021, Republic of Meridia</dd>
+      <dt>Registered office</dt><dd>14 Aster Rise, Kestrel Heights, Meridia City MC-2207</dd>
+      <dt>Shareholder</dt><dd>Rafael Okoro, 100 ordinary shares (100%)</dd>
+      <dt>Director</dt><dd>Rafael Okoro</dd>
+      <dt>Company secretary</dt><dd>Dr Ada Okoro</dd>
+      <dt>Bank</dt><dd>Meridia Commerce Bank, account ending 6612</dd>
+      <dt>Funding</dt><dd>Director's loan from Mr Okoro, M$585,000 at 30 June 2026</dd>
+    </dl>
+  </div>
+
+  <h3>Investments held by Okoro Ventures Ltd</h3>
+  <table>
+    <tr><th>Company</th><th>Sector</th><th>First invested</th><th class="num">Invested M$</th><th>Instrument</th><th>Conflict check</th></tr>
+    <tr><td>Pallas Bio Ltd</td><td>Diagnostics</td><td>Mar 2022</td><td class="num">250,000</td><td>Seed preferred</td><td>No overlap</td></tr>
+    <tr><td>Brightwater Robotics Ltd</td><td>Warehouse robotics</td><td>Sep 2022</td><td class="num">150,000</td><td>Seed preferred</td><td>Lumen Freight customer; board notified 9 Sep 2022</td></tr>
+    <tr><td>Fennick Pay Ltd</td><td>Payments</td><td>Jan 2023</td><td class="num">100,000</td><td>Convertible note</td><td>No overlap</td></tr>
+    <tr><td>Tallis Learning Ltd</td><td>Education</td><td>Nov 2023</td><td class="num">75,000</td><td>SAFE</td><td>No overlap</td></tr>
+    <tr class="total"><td colspan="3">Total</td><td class="num">575,000</td><td colspan="2"></td></tr>
+  </table>
+  <p class="note">Detail of each position is in the separate angel portfolio workbook maintained by Okoro Ventures Ltd.</p>
+
+  <h2>Certification</h2>
+  <p>I certify that this is a true extract of the register of members of Lumen Freight Holdings Ltd as at 30 June 2026 and that the capitalisation table reflects the company's records following completion of the Series C round.</p>
+  <div class="sig">
+    <div><div class="scrawl">J. Abara</div>Josephine Abara<br>Company Secretary, Lumen Freight Holdings Ltd<br>Dated 3 July 2026</div>
+    <div><div class="scrawl">M. Danso</div>Mireille Danso<br>Director<br>Dated 3 July 2026</div>
+  </div>
+  <p style="margin-top:22px"><span class="stamp">Company seal · Lumen Freight Holdings Ltd</span></p>
+
+  <footer class="foot">
+    <div class="issuer">Lumen Freight Holdings Ltd · Registered in the Republic of Meridia no. MC-0418827 · Strictly confidential</div>
+    <div class="row"><span>Synthetic document for the Reljod Labs Client Manager demo. Not a real record.</span><span>Page 3 of 3</span></div>
+  </footer>
+  <div class="specimen">SPECIMEN</div>
+</section>
+
+</body>
+</html>

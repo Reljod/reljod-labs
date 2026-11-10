@@ -8,6 +8,9 @@
     },
     "src/app/api/casework/chat/route.ts": {
       "supportsCancellation": true
+    },
+    "src/app/api/client-manager/builds/[buildId]/events/route.ts": {
+      "supportsCancellation": true
     }
   }
 }

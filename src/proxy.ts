@@ -62,6 +62,7 @@ export const config = {
     "/demos/:path*",
     "/ask/:path*",
     "/api/casework/:path*",
+    "/api/client-manager/:path*",
     "/access/:path*",
   ],
 };
