@@ -3,6 +3,7 @@ import { ButtonLink } from "@/components/ui/button-link";
 import { Mark } from "@/components/ui/mark";
 import { lab } from "@/content/lab";
 import { navigation } from "@/content/navigation";
+import { ProfileMenu } from "@/features/access/components/profile-menu";
 
 export function SiteHeader() {
   return (
@@ -29,12 +30,15 @@ export function SiteHeader() {
             ))}
           </ul>
         </nav>
-        <ButtonLink
-          href="#contact"
-          className="min-h-10 px-4 text-xs shadow-hard-sm"
-        >
-          Contact
-        </ButtonLink>
+        <div className="flex items-center gap-3">
+          <ButtonLink
+            href="#contact"
+            className="min-h-10 px-4 text-xs shadow-hard-sm"
+          >
+            Contact
+          </ButtonLink>
+          <ProfileMenu />
+        </div>
       </div>
     </header>
   );

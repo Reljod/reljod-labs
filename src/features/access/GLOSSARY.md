@@ -24,6 +24,10 @@ _Avoid_: Password, token, PIN
 A visitor who redeemed a Guest code: an anonymous Supabase Auth user bound to that Guest pass. An anonymous user with no live Guest pass has no Access.
 _Avoid_: Anon, visitor, user
 
+**Profile settings**:
+The page at `/access/profile` where a Host edits their name and password and opens guest access.
+_Avoid_: Account page, dashboard
+
 **Door**:
 The page at `/access` where a visitor without Access lands, enters a Guest code or signs in.
 _Avoid_: Login page, paywall

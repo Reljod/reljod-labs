@@ -2,10 +2,10 @@
 
 import { createHash, randomBytes } from "node:crypto";
 import { refresh } from "next/cache";
-import { headers } from "next/headers";
+import { cookies, headers } from "next/headers";
 import { redirect } from "next/navigation";
 import { hashVisitor } from "@/features/document-compliance/server/rate-limit";
-import { ACCESS_PATH, GUESTS_PATH } from "../constants";
+import { ACCESS_PATH, PROFILE_HINT_COOKIE, PROFILE_PATH } from "../constants";
 import {
   CODE_LENGTH,
   guestCodeFrom,
@@ -13,7 +13,9 @@ import {
 } from "../domain/guest-code";
 import {
   LIMITS,
+  parseDisplayName,
   parseGuestPassRequest,
+  passwordProblem,
   safeNextPath,
 } from "../domain/guest-pass";
 import { env } from "./env";
@@ -28,7 +30,7 @@ import {
   revokeGuestPass as revokePass,
   tooManyAttempts,
 } from "./repository";
-import { authClient } from "./supabase";
+import { authClient, sessionlessAuthClient } from "./supabase";
 
 export type DoorState = { error: string } | null;
 
@@ -47,6 +49,36 @@ async function visitorHash() {
     requestHeaders.get("x-real-ip") ??
     "unknown";
   return hashVisitor(ip, env.rateLimitSalt());
+}
+
+/** Tells the header's profile menu there is, or no longer is, someone to show. */
+async function hintProfile(present: boolean) {
+  const jar = await cookies();
+  if (!present) return jar.delete(PROFILE_HINT_COOKIE);
+  jar.set(PROFILE_HINT_COOKIE, "1", {
+    sameSite: "lax",
+    secure: process.env.NODE_ENV === "production",
+    path: "/",
+    maxAge: 60 * 60 * 24 * 30,
+  });
+}
+
+export type Profile =
+  | { kind: "host"; email: string; name: string }
+  | { kind: "guest"; label: string; expiresAt: string }
+  | null;
+
+/** Who this browser is, for the header's profile menu. Null for a visitor. */
+export async function currentProfile(): Promise<Profile> {
+  const access = await currentAccess();
+  if (access?.kind === "host") {
+    return { kind: "host", email: access.email, name: access.name };
+  }
+  if (access?.kind === "guest") {
+    return { kind: "guest", label: access.label, expiresAt: access.expiresAt };
+  }
+  if (!access) await hintProfile(false);
+  return null;
 }
 
 /** A Guest enters a code: this browser becomes a Guest on that pass. */
@@ -103,6 +135,7 @@ export async function redeemGuestCode(
     }
     return { error: BAD_CODE };
   }
+  await hintProfile(true);
   redirect(next);
 }
 
@@ -132,7 +165,8 @@ export async function signIn(
     if (!error) await client.auth.signOut({ scope: "local" });
     return wrong;
   }
-  redirect(GUESTS_PATH);
+  await hintProfile(true);
+  redirect(PROFILE_PATH);
 }
 
 /** Ends this browser's session, Host or Guest. */
@@ -140,7 +174,72 @@ export async function signOut() {
   if (env.supabasePublishableKey()) {
     await authClient(requestCookies()).auth.signOut({ scope: "local" });
   }
+  await hintProfile(false);
   redirect(ACCESS_PATH);
+}
+
+export type SettingsState = { error: string } | { saved: string } | null;
+
+/** A Host changes the name shown on their profile. */
+export async function updateProfile(
+  _previous: SettingsState,
+  form: FormData,
+): Promise<SettingsState> {
+  await requireHost();
+  const name = parseDisplayName(form.get("name"));
+  if (name === null) {
+    return { error: `Use at most ${LIMITS.nameLength} characters.` };
+  }
+  const { error } = await authClient(requestCookies()).auth.updateUser({
+    data: { display_name: name },
+  });
+  if (error) {
+    console.error("[access] could not update the profile", error);
+    return { error: "The profile could not be saved. Try again." };
+  }
+  refresh();
+  return { saved: "Profile saved." };
+}
+
+/** A Host changes their password, proving the current one first. */
+export async function changePassword(
+  _previous: SettingsState,
+  form: FormData,
+): Promise<SettingsState> {
+  const host = await requireHost();
+  const current = String(form.get("current") ?? "");
+  const next = String(form.get("next") ?? "");
+  const problem = passwordProblem({
+    current,
+    next,
+    confirm: String(form.get("confirm") ?? ""),
+  });
+  if (problem) return { error: problem };
+
+  // A stolen session must not be enough to take the account over.
+  const visitor = await visitorHash();
+  if (await tooManyAttempts(visitor, "sign_in")) return { error: WAIT };
+  const { error: wrong } =
+    await sessionlessAuthClient().auth.signInWithPassword({
+      email: host.email,
+      password: current,
+    });
+  await recordAttempt(visitor, "sign_in", !wrong);
+  if (wrong) return { error: "The current password is wrong." };
+
+  const { error } = await authClient(requestCookies()).auth.updateUser({
+    password: next,
+  });
+  if (error) {
+    console.error("[access] could not change the password", error);
+    return {
+      error:
+        error.code === "weak_password"
+          ? "That password is too weak. Choose a stronger one."
+          : "The password could not be changed. Try again.",
+    };
+  }
+  return { saved: "Password changed." };
 }
 
 export type IssueState =

@@ -9,6 +9,10 @@ export const LIMITS = {
   /** Guest passes that may be live at once. */
   maxLivePasses: 25,
   labelLength: 60,
+  nameLength: 60,
+  passwordMinLength: 8,
+  /** Longer passwords are cut short by the hash Supabase Auth uses. */
+  passwordMaxLength: 72,
   /** Wrong codes or passwords one visitor may try before waiting. */
   failedAttempts: 8,
   attemptWindowMinutes: 15,
@@ -47,6 +51,30 @@ export function parseGuestPassRequest(input: {
   if (!Number.isInteger(devices) || devices < 1 || devices > LIMITS.maxDevices)
     return null;
   return { label, hours, devices };
+}
+
+/** A Host's display name as typed, tidied. Empty clears it; null is too long. */
+export function parseDisplayName(input: unknown) {
+  const name = String(input ?? "")
+    .replace(/\s+/g, " ")
+    .trim();
+  return name.length <= LIMITS.nameLength ? name : null;
+}
+
+/** Why a new password is refused, or null when it will do. */
+export function passwordProblem(input: {
+  current: string;
+  next: string;
+  confirm: string;
+}) {
+  if (input.next.length < LIMITS.passwordMinLength)
+    return `Use at least ${LIMITS.passwordMinLength} characters.`;
+  if (input.next.length > LIMITS.passwordMaxLength)
+    return `Use at most ${LIMITS.passwordMaxLength} characters.`;
+  if (input.next !== input.confirm) return "The two new passwords differ.";
+  if (input.next === input.current)
+    return "The new password is the same as the current one.";
+  return null;
 }
 
 const GATED = [/^\/demos(\/|$)/, /^\/ask(\/|$)/];

@@ -3,6 +3,7 @@ import {
   ACCESS_PATH,
   DENIED_MESSAGE,
   GUESTS_PATH,
+  PROFILE_PATH,
   SIGN_IN_PATH,
 } from "@/features/access/constants";
 import { type Access, accessThrough } from "@/features/access/server/gate";
@@ -51,9 +52,10 @@ export async function proxy(request: NextRequest) {
     NextResponse.redirect(new URL(target, request.url));
   let refusal: NextResponse;
   if (path.startsWith(ACCESS_PATH)) {
-    // The door is open to everyone; the Guest pass desk only to a Host.
-    if (!path.startsWith(GUESTS_PATH) || access?.kind === "host")
-      return response;
+    // The door is open to everyone; a Host's own pages only to a Host.
+    const hostOnly =
+      path.startsWith(GUESTS_PATH) || path.startsWith(PROFILE_PATH);
+    if (!hostOnly || access?.kind === "host") return response;
     refusal = to(SIGN_IN_PATH);
   } else if (access) {
     return response;

@@ -3,7 +3,7 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { Suspense } from "react";
 import { SignInForm } from "@/features/access/components/sign-in-form";
-import { ACCESS_PATH, GUESTS_PATH } from "@/features/access/constants";
+import { ACCESS_PATH, PROFILE_PATH } from "@/features/access/constants";
 import { currentAccess } from "@/features/access/server/gate";
 import { AccessShell, Card, Waiting } from "../shell";
 
@@ -23,7 +23,7 @@ export default function SignInPage() {
 }
 
 async function SignIn() {
-  if ((await currentAccess())?.kind === "host") redirect(GUESTS_PATH);
+  if ((await currentAccess())?.kind === "host") redirect(PROFILE_PATH);
   return (
     <>
       <Card>

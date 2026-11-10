@@ -11,7 +11,7 @@ import { type AuthCookies, authClient } from "./supabase";
 
 /** Why a request may use the demos. */
 export type Access =
-  | { kind: "host"; userId: string; email: string }
+  | { kind: "host"; userId: string; email: string; name: string }
   | {
       kind: "guest";
       userId: string;
@@ -44,7 +44,14 @@ export async function hostOf(client: SupabaseClient) {
   const email = user.email?.toLowerCase();
   if (!email || !user.email_confirmed_at) return null;
   if (!env.hostEmails().includes(email)) return null;
-  return { kind: "host" as const, userId: user.id, email };
+  // The name is the Host's own to edit, so it is shown and never trusted.
+  const name = user.user_metadata?.display_name;
+  return {
+    kind: "host" as const,
+    userId: user.id,
+    email,
+    name: typeof name === "string" ? name : "",
+  };
 }
 
 /**

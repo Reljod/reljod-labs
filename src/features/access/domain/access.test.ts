@@ -10,7 +10,9 @@ import {
   guestPassStatus,
   hostEmails,
   LIMITS,
+  parseDisplayName,
   parseGuestPassRequest,
+  passwordProblem,
   safeNextPath,
 } from "./guest-pass";
 
@@ -85,6 +87,36 @@ describe("Guest pass", () => {
     expect(
       parseGuestPassRequest({ label: "Ana", hours: 24, devices: 0 }),
     ).toBeNull();
+  });
+});
+
+describe("Profile", () => {
+  it("tidies a display name and refuses one that is too long", () => {
+    expect(parseDisplayName("  Reljod   Oreta ")).toBe("Reljod Oreta");
+    expect(parseDisplayName("")).toBe("");
+    expect(parseDisplayName("x".repeat(LIMITS.nameLength + 1))).toBeNull();
+  });
+
+  it("checks a new password", () => {
+    const ok = {
+      current: "old-password",
+      next: "new-password",
+      confirm: "new-password",
+    };
+    expect(passwordProblem(ok)).toBeNull();
+    expect(passwordProblem({ ...ok, next: "short", confirm: "short" })).toMatch(
+      /at least/,
+    );
+    expect(passwordProblem({ ...ok, confirm: "other-password" })).toMatch(
+      /differ/,
+    );
+    expect(
+      passwordProblem({ ...ok, next: "old-password", confirm: "old-password" }),
+    ).toMatch(/same/);
+    const long = "x".repeat(LIMITS.passwordMaxLength + 1);
+    expect(passwordProblem({ ...ok, next: long, confirm: long })).toMatch(
+      /at most/,
+    );
   });
 });
 

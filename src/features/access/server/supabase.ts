@@ -18,6 +18,20 @@ export function supabase() {
   return client;
 }
 
+/**
+ * An Auth client that keeps no session: for checking a password without
+ * touching the session this browser already has.
+ */
+export function sessionlessAuthClient() {
+  return createClient(env.supabaseUrl(), env.supabasePublishableKey(), {
+    auth: {
+      persistSession: false,
+      autoRefreshToken: false,
+      detectSessionInUrl: false,
+    },
+  });
+}
+
 export type AuthCookies = CookieMethodsServer;
 
 /**

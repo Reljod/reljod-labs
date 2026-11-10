@@ -5,7 +5,7 @@ import { ButtonLink } from "@/components/ui/button-link";
 import { CodeForm } from "@/features/access/components/code-form";
 import { LocalTime } from "@/features/access/components/local-time";
 import { quietButtonClass } from "@/features/access/components/styles";
-import { GUESTS_PATH, SIGN_IN_PATH } from "@/features/access/constants";
+import { PROFILE_PATH, SIGN_IN_PATH } from "@/features/access/constants";
 import { safeNextPath } from "@/features/access/domain/guest-pass";
 import { signOut } from "@/features/access/server/actions";
 import { currentAccess } from "@/features/access/server/gate";
@@ -53,8 +53,8 @@ async function Door({
         <div className="flex flex-wrap items-center gap-4">
           <ButtonLink href={next}>Go to the demos</ButtonLink>
           {access.kind === "host" ? (
-            <ButtonLink href={GUESTS_PATH} variant="secondary">
-              Guest passes
+            <ButtonLink href={PROFILE_PATH} variant="secondary">
+              Profile settings
             </ButtonLink>
           ) : null}
           {access.kind !== "e2e" ? (
