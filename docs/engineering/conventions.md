@@ -29,3 +29,10 @@ A file name, extension or type sent by the browser is untrusted. Before any of i
 
 - Use one shared helper; don't re-derive the extension at each call site.
 - Keep every key the browser can influence under the owning record's prefix (`clients/<id>/…`).
+
+## Document only what the repository has
+
+Agent instructions are read as fact. PR #28 added "The `ci` workflow runs the first three on every pull request" to `AGENTS.md`, but `.github/workflows/ci.yml` could not be pushed (the session token lacks the `workflow` scope) and was left for a human to add. Merged as written, every later session would assume lint, typecheck and tests are checked in CI when nothing runs them.
+
+- Describe CI, scripts or config in `AGENTS.md` and `docs/` in the same change that adds them, not before.
+- When a file has to be added by hand (workflow files are the usual case), list it in the PR body and leave the docs to the follow-up that adds it.
