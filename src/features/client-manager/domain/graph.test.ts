@@ -530,7 +530,7 @@ describe("citations", () => {
     ]);
     expect(splitCitations("Hi [[person:paolo]]!")).toEqual([
       { kind: "text", text: "Hi " },
-      { kind: "cite", key: "person:paolo" },
+      { kind: "cite", handle: null, key: "person:paolo" },
       { kind: "text", text: "!" },
     ]);
   });

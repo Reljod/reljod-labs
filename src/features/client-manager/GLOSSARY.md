@@ -9,8 +9,15 @@ A person the wealth manager serves. Every Client is the Root of their own Client
 _Avoid_: Customer, user, contact
 
 **Catalog**:
-The grid of Clients: the visitor's own, then the Sample book. Each card shows the Portrait, Persona and a miniature of the graph.
-_Avoid_: List, dashboard, directory
+The list of Clients in the Clients tab: the visitor's own, then the Samples. Each row shows the Portrait, Persona and a bar of what the graph holds per Branch.
+_Avoid_: Directory
+
+**Client file**:
+One Client opened in the Clients tab: the Profile (a relationship manager's view: four headline numbers, then People, Balance sheet, Goals, Watch, Timeline, each showing its top few facts), the Map (the Graph view) and Documents. It loads in parts: facts first, Edges by the part of the Map you open, quotes when you open a fact.
+_Avoid_: Workspace, dashboard (in UI copy)
+
+**Certainty**:
+How sure a Node or Edge is, from its confidence, in three steps drawn the same way everywhere: high (full dot, solid line, 80% and up), medium (half dot, dashed line), low (hollow dot, dotted line, under 60%).
 
 **Sample**:
 A fictional Client seeded for every visitor to open and ask about. Read-only: no additions.
@@ -40,7 +47,7 @@ Where Nodes are filed: eight **Branches** (Profile, Family & network, Career & b
 _Avoid_: Tags, folders, clusters
 
 **Evidence**:
-The words in a Source a Node or Edge stands on. Check uses it to catch unsupported facts.
+The words in a Source a Node or Edge stands on. Check uses it to catch unsupported facts. Documents marks every quote in place.
 _Avoid_: Citation (that is the chat's), proof
 
 **Build**:
@@ -68,10 +75,21 @@ What the graph says about how to work with the Client: archetype, headline, trai
 The Client's picture: uploaded, or painted from the Persona in the house style.
 _Avoid_: Avatar, photo (unless uploaded)
 
-**Navigator**:
-The chat model that answers questions about a Client by walking the graph with tools (search, expand, connect, browse a Category, read), and records new facts as an addition.
-_Avoid_: Assistant, bot, agent
+**Desk**:
+The chat in the Chat tab. It answers about every Client or one (the Thread's scope) and knows the graphs only through the MCP server. Cites facts as `[[handle/key]]`, where the **Handle** is the first 8 characters of the Client's id.
+_Avoid_: Navigator (the old per-client chat), bot
+
+**Thread**:
+One conversation with the Desk, kept per browser session, optionally scoped to one Client. The sidebar lists them by date or by Client.
+_Avoid_: Session (that is the browser's), conversation (in code)
+
+**MCP server**:
+`/api/client-manager/mcp`: every read of the graphs (profile, search, walks, facts with quotes, documents), Research brief and `add_facts`. The Desk calls it in process with a **Desk token** narrowed to the Thread's Client; Claude Code calls it with an **MCP token** from the MCP page. A Guest's token dies with their Guest pass.
+
+**Research**:
+A Desk turn with web search on: it reads the Research brief, searches, and ends with a **Proposal**, a card of findings (each a sentence, a URL and a Certainty) the person ticks before any of it is added. Added findings become one `web` Source and an addition Build.
+_Avoid_: Enrichment, scraping
 
 **Traversal**:
-The walk the Navigator made for one answer: each tool call, the SQL it ran and the Nodes and Edges it touched. The Graph view lights it up live and can replay it.
+The walk the Desk made for one answer: each tool call, the SQL it ran and the Nodes and Edges it touched. The Graph view lights it up live and can replay it.
 _Avoid_: Trace (in UI copy), path (that is one kind of step)

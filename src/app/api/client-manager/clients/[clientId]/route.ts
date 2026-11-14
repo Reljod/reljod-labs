@@ -1,5 +1,5 @@
 import {
-  clientView,
+  clientSummary,
   ownedClient,
   removeClient,
   viewableClient,
@@ -10,6 +10,7 @@ import {
 } from "@/features/client-manager/server/session";
 import { failure, notFound } from "../../respond";
 
+/** A client's first frame: profile and facts, without Edges or quotes. */
 export async function GET(
   _request: Request,
   { params }: RouteContext<"/api/client-manager/clients/[clientId]">,
@@ -19,7 +20,9 @@ export async function GET(
     const sessionId = await currentSessionId();
     const client = await viewableClient(clientId, sessionId);
     if (!client) return notFound();
-    return Response.json(await clientView(client, sessionId, await visitor()));
+    return Response.json(
+      await clientSummary(client, sessionId, await visitor()),
+    );
   } catch (error) {
     return failure(error);
   }

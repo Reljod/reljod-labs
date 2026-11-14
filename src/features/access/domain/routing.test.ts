@@ -78,7 +78,10 @@ describe("decide", () => {
 });
 
 describe("checksItsOwnBearer", () => {
-  it("is only the MCP route", () => {
+  it("is only the MCP routes", () => {
+    expect(checksItsOwnBearer("/api/client-manager/mcp")).toBe(true);
+    expect(checksItsOwnBearer("/api/client-manager/mcp-token")).toBe(false);
+    expect(checksItsOwnBearer("/api/client-manager/clients")).toBe(false);
     expect(checksItsOwnBearer("/api/casework/mcp")).toBe(true);
     expect(checksItsOwnBearer("/api/casework/mcp/sse")).toBe(true);
     expect(checksItsOwnBearer("/api/casework/mcp-evil")).toBe(false);

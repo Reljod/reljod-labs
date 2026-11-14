@@ -2,7 +2,7 @@ import type { TraversalStep } from "./events";
 import { ROOT_KEY } from "./graph";
 
 /**
- * What the Graph view lights up while the Navigator walks: every Node and
+ * What the Graph view lights up while the Desk walks: every Node and
  * Edge it touched, the order it touched them in (the view staggers by it),
  * and how. Later steps keep what earlier ones lit.
  */

@@ -34,7 +34,14 @@ const MAX_FILES = 8;
 const MAX_BYTES = 10 * 1024 * 1024;
 
 /** The Intake: a name, anything you know, any files. Submitting starts the Build. */
-export function IntakeDialog({ onClose }: { onClose: () => void }) {
+export function IntakeDialog({
+  onClose,
+  onCreated,
+}: {
+  onClose: () => void;
+  /** Where the new client opens; without it, its own page. */
+  onCreated?: (clientId: string) => void;
+}) {
   const router = useRouter();
   const [name, setName] = useState("");
   const [note, setNote] = useState("");
@@ -150,7 +157,8 @@ export function IntakeDialog({ onClose }: { onClose: () => void }) {
       ]);
       setStage("Starting the pipeline");
       await postJson(`/api/client-manager/builds/${created.buildId}/start`, {});
-      router.push(`/demos/client-manager/${created.clientId}`);
+      if (onCreated) onCreated(created.clientId);
+      else router.push(`/demos/client-manager/${created.clientId}`);
     } catch (failure) {
       // A client whose files never arrived would sit in the Catalog as failed.
       if (createdId) {

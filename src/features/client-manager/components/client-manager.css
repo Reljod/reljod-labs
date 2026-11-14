@@ -225,3 +225,41 @@
     color: #14213d;
   }
 }
+
+/* A quote the reader jumped to pulses once. */
+.cm-flash {
+  animation: cm-flash 1.2s ease-out 1;
+}
+@keyframes cm-flash {
+  0% {
+    box-shadow: 0 0 0 6px #d9a84e99;
+  }
+  100% {
+    box-shadow: 0 0 0 0 #d9a84e00;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .cm-flash {
+    animation: none;
+  }
+}
+
+/* A caret blinks after the last words while an answer streams in. */
+.cm-streaming > :last-child::after {
+  content: "";
+  display: inline-block;
+  width: 0.45em;
+  height: 1em;
+  margin-left: 3px;
+  vertical-align: -0.15em;
+  border-radius: 1px;
+  background: #1d4e89;
+  animation: cm-blink 1s steps(1) infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .cm-streaming > :last-child::after {
+    animation: none;
+  }
+}

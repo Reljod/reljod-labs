@@ -24,7 +24,14 @@ export const JOB_LABELS: Record<JobId, { title: string; verb: string }> = {
   persona: { title: "Persona", verb: "Inferring a persona and a portrait" },
 };
 
-export type SourceKind = "note" | "pdf" | "image" | "sheet" | "doc" | "text";
+export type SourceKind =
+  | "note"
+  | "pdf"
+  | "image"
+  | "sheet"
+  | "doc"
+  | "text"
+  | "web";
 
 export type SourceView = {
   id: string;
@@ -98,7 +105,7 @@ export type BuildEventInput = DistributiveOmit<BuildEvent, "at">;
 
 // GraphRAG ----------------------------------------------------------------------
 
-/** One move the Navigator makes through the graph, as the view replays it. */
+/** One move the Desk makes through the graph, as the view replays it. */
 export type TraversalStep =
   | {
       kind: "search";
@@ -120,34 +127,3 @@ export type TraversalStep =
     }
   | { kind: "category"; category: string; keys: string[] }
   | { kind: "read"; keys: string[] };
-
-export type ChatEvent =
-  /** A tool call began: the transcript shows it running until its step lands. */
-  | { type: "tool"; callId: string; name: ToolName; input: unknown }
-  | {
-      type: "step";
-      callId?: string;
-      step: TraversalStep;
-      /** The SQL that ran, shown in the trace. */
-      sql: string;
-      ms: number;
-    }
-  | { type: "tool-result"; callId: string; ok: boolean; summary: string }
-  | { type: "reasoning"; delta: string }
-  | { type: "text"; delta: string }
-  | { type: "usage"; usage: Usage }
-  | { type: "build"; buildId: string }
-  | { type: "done"; messageId: string | null; cited: string[] }
-  | { type: "error"; message: string };
-
-export const TOOL_NAMES = [
-  "search_graph",
-  "expand",
-  "connect",
-  "browse_category",
-  "read",
-  "record_facts",
-] as const;
-export type ToolName = (typeof TOOL_NAMES)[number];
-
-export const MAX_MESSAGE_LENGTH = 2000;
