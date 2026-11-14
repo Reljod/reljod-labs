@@ -8,9 +8,13 @@ import {
 /** Routes under the gated paths that browser code fetches, never visits. */
 const NOT_A_PAGE = /^\/api\/|\/(events|builds)$|\/packs\//;
 
+const BEARER_ROUTES = ["/api/casework/mcp", "/api/client-manager/mcp"];
+
 /** Outside MCP clients carry a bearer token, not cookies; the route checks it. */
 export function checksItsOwnBearer(path: string) {
-  return path === "/api/casework/mcp" || path.startsWith("/api/casework/mcp/");
+  return BEARER_ROUTES.some(
+    (route) => path === route || path.startsWith(`${route}/`),
+  );
 }
 
 export type Decision =

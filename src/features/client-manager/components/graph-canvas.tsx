@@ -23,6 +23,7 @@ import {
   TONE_HEX,
   toneOf,
 } from "../domain/categories";
+import { CERTAINTY_STYLE, certaintyOf } from "../domain/confidence";
 import {
   type DraftEdge,
   type DraftGraph,
@@ -78,6 +79,8 @@ type Props = {
   onTarget: (target: CameraTarget) => void;
   onSelect: (key: string | null) => void;
   hovered?: string | null;
+  /** Nodes are being handed in a few at a time: each springs out as it arrives, no extra stagger. */
+  revealing?: boolean;
 };
 
 const OVERVIEW = overviewBox();
@@ -138,6 +141,7 @@ export function GraphCanvas({
   onTarget,
   onSelect,
   hovered = null,
+  revealing = false,
 }: Props) {
   const reduce = useReducedMotion();
   const wrap = useRef<HTMLDivElement>(null);
@@ -153,6 +157,23 @@ export function GraphCanvas({
     () => new Map(graph.nodes.map((node) => [node.key, node])),
     [graph.nodes],
   );
+
+  // Edges arrive in batches as the map loads them; each batch grows in, staggered.
+  const seenEdges = useRef(new Map<string, number>());
+  const edgeDelays = useMemo(() => {
+    const delays = new Map<string, number>();
+    let fresh = 0;
+    for (const edge of graph.edges) {
+      const key = edgeKey(edge);
+      let delay = seenEdges.current.get(key);
+      if (delay === undefined) {
+        delay = reduce ? 0 : Math.min(fresh++ * 0.035, 1.4);
+        seenEdges.current.set(key, delay);
+      }
+      delays.set(key, delay);
+    }
+    return delays;
+  }, [graph.edges, reduce]);
 
   // What is in focus decides what is drawn loud and what fades back.
   const focusBranch =
@@ -601,7 +622,7 @@ export function GraphCanvas({
           })}
         </g>
 
-        {/* Relations between Nodes. */}
+        {/* Relations between Nodes: solid when stated plainly, dashed when likely, dotted when unsure. Each grows in as it loads. */}
         <g fill="none">
           {graph.edges.map((edge) => {
             const from = layout.nodes.get(edge.from);
@@ -609,37 +630,57 @@ export function GraphCanvas({
             if (!from || !to) return null;
             const state = edgeState(edge);
             const d = curve(from, to);
+            const level = certaintyOf(edge.confidence);
+            const style = CERTAINTY_STYLE[level];
             const base = state.touchesSelected
-              ? 0.8
+              ? 0.85
               : selected
-                ? 0.04
+                ? 0.05
                 : lit
-                  ? 0.06
+                  ? 0.07
                   : state.inFocus
-                    ? 0.42
+                    ? 0.5
                     : focusBranch
-                      ? 0.05
-                      : 0.13;
+                      ? 0.06
+                      : 0.18;
+            const dash = style.dash
+              ?.split(" ")
+              .map((part) =>
+                (Number(part) * Math.max(1, unit * 1.1)).toFixed(1),
+              )
+              .join(" ");
             const glowTone =
               state.glow?.glow === "path" ? "#b23a2b" : "#d9a84e";
             return (
               <g key={state.key}>
-                <path
-                  d={d}
+                <motion.path
+                  initial={
+                    reduce ? false : { d: curve(from, from), opacity: 0 }
+                  }
+                  animate={{ d, opacity: 1 }}
+                  transition={{
+                    d: {
+                      duration: 0.7,
+                      ease: [0.22, 1, 0.36, 1],
+                      delay: edgeDelays.get(state.key) ?? 0,
+                    },
+                    opacity: {
+                      duration: 0.3,
+                      delay: edgeDelays.get(state.key) ?? 0,
+                    },
+                  }}
                   stroke={
-                    state.touchesSelected
-                      ? toneOf(
-                          nodeByKey.get(
-                            edge.to === selected ? edge.from : edge.to,
-                          )?.category ?? "",
-                        )
+                    state.touchesSelected || state.inFocus
+                      ? style.color
                       : "#14213d"
                   }
                   strokeOpacity={state.glow ? 0.15 : base}
+                  strokeDasharray={dash}
+                  strokeLinecap="round"
                   strokeWidth={Math.max(
                     1,
-                    (state.touchesSelected ? 2.2 : 1.2) *
-                      Math.min(1, unit * 1.4),
+                    (state.touchesSelected ? 2.4 : 1.3) *
+                      Math.min(1.4, unit * 1.4),
                   )}
                   className="cm-fade"
                 />
@@ -675,7 +716,7 @@ export function GraphCanvas({
                     x={((from.x + to.x) / 2) * 0.86}
                     y={((from.y + to.y) / 2) * 0.86}
                     textAnchor="middle"
-                    fill="#4a4f5b"
+                    fill={style.color}
                     style={{ fontSize: fontPx(10), strokeWidth: fontPx(3) }}
                     className="font-mono"
                   >
@@ -857,7 +898,9 @@ export function GraphCanvas({
                   label={labelVisible(node)}
                   unit={unit}
                   delay={
-                    reduce ? 0 : building ? 0 : Math.min(order * 0.025, 1.2)
+                    reduce || building || revealing
+                      ? 0
+                      : Math.min(order * 0.025, 1.2)
                   }
                   onSelect={onSelect}
                 />

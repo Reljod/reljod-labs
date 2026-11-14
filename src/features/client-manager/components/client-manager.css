@@ -225,3 +225,22 @@
     color: #14213d;
   }
 }
+
+/* A quote the reader jumped to pulses once. */
+.cm-flash {
+  animation: cm-flash 1.2s ease-out 1;
+}
+@keyframes cm-flash {
+  0% {
+    box-shadow: 0 0 0 6px #d9a84e99;
+  }
+  100% {
+    box-shadow: 0 0 0 0 #d9a84e00;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .cm-flash {
+    animation: none;
+  }
+}

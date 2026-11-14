@@ -1,0 +1,356 @@
+"use client";
+
+import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { AnimatePresence, motion } from "motion/react";
+import { useEffect, useState } from "react";
+import type { Highlight } from "../domain/traversal";
+import type { CatalogCard } from "../server/service";
+import { AddDialog } from "./add-dialog";
+import { fetchClient, keys, send } from "./api";
+import { BuildStrip } from "./build-strip";
+import { DocumentsView } from "./documents-view";
+import { FactSheet } from "./fact-sheet";
+import { Icon, type IconName } from "./icons";
+import { MapView } from "./map-view";
+import { Portrait } from "./portrait";
+import { ProfileView } from "./profile-view";
+import { useBuildFeed } from "./use-build-feed";
+
+export type DashboardView = "profile" | "map" | "documents";
+
+const VIEWS: { id: DashboardView; label: string; icon: IconName }[] = [
+  { id: "profile", label: "Profile", icon: "profile" },
+  { id: "map", label: "Map", icon: "map" },
+  { id: "documents", label: "Documents", icon: "doc" },
+];
+
+const RISK: Record<string, number> = { low: 1, moderate: 2, high: 3 };
+
+/**
+ * One client: the business Profile first, the relationship Map and the
+ * Documents behind every fact. Opens from the client's card at once and fills
+ * in as each part loads.
+ */
+export function ClientDashboard({
+  clientId,
+  card,
+  view,
+  focusKey,
+  doc,
+  highlight,
+  watchBuildId,
+  onView,
+  onFocus,
+  onDoc,
+  onAsk,
+  onBack,
+}: {
+  clientId: string;
+  card: CatalogCard | undefined;
+  view: DashboardView;
+  focusKey: string | null;
+  doc: { sourceId: string | null; quote: string | null };
+  /** A chat answer's walk, lit on the map. */
+  highlight: Highlight;
+  watchBuildId: string | null;
+  onView: (view: DashboardView) => void;
+  onFocus: (key: string | null) => void;
+  onDoc: (sourceId: string | null, quote?: string) => void;
+  onAsk: (question: string, options?: { research?: boolean }) => void;
+  onBack: () => void;
+}) {
+  const queryClient = useQueryClient();
+  const query = useQuery({
+    queryKey: keys.client(clientId),
+    queryFn: () => fetchClient(clientId),
+    retry: (count, error) => error.message !== "not-found" && count < 2,
+  });
+  const client = query.data;
+
+  const running =
+    client?.latestBuild &&
+    ["queued", "running"].includes(client.latestBuild.status)
+      ? client.latestBuild.id
+      : null;
+  const [watching, setWatching] = useState<string | null>(null);
+  useEffect(() => {
+    if (running) setWatching(running);
+    else if (watchBuildId) setWatching(watchBuildId);
+  }, [running, watchBuildId]);
+  const live = useBuildFeed(watching, undefined);
+  const buildOpen = !!watching && !live.end;
+  const intake =
+    client?.latestBuild?.id === watching &&
+    client.latestBuild.trigger === "intake";
+
+  // A Build that ended changes everything below: reload it.
+  useEffect(() => {
+    if (!live.end) return;
+    void queryClient.invalidateQueries({ queryKey: keys.client(clientId) });
+    void queryClient.invalidateQueries({
+      queryKey: ["client-manager", "edges", clientId],
+    });
+    void queryClient.invalidateQueries({ queryKey: keys.catalog });
+    const timer = setTimeout(() => setWatching(null), 2500);
+    return () => clearTimeout(timer);
+  }, [live.end, clientId, queryClient]);
+
+  const [adding, setAdding] = useState(false);
+  const name = client?.name ?? card?.name ?? "Client";
+  const persona = live.persona ?? client?.persona ?? card?.persona ?? null;
+  const portraitUrl =
+    live.portraitUrl ?? client?.portraitUrl ?? card?.portraitUrl ?? null;
+
+  const openSource = (sourceId: string, quote?: string) => {
+    onDoc(sourceId, quote);
+    onView("documents");
+  };
+
+  return (
+    <div className="flex h-full min-h-0 flex-col bg-marble">
+      <header className="border-ink/10 border-b bg-paper px-4 pt-3">
+        <div className="flex items-center gap-3">
+          <button
+            type="button"
+            onClick={onBack}
+            aria-label="All clients"
+            className="rounded-sm p-1.5 lg:hidden text-ink-muted hover:bg-marble hover:text-ink"
+          >
+            <Icon name="back" />
+          </button>
+          <Portrait
+            name={name}
+            url={portraitUrl}
+            size="sm"
+            building={buildOpen}
+          />
+          <div className="min-w-0 flex-1">
+            <div className="flex items-center gap-2">
+              <h2 className="truncate text-lg leading-tight font-semibold">
+                {name}
+              </h2>
+              {(client?.isSample ?? card?.isSample) ? (
+                <span className="eyebrow rounded-sm bg-brass/30 px-1.5 py-px text-[0.6rem] font-bold">
+                  Sample
+                </span>
+              ) : null}
+            </div>
+            <p className="truncate text-sm text-ink-muted">
+              {persona ? (
+                <>
+                  <span className="font-medium text-ink">
+                    {persona.archetype}
+                  </span>{" "}
+                  · {persona.headline}
+                </>
+              ) : buildOpen ? (
+                "Reading everything you shared…"
+              ) : (
+                " "
+              )}
+            </p>
+          </div>
+          <div className="hidden items-center gap-4 font-mono text-xs text-ink-muted sm:flex">
+            {persona && persona.riskAppetite !== "unknown" ? (
+              <span
+                title={`Risk appetite: ${persona.riskAppetite}`}
+                className="flex items-end gap-0.5"
+              >
+                {[1, 2, 3].map((step) => (
+                  <span
+                    key={step}
+                    className={`w-1 rounded-[1px] ${step <= (RISK[persona.riskAppetite] ?? 0) ? "bg-seal-red" : "bg-limestone"}`}
+                    style={{ height: 4 + step * 3 }}
+                  />
+                ))}
+              </span>
+            ) : null}
+          </div>
+          <div className="flex items-center gap-0.5">
+            <ToolButton
+              icon="chat"
+              label={`Ask about ${name} in Chat`}
+              onClick={() => onAsk("")}
+            />
+            {client?.canAdd ? (
+              <>
+                <ToolButton
+                  icon="globe"
+                  label={`Research ${name} on the web`}
+                  onClick={() => onAsk(`Research ${name}`, { research: true })}
+                />
+                <ToolButton
+                  icon="add"
+                  label="Add notes or files"
+                  onClick={() => setAdding(true)}
+                />
+              </>
+            ) : null}
+          </div>
+        </div>
+        <nav aria-label="Client views" className="-mb-px mt-2 flex gap-1">
+          {VIEWS.map((item) => (
+            <button
+              key={item.id}
+              type="button"
+              onClick={() => onView(item.id)}
+              aria-current={view === item.id}
+              className={`flex items-center gap-1.5 border-b-2 px-3 py-2 text-sm font-medium transition-colors ${view === item.id ? "border-ink text-ink" : "border-transparent text-ink-muted hover:text-ink"}`}
+            >
+              <Icon name={item.icon} className="size-3.5" />
+              {item.label}
+              {item.id === "documents" && client ? (
+                <span className="text-xs text-stone">
+                  {client.sources.length}
+                </span>
+              ) : null}
+            </button>
+          ))}
+        </nav>
+      </header>
+
+      <AnimatePresence>
+        {watching && (buildOpen || live.end) ? (
+          <BuildStrip
+            state={live}
+            canStop={client?.canAdd ?? false}
+            onStop={() =>
+              void send(
+                `/api/client-manager/builds/${watching}/stop`,
+                "POST",
+                {},
+              ).then(() =>
+                queryClient.invalidateQueries({
+                  queryKey: keys.client(clientId),
+                }),
+              )
+            }
+          />
+        ) : null}
+      </AnimatePresence>
+
+      <div className="relative min-h-0 flex-1">
+        {query.isError ? (
+          <p className="p-8 text-center text-sm text-ink-muted">
+            {query.error.message === "not-found"
+              ? "This client is gone, or belongs to another browser."
+              : "This client didn't load. Try again."}
+          </p>
+        ) : !client ? (
+          <DashboardSkeleton />
+        ) : (
+          <motion.div
+            key={view}
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ duration: 0.2 }}
+            className="h-full"
+          >
+            {view === "profile" ? (
+              <>
+                <ProfileView
+                  client={client}
+                  onFact={onFocus}
+                  onResearch={(topic) =>
+                    onAsk(`Research ${client.name}: ${topic.toLowerCase()}`, {
+                      research: true,
+                    })
+                  }
+                />
+                <AnimatePresence>
+                  {focusKey ? (
+                    <div className="absolute top-3 right-3 bottom-3 z-10 w-[min(24rem,calc(100%-1.5rem))]">
+                      <FactSheet
+                        clientId={client.id}
+                        clientName={client.name}
+                        nodeKey={focusKey}
+                        nodes={client.nodes}
+                        sources={client.sources}
+                        onSelect={onFocus}
+                        onOpenSource={openSource}
+                        onClose={() => onFocus(null)}
+                      />
+                    </div>
+                  ) : null}
+                </AnimatePresence>
+              </>
+            ) : view === "map" ? (
+              <MapView
+                client={client}
+                live={intake && buildOpen ? live : null}
+                focusKey={focusKey}
+                highlight={highlight}
+                onFocus={onFocus}
+                onOpenSource={openSource}
+              />
+            ) : (
+              <DocumentsView
+                client={client}
+                openId={doc.sourceId}
+                quote={doc.quote}
+                onOpen={(sourceId, quote) => onDoc(sourceId, quote)}
+                onFact={(key) => {
+                  onFocus(key);
+                  onView("profile");
+                }}
+              />
+            )}
+          </motion.div>
+        )}
+      </div>
+
+      <AnimatePresence>
+        {adding && client ? (
+          <AddDialog
+            clientId={client.id}
+            clientName={client.name}
+            onClose={() => setAdding(false)}
+            onStarted={(buildId) => {
+              setAdding(false);
+              setWatching(buildId);
+              void queryClient.invalidateQueries({
+                queryKey: keys.client(clientId),
+              });
+            }}
+          />
+        ) : null}
+      </AnimatePresence>
+    </div>
+  );
+}
+
+function ToolButton({
+  icon,
+  label,
+  onClick,
+}: {
+  icon: IconName;
+  label: string;
+  onClick: () => void;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      aria-label={label}
+      title={label}
+      className="rounded-sm p-2 text-ink-muted hover:bg-marble hover:text-ink"
+    >
+      <Icon name={icon} />
+    </button>
+  );
+}
+
+function DashboardSkeleton() {
+  return (
+    <div className="grid gap-4 p-6 lg:grid-cols-2">
+      {[0, 1, 2, 3].map((index) => (
+        <div
+          key={index}
+          className="cm-shimmer h-40 rounded-sm"
+          style={{ animationDelay: `${index * 0.12}s` }}
+        />
+      ))}
+    </div>
+  );
+}

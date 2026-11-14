@@ -148,7 +148,7 @@ export const projects: Project[] = [
     features: [
       "Add a client: a name, free text, PDFs, spreadsheets, images",
       "A Critic model checks the graph and repairs it while you watch",
-      "Ask questions and watch the traversal light up the graph",
+      "Ask across your whole book, or research a client on the web",
     ],
   },
 ];

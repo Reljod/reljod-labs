@@ -1,15 +1,27 @@
 "use client";
 
 import { motion } from "motion/react";
-import { useMemo } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { BRANCHES, TONE_HEX } from "../domain/categories";
 import { type DraftGraph, ROOT_KEY } from "../domain/graph";
 import type { Highlight } from "../domain/traversal";
 import type { CameraTarget } from "./graph-canvas";
 
+const add = (set: Set<string>, id: string) =>
+  set.has(id) ? set : new Set([...set, id]);
+
+const toggle = (set: Set<string>, id: string) => {
+  const next = new Set(set);
+  if (next.has(id)) next.delete(id);
+  else next.add(id);
+  return next;
+};
+
 /**
  * The Category tree as a list: the way in for keyboards and small screens,
- * and a legend that shows where the Navigator is walking.
+ * and a legend that shows where a walk lit the map. Which Branches and
+ * leaves are open is the tree's own state: opening a Node keeps them open,
+ * and only the chevrons fold them.
  */
 export function CategoryTree({
   graph,
@@ -34,13 +46,26 @@ export function CategoryTree({
     }
     return map;
   }, [graph.nodes]);
-  const openBranch =
-    target.kind === "branch"
+  const [openBranches, setOpenBranches] = useState<Set<string>>(new Set());
+  const [openLeaves, setOpenLeaves] = useState<Set<string>>(new Set());
+
+  // Wherever the map goes, the tree opens the way there and keeps it open.
+  const where =
+    target.kind === "branch" || target.kind === "leaf"
       ? target.id
-      : target.kind === "leaf"
-        ? target.id.split(".")[0]
-        : null;
-  const openLeaf = target.kind === "leaf" ? target.id : null;
+      : target.kind === "node"
+        ? (graph.nodes.find((node) => node.key === target.key)?.category ?? "")
+        : "";
+  useEffect(() => {
+    if (!where) return;
+    const [branchId, leafId] = where.split(".");
+    if (branchId) setOpenBranches((set) => add(set, branchId));
+    if (leafId) setOpenLeaves((set) => add(set, where));
+  }, [where]);
+
+  const activeLeaf = target.kind === "leaf" ? target.id : null;
+  const activeBranch = target.kind === "branch" ? target.id : null;
+  const selectedKey = target.kind === "node" ? target.key : null;
 
   return (
     <nav aria-label="Categories" className="flex flex-col gap-1">
@@ -60,38 +85,59 @@ export function CategoryTree({
           nodes: byLeaf.get(`${branch.id}.${leaf.id}`) ?? [],
         }));
         const total = leaves.reduce((sum, leaf) => sum + leaf.nodes.length, 0);
-        const open = openBranch === branch.id;
+        const open = openBranches.has(branch.id);
         const walking = leaves.some((leaf) =>
           leaf.nodes.some((node) => highlight.nodes.has(node.key)),
         );
         return (
           <div key={branch.id}>
-            <button
-              type="button"
-              aria-expanded={open}
-              onClick={() =>
-                onTarget(
-                  open
-                    ? { kind: "overview" }
-                    : { kind: "branch", id: branch.id },
-                )
-              }
-              className={`flex w-full items-center gap-2 rounded-sm px-2 py-1.5 text-left text-sm font-semibold transition-colors ${open ? "bg-paper outline-box" : "hover:bg-limestone"} ${total === 0 ? "opacity-50" : ""}`}
-            >
-              <span
-                aria-hidden="true"
-                className="size-3 shrink-0 rounded-full border-2 border-ink"
-                style={{ background: tone }}
-              />
-              <span className="min-w-0 flex-1 truncate">{branch.label}</span>
-              {walking ? (
+            <div className="flex items-center">
+              <button
+                type="button"
+                aria-label={`${open ? "Fold" : "Unfold"} ${branch.label}`}
+                aria-expanded={open}
+                onClick={() => setOpenBranches((set) => toggle(set, branch.id))}
+                className="flex size-6 shrink-0 items-center justify-center rounded-sm text-ink-muted hover:bg-limestone"
+              >
+                <svg
+                  viewBox="0 0 24 24"
+                  className={`size-3 transition-transform ${open ? "rotate-90" : ""}`}
+                  aria-hidden="true"
+                >
+                  <path
+                    d="M9 6l6 6-6 6"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2.5"
+                    strokeLinecap="round"
+                  />
+                </svg>
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  setOpenBranches((set) => add(set, branch.id));
+                  onTarget({ kind: "branch", id: branch.id });
+                }}
+                className={`flex min-w-0 flex-1 items-center gap-2 rounded-sm px-1.5 py-1.5 text-left text-sm font-semibold transition-colors ${activeBranch === branch.id ? "bg-paper outline-box" : "hover:bg-limestone"} ${total === 0 ? "opacity-50" : ""}`}
+              >
                 <span
                   aria-hidden="true"
-                  className="size-2 rounded-full bg-brass motion-safe:animate-live-pulse"
+                  className="size-3 shrink-0 rounded-full border-2 border-ink"
+                  style={{ background: tone }}
                 />
-              ) : null}
-              <span className="font-mono text-xs text-ink-muted">{total}</span>
-            </button>
+                <span className="min-w-0 flex-1 truncate">{branch.label}</span>
+                {walking ? (
+                  <span
+                    aria-hidden="true"
+                    className="size-2 rounded-full bg-brass motion-safe:animate-live-pulse"
+                  />
+                ) : null}
+                <span className="font-mono text-xs text-ink-muted">
+                  {total}
+                </span>
+              </button>
+            </div>
             {open ? (
               <motion.ul
                 initial={{ height: 0, opacity: 0 }}
@@ -103,22 +149,31 @@ export function CategoryTree({
                   <li key={leaf.id}>
                     <button
                       type="button"
-                      onClick={() => onTarget({ kind: "leaf", id: leaf.id })}
-                      className={`flex w-full items-center justify-between rounded-sm px-2 py-1 text-left text-sm ${openLeaf === leaf.id ? "bg-morning-haze font-semibold" : "hover:bg-limestone"} ${leaf.nodes.length === 0 ? "text-stone" : ""}`}
+                      aria-expanded={openLeaves.has(leaf.id)}
+                      onClick={() => {
+                        setOpenLeaves((set) =>
+                          activeLeaf === leaf.id
+                            ? toggle(set, leaf.id)
+                            : add(set, leaf.id),
+                        );
+                        onTarget({ kind: "leaf", id: leaf.id });
+                      }}
+                      className={`flex w-full items-center justify-between rounded-sm px-2 py-1 text-left text-sm ${activeLeaf === leaf.id ? "bg-morning-haze font-semibold" : "hover:bg-limestone"} ${leaf.nodes.length === 0 ? "text-stone" : ""}`}
                     >
                       {leaf.label}
                       <span className="font-mono text-xs">
                         {leaf.nodes.length}
                       </span>
                     </button>
-                    {openLeaf === leaf.id && leaf.nodes.length > 0 ? (
+                    {openLeaves.has(leaf.id) && leaf.nodes.length > 0 ? (
                       <ul className="mb-1 ml-2">
                         {leaf.nodes.map((node) => (
                           <li key={node.key}>
                             <button
                               type="button"
                               onClick={() => onSelect(node.key)}
-                              className={`w-full truncate rounded-sm px-2 py-0.5 text-left text-xs hover:bg-limestone ${highlight.nodes.has(node.key) ? "font-bold text-federal-blue" : "text-ink-muted"}`}
+                              aria-current={selectedKey === node.key}
+                              className={`w-full truncate rounded-sm px-2 py-0.5 text-left text-xs hover:bg-limestone ${selectedKey === node.key ? "bg-ink font-semibold text-paper hover:bg-ink" : highlight.nodes.has(node.key) ? "font-bold text-federal-blue" : "text-ink-muted"}`}
                             >
                               {node.label}
                             </button>

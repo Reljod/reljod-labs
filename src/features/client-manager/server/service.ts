@@ -1,6 +1,7 @@
 import "server-only";
 import { getRun, start } from "workflow/api";
 import { z } from "zod";
+import { MAX_PROPOSED_FACTS } from "../domain/chat";
 import type {
   BuildEvent,
   BuildStats,
@@ -9,10 +10,8 @@ import type {
   SourceView,
 } from "../domain/events";
 import { safeExtension } from "../domain/file-name";
-import type { DraftGraph } from "../domain/graph";
 import { slugify } from "../domain/graph";
 import { buildWorkflow } from "./build-workflow";
-import { env } from "./env";
 import { kindOf, mediaTypeFor } from "./gather";
 import {
   addMessage,
@@ -26,16 +25,19 @@ import {
   createClientRow,
   createSources,
   deleteClient,
+  type EdgeScope,
+  edgesInScope,
+  edgeTotal,
+  factsPerSource,
   getBuild,
   getClient,
   latestBuild,
   listCatalog,
-  listMessages,
-  loadGraph,
-  type MessageRow,
-  repairsOfClient,
+  nodeDetail,
+  nodesLite,
   setClientStatus,
   setPortrait,
+  sourceDetail,
   sourcesOfClient,
   updateBuild,
   usageSince,
@@ -49,6 +51,8 @@ export const LIMITS = {
   noteChars: 20_000,
   buildsPerHour: 6,
   asksPerHour: 40,
+  /** Research turns search the web several times each. */
+  researchPerHour: 8,
   buildsPerDay: 150,
   spendPerVisitorPerDay: 2,
 };
@@ -235,19 +239,7 @@ export async function createAddition(
   announce = true,
 ) {
   const input = additionSchema.parse(raw);
-  if (client.is_sample && !visitor.trusted) {
-    throw new LimitError(
-      "Sample clients are read-only. Add your own client to try additions.",
-    );
-  }
-  const running = await latestBuild(client.id);
-  if (running && isAbandoned(running)) {
-    // Its browser never started it (an upload failed, the tab closed).
-    await updateBuild(running.id, { status: "failed", error: "Never started" });
-  } else if (running && ["queued", "running"].includes(running.status)) {
-    throw new LimitError("A build is already running for this client.");
-  }
-  await checkLimits(visitor, "build");
+  await assertAddable(client, visitor);
   const { buildId, uploads } = await prepareBuild({
     clientId: client.id,
     trigger: "addition",
@@ -272,6 +264,96 @@ export async function createAddition(
     visitorHash: visitor.hash,
   });
   return { buildId, uploads };
+}
+
+/** Throws unless a new addition may start on this client now. */
+async function assertAddable(client: ClientRow, visitor: Visitor) {
+  if (client.is_sample && !visitor.trusted) {
+    throw new LimitError(
+      "Sample clients are read-only. Add your own client to try additions.",
+    );
+  }
+  const running = await latestBuild(client.id);
+  if (running && isAbandoned(running)) {
+    // Its browser never started it (an upload failed, the tab closed).
+    await updateBuild(running.id, { status: "failed", error: "Never started" });
+  } else if (running && ["queued", "running"].includes(running.status)) {
+    throw new LimitError("A build is already running for this client.");
+  }
+  await checkLimits(visitor, "build");
+}
+
+const httpUrl = z
+  .string()
+  .trim()
+  .max(500)
+  .refine(
+    (value) => /^https?:\/\/[^\s]+$/i.test(value),
+    "Links must be http(s)",
+  );
+
+export const factsSchema = z.object({
+  facts: z
+    .array(
+      z.object({
+        text: z.string().trim().min(3).max(500),
+        sourceUrl: httpUrl.nullish(),
+        sourceTitle: z.string().trim().max(200).nullish(),
+      }),
+    )
+    .min(1)
+    .max(MAX_PROPOSED_FACTS),
+});
+
+/**
+ * Adds facts the person approved (from web research) or told the chat, as
+ * one Source and an addition Build: the same pipeline as an Intake, so they
+ * are checked, deduplicated and reviewed before they land in the graph.
+ */
+export async function addFacts(
+  client: ClientRow,
+  raw: unknown,
+  visitor: Visitor,
+  origin: "research" | "chat",
+): Promise<{ buildId: string }> {
+  const { facts } = factsSchema.parse(raw);
+  await assertAddable(client, visitor);
+  const buildId = await createBuild({
+    clientId: client.id,
+    trigger: "addition",
+    visitorHash: visitor.hash,
+  });
+  const linked = facts.some((fact) => fact.sourceUrl);
+  const date = new Date().toLocaleDateString("en-GB", {
+    day: "numeric",
+    month: "short",
+    year: "numeric",
+  });
+  const text = facts
+    .map((fact) =>
+      fact.sourceUrl
+        ? `- ${fact.text} (Source: ${fact.sourceTitle ? `${fact.sourceTitle}, ` : ""}${fact.sourceUrl})`
+        : `- ${fact.text}`,
+    )
+    .join("\n");
+  await createSources([
+    {
+      clientId: client.id,
+      buildId,
+      kind: linked ? "web" : "note",
+      name:
+        origin === "research"
+          ? `Web research · ${date}`
+          : `From chat · ${date}`,
+      mediaType: "text/plain",
+      storagePath: null,
+      byteSize: text.length,
+      text,
+    },
+  ]);
+  const build = await getBuild(buildId);
+  if (build) await startBuild(build, visitor);
+  return { buildId };
 }
 
 /** Starts the Build's workflow once the browser has uploaded its files. */
@@ -433,17 +515,26 @@ export async function catalog(
   }));
 }
 
-export type MessageView = {
-  id: string;
-  role: MessageRow["role"];
-  mode: MessageRow["mode"];
-  content: string;
-  traversal: MessageRow["traversal"];
-  buildId: string | null;
-  createdAt: string;
+export type NodeLite = {
+  key: string;
+  label: string;
+  type: string;
+  category: string;
+  summary: string;
+  attributes: Record<string, string>;
+  confidence: number;
+  sourceIds: string[];
+  quotes: number;
 };
 
-export type ClientView = {
+export type SourceSummary = SourceView & {
+  createdAt: string;
+  buildId: string | null;
+  facts: number;
+};
+
+/** A client as the dashboard first draws it: no Edges, no quotes; those load as you open things. */
+export type ClientSummary = {
   id: string;
   name: string;
   isSample: boolean;
@@ -451,16 +542,9 @@ export type ClientView = {
   persona: Persona | null;
   portraitUrl: string | null;
   portraitSource: ClientRow["portrait_source"];
-  graph: DraftGraph;
-  sources: (SourceView & { createdAt: string; buildId: string | null })[];
-  messages: MessageView[];
-  repairs: {
-    round: number;
-    by: string;
-    op: string;
-    detail: Record<string, string>;
-    buildId: string;
-  }[];
+  nodes: NodeLite[];
+  edgeCount: number;
+  sources: SourceSummary[];
   latestBuild: {
     id: string;
     status: BuildRow["status"];
@@ -470,27 +554,26 @@ export type ClientView = {
   } | null;
   spend: { costUsd: number; tokens: number };
   canAdd: boolean;
-  /** The Navigator's model, as the chat header shows it. */
-  chatModel: string;
 };
 
-export async function clientView(
+export async function clientSummary(
   client: ClientRow,
   sessionId: string | null,
   visitor: Visitor | null,
-): Promise<ClientView> {
-  const [graph, sources, messages, build, spend, portraitUrl, repairs] =
+): Promise<ClientSummary> {
+  const [nodes, sources, counts, build, spend, portraitUrl, edgeCount] =
     await Promise.all([
-      loadGraph(client.id),
+      nodesLite(client.id),
       sourcesOfClient(client.id),
-      listMessages(client.id, sessionId),
+      factsPerSource(client.id),
       latestBuild(client.id),
       clientSpend(client.id),
       client.portrait_path
         ? signedUrl(client.portrait_path)
         : Promise.resolve(null),
-      repairsOfClient(client.id),
+      edgeTotal(client.id),
     ]);
+  const backed = new Map(counts.map((row) => [row.source_id, row.total]));
   return {
     id: client.id,
     name: client.name,
@@ -499,7 +582,18 @@ export async function clientView(
     persona: client.persona,
     portraitUrl,
     portraitSource: client.portrait_source,
-    graph,
+    nodes: nodes.map((node) => ({
+      key: node.key,
+      label: node.label,
+      type: node.type,
+      category: node.category,
+      summary: node.summary,
+      attributes: node.attributes,
+      confidence: node.confidence,
+      sourceIds: node.source_ids,
+      quotes: node.quotes,
+    })),
+    edgeCount,
     sources: sources.map((source) => ({
       id: source.id,
       name: source.name,
@@ -508,22 +602,7 @@ export async function clientView(
       chars: source.chars,
       buildId: source.build_id,
       createdAt: source.created_at.toISOString(),
-    })),
-    messages: messages.map((message) => ({
-      id: message.id,
-      role: message.role,
-      mode: message.mode,
-      content: message.content,
-      traversal: message.traversal,
-      buildId: message.build_id,
-      createdAt: message.created_at.toISOString(),
-    })),
-    repairs: repairs.map((repair) => ({
-      round: repair.round,
-      by: repair.by,
-      op: repair.op,
-      detail: repair.detail,
-      buildId: repair.build_id,
+      facts: backed.get(source.id) ?? 0,
     })),
     latestBuild: build
       ? {
@@ -535,9 +614,126 @@ export async function clientView(
         }
       : null,
     spend: { costUsd: spend.cost, tokens: spend.tokens },
-    canAdd:
-      (!!sessionId && client.session_id === sessionId) ||
-      (client.is_sample && !!visitor?.trusted),
-    chatModel: env.chatModel(),
+    canAdd: canAdd(client, sessionId, visitor),
+  };
+}
+
+export function canAdd(
+  client: ClientRow,
+  sessionId: string | null,
+  visitor: Visitor | null,
+) {
+  return (
+    (!!sessionId && client.session_id === sessionId) ||
+    (client.is_sample && !!visitor?.trusted)
+  );
+}
+
+export type EdgeLite = {
+  from: string;
+  to: string;
+  relation: string;
+  label: string;
+  confidence: number;
+  quotes: number;
+};
+
+export async function clientEdges(
+  clientId: string,
+  scope: EdgeScope,
+): Promise<EdgeLite[]> {
+  const rows = await edgesInScope(clientId, scope);
+  return rows.map((row) => ({
+    from: row.from_key,
+    to: row.to_key,
+    relation: row.relation,
+    label: row.label,
+    confidence: row.confidence,
+    quotes: row.quotes,
+  }));
+}
+
+export type Quote = { sourceId: string; quote: string };
+
+export type NodeFull = NodeLite & {
+  evidence: Quote[];
+  links: (EdgeLite & { evidence: Quote[] })[];
+};
+
+export async function clientNode(
+  clientId: string,
+  key: string,
+): Promise<NodeFull | null> {
+  const detail = await nodeDetail(clientId, key);
+  if (!detail) return null;
+  const { node, evidence, edges } = detail;
+  return {
+    key: node.key,
+    label: node.label,
+    type: node.type,
+    category: node.category,
+    summary: node.summary,
+    attributes: node.attributes,
+    confidence: node.confidence,
+    sourceIds: [...new Set(evidence.map((item) => item.source_id))],
+    quotes: evidence.length,
+    evidence: evidence.map((item) => ({
+      sourceId: item.source_id,
+      quote: item.quote,
+    })),
+    links: edges.map((edge) => ({
+      from: edge.from_key,
+      to: edge.to_key,
+      relation: edge.relation,
+      label: edge.label,
+      confidence: edge.confidence,
+      quotes: edge.evidence?.length ?? 0,
+      evidence: (edge.evidence ?? []).map((item) => ({
+        sourceId: item.source_id,
+        quote: item.quote,
+      })),
+    })),
+  };
+}
+
+export type SourceFull = SourceSummary & {
+  text: string | null;
+  url: string | null;
+  backing: {
+    quote: string;
+    key: string | null;
+    label: string;
+    category: string | null;
+    confidence: number;
+  }[];
+};
+
+export async function clientSource(
+  clientId: string,
+  sourceId: string,
+): Promise<SourceFull | null> {
+  const detail = await sourceDetail(clientId, sourceId);
+  if (!detail) return null;
+  const { source, facts } = detail;
+  return {
+    id: source.id,
+    name: source.name,
+    kind: source.kind,
+    mediaType: source.media_type,
+    chars: source.text?.length ?? 0,
+    buildId: source.build_id,
+    createdAt: source.created_at.toISOString(),
+    facts: facts.length,
+    text: source.text,
+    url: source.storage_path ? await signedUrl(source.storage_path) : null,
+    backing: facts.map((fact) => ({
+      quote: fact.quote,
+      key: fact.node_key,
+      label:
+        fact.node_label ??
+        `${fact.from_label ?? ""} ${fact.edge_label ?? ""} ${fact.to_label ?? ""}`.trim(),
+      category: fact.category,
+      confidence: fact.confidence,
+    })),
   };
 }

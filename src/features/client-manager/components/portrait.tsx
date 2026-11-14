@@ -30,7 +30,7 @@ export function Portrait({
 }: {
   name: string;
   url: string | null;
-  size?: "sm" | "md" | "lg" | "xl";
+  size?: "xs" | "sm" | "md" | "lg" | "xl";
   building?: boolean;
   className?: string;
 }) {
@@ -42,6 +42,7 @@ export function Portrait({
         TONES.length
     ];
   const box = {
+    xs: "size-7 text-[0.6rem]",
     sm: "size-10 text-sm",
     md: "size-16 text-xl",
     lg: "size-24 text-3xl",
@@ -56,7 +57,7 @@ export function Portrait({
         />
       ) : null}
       <span
-        className="relative flex size-full items-center justify-center overflow-hidden rounded-full border-2 border-ink font-mono font-bold text-paper"
+        className={`relative flex size-full items-center justify-center overflow-hidden rounded-full border-ink font-mono font-bold text-paper ${size === "xs" ? "border-[1.5px]" : "border-2"}`}
         style={{ background: tone }}
       >
         <span aria-hidden={!!url && loaded && !failed}>{initialsOf(name)}</span>
