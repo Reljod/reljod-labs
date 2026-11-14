@@ -145,44 +145,53 @@ export async function* ask(input: {
 }): AsyncGenerator<AssistantEvent> {
   const { text, research: asked } = askSchema.parse(input.raw);
   const research = asked || ASKS_FOR_RESEARCH.test(text);
-  await checkLimits(input.visitor, "ask");
-  if (
-    research &&
-    !input.visitor.trusted &&
-    (await researchSince(
-      input.visitor.hash,
-      new Date(Date.now() - 3_600_000),
-    )) >= LIMITS.researchPerHour
-  ) {
+  const { thread } = input;
+  // Everything the answer needs before its first word, in one round trip.
+  const [, researchRuns, history, catalogRows] = await Promise.all([
+    checkLimits(input.visitor, "ask"),
+    research && !input.visitor.trusted
+      ? researchSince(input.visitor.hash, new Date(Date.now() - 3_600_000))
+      : Promise.resolve(0),
+    threadHistory(thread.id),
+    listCatalog(input.sessionId),
+  ]);
+  if (researchRuns >= LIMITS.researchPerHour) {
     throw new LimitError(
       `That's ${LIMITS.researchPerHour} research runs this hour. Ask without Research, or try again soon.`,
     );
   }
 
-  const { thread } = input;
-  const history = await threadHistory(thread.id);
-  if (history.length === 0) {
-    await updateThread(thread.id, { title: titleFrom(text) });
-  }
-  await addThreadMessage({
-    threadId: thread.id,
-    sessionId: input.sessionId,
-    clientId: thread.client_id,
-    role: "user",
-    mode: research ? "research" : "ask",
-    content: text,
-    visitorHash: input.visitor.hash,
-  });
-  const fresh = await getThread(thread.id);
-  if (fresh) {
-    const client = fresh.client_id ? await getClient(fresh.client_id) : null;
-    yield {
-      type: "thread",
-      thread: summaryOf({ ...fresh, client_name: client?.name ?? null }),
-    };
-  }
+  // Only a chat still called "New chat" takes its first question as a title.
+  const title =
+    history.length === 0 && thread.title === "New chat"
+      ? titleFrom(text)
+      : thread.title;
+  await Promise.all([
+    title !== thread.title
+      ? updateThread(thread.id, { title })
+      : Promise.resolve(),
+    addThreadMessage({
+      threadId: thread.id,
+      sessionId: input.sessionId,
+      clientId: thread.client_id,
+      role: "user",
+      mode: research ? "research" : "ask",
+      content: text,
+      visitorHash: input.visitor.hash,
+    }),
+  ]);
+  yield {
+    type: "thread",
+    thread: summaryOf({
+      ...thread,
+      title,
+      updated_at: new Date(),
+      client_name:
+        catalogRows.find((row) => row.id === thread.client_id)?.name ?? null,
+    }),
+  };
 
-  const book = bookOf(await listCatalog(input.sessionId), input.visitor.hash);
+  const book = bookOf(catalogRows, input.visitor.hash);
   const walk = converse({
     origin: input.origin,
     sessionId: input.sessionId,

@@ -39,7 +39,8 @@ import { Portrait } from "./portrait";
  */
 
 type Pending = {
-  threadId: string;
+  /** Null until the server has made the chat. */
+  threadId: string | null;
   question: string;
   research: boolean;
   trail: TrailStep[];
@@ -47,6 +48,7 @@ type Pending = {
   proposal: Proposal | null;
   buildId: string | null;
   cited: CitedFact[];
+  messageId: string | null;
   done: boolean;
   error: string | null;
   startedAt: number;
@@ -110,6 +112,8 @@ export function Chat({
   const abort = useRef<AbortController | null>(null);
   const list = useRef<HTMLDivElement>(null);
   const scoped = cards.find((card) => card.id === scope) ?? null;
+  // A question in a chat that doesn't exist yet shows at once; it moves to
+  // the new chat's id the moment the server makes it.
   const showPending = pending && pending.threadId === threadId ? pending : null;
   const busy = !!showPending && !showPending.done;
 
@@ -121,12 +125,16 @@ export function Chat({
     [cards, scoped],
   );
 
+  // Follow the answer as it grows, unless the person scrolled up to read.
+  const pinned = useRef(true);
   const tail = `${messages.length}-${showPending?.text.length ?? 0}-${showPending?.trail.length ?? 0}-${!!showPending?.proposal}`;
   // biome-ignore lint/correctness/useExhaustiveDependencies: follow new and growing messages
   useEffect(() => {
-    list.current?.scrollTo({
-      top: list.current.scrollHeight,
-      behavior: "smooth",
+    const element = list.current;
+    if (!element || !pinned.current) return;
+    element.scrollTo({
+      top: element.scrollHeight,
+      behavior: busy ? "auto" : "smooth",
     });
   }, [tail]);
 
@@ -137,43 +145,54 @@ export function Chat({
       abort.current?.abort();
       const controller = new AbortController();
       abort.current = controller;
+      pinned.current = true;
       let id = threadId;
-      let current: Pending | null = null;
-      const update = (patch: Partial<Pending>) => {
-        if (!current) return;
-        current = { ...current, ...patch };
+      // The question is on screen before any request goes out.
+      let current: Pending = {
+        threadId: id,
+        question,
+        research: asResearch,
+        trail: [],
+        text: "",
+        proposal: null,
+        buildId: null,
+        cited: [],
+        messageId: null,
+        done: false,
+        error: null,
+        startedAt: Date.now(),
+      };
+      setPending(current);
+      // Tokens arrive faster than frames: draw at most once per frame.
+      let frame = 0;
+      const flush = () => {
+        frame = 0;
         setPending(current);
+      };
+      const update = (patch: Partial<Pending>, now = false) => {
+        current = { ...current, ...patch };
+        if (now) {
+          cancelAnimationFrame(frame);
+          flush();
+        } else if (!frame) {
+          frame = requestAnimationFrame(flush);
+        }
       };
       try {
         if (!id) {
           const created = await send<ThreadSummary>(
             "/api/client-manager/threads",
             "POST",
-            {
-              clientId: scope,
-            },
+            { clientId: scope },
           );
           id = created.id;
           queryClient.setQueryData(keys.thread(id), {
             thread: created,
             messages: [],
           });
+          update({ threadId: id }, true);
           onThreadCreated(created);
         }
-        current = {
-          threadId: id,
-          question,
-          research: asResearch,
-          trail: [],
-          text: "",
-          proposal: null,
-          buildId: null,
-          cited: [],
-          done: false,
-          error: null,
-          startedAt: Date.now(),
-        };
-        setPending(current);
         const response = await fetch(
           `/api/client-manager/threads/${id}/messages`,
           {
@@ -183,10 +202,13 @@ export function Chat({
             signal: controller.signal,
           },
         );
-        if (!response.ok) throw new Error("The desk is unavailable right now.");
+        if (!response.ok) {
+          const body = (await response.json().catch(() => null)) as {
+            error?: string;
+          } | null;
+          throw new Error(body?.error ?? "The desk is unavailable right now.");
+        }
         for await (const event of readNdjson<AssistantEvent>(response)) {
-          if (!current) break;
-          const now: Pending = current;
           switch (event.type) {
             case "thread":
               queryClient.setQueryData<ThreadSummary[]>(
@@ -202,7 +224,7 @@ export function Chat({
             case "tool":
               update({
                 trail: [
-                  ...now.trail,
+                  ...current.trail,
                   {
                     callId: event.callId,
                     tool: event.name,
@@ -213,7 +235,7 @@ export function Chat({
               break;
             case "tool-result":
               update({
-                trail: now.trail.map((step) =>
+                trail: current.trail.map((step) =>
                   step.callId === event.callId
                     ? {
                         ...step,
@@ -227,7 +249,7 @@ export function Chat({
               });
               break;
             case "text":
-              update({ text: now.text + event.delta });
+              update({ text: current.text + event.delta });
               break;
             case "proposal":
               update({ proposal: event.proposal });
@@ -243,31 +265,72 @@ export function Chat({
               update({ error: event.message });
               break;
             case "done":
-              update({ done: true, cited: event.cited });
+              update({ cited: event.cited, messageId: event.messageId });
               break;
           }
         }
-        update({ done: true });
+        update({ done: true }, true);
       } catch (failure) {
-        if (current) {
-          update({
+        update(
+          {
             done: true,
             error: controller.signal.aborted
               ? "Stopped."
               : failure instanceof Error
                 ? failure.message
                 : "Something went wrong.",
-          });
-        }
+          },
+          true,
+        );
       }
       if (!id) return;
-      await Promise.all([
-        queryClient.invalidateQueries({ queryKey: keys.thread(id) }),
-        queryClient.invalidateQueries({ queryKey: keys.threads }),
-      ]);
-      const finished = current as Pending | null;
-      if (!finished?.error)
+      const finished = current;
+      if (!finished.error && finished.messageId) {
+        // Hand the finished turn to the thread as it is, in the same frame
+        // the live one goes away: no refetch, no flicker. The refetch after
+        // only fills in what the server saved.
+        const at = new Date(finished.startedAt).toISOString();
+        queryClient.setQueryData<{
+          thread: ThreadSummary;
+          messages: ThreadMessage[];
+        }>(keys.thread(id), (data) =>
+          data
+            ? {
+                ...data,
+                messages: [
+                  ...data.messages,
+                  {
+                    id: `${finished.messageId}-q`,
+                    role: "user",
+                    content: finished.question,
+                    research: finished.research,
+                    trail: [],
+                    cited: [],
+                    proposal: null,
+                    buildId: null,
+                    clientId: scope,
+                    createdAt: at,
+                  },
+                  {
+                    id: finished.messageId as string,
+                    role: "assistant",
+                    content: finished.text,
+                    research: finished.research,
+                    trail: finished.trail,
+                    cited: finished.cited,
+                    proposal: finished.proposal,
+                    buildId: finished.buildId,
+                    clientId: scope,
+                    createdAt: at,
+                  },
+                ],
+              }
+            : data,
+        );
         setPending((value) => (value === finished ? null : value));
+      }
+      void queryClient.invalidateQueries({ queryKey: keys.thread(id) });
+      void queryClient.invalidateQueries({ queryKey: keys.threads });
     },
     [busy, onThreadCreated, queryClient, scope, threadId],
   );
@@ -317,7 +380,16 @@ export function Chat({
         ) : null}
       </div>
 
-      <div ref={list} className="cm-scroll min-h-0 flex-1 overflow-y-auto">
+      <div
+        ref={list}
+        onScroll={(event) => {
+          const element = event.currentTarget;
+          pinned.current =
+            element.scrollHeight - element.scrollTop - element.clientHeight <
+            120;
+        }}
+        className="cm-scroll min-h-0 flex-1 overflow-y-auto"
+      >
         {empty ? (
           <div className="mx-auto flex h-full max-w-2xl flex-col items-center justify-center gap-6 px-6 py-10 text-center">
             {scoped ? (
@@ -390,18 +462,11 @@ export function Chat({
             )}
             {showPending ? (
               <>
-                {!messages.some(
-                  (message: ThreadMessage) =>
-                    message.role === "user" &&
-                    message.content === showPending.question &&
-                    Date.parse(message.createdAt) >=
-                      showPending.startedAt - 5000,
-                ) ? (
-                  <UserBubble
-                    text={showPending.question}
-                    research={showPending.research}
-                  />
-                ) : null}
+                <UserBubble
+                  text={showPending.question}
+                  research={showPending.research}
+                  live
+                />
                 <AnswerBlock
                   text={showPending.text}
                   trail={showPending.trail}
@@ -549,10 +614,19 @@ function ScopePicker({
   );
 }
 
-function UserBubble({ text, research }: { text: string; research: boolean }) {
+function UserBubble({
+  text,
+  research,
+  live = false,
+}: {
+  text: string;
+  research: boolean;
+  /** Only a question just sent slides in; saved ones are simply there. */
+  live?: boolean;
+}) {
   return (
     <motion.div
-      initial={{ opacity: 0, y: 6 }}
+      initial={live ? { opacity: 0, y: 6 } : false}
       animate={{ opacity: 1, y: 0 }}
       className="flex justify-end"
     >
@@ -609,7 +683,7 @@ function AnswerBlock({
   ].slice(0, 8);
   return (
     <motion.div
-      initial={{ opacity: 0 }}
+      initial={startedAt ? { opacity: 0 } : false}
       animate={{ opacity: 1 }}
       className="space-y-3"
     >
@@ -622,7 +696,9 @@ function AnswerBlock({
         />
       ) : null}
       {text ? (
-        <div className="space-y-2 text-[0.95rem] leading-relaxed">
+        <div
+          className={`space-y-2 text-[0.95rem] leading-relaxed ${done ? "" : "cm-streaming"}`}
+        >
           <Rich
             text={text}
             cited={cited}

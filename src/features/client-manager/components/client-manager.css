@@ -244,3 +244,22 @@
     animation: none;
   }
 }
+
+/* A caret blinks after the last words while an answer streams in. */
+.cm-streaming > :last-child::after {
+  content: "";
+  display: inline-block;
+  width: 0.45em;
+  height: 1em;
+  margin-left: 3px;
+  vertical-align: -0.15em;
+  border-radius: 1px;
+  background: #1d4e89;
+  animation: cm-blink 1s steps(1) infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .cm-streaming > :last-child::after {
+    animation: none;
+  }
+}

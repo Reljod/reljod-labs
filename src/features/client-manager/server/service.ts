@@ -80,8 +80,10 @@ export const additionSchema = z.object({
 
 export async function checkLimits(visitor: Visitor, kind: "build" | "ask") {
   if (visitor.trusted) return;
-  const hour = await usageSince(visitor.hash, new Date(Date.now() - 3_600_000));
-  const day = await usageSince(visitor.hash, new Date(Date.now() - 86_400_000));
+  const [hour, day] = await Promise.all([
+    usageSince(visitor.hash, new Date(Date.now() - 3_600_000)),
+    usageSince(visitor.hash, new Date(Date.now() - 86_400_000)),
+  ]);
   if (day.cost >= LIMITS.spendPerVisitorPerDay) {
     throw new LimitError(
       "You've used today's model budget for this demo. Come back tomorrow.",
