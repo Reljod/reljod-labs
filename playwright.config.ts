@@ -39,12 +39,18 @@ export default defineConfig({
     extraHTTPHeaders: { [E2E_HEADER]: process.env.E2E_BYPASS_TOKEN ?? "" },
     trace: "retain-on-failure",
   },
+  // CI tests a production build: `next dev` compiles each route on its first
+  // visit, which slows the first request of every spec. Locally, dev keeps
+  // the edit-and-rerun loop fast. `E2E_SERVER=prod` forces a build locally.
   webServer: externalBaseUrl
     ? undefined
     : {
-        command: "pnpm dev --port 3100",
+        command:
+          process.env.CI || process.env.E2E_SERVER === "prod"
+            ? "pnpm build && pnpm start --port 3100"
+            : "pnpm dev --port 3100",
         url: localUrl,
         reuseExistingServer: false,
-        timeout: 120_000,
+        timeout: 300_000,
       },
 });
