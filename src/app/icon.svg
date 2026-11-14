@@ -1,0 +1,28 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" width="32" height="32">
+  <style>
+    .tile { fill: #14213d; }
+    .ink { fill: #f5f1e8; }
+    .route { stroke: #f5f1e8; }
+    .end { fill: #d9a84e; }
+    @media (prefers-color-scheme: dark) {
+      .tile { fill: #f5f1e8; }
+      .ink { fill: #14213d; }
+      .route { stroke: #14213d; }
+      .end { fill: #b8862f; }
+    }
+  </style>
+  <rect class="tile" width="32" height="32" rx="6"/>
+  <g transform="translate(2.5 2.5) scale(0.84375)">
+    <g class="ink">
+      <circle cx="7" cy="7" r="1.7"/>
+      <circle cx="16" cy="7" r="1.7"/>
+      <circle cx="7" cy="16" r="1.7"/>
+      <circle cx="25" cy="16" r="1.7"/>
+      <circle cx="16" cy="25" r="1.7"/>
+      <circle cx="25" cy="25" r="1.7"/>
+      <circle cx="7" cy="25" r="2.6"/>
+    </g>
+    <path class="route" d="M7 25V16h9V7h6" fill="none" stroke-width="2.6" stroke-linecap="square"/>
+    <circle class="end" cx="25" cy="7" r="3.2"/>
+  </g>
+</svg>
