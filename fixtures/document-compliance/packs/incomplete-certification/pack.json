@@ -15,27 +15,21 @@
       "file": "identity-document.jpg",
       "mediaType": "image/jpeg",
       "sourceFormat": "image",
-      "pages": [
-        "identity-document.jpg"
-      ]
+      "pages": ["identity-document.jpg"]
     },
     {
       "kind": "proof_of_address",
       "file": "proof-of-address.pdf",
       "mediaType": "application/pdf",
       "sourceFormat": "pdf_digital",
-      "pages": [
-        "proof-of-address.page-1.png"
-      ]
+      "pages": ["proof-of-address.page-1.png"]
     },
     {
       "kind": "certified_copy",
       "file": "certified-copy.pdf",
       "mediaType": "application/pdf",
       "sourceFormat": "pdf_scanned",
-      "pages": [
-        "certified-copy.page-1.png"
-      ]
+      "pages": ["certified-copy.page-1.png"]
     }
   ],
   "expectedFindings": [

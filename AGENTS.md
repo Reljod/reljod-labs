@@ -2,9 +2,9 @@
 
 ## Testing
 
-- Verify changes with `pnpm test` (unit tests), `pnpm lint` and `pnpm build`.
+- Verify changes with `pnpm test` (unit tests), `pnpm lint`, `pnpm typecheck` and `pnpm build`. The `ci` workflow runs the first three on every pull request.
 - Conventions learned in review (read before adding a paid model call or a user-facing limit): `docs/engineering/conventions.md`.
-- Run the Playwright end-to-end suite (`pnpm test:e2e`) only when the user explicitly asks for it in the current conversation. It calls the paid model through Vercel AI Gateway, writes to the live Supabase project and takes several minutes per run. It needs the parser running on `PARSER_URL` (see `services/parser/README.md`).
+- Run the Playwright end-to-end suite (`pnpm test:e2e`) only when the user explicitly asks for it in the current conversation. It calls the paid model through Vercel AI Gateway, writes to the live Supabase project and takes several minutes per run. In CI it runs against a production build (`next start`); locally against `next dev` unless `E2E_SERVER=prod`.
 
 ## Document compliance
 
