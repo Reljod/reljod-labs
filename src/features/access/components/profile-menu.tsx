@@ -10,8 +10,9 @@ import {
   PROFILE_PATH,
   SIGN_IN_PATH,
 } from "../constants";
-import { currentProfile, type Profile, signOut } from "../server/actions";
+import { currentProfile, type Profile } from "../server/actions";
 import { LocalTime } from "./local-time";
+import { SignOutButton } from "./sign-out-button";
 
 const itemClass =
   "block w-full px-4 py-2.5 text-left font-mono text-xs font-bold tracking-[0.1em] uppercase hover:bg-morning-haze focus-visible:bg-morning-haze focus-visible:outline-none";
@@ -129,11 +130,13 @@ export function ProfileMenu() {
               <Link href="/#demos" role="menuitem" className={itemClass}>
                 Demos
               </Link>
-              <form action={signOut} className="border-ink border-t-2">
-                <button type="submit" role="menuitem" className={itemClass}>
-                  {profile.kind === "host" ? "Sign out" : "Leave"}
-                </button>
-              </form>
+              <div className="border-ink border-t-2">
+                <SignOutButton
+                  role="menuitem"
+                  className={itemClass}
+                  label={profile.kind === "host" ? "Sign out" : "Leave"}
+                />
+              </div>
             </>
           ) : (
             <>

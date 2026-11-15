@@ -1,7 +1,7 @@
 "use client";
 
 import { AnimatePresence, motion } from "motion/react";
-import { useState } from "react";
+import { useRef, useState } from "react";
 import {
   MODELS,
   type ModelSettingsByPurpose,
@@ -29,6 +29,23 @@ export function SettingsDrawer({
   spend,
 }: Props) {
   const [tab, setTab] = useState<"models" | "spend">("models");
+  const resettingRef = useRef(false);
+  const [resetting, setResetting] = useState(false);
+  const [resetFailed, setResetFailed] = useState(false);
+  async function reset() {
+    if (resettingRef.current) return;
+    resettingRef.current = true;
+    setResetting(true);
+    setResetFailed(false);
+    try {
+      onSettings(await resetModelSettings());
+    } catch {
+      setResetFailed(true);
+    } finally {
+      resettingRef.current = false;
+      setResetting(false);
+    }
+  }
   return (
     <AnimatePresence>
       {open ? (
@@ -101,11 +118,18 @@ export function SettingsDrawer({
                   ))}
                   <button
                     type="button"
-                    onClick={async () => onSettings(await resetModelSettings())}
-                    className="justify-self-start font-mono text-xs font-bold text-federal-blue uppercase underline"
+                    disabled={resetting}
+                    aria-busy={resetting}
+                    onClick={reset}
+                    className="justify-self-start font-mono text-xs font-bold text-federal-blue uppercase underline disabled:opacity-50"
                   >
-                    Reset to the defaults
+                    {resetting ? "Resetting…" : "Reset to the defaults"}
                   </button>
+                  {resetFailed ? (
+                    <p role="alert" className="text-xs text-seal-red">
+                      The defaults could not be restored. Try again.
+                    </p>
+                  ) : null}
                 </div>
               ) : (
                 <div className="grid gap-3">

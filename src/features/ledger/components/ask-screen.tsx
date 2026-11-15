@@ -156,9 +156,14 @@ export function AskScreen({
     [director.play, place, rewind],
   );
 
+  // `busy` is state, so two clicks in one frame both read it as false; the
+  // ref turns the second one away at once.
+  const busyRef = useRef(false);
+
   const ask = useCallback(
     async (question: string) => {
-      if (busy) return;
+      if (busy || busyRef.current) return;
+      busyRef.current = true;
       setBusy(true);
       setNotice(null);
       setLive({ question, answer: "", notFound: false });
@@ -200,6 +205,7 @@ export function AskScreen({
       const build = stored as StoredBuild | null;
       if (build) setBuilds((list) => [...list, build]);
       setLive(null);
+      busyRef.current = false;
       setBusy(false);
     },
     [busy, perform, session.id],
@@ -208,7 +214,8 @@ export function AskScreen({
   const replay = useCallback(
     async (index: number) => {
       const build = builds[index];
-      if (!build || busy) return;
+      if (!build || busy || busyRef.current) return;
+      busyRef.current = true;
       setBusy(true);
       await perform({
         buildId: `${build.id}-replay-${Date.now()}`,
@@ -216,6 +223,7 @@ export function AskScreen({
         steps: StepQueue.from(build.plan.steps),
         frame: () => ({ title: build.plan.title, layout: build.plan.layout }),
       });
+      busyRef.current = false;
       setBusy(false);
     },
     [builds, busy, perform],

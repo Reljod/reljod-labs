@@ -1,6 +1,7 @@
 "use client";
 
 import { useActionState, useState } from "react";
+import { useSubmitGuard } from "@/components/ui/use-submit-guard";
 import { durationLabel, LIMITS } from "../domain/guest-pass";
 import { type IssueState, issueGuestPass } from "../server/actions";
 import { LocalTime } from "./local-time";
@@ -12,6 +13,7 @@ export function IssueForm() {
     issueGuestPass,
     null,
   );
+  const guard = useSubmitGuard(pending, state);
   const [copied, setCopied] = useState(false);
   const issued = state && "code" in state ? state : null;
 
@@ -19,7 +21,10 @@ export function IssueForm() {
     <div className="flex flex-col gap-6">
       <form
         action={action}
-        onSubmit={() => setCopied(false)}
+        onSubmit={(event) => {
+          guard(event);
+          if (!event.defaultPrevented) setCopied(false);
+        }}
         className="grid gap-4 sm:grid-cols-[2fr_1fr_1fr] sm:items-end"
       >
         <div className="flex flex-col gap-2">
@@ -74,6 +79,7 @@ export function IssueForm() {
         <button
           type="submit"
           disabled={pending}
+          aria-busy={pending}
           className={`${submitClass} sm:col-span-3`}
         >
           {pending ? "Issuing…" : "Issue guest pass"}

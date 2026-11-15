@@ -1,6 +1,7 @@
 "use client";
 
 import { useActionState } from "react";
+import { useSubmitGuard } from "@/components/ui/use-submit-guard";
 import { type DoorState, signIn } from "../server/actions";
 import { fieldClass, submitClass } from "./styles";
 
@@ -10,8 +11,9 @@ export function SignInForm() {
     signIn,
     null,
   );
+  const guard = useSubmitGuard(pending, state);
   return (
-    <form action={action} className="flex flex-col gap-3">
+    <form action={action} onSubmit={guard} className="flex flex-col gap-3">
       <label htmlFor="host-email" className="eyebrow">
         Email
       </label>
@@ -34,7 +36,12 @@ export function SignInForm() {
         autoComplete="current-password"
         className={fieldClass}
       />
-      <button type="submit" disabled={pending} className={submitClass}>
+      <button
+        type="submit"
+        disabled={pending}
+        aria-busy={pending}
+        className={submitClass}
+      >
         {pending ? "Signing in…" : "Sign in"}
       </button>
       {state?.error ? (

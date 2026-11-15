@@ -3,7 +3,7 @@
 import { useMutation } from "@tanstack/react-query";
 import { AnimatePresence, motion, useReducedMotion } from "motion/react";
 import { useRouter } from "next/navigation";
-import { useEffect, useState, useTransition } from "react";
+import { useEffect, useRef, useState, useTransition } from "react";
 import type { Pack } from "../packs";
 import { DOCUMENT_ORDER } from "../scan-events";
 import { startPrescreen } from "../server/actions";
@@ -41,9 +41,15 @@ export function PackPicker({ packs }: { packs: PackSummary[] }) {
   // (or the router cache restores this page on back), the button is usable again.
   const [navigating, startNavigation] = useTransition();
 
+  // isPending only shows on the next render; this stops a fast double click
+  // from starting (and paying for) a second run in between.
+  const sending = useRef(false);
   const start = useMutation({
     mutationFn: startPrescreen,
     onMutate: () => setNotice(null),
+    onSettled: () => {
+      sending.current = false;
+    },
     onSuccess: (result) => {
       const base = "/demos/document-compliance/runs";
       if (result.status === "started") {
@@ -141,7 +147,12 @@ export function PackPicker({ packs }: { packs: PackSummary[] }) {
           type="button"
           data-testid="run-prescreen"
           disabled={!pack || starting}
-          onClick={() => pack && start.mutate(pack.slug)}
+          aria-busy={starting}
+          onClick={() => {
+            if (!pack || starting || sending.current) return;
+            sending.current = true;
+            start.mutate(pack.slug);
+          }}
           className="outline-box press group/run flex min-h-14 items-center justify-center gap-3 rounded-sm bg-federal-blue px-6 font-mono text-base font-bold tracking-[0.1em] text-paper uppercase disabled:cursor-wait disabled:opacity-80"
         >
           {starting ? (

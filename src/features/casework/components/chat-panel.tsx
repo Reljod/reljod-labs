@@ -127,6 +127,8 @@ type ChatPanelProps = {
   /** What is going on right now, or null when nothing is. */
   working: { label: string; costUsd: number; since: number } | null;
   onStop: () => void;
+  /** A stop is on its way; the Stop buttons wait for it. */
+  stopping?: boolean;
   onDropFiles: (files: File[]) => void;
   /** "GLM 5.3 Flash · low", the chat model in a few words. */
   model: string;
@@ -272,7 +274,9 @@ export function ChatPanel(props: ChatPanelProps) {
         {question ? <QuestionCard {...props} question={question} /> : null}
       </div>
 
-      {working ? <Working {...working} onStop={props.onStop} /> : null}
+      {working ? (
+        <Working {...working} onStop={props.onStop} stopping={props.stopping} />
+      ) : null}
 
       <form
         onSubmit={submit}
@@ -335,10 +339,12 @@ export function ChatPanel(props: ChatPanelProps) {
             <button
               type="button"
               onClick={props.onStop}
-              className="press mt-0.5 flex h-8 items-center gap-1.5 rounded-sm border-2 border-ink bg-seal-red px-2.5 font-mono text-[11px] font-bold tracking-[0.08em] text-paper uppercase"
+              disabled={props.stopping}
+              aria-busy={props.stopping}
+              className="press mt-0.5 flex h-8 items-center gap-1.5 rounded-sm border-2 border-ink bg-seal-red px-2.5 font-mono text-[11px] font-bold tracking-[0.08em] text-paper uppercase disabled:opacity-60"
             >
               <span className="size-2 bg-paper" aria-hidden="true" />
-              Stop
+              {props.stopping ? "Stopping…" : "Stop"}
             </button>
           ) : (
             <button
@@ -651,11 +657,13 @@ function Working({
   costUsd,
   since,
   onStop,
+  stopping = false,
 }: {
   label: string;
   costUsd: number;
   since: number;
   onStop: () => void;
+  stopping?: boolean;
 }) {
   const [now, setNow] = useState(() => Date.now());
   useEffect(() => {
@@ -675,9 +683,11 @@ function Working({
       <button
         type="button"
         onClick={onStop}
-        className="ml-auto shrink-0 text-ink-muted underline hover:text-seal-red"
+        disabled={stopping}
+        aria-busy={stopping}
+        className="ml-auto shrink-0 text-ink-muted underline hover:text-seal-red disabled:no-underline"
       >
-        esc to stop
+        {stopping ? "stopping…" : "esc to stop"}
       </button>
     </div>
   );
@@ -746,6 +756,7 @@ function QuestionCard(props: ChatPanelProps & { question: OpenQuestion }) {
             <button
               type="button"
               disabled={answering}
+              aria-busy={answering}
               onClick={() => props.onAnswer(option.answer)}
               className="group flex w-full items-baseline gap-2 border-ink/10 border-b px-3 py-1.5 text-left last:border-b-0 hover:bg-morning-haze/60 disabled:opacity-50"
             >

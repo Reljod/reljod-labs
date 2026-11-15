@@ -5,6 +5,7 @@ import { ButtonLink } from "@/components/ui/button-link";
 import { IssueForm } from "@/features/access/components/issue-form";
 import { LocalTime } from "@/features/access/components/local-time";
 import { PassActions } from "@/features/access/components/pass-actions";
+import { SignOutButton } from "@/features/access/components/sign-out-button";
 import { quietButtonClass } from "@/features/access/components/styles";
 import { PROFILE_PATH, SIGN_IN_PATH } from "@/features/access/constants";
 import {
@@ -13,7 +14,6 @@ import {
   LIMITS,
   purgeDate,
 } from "@/features/access/domain/guest-pass";
-import { signOut } from "@/features/access/server/actions";
 import { currentAccess } from "@/features/access/server/gate";
 import { listGuestPasses } from "@/features/access/server/repository";
 import { AccessShell, Card, Waiting } from "../shell";
@@ -109,11 +109,7 @@ async function GuestPasses() {
           >
             Profile settings
           </ButtonLink>
-          <form action={signOut}>
-            <button type="submit" className={quietButtonClass}>
-              Sign out
-            </button>
-          </form>
+          <SignOutButton className={quietButtonClass} />
         </div>
       </div>
 
