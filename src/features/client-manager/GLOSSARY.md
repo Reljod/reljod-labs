@@ -5,11 +5,11 @@ A wealth manager's book of clients, each with a self-correcting knowledge graph 
 ## Language
 
 **Client**:
-A person the wealth manager serves. Every Client is the Root of their own Client graph.
+A person the wealth manager serves. Every Client is the Root of their own Client graph. A Client belongs to an Owner (see the Access glossary): a Host, or a Guest pass, whose every device shares the book.
 _Avoid_: Customer, user, contact
 
 **Catalog**:
-The list of Clients in the Clients tab: the visitor's own, then the Samples. Each row shows the Portrait, Persona and a bar of what the graph holds per Branch.
+The list of Clients in the Clients tab: the Owner's own, then the Samples. Each row shows the Portrait, Persona and a bar of what the graph holds per Branch.
 _Avoid_: Directory
 
 **Client file**:
@@ -80,8 +80,8 @@ The chat in the Chat tab. It answers about every Client or one (the Thread's sco
 _Avoid_: Navigator (the old per-client chat), bot
 
 **Thread**:
-One conversation with the Desk, kept per browser session, optionally scoped to one Client. The sidebar lists them by date or by Client.
-_Avoid_: Session (that is the browser's), conversation (in code)
+One conversation with the Desk, kept for its Owner, optionally scoped to one Client. The sidebar lists them by date or by Client.
+_Avoid_: Session, conversation (in code)
 
 **MCP server**:
 `/api/client-manager/mcp`: every read of the graphs (profile, search, walks, facts with quotes, documents), Research brief and `add_facts`. The Desk calls it in process with a **Desk token** narrowed to the Thread's Client; Claude Code calls it with an **MCP token** from the MCP page. A Guest's token dies with their Guest pass.

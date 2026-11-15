@@ -1,18 +1,28 @@
 import "server-only";
 import { createHmac, timingSafeEqual } from "node:crypto";
 import { cookies, headers } from "next/headers";
-import { requireAccess } from "@/features/access/server/gate";
+import type { Owner } from "@/features/access/domain/owner";
+import { requireOwner } from "@/features/access/server/gate";
 import { E2E_HEADER } from "@/features/document-compliance/constants";
 import {
   E2E_VISITOR,
   hashVisitor,
 } from "@/features/document-compliance/server/rate-limit";
 import { env } from "./env";
-import { createSession, getSession, type SessionRow } from "./repository";
+import {
+  createSession,
+  getSession,
+  type SessionRow,
+  sessionsOf,
+} from "./repository";
 
+/**
+ * Which of the Owner's Desks this browser has open. Only a pointer: a Desk is
+ * opened only when its Owner is the request's Owner, so the cookie never
+ * reaches someone else's Desk.
+ */
 export const SESSION_COOKIE = "casework_session";
-/** Every desk this browser has opened, newest first, so it can go back to one. */
-export const DESKS_COOKIE = "casework_desks";
+/** How many earlier Desks the list offers to go back to. */
 const MAX_DESKS = 12;
 
 const COOKIE = {
@@ -23,49 +33,47 @@ const COOKIE = {
   path: "/",
 };
 
-/** The ids of the desks this browser owns. */
-export async function deskIds() {
-  const jar = await cookies();
-  const listed = (jar.get(DESKS_COOKIE)?.value ?? "")
-    .split(".")
-    .filter((id) => /^[0-9a-f-]{36}$/i.test(id));
-  const current = jar.get(SESSION_COOKIE)?.value;
-  return [...new Set([...(current ? [current] : []), ...listed])].slice(
-    0,
-    MAX_DESKS,
-  );
-}
-
 async function rememberDesk(id: string) {
-  const jar = await cookies();
-  const ids = [...new Set([id, ...(await deskIds())])].slice(0, MAX_DESKS);
-  jar.set(SESSION_COOKIE, id, COOKIE);
-  jar.set(DESKS_COOKIE, ids.join("."), COOKIE);
+  try {
+    (await cookies()).set(SESSION_COOKIE, id, COOKIE);
+  } catch {
+    // A page render cannot write cookies; the next action will.
+  }
 }
 
-async function openSession() {
+async function openSession(owner: Owner) {
   const { hash } = await visitorHash();
-  const id = await createSession(hash);
+  const id = await createSession(hash, owner);
   await rememberDesk(id);
   return id;
 }
 
-/*
- * Every way to a desk session passes the Access gate here, so no server
- * action or route of the desk can reach the model without it.
- */
-
-/** Opens a fresh desk and keeps the old ones on the list. */
-export async function startSession() {
-  await requireAccess();
-  return openSession();
+/** The Desk, if the Owner owns it. */
+function ownedBy(session: SessionRow | null, owner: Owner) {
+  return session && session.owner === owner ? session : null;
 }
 
-/** Goes back to an earlier desk, if this browser owns it. */
+/*
+ * Every way to a Desk passes the Access gate here, through `requireOwner`,
+ * so no server action or route of the desk can reach the model without it.
+ */
+
+/** The Owner's Desks, newest activity first. */
+export async function ownedDesks() {
+  const { owner } = await requireOwner();
+  return sessionsOf(owner, MAX_DESKS);
+}
+
+/** Opens a fresh Desk and keeps the old ones on the list. */
+export async function startSession() {
+  const { owner } = await requireOwner();
+  return openSession(owner);
+}
+
+/** Goes back to an earlier Desk, if the Owner owns it. */
 export async function switchSession(id: string) {
-  await requireAccess();
-  if (!(await deskIds()).includes(id)) return false;
-  if (!(await getSession(id))) return false;
+  const { owner } = await requireOwner();
+  if (!ownedBy(await getSession(id), owner)) return false;
   await rememberDesk(id);
   return true;
 }
@@ -101,18 +109,26 @@ export async function visitorHash() {
   return { hash: hashVisitor(ip, env.rateLimitSalt()), limited: true };
 }
 
-/** This browser's desk session, if it has one. */
+/**
+ * The Desk this request works in: the one this browser has open, if the Owner
+ * owns it, or else the Owner's latest, so a Guest's other devices and a Host's
+ * other browsers pick up where they left off.
+ */
 export async function currentSession(): Promise<SessionRow | null> {
-  await requireAccess();
+  const { owner } = await requireOwner();
   const id = (await cookies()).get(SESSION_COOKIE)?.value;
-  return id ? getSession(id) : null;
+  const open = id ? ownedBy(await getSession(id), owner) : null;
+  if (open) return open;
+  const [latest] = await sessionsOf(owner, 1);
+  return latest ?? null;
 }
 
-/** This browser's desk session, created on first use (from a server action or route). */
+/** The Desk this request works in, created on first use (from a server action or route). */
 export async function ensureSession(): Promise<SessionRow> {
   const existing = await currentSession();
   if (existing) return existing;
-  const id = await openSession();
+  const { owner } = await requireOwner();
+  const id = await openSession(owner);
   const session = await getSession(id);
   if (!session) throw new Error("Session was not created");
   return session;

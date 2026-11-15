@@ -2,7 +2,8 @@ import { createClient } from "@supabase/supabase-js";
 
 /**
  * Deletes everything the suite created: Pre-screen runs (documents, spans and
- * findings cascade) and Ask sessions (Builds cascade).
+ * findings cascade) and Ask sessions (Builds cascade). The suite's rows carry
+ * the e2e visitor hash and the `e2e` Owner.
  * Set `E2E_KEEP_RUNS=1` to keep them for debugging a failure in the database.
  */
 export default async function globalTeardown() {

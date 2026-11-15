@@ -1,6 +1,5 @@
 import {
-  currentSessionId,
-  ensureSessionId,
+  currentOwner,
   visitor,
 } from "@/features/client-manager/server/session";
 import {
@@ -13,7 +12,7 @@ import { failure } from "../respond";
 export async function GET() {
   try {
     return Response.json({
-      threads: await threadsOf(await currentSessionId()),
+      threads: await threadsOf(await currentOwner()),
     });
   } catch (error) {
     return failure(error);
@@ -23,9 +22,9 @@ export async function GET() {
 /** A new chat, about every client or one. */
 export async function POST(request: Request) {
   try {
-    const sessionId = await ensureSessionId();
+    const owner = await currentOwner();
     const body = await request.json().catch(() => ({}));
-    return Response.json(await openThread(body, sessionId, await visitor()));
+    return Response.json(await openThread(body, owner, await visitor()));
   } catch (error) {
     return failure(error);
   }

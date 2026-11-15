@@ -1,5 +1,6 @@
 import "server-only";
 import { z } from "zod";
+import type { Owner } from "@/features/access/domain/owner";
 import {
   type AssistantEvent,
   type CitedFact,
@@ -51,22 +52,22 @@ export function summaryOf(
   };
 }
 
-export async function threadsOf(sessionId: string | null) {
-  if (!sessionId) return [];
-  return (await listThreads(sessionId)).map(summaryOf);
+export async function threadsOf(owner: Owner | null) {
+  if (!owner) return [];
+  return (await listThreads(owner)).map(summaryOf);
 }
 
-export async function ownedThread(threadId: string, sessionId: string | null) {
+export async function ownedThread(threadId: string, owner: Owner | null) {
   const thread = await getThread(threadId);
-  return thread && sessionId && thread.session_id === sessionId ? thread : null;
+  return thread && owner && thread.owner === owner ? thread : null;
 }
 
-/** Whether this session may scope a Thread to the client: one it can see. */
-async function visibleClient(clientId: string | null, sessionId: string) {
+/** Whether this Owner may scope a Thread to the client: one it can see. */
+async function visibleClient(clientId: string | null, owner: Owner) {
   if (!clientId) return null;
   const client = await getClient(clientId);
   if (!client) throw new LimitError("That client is gone.");
-  if (!client.is_sample && client.session_id !== sessionId)
+  if (!client.is_sample && client.owner !== owner)
     throw new LimitError("That client is not in your book.");
   return client;
 }
@@ -78,13 +79,13 @@ export const threadPatchSchema = z.object({
 
 export async function openThread(
   raw: unknown,
-  sessionId: string,
+  owner: Owner,
   visitor: Visitor,
 ): Promise<ThreadSummary> {
   const input = threadPatchSchema.parse(raw ?? {});
-  const client = await visibleClient(input.clientId ?? null, sessionId);
+  const client = await visibleClient(input.clientId ?? null, owner);
   const row = await createThread({
-    sessionId,
+    owner,
     clientId: client?.id ?? null,
     title: input.title,
     visitorHash: visitor.hash,
@@ -95,11 +96,10 @@ export async function openThread(
 export async function patchThread(
   thread: ThreadRow,
   raw: unknown,
-  sessionId: string,
+  owner: Owner,
 ) {
   const input = threadPatchSchema.parse(raw);
-  if (input.clientId !== undefined)
-    await visibleClient(input.clientId, sessionId);
+  if (input.clientId !== undefined) await visibleClient(input.clientId, owner);
   await updateThread(thread.id, input);
 }
 
@@ -138,7 +138,7 @@ const ASKS_FOR_RESEARCH = /^(please\s+)?(research|look\s+up|dig\s+into)\b/i;
 export async function* ask(input: {
   thread: ThreadRow;
   raw: unknown;
-  sessionId: string;
+  owner: Owner;
   visitor: Visitor;
   origin: string;
   signal?: AbortSignal;
@@ -153,7 +153,7 @@ export async function* ask(input: {
       ? researchSince(input.visitor.hash, new Date(Date.now() - 3_600_000))
       : Promise.resolve(0),
     threadHistory(thread.id),
-    listCatalog(input.sessionId),
+    listCatalog(input.owner),
   ]);
   if (researchRuns >= LIMITS.researchPerHour) {
     throw new LimitError(
@@ -172,7 +172,7 @@ export async function* ask(input: {
       : Promise.resolve(),
     addThreadMessage({
       threadId: thread.id,
-      sessionId: input.sessionId,
+      owner: input.owner,
       clientId: thread.client_id,
       role: "user",
       mode: research ? "research" : "ask",
@@ -194,7 +194,7 @@ export async function* ask(input: {
   const book = bookOf(catalogRows, input.visitor.hash);
   const walk = converse({
     origin: input.origin,
-    sessionId: input.sessionId,
+    owner: input.owner,
     visitor: input.visitor,
     clients: book.clients,
     scopeClientId: thread.client_id,
@@ -211,7 +211,7 @@ export async function* ask(input: {
   const turn = next.value;
   const messageId = await addThreadMessage({
     threadId: thread.id,
-    sessionId: input.sessionId,
+    owner: input.owner,
     clientId: turn.buildClientId ?? thread.client_id,
     role: "assistant",
     mode: research ? "research" : "ask",
@@ -263,7 +263,8 @@ export async function decide(input: {
   if (chosen.length === 0) throw new LimitError("Pick at least one finding.");
   const client = await getClient(proposal.clientId);
   if (!client) throw new LimitError("That client is gone.");
-  if (client.session_id !== input.thread.session_id && !input.visitor.trusted)
+  const owns = !!client.owner && client.owner === input.thread.owner;
+  if (!owns && !input.visitor.trusted)
     throw new LimitError(
       "Samples are read-only. Research one of your own clients to add findings.",
     );

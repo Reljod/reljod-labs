@@ -4,7 +4,7 @@ import {
   viewableBuild,
 } from "@/features/client-manager/server/service";
 import {
-  currentSessionId,
+  currentOwner,
   visitor,
 } from "@/features/client-manager/server/session";
 import { failure, notFound } from "../../../respond";
@@ -16,11 +16,11 @@ export async function POST(
 ) {
   try {
     const { buildId } = await params;
-    const sessionId = await currentSessionId();
-    const found = await viewableBuild(buildId, sessionId);
+    const owner = await currentOwner();
+    const found = await viewableBuild(buildId, owner);
     if (
       !found ||
-      !(await ownedClient(found.client.id, sessionId, await visitor()))
+      !(await ownedClient(found.client.id, owner, await visitor()))
     ) {
       return notFound();
     }

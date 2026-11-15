@@ -369,7 +369,7 @@ async function externalSession() {
     .limit(1);
   return (
     (data?.[0] as { id: string } | undefined)?.id ??
-    createSession(EXTERNAL_VISITOR)
+    createSession(EXTERNAL_VISITOR, null)
   );
 }
 

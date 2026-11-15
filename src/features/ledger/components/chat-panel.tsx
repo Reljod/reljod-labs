@@ -126,6 +126,7 @@ export function ChatPanel({
           type="submit"
           data-testid="chat-send"
           disabled={busy || !cleanQuestion(question)}
+          aria-busy={busy}
           className="outline-box press min-h-11 rounded-sm bg-federal-blue px-4 font-mono text-sm font-bold tracking-[0.1em] text-paper uppercase disabled:opacity-50"
         >
           Ask

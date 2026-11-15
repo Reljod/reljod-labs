@@ -1,4 +1,5 @@
 import "server-only";
+import type { Owner } from "@/features/access/domain/owner";
 import type { AskSessionView, StoredBuild } from "../domain/build-events";
 import { type BuildPlan, finalizePlan } from "../domain/build-plan";
 import { supabase } from "./supabase";
@@ -23,10 +24,13 @@ const toBuild = (row: BuildRow): StoredBuild => ({
   createdAt: row.created_at,
 });
 
-export async function createAskSession(visitorHash: string) {
+export async function createAskSession(input: {
+  visitorHash: string;
+  owner: Owner;
+}) {
   const { data, error } = await supabase()
     .from("ask_sessions")
-    .insert({ visitor_hash: visitorHash })
+    .insert({ visitor_hash: input.visitorHash, owner: input.owner })
     .select("id")
     .single();
   if (error)
@@ -34,14 +38,17 @@ export async function createAskSession(visitorHash: string) {
   return data.id as string;
 }
 
+/** An Owner's Ask session; null when it is missing or someone else's. */
 export async function loadAskSession(
   id: string,
+  owner: Owner,
 ): Promise<AskSessionView | null> {
   if (!UUID.test(id)) return null;
   const { data, error } = await supabase()
     .from("ask_sessions")
     .select(`id, builds (${BUILD_COLUMNS})`)
     .eq("id", id)
+    .eq("owner", owner)
     .order("position", { referencedTable: "builds" })
     .maybeSingle();
   if (error)
@@ -93,11 +100,15 @@ export async function countBuilds(filter: {
   return count ?? 0;
 }
 
-/** The newest Ask session that has an answer to show: where limited visitors land. */
-export async function latestAnsweredSessionId() {
+/**
+ * The Owner's newest Ask session that has an answer to show: where a limited
+ * visitor lands. Null when they have none.
+ */
+export async function latestAnsweredSessionId(owner: Owner) {
   const { data, error } = await supabase()
     .from("builds")
-    .select("ask_session_id")
+    .select("ask_session_id, ask_sessions!inner(owner)")
+    .eq("ask_sessions.owner", owner)
     .order("created_at", { ascending: false })
     .limit(1)
     .maybeSingle();

@@ -1,5 +1,5 @@
 import {
-  currentSessionId,
+  currentOwner,
   visitor,
 } from "@/features/client-manager/server/session";
 import { decide, ownedThread } from "@/features/client-manager/server/threads";
@@ -14,7 +14,7 @@ export async function POST(
 ) {
   try {
     const { threadId, messageId } = await params;
-    const thread = await ownedThread(threadId, await currentSessionId());
+    const thread = await ownedThread(threadId, await currentOwner());
     if (!thread) return notFound();
     const proposal = await decide({
       thread,

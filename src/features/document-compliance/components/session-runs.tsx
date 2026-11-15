@@ -22,8 +22,8 @@ const time = (iso: string) =>
   });
 
 /**
- * The Pre-screen runs this browser started, newest first, so a visitor can go
- * back to any of them. Hidden until the Session has its first run.
+ * The Pre-screen runs this Owner started, newest first, so they can go back to
+ * any of them from any device. Hidden until the Session has its first run.
  */
 export function SessionRuns({ currentRunId }: { currentRunId?: string }) {
   const runs = useQuery({

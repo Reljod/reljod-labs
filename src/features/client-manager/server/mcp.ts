@@ -47,7 +47,7 @@ async function bookFor(
   ctx: unknown,
 ): Promise<{ book: Book; claims: McpClaims }> {
   const claims = claimsOf(ctx);
-  const rows = await listCatalog(claims.session);
+  const rows = await listCatalog(claims.owner);
   return { book: bookOf(rows, claims.visitor, claims.client), claims };
 }
 
@@ -306,7 +306,7 @@ export function registerClientManagerTools(server: McpServer) {
         if (!client) throw new ToolError("No such client.");
         const who = visitorOf(claims);
         const owns =
-          client.session_id === claims.session ||
+          (!!client.owner && client.owner === claims.owner) ||
           (client.is_sample && who.trusted);
         if (!owns)
           throw new ToolError(

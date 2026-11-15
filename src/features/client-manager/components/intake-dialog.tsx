@@ -112,8 +112,11 @@ export function IntakeDialog({
     setNote(example.note);
   };
 
+  // Set at once, so a double click or Enter cannot open two clients.
+  const sending = useRef(false);
   const submit = async (event: FormEvent) => {
     event.preventDefault();
+    if (sending.current) return;
     if (!name.trim()) {
       setError("Give the client a name.");
       return;
@@ -122,6 +125,7 @@ export function IntakeDialog({
       setError("Add something about them: a note, or at least one file.");
       return;
     }
+    sending.current = true;
     setError(null);
     setPhase("sending");
     let createdId: string | null = null;
@@ -166,6 +170,7 @@ export function IntakeDialog({
           method: "DELETE",
         });
       }
+      sending.current = false;
       setPhase("form");
       setError(
         failure instanceof Error
@@ -458,12 +463,13 @@ export function IntakeDialog({
 
         <footer className="flex items-center justify-between gap-3 border-ink border-t-2 bg-paper px-5 py-3">
           <p className="hidden text-xs text-ink-muted sm:block">
-            Synthetic data only, please. Clients you add are visible to this
-            browser only and expire in 30 days.
+            Synthetic data only, please. Clients you add are yours alone (on a
+            guest pass, everyone on it shares them) and expire in 30 days.
           </p>
           <button
             type="submit"
             disabled={phase === "sending"}
+            aria-busy={phase === "sending"}
             className="outline-box press ml-auto inline-flex min-h-11 items-center gap-2 rounded-sm bg-federal-blue px-5 py-2 font-mono text-sm font-bold tracking-[0.1em] text-paper uppercase disabled:opacity-60"
           >
             {phase === "sending" ? "Building…" : "Build the graph →"}

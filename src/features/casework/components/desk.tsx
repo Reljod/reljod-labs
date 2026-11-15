@@ -138,6 +138,15 @@ export function Desk() {
   const [answering, setAnswering] = useState(false);
   const [greeted, setGreeted] = useState(false);
   const chatAbort = useRef<AbortController | null>(null);
+  // Each write runs once at a time. State flags (busy, answering…) only show
+  // on the next render, so a fast double click would get past them; these
+  // refs turn the second click away at once.
+  const sendingRef = useRef(false);
+  const answeringRef = useRef(false);
+  const stoppingRef = useRef(false);
+  const switchingRef = useRef(false);
+  const [stopping, setStopping] = useState(false);
+  const [switching, setSwitching] = useState(false);
   const run = useRun(shown?.id ?? null, shown?.instant ?? false);
 
   const load = useCallback(async () => {
@@ -279,7 +288,8 @@ export function Desk() {
   );
 
   async function send(text: string) {
-    if (busy) return;
+    if (busy || sendingRef.current) return;
+    sendingRef.current = true;
     const documentIds = tray;
     const names = documentIds.flatMap((id) => docs.get(id)?.name ?? []);
     const pendingId = `p${Date.now()}`;
@@ -429,6 +439,7 @@ export function Desk() {
           item.text || (item.tools.length || item.choices ? "" : "No reply."),
       }));
       chatAbort.current = null;
+      sendingRef.current = false;
       setBusy(null);
       setTalking(false);
       void getSpend().then(setSpend);
@@ -437,6 +448,9 @@ export function Desk() {
 
   /** Stops whatever is going: the Specialist mid-answer, and the Run on the stage. */
   const stopAll = useCallback(async () => {
+    if (stoppingRef.current) return;
+    stoppingRef.current = true;
+    setStopping(true);
     const answering = chatAbort.current;
     answering?.abort();
     const runId = shown && !shown.instant ? shown.id : null;
@@ -463,12 +477,16 @@ export function Desk() {
       }
     } catch (error) {
       log("error", error instanceof Error ? error.message : "Could not stop");
+    } finally {
+      stoppingRef.current = false;
+      setStopping(false);
     }
     void refresh();
   }, [shown, log, refresh]);
 
   async function reply(value: Answer) {
-    if (!run.question) return;
+    if (!run.question || answeringRef.current) return;
+    answeringRef.current = true;
     setAnswering(true);
     const names =
       value.documentIds?.flatMap((id) => docs.get(id)?.name ?? []) ?? [];
@@ -493,7 +511,13 @@ export function Desk() {
       );
     try {
       await answer(run.question.questionId, value);
+    } catch (error) {
+      log(
+        "error",
+        error instanceof Error ? error.message : "Could not send the answer",
+      );
     } finally {
+      answeringRef.current = false;
       setAnswering(false);
     }
   }
@@ -598,6 +622,23 @@ export function Desk() {
   }, [upload]);
 
   async function switchDesk(id: string | null) {
+    if (switchingRef.current) return;
+    switchingRef.current = true;
+    setSwitching(true);
+    try {
+      await changeDesk(id);
+    } catch (error) {
+      log(
+        "error",
+        error instanceof Error ? error.message : "Could not open that desk",
+      );
+    } finally {
+      switchingRef.current = false;
+      setSwitching(false);
+    }
+  }
+
+  async function changeDesk(id: string | null) {
     chatAbort.current?.abort();
     setDesksOpen(false);
     setShown(null);
@@ -762,7 +803,8 @@ export function Desk() {
                       <li key={item.id}>
                         <button
                           type="button"
-                          disabled={item.current}
+                          disabled={item.current || switching}
+                          aria-busy={switching}
                           onClick={() => switchDesk(item.id)}
                           className={`flex w-full items-baseline gap-2 border-ink/10 border-b px-3 py-2 text-left ${item.current ? "bg-morning-haze/60" : "hover:bg-marble"}`}
                         >
@@ -788,10 +830,12 @@ export function Desk() {
                   </ul>
                   <button
                     type="button"
+                    disabled={switching}
+                    aria-busy={switching}
                     onClick={() => switchDesk(null)}
-                    className="w-full px-3 py-2 text-left font-mono text-[11px] font-bold tracking-[0.06em] text-federal-blue uppercase hover:bg-marble"
+                    className="w-full px-3 py-2 text-left font-mono text-[11px] font-bold tracking-[0.06em] text-federal-blue uppercase hover:bg-marble disabled:opacity-50"
                   >
-                    + New desk
+                    {switching ? "Opening…" : "+ New desk"}
                   </button>
                 </div>
               </>
@@ -919,6 +963,7 @@ export function Desk() {
                 }}
                 working={working}
                 onStop={stopAll}
+                stopping={stopping}
                 onDropFiles={upload}
                 model={settings ? modelSummary(settings.chat) : ""}
               />

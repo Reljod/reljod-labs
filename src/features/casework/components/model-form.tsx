@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useRef, useState } from "react";
 import {
   DEFAULT_SETTINGS,
   MODEL_IDS,
@@ -80,6 +80,7 @@ export function ModelForm({
   const [state, setState] = useState<"idle" | "saving" | "saved" | "failed">(
     "idle",
   );
+  const latest = useRef(0);
   const value = settings[purpose];
   const model = MODELS[value.model];
   const changed = !same(value, DEFAULT_SETTINGS[purpose]);
@@ -94,11 +95,16 @@ export function ModelForm({
     }
     onSettings({ ...settings, [purpose]: next });
     setState("saving");
+    // Saves as it changes, so quick changes overlap: only the newest answer
+    // may land, or a slower earlier save would put an old value back.
+    const ticket = ++latest.current;
     try {
-      onSettings(await saveModelSettings(purpose, next));
+      const saved = await saveModelSettings(purpose, next);
+      if (ticket !== latest.current) return;
+      onSettings(saved);
       setState("saved");
     } catch {
-      setState("failed");
+      if (ticket === latest.current) setState("failed");
     }
   }
 

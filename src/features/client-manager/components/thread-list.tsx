@@ -22,7 +22,7 @@ function bucketOf(updatedAt: string, now: number) {
   return "Older";
 }
 
-/** Every chat in this browser: new, search, by date or by client. */
+/** Every chat of yours: new, search, by date or by client. */
 export function ThreadList({
   threads,
   cards,
@@ -31,6 +31,7 @@ export function ThreadList({
   onNew,
   onOpen,
   onDelete,
+  notice = null,
 }: {
   threads: ThreadSummary[];
   cards: CatalogCard[];
@@ -39,6 +40,8 @@ export function ThreadList({
   onNew: () => void;
   onOpen: (thread: ThreadSummary) => void;
   onDelete: (thread: ThreadSummary) => void;
+  /** Why the last delete did not go through, shown above the list. */
+  notice?: string | null;
 }) {
   const [filter, setFilter] = useState("");
   const [grouping, setGrouping] = useState<Grouping>("recent");
@@ -127,6 +130,11 @@ export function ThreadList({
         aria-label="Chats"
         className="cm-scroll min-h-0 flex-1 overflow-y-auto px-2 pb-2"
       >
+        {notice ? (
+          <p role="alert" className="mx-1 mb-2 text-xs text-seal-red">
+            {notice}
+          </p>
+        ) : null}
         {loading ? (
           <ul className="space-y-1.5 px-1">
             {[0, 1, 2, 3, 4].map((index) => (

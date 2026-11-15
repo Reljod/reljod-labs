@@ -3,6 +3,7 @@ import { randomUUID } from "node:crypto";
 import { createMCPClient } from "@ai-sdk/mcp";
 import { hasToolCall, isStepCount, streamText, type ToolSet, tool } from "ai";
 import { z } from "zod";
+import type { Owner } from "@/features/access/domain/owner";
 import {
   type AssistantEvent,
   type CitedFact,
@@ -139,7 +140,7 @@ export type Turn = {
  */
 export async function* converse(input: {
   origin: string;
-  sessionId: string;
+  owner: Owner;
   visitor: Visitor;
   clients: BookClient[];
   scopeClientId: string | null;
@@ -159,7 +160,7 @@ export async function* converse(input: {
       url: `${input.origin}/api/client-manager/mcp`,
       headers: {
         authorization: `Bearer ${deskToken({
-          sessionId: input.sessionId,
+          owner: input.owner,
           visitor: input.visitor,
           clientId: scoped?.id ?? null,
         })}`,

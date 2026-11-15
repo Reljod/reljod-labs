@@ -75,7 +75,7 @@ One execution of a Pre-screen against a Document pack, holding everything it pro
 _Avoid_: Job, check, session
 
 **Session**:
-The Pre-screen runs started from one browser, listed together so a visitor can go back to any of them. It groups runs and decides nothing.
+The Pre-screen runs of one Owner (a Host, or everyone on one Guest pass; see the Access glossary), listed together so they can go back to any of them from any device. It groups runs and decides nothing; another Owner's run cannot be opened.
 _Avoid_: History, workspace, account
 
 **Run metrics**:

@@ -1,10 +1,14 @@
 "use server";
 
-import { randomUUID } from "node:crypto";
-import { cookies, headers } from "next/headers";
+import { headers } from "next/headers";
 import { start } from "workflow/api";
 import { DENIED_MESSAGE } from "@/features/access/constants";
-import { currentAccess, requireAccess } from "@/features/access/server/gate";
+import { ownerOf } from "@/features/access/domain/owner";
+import {
+  type Access,
+  currentAccess,
+  requireOwner,
+} from "@/features/access/server/gate";
 import { E2E_HEADER } from "../constants";
 import { individualOnboarding } from "../domain/rulebook";
 import { findPack } from "../packs";
@@ -16,35 +20,10 @@ import {
   createRun,
   failRun,
   latestCompletedRunId,
-  listSessionRuns,
+  listOwnerRuns,
   loadRun,
   setWorkflowRunId,
 } from "./repository";
-
-/** The cookie that groups one browser's Pre-screen runs into a Session (ADR 0007). */
-const SESSION_COOKIE = "prescreen_session";
-const SESSION_DAYS = 30;
-const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/;
-
-async function currentSessionId() {
-  const value = (await cookies()).get(SESSION_COOKIE)?.value ?? "";
-  return UUID.test(value) ? value : null;
-}
-
-/** The visitor's Session id, starting a Session (and its cookie) if there is none. */
-async function ensureSessionId() {
-  const existing = await currentSessionId();
-  const id = existing ?? randomUUID();
-  // Refreshed on every run, so a Session lasts as long as its newest run is kept.
-  (await cookies()).set(SESSION_COOKIE, id, {
-    httpOnly: true,
-    sameSite: "lax",
-    secure: process.env.NODE_ENV === "production",
-    path: "/demos/document-compliance",
-    maxAge: SESSION_DAYS * 24 * 60 * 60,
-  });
-  return id;
-}
 
 async function visitor() {
   const requestHeaders = await headers();
@@ -65,10 +44,11 @@ async function visitor() {
  */
 export async function startPrescreen(packSlug: string): Promise<StartResult> {
   try {
-    if (!(await currentAccess())) {
+    const access = await currentAccess();
+    if (!access) {
       return { status: "error", message: DENIED_MESSAGE };
     }
-    return await startRun(packSlug);
+    return await startRun(packSlug, access);
   } catch (error) {
     console.error("[document-compliance] could not start a Pre-screen", error);
     return {
@@ -79,7 +59,11 @@ export async function startPrescreen(packSlug: string): Promise<StartResult> {
   }
 }
 
-async function startRun(packSlug: string): Promise<StartResult> {
+async function startRun(
+  packSlug: string,
+  access: Access,
+): Promise<StartResult> {
+  const owner = ownerOf(access);
   const pack = findPack(packSlug);
   if (!pack) throw new Error(`Unknown pack ${packSlug}`);
 
@@ -89,7 +73,7 @@ async function startRun(packSlug: string): Promise<StartResult> {
     if (message) {
       return {
         status: "limited",
-        runId: await latestCompletedRunId(pack.slug),
+        runId: await latestCompletedRunId(pack.slug, owner),
         message,
       };
     }
@@ -100,7 +84,7 @@ async function startRun(packSlug: string): Promise<StartResult> {
     rulebook: individualOnboarding,
     declaration: pack.clientDeclaration,
     visitorHash: hash,
-    sessionId: await ensureSessionId(),
+    owner,
     model: env.model(),
   });
   try {
@@ -122,14 +106,17 @@ async function startRun(packSlug: string): Promise<StartResult> {
   return { status: "started", runId };
 }
 
+/** One of the Owner's runs; null for a run someone else started. */
 export async function getRun(runId: string): Promise<RunView | null> {
-  await requireAccess();
-  return loadRun(runId);
+  const { owner } = await requireOwner();
+  return loadRun(runId, owner);
 }
 
-/** The runs this browser started, newest first; empty before its first run. */
+/**
+ * The runs this Owner started, newest first, on any device: a Host's
+ * browsers, or every device on a Guest pass. Empty before the first run.
+ */
 export async function getSessionRuns(): Promise<SessionRunView[]> {
-  await requireAccess();
-  const sessionId = await currentSessionId();
-  return sessionId ? listSessionRuns(sessionId) : [];
+  const { owner } = await requireOwner();
+  return listOwnerRuns(owner);
 }

@@ -1,4 +1,5 @@
 import "server-only";
+import type { Owner } from "@/features/access/domain/owner";
 import type {
   BuildStats,
   Persona,
@@ -22,7 +23,8 @@ import type { CallContext } from "./llm";
 
 export type ClientRow = {
   id: string;
-  session_id: string | null;
+  /** Whose client this is (an Access Owner); null for samples and legacy rows. */
+  owner: string | null;
   is_sample: boolean;
   name: string;
   status: "building" | "ready" | "failed";
@@ -36,13 +38,13 @@ export type ClientRow = {
 
 export async function createClientRow(input: {
   name: string;
-  sessionId: string | null;
+  owner: Owner | null;
   isSample: boolean;
   visitorHash: string;
 }): Promise<string> {
   const [row] = await sql()<{ id: string }[]>`
-    insert into client_manager.clients (name, session_id, is_sample, visitor_hash)
-    values (${input.name}, ${input.sessionId}, ${input.isSample}, ${input.visitorHash})
+    insert into client_manager.clients (name, owner, is_sample, visitor_hash)
+    values (${input.name}, ${input.owner}, ${input.isSample}, ${input.visitorHash})
     returning id`;
   if (!row) throw new Error("Client was not created");
   // The client is the Root of their own graph from the start.
@@ -59,9 +61,9 @@ export async function getClient(id: string): Promise<ClientRow | null> {
   return row ?? null;
 }
 
-/** Samples are open to everyone; a visitor's own clients only to their session. */
-export function canView(client: ClientRow, sessionId: string | null) {
-  return client.is_sample || (!!sessionId && client.session_id === sessionId);
+/** Samples are open to everyone; anyone else's clients only to their Owner. */
+export function canView(client: ClientRow, owner: Owner | null) {
+  return client.is_sample || (!!owner && client.owner === owner);
 }
 
 export type CatalogRow = ClientRow & {
@@ -71,9 +73,7 @@ export type CatalogRow = ClientRow & {
   last_build_status: string | null;
 };
 
-export async function listCatalog(
-  sessionId: string | null,
-): Promise<CatalogRow[]> {
+export async function listCatalog(owner: Owner | null): Promise<CatalogRow[]> {
   return sql()<CatalogRow[]>`
     select c.*,
       (select count(*)::int from client_manager.nodes n where n.client_id = c.id) as node_count,
@@ -88,7 +88,7 @@ export async function listCatalog(
       (select b.status from client_manager.builds b where b.client_id = c.id
         order by b.created_at desc limit 1) as last_build_status
     from client_manager.clients c
-    where c.is_sample or (${sessionId}::uuid is not null and c.session_id = ${sessionId}::uuid)
+    where c.is_sample or (${owner}::text is not null and c.owner = ${owner}::text)
     order by c.is_sample, c.created_at desc
     limit 60`;
 }
@@ -668,7 +668,8 @@ export type MessageRow = {
 
 export async function addMessage(input: {
   clientId: string;
-  sessionId: string;
+  /** Null for a sample client's Build messages. */
+  owner: Owner | null;
   role: MessageRow["role"];
   mode: MessageRow["mode"];
   content: string;
@@ -678,8 +679,8 @@ export async function addMessage(input: {
 }): Promise<string> {
   const [row] = await sql()<{ id: string }[]>`
     insert into client_manager.messages
-      (client_id, session_id, role, mode, content, traversal, build_id, visitor_hash)
-    values (${input.clientId}, ${input.sessionId}, ${input.role}, ${input.mode},
+      (client_id, owner, role, mode, content, traversal, build_id, visitor_hash)
+    values (${input.clientId}, ${input.owner}, ${input.role}, ${input.mode},
       ${input.content}, ${input.traversal ? sql().json(input.traversal) : null},
       ${input.buildId ?? null}, ${input.visitorHash})
     returning id`;
@@ -899,7 +900,7 @@ export async function factsPerSource(clientId: string) {
 
 export type ThreadRow = {
   id: string;
-  session_id: string;
+  owner: string | null;
   client_id: string | null;
   title: string;
   created_at: Date;
@@ -907,15 +908,15 @@ export type ThreadRow = {
 };
 
 export async function createThread(input: {
-  sessionId: string;
+  owner: Owner;
   clientId: string | null;
   title?: string;
   visitorHash: string;
 }): Promise<ThreadRow> {
   const [row] = await sql()<ThreadRow[]>`
-    insert into client_manager.threads (session_id, client_id, title, visitor_hash)
-    values (${input.sessionId}, ${input.clientId}, ${input.title ?? "New chat"}, ${input.visitorHash})
-    returning id, session_id, client_id, title, created_at, updated_at`;
+    insert into client_manager.threads (owner, client_id, title, visitor_hash)
+    values (${input.owner}, ${input.clientId}, ${input.title ?? "New chat"}, ${input.visitorHash})
+    returning id, owner, client_id, title, created_at, updated_at`;
   if (!row) throw new Error("Thread was not created");
   return row;
 }
@@ -923,23 +924,23 @@ export async function createThread(input: {
 export async function getThread(id: string): Promise<ThreadRow | null> {
   if (!isUuid(id)) return null;
   const [row] = await sql()<ThreadRow[]>`
-    select id, session_id, client_id, title, created_at, updated_at
+    select id, owner, client_id, title, created_at, updated_at
     from client_manager.threads where id = ${id}`;
   return row ?? null;
 }
 
-export async function listThreads(sessionId: string) {
+export async function listThreads(owner: Owner) {
   return sql()<
     (ThreadRow & { client_name: string | null; preview: string | null })[]
   >`
-    select t.id, t.session_id, t.client_id, t.title, t.created_at, t.updated_at,
+    select t.id, t.owner, t.client_id, t.title, t.created_at, t.updated_at,
       c.name as client_name,
       (select m.content from client_manager.messages m
         where m.thread_id = t.id and m.role = 'assistant'
         order by m.created_at desc limit 1) as preview
     from client_manager.threads t
     left join client_manager.clients c on c.id = t.client_id
-    where t.session_id = ${sessionId}
+    where t.owner = ${owner}
     order by t.updated_at desc
     limit 100`;
 }
@@ -979,7 +980,7 @@ export type ThreadMessageRow = {
 
 export async function addThreadMessage(input: {
   threadId: string;
-  sessionId: string;
+  owner: Owner;
   clientId: string | null;
   role: "user" | "assistant";
   mode: "ask" | "research";
@@ -991,8 +992,8 @@ export async function addThreadMessage(input: {
 }): Promise<string> {
   const [row] = await sql()<{ id: string }[]>`
     insert into client_manager.messages
-      (thread_id, client_id, session_id, role, mode, content, traversal, proposal, build_id, visitor_hash)
-    values (${input.threadId}, ${input.clientId}, ${input.sessionId}, ${input.role}, ${input.mode},
+      (thread_id, client_id, owner, role, mode, content, traversal, proposal, build_id, visitor_hash)
+    values (${input.threadId}, ${input.clientId}, ${input.owner}, ${input.role}, ${input.mode},
       ${input.content}, ${input.traversal ? sql().json(input.traversal as never) : null},
       ${input.proposal ? sql().json(input.proposal as never) : null},
       ${input.buildId ?? null}, ${input.visitorHash})

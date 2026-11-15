@@ -58,6 +58,15 @@ function AskForm() {
     );
   }
 
+  // The box stays busy from the first click until the session page takes
+  // over (or the ask fails), so a second click cannot open a second session.
+  const sending = useRef(false);
+  const [busy, setBusy] = useState(false);
+  function release() {
+    sending.current = false;
+    setBusy(false);
+  }
+
   const ask = useMutation({
     mutationFn: startAskSession,
     onSuccess: async (result, asked) => {
@@ -73,15 +82,21 @@ function AskForm() {
           setQuestion("");
           setPose("idle");
           ask.reset();
+          release();
         }, 1200);
       } else if (result.status === "limited" && result.sessionId) {
         router.push(`/ask/${result.sessionId}?notice=limited`);
+        setTimeout(release, 1200);
       } else if (result.status === "limited") {
         setPose("sleep");
         setNotice(result.message);
+        release();
+      } else {
+        release();
       }
     },
     onError: () => {
+      release();
       setPose("confused");
       setNotice("Ledger couldn't open his books just now. Please try again.");
     },
@@ -89,7 +104,9 @@ function AskForm() {
 
   function submit(text: string) {
     const clean = cleanQuestion(text);
-    if (!clean || ask.isPending) return;
+    if (!clean || sending.current) return;
+    sending.current = true;
+    setBusy(true);
     setNotice(null);
     setPose("search");
     ask.mutate(clean);
@@ -159,10 +176,11 @@ function AskForm() {
           <button
             type="submit"
             data-testid="ask-send"
-            disabled={ask.isPending || !cleanQuestion(question)}
+            disabled={busy || !cleanQuestion(question)}
+            aria-busy={busy}
             className="outline-box press min-h-11 self-end rounded-sm bg-federal-blue px-5 font-mono text-sm font-bold tracking-[0.1em] text-paper uppercase disabled:opacity-50"
           >
-            {ask.isPending ? "Opening books…" : "Ask Ledger"}
+            {busy ? "Opening books…" : "Ask Ledger"}
           </button>
         </form>
         {notice ? (
@@ -172,7 +190,7 @@ function AskForm() {
         ) : null}
         <div className="mt-6 border-ink border-t-2 pt-4">
           <p className="eyebrow mb-3 text-ink-muted">Or try</p>
-          <PresetChips onPick={submit} disabled={ask.isPending} />
+          <PresetChips onPick={submit} disabled={busy} />
         </div>
       </div>
     </aside>

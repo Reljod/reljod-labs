@@ -1,6 +1,7 @@
 "use client";
 
 import { useActionState } from "react";
+import { useSubmitGuard } from "@/components/ui/use-submit-guard";
 import { LIMITS } from "../domain/guest-pass";
 import {
   changePassword,
@@ -28,8 +29,9 @@ export function ProfileForm({ name, email }: { name: string; email: string }) {
     updateProfile,
     null,
   );
+  const guard = useSubmitGuard(pending, state);
   return (
-    <form action={action} className="flex flex-col gap-3">
+    <form action={action} onSubmit={guard} className="flex flex-col gap-3">
       <label htmlFor="profile-email" className="eyebrow">
         Email
       </label>
@@ -56,7 +58,12 @@ export function ProfileForm({ name, email }: { name: string; email: string }) {
         placeholder="How you want to be shown"
         className={fieldClass}
       />
-      <button type="submit" disabled={pending} className={submitClass}>
+      <button
+        type="submit"
+        disabled={pending}
+        aria-busy={pending}
+        className={submitClass}
+      >
         {pending ? "Saving…" : "Save profile"}
       </button>
       <Outcome state={state} />
@@ -70,8 +77,9 @@ export function PasswordForm() {
     changePassword,
     null,
   );
+  const guard = useSubmitGuard(pending, state);
   return (
-    <form action={action} className="flex flex-col gap-3">
+    <form action={action} onSubmit={guard} className="flex flex-col gap-3">
       <label htmlFor="password-current" className="eyebrow">
         Current password
       </label>
@@ -107,7 +115,12 @@ export function PasswordForm() {
         autoComplete="new-password"
         className={fieldClass}
       />
-      <button type="submit" disabled={pending} className={submitClass}>
+      <button
+        type="submit"
+        disabled={pending}
+        aria-busy={pending}
+        className={submitClass}
+      >
         {pending ? "Changing…" : "Change password"}
       </button>
       <Outcome state={state} />

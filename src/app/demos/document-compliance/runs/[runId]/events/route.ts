@@ -1,4 +1,5 @@
 import { getRun } from "workflow/api";
+import { ownerOf } from "@/features/access/domain/owner";
 import { accessOrDenied } from "@/features/access/server/gate";
 import { workflowRunIdOf } from "@/features/document-compliance/server/repository";
 
@@ -13,7 +14,8 @@ export async function GET(
   const access = await accessOrDenied();
   if (access instanceof Response) return access;
   const { runId } = await params;
-  const workflowRunId = await workflowRunIdOf(runId);
+  // Another Owner's run streams nothing, as if it did not exist.
+  const workflowRunId = await workflowRunIdOf(runId, ownerOf(access));
   if (!workflowRunId) return new Response("Not found", { status: 404 });
 
   const from = Number(new URL(request.url).searchParams.get("from") ?? 0);

@@ -1,5 +1,7 @@
 # Keep each Document's model usage and raw answer, and group runs into a Session
 
+> The cookie Session below is superseded by ADR 0011: Pre-screen runs are now listed for their Owner.
+
 Amends ADR 0003. A Pre-screen run used to keep only what a Reviewer needs (Spans, Extracted fields, Findings), so nobody could tell what a run cost, which model and provider actually answered, how long each stage took or what the model returned before code verified it. Each Document row now keeps the model id the gateway resolved, the provider that served it, input, output, reasoning and cached tokens, the price the gateway reported (`providerMetadata.gateway.cost`), how long parsing and reading took and the model's structured answer as returned (`raw_output`). The read step streams the same usage as a `usage` ScanEvent, so the run page shows the cost while the run is live and a replay shows it again.
 
 Runs started from one browser share a Session id, a random UUID in an httpOnly cookie scoped to the demo, stored on `prescreen_runs.session_id`. The demo lists a Session's runs, newest first, with their Findings, model and cost. We chose a cookie over browser storage so the server can list the runs (and their status) without trusting ids sent by the page, and over sign-in because the demo has no accounts.

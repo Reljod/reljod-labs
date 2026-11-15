@@ -1,6 +1,6 @@
 import { getRun } from "workflow/api";
 import { viewableBuild } from "@/features/client-manager/server/service";
-import { currentSessionId } from "@/features/client-manager/server/session";
+import { currentOwner } from "@/features/client-manager/server/session";
 import { failure } from "../../../respond";
 
 // Stays open while the Build streams; a reconnect resumes from `from`.
@@ -14,7 +14,7 @@ export async function GET(
   const { buildId } = await params;
   let workflowRunId: string | null | undefined;
   try {
-    const found = await viewableBuild(buildId, await currentSessionId());
+    const found = await viewableBuild(buildId, await currentOwner());
     workflowRunId = found?.build.workflow_run_id;
   } catch (error) {
     return failure(error);

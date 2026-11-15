@@ -11,7 +11,7 @@ import {
   ownedClient,
 } from "@/features/client-manager/server/service";
 import {
-  currentSessionId,
+  currentOwner,
   visitor,
 } from "@/features/client-manager/server/session";
 import {
@@ -43,7 +43,7 @@ export async function POST(
   try {
     const { clientId } = await params;
     const who = await visitor();
-    const client = await ownedClient(clientId, await currentSessionId(), who);
+    const client = await ownedClient(clientId, await currentOwner(), who);
     if (!client) return notFound();
     const body = bodySchema.parse(await request.json());
 

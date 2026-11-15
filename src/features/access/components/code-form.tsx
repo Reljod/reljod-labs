@@ -1,6 +1,7 @@
 "use client";
 
 import { useActionState } from "react";
+import { useSubmitGuard } from "@/components/ui/use-submit-guard";
 import { type DoorState, redeemGuestCode } from "../server/actions";
 import { fieldClass, submitClass } from "./styles";
 
@@ -10,8 +11,9 @@ export function CodeForm({ next }: { next: string }) {
     redeemGuestCode,
     null,
   );
+  const guard = useSubmitGuard(pending, state);
   return (
-    <form action={action} className="flex flex-col gap-3">
+    <form action={action} onSubmit={guard} className="flex flex-col gap-3">
       <input type="hidden" name="next" value={next} />
       <label htmlFor="guest-code" className="eyebrow">
         Guest code
@@ -28,7 +30,12 @@ export function CodeForm({ next }: { next: string }) {
         placeholder="XXXX-XXXX-XXXX"
         className={`${fieldClass} font-mono text-lg tracking-[0.15em] uppercase`}
       />
-      <button type="submit" disabled={pending} className={submitClass}>
+      <button
+        type="submit"
+        disabled={pending}
+        aria-busy={pending}
+        className={submitClass}
+      >
         {pending ? "Checking…" : "Open the demos"}
       </button>
       {state?.error ? (

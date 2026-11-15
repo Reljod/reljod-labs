@@ -6,10 +6,10 @@ import {
   PasswordForm,
   ProfileForm,
 } from "@/features/access/components/settings-forms";
+import { SignOutButton } from "@/features/access/components/sign-out-button";
 import { quietButtonClass } from "@/features/access/components/styles";
 import { GUESTS_PATH, SIGN_IN_PATH } from "@/features/access/constants";
 import { LIMITS } from "@/features/access/domain/guest-pass";
-import { signOut } from "@/features/access/server/actions";
 import { currentAccess } from "@/features/access/server/gate";
 import { countLivePasses } from "@/features/access/server/repository";
 import { AccessShell, Card, Waiting } from "../shell";
@@ -64,11 +64,7 @@ async function Profile() {
         </Card>
       </div>
 
-      <form action={signOut}>
-        <button type="submit" className={quietButtonClass}>
-          Sign out
-        </button>
-      </form>
+      <SignOutButton className={quietButtonClass} />
     </>
   );
 }

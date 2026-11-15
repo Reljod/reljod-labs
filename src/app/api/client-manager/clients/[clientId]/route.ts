@@ -5,7 +5,7 @@ import {
   viewableClient,
 } from "@/features/client-manager/server/service";
 import {
-  currentSessionId,
+  currentOwner,
   visitor,
 } from "@/features/client-manager/server/session";
 import { failure, notFound } from "../../respond";
@@ -17,12 +17,10 @@ export async function GET(
 ) {
   try {
     const { clientId } = await params;
-    const sessionId = await currentSessionId();
-    const client = await viewableClient(clientId, sessionId);
+    const owner = await currentOwner();
+    const client = await viewableClient(clientId, owner);
     if (!client) return notFound();
-    return Response.json(
-      await clientSummary(client, sessionId, await visitor()),
-    );
+    return Response.json(await clientSummary(client, owner, await visitor()));
   } catch (error) {
     return failure(error);
   }
@@ -36,7 +34,7 @@ export async function DELETE(
     const { clientId } = await params;
     const client = await ownedClient(
       clientId,
-      await currentSessionId(),
+      await currentOwner(),
       await visitor(),
     );
     if (!client) return notFound();

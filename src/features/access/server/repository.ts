@@ -11,10 +11,12 @@ export type GuestPassRow = {
   expires_at: string;
   max_devices: number;
   revoked_at: string | null;
+  renewed_at: string | null;
+  deleted_at: string | null;
 };
 
 const PASS_COLUMNS =
-  "id, label, created_at, expires_at, max_devices, revoked_at";
+  "id, label, created_at, expires_at, max_devices, revoked_at, renewed_at, deleted_at";
 
 function fail(what: string, error: { message: string }): never {
   throw new Error(`${what}: ${error.message}`);
@@ -48,11 +50,16 @@ export async function guestPassOf(
 export async function codeLooksGood(codeHash: string, userId: string | null) {
   const { data: pass, error } = await supabase()
     .from("guest_passes")
-    .select("id, expires_at, max_devices, revoked_at")
+    .select("id, expires_at, max_devices, revoked_at, deleted_at")
     .eq("code_hash", codeHash)
     .maybeSingle();
   if (error) fail("Could not look up the Guest code", error);
-  if (!pass || pass.revoked_at || Date.parse(pass.expires_at) <= Date.now())
+  if (
+    !pass ||
+    pass.deleted_at ||
+    pass.revoked_at ||
+    Date.parse(pass.expires_at) <= Date.now()
+  )
     return false;
   const { data: sessions, error: sessionError } = await supabase()
     .from("guest_sessions")
@@ -90,6 +97,7 @@ export async function countLivePasses() {
     .from("guest_passes")
     .select("id", { count: "exact", head: true })
     .is("revoked_at", null)
+    .is("deleted_at", null)
     .gt("expires_at", new Date().toISOString());
   if (error) fail("Could not count Guest passes", error);
   return count ?? 0;
@@ -155,6 +163,72 @@ export async function revokeGuestPass(id: string) {
     .eq("id", id)
     .is("revoked_at", null);
   if (error) fail("Could not revoke the Guest pass", error);
+}
+
+/** The pass, if it is one of the Host's to manage. */
+export async function guestPassById(id: string): Promise<GuestPassRow | null> {
+  const { data, error } = await supabase()
+    .from("guest_passes")
+    .select(PASS_COLUMNS)
+    .eq("id", id)
+    .maybeSingle();
+  if (error) fail("Could not load the Guest pass", error);
+  return data as GuestPassRow | null;
+}
+
+/**
+ * Moves a pass's end and lifts a revoke, so an ended pass works again. Its
+ * Guests' data was kept under the pass, so it is all still there.
+ */
+export async function extendGuestPass(id: string, expiresAt: Date, now: Date) {
+  const { error } = await supabase()
+    .from("guest_passes")
+    .update({
+      expires_at: expiresAt.toISOString(),
+      renewed_at: now.toISOString(),
+      revoked_at: null,
+    })
+    .eq("id", id)
+    .is("deleted_at", null);
+  if (error) fail("Could not extend the Guest pass", error);
+}
+
+/**
+ * Gives a pass a new Guest code. Every device on the old code is signed out
+ * (its Guest session ends; the anonymous user is cleaned up by cron), so the
+ * pass's devices are free again. The data stays with the pass.
+ */
+export async function replaceGuestCode(id: string, codeHash: string) {
+  const { error } = await supabase()
+    .from("guest_passes")
+    .update({ code_hash: codeHash })
+    .eq("id", id)
+    .is("deleted_at", null);
+  if (error) fail("Could not replace the Guest code", error);
+  const { error: sessionError } = await supabase()
+    .from("guest_sessions")
+    .delete()
+    .eq("guest_pass_id", id);
+  if (sessionError) fail("Could not end the old Guest sessions", sessionError);
+}
+
+/** Marks a pass deleted. It and its Guests' data are purged 30 days later. */
+export async function markGuestPassDeleted(id: string) {
+  const { error } = await supabase()
+    .from("guest_passes")
+    .update({ deleted_at: new Date().toISOString() })
+    .eq("id", id)
+    .is("deleted_at", null);
+  if (error) fail("Could not delete the Guest pass", error);
+}
+
+/** Takes a deleted pass back before it is purged, as it was when deleted. */
+export async function restoreGuestPass(id: string) {
+  const { error } = await supabase()
+    .from("guest_passes")
+    .update({ deleted_at: null })
+    .eq("id", id);
+  if (error) fail("Could not restore the Guest pass", error);
 }
 
 export async function recordAttempt(

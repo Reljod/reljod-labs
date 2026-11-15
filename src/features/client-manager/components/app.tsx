@@ -3,7 +3,7 @@
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { AnimatePresence } from "motion/react";
 import Link from "next/link";
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { ThreadSummary, Walk } from "../domain/chat";
 import { EMPTY_HIGHLIGHT, highlightFrom } from "../domain/traversal";
 import { fetchCatalog, fetchThreads, keys, send } from "./api";
@@ -152,16 +152,29 @@ export function ClientManagerApp({
     [open],
   );
 
+  // Threads being deleted now, so a second click cannot send it twice.
+  const deleting = useRef(new Set<string>());
+  const [threadNotice, setThreadNotice] = useState<string | null>(null);
   const deleteThread = async (thread: ThreadSummary) => {
+    if (deleting.current.has(thread.id)) return;
     if (!window.confirm(`Delete “${thread.title}”?`)) return;
+    deleting.current.add(thread.id);
+    setThreadNotice(null);
+    // Gone from the list at once; put back below if the server refuses.
     queryClient.setQueryData<ThreadSummary[]>(keys.threads, (list) =>
       (list ?? []).filter((item) => item.id !== thread.id),
     );
     if (thread.id === threadId) setThreadId(null);
-    await send(`/api/client-manager/threads/${thread.id}`, "DELETE").catch(
-      () => {},
-    );
-    void queryClient.invalidateQueries({ queryKey: keys.threads });
+    try {
+      await send(`/api/client-manager/threads/${thread.id}`, "DELETE");
+    } catch (failure) {
+      setThreadNotice(
+        `“${thread.title}” was not deleted: ${failure instanceof Error ? failure.message : "try again."}`,
+      );
+    } finally {
+      deleting.current.delete(thread.id);
+      void queryClient.invalidateQueries({ queryKey: keys.threads });
+    }
   };
 
   const patchOpen = (patch: Partial<Open>) =>
@@ -246,6 +259,7 @@ export function ClientManagerApp({
                   setShowList(false);
                 }}
                 onDelete={(thread) => void deleteThread(thread)}
+                notice={threadNotice}
               />
             </aside>
           ) : null}

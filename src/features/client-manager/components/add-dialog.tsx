@@ -33,9 +33,12 @@ export function AddDialog({
     return () => window.removeEventListener("keydown", onKey);
   }, [busy, onClose]);
 
+  // Set at once, so a double click or Enter cannot start two additions.
+  const sending = useRef(false);
   const submit = async (event: FormEvent) => {
     event.preventDefault();
-    if (!note.trim() && files.length === 0) return;
+    if (sending.current || (!note.trim() && files.length === 0)) return;
+    sending.current = true;
     setBusy(true);
     setError(null);
     try {
@@ -67,6 +70,7 @@ export function AddDialog({
       setError(
         failure instanceof Error ? failure.message : "Could not add that.",
       );
+      sending.current = false;
       setBusy(false);
     }
   };
@@ -159,6 +163,7 @@ export function AddDialog({
           <button
             type="submit"
             disabled={busy || (!note.trim() && files.length === 0)}
+            aria-busy={busy}
             className="ml-auto rounded-sm bg-ink px-4 py-2 text-sm font-semibold text-paper disabled:opacity-40"
           >
             {busy ? "Starting…" : "Add to the graph"}

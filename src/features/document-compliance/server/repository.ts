@@ -1,4 +1,5 @@
 import "server-only";
+import type { Owner } from "@/features/access/domain/owner";
 import { fieldChecks } from "../domain/field-checks";
 import type { Rulebook } from "../domain/rulebook";
 import { individualOnboarding } from "../domain/rulebook";
@@ -47,7 +48,7 @@ export async function createRun(input: {
   rulebook: Rulebook;
   declaration: ClientDeclaration;
   visitorHash: string;
-  sessionId: string;
+  owner: Owner;
   model: string;
 }) {
   const run = rows<{ id: string }>(
@@ -59,7 +60,7 @@ export async function createRun(input: {
         rulebook_version: input.rulebook.version,
         client_declaration: input.declaration,
         visitor_hash: input.visitorHash,
-        session_id: input.sessionId,
+        owner: input.owner,
         model: input.model,
         status: "queued",
       })
@@ -84,12 +85,14 @@ export async function setWorkflowRunId(runId: string, workflowRunId: string) {
   );
 }
 
-export async function workflowRunIdOf(runId: string) {
+/** The workflow run behind an Owner's Pre-screen run; null for anyone else's. */
+export async function workflowRunIdOf(runId: string, owner: Owner) {
   const [run] = rows<{ workflow_run_id: string | null }[]>(
     await supabase()
       .from("prescreen_runs")
       .select("workflow_run_id")
       .eq("id", runId)
+      .eq("owner", owner)
       .limit(1),
   );
   return run?.workflow_run_id ?? null;
@@ -279,12 +282,14 @@ export async function countRuns(filter: { visitorHash?: string; since: Date }) {
   return count ?? 0;
 }
 
-export async function latestCompletedRunId(packSlug: string) {
+/** The Owner's newest finished run of a pack: where a limited visitor lands. */
+export async function latestCompletedRunId(packSlug: string, owner: Owner) {
   const latest = rows<{ id: string }[]>(
     await supabase()
       .from("prescreen_runs")
       .select("id")
       .eq("pack_slug", packSlug)
+      .eq("owner", owner)
       .eq("status", "completed")
       .order("completed_at", { ascending: false })
       .limit(1),
@@ -335,9 +340,13 @@ const METRIC_COLUMNS = [
 ] as const;
 
 /** Loads a run and everything it produced, shaped for the Reviewer view. */
-export async function loadRun(runId: string): Promise<RunView | null> {
+/** An Owner's run, whole; null when it is missing or someone else's. */
+export async function loadRun(
+  runId: string,
+  owner: Owner,
+): Promise<RunView | null> {
   const [run] = await selectIn("prescreen_runs", "id", [runId]);
-  if (!run) return null;
+  if (!run || run.owner !== owner) return null;
   const pack = findPack(run.pack_slug);
 
   const documents = await selectIn("documents", "run_id", [runId]);
@@ -541,16 +550,16 @@ function storedJudgments(raw: unknown): DocumentJudgments | null {
   };
 }
 
-/** A Session's runs, newest first, each with its cost and Finding counts. */
-export async function listSessionRuns(
-  sessionId: string,
+/** An Owner's runs, newest first, each with its cost and Finding counts. */
+export async function listOwnerRuns(
+  owner: Owner,
   limit = 20,
 ): Promise<SessionRunView[]> {
   const runs = rows<Tables["prescreen_runs"]["Row"][]>(
     await supabase()
       .from("prescreen_runs")
       .select("*")
-      .eq("session_id", sessionId)
+      .eq("owner", owner)
       .order("created_at", { ascending: false })
       .limit(limit),
   );
