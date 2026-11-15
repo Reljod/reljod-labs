@@ -41,6 +41,8 @@ async function Consent({
     if (typeof value === "string") params.set(key, value);
   }
   const parsed = parseAuthorizationRequest(params, env.rateLimitSalt());
+  // Safe before checking Access only because src/proxy.ts gates /demos/*
+  // first, and the redirect goes to a URI the client registered.
   if (parsed.kind === "error") redirect(parsed.redirect);
   if (parsed.kind === "invalid" || !access) {
     return (

@@ -4,7 +4,7 @@ import { createMcpHandler, withMcpAuth } from "mcp-handler";
 import { z } from "zod";
 import { MAX_PROPOSED_FACTS } from "../domain/chat";
 import type { McpClaims } from "../domain/mcp-token";
-import { PROTECTED_RESOURCE_PATH } from "../domain/oauth";
+import { PROTECTED_RESOURCE_PATH } from "../domain/oauth-paths";
 import { MCP_SERVER_NAME, researchPrompt } from "../domain/research";
 import {
   type Book,

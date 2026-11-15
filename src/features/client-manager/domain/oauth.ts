@@ -1,5 +1,11 @@
 import { createHash, createHmac, timingSafeEqual } from "node:crypto";
 import { type McpClaims, signMcpToken } from "./mcp-token";
+import {
+  AUTHORIZE_PATH,
+  MCP_PATH,
+  OAUTH_PATH,
+  OAUTH_SCOPE,
+} from "./oauth-paths";
 
 /**
  * OAuth 2.1 for the Client Manager MCP server, so an MCP client such as Claude
@@ -12,11 +18,13 @@ import { type McpClaims, signMcpToken } from "./mcp-token";
  * token is an ordinary MCP token, so the server checks it exactly as before.
  */
 
-export const MCP_PATH = "/api/client-manager/mcp";
-export const OAUTH_PATH = "/api/client-manager/oauth";
-export const AUTHORIZE_PATH = "/demos/client-manager/mcp/authorize";
-export const PROTECTED_RESOURCE_PATH = `/.well-known/oauth-protected-resource${MCP_PATH}`;
-export const OAUTH_SCOPE = "client-manager";
+export {
+  AUTHORIZE_PATH,
+  MCP_PATH,
+  OAUTH_PATH,
+  OAUTH_SCOPE,
+  PROTECTED_RESOURCE_PATH,
+} from "./oauth-paths";
 
 /** An access token lives an hour; the client refreshes it until the Grant ends. */
 export const ACCESS_TOKEN_SECONDS = 60 * 60;

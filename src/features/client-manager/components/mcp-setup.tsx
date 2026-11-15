@@ -3,7 +3,7 @@
 import { motion } from "motion/react";
 import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
-import { MCP_PATH } from "../domain/oauth";
+import { MCP_PATH } from "../domain/oauth-paths";
 import { MCP_SERVER_NAME, MCP_TOOLS, researchSkill } from "../domain/research";
 import { Icon } from "./icons";
 
