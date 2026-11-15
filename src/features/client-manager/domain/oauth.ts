@@ -321,7 +321,7 @@ export function tokensFor(
   const { until: _until, ...claims } = grant;
   const refresh: Refresh = { client: sha256(clientId), grant };
   return {
-    access_token: signMcpToken({ ...claims, exp }, secret),
+    access_token: signMcpToken({ ...claims, via: "oauth", exp }, secret),
     token_type: "Bearer",
     expires_in: exp - seconds,
     refresh_token: seal("refresh", refresh, secret),

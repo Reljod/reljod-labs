@@ -23,6 +23,11 @@ export type McpClaims = {
   pass?: string;
   /** A Host token's account. */
   email?: string;
+  /**
+   * `oauth` when an MCP client got it by signing in. A Guest's OAuth token
+   * also needs their pasted guest token beside it (`guestTokenProblem`).
+   */
+  via?: "oauth";
   /** Narrows the token to one client (a Thread's scope). */
   client?: string;
   /** Expiry, epoch seconds. */
@@ -67,4 +72,31 @@ export function readMcpToken(
   } catch {
     return null;
   }
+}
+
+/**
+ * A Guest who signs in with OAuth must also send their guest token (one
+ * minted on the MCP page for the same Guest pass) in the `X-Guest-Token`
+ * header, so the connection is tied to something only the Guest was given.
+ * Returns why a request falls short, or null. Hosts and pasted tokens pass.
+ */
+export function guestTokenProblem(
+  claims: McpClaims,
+  header: string | null,
+  secret: string,
+  now = Date.now(),
+): string | null {
+  if (claims.kind !== "guest" || claims.via !== "oauth") return null;
+  if (!header)
+    return "Guests also send their guest token in the X-Guest-Token header. Get it on the Client Manager MCP page.";
+  const key = readMcpToken(header, secret, now);
+  if (
+    !key ||
+    key.kind !== "guest" ||
+    key.via === "oauth" ||
+    key.pass !== claims.pass ||
+    key.owner !== claims.owner
+  )
+    return "X-Guest-Token is not a guest token for this guest pass. Get a new one on the Client Manager MCP page.";
+  return null;
 }

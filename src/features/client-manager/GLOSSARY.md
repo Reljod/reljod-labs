@@ -84,7 +84,7 @@ One conversation with the Desk, kept for its Owner, optionally scoped to one Cli
 _Avoid_: Session, conversation (in code)
 
 **MCP server**:
-`/api/client-manager/mcp`: every read of the graphs (profile, search, walks, facts with quotes, documents), Research brief and `add_facts`. The Desk calls it in process with a **Desk token** narrowed to the Thread's Client; Claude Code calls it with an **MCP token** it gets by signing in with OAuth (or one pasted from the MCP page). A Guest's token dies with their Guest pass.
+`/api/client-manager/mcp`: every read of the graphs (profile, search, walks, facts with quotes, documents), Research brief and `add_facts`. The Desk calls it in process with a **Desk token** narrowed to the Thread's Client; Claude Code calls it with an **MCP token** it gets by signing in with OAuth (or one pasted from the MCP page); a Guest's OAuth requests also carry their **Guest token** in `X-Guest-Token`. A Guest's token dies with their Guest pass.
 
 **Grant**:
 What a person allowed on the OAuth consent page: the MCP claims of whoever was signed in, and when it ends (a Host's after 30 days, a Guest's with their pass). Every access token an MCP client gets is minted from it.

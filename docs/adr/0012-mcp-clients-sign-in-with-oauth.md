@@ -6,9 +6,12 @@ The server now follows the MCP authorization spec. Its 401 names its Protected R
 
 We kept it stateless, like the MCP token (ADR 0010): the client id is the signed registration (its redirect URIs), the code is a signed Grant with the PKCE challenge and a two-minute life, and the refresh token is the signed Grant until it ends. The access token is an ordinary MCP token that lives an hour, so `verifyBearer` and the Guest pass check are unchanged. A **Grant** is what the person allowed: the MCP claims of whoever was signed in at consent, and when it ends (a Host's 30 days later, a Guest's with their pass). We chose this over tables for clients, codes and tokens because nothing else in the Client Manager needs them and a migration to the live project waits on the user.
 
+A Guest's OAuth sign-in is also tied to their guest token: every MCP request on a Guest's OAuth access token (marked `via: "oauth"`) must carry an `X-Guest-Token` header holding a pasted guest token for the same Guest pass, or it is refused with a 403 that says so (not a 401, which would only send the client to sign in again). The MCP page puts the guest token in a Guest's `claude mcp add --header` and `.mcp.json`. Hosts need no header.
+
 ## Consequences
 
 - A code can be replayed within its two minutes, which the spec forbids; it is useless without the PKCE verifier only the client holds. Refresh tokens are not rotated out: an old one works until the Grant ends. Rotating `RATE_LIMIT_SALT` revokes every client, code and token at once.
 - Every refresh checks the holder still has Access before minting, so a revoked Guest pass or a Host off the list stops at the next hour at most (and at once on the MCP server, which checks on every call).
 - Redirect URIs are https, or http on loopback with any port (RFC 8252). An unknown client or redirect URI is shown on the page and never redirected to. The consent page refuses to be framed.
+- A Guest who loses their guest token gets a new one on the MCP page; any token for the same pass works, and all of them end with the pass.
 - The pasted token stays, behind a fold on the MCP page, for clients without OAuth. It is shown whole, so the person sees exactly what they copy.

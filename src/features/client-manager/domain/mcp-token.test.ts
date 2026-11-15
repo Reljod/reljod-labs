@@ -1,5 +1,10 @@
 import { describe, expect, it } from "vitest";
-import { type McpClaims, readMcpToken, signMcpToken } from "./mcp-token";
+import {
+  guestTokenProblem,
+  type McpClaims,
+  readMcpToken,
+  signMcpToken,
+} from "./mcp-token";
 
 const claims: McpClaims = {
   kind: "guest",
@@ -48,5 +53,40 @@ describe("MCP tokens", () => {
     expect(readMcpToken("", "salt", now)).toBeNull();
     expect(readMcpToken("Bearer abc", "salt", now)).toBeNull();
     expect(readMcpToken("cmm_onlyonepart", "salt", now)).toBeNull();
+  });
+});
+
+describe("guest token beside an OAuth sign-in", () => {
+  const oauth: McpClaims = { ...claims, via: "oauth" };
+  const pasted = signMcpToken(claims, "salt");
+
+  it("asks an OAuth Guest for their guest token of the same pass", () => {
+    expect(guestTokenProblem(oauth, null, "salt", now)).toMatch(
+      /X-Guest-Token/,
+    );
+    expect(guestTokenProblem(oauth, pasted, "salt", now)).toBeNull();
+  });
+
+  it("refuses another pass's token, an OAuth token or a forged one", () => {
+    const otherPass = signMcpToken({ ...claims, pass: "pass-2" }, "salt");
+    expect(guestTokenProblem(oauth, otherPass, "salt", now)).not.toBeNull();
+    const oauthToken = signMcpToken(oauth, "salt");
+    expect(guestTokenProblem(oauth, oauthToken, "salt", now)).not.toBeNull();
+    expect(
+      guestTokenProblem(oauth, signMcpToken(claims, "other"), "salt", now),
+    ).not.toBeNull();
+  });
+
+  it("asks nothing of Hosts or pasted guest tokens", () => {
+    expect(guestTokenProblem(claims, null, "salt", now)).toBeNull();
+    const host: McpClaims = {
+      kind: "host",
+      owner: "host:4b7f0c1e-0000-4000-8000-000000000009",
+      visitor: "hash",
+      email: "host@example.com",
+      via: "oauth",
+      exp: claims.exp,
+    };
+    expect(guestTokenProblem(host, null, "salt", now)).toBeNull();
   });
 });

@@ -3,7 +3,7 @@
 import { motion } from "motion/react";
 import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
-import { MCP_PATH } from "../domain/oauth-paths";
+import { GUEST_TOKEN_HEADER, MCP_PATH } from "../domain/oauth-paths";
 import { MCP_SERVER_NAME, MCP_TOOLS, researchSkill } from "../domain/research";
 import { Icon } from "./icons";
 
@@ -16,9 +16,11 @@ type Minted = {
 /**
  * How to use the Client Manager from Claude Code: one command with the
  * server's URL, an OAuth sign-in in the browser, the tools it gets, and the
- * research skill. A pasted token remains for clients without OAuth.
+ * research skill. A Guest also sends their guest token in a header, which
+ * ties the OAuth sign-in to their Guest pass. A pasted token remains for
+ * clients without OAuth.
  */
-export function McpSetup() {
+export function McpSetup({ guest }: { guest: boolean }) {
   const [origin, setOrigin] = useState("https://your-site");
   const [minted, setMinted] = useState<Minted | null>(null);
   const [busy, setBusy] = useState(false);
@@ -53,26 +55,67 @@ export function McpSetup() {
   };
 
   const url = `${origin}${MCP_PATH}`;
-  const command = `claude mcp add --transport http ${MCP_SERVER_NAME} ${url}`;
-  const json = (token?: string) =>
+  const base = `claude mcp add --transport http ${MCP_SERVER_NAME} ${url}`;
+  // A Guest's command needs their token; until it exists, nothing to copy.
+  const guestToken = minted?.token ?? "<your guest token>";
+  const command = guest
+    ? `${base} \\\n  --header "${GUEST_TOKEN_HEADER}: ${guestToken}"`
+    : base;
+  const json = (headers?: Record<string, string>) =>
     JSON.stringify(
       {
         mcpServers: {
           [MCP_SERVER_NAME]: {
             type: "http",
             url,
-            ...(token ? { headers: { Authorization: `Bearer ${token}` } } : {}),
+            ...(headers ? { headers } : {}),
           },
         },
       },
       null,
       2,
     );
+  const oauthJson = json(
+    guest ? { [GUEST_TOKEN_HEADER]: guestToken } : undefined,
+  );
+  const canCopy = !guest || minted !== null;
   // What is shown is exactly what is copied, token and all.
   const tokenCommand = minted
-    ? `${command} \\\n  --header "Authorization: Bearer ${minted.token}"`
+    ? `${base} \\\n  --header "Authorization: Bearer ${minted.token}"`
     : null;
-  const guest = minted?.kind === "guest";
+  let step = 0;
+
+  const badge = minted ? (
+    <div className="flex flex-wrap items-center gap-2 text-sm">
+      <span
+        className={`rounded-full px-2.5 py-0.5 font-mono text-xs font-bold uppercase ${minted.kind === "guest" ? "bg-brass/30" : "bg-ivy/15 text-ivy"}`}
+      >
+        {minted.kind === "guest"
+          ? "Guest token"
+          : minted.kind === "host"
+            ? "Host token"
+            : "Test token"}
+      </span>
+      <span className="text-ink-muted">
+        until{" "}
+        {new Date(minted.expiresAt).toLocaleString(undefined, {
+          dateStyle: "medium",
+          timeStyle: "short",
+        })}
+      </span>
+    </div>
+  ) : (
+    <button
+      type="button"
+      onClick={() => void mint()}
+      disabled={busy}
+      aria-busy={busy}
+      className="flex items-center gap-2 rounded-sm bg-ink px-4 py-2 text-sm font-semibold text-paper hover:bg-federal-blue disabled:opacity-50"
+    >
+      <Icon name="spark" className="size-4" />
+      {busy ? "Creating…" : guest ? "Create my guest token" : "Create a token"}
+    </button>
+  );
 
   const downloadSkill = () => {
     const blob = new Blob([researchSkill()], { type: "text/markdown" });
@@ -108,23 +151,35 @@ export function McpSetup() {
           </p>
         </section>
 
-        <Step n={1} title="Add the server">
-          <Code text={command} copy={command} />
+        {guest ? (
+          <Step n={++step} title="Get your guest token">
+            {badge}
+            {error ? <p className="text-sm text-seal-red">{error}</p> : null}
+            <p className="text-sm text-ink-muted">
+              As a guest you sign in with OAuth and also send this token, so the
+              connection belongs to your guest pass. It ends with the pass.
+            </p>
+          </Step>
+        ) : null}
+
+        <Step n={++step} title="Add the server">
+          <Code text={command} copy={canCopy ? command : null} />
           <details className="text-sm">
             <summary className="cursor-pointer text-ink-muted hover:text-ink">
               .mcp.json
             </summary>
             <div className="mt-2">
-              <Code text={json()} copy={json()} />
+              <Code text={oauthJson} copy={canCopy ? oauthJson : null} />
             </div>
           </details>
           <p className="text-sm text-ink-muted">
-            No token to copy: the server signs you in with OAuth. In Claude.ai
-            or Claude Desktop, add it as a custom connector with the same URL.
+            {guest
+              ? `The ${GUEST_TOKEN_HEADER} header is your guest token, shown whole so you can see what you copy. Keep it to yourself.`
+              : "No token to copy: the server signs you in with OAuth. In Claude.ai or Claude Desktop, add it as a custom connector with the same URL."}
           </p>
         </Step>
 
-        <Step n={2} title="Sign in">
+        <Step n={++step} title="Sign in">
           <p className="text-sm text-ink-muted">
             In Claude Code, run <code className="font-mono text-ink">/mcp</code>
             , pick <code className="font-mono text-ink">{MCP_SERVER_NAME}</code>{" "}
@@ -140,7 +195,7 @@ export function McpSetup() {
           </p>
         </Step>
 
-        <Step n={3} title="Add the research skill">
+        <Step n={++step} title="Add the research skill">
           <div className="flex flex-wrap items-center gap-3">
             <button
               type="button"
@@ -175,42 +230,23 @@ export function McpSetup() {
             Client can't sign in with OAuth? Use a token
           </summary>
           <div className="mt-3 space-y-3">
-            {minted ? (
-              <div className="flex flex-wrap items-center gap-2 text-sm">
-                <span
-                  className={`rounded-full px-2.5 py-0.5 font-mono text-xs font-bold uppercase ${guest ? "bg-brass/30" : "bg-ivy/15 text-ivy"}`}
-                >
-                  {guest
-                    ? "Guest token"
-                    : minted.kind === "host"
-                      ? "Host token"
-                      : "Test token"}
-                </span>
-                <span className="text-ink-muted">
-                  until{" "}
-                  {new Date(minted.expiresAt).toLocaleString(undefined, {
-                    dateStyle: "medium",
-                    timeStyle: "short",
-                  })}
-                </span>
-              </div>
-            ) : (
-              <button
-                type="button"
-                onClick={() => void mint()}
-                disabled={busy}
-                aria-busy={busy}
-                className="flex items-center gap-2 rounded-sm bg-ink px-4 py-2 text-sm font-semibold text-paper hover:bg-federal-blue disabled:opacity-50"
-              >
-                <Icon name="spark" className="size-4" />
-                {busy ? "Creating…" : "Create a token"}
-              </button>
-            )}
-            {error ? <p className="text-sm text-seal-red">{error}</p> : null}
+            {guest ? null : badge}
+            {guest ? (
+              <p className="text-sm text-ink-muted">
+                Your guest token, from step 1, also works on its own as the
+                bearer.
+              </p>
+            ) : null}
+            {!guest && error ? (
+              <p className="text-sm text-seal-red">{error}</p>
+            ) : null}
             {minted && tokenCommand ? (
               <>
                 <Code text={tokenCommand} copy={tokenCommand} />
-                <Code text={json(minted.token)} copy={json(minted.token)} />
+                <Code
+                  text={json({ Authorization: `Bearer ${minted.token}` })}
+                  copy={json({ Authorization: `Bearer ${minted.token}` })}
+                />
                 <p className="text-sm text-ink-muted">
                   The whole token is shown so you can see what you copy. Keep it
                   to yourself: anyone with it reaches your client book.

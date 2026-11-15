@@ -148,7 +148,11 @@ describe("the token endpoint", () => {
     const tokens = tokensFor(result.grant, clientId, SECRET, now);
     expect(tokens.expires_in).toBe(3600);
     const claims = readMcpToken(tokens.access_token, SECRET, now);
-    expect(claims).toMatchObject({ kind: "host", owner: grant.owner });
+    expect(claims).toMatchObject({
+      kind: "host",
+      owner: grant.owner,
+      via: "oauth",
+    });
 
     const refreshed = redeem(
       new URLSearchParams({

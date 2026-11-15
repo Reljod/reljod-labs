@@ -7,3 +7,5 @@ export const OAUTH_PATH = "/api/client-manager/oauth";
 export const AUTHORIZE_PATH = "/demos/client-manager/mcp/authorize";
 export const PROTECTED_RESOURCE_PATH = `/.well-known/oauth-protected-resource${MCP_PATH}`;
 export const OAUTH_SCOPE = "client-manager";
+/** Where a Guest's OAuth requests carry their guest token. */
+export const GUEST_TOKEN_HEADER = "X-Guest-Token";
