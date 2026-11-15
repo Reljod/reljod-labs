@@ -1,6 +1,7 @@
 "use client";
 
 import { motion } from "motion/react";
+import { useRef, useState } from "react";
 import { type BuildState, spendOf } from "../domain/build-state";
 import { JOB_LABELS, JOBS } from "../domain/events";
 import { Icon } from "./icons";
@@ -8,7 +9,8 @@ import { Icon } from "./icons";
 /**
  * A Build while it runs, in one line: a dot per Job that fills as it
  * finishes, what is happening now, the facts so far, the self-corrections,
- * the cost, and a way to stop.
+ * the cost, and a way to stop. Stopping asks first, is sent once, and says
+ * if it failed.
  */
 export function BuildStrip({
   state,
@@ -17,9 +19,30 @@ export function BuildStrip({
 }: {
   state: BuildState;
   canStop: boolean;
-  onStop: () => void;
+  onStop: () => Promise<unknown>;
 }) {
   const status = state.end?.status ?? "running";
+  const [confirming, setConfirming] = useState(false);
+  const [stopping, setStopping] = useState(false);
+  const [stopError, setStopError] = useState<string | null>(null);
+  const sent = useRef(false);
+  const stop = async () => {
+    if (sent.current) return;
+    sent.current = true;
+    setStopping(true);
+    setStopError(null);
+    try {
+      await onStop();
+    } catch (failure) {
+      setStopError(
+        failure instanceof Error ? failure.message : "Could not stop it.",
+      );
+      sent.current = false;
+    } finally {
+      setStopping(false);
+      setConfirming(false);
+    }
+  };
   const current = state.runs.at(-1);
   const spend = spendOf(state);
   return (
@@ -69,14 +92,42 @@ export function BuildStrip({
           <span title="Model spend">${spend.costUsd.toFixed(3)}</span>
         </span>
         {status === "running" && canStop ? (
-          <button
-            type="button"
-            onClick={onStop}
-            className="flex items-center gap-1 rounded-sm px-1.5 py-0.5 font-mono text-[0.7rem] text-paper/80 hover:bg-seal-red hover:text-paper"
-          >
-            <Icon name="stop" className="size-3" />
-            Stop
-          </button>
+          confirming || stopping ? (
+            <span className="flex items-center gap-1 font-mono text-[0.7rem]">
+              <span className="text-paper/80">Stop this build?</span>
+              <button
+                type="button"
+                onClick={() => void stop()}
+                disabled={stopping}
+                aria-busy={stopping}
+                className="rounded-sm bg-seal-red px-1.5 py-0.5 text-paper disabled:opacity-60"
+              >
+                {stopping ? "Stopping…" : "Stop"}
+              </button>
+              <button
+                type="button"
+                onClick={() => setConfirming(false)}
+                disabled={stopping}
+                className="rounded-sm px-1.5 py-0.5 text-paper/80 hover:bg-paper/10 disabled:opacity-60"
+              >
+                Keep going
+              </button>
+            </span>
+          ) : (
+            <button
+              type="button"
+              onClick={() => setConfirming(true)}
+              className="flex items-center gap-1 rounded-sm px-1.5 py-0.5 font-mono text-[0.7rem] text-paper/80 hover:bg-seal-red hover:text-paper"
+            >
+              <Icon name="stop" className="size-3" />
+              Stop
+            </button>
+          )
+        ) : null}
+        {stopError ? (
+          <p role="alert" className="w-full font-mono text-[0.7rem] text-brass">
+            {stopError}
+          </p>
         ) : null}
       </div>
     </motion.div>

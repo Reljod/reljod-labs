@@ -215,7 +215,7 @@ export function ClientDashboard({
             state={live}
             canStop={client?.canAdd ?? false}
             onStop={() =>
-              void send(
+              send(
                 `/api/client-manager/builds/${watching}/stop`,
                 "POST",
                 {},
@@ -233,7 +233,7 @@ export function ClientDashboard({
         {query.isError ? (
           <p className="p-8 text-center text-sm text-ink-muted">
             {query.error.message === "not-found"
-              ? "This client is gone, or belongs to another browser."
+              ? "This client is gone, or belongs to someone else."
               : "This client didn't load. Try again."}
           </p>
         ) : !client ? (

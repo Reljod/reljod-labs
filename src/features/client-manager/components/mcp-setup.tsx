@@ -2,7 +2,7 @@
 
 import { motion } from "motion/react";
 import Link from "next/link";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { MCP_SERVER_NAME, MCP_TOOLS, researchSkill } from "../domain/research";
 import { Icon } from "./icons";
 
@@ -24,7 +24,11 @@ export function McpSetup() {
   const [shown, setShown] = useState(false);
   useEffect(() => setOrigin(window.location.origin), []);
 
+  // Set at once, so a double click cannot mint two tokens.
+  const minting = useRef(false);
   const mint = async () => {
+    if (minting.current) return;
+    minting.current = true;
     setBusy(true);
     setError(null);
     try {
@@ -42,6 +46,7 @@ export function McpSetup() {
           : "Could not create a token.",
       );
     } finally {
+      minting.current = false;
       setBusy(false);
     }
   };
@@ -132,6 +137,7 @@ export function McpSetup() {
               type="button"
               onClick={() => void mint()}
               disabled={busy}
+              aria-busy={busy}
               className="flex items-center gap-2 rounded-sm bg-ink px-4 py-2 text-sm font-semibold text-paper hover:bg-federal-blue disabled:opacity-50"
             >
               <Icon name="spark" className="size-4" />

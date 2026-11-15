@@ -138,10 +138,8 @@ export function Chat({
     });
   }, [tail]);
 
-  const ask = useCallback(
-    async (text: string, asResearch: boolean) => {
-      const question = text.trim();
-      if (!question || busy) return;
+  const askOnce = useCallback(
+    async (question: string, asResearch: boolean) => {
       abort.current?.abort();
       const controller = new AbortController();
       abort.current = controller;
@@ -332,7 +330,24 @@ export function Chat({
       void queryClient.invalidateQueries({ queryKey: keys.thread(id) });
       void queryClient.invalidateQueries({ queryKey: keys.threads });
     },
-    [busy, onThreadCreated, queryClient, scope, threadId],
+    [onThreadCreated, queryClient, scope, threadId],
+  );
+
+  // Set before the first await, so a double click or a double Enter cannot
+  // send the question twice before `busy` re-renders.
+  const asking = useRef(false);
+  const ask = useCallback(
+    async (text: string, asResearch: boolean) => {
+      const question = text.trim();
+      if (!question || busy || asking.current) return;
+      asking.current = true;
+      try {
+        await askOnce(question, asResearch);
+      } finally {
+        asking.current = false;
+      }
+    },
+    [busy, askOnce],
   );
 
   // A question handed in from a client's dashboard or a suggestion.
@@ -416,8 +431,9 @@ export function Chat({
                 <button
                   key={suggestion}
                   type="button"
+                  disabled={busy}
                   onClick={() => void ask(suggestion, false)}
-                  className="rounded-full border border-ink/15 bg-paper px-3.5 py-2 text-sm hover:border-federal-blue hover:text-federal-blue"
+                  className="disabled:opacity-50 rounded-full border border-ink/15 bg-paper px-3.5 py-2 text-sm hover:border-federal-blue hover:text-federal-blue"
                 >
                   {suggestion}
                 </button>
@@ -425,8 +441,9 @@ export function Chat({
               {scoped && !scoped.isSample ? (
                 <button
                   type="button"
+                  disabled={busy}
                   onClick={() => void ask(`Research ${scoped.name}`, true)}
-                  className="flex items-center gap-1.5 rounded-full border border-federal-blue/40 bg-morning-haze/50 px-3.5 py-2 text-sm text-federal-blue hover:border-federal-blue"
+                  className="disabled:opacity-50 flex items-center gap-1.5 rounded-full border border-federal-blue/40 bg-morning-haze/50 px-3.5 py-2 text-sm text-federal-blue hover:border-federal-blue"
                 >
                   <Icon name="globe" className="size-3.5" />
                   Research {scoped.name.split(" ")[0]} on the web
@@ -1076,13 +1093,16 @@ function ProposalCard({
           .map((fact) => fact.id),
       ),
   );
-  const [busy, setBusy] = useState(false);
+  const [busy, setBusy] = useState<"add" | "dismiss" | null>(null);
+  // Set at once, so a double click cannot send the decision twice.
+  const deciding = useRef(false);
   const [error, setError] = useState<string | null>(null);
   const open = proposal.status === "open";
 
   const decide = async (action: "add" | "dismiss") => {
-    if (!messageId || !threadId) return;
-    setBusy(true);
+    if (!messageId || !threadId || deciding.current) return;
+    deciding.current = true;
+    setBusy(action);
     setError(null);
     try {
       const { proposal: next } = await send<{ proposal: Proposal }>(
@@ -1104,7 +1124,8 @@ function ProposalCard({
         failure instanceof Error ? failure.message : "That didn't work.",
       );
     } finally {
-      setBusy(false);
+      deciding.current = false;
+      setBusy(null);
     }
   };
 
@@ -1189,21 +1210,23 @@ function ProposalCard({
           ) : (
             <button
               type="button"
-              disabled={busy || picked.size === 0 || !messageId}
+              disabled={!!busy || picked.size === 0 || !messageId}
+              aria-busy={busy === "add"}
               onClick={() => void decide("add")}
               className="flex items-center gap-1.5 rounded-sm bg-ink px-3 py-1.5 text-sm font-semibold text-paper hover:bg-federal-blue disabled:opacity-40"
             >
               <Icon name="add" className="size-3.5" />
-              {busy ? "Adding…" : `Add ${picked.size}`}
+              {busy === "add" ? "Adding…" : `Add ${picked.size}`}
             </button>
           )}
           <button
             type="button"
-            disabled={busy || !messageId}
+            disabled={!!busy || !messageId}
+            aria-busy={busy === "dismiss"}
             onClick={() => void decide("dismiss")}
             className="rounded-sm px-2 py-1.5 text-sm text-ink-muted hover:text-ink disabled:opacity-40"
           >
-            Dismiss
+            {busy === "dismiss" ? "Dismissing…" : "Dismiss"}
           </button>
           {error ? (
             <p className="ml-auto text-xs text-seal-red">{error}</p>
