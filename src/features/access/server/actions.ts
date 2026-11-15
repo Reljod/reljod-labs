@@ -338,14 +338,18 @@ export async function issueGuestPass(
   };
 }
 
-/** A Host ends a Guest pass now: every Guest on it loses Access at once. */
-export async function revokeGuestPass(form: FormData) {
-  await requireHost();
-  const id = String(form.get("id") ?? "");
-  if (!UUID.test(id)) return;
-  await revokePass(id);
-  refresh();
-}
+/**
+ * What a Host's action on one issued pass answers, for its confirm dialog:
+ * what went wrong, or what changed (and a new Guest code, shown once).
+ */
+export type PassActionState =
+  | { error: string }
+  | { done: string; expiresAt?: string; code?: string }
+  | null;
+
+const GONE: PassActionState = {
+  error: "That pass is gone. Reload the page to see the current list.",
+};
 
 /** The pass a Host's form names, if it exists. */
 async function passFrom(form: FormData) {
@@ -354,35 +358,64 @@ async function passFrom(form: FormData) {
   return guestPassById(id);
 }
 
+function statusOf(pass: {
+  expires_at: string;
+  revoked_at: string | null;
+  deleted_at: string | null;
+}) {
+  return guestPassStatus({
+    expiresAt: pass.expires_at,
+    revokedAt: pass.revoked_at,
+    deletedAt: pass.deleted_at,
+  });
+}
+
+const FULL = {
+  error: `There are already ${LIMITS.maxLivePasses} live Guest passes. Revoke one first.`,
+};
+
+/** A Host ends a Guest pass now: every Guest on it loses Access at once. */
+export async function revokeGuestPass(
+  _previous: PassActionState,
+  form: FormData,
+): Promise<PassActionState> {
+  await requireHost();
+  const pass = await passFrom(form);
+  if (!pass || statusOf(pass) !== "live") return GONE;
+  await revokePass(pass.id);
+  refresh();
+  return { done: "Revoked. Its guests lost access just now." };
+}
+
 /**
  * A Host extends a live pass, or renews one that ended (expired or revoked).
  * Its Guests come back to everything they saved: the data belongs to the pass.
  */
-export async function extendGuestPass(form: FormData) {
+export async function extendGuestPass(
+  _previous: PassActionState,
+  form: FormData,
+): Promise<PassActionState> {
   await requireHost();
   const hours = parseDuration(form.get("hours"));
+  if (hours === null) return { error: "Choose how long to add." };
   const pass = await passFrom(form);
-  if (hours === null || !pass || pass.deleted_at) return;
-  const status = guestPassStatus({
-    expiresAt: pass.expires_at,
-    revokedAt: pass.revoked_at,
-  });
+  if (!pass || pass.deleted_at) return GONE;
+  const live = statusOf(pass) === "live";
   // Renewing brings a pass back into the live count, so it must have room.
-  if (status !== "live" && (await countLivePasses()) >= LIMITS.maxLivePasses)
-    return;
+  if (!live && (await countLivePasses()) >= LIMITS.maxLivePasses) return FULL;
   const now = new Date();
-  await extendPass(
-    pass.id,
-    extendedExpiry({ expiresAt: pass.expires_at }, hours, now.getTime()),
-    now,
+  const expiresAt = extendedExpiry(
+    { expiresAt: pass.expires_at },
+    hours,
+    now.getTime(),
   );
+  await extendPass(pass.id, expiresAt, now);
   refresh();
+  return {
+    done: live ? "Extended." : "Renewed. Its guests can come back in.",
+    expiresAt: expiresAt.toISOString(),
+  };
 }
-
-export type NewCodeState =
-  | { error: string }
-  | { passId: string; code: string; label: string }
-  | null;
 
 /**
  * A Host replaces a pass's Guest code, when it was lost or handed to the
@@ -390,16 +423,16 @@ export type NewCodeState =
  * one gets the same saved data.
  */
 export async function regenerateGuestCode(
-  _previous: NewCodeState,
+  _previous: PassActionState,
   form: FormData,
-): Promise<NewCodeState> {
+): Promise<PassActionState> {
   await requireHost();
   const pass = await passFrom(form);
-  if (!pass || pass.deleted_at) return { error: "That pass is gone." };
+  if (!pass || pass.deleted_at) return GONE;
   const code = guestCodeFrom(randomBytes(CODE_LENGTH));
   await replaceGuestCode(pass.id, hashCode(normalizeGuestCode(code) ?? ""));
   refresh();
-  return { passId: pass.id, code, label: pass.label };
+  return { done: "New code made. The old one no longer works.", code };
 }
 
 /**
@@ -407,19 +440,30 @@ export async function regenerateGuestCode(
  * everything they saved are purged after LIMITS.retentionDays. Until then the
  * Host can restore it.
  */
-export async function deleteGuestPass(form: FormData) {
+export async function deleteGuestPass(
+  _previous: PassActionState,
+  form: FormData,
+): Promise<PassActionState> {
   await requireHost();
   const pass = await passFrom(form);
-  if (!pass || pass.deleted_at) return;
+  if (!pass || pass.deleted_at) return GONE;
   await markGuestPassDeleted(pass.id);
   refresh();
+  return { done: "Deleted. You can restore it from the Deleted list." };
 }
 
 /** A Host takes back a deleted pass before it is purged. */
-export async function restoreGuestPass(form: FormData) {
+export async function restoreGuestPass(
+  _previous: PassActionState,
+  form: FormData,
+): Promise<PassActionState> {
   await requireHost();
   const pass = await passFrom(form);
-  if (!pass?.deleted_at) return;
+  if (!pass?.deleted_at) return GONE;
+  // A pass deleted while live comes back live, so it must have room too.
+  const live = statusOf({ ...pass, deleted_at: null }) === "live";
+  if (live && (await countLivePasses()) >= LIMITS.maxLivePasses) return FULL;
   await restorePass(pass.id);
   refresh();
+  return { done: "Restored, with everything its guests saved." };
 }

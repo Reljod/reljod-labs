@@ -38,3 +38,11 @@ Each demo first grouped saved data by a cookie of its own (`client_manager_sessi
 - Key a Guest's data on the Guest pass, so it outlives devices and codes.
 - Deleting a person's access is a soft delete with a 30-day purge (`access.purge_deleted_guest_passes`), not a cascade from the Auth user. Register each new owned table in `access.owned_tables` so the purge reaches it.
 - Rows from before Owners have `owner` null and are shown to nobody; samples meant for everyone say so explicitly (`is_sample`).
+
+## A write button fires once, and says what happened
+
+The Guest pass page first shipped Extend and New code as bare buttons: a click gave no sign it had worked, so a Host clicked again, and each click wrote again (two extensions, or a second code that silently replaced the one just shown). A button that writes must not be able to send twice, and the person must see the result.
+
+- Disable the button while its write is in flight and show a pending label ("Extending…") with `aria-busy`. Use the pending flag of `useActionState`, `useFormStatus` or `useMutation`; add a synchronous ref guard where the flag is set only after an await or lives in another component. Enter-to-submit and chips go through the same guard.
+- Ask to confirm a write that is destructive or hard to undo (delete, revoke, stop, a new code that replaces the old one), in a dialog that names what will happen. `ConfirmDialog` in `src/features/access/components/pass-actions.tsx` is the pattern: a native `<dialog>`, Escape and the backdrop close it except while the write runs.
+- Show the result where the person clicked (what changed, or the error inline). Never fail silently.
