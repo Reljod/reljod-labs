@@ -36,7 +36,10 @@ type RunRow = {
   error: string | null;
   workflow_run_id: string | null;
   visitor_hash: string;
+  /** Legacy: the browser Session before runs belonged to an Owner. */
   session_id: string | null;
+  /** The Owner (`host:…`, `guest:…` or `e2e`); null on runs from before Owners. */
+  owner: string | null;
   created_at: string;
   completed_at: string | null;
   expires_at: string;
@@ -134,6 +137,7 @@ export type Database = {
           | "error"
           | "workflow_run_id"
           | "session_id"
+          | "owner"
           | "created_at"
           | "completed_at"
           | "expires_at"

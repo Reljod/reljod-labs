@@ -3,7 +3,7 @@ import {
   clientEdges,
   viewableClient,
 } from "@/features/client-manager/server/service";
-import { currentSessionId } from "@/features/client-manager/server/session";
+import { currentOwner } from "@/features/client-manager/server/session";
 import { failure, notFound } from "../../../respond";
 
 /** `root`, `branch:wealth`, `leaf:wealth.accounts` or `node:person:ivy-marsh`. */
@@ -25,7 +25,7 @@ export async function GET(
 ) {
   try {
     const { clientId } = await params;
-    const client = await viewableClient(clientId, await currentSessionId());
+    const client = await viewableClient(clientId, await currentOwner());
     if (!client) return notFound();
     const scope = scopeOf(new URL(request.url).searchParams.get("scope"));
     if (!scope) return Response.json({ error: "Bad scope" }, { status: 400 });

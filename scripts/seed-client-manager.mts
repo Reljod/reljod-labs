@@ -31,19 +31,15 @@ const TYPES: Record<string, string> = {
   ".jpg": "image/jpeg",
 };
 
-let cookie = "";
 async function post<T>(path: string, body: unknown): Promise<T> {
   const response = await fetch(`${APP_URL}${path}`, {
     method: "POST",
     headers: {
       "content-type": "application/json",
       "x-e2e-token": TOKEN as string,
-      cookie,
     },
     body: JSON.stringify(body),
   });
-  const setCookie = response.headers.get("set-cookie");
-  if (setCookie) cookie = setCookie.split(";")[0] ?? cookie;
   const data = (await response.json()) as T & { error?: string };
   if (!response.ok)
     throw new Error(`${path}: ${data.error ?? response.status}`);

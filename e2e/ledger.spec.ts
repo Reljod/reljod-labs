@@ -258,7 +258,16 @@ test.describe("Ledger", () => {
 
   test("an over-limit visitor lands on a stored answer", async ({ page }) => {
     test.skip(live, "forces the limit with an e2e header");
-    await page.setExtraHTTPHeaders({ "x-ledger-force-limit": "1" });
+    // A limited visitor lands on their own Owner's latest answer, never on
+    // someone else's, so the suite stores one first.
+    await askFromDemo(page, PRESET_QUESTIONS[0], true);
+    await waitForBuild(page);
+    const stored = page.url().split("?")[0];
+    await page.setExtraHTTPHeaders({
+      "x-e2e-token": process.env.E2E_BYPASS_TOKEN ?? "",
+      "x-ledger-stub": "1",
+      "x-ledger-force-limit": "1",
+    });
     await page.goto("/demos/ledger");
     await page
       .getByTestId("ask-box")
@@ -266,6 +275,7 @@ test.describe("Ledger", () => {
       .first()
       .click();
     await page.waitForURL(/notice=limited/);
+    expect(page.url().split("?")[0]).toBe(stored);
     await expect(screen(page).getByTestId("notice")).toBeVisible();
     await expect(page.getByTestId("answer-page")).toBeVisible();
   });

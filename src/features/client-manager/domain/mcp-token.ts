@@ -1,7 +1,8 @@
 import { createHmac, timingSafeEqual } from "node:crypto";
+import { type Owner, parseOwner } from "@/features/access/domain/owner";
 
 /**
- * A Client Manager MCP token: who may ask, for which browser session's book,
+ * A Client Manager MCP token: who may ask, for which Owner's book,
  * until when. Signed, not stored, so the server checks it without a lookup;
  * a Guest's token is also checked against their Guest pass on every call, so
  * it dies with the pass.
@@ -9,8 +10,11 @@ import { createHmac, timingSafeEqual } from "node:crypto";
 export type McpClaims = {
   /** `desk` is the app's own chat, minted per message. */
   kind: "host" | "guest" | "e2e" | "desk";
-  /** The browser session whose clients the token reaches. */
-  session: string;
+  /**
+   * The Access Owner whose clients the token reaches. Tokens minted before
+   * Owners carried a browser session instead, and are refused.
+   */
+  owner: Owner;
   /** The rate-limit identity the token spends against. */
   visitor: string;
   /** The Auth user a Guest token was minted for. */
@@ -56,10 +60,7 @@ export function readMcpToken(
       Buffer.from(payload, "base64url").toString("utf8"),
     ) as McpClaims;
     if (typeof claims.exp !== "number" || claims.exp * 1000 <= now) return null;
-    if (
-      typeof claims.session !== "string" ||
-      typeof claims.visitor !== "string"
-    )
+    if (!parseOwner(claims.owner) || typeof claims.visitor !== "string")
       return null;
     if (!["host", "guest", "e2e", "desk"].includes(claims.kind)) return null;
     return claims;

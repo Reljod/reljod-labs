@@ -1,4 +1,5 @@
 import "server-only";
+import type { Owner } from "@/features/access/domain/owner";
 import type { Scenario } from "../domain/case-file";
 import type { JobId } from "../domain/jobs";
 import type { ModelSettings, Purpose } from "../domain/model-config";
@@ -27,17 +28,19 @@ function ok(result: { error: { message: string } | null }) {
 export type SessionRow = {
   id: string;
   visitor_hash: string;
+  /** Null for Desks from before Owners, and for the outside MCP client's desk. */
+  owner: Owner | null;
   model_overrides: Partial<Record<Purpose, Partial<ModelSettings>>>;
   title: string | null;
   created_at: string;
   last_active_at: string;
 };
 
-export async function createSession(visitorHash: string) {
+export async function createSession(visitorHash: string, owner: Owner | null) {
   return rows<{ id: string }>(
     await supabase()
       .from("sessions")
-      .insert({ visitor_hash: visitorHash })
+      .insert({ visitor_hash: visitorHash, owner })
       .select("id")
       .single(),
   ).id;
@@ -51,16 +54,15 @@ export async function getSession(id: string) {
   return session ?? null;
 }
 
-/** Sessions by id, newest activity first: the desks one browser can go back to. */
-export async function sessionsByIds(ids: string[]) {
-  const valid = ids.filter((id) => /^[0-9a-f-]{36}$/i.test(id));
-  if (valid.length === 0) return [];
+/** An Owner's Desks, newest activity first: the ones they can go back to. */
+export async function sessionsOf(owner: Owner, limit: number) {
   return rows<SessionRow[]>(
     await supabase()
       .from("sessions")
       .select("*")
-      .in("id", valid)
-      .order("last_active_at", { ascending: false }),
+      .eq("owner", owner)
+      .order("last_active_at", { ascending: false })
+      .limit(limit),
   );
 }
 

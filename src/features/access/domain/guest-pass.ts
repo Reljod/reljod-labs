@@ -16,22 +16,61 @@ export const LIMITS = {
   /** Wrong codes or passwords one visitor may try before waiting. */
   failedAttempts: 8,
   attemptWindowMinutes: 15,
+  /**
+   * Days a deleted Guest pass, and every Client, Desk and run its Guests
+   * saved, is kept so the Host can restore it. A pass that ended and was left
+   * alone this long is deleted for them. The cron jobs repeat both numbers.
+   */
+  retentionDays: 30,
 } as const;
 
-export type GuestPassStatus = "live" | "expired" | "revoked";
+export type GuestPassStatus = "live" | "expired" | "revoked" | "deleted";
 
 export function guestPassStatus(
-  pass: { expiresAt: string; revokedAt: string | null },
+  pass: {
+    expiresAt: string;
+    revokedAt: string | null;
+    deletedAt?: string | null;
+  },
   now = Date.now(),
 ): GuestPassStatus {
+  if (pass.deletedAt) return "deleted";
   if (pass.revokedAt) return "revoked";
   return Date.parse(pass.expiresAt) > now ? "live" : "expired";
+}
+
+/** When a deleted Guest pass and its Guests' data are purged for good. */
+export function purgeDate(deletedAt: string) {
+  return new Date(Date.parse(deletedAt) + LIMITS.retentionDays * 86_400_000);
+}
+
+/** A duration a Host chose for a pass, issued or extended; null when off the list. */
+export function parseDuration(input: unknown) {
+  const hours = Number(input);
+  return (LIMITS.durationsHours as readonly number[]).includes(hours)
+    ? hours
+    : null;
 }
 
 export function durationLabel(hours: number) {
   if (hours < 24) return `${hours} hour${hours === 1 ? "" : "s"}`;
   const days = hours / 24;
   return `${days} day${days === 1 ? "" : "s"}`;
+}
+
+/**
+ * The new end of a pass a Host extends by `hours`: added to what is left of a
+ * live pass, or counted from now for one that ended. Never more than the
+ * longest duration from now, which the migration's check repeats.
+ */
+export function extendedExpiry(
+  pass: { expiresAt: string },
+  hours: number,
+  now = Date.now(),
+) {
+  const from = Math.max(now, Date.parse(pass.expiresAt));
+  const longest = now + Math.max(...LIMITS.durationsHours) * 3_600_000;
+  return new Date(Math.min(from + hours * 3_600_000, longest));
 }
 
 /** What the Host asked for, or null when it is outside the limits. */
@@ -43,11 +82,10 @@ export function parseGuestPassRequest(input: {
   const label = String(input.label ?? "")
     .replace(/\s+/g, " ")
     .trim();
-  const hours = Number(input.hours);
+  const hours = parseDuration(input.hours);
   const devices = Number(input.devices);
   if (!label || label.length > LIMITS.labelLength) return null;
-  if (!(LIMITS.durationsHours as readonly number[]).includes(hours))
-    return null;
+  if (hours === null) return null;
   if (!Number.isInteger(devices) || devices < 1 || devices > LIMITS.maxDevices)
     return null;
   return { label, hours, devices };

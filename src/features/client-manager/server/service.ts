@@ -1,6 +1,7 @@
 import "server-only";
 import { getRun, start } from "workflow/api";
 import { z } from "zod";
+import type { Owner } from "@/features/access/domain/owner";
 import { MAX_PROPOSED_FACTS } from "../domain/chat";
 import type {
   BuildEvent,
@@ -185,14 +186,14 @@ async function prepareBuild(input: {
 export async function createIntake(
   raw: unknown,
   visitor: Visitor,
-  sessionId: string,
+  owner: Owner,
 ) {
   const input = intakeSchema.parse(raw);
   await checkLimits(visitor, "build");
   const isSample = input.sample && visitor.trusted;
   const clientId = await createClientRow({
     name: input.name,
-    sessionId: isSample ? null : sessionId,
+    owner: isSample ? null : owner,
     isSample,
     visitorHash: visitor.hash,
   });
@@ -222,7 +223,7 @@ export async function createIntake(
     .join(" and ");
   await addMessage({
     clientId,
-    sessionId,
+    owner: isSample ? null : owner,
     role: "user",
     mode: "build",
     content: `New client: ${input.name}. Built from ${summary}.`,
@@ -236,7 +237,7 @@ export async function createAddition(
   client: ClientRow,
   raw: unknown,
   visitor: Visitor,
-  sessionId: string,
+  owner: Owner,
   /** False when the chat already shows the person's words. */
   announce = true,
 ) {
@@ -258,7 +259,7 @@ export async function createAddition(
   ].filter(Boolean);
   await addMessage({
     clientId: client.id,
-    sessionId,
+    owner: client.owner ? owner : null,
     role: "user",
     mode: "build",
     content: parts.join("\n"),
@@ -447,31 +448,28 @@ export async function stopBuild(build: BuildRow) {
     await setClientStatus(build.client_id, "failed");
 }
 
-/** The Build, if this session may watch it. */
-export async function viewableBuild(buildId: string, sessionId: string | null) {
+/** The Build, if this Owner may watch it. */
+export async function viewableBuild(buildId: string, owner: Owner | null) {
   const build = await getBuild(buildId);
   if (!build) return null;
   const client = await getClient(build.client_id);
-  if (!client || !canView(client, sessionId)) return null;
+  if (!client || !canView(client, owner)) return null;
   return { build, client };
 }
 
-export async function viewableClient(
-  clientId: string,
-  sessionId: string | null,
-) {
+export async function viewableClient(clientId: string, owner: Owner | null) {
   const client = await getClient(clientId);
-  return client && canView(client, sessionId) ? client : null;
+  return client && canView(client, owner) ? client : null;
 }
 
 export async function ownedClient(
   clientId: string,
-  sessionId: string | null,
+  owner: Owner | null,
   visitor: Visitor,
 ) {
   const client = await getClient(clientId);
   if (!client) return null;
-  if (client.session_id && client.session_id === sessionId) return client;
+  if (client.owner && client.owner === owner) return client;
   if (client.is_sample && visitor.trusted) return client;
   return null;
 }
@@ -492,10 +490,8 @@ export type CatalogCard = {
   createdAt: string;
 };
 
-export async function catalog(
-  sessionId: string | null,
-): Promise<CatalogCard[]> {
-  const rows = await listCatalog(sessionId);
+export async function catalog(owner: Owner | null): Promise<CatalogCard[]> {
+  const rows = await listCatalog(owner);
   const urls = await signedUrls(
     rows.flatMap((row) => (row.portrait_path ? [row.portrait_path] : [])),
   );
@@ -560,7 +556,7 @@ export type ClientSummary = {
 
 export async function clientSummary(
   client: ClientRow,
-  sessionId: string | null,
+  owner: Owner | null,
   visitor: Visitor | null,
 ): Promise<ClientSummary> {
   const [nodes, sources, counts, build, spend, portraitUrl, edgeCount] =
@@ -616,17 +612,17 @@ export async function clientSummary(
         }
       : null,
     spend: { costUsd: spend.cost, tokens: spend.tokens },
-    canAdd: canAdd(client, sessionId, visitor),
+    canAdd: canAdd(client, owner, visitor),
   };
 }
 
 export function canAdd(
   client: ClientRow,
-  sessionId: string | null,
+  owner: Owner | null,
   visitor: Visitor | null,
 ) {
   return (
-    (!!sessionId && client.session_id === sessionId) ||
+    (!!owner && client.owner === owner) ||
     (client.is_sample && !!visitor?.trusted)
   );
 }

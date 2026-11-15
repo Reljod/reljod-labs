@@ -1,5 +1,5 @@
 import { deleteThread } from "@/features/client-manager/server/repository";
-import { currentSessionId } from "@/features/client-manager/server/session";
+import { currentOwner } from "@/features/client-manager/server/session";
 import {
   messagesOf,
   ownedThread,
@@ -13,7 +13,7 @@ type Context = RouteContext<"/api/client-manager/threads/[threadId]">;
 export async function GET(_request: Request, { params }: Context) {
   try {
     const { threadId } = await params;
-    const thread = await ownedThread(threadId, await currentSessionId());
+    const thread = await ownedThread(threadId, await currentOwner());
     if (!thread) return notFound();
     return Response.json({
       thread: summaryOf(thread),
@@ -28,10 +28,10 @@ export async function GET(_request: Request, { params }: Context) {
 export async function PATCH(request: Request, { params }: Context) {
   try {
     const { threadId } = await params;
-    const sessionId = await currentSessionId();
-    const thread = await ownedThread(threadId, sessionId);
-    if (!thread || !sessionId) return notFound();
-    await patchThread(thread, await request.json(), sessionId);
+    const owner = await currentOwner();
+    const thread = await ownedThread(threadId, owner);
+    if (!thread || !owner) return notFound();
+    await patchThread(thread, await request.json(), owner);
     return Response.json({ ok: true });
   } catch (error) {
     return failure(error);
@@ -41,7 +41,7 @@ export async function PATCH(request: Request, { params }: Context) {
 export async function DELETE(_request: Request, { params }: Context) {
   try {
     const { threadId } = await params;
-    const thread = await ownedThread(threadId, await currentSessionId());
+    const thread = await ownedThread(threadId, await currentOwner());
     if (!thread) return notFound();
     await deleteThread(thread.id);
     return Response.json({ deleted: true });

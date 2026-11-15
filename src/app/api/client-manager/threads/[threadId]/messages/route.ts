@@ -1,7 +1,8 @@
+import type { Owner } from "@/features/access/domain/owner";
 import type { AssistantEvent } from "@/features/client-manager/domain/chat";
 import { LimitError } from "@/features/client-manager/server/service";
 import {
-  ensureSessionId,
+  currentOwner,
   visitor,
 } from "@/features/client-manager/server/session";
 import { ask, ownedThread } from "@/features/client-manager/server/threads";
@@ -14,15 +15,15 @@ export async function POST(
   request: Request,
   { params }: RouteContext<"/api/client-manager/threads/[threadId]/messages">,
 ) {
-  let sessionId: string;
+  let owner: Owner;
   try {
     // Passes the Access gate before anything is read or asked.
-    sessionId = await ensureSessionId();
+    owner = await currentOwner();
   } catch (error) {
     return failure(error);
   }
   const { threadId } = await params;
-  const thread = await ownedThread(threadId, sessionId);
+  const thread = await ownedThread(threadId, owner);
   if (!thread) return notFound();
   const body = await request.json().catch(() => null);
   const who = await visitor();
@@ -37,7 +38,7 @@ export async function POST(
         for await (const event of ask({
           thread,
           raw: body,
-          sessionId,
+          owner,
           visitor: who,
           origin,
           signal: request.signal,

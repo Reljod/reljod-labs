@@ -5,6 +5,7 @@ import { cookies, headers } from "next/headers";
 import { E2E_HEADER } from "@/features/document-compliance/constants";
 import { DENIED_MESSAGE } from "../constants";
 import { guestPassStatus } from "../domain/guest-pass";
+import { type Owner, ownerOf } from "../domain/owner";
 import { env } from "./env";
 import { guestPassOf } from "./repository";
 import { type AuthCookies, authClient } from "./supabase";
@@ -84,6 +85,7 @@ export async function accessThrough(door: {
     const status = guestPassStatus({
       expiresAt: pass.expires_at,
       revokedAt: pass.revoked_at,
+      deletedAt: pass.deleted_at,
     });
     if (status !== "live") return null;
     return {
@@ -131,6 +133,19 @@ export async function requireAccess() {
   const access = await currentAccess();
   if (!access) throw new AccessDeniedError();
   return access;
+}
+
+/**
+ * The gate for any read or write of saved demo data: the Access, and the
+ * Owner every row must be scoped to. Never scope saved data by a browser
+ * cookie: a Guest's devices and a Host's browsers share one Owner.
+ */
+export async function requireOwner(): Promise<{
+  access: Access;
+  owner: Owner;
+}> {
+  const access = await requireAccess();
+  return { access, owner: ownerOf(access) };
 }
 
 /** The gate for issuing and revoking Guest passes. */

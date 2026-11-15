@@ -3,7 +3,7 @@ import { type McpClaims, readMcpToken, signMcpToken } from "./mcp-token";
 
 const claims: McpClaims = {
   kind: "guest",
-  session: "4b7f0c1e-0000-4000-8000-000000000001",
+  owner: "guest:4b7f0c1e-0000-4000-8000-000000000001",
   visitor: "hash",
   user: "user-1",
   pass: "pass-1",
@@ -23,13 +23,25 @@ describe("MCP tokens", () => {
     expect(readMcpToken(token, "other", now)).toBeNull();
     const [payload, signature] = token.slice(4).split(".");
     const forged = Buffer.from(
-      JSON.stringify({ ...claims, session: "someone-else" }),
+      JSON.stringify({
+        ...claims,
+        owner: "guest:4b7f0c1e-0000-4000-8000-000000000002",
+      }),
     ).toString("base64url");
     expect(readMcpToken(`cmm_${forged}.${signature}`, "salt", now)).toBeNull();
     expect(
       readMcpToken(`cmm_${payload}.${signature}`, "salt", now),
     ).not.toBeNull();
     expect(readMcpToken(token, "salt", Date.UTC(2031, 0, 1))).toBeNull();
+  });
+
+  it("refuses a token minted before Owners, which named a browser session", () => {
+    const { owner: _owner, ...rest } = claims;
+    const legacy = signMcpToken(
+      { ...rest, session: "4b7f0c1e-0000-4000-8000-000000000001" } as never,
+      "salt",
+    );
+    expect(readMcpToken(legacy, "salt", now)).toBeNull();
   });
 
   it("refuses anything that is not one of its tokens", () => {

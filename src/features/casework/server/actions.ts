@@ -25,12 +25,16 @@ import {
   runsForSession,
   type SessionRow,
   sessionSpend,
-  sessionsByIds,
   setModelOverrides,
   spendBySession,
 } from "./repository";
 import { answerQuestion, settingsFor, stopActiveRun, stopRun } from "./runs";
-import { deskIds, ensureSession, startSession, switchSession } from "./session";
+import {
+  ensureSession,
+  ownedDesks,
+  startSession,
+  switchSession,
+} from "./session";
 import { BUCKET, signedUrls, supabase } from "./supabase";
 
 const MAX_UPLOAD_BYTES = 10 * 1024 * 1024;
@@ -89,7 +93,10 @@ function docView(
 }
 
 async function deskList(current: SessionRow): Promise<DeskSummary[]> {
-  const sessions = await sessionsByIds(await deskIds());
+  const owned = await ownedDesks();
+  const sessions = owned.some((session) => session.id === current.id)
+    ? owned
+    : [current, ...owned];
   const spend = await spendBySession(sessions.map((session) => session.id));
   return sessions
     .filter((session) => session.id === current.id || session.title)
@@ -271,7 +278,7 @@ export async function newDesk() {
   await startSession();
 }
 
-/** Goes back to an earlier desk of this browser. */
+/** Goes back to an earlier desk of this Owner. */
 export async function openEarlierDesk(id: string) {
   return switchSession(String(id));
 }

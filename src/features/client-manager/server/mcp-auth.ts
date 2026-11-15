@@ -1,7 +1,8 @@
 import "server-only";
 import { guestPassStatus } from "@/features/access/domain/guest-pass";
+import type { Owner } from "@/features/access/domain/owner";
 import { env as accessEnv } from "@/features/access/server/env";
-import { type Access, requireAccess } from "@/features/access/server/gate";
+import { type Access, requireOwner } from "@/features/access/server/gate";
 import { guestPassOf } from "@/features/access/server/repository";
 import {
   type McpClaims,
@@ -9,31 +10,27 @@ import {
   signMcpToken,
 } from "../domain/mcp-token";
 import { env } from "./env";
-import {
-  ensureSessionId,
-  TRUSTED_VISITOR,
-  type Visitor,
-  visitor,
-} from "./session";
+import { TRUSTED_VISITOR, type Visitor, visitor } from "./session";
 
 const DAY = 86_400;
 
 /**
  * The token an outside MCP client (Claude Code, say) sends as its bearer.
- * It reaches this browser session's clients and spends against this
+ * It reaches this Owner's clients (a Guest's are their Guest pass's, shared
+ * by every device on it) and spends against this
  * visitor's limits. A Guest's token lasts as long as their Guest pass and is
  * refused the moment the pass is revoked; a Host's lasts 30 days.
  */
 export async function mintMcpToken() {
-  const access: Access = await requireAccess();
-  const sessionId = await ensureSessionId();
+  const { access, owner }: { access: Access; owner: Owner } =
+    await requireOwner();
   const who = await visitor();
   const now = Math.floor(Date.now() / 1000);
   const claims: McpClaims =
     access.kind === "guest"
       ? {
           kind: "guest",
-          session: sessionId,
+          owner,
           visitor: who.hash,
           user: access.userId,
           pass: access.passId,
@@ -42,14 +39,14 @@ export async function mintMcpToken() {
       : access.kind === "host"
         ? {
             kind: "host",
-            session: sessionId,
+            owner,
             visitor: who.hash,
             email: access.email,
             exp: now + 30 * DAY,
           }
         : {
             kind: "e2e",
-            session: sessionId,
+            owner,
             visitor: who.hash,
             exp: now + DAY,
           };
@@ -62,14 +59,14 @@ export async function mintMcpToken() {
 
 /** The app's own chat: a token for one message, narrowed to the Thread's client. */
 export function deskToken(input: {
-  sessionId: string;
+  owner: Owner;
   visitor: Visitor;
   clientId: string | null;
 }) {
   return signMcpToken(
     {
       kind: "desk",
-      session: input.sessionId,
+      owner: input.owner,
       visitor: input.visitor.hash,
       ...(input.clientId ? { client: input.clientId } : {}),
       exp: Math.floor(Date.now() / 1000) + 10 * 60,
@@ -97,11 +94,13 @@ export async function verifyBearer(bearer: string): Promise<McpClaims | null> {
         : null;
     case "guest": {
       if (!claims.user || !claims.pass) return null;
+      if (claims.owner !== `guest:${claims.pass}`) return null;
       const pass = await guestPassOf(claims.user);
       if (!pass || pass.id !== claims.pass) return null;
       const status = guestPassStatus({
         expiresAt: pass.expires_at,
         revokedAt: pass.revoked_at,
+        deletedAt: pass.deleted_at,
       });
       return status === "live" ? claims : null;
     }

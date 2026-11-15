@@ -13,7 +13,7 @@ The chat agent. It reads what the person says and drops, and calls Jobs and Pipe
 _Avoid_: Bot, assistant, copilot
 
 **Desk**:
-One visitor's workspace: their chat with the Specialist, their uploads, their Runs and their Spend. Kept as a session. A browser keeps a list of its Desks and can go back to an earlier one.
+One Owner's workspace: their chat with the Specialist, their uploads, their Runs and their Spend. Kept as a session that belongs to the Owner (a Host, or a Guest pass), not to a browser, so every browser of a Host and every device on a Guest pass sees the same Desks and can go back to an earlier one. A browser only remembers which of them it has open.
 _Avoid_: Workspace, account
 
 **Cabinet**:

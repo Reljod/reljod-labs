@@ -3,7 +3,7 @@ import {
   viewableClient,
 } from "@/features/client-manager/server/service";
 import {
-  ensureSessionId,
+  currentOwner,
   visitor,
 } from "@/features/client-manager/server/session";
 import { failure, notFound } from "../../../respond";
@@ -15,15 +15,15 @@ export async function POST(
 ) {
   try {
     const { clientId } = await params;
-    const sessionId = await ensureSessionId();
-    const client = await viewableClient(clientId, sessionId);
+    const owner = await currentOwner();
+    const client = await viewableClient(clientId, owner);
     if (!client) return notFound();
     return Response.json(
       await createAddition(
         client,
         await request.json(),
         await visitor(),
-        sessionId,
+        owner,
       ),
     );
   } catch (error) {

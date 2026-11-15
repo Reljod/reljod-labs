@@ -29,3 +29,12 @@ A file name, extension or type sent by the browser is untrusted. Before any of i
 
 - Use one shared helper; don't re-derive the extension at each call site.
 - Keep every key the browser can influence under the owning record's prefix (`clients/<id>/…`).
+
+## Saved data is scoped to the Owner, never to the browser
+
+Each demo first grouped saved data by a cookie of its own (`client_manager_session`, `casework_desks`, `prescreen_session`) or by an id in the URL. A Guest's second device saw nothing, a Host on a new browser lost their book, and an Ask session or Pre-screen run opened for anyone who had its id. Worse, Guest data was tied to things that die (the anonymous Auth user, the browser), so ending or replacing a Guest pass lost it.
+
+- Read the Owner with `requireOwner()` and filter every list and every load by id on `owner`, in the server function. Check ownership of the parent too when a route takes a child id (a run of a desk, a source of a client).
+- Key a Guest's data on the Guest pass, so it outlives devices and codes.
+- Deleting a person's access is a soft delete with a 30-day purge (`access.purge_deleted_guest_passes`), not a cascade from the Auth user. Register each new owned table in `access.owned_tables` so the purge reaches it.
+- Rows from before Owners have `owner` null and are shown to nobody; samples meant for everyone say so explicitly (`is_sample`).

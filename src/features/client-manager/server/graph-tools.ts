@@ -36,7 +36,7 @@ export type BookClient = {
   id: string;
   name: string;
   isSample: boolean;
-  sessionId: string | null;
+  owner: string | null;
   status: CatalogRow["status"];
   persona: Persona | null;
   nodes: number;
@@ -79,7 +79,7 @@ export function bookOf(
         id: row.id,
         name: row.name,
         isSample: row.is_sample,
-        sessionId: row.session_id,
+        owner: row.owner,
         status: row.status,
         persona: row.persona,
         nodes: row.node_count,

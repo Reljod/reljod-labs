@@ -1,4 +1,5 @@
 import { getWritable } from "workflow";
+import { parseOwner } from "@/features/access/domain/owner";
 import type {
   BuildEvent,
   BuildEventInput,
@@ -462,7 +463,7 @@ async function finishStep(
   const client = await getClient(input.clientId);
   await addMessage({
     clientId: input.clientId,
-    sessionId: client?.session_id ?? "00000000-0000-0000-0000-000000000000",
+    owner: parseOwner(client?.owner),
     role: "assistant",
     mode: "build",
     content: `Graph ${input.trigger === "addition" ? "updated" : "ready"}: ${plural(stats.nodes, "Node")} and ${plural(stats.edges, "Edge")} across ${plural(stats.branches, "Branch")}, after ${plural(repairs, "Repair")} in ${plural(rounds, "review round")}.`,

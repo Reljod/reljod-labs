@@ -1,4 +1,5 @@
 import "server-only";
+import type { Owner } from "@/features/access/domain/owner";
 import {
   type AskSessionView,
   type BuildEvent,
@@ -29,6 +30,8 @@ const isComplete = (step: unknown): step is PlanStep =>
  */
 export function runBuild(input: {
   session: AskSessionView;
+  /** The session's Owner; a limited visitor is sent to their own latest answer. */
+  owner: Owner;
   question: string;
   visitor: Visitor;
 }): ReadableStream<Uint8Array> {
@@ -44,7 +47,7 @@ export function runBuild(input: {
           send({
             type: "limited",
             message: limit,
-            sessionId: await latestAnsweredSessionId(),
+            sessionId: await latestAnsweredSessionId(input.owner),
           });
           return;
         }

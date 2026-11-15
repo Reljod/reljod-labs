@@ -13,11 +13,19 @@ A Supabase Auth account, with a confirmed email on the Host list (`ACCESS_HOST_E
 _Avoid_: Admin, owner, user
 
 **Guest pass**:
-A Host's invitation to the demos: for a named person, until a set time, on a set number of devices. A Host can revoke it early.
+A Host's invitation to the demos: for a named person, until a set time, on a set number of devices. A Host can extend it, renew it after it ended, give it a new Guest code, revoke it early, or delete it. Everything its Guests save belongs to it.
 _Avoid_: Invite, token, key
 
+**Owner**:
+Who saved demo data belongs to: a Host, a Guest pass (shared by every device on it), or the e2e suite. Every saved row carries one, and every read is scoped to it.
+_Avoid_: User, session, account
+
+**Deleted pass**:
+A Guest pass the Host deleted. Its Guests lose Access at once; the pass and what they saved are kept 30 days so the Host can restore it, then purged.
+_Avoid_: Archived, removed
+
 **Guest code**:
-The twelve symbols that redeem a Guest pass, shown to the Host once and handed over by word of mouth. Only its hash is stored.
+The twelve symbols that redeem a Guest pass, shown to the Host once and handed over by word of mouth. Only its hash is stored. A new code replaces the old one and signs out the devices on it; the data stays with the pass.
 _Avoid_: Password, token, PIN
 
 **Guest**:

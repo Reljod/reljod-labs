@@ -1,3 +1,4 @@
+import { ownerOf } from "@/features/access/domain/owner";
 import { accessOrDenied } from "@/features/access/server/gate";
 import { cleanQuestion } from "@/features/ledger/domain/presets";
 import { loadAskSession } from "@/features/ledger/server/repository";
@@ -20,11 +21,14 @@ export async function POST(
   const question = cleanQuestion(String(body?.question ?? ""));
   if (!question) return new Response("Ask a question", { status: 400 });
 
-  const session = await loadAskSession(sessionId);
+  // Another Owner's session is answered as if it did not exist.
+  const owner = ownerOf(access);
+  const session = await loadAskSession(sessionId, owner);
   if (!session) return new Response("Not found", { status: 404 });
 
   const events = runBuild({
     session,
+    owner,
     question,
     visitor: await currentVisitor(),
   });
