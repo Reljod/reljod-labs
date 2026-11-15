@@ -86,6 +86,9 @@ type Props = {
 const OVERVIEW = overviewBox();
 const MIN_WIDTH = 160;
 const MAX_WIDTH = OVERVIEW.width * 1.5;
+/** Framing a Node: about twice the overview's zoom, where Node labels show. */
+const NODE_PAD = 150;
+const NODE_MIN_WIDTH = 820;
 
 const NODE_RADIUS: Partial<Record<DraftNode["type"], number>> = {
   person: 12,
@@ -258,9 +261,11 @@ export function GraphCanvas({
             const point = other ? layout.nodes.get(other) : undefined;
             if (point) points.push(point);
           }
-          const box = pointBox(points, 110);
-          return box.width < 420
-            ? pointBox(points, 110 + (420 - box.width) / 2)
+          // Wide enough that the Node's neighbours and their labels stay on
+          // screen, even before its relations have loaded.
+          const box = pointBox(points, NODE_PAD);
+          return box.width < NODE_MIN_WIDTH
+            ? pointBox(points, NODE_PAD + (NODE_MIN_WIDTH - box.width) / 2)
             : box;
         }
         case "keys": {
@@ -280,10 +285,23 @@ export function GraphCanvas({
   );
 
   const goalId = targetId(target);
-  // biome-ignore lint/correctness/useExhaustiveDependencies: fly only when the target itself changes, not as Nodes stream in
+  // A Node's relations load only once it is opened, so the camera frames it
+  // again when its neighbours arrive, to keep them all in view.
+  const goalNeighbours = useMemo(() => {
+    if (target.kind !== "node") return "";
+    const keys = new Set<string>();
+    for (const edge of graph.edges) {
+      if (edge.from === target.key && layout.nodes.has(edge.to))
+        keys.add(edge.to);
+      if (edge.to === target.key && layout.nodes.has(edge.from))
+        keys.add(edge.from);
+    }
+    return [...keys].sort().join("|");
+  }, [target, graph.edges, layout]);
+  // biome-ignore lint/correctness/useExhaustiveDependencies: fly only when the target or its neighbours change, not as other Nodes stream in
   useEffect(() => {
     flyTo(boxFor(target));
-  }, [goalId, size.width, size.height]);
+  }, [goalId, goalNeighbours, size.width, size.height]);
 
   useLayoutEffect(() => {
     const element = wrap.current;
