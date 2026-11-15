@@ -9,51 +9,51 @@ import {
   readMcpToken,
   signMcpToken,
 } from "../domain/mcp-token";
+import type { Grant } from "../domain/oauth";
 import { env } from "./env";
 import { TRUSTED_VISITOR, type Visitor, visitor } from "./session";
 
 const DAY = 86_400;
 
 /**
- * The token an outside MCP client (Claude Code, say) sends as its bearer.
- * It reaches this Owner's clients (a Guest's are their Guest pass's, shared
- * by every device on it) and spends against this
- * visitor's limits. A Guest's token lasts as long as their Guest pass and is
- * refused the moment the pass is revoked; a Host's lasts 30 days.
+ * What this visitor may hand an outside MCP client (Claude Code, say): their
+ * Owner's clients (a Guest's are their Guest pass's, shared by every device
+ * on it), spending against this visitor's limits. A Guest's lasts as long as
+ * their Guest pass and is refused the moment the pass is revoked; a Host's
+ * lasts 30 days. The OAuth consent page and the token page both mint from it.
  */
-export async function mintMcpToken() {
+export async function currentGrant(): Promise<Grant> {
   const { access, owner }: { access: Access; owner: Owner } =
     await requireOwner();
   const who = await visitor();
   const now = Math.floor(Date.now() / 1000);
-  const claims: McpClaims =
-    access.kind === "guest"
+  return access.kind === "guest"
+    ? {
+        kind: "guest",
+        owner,
+        visitor: who.hash,
+        user: access.userId,
+        pass: access.passId,
+        until: Math.floor(Date.parse(access.expiresAt) / 1000),
+      }
+    : access.kind === "host"
       ? {
-          kind: "guest",
+          kind: "host",
           owner,
           visitor: who.hash,
-          user: access.userId,
-          pass: access.passId,
-          exp: Math.floor(Date.parse(access.expiresAt) / 1000),
+          email: access.email,
+          until: now + 30 * DAY,
         }
-      : access.kind === "host"
-        ? {
-            kind: "host",
-            owner,
-            visitor: who.hash,
-            email: access.email,
-            exp: now + 30 * DAY,
-          }
-        : {
-            kind: "e2e",
-            owner,
-            visitor: who.hash,
-            exp: now + DAY,
-          };
+      : { kind: "e2e", owner, visitor: who.hash, until: now + DAY };
+}
+
+/** A token to paste, for MCP clients that cannot sign in with OAuth. */
+export async function mintMcpToken() {
+  const { until, ...claims } = await currentGrant();
   return {
-    token: signMcpToken(claims, env.rateLimitSalt()),
+    token: signMcpToken({ ...claims, exp: until }, env.rateLimitSalt()),
     kind: claims.kind,
-    expiresAt: new Date(claims.exp * 1000).toISOString(),
+    expiresAt: new Date(until * 1000).toISOString(),
   };
 }
 

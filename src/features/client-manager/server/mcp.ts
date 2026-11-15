@@ -3,8 +3,13 @@ import type { McpServer } from "@modelcontextprotocol/server";
 import { createMcpHandler, withMcpAuth } from "mcp-handler";
 import { z } from "zod";
 import { MAX_PROPOSED_FACTS } from "../domain/chat";
-import type { McpClaims } from "../domain/mcp-token";
+import { guestTokenProblem, type McpClaims } from "../domain/mcp-token";
+import {
+  GUEST_TOKEN_HEADER,
+  PROTECTED_RESOURCE_PATH,
+} from "../domain/oauth-paths";
 import { MCP_SERVER_NAME, researchPrompt } from "../domain/research";
+import { env } from "./env";
 import {
   type Book,
   bookOf,
@@ -374,12 +379,31 @@ const handler = createMcpHandler(registerClientManagerTools, {
   serverInfo: { name: MCP_SERVER_NAME, version: "1.0.0" },
 });
 
-/** Every request carries a Client Manager token; Guests' tokens die with their pass. */
-export const mcpHandler = withMcpAuth(
+/** Each request's bearer is checked once, by the guest check and by the auth wrapper. */
+const verified = new WeakMap<Request, Promise<McpClaims | null>>();
+function verifiedClaims(request: Request, bearer: string) {
+  let claims = verified.get(request);
+  if (!claims) {
+    claims = verifyBearer(bearer);
+    verified.set(request, claims);
+  }
+  return claims;
+}
+
+function bearerOf(request: Request) {
+  const [type, token] = request.headers.get("authorization")?.split(" ") ?? [];
+  return type?.toLowerCase() === "bearer" && token ? token : null;
+}
+
+/**
+ * Every request carries a Client Manager token, from OAuth or pasted; Guests'
+ * tokens die with their pass.
+ */
+const authenticated = withMcpAuth(
   handler,
-  async (_request, bearer) => {
+  async (request, bearer) => {
     if (!bearer) return undefined;
-    const claims = await verifyBearer(bearer);
+    const claims = await verifiedClaims(request, bearer);
     if (!claims) return undefined;
     return {
       token: bearer,
@@ -388,5 +412,30 @@ export const mcpHandler = withMcpAuth(
       extra: { claims },
     };
   },
-  { required: true },
+  // The 401 names the metadata that leads an MCP client to sign in by OAuth.
+  { required: true, resourceMetadataPath: PROTECTED_RESOURCE_PATH },
 );
+
+/**
+ * A Guest signed in with OAuth must also send their guest token. Refused with
+ * a 403 that says so, not a 401, which would only send the client to sign in
+ * again.
+ */
+export async function mcpHandler(request: Request) {
+  const bearer = bearerOf(request);
+  const claims = bearer ? await verifiedClaims(request, bearer) : null;
+  const problem = claims
+    ? guestTokenProblem(
+        claims,
+        request.headers.get(GUEST_TOKEN_HEADER),
+        env.rateLimitSalt(),
+      )
+    : null;
+  if (problem) {
+    return Response.json(
+      { jsonrpc: "2.0", error: { code: -32001, message: problem }, id: null },
+      { status: 403, headers: { "cache-control": "no-store" } },
+    );
+  }
+  return authenticated(request);
+}

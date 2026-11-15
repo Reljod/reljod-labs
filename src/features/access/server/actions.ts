@@ -222,7 +222,9 @@ async function signInHost(form: FormData): Promise<DoorState> {
   }
   await hintProfile("host");
   await trackAccess("Host signed in", { audience: "host" });
-  return { to: PROFILE_PATH };
+  // Sent here from a demo (an MCP client's sign-in, say): go back to it.
+  const next = form.get("next");
+  return { to: next ? safeNextPath(next) : PROFILE_PATH };
 }
 
 /** Ends this browser's session, Host or Guest, and says where to go next. */
