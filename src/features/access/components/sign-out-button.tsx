@@ -3,8 +3,12 @@
 import { useActionState } from "react";
 import { useSubmitGuard } from "@/components/ui/use-submit-guard";
 import { signOut } from "../server/actions";
+import { useLeave } from "./use-leave";
 
-/** Ends this browser's session, once: the button waits while it signs out. */
+/**
+ * Ends this browser's session, once: the button waits while it signs out,
+ * then the next page loads in full so nothing of this account stays on screen.
+ */
 export function SignOutButton({
   className,
   label = "Sign out",
@@ -14,21 +18,22 @@ export function SignOutButton({
   label?: string;
   role?: "menuitem";
 }) {
-  const [state, action, pending] = useActionState(async () => {
-    await signOut();
-    return null;
-  }, null);
+  const [state, action, pending] = useActionState<{ to: string } | null>(
+    () => signOut(),
+    null,
+  );
   const guard = useSubmitGuard(pending, state);
+  const busy = useLeave(state) || pending;
   return (
     <form action={action} onSubmit={guard}>
       <button
         type="submit"
         role={role}
-        disabled={pending}
-        aria-busy={pending}
+        disabled={busy}
+        aria-busy={busy}
         className={`${className} disabled:opacity-50`}
       >
-        {pending ? "Signing out…" : label}
+        {busy ? "Signing out…" : label}
       </button>
     </form>
   );
