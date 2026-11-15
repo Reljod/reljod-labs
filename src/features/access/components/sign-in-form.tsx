@@ -4,6 +4,7 @@ import { useActionState } from "react";
 import { useSubmitGuard } from "@/components/ui/use-submit-guard";
 import { type DoorState, signIn } from "../server/actions";
 import { fieldClass, submitClass } from "./styles";
+import { useLeave } from "./use-leave";
 
 /** Where a Host signs in with their account. */
 export function SignInForm() {
@@ -12,6 +13,7 @@ export function SignInForm() {
     null,
   );
   const guard = useSubmitGuard(pending, state);
+  const busy = useLeave(state) || pending;
   return (
     <form action={action} onSubmit={guard} className="flex flex-col gap-3">
       <label htmlFor="host-email" className="eyebrow">
@@ -38,13 +40,13 @@ export function SignInForm() {
       />
       <button
         type="submit"
-        disabled={pending}
-        aria-busy={pending}
+        disabled={busy}
+        aria-busy={busy}
         className={submitClass}
       >
-        {pending ? "Signing in…" : "Sign in"}
+        {busy ? "Signing in…" : "Sign in"}
       </button>
-      {state?.error ? (
+      {state && "error" in state ? (
         <p role="alert" className="text-sm text-seal-red">
           {state.error}
         </p>

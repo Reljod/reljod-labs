@@ -42,7 +42,13 @@ import {
 } from "./repository";
 import { authClient, sessionlessAuthClient } from "./supabase";
 
-export type DoorState = { error: string } | null;
+/**
+ * What the door says back. On success it names where to go, and the browser
+ * loads that page in full rather than navigating in place: Next keeps recent
+ * pages alive (with their React state and query caches), so a soft navigation
+ * after a change of account would flash the previous Owner's data.
+ */
+export type DoorState = { error: string } | { to: string } | null;
 
 const WAIT = `Too many tries. Wait ${LIMITS.attemptWindowMinutes} minutes and try again.`;
 const BAD_CODE =
@@ -181,7 +187,7 @@ async function redeemCode(form: FormData): Promise<DoorState> {
     audience: "guest",
     returning: returning !== null,
   });
-  redirect(next);
+  return { to: next };
 }
 
 /** A Host signs in with their Supabase Auth account. */
@@ -216,16 +222,16 @@ async function signInHost(form: FormData): Promise<DoorState> {
   }
   await hintProfile("host");
   await trackAccess("Host signed in", { audience: "host" });
-  redirect(PROFILE_PATH);
+  return { to: PROFILE_PATH };
 }
 
-/** Ends this browser's session, Host or Guest. */
-export async function signOut() {
+/** Ends this browser's session, Host or Guest, and says where to go next. */
+export async function signOut(): Promise<{ to: string }> {
   if (env.supabasePublishableKey()) {
     await authClient(requestCookies()).auth.signOut({ scope: "local" });
   }
   await hintProfile(null);
-  redirect(ACCESS_PATH);
+  return { to: ACCESS_PATH };
 }
 
 export type SettingsState = { error: string } | { saved: string } | null;

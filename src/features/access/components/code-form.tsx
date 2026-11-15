@@ -4,6 +4,7 @@ import { useActionState } from "react";
 import { useSubmitGuard } from "@/components/ui/use-submit-guard";
 import { type DoorState, redeemGuestCode } from "../server/actions";
 import { fieldClass, submitClass } from "./styles";
+import { useLeave } from "./use-leave";
 
 /** Where a Guest types the code their Host gave them. */
 export function CodeForm({ next }: { next: string }) {
@@ -12,6 +13,7 @@ export function CodeForm({ next }: { next: string }) {
     null,
   );
   const guard = useSubmitGuard(pending, state);
+  const busy = useLeave(state) || pending;
   return (
     <form action={action} onSubmit={guard} className="flex flex-col gap-3">
       <input type="hidden" name="next" value={next} />
@@ -32,13 +34,13 @@ export function CodeForm({ next }: { next: string }) {
       />
       <button
         type="submit"
-        disabled={pending}
-        aria-busy={pending}
+        disabled={busy}
+        aria-busy={busy}
         className={submitClass}
       >
-        {pending ? "Checking…" : "Open the demos"}
+        {busy ? "Checking…" : "Open the demos"}
       </button>
-      {state?.error ? (
+      {state && "error" in state ? (
         <p role="alert" className="text-sm text-seal-red">
           {state.error}
         </p>
