@@ -83,7 +83,14 @@ async function Door({
           Ask Reljod for one
         </Link>
         . Have an account?{" "}
-        <Link href={SIGN_IN_PATH} className="text-federal-blue underline">
+        <Link
+          href={
+            query.next
+              ? `${SIGN_IN_PATH}?next=${encodeURIComponent(next)}`
+              : SIGN_IN_PATH
+          }
+          className="text-federal-blue underline"
+        >
           Sign in
         </Link>
         .

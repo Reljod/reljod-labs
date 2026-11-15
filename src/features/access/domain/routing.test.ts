@@ -78,7 +78,10 @@ describe("decide", () => {
 });
 
 describe("checksItsOwnBearer", () => {
-  it("is only the MCP routes", () => {
+  it("is only the MCP and OAuth routes", () => {
+    expect(checksItsOwnBearer("/api/client-manager/oauth/token")).toBe(true);
+    expect(checksItsOwnBearer("/api/client-manager/oauth/register")).toBe(true);
+    expect(checksItsOwnBearer("/api/client-manager/oauthx")).toBe(false);
     expect(checksItsOwnBearer("/api/client-manager/mcp")).toBe(true);
     expect(checksItsOwnBearer("/api/client-manager/mcp-token")).toBe(false);
     expect(checksItsOwnBearer("/api/client-manager/clients")).toBe(false);

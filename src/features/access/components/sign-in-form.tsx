@@ -6,8 +6,8 @@ import { type DoorState, signIn } from "../server/actions";
 import { fieldClass, submitClass } from "./styles";
 import { useLeave } from "./use-leave";
 
-/** Where a Host signs in with their account. */
-export function SignInForm() {
+/** Where a Host signs in with their account, then goes on to `next` if given. */
+export function SignInForm({ next }: { next?: string | null }) {
   const [state, action, pending] = useActionState<DoorState, FormData>(
     signIn,
     null,
@@ -16,6 +16,7 @@ export function SignInForm() {
   const busy = useLeave(state) || pending;
   return (
     <form action={action} onSubmit={guard} className="flex flex-col gap-3">
+      {next ? <input type="hidden" name="next" value={next} /> : null}
       <label htmlFor="host-email" className="eyebrow">
         Email
       </label>

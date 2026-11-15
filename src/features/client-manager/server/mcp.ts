@@ -4,6 +4,7 @@ import { createMcpHandler, withMcpAuth } from "mcp-handler";
 import { z } from "zod";
 import { MAX_PROPOSED_FACTS } from "../domain/chat";
 import type { McpClaims } from "../domain/mcp-token";
+import { PROTECTED_RESOURCE_PATH } from "../domain/oauth";
 import { MCP_SERVER_NAME, researchPrompt } from "../domain/research";
 import {
   type Book,
@@ -374,7 +375,10 @@ const handler = createMcpHandler(registerClientManagerTools, {
   serverInfo: { name: MCP_SERVER_NAME, version: "1.0.0" },
 });
 
-/** Every request carries a Client Manager token; Guests' tokens die with their pass. */
+/**
+ * Every request carries a Client Manager token, from OAuth or pasted; Guests'
+ * tokens die with their pass.
+ */
 export const mcpHandler = withMcpAuth(
   handler,
   async (_request, bearer) => {
@@ -388,5 +392,6 @@ export const mcpHandler = withMcpAuth(
       extra: { claims },
     };
   },
-  { required: true },
+  // The 401 names the metadata that leads an MCP client to sign in by OAuth.
+  { required: true, resourceMetadataPath: PROTECTED_RESOURCE_PATH },
 );
