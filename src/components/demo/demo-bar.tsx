@@ -2,7 +2,10 @@ import Link from "next/link";
 import type { ReactNode } from "react";
 import { liveDemos } from "@/content/projects";
 import {
+  type DemoBarRowFrom,
   demoBarControlClass,
+  demoBarNameClass,
+  demoBarRowClass,
   demoTabClass,
   demoTabsClass,
 } from "./demo-bar-styles";
@@ -18,7 +21,8 @@ type DemoSlug =
   | "ledger"
   | "casework-desk"
   | "client-manager"
-  | "process-transfer";
+  | "process-transfer"
+  | "bank-harness";
 
 /** A place inside a demo: a page (`href`) or a view the demo swaps itself (`onSelect`). */
 export type DemoTab =
@@ -38,6 +42,7 @@ export function DemoBar({
   panelsId,
   titleAs: Title = "span",
   badge,
+  rowFrom = "lg",
   children,
 }: {
   slug: DemoSlug;
@@ -52,6 +57,8 @@ export function DemoBar({
   titleAs?: "h1" | "span";
   /** A small mark beside the name, such as "Synthetic data". */
   badge?: ReactNode;
+  /** From which width the bar is one row ("lg" by default; "xl" for a demo with many places). */
+  rowFrom?: DemoBarRowFrom;
   children?: ReactNode;
 }) {
   const index = liveDemos.findIndex((demo) => demo.slug === slug);
@@ -60,7 +67,9 @@ export function DemoBar({
 
   return (
     <header className="sticky top-0 z-30 shrink-0 border-ink border-b-2 bg-marble text-ink">
-      <div className="flex flex-wrap items-center gap-x-3 gap-y-2 px-3 py-2.5 sm:px-4 lg:h-16 lg:flex-nowrap lg:py-0">
+      <div
+        className={`flex flex-wrap items-center gap-x-3 gap-y-2 px-3 py-2.5 sm:px-4 ${demoBarRowClass[rowFrom]}`}
+      >
         <Link
           href={ALL_DEMOS_HREF}
           data-testid="demo-back"
@@ -71,7 +80,9 @@ export function DemoBar({
         </Link>
 
         {/* Grows from nothing, so on phones the controls keep to the first row. */}
-        <div className="flex min-w-0 flex-1 basis-0 items-center gap-3 lg:flex-none lg:basis-auto">
+        <div
+          className={`flex min-w-0 flex-1 basis-0 items-center gap-3 ${demoBarNameClass[rowFrom]}`}
+        >
           <Link
             href={home}
             className="flex min-w-0 items-center gap-2 font-mono font-bold uppercase hover:text-federal-blue"
@@ -96,9 +107,10 @@ export function DemoBar({
             tabs={tabs.filter((tab): tab is DemoViewTab => "onSelect" in tab)}
             current={current}
             panelsId={panelsId}
+            rowFrom={rowFrom}
           />
         ) : (
-          <nav aria-label={name} className={demoTabsClass}>
+          <nav aria-label={name} className={demoTabsClass(rowFrom)}>
             {tabs.map((tab) =>
               "href" in tab ? (
                 <Link

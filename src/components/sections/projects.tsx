@@ -49,7 +49,10 @@ function ProjectCard({ project, index }: { project: Project; index: number }) {
       <div className="flex flex-1 flex-col p-6">
         <div className="flex items-center justify-between gap-3">
           <p className="eyebrow text-ink-muted">{project.sector}</p>
-          <Badge tone="haze">{project.status}</Badge>
+          <div className="flex items-center gap-2">
+            {project.isNew ? <Badge tone="brass">New</Badge> : null}
+            <Badge tone="haze">{project.status}</Badge>
+          </div>
         </div>
         <h3 className="mt-4 text-[1.375rem] leading-snug font-semibold">
           {project.title}

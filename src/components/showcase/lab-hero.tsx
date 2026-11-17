@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { Badge } from "@/components/ui/badge";
 import { ButtonLink } from "@/components/ui/button-link";
 import { Icon } from "@/components/ui/icon";
 import { LiveBadge } from "@/components/ui/live-badge";
@@ -59,7 +60,10 @@ export function LabHero() {
                     {String(index + 1).padStart(2, "0")}
                   </span>
                   <span className="min-w-0 flex-1">
-                    <span className="block font-semibold">{demo.title}</span>
+                    <span className="flex flex-wrap items-center gap-x-2 gap-y-1 font-semibold">
+                      {demo.title}
+                      {demo.isNew ? <Badge tone="brass">New</Badge> : null}
+                    </span>
                     <span className="eyebrow block text-ink-muted">
                       {demo.sector}
                     </span>
