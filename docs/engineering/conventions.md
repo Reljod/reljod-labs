@@ -47,3 +47,10 @@ The Guest pass page first shipped Extend and New code as bare buttons: a click g
 - Ask to confirm a write that is destructive or hard to undo (delete, revoke, stop, a new code that replaces the old one), in a dialog that names what will happen. `ConfirmDialog` in `src/features/access/components/pass-actions.tsx` is the pattern: a native `<dialog>`, Escape and the backdrop close it except while the write runs.
 - An escape hatch is the exception: Casework's Stop (and Esc) is guarded but never asks first, because a confirm would slow down the one control that must always work and it deletes nothing.
 - Show the result where the person clicked (what changed, or the error inline). Never fail silently.
+
+## Sticky things sit below the demo bar
+
+`DemoBar` is `sticky top-0 z-30` and 4rem plus a 2px border tall on large screens (taller on phones, where its tabs wrap to a second row). When it landed, the Document compliance run page's document viewer kept its old `lg:sticky lg:top-4` and slid under the bar on scroll, hiding its top.
+
+- Anything sticky or `fixed` under a demo page's bar offsets by at least the bar's height (`lg:top-20` is a safe default), not a few pixels from the viewport top.
+- A full-height demo layout subtracts the bar (`h-[calc(100dvh-4rem)]` or a flex column with the bar as a `shrink-0` child), and keeps its overlays above `z-30` only when they should cover the bar.

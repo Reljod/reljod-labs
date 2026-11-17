@@ -74,6 +74,7 @@
 ## Demo pages share one bar
 
 - Every demo page opens with `DemoBar` (`src/components/demo/demo-bar.tsx`): the "All demos" back button (always `/#demos`, never a history back), the demo's number from `liveDemos` order, its name linking to the demo's first page, its places as tabs, and the demo's own controls on the right. Don't add a second back link inside a demo; a sub-page is reached and left through the tabs or the name.
+- Anything sticky or fixed under the bar must clear it: "Sticky things sit below the demo bar" in `docs/engineering/conventions.md`.
 - Demos are drawn in the Colonnade language of Document compliance: 2px ink outlines (`outline-box`), `rounded-sm`, hard offset shadows, `press` on everything clickable, `eyebrow` labels. No soft shadows or pill shapes.
 
 ## Buttons that write

@@ -248,7 +248,8 @@ export function FindingsReport({
           })}
         </ol>
 
-        <div className="lg:sticky lg:top-4 lg:self-start">
+        {/* Clears the sticky DemoBar (lg:h-16 plus its border). */}
+        <div className="lg:sticky lg:top-20 lg:self-start">
           <DocumentViewer
             documents={view.documents}
             activeKind={activeKind}
