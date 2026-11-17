@@ -38,7 +38,13 @@ vi.mock("workflow/api", () => ({
     return { runId: "wf-1" };
   },
 }));
-vi.mock("./run-workflow", () => ({ harnessRun: () => {} }));
+vi.mock("./run-workflow", () => ({
+  PIPELINE_WORKFLOWS: {
+    member_request: () => {},
+    contribution_processing: () => {},
+    delinquency_report: () => {},
+  },
+}));
 vi.mock("./db", () => {
   type Fragment = Query & { fragment: true };
   const isFragment = (value: unknown): value is Fragment =>

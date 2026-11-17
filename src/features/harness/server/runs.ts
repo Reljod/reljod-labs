@@ -42,7 +42,7 @@ import {
 import type { ApprovalAnswer, RunContext } from "./pipelines/types";
 import { takeRate } from "./rate";
 import { ruleStatesAsOf } from "./rules";
-import { harnessRun } from "./run-workflow";
+import { PIPELINE_WORKFLOWS } from "./run-workflow";
 import { writableSession } from "./sessions";
 import { modelStubbed } from "./stub";
 
@@ -224,7 +224,7 @@ export async function startRun(
     startedVia: input.via,
   };
   try {
-    const workflow = await start(harnessRun, [ctx]);
+    const workflow = await start(PIPELINE_WORKFLOWS[ctx.pipelineId], [ctx]);
     await db`
       update harness.runs set workflow_run_id = ${workflow.runId}
       where owner = ${owner} and id = ${runId}`;

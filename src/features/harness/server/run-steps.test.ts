@@ -60,13 +60,17 @@ vi.mock("./pipelines/runners", () => ({
 }));
 
 import { FatalError } from "workflow";
+import { PIPELINE_IDS } from "../domain/pipeline";
+import { pipelineOf } from "../domain/pipelines/index";
 import {
   approvalSummary,
-  beginStep,
-  fanItemStep,
-  recordStep,
-  workStep,
-} from "./run-workflow";
+  compute,
+  draftChaser,
+  FAN_FUNCTIONS,
+  STEP_FUNCTIONS,
+  saveCompute,
+  startRun,
+} from "./run-steps";
 
 const ctx = {
   runId: "run-1",
@@ -91,41 +95,44 @@ beforeEach(() => {
 describe("a Run marked over spends nothing more", () => {
   it("ends the workflow at its first Step when the Run was already stopped", async () => {
     state.setStatusMoves = false;
-    await expect(beginStep(ctx)).rejects.toBeInstanceOf(FatalError);
+    await expect(startRun(ctx)).rejects.toBeInstanceOf(FatalError);
   });
 
   it("does not start a Step's work once the Run is stopped", async () => {
     state.runStatus = "stopped";
-    await expect(workStep(ctx, "compute", {})).rejects.toBeInstanceOf(
-      FatalError,
-    );
+    await expect(compute(ctx, {})).rejects.toBeInstanceOf(FatalError);
     expect(state.executed).toBe(0);
   });
 
   it("does not make a fanned-out paid call once the Run is stopped", async () => {
     state.runStatus = "stopped";
-    await expect(
-      fanItemStep(ctx, "draft_chasers", 1, {}),
-    ).rejects.toBeInstanceOf(FatalError);
+    await expect(draftChaser(ctx, 1, {})).rejects.toBeInstanceOf(FatalError);
     expect(state.fanCalls).toBe(0);
   });
 });
 
 describe("saving a Step is apart from its work", () => {
   it("does the work without saving, so a failed save retries only the save", async () => {
-    const result = await workStep(ctx, "compute", {});
+    const result = await compute(ctx, {});
     expect(state.executed).toBe(1);
     expect(state.saved).toBe(0);
-    await recordStep(ctx, "compute", result);
+    await saveCompute(ctx, result);
     expect(state.saved).toBe(1);
     expect(state.executed).toBe(1);
   });
 
   it("retries the work at most once, the save more", () => {
-    expect((workStep as unknown as { maxRetries: number }).maxRetries).toBe(1);
-    expect(
-      (recordStep as unknown as { maxRetries: number }).maxRetries,
-    ).toBeGreaterThan(1);
+    for (const step of Object.values(STEP_FUNCTIONS)) {
+      expect((step.work as unknown as { maxRetries: number }).maxRetries).toBe(
+        1,
+      );
+      expect(
+        (step.save as unknown as { maxRetries: number }).maxRetries,
+      ).toBeGreaterThan(1);
+    }
+    for (const fan of Object.values(FAN_FUNCTIONS)) {
+      expect((fan.one as unknown as { maxRetries: number }).maxRetries).toBe(1);
+    }
   });
 });
 
@@ -168,12 +175,29 @@ describe("an approval given after the Run ended", () => {
   it("runs no Step after it: the next Step finds the Run ended", async () => {
     state.runStatus = "stopped";
     await expect(
-      workStep(
+      compute(
         { ...(ctx as object), pipelineId: "delinquency_report" } as never,
-        "compute",
         {},
       ),
     ).rejects.toBeInstanceOf(FatalError);
     expect(state.executed).toBe(0);
+  });
+});
+
+describe("the trace names every Step", () => {
+  it("has a named step function for every Step of every Pipeline", () => {
+    for (const id of PIPELINE_IDS) {
+      for (const step of pipelineOf(id)?.steps ?? []) {
+        if (step.kind === "approval") continue;
+        const named = STEP_FUNCTIONS[step.id] ?? FAN_FUNCTIONS[step.id];
+        expect(named, `${id}.${step.id}`).toBeDefined();
+      }
+    }
+  });
+
+  it("gives no Step both a single and a fanned-out pair", () => {
+    for (const id of Object.keys(FAN_FUNCTIONS)) {
+      expect(STEP_FUNCTIONS[id]).toBeUndefined();
+    }
   });
 });
