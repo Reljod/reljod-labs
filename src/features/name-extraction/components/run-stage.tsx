@@ -153,7 +153,7 @@ function NamesFeed({
     <div className="flex min-h-0 min-w-0 flex-col rounded-sm border-2 border-paper/25 bg-paper/[0.04]">
       <div
         ref={listRef}
-        className="flex items-baseline justify-between gap-2 border-paper/10 border-b px-3 py-2"
+        className="flex shrink-0 items-baseline justify-between gap-2 border-paper/10 border-b px-3 py-2"
       >
         <span className="eyebrow text-[0.62rem] text-paper/60">
           Names found
@@ -164,7 +164,7 @@ function NamesFeed({
       </div>
       <ul
         aria-live="off"
-        className="sv-scroll-dark flex max-h-56 flex-col gap-1 overflow-y-auto p-2 lg:max-h-none lg:flex-1"
+        className="sv-scroll-dark flex max-h-56 min-h-0 flex-1 flex-col gap-1 overflow-y-auto p-2 lg:max-h-none"
       >
         {names.length === 0 ? (
           <li className="px-1 py-2 text-sm text-paper/45">
@@ -322,12 +322,15 @@ export function RunStage({
           <Clock value={clock} format={clockText} />
         </Counter>
       </div>
-      <div className="grid gap-4 p-4 sm:p-6 lg:grid-cols-[minmax(0,1fr)_17rem]">
-        <div className="flex min-w-0 flex-col gap-3">
-          <div ref={mapBox} className="contents">
+      <div className="grid gap-4 p-4 sm:p-6 lg:h-[calc(100dvh-19rem)] lg:min-h-[18rem] lg:grid-cols-[minmax(0,1fr)_17rem] lg:grid-rows-[minmax(0,1fr)]">
+        <div className="flex min-h-0 min-w-0 flex-col gap-3">
+          <div
+            ref={mapBox}
+            className="sv-scroll-dark max-h-72 min-h-0 overflow-y-auto pr-1 lg:max-h-none lg:flex-1"
+          >
             <PageTiles map={map} density={density} hot={hot} total={total} />
           </div>
-          <div className="flex flex-wrap items-center gap-x-4 gap-y-1 font-mono text-[0.65rem] text-paper/55">
+          <div className="flex shrink-0 flex-wrap items-center gap-x-4 gap-y-1 font-mono text-[0.65rem] text-paper/55">
             <span className="flex items-center gap-1.5">
               <span className="size-2.5 rounded-[2px] bg-paper/[0.07] ring-1 ring-paper/20" />
               not read yet
