@@ -37,9 +37,20 @@
 - Env: `CLIENT_MANAGER_DATABASE_URL`; optional `CLIENT_MANAGER_AI_GATEWAY_API_KEY` (falls back to `DOCUMENT_COMPLIANCE_AI_GATEWAY_API_KEY`), `CLIENT_MANAGER_MODEL`, `CLIENT_MANAGER_CRITIC_MODEL`, `CLIENT_MANAGER_CHAT_MODEL`, `CLIENT_MANAGER_IMAGE_MODEL`; shares `RATE_LIMIT_SALT` and `E2E_BYPASS_TOKEN`.
 - Sample documents: `fixtures/client-manager/` (HTML sources, Meridia, SPECIMEN), rendered to `public/client-manager/samples/` with `pnpm render:client-manager-samples`. Sample clients: `pnpm seed:client-manager` against a running app.
 
+## Handover (process transfer)
+
+- A live demo at `/demos/process-transfer`: a Recording of a handover call becomes a Process, a workflow document (DOCX) and a Deck (PPTX) that is approved only when its Checks pass. Domain language: `src/features/process-transfer/GLOSSARY.md`. Decision: `docs/adr/0019-a-deck-is-laid-out-by-code-and-approved-by-checks.md`.
+- `domain/run.ts` is the contract: the workflow writes a `RunView`, the row stores it, the screen shows it. A Stage changes a Run by emitting a `patch`, which is also written to the row.
+- Rules are data in `domain/rules.ts`; the Checks that apply them are in `domain/process-checks.ts` and `domain/deck-checks.ts`, keyed by Rule id. A new Rule needs both, and a test that it can fail.
+- The preview, the Checks and the PPTX all come from the laid-out `Deck` (`domain/deck-layout.ts`). Never position anything in `pptx.ts` or `slide-view.tsx` that is not in the Deck. Layout spacing comes from the Rules' Parameters, and a deck the engine lays out from a plan within the content limits must pass every default Rule.
+- DOCX and PPTX are built in the browser (`domain/docx.ts`, `domain/pptx.ts`, hand-written OOXML zipped with `fflate`); the server stores no generated files, only uploaded Recordings. After changing either, render it (LibreOffice in Docker) and run the Open XML SDK validator; neither is part of CI.
+- Samples: `fixtures/process-transfer/` (README there; HyperFrames compositions and local Kokoro voices, Meridia, SPECIMEN), rendered to `public/process-transfer/samples/` with `pnpm render:process-transfer-samples`. `expected/<slug>.json` is the ground truth for each.
+- Env: `PROCESS_TRANSFER_AI_GATEWAY_API_KEY` (required, no fallback); `PROCESS_TRANSFER_DATABASE_URL` (falls back to `CLIENT_MANAGER_DATABASE_URL`); shares `SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY`, `RATE_LIMIT_SALT` and `E2E_BYPASS_TOKEN`. Data lives in the `process_transfer` schema (`supabase/migrations/20261118120000_process_transfer.sql`), reached directly like Client Manager's; uploads go to the private `process-transfer` bucket through signed upload URLs.
+- Watch needs a model that takes video (`MODELS[id].video`). Limits are `LIMITS` in `domain/limits.ts`.
+
 ## Access (the gate in front of the demos)
 
-- The demos call a paid model, so `/demos/*`, `/ask/*`, `/api/casework/*` and `/api/client-manager/*` open only to a Host (a Supabase Auth account) or a Guest on a live Guest pass. `/` and `/about` stay public. Domain language: `src/features/access/GLOSSARY.md`.
+- The demos call a paid model, so `/demos/*`, `/ask/*`, `/api/casework/*`, `/api/client-manager/*` and `/api/process-transfer/*` open only to a Host (a Supabase Auth account) or a Guest on a live Guest pass. `/` and `/about` stay public. Domain language: `src/features/access/GLOSSARY.md`.
 - Two gates, both required. `src/proxy.ts` turns visitors away before a demo page or route runs. Every server action and route handler of a demo also calls `requireAccess()` (or `accessOrDenied()`) from `src/features/access/server/gate.ts`, because a server action can be posted to any page. A new demo entry point must do the same, and a new demo path must be added to the proxy matcher.
 - A Guest is an anonymous Supabase Auth user. Anyone can become one, so an Auth session alone grants nothing: Access comes from a row binding the user to a live Guest pass, written only by `access.redeem_guest_pass`.
 - Env: `SUPABASE_PUBLISHABLE_KEY` (or the legacy `SUPABASE_ANON_KEY`; server only, never `NEXT_PUBLIC_`), `ACCESS_HOST_EMAILS` (comma-separated; empty means nobody is a Host); shares `RATE_LIMIT_SALT`. A request carrying `E2E_BYPASS_TOKEN` passes the gate. Data lives in the Supabase `access` schema (listed under Data API > Exposed schemas). Anonymous sign-ins must be enabled in Supabase Auth.

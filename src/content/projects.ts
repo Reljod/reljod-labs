@@ -151,6 +151,24 @@ export const projects: Project[] = [
       "Ask across your whole book, or research a client on the web",
     ],
   },
+  // Appended last, like the others, so every `projects.<index>` source path keeps its entry.
+  {
+    slug: "process-transfer",
+    icon: "compass",
+    title: "Handover",
+    sector: "Operations and process transfer",
+    summary:
+      "Record the call where a colleague shares their screen and shows how a process is done. A pipeline watches it, writes the steps as a workflow document and builds a slide deck that is checked for alignment, legibility and motion before it is approved.",
+    outcome: "No deck is approved until its checks pass",
+    tags: ["Video understanding", "Workflow", "Self-checking", "DOCX and PPTX"],
+    status: "Live",
+    href: "/demos/process-transfer",
+    features: [
+      "Twelve recorded handover calls to try, or upload your own",
+      "Every step linked to the second of the recording that shows it",
+      "Editable rules, the cost of every model call and an audit trail",
+    ],
+  },
 ];
 
 /** The landing page's split: live demos take the stage, the rest wait on the bench. */
