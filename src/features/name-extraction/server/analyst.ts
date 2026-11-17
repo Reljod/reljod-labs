@@ -9,7 +9,7 @@ import {
   type Score,
   type ToolId,
 } from "../domain/contract";
-import { CORPUS, generateDocument } from "../domain/corpus";
+import { answerKeyFor, CORPUS, generateDocument } from "../domain/corpus";
 import { applyRulebook, mergeNames } from "../domain/resolve";
 import { scoreNames } from "../domain/score";
 import { sweep } from "../domain/sweep";
@@ -615,7 +615,13 @@ function corpusScore(
   if (ctx.source.kind !== "corpus") return undefined;
   const corpusId = ctx.source.corpusId;
   if (!CORPUS.some((entry) => entry.id === corpusId)) return undefined;
-  return scoreNames(names, generateDocument(corpusId).answerKey);
+  // Score against what this Rulebook asks for: no handle-only parties when
+  // handles are off, only the entity types it extracts.
+  const expected = answerKeyFor(
+    generateDocument(corpusId).answerKey,
+    ctx.rulebook,
+  ).filter((name) => ctx.rulebook.entityTypes.includes(name.type));
+  return scoreNames(names, expected);
 }
 
 export type EndOutcome =

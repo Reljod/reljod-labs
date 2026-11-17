@@ -1,0 +1,270 @@
+{
+  "about": "Synthetic AML Documents for the Name Extraction demo, generated from a seed by src/features/name-extraction/domain/corpus. Fictional Republic of Meridia; every page says SPECIMEN. Written by scripts/render-name-extraction-corpus.mts; do not edit by hand.",
+  "splits": {
+    "train": {
+      "documents": 13,
+      "pages": 2095,
+      "expectedNames": 606
+    },
+    "validation": {
+      "documents": 7,
+      "pages": 1185,
+      "expectedNames": 347
+    },
+    "test": {
+      "documents": 7,
+      "pages": 1160,
+      "expectedNames": 338
+    }
+  },
+  "samples": [
+    "public/name-extraction/samples/ne-te-01.pdf",
+    "public/name-extraction/samples/ne-te-04.pdf",
+    "public/name-extraction/samples/ne-te-06.pdf"
+  ],
+  "documents": [
+    {
+      "id": "ne-tr-01",
+      "title": "Harbour corridor MT103 batch",
+      "genre": "Wire transfer ledger",
+      "split": "train",
+      "pages": 10,
+      "seed": 1101,
+      "expectedNames": 15
+    },
+    {
+      "id": "ne-tr-02",
+      "title": "Freight forwarder current account",
+      "genre": "Bank statement",
+      "split": "train",
+      "pages": 25,
+      "seed": 1102,
+      "expectedNames": 17
+    },
+    {
+      "id": "ne-tr-03",
+      "title": "Private client onboarding file",
+      "genre": "KYC file",
+      "split": "train",
+      "pages": 50,
+      "seed": 1103,
+      "expectedNames": 26
+    },
+    {
+      "id": "ne-tr-04",
+      "title": "Layered holding structure extract",
+      "genre": "Corporate registry extract",
+      "split": "train",
+      "pages": 75,
+      "seed": 1104,
+      "expectedNames": 27
+    },
+    {
+      "id": "ne-tr-05",
+      "title": "Tracing claim over mixed accounts",
+      "genre": "Court judgment",
+      "split": "train",
+      "pages": 100,
+      "seed": 1105,
+      "expectedNames": 34
+    },
+    {
+      "id": "ne-tr-06",
+      "title": "Structured cash deposits review",
+      "genre": "SAR narrative",
+      "split": "train",
+      "pages": 150,
+      "seed": 1106,
+      "expectedNames": 43
+    },
+    {
+      "id": "ne-tr-07",
+      "title": "Shipping desk mailbox export",
+      "genre": "Email and chat export",
+      "split": "train",
+      "pages": 200,
+      "seed": 1107,
+      "expectedNames": 54
+    },
+    {
+      "id": "ne-tr-08",
+      "title": "Seafood import credit file",
+      "genre": "Trade finance file",
+      "split": "train",
+      "pages": 250,
+      "seed": 1108,
+      "expectedNames": 64
+    },
+    {
+      "id": "ne-tr-09",
+      "title": "Shipping group board minutes",
+      "genre": "Board minutes",
+      "split": "train",
+      "pages": 300,
+      "seed": 1109,
+      "expectedNames": 76
+    },
+    {
+      "id": "ne-tr-10",
+      "title": "Trading company statements, 2025-2026",
+      "genre": "Bank statement",
+      "split": "train",
+      "pages": 400,
+      "seed": 1110,
+      "expectedNames": 97
+    },
+    {
+      "id": "ne-tr-11",
+      "title": "Correspondent banking payments archive",
+      "genre": "Wire transfer ledger",
+      "split": "train",
+      "pages": 500,
+      "seed": 1111,
+      "expectedNames": 119
+    },
+    {
+      "id": "ne-tr-12",
+      "title": "Corporate customer periodic review",
+      "genre": "KYC file",
+      "split": "train",
+      "pages": 25,
+      "seed": 1112,
+      "expectedNames": 19
+    },
+    {
+      "id": "ne-tr-13",
+      "title": "Rapid movement of funds alert",
+      "genre": "SAR narrative",
+      "split": "train",
+      "pages": 10,
+      "seed": 1113,
+      "expectedNames": 15
+    },
+    {
+      "id": "ne-va-01",
+      "title": "Shelf company extract",
+      "genre": "Corporate registry extract",
+      "split": "validation",
+      "pages": 10,
+      "seed": 2101,
+      "expectedNames": 17
+    },
+    {
+      "id": "ne-va-02",
+      "title": "Broker chat review set",
+      "genre": "Email and chat export",
+      "split": "validation",
+      "pages": 50,
+      "seed": 2102,
+      "expectedNames": 22
+    },
+    {
+      "id": "ne-va-03",
+      "title": "Property company board minutes",
+      "genre": "Board minutes",
+      "split": "validation",
+      "pages": 100,
+      "seed": 2103,
+      "expectedNames": 36
+    },
+    {
+      "id": "ne-va-04",
+      "title": "Asset recovery judgment",
+      "genre": "Court judgment",
+      "split": "validation",
+      "pages": 150,
+      "seed": 2104,
+      "expectedNames": 45
+    },
+    {
+      "id": "ne-va-05",
+      "title": "Remittance hub ledger",
+      "genre": "Wire transfer ledger",
+      "split": "validation",
+      "pages": 300,
+      "seed": 2105,
+      "expectedNames": 79
+    },
+    {
+      "id": "ne-va-06",
+      "title": "Commodity trader credit archive",
+      "genre": "Trade finance file",
+      "split": "validation",
+      "pages": 500,
+      "seed": 2106,
+      "expectedNames": 118
+    },
+    {
+      "id": "ne-va-07",
+      "title": "Trust and foundation onboarding",
+      "genre": "KYC file",
+      "split": "validation",
+      "pages": 75,
+      "seed": 2107,
+      "expectedNames": 30
+    },
+    {
+      "id": "ne-te-01",
+      "title": "Retail customer onboarding",
+      "genre": "KYC file",
+      "split": "test",
+      "pages": 10,
+      "seed": 3101,
+      "expectedNames": 16
+    },
+    {
+      "id": "ne-te-02",
+      "title": "Mule account cluster",
+      "genre": "SAR narrative",
+      "split": "test",
+      "pages": 25,
+      "seed": 3102,
+      "expectedNames": 16
+    },
+    {
+      "id": "ne-te-03",
+      "title": "Logistics group minutes",
+      "genre": "Board minutes",
+      "split": "test",
+      "pages": 75,
+      "seed": 3103,
+      "expectedNames": 29
+    },
+    {
+      "id": "ne-te-04",
+      "title": "Offshore chain registry pack",
+      "genre": "Corporate registry extract",
+      "split": "test",
+      "pages": 100,
+      "seed": 3104,
+      "expectedNames": 36
+    },
+    {
+      "id": "ne-te-05",
+      "title": "Trade desk eDiscovery set",
+      "genre": "Email and chat export",
+      "split": "test",
+      "pages": 250,
+      "seed": 3105,
+      "expectedNames": 65
+    },
+    {
+      "id": "ne-te-06",
+      "title": "Import business statements archive",
+      "genre": "Bank statement",
+      "split": "test",
+      "pages": 500,
+      "seed": 3106,
+      "expectedNames": 118
+    },
+    {
+      "id": "ne-te-07",
+      "title": "Nominee director judgment",
+      "genre": "Court judgment",
+      "split": "test",
+      "pages": 200,
+      "seed": 3107,
+      "expectedNames": 58
+    }
+  ]
+}
