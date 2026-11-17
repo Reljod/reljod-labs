@@ -15,7 +15,7 @@ This takes about ten minutes. You need Access to the demos: a Host account or a 
 
 Go to §/demos/harness§. The first time, the Harness creates your private Workspace and seeds it with Staff, records and Knowledge base Sources. That takes a moment.
 
-The bar across the top is the one every demo on this site shares: **All demos** goes back to the list, **01 Jod: Harness for Bank** back to Chat, then the six tabs (Chat, Pipelines, Knowledge, Skills, Audit, Docs; arrow keys move between them, and each has its own address, §?tab=…§), and on the right **Connect Claude** (**Claude** on a narrower screen), **Demo mode** and the Staff switcher.
+The bar across the top is the one every demo on this site shares: **All demos** goes back to the top of the site, **01 Jod: Harness for Bank** back to Chat, then the six tabs (Chat, Pipelines, Knowledge, Skills, Audit, Docs; arrow keys move between them, and each has its own address, §?tab=…§), and on the right **Connect Claude** (**Claude** on a narrower screen), **Demo mode** and the Staff switcher.
 
 ## 2. Pick a Staff member
 

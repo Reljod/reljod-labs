@@ -14,8 +14,8 @@ import { DemoTabs, type DemoViewTab } from "./demo-tabs";
 
 export { demoBarControlClass };
 
-/** Where every demo's back button goes: the landing page's live demos. */
-export const ALL_DEMOS_HREF = "/#demos";
+/** Where every demo's back button goes: the top of the landing page. */
+export const ALL_DEMOS_HREF = "/";
 
 type DemoSlug =
   | "document-compliance-checks"
