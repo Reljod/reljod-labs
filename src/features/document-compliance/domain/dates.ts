@@ -97,3 +97,14 @@ export function subtractMonths(date: IsoDate, months: number): IsoDate {
   const lastDay = new Date(Date.UTC(targetYear, targetMonth, 0)).getUTCDate();
   return iso(targetYear, targetMonth, Math.min(day, lastDay)) as IsoDate;
 }
+
+/** The calendar day `days` days later. */
+export function addDays(date: IsoDate, days: number): IsoDate {
+  const [year, month, day] = date.split("-").map(Number);
+  const next = new Date(Date.UTC(year, month - 1, day + days));
+  return iso(
+    next.getUTCFullYear(),
+    next.getUTCMonth() + 1,
+    next.getUTCDate(),
+  ) as IsoDate;
+}

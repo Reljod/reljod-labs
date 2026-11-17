@@ -37,8 +37,20 @@ A named set of Requirements for one kind of Document pack in one Jurisdiction, s
 _Avoid_: Policy, checklist, ruleset
 
 **Requirement**:
-One rule a Document pack must satisfy, such as "Proof of address issued within 3 months".
-_Avoid_: Rule, check, control
+What a Document pack must satisfy, such as "Proof of address issued within 3 months". Its Rule says how it is decided.
+_Avoid_: check, control
+
+**Rule**:
+How a Requirement is decided, written as a sentence with Parameters and an on/off switch, such as "The proof of address is dated within {3 months} before the Pre-screen date". One Rule, the reading-confidence floor, shapes every check instead of one Requirement. Rules are data an Owner edits; the checks that apply them are code.
+_Avoid_: Policy, setting, config
+
+**Parameter**:
+A typed value inside a Rule that can change without touching code: a number of days or months, a percentage, one of a few options, or a list.
+_Avoid_: Threshold, variable, knob
+
+**Rule Version**:
+One saved state of a Rule for one Owner. Version 0 is the Default that ships in code; each save or restore makes the next Version, and a Pre-screen run records the Version of every Rule it applied.
+_Avoid_: Revision, history entry
 
 **Jurisdiction**:
 The regulatory regime a Rulebook encodes.
@@ -69,6 +81,22 @@ _Avoid_: Proof, source, citation
 **Pre-screen**:
 Producing Findings for a Document pack before a person looks at it. It never approves or rejects a client.
 _Avoid_: Approval, verification, decision
+
+**Evaluation**:
+One application of a Rulebook to a Pre-screen run's stored readings. Evaluation 1 is the run's own; a **Re-evaluation** applies the Owner's current Rules again later, in code, without calling the model, and is kept as the next Evaluation.
+_Avoid_: Rerun, recheck, rescore
+
+**Reviewer decision**:
+A Reviewer settling a flagged Finding of the latest Evaluation as `Pass` or `Fail`, with a note that says why. It sits beside the Finding and never changes it; the newest decision on a Requirement stands.
+_Avoid_: Approval, sign-off, override (as a noun)
+
+**Audit event**:
+One thing that happened, recorded with who did it (a person, the model or the system), when, and what it touched: a run started, a Document read with its cost, a Rule saved, a Re-evaluation, a Reviewer decision. Audit events are only ever added; together they are the Owner's **Audit trail**.
+_Avoid_: Log line, history, activity
+
+**Pipeline step**:
+One stage of a Pre-screen run as the Pipeline view draws it: Parse, Read, Verify and Field checks for each Document, then Evaluate and Findings for the pack. Only Read calls the model.
+_Avoid_: Job, task, phase
 
 **Pre-screen run**:
 One execution of a Pre-screen against a Document pack, holding everything it produced: Spans, Extracted fields and Findings.

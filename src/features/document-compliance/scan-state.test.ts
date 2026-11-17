@@ -138,6 +138,8 @@ describe("replayEvents", () => {
       },
     ],
     findings: [],
+    evaluations: [],
+    reviews: [],
   };
 
   it("rebuilds a stored run into the state a live run ends in", () => {

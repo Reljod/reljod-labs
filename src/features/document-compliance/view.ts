@@ -1,5 +1,7 @@
 import type { FieldCheck } from "./domain/field-checks";
+import type { ReviewView } from "./domain/review";
 import type { RequirementId, Rulebook } from "./domain/rulebook";
+import type { AppliedRule, RuleId, RuleState } from "./domain/rules";
 import type {
   Box,
   DocumentJudgments,
@@ -27,7 +29,43 @@ export type RunView = {
   completedAt: string | null;
   prescreenDate: string;
   documents: DocumentView[];
+  /** The Findings the run itself made: Evaluation 1. */
   findings: FindingView[];
+  /** Evaluation 1 (the run's own), then each re-evaluation, oldest first. */
+  evaluations: EvaluationView[];
+  /** Every Reviewer decision, oldest first; the newest per Requirement stands. */
+  reviews: ReviewView[];
+};
+
+/** One evaluation of a run's Rulebook over its stored readings. */
+export type EvaluationView = {
+  number: number;
+  createdAt: string;
+  /** Who asked for it; null for the run's own. */
+  createdBy: string | null;
+  /** Every Rule as this evaluation applied it. */
+  rules: AppliedRule[];
+  findings: FindingView[];
+  /** The Field checks under these Rules, every Document together. */
+  checks: FieldCheck[];
+};
+
+/** A Rule as the Owner has it now, for the Rules page. */
+export type RuleView = {
+  id: RuleId;
+  state: RuleState;
+  /** True when it differs from the Default. */
+  edited: boolean;
+  savedBy: string | null;
+  savedAt: string | null;
+  versionCount: number;
+};
+
+/** One saved state of a Rule; Version 0 is the Default. */
+export type RuleVersionView = RuleState & {
+  restoredFrom: number | null;
+  savedBy: string;
+  savedAt: string | null;
 };
 
 export type DocumentView = {

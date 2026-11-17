@@ -1,4 +1,5 @@
 import {
+  addDays,
   type IsoDate,
   parseMrzDate,
   parsePrintedDate,
@@ -55,8 +56,18 @@ export function readDate(field: ExtractedField, prescreenDate: IsoDate) {
     : parsePrintedDate(field.value);
 }
 
-export function isExpired(expiry: IsoDate, prescreenDate: IsoDate) {
-  return expiry < prescreenDate;
+/** The first day an identity document may expire on and still pass. */
+export function validityCutoff(rulebook: Rulebook, prescreenDate: IsoDate) {
+  return addDays(prescreenDate, rulebook.identityMinValidityDays);
+}
+
+/** True when the document expires before the Rulebook's validity cutoff. */
+export function isExpired(
+  expiry: IsoDate,
+  rulebook: Rulebook,
+  prescreenDate: IsoDate,
+) {
+  return expiry < validityCutoff(rulebook, prescreenDate);
 }
 
 /** Where a proof of address date sits against the Rulebook's age limit. */
@@ -94,7 +105,7 @@ export function compareField(
       return namesCompatible(field.value, declaration.fullName)
         ? compared("pass", "matches declaration", declaration.fullName)
         : compared(
-            "needs_review",
+            rulebook.nameMismatchOutcome,
             "differs from declaration",
             declaration.fullName,
           );
@@ -103,17 +114,26 @@ export function compareField(
       if (!date) return compared("needs_review", "date not recognised");
       return date === declaration.dateOfBirth
         ? compared("pass", "matches declaration", declaration.dateOfBirth)
-        : compared("fail", "differs from declaration", declaration.dateOfBirth);
+        : compared(
+            rulebook.dateOfBirthMismatchOutcome,
+            "differs from declaration",
+            declaration.dateOfBirth,
+          );
     }
     case "date_of_expiry":
     case "mrz_date_of_expiry": {
       const date = readDate(field, prescreenDate);
-      const expected = `on or after ${prescreenDate}`;
+      const expected = `on or after ${validityCutoff(rulebook, prescreenDate)}`;
       if (!date)
         return compared("needs_review", "date not recognised", expected);
-      return isExpired(date, prescreenDate)
-        ? compared("fail", `expired ${date}`, expected)
-        : compared("pass", `valid until ${date}`, expected);
+      if (!isExpired(date, rulebook, prescreenDate)) {
+        return compared("pass", `valid until ${date}`, expected);
+      }
+      return compared(
+        "fail",
+        date < prescreenDate ? `expired ${date}` : `expires too soon (${date})`,
+        expected,
+      );
     }
     case "statement_date": {
       const date = readDate(field, prescreenDate);
@@ -143,7 +163,7 @@ export function compareField(
             declaration.residentialAddress,
           )
         : compared(
-            "needs_review",
+            rulebook.addressMismatchOutcome,
             "differs from declaration",
             declaration.residentialAddress,
           );

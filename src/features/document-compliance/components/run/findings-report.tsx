@@ -5,7 +5,12 @@ import { useEffect, useState } from "react";
 import type { FieldCheck } from "../../domain/field-checks";
 import type { DocumentKind, Outcome } from "../../domain/types";
 import { formatPercent } from "../../metrics";
-import type { DocumentView, FindingView, RunView } from "../../view";
+import type {
+  DocumentView,
+  EvaluationView,
+  FindingView,
+  RunView,
+} from "../../view";
 import { LOW_CONFIDENCE } from "../confidence";
 import { DocumentViewer } from "../document-viewer";
 import {
@@ -14,6 +19,7 @@ import {
   FIELD_LABELS,
   OUTCOME_STYLES,
 } from "../labels";
+import { ReviewPanel } from "./review-panel";
 
 const OUTCOMES: Outcome[] = ["fail", "needs_review", "pass"];
 
@@ -109,17 +115,28 @@ function ConfidenceTag({ value }: { value: number | null }) {
 
 type FindingsReportProps = {
   view: RunView;
+  /** The Evaluation whose Findings to show. */
+  evaluation: EvaluationView;
   reduceMotion: boolean;
 };
 
 /** The finished run: every Finding with its reason, and its Evidence on the page. */
-export function FindingsReport({ view, reduceMotion }: FindingsReportProps) {
+export function FindingsReport({
+  view,
+  evaluation,
+  reduceMotion,
+}: FindingsReportProps) {
   const [selected, setSelected] = useState<FindingView | null>(null);
   const [activeKind, setActiveKind] =
     useState<DocumentKind>("identity_document");
-  const checks = view.documents.flatMap((document) => document.checks);
+  const { findings, checks } = evaluation;
   const count = (outcome: Outcome) =>
-    view.findings.filter((finding) => finding.outcome === outcome).length;
+    findings.filter((finding) => finding.outcome === outcome).length;
+  const latest = evaluation.number === view.evaluations.at(-1)?.number;
+  const reviewOf = (finding: FindingView) =>
+    view.reviews.findLast(
+      (review) => review.requirementId === finding.requirementId,
+    ) ?? null;
 
   function selectFinding(finding: FindingView) {
     setSelected(finding);
@@ -128,7 +145,7 @@ export function FindingsReport({ view, reduceMotion }: FindingsReportProps) {
   }
 
   // Flagged Findings first: they are what a Reviewer acts on.
-  const ordered = [...view.findings].sort(
+  const ordered = [...findings].sort(
     (a, b) => OUTCOMES.indexOf(a.outcome) - OUTCOMES.indexOf(b.outcome),
   );
 
@@ -179,7 +196,7 @@ export function FindingsReport({ view, reduceMotion }: FindingsReportProps) {
               selected?.requirementId === finding.requirementId;
             return (
               <motion.li
-                key={finding.requirementId}
+                key={`${evaluation.number}-${finding.requirementId}`}
                 initial={reduceMotion ? false : { opacity: 0, x: -24 }}
                 animate={{ opacity: 1, x: 0 }}
                 transition={{ delay: 0.2 + index * 0.05 }}
@@ -215,6 +232,17 @@ export function FindingsReport({ view, reduceMotion }: FindingsReportProps) {
                     documents={view.documents}
                   />
                 </button>
+                {finding.outcome !== "pass" ? (
+                  <div className="outline-box -mt-0.5 rounded-b-sm bg-paper">
+                    <ReviewPanel
+                      runId={view.id}
+                      finding={finding}
+                      review={reviewOf(finding)}
+                      evaluation={evaluation.number}
+                      editable={latest && view.status === "completed"}
+                    />
+                  </div>
+                ) : null}
               </motion.li>
             );
           })}
