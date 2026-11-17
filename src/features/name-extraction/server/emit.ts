@@ -105,7 +105,7 @@ export async function emit(runId: string, ...events: RunEventInput[]) {
 /**
  * Appends events and throws if it cannot, in production too. For work that
  * must not happen untraced (code the Analyst wrote): write first, and do the
- * work only if this returned (ADR 0019).
+ * work only if this returned (ADR 0021).
  */
 export async function emitStrict(runId: string, ...events: RunEventInput[]) {
   await sink.events(runId, stamp(events));

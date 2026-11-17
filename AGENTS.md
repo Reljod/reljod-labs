@@ -70,7 +70,7 @@
 
 ## Sieve (Name Extraction)
 
-- A live demo at `/demos/name-extraction`: one Analyst agent lists every party named in a 10 to 500 page AML document, recall first. Domain language: `src/features/name-extraction/GLOSSARY.md`. Decision: `docs/adr/0020-one-analyst-with-tools-not-a-pipeline.md`; research and cost model: `docs/research/name-extraction.md`.
+- A live demo at `/demos/name-extraction`: one Analyst agent lists every party named in a 10 to 500 page AML document, recall first. Domain language: `src/features/name-extraction/GLOSSARY.md`. Decision: `docs/adr/0021-one-analyst-with-tools-not-a-pipeline.md`; research and cost model: `docs/research/name-extraction.md`.
 - No fixed pipeline. The Analyst picks its tools (`domain/contract.ts` `TOOLS`): Readers (sub-agents over page ranges), Skills (`src/features/name-extraction/skills/`), `run_code` in a Vercel Sandbox with no network, and the model-free Sweep. The harness owns the Done gate and the caps (turns, Readers, USD); the model never does.
 - Each Analyst turn and each tool call is a Workflow step (`server/run-workflow.ts`, `server/analyst.ts`). Every event goes to `name_extraction.run_events`, the append-only Audit trail.
 - Corpus: generated from seeds in `domain/corpus/` (README in `fixtures/name-extraction/`), splits train/validation/test, every split with a 500-page Document. Tune the Sweep on train and validation only. `pnpm render:name-extraction-corpus` rewrites the manifest and the sample PDFs.

@@ -269,7 +269,7 @@ export async function runTool(
   }
 
   if (toolId === "run_code") {
-    // The code is on the trail before it runs; if that write fails, it does not run (ADR 0019).
+    // The code is on the trail before it runs; if that write fails, it does not run (ADR 0021).
     const input = parsed.value as { code: string };
     try {
       await emitStrict(ctx.runId, startEvent, {

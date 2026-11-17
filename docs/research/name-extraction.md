@@ -1,6 +1,6 @@
 # Name extraction from long documents: research notes
 
-Research behind ADR 0020 (one Analyst with tools). Written 2026-11-17. Domain words follow `src/features/name-extraction/GLOSSARY.md`.
+Research behind ADR 0021 (one Analyst with tools). Written 2026-11-17. Domain words follow `src/features/name-extraction/GLOSSARY.md`.
 
 What this covers: how to list every party named in a 10 to 500 page document with recall first, cheaply and fast, and which models to use on Vercel AI Gateway. Each claim is marked **established** (a peer-reviewed paper, a vendor's own docs, or a primary report we read), **reported** (a primary source we could only read in part, or a vendor blog with one worked example), or **our estimate** (not measured yet).
 

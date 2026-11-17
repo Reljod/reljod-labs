@@ -318,7 +318,7 @@ export type RunEvent = { at: number } & (
   | {
       /**
        * Written twice per run_code call: before the code runs, with exitCode
-       * CODE_PENDING, then with the result (ADR 0019). Keep the last per callId.
+       * CODE_PENDING, then with the result (ADR 0021). Keep the last per callId.
        */
       type: "code";
       callId: string;
