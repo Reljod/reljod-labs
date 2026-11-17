@@ -1,6 +1,9 @@
 import type { Metadata } from "next";
 import { Caveats } from "@/features/document-compliance/components/caveats";
-import { DemoHeader } from "@/features/document-compliance/components/demo-nav";
+import {
+  ComplianceBar,
+  DemoHeader,
+} from "@/features/document-compliance/components/demo-nav";
 import { PackPicker } from "@/features/document-compliance/components/pack-picker";
 import { QueryProvider } from "@/features/document-compliance/components/query-provider";
 import { SessionRuns } from "@/features/document-compliance/components/session-runs";
@@ -15,8 +18,9 @@ export const metadata: Metadata = {
 export default function DocumentComplianceDemoPage() {
   return (
     <QueryProvider>
-      <main className="mx-auto flex max-w-6xl flex-col gap-8 px-4 py-10 sm:px-6 sm:py-12 lg:h-dvh lg:min-h-[44rem] lg:gap-6 lg:py-8">
-        <DemoHeader current="packs" title="Document compliance checks" />
+      <ComplianceBar current="packs" />
+      <main className="mx-auto flex max-w-6xl flex-col gap-8 px-4 py-10 sm:px-6 sm:py-12 lg:h-[calc(100dvh-4rem)] lg:min-h-[40rem] lg:gap-6 lg:py-8">
+        <DemoHeader title="Document compliance checks" />
         <PackPicker
           packs={packs.map(({ slug, title, documents }) => ({
             slug,

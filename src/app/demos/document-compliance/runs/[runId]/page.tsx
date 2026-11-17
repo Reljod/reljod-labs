@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { Suspense } from "react";
+import { ComplianceBar } from "@/features/document-compliance/components/demo-nav";
 import { QueryProvider } from "@/features/document-compliance/components/query-provider";
 import {
   RunScreen,
@@ -14,13 +15,16 @@ export default function PrescreenRunPage({
   params,
 }: PageProps<"/demos/document-compliance/runs/[runId]">) {
   return (
-    <main className="mx-auto flex max-w-6xl flex-col gap-8 px-4 py-8 sm:px-6 sm:py-10">
-      <QueryProvider>
-        <Suspense fallback={<RunSkeleton />}>
-          <Run params={params} />
-        </Suspense>
-      </QueryProvider>
-    </main>
+    <>
+      <ComplianceBar />
+      <main className="mx-auto flex max-w-6xl flex-col gap-8 px-4 py-8 sm:px-6 sm:py-10">
+        <QueryProvider>
+          <Suspense fallback={<RunSkeleton />}>
+            <Run params={params} />
+          </Suspense>
+        </QueryProvider>
+      </main>
+    </>
   );
 }
 

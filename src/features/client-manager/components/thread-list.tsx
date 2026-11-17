@@ -88,7 +88,7 @@ export function ThreadList({
         <button
           type="button"
           onClick={onNew}
-          className="flex w-full items-center gap-2 rounded-sm bg-ink px-3 py-2 text-sm font-semibold text-paper hover:bg-federal-blue"
+          className="outline-box press eyebrow flex w-full items-center gap-2 rounded-sm bg-federal-blue px-3 py-2 font-bold text-paper"
         >
           <Icon name="plus" className="size-4" />
           New chat
@@ -103,11 +103,11 @@ export function ThreadList({
             value={filter}
             onChange={(event) => setFilter(event.target.value)}
             placeholder="Search chats"
-            className="w-full rounded-sm border border-ink/15 bg-paper py-1.5 pr-2 pl-8 text-sm focus:border-federal-blue focus:outline-none"
+            className="outline-box w-full rounded-sm bg-paper py-1.5 pr-2 pl-8 text-sm shadow-hard-sm focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-federal-blue"
           />
         </label>
         <div
-          className="grid grid-cols-2 rounded-sm bg-limestone/50 p-0.5 text-xs font-medium"
+          className="grid grid-cols-2 gap-2"
           role="tablist"
           aria-label="Group chats"
         >
@@ -118,7 +118,7 @@ export function ThreadList({
               role="tab"
               aria-selected={grouping === value}
               onClick={() => setGrouping(value)}
-              className={`rounded-[2px] py-1 ${grouping === value ? "bg-paper shadow-hard-sm" : "text-ink-muted hover:text-ink"}`}
+              className={`outline-box press eyebrow rounded-sm px-3 py-1.5 ${grouping === value ? "bg-ink text-paper" : "bg-paper"}`}
             >
               {value === "recent" ? "Recent" : "By client"}
             </button>
@@ -151,7 +151,7 @@ export function ThreadList({
               key={`${group.title}-${group.clientId ?? ""}`}
               className="mb-3"
             >
-              <h3 className="flex items-center gap-1.5 px-2 pt-1 pb-1 text-[0.7rem] font-semibold text-stone">
+              <h3 className="eyebrow flex items-center gap-1.5 px-2 pt-1 pb-1 text-[0.65rem] text-stone">
                 {grouping === "client" ? (
                   card ? (
                     <Portrait
@@ -181,7 +181,7 @@ export function ThreadList({
                       onClick={() => onOpen(thread)}
                       aria-current={activeId === thread.id}
                       title={thread.preview || thread.title}
-                      className={`block w-full truncate rounded-sm py-1.5 pr-7 pl-2 text-left text-sm ${activeId === thread.id ? "bg-paper font-medium shadow-hard-sm" : "text-ink-muted hover:bg-paper/70 hover:text-ink"}`}
+                      className={`block w-full truncate rounded-sm border-2 py-1.5 pr-7 pl-2 text-left text-sm ${activeId === thread.id ? "border-ink bg-paper font-medium shadow-hard-sm" : "border-transparent text-ink-muted hover:border-ink/20 hover:bg-paper/70 hover:text-ink"}`}
                     >
                       {grouping === "recent" && thread.clientName ? (
                         <span className="mr-1 text-stone">
@@ -213,7 +213,7 @@ export function ThreadList({
 
       <Link
         href="/demos/client-manager/mcp"
-        className="flex items-center gap-2 border-ink/10 border-t px-4 py-3 text-sm text-ink-muted hover:bg-paper hover:text-federal-blue"
+        className="eyebrow flex items-center gap-2 border-ink border-t-2 px-4 py-3 text-ink-muted hover:bg-paper hover:text-federal-blue"
       >
         <Icon name="plug" className="size-4" />
         Use in Claude Code

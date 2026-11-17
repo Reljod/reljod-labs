@@ -2,7 +2,6 @@
 
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { AnimatePresence, motion, useReducedMotion } from "motion/react";
-import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { useEffect, useState } from "react";
 import { formatTokens, formatUsd, runTotals } from "../../metrics";
@@ -109,13 +108,6 @@ export function RunScreen({ runId }: { runId: string }) {
   return (
     <div className="flex flex-col gap-6">
       <header className="flex flex-wrap items-center gap-3">
-        <Link
-          href="/demos/document-compliance"
-          aria-label="Back to document packs"
-          className="outline-box press grid size-10 place-items-center rounded-sm bg-paper font-mono font-bold"
-        >
-          ←
-        </Link>
         <h1 className="font-mono text-xl font-bold uppercase sm:text-2xl">
           {pack.title}
         </h1>

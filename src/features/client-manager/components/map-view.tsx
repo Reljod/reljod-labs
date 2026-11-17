@@ -166,7 +166,7 @@ export function MapView({
 
   return (
     <div className="grid h-full min-h-0 md:grid-cols-[14rem_minmax(0,1fr)]">
-      <aside className="cm-scroll hidden min-h-0 overflow-y-auto border-ink/10 border-r p-2 md:block">
+      <aside className="cm-scroll hidden min-h-0 overflow-y-auto border-ink border-r-2 p-2 md:block">
         <CategoryTree
           graph={graph}
           target={target}
@@ -196,7 +196,7 @@ export function MapView({
           }}
           onSelect={select}
         />
-        <div className="pointer-events-none absolute bottom-3 left-3 flex items-center gap-3 rounded-sm bg-paper/85 px-2.5 py-1.5 text-[0.65rem] text-ink-muted shadow-hard-sm backdrop-blur">
+        <div className="outline-box pointer-events-none absolute bottom-3 left-3 flex items-center gap-3 rounded-sm bg-paper px-2.5 py-1.5 font-mono text-[0.65rem] text-ink-muted shadow-hard-sm">
           {[0.9, 0.7, 0.45].map((confidence, index) => (
             <span key={confidence} className="flex items-center gap-1">
               <CertaintyLine confidence={confidence} className="h-2 w-5" />

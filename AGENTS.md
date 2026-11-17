@@ -71,6 +71,11 @@
 - A new table that holds an Owner's top-level rows registers itself in its migration: `insert into access.owned_tables values ('<schema>.<table>') on conflict do nothing`. Child tables reach it by `on delete cascade`; register any that do not. Unregistered tables are never purged.
 - Apply migrations to the live project with the Supabase MCP tools only when the user asks. Additive changes (new nullable columns, new tables) go first and stay safe for the code already deployed.
 
+## Demo pages share one bar
+
+- Every demo page opens with `DemoBar` (`src/components/demo/demo-bar.tsx`): the "All demos" back button (always `/#demos`, never a history back), the demo's number from `liveDemos` order, its name linking to the demo's first page, its places as tabs, and the demo's own controls on the right. Don't add a second back link inside a demo; a sub-page is reached and left through the tabs or the name.
+- Demos are drawn in the Colonnade language of Document compliance: 2px ink outlines (`outline-box`), `rounded-sm`, hard offset shadows, `press` on everything clickable, `eyebrow` labels. No soft shadows or pill shapes.
+
 ## Buttons that write
 
 - A button that writes is disabled while the write runs, shows a pending label, and shows the result or error where it was clicked. Destructive or hard-to-undo writes confirm first in a dialog (pattern: `ConfirmDialog` in `src/features/access/components/pass-actions.tsx`). Details: "A write button fires once" in `docs/engineering/conventions.md`.

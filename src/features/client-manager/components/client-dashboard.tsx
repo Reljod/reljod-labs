@@ -108,13 +108,13 @@ export function ClientDashboard({
 
   return (
     <div className="flex h-full min-h-0 flex-col bg-marble">
-      <header className="border-ink/10 border-b bg-paper px-4 pt-3">
+      <header className="border-ink border-b-2 bg-paper px-4 pt-3">
         <div className="flex items-center gap-3">
           <button
             type="button"
             onClick={onBack}
             aria-label="All clients"
-            className="rounded-sm p-1.5 lg:hidden text-ink-muted hover:bg-marble hover:text-ink"
+            className="outline-box press grid size-8 place-items-center rounded-sm bg-paper lg:hidden"
           >
             <Icon name="back" />
           </button>
@@ -126,11 +126,11 @@ export function ClientDashboard({
           />
           <div className="min-w-0 flex-1">
             <div className="flex items-center gap-2">
-              <h2 className="truncate text-lg leading-tight font-semibold">
+              <h2 className="truncate font-mono text-lg leading-tight font-bold uppercase">
                 {name}
               </h2>
               {(client?.isSample ?? card?.isSample) ? (
-                <span className="eyebrow rounded-sm bg-brass/30 px-1.5 py-px text-[0.6rem] font-bold">
+                <span className="eyebrow rounded-sm border border-ink bg-brass/30 px-1.5 py-0.5 text-[0.6rem] font-bold">
                   Sample
                 </span>
               ) : null}
@@ -166,7 +166,7 @@ export function ClientDashboard({
               </span>
             ) : null}
           </div>
-          <div className="flex items-center gap-0.5">
+          <div className="flex items-center gap-2">
             <ToolButton
               icon="chat"
               label={`Ask about ${name} in Chat`}
@@ -188,21 +188,22 @@ export function ClientDashboard({
             ) : null}
           </div>
         </div>
-        <nav aria-label="Client views" className="-mb-px mt-2 flex gap-1">
+        <nav
+          aria-label="Client views"
+          className="mt-3 mb-3 flex flex-wrap gap-2"
+        >
           {VIEWS.map((item) => (
             <button
               key={item.id}
               type="button"
               onClick={() => onView(item.id)}
               aria-current={view === item.id}
-              className={`flex items-center gap-1.5 border-b-2 px-3 py-2 text-sm font-medium transition-colors ${view === item.id ? "border-ink text-ink" : "border-transparent text-ink-muted hover:text-ink"}`}
+              className={`outline-box press eyebrow flex items-center gap-1.5 rounded-sm px-3 py-1.5 ${view === item.id ? "bg-ink text-paper" : "bg-paper"}`}
             >
               <Icon name={item.icon} className="size-3.5" />
               {item.label}
               {item.id === "documents" && client ? (
-                <span className="text-xs text-stone">
-                  {client.sources.length}
-                </span>
+                <span className="opacity-60">{client.sources.length}</span>
               ) : null}
             </button>
           ))}
@@ -334,7 +335,7 @@ function ToolButton({
       onClick={onClick}
       aria-label={label}
       title={label}
-      className="rounded-sm p-2 text-ink-muted hover:bg-marble hover:text-ink"
+      className="outline-box press grid size-8 place-items-center rounded-sm bg-paper text-ink hover:text-federal-blue"
     >
       <Icon name={icon} />
     </button>

@@ -381,7 +381,7 @@ export function Chat({
 
   return (
     <div className="flex h-full min-h-0 flex-col">
-      <div className="flex items-center gap-2 border-ink/10 border-b px-4 py-2">
+      <div className="flex items-center gap-2 border-ink border-b-2 bg-paper px-4 py-2">
         <ScopePicker
           cards={cards}
           scope={scope}
@@ -389,7 +389,7 @@ export function Chat({
           locked={busy}
         />
         {thread.data?.thread.title && threadId ? (
-          <p className="min-w-0 flex-1 truncate text-right text-sm text-ink-muted">
+          <p className="min-w-0 flex-1 truncate text-right font-mono text-xs font-bold text-ink-muted uppercase">
             {thread.data.thread.title}
           </p>
         ) : null}
@@ -421,7 +421,7 @@ export function Chat({
                 ))}
               </span>
             )}
-            <h2 className="text-2xl font-semibold tracking-tight sm:text-3xl">
+            <h2 className="font-mono text-2xl leading-tight font-bold uppercase sm:text-3xl">
               {scoped
                 ? `What do you want to know about ${scoped.name.split(" ")[0]}?`
                 : "Ask about your book"}
@@ -433,7 +433,7 @@ export function Chat({
                   type="button"
                   disabled={busy}
                   onClick={() => void ask(suggestion, false)}
-                  className="disabled:opacity-50 rounded-full border border-ink/15 bg-paper px-3.5 py-2 text-sm hover:border-federal-blue hover:text-federal-blue"
+                  className="outline-box press rounded-sm bg-paper px-3 py-1.5 text-sm hover:bg-morning-haze disabled:opacity-50"
                 >
                   {suggestion}
                 </button>
@@ -443,7 +443,7 @@ export function Chat({
                   type="button"
                   disabled={busy}
                   onClick={() => void ask(`Research ${scoped.name}`, true)}
-                  className="disabled:opacity-50 flex items-center gap-1.5 rounded-full border border-federal-blue/40 bg-morning-haze/50 px-3.5 py-2 text-sm text-federal-blue hover:border-federal-blue"
+                  className="outline-box press flex items-center gap-1.5 rounded-sm bg-morning-haze px-3 py-1.5 text-sm text-federal-blue disabled:opacity-50"
                 >
                   <Icon name="globe" className="size-3.5" />
                   Research {scoped.name.split(" ")[0]} on the web
@@ -545,7 +545,7 @@ function ScopePicker({
         onClick={() => setOpen(!open)}
         aria-expanded={open}
         aria-label="Which clients this chat asks about"
-        className="flex items-center gap-2 rounded-full border border-ink/15 bg-paper py-1 pr-3 pl-1 text-sm font-medium hover:border-federal-blue disabled:opacity-60"
+        className="outline-box press flex items-center gap-2 rounded-sm bg-paper py-1 pr-3 pl-1 text-sm font-medium disabled:opacity-60"
       >
         {current ? (
           <Portrait name={current.name} url={current.portraitUrl} size="xs" />
@@ -574,7 +574,7 @@ function ScopePicker({
               value={filter}
               onChange={(event) => setFilter(event.target.value)}
               placeholder="Filter clients"
-              className="w-full border-ink/10 border-b px-3 py-2 text-sm focus:outline-none"
+              className="w-full border-ink border-b-2 px-3 py-2 text-sm focus:outline-none"
               onKeyDown={(event) => {
                 if (event.key === "Escape") {
                   event.preventDefault();
@@ -590,7 +590,7 @@ function ScopePicker({
                     onScope(null);
                     setOpen(false);
                   }}
-                  className={`flex w-full items-center gap-2 px-3 py-1.5 text-left text-sm hover:bg-marble ${!scope ? "font-semibold" : ""}`}
+                  className={`flex w-full items-center gap-2 px-3 py-1.5 text-left text-sm hover:bg-morning-haze ${!scope ? "font-semibold" : ""}`}
                 >
                   <span className="flex size-7 items-center justify-center rounded-full bg-ink text-paper">
                     <Icon name="people" className="size-3.5" />
@@ -609,7 +609,7 @@ function ScopePicker({
                       onScope(card.id);
                       setOpen(false);
                     }}
-                    className={`flex w-full items-center gap-2 px-3 py-1.5 text-left text-sm hover:bg-marble ${scope === card.id ? "font-semibold" : ""}`}
+                    className={`flex w-full items-center gap-2 px-3 py-1.5 text-left text-sm hover:bg-morning-haze ${scope === card.id ? "font-semibold" : ""}`}
                   >
                     <Portrait
                       name={card.name}
@@ -647,7 +647,7 @@ function UserBubble({
       animate={{ opacity: 1, y: 0 }}
       className="flex justify-end"
     >
-      <p className="max-w-[85%] rounded-2xl rounded-br-sm bg-ink px-4 py-2.5 text-[0.95rem] whitespace-pre-wrap text-paper">
+      <p className="outline-box max-w-[85%] rounded-sm bg-ink px-4 py-2.5 text-[0.95rem] whitespace-pre-wrap text-paper shadow-[3px_3px_0_var(--color-federal-blue)]">
         {research ? (
           <Icon
             name="globe"
@@ -735,7 +735,7 @@ function AnswerBlock({
                 target="_blank"
                 rel="noreferrer"
                 title={item.title}
-                className="flex max-w-56 items-center gap-1.5 rounded-full border border-ink/10 bg-paper px-2 py-0.5 text-xs text-ink-muted hover:border-federal-blue hover:text-federal-blue"
+                className="flex max-w-56 items-center gap-1.5 rounded-sm border border-ink bg-paper px-2 py-0.5 font-mono text-[0.7rem] text-ink-muted hover:bg-morning-haze hover:text-federal-blue"
               >
                 <Favicon url={item.url} />
                 <span className="truncate">{domainOf(item.url)}</span>
@@ -800,7 +800,7 @@ function Trail({
           type="button"
           onClick={() => setOpen(!open)}
           aria-expanded={open}
-          className="flex items-center gap-1.5 rounded-full bg-marble px-2 py-1 text-ink-muted hover:text-ink"
+          className="flex items-center gap-1.5 rounded-sm border border-ink bg-marble px-2 py-1 text-ink-muted hover:bg-paper hover:text-ink"
         >
           <Icon
             name="chevron"
@@ -837,7 +837,7 @@ function Trail({
                 )
               }
               title={`Show the walk on ${card.name}'s map`}
-              className="flex items-center gap-1.5 rounded-full border border-ink/10 py-0.5 pr-2 pl-0.5 text-xs text-ink-muted hover:border-federal-blue hover:text-federal-blue"
+              className="flex items-center gap-1.5 rounded-sm border border-ink bg-paper py-0.5 pr-2 pl-0.5 text-xs text-ink-muted hover:bg-morning-haze hover:text-federal-blue"
             >
               <Portrait name={card.name} url={card.portraitUrl} size="xs" />
               <Icon name="map" className="size-3" />
@@ -1062,7 +1062,7 @@ function FactChip({
       type="button"
       onClick={onClick}
       title={client ? `${client.name} · open this fact` : label}
-      className="mx-0.5 inline-flex max-w-[16rem] items-center gap-1 rounded-full border border-ink/10 bg-morning-haze/60 px-1.5 align-[1px] text-[0.72rem] leading-5 font-medium text-federal-blue hover:border-federal-blue"
+      className="mx-0.5 inline-flex max-w-[16rem] items-center gap-1 rounded-sm border border-federal-blue/40 bg-morning-haze/60 px-1.5 align-[1px] text-[0.72rem] leading-5 font-medium text-federal-blue hover:border-federal-blue hover:bg-morning-haze"
     >
       <span className="truncate">{label}</span>
     </button>
@@ -1131,15 +1131,15 @@ function ProposalCard({
 
   return (
     <div
-      className={`outline-box overflow-hidden rounded-sm bg-paper shadow-hard-sm ${proposal.status === "dismissed" ? "opacity-60" : ""}`}
+      className={`outline-box cm-reveal overflow-hidden rounded-sm bg-paper shadow-hard-md ${proposal.status === "dismissed" ? "opacity-60" : ""}`}
       data-testid="proposal-card"
     >
-      <div className="flex items-center gap-2 border-ink/10 border-b px-3 py-2">
+      <div className="flex items-center gap-2 border-ink border-b-2 px-3 py-2">
         <Icon name="globe" className="size-4 text-federal-blue" />
         <button
           type="button"
           onClick={() => onOpenClient(proposal.clientId)}
-          className="min-w-0 flex-1 truncate text-left text-sm font-semibold hover:underline"
+          className="min-w-0 flex-1 truncate text-left font-mono text-sm font-bold uppercase hover:underline"
         >
           {proposal.clientName}
         </button>
@@ -1151,7 +1151,7 @@ function ProposalCard({
               : "×"}
         </span>
       </div>
-      <ul className="divide-y divide-ink/5">
+      <ul className="divide-y divide-ink/10">
         {proposal.facts.map((fact) => {
           const chosen = open
             ? picked.has(fact.id)
@@ -1204,7 +1204,7 @@ function ProposalCard({
         })}
       </ul>
       {open ? (
-        <div className="flex items-center gap-2 border-ink/10 border-t bg-marble/50 px-3 py-2">
+        <div className="flex items-center gap-2 border-ink border-t-2 bg-marble/50 px-3 py-2">
           {readOnly ? (
             <p className="text-xs text-ink-muted">Samples are read-only.</p>
           ) : (
@@ -1213,7 +1213,7 @@ function ProposalCard({
               disabled={!!busy || picked.size === 0 || !messageId}
               aria-busy={busy === "add"}
               onClick={() => void decide("add")}
-              className="flex items-center gap-1.5 rounded-sm bg-ink px-3 py-1.5 text-sm font-semibold text-paper hover:bg-federal-blue disabled:opacity-40"
+              className="outline-box press eyebrow flex items-center gap-1.5 rounded-sm bg-federal-blue px-3 py-1.5 font-bold text-paper disabled:opacity-40"
             >
               <Icon name="add" className="size-3.5" />
               {busy === "add" ? "Adding…" : `Add ${picked.size}`}
@@ -1224,7 +1224,7 @@ function ProposalCard({
             disabled={!!busy || !messageId}
             aria-busy={busy === "dismiss"}
             onClick={() => void decide("dismiss")}
-            className="rounded-sm px-2 py-1.5 text-sm text-ink-muted hover:text-ink disabled:opacity-40"
+            className="outline-box press eyebrow rounded-sm bg-paper px-3 py-1.5 disabled:opacity-40"
           >
             {busy === "dismiss" ? "Dismissing…" : "Dismiss"}
           </button>
@@ -1236,7 +1236,7 @@ function ProposalCard({
         <button
           type="button"
           onClick={() => onOpenClient(proposal.clientId)}
-          className="flex w-full items-center gap-2 border-ink/10 border-t bg-ivy/10 px-3 py-2 text-left text-sm text-ivy"
+          className="flex w-full items-center gap-2 border-ink border-t-2 bg-ivy/10 px-3 py-2 text-left text-sm text-ivy hover:bg-ivy/20"
         >
           <Icon name="check" className="size-3.5" />
           Building into {proposal.clientName}'s file
@@ -1282,7 +1282,7 @@ function Composer({
   return (
     <form onSubmit={submit} className="px-4 pt-2 pb-4">
       <div
-        className={`mx-auto max-w-3xl rounded-xl border bg-paper shadow-hard-sm transition-colors ${research ? "border-federal-blue" : "border-ink/20"}`}
+        className={`mx-auto max-w-3xl rounded-sm border-2 bg-paper shadow-hard-md transition-colors focus-within:outline-2 focus-within:outline-offset-2 focus-within:outline-federal-blue ${research ? "border-federal-blue" : "border-ink"}`}
       >
         <label htmlFor="cm-input" className="sr-only">
           Message
@@ -1316,7 +1316,7 @@ function Composer({
               onClick={() => onResearch(!research)}
               aria-pressed={research}
               title="Search the web and propose new facts"
-              className={`flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-medium transition-colors ${research ? "bg-federal-blue text-paper" : "text-ink-muted hover:bg-marble hover:text-ink"}`}
+              className={`outline-box press eyebrow flex items-center gap-1.5 rounded-sm px-2.5 py-1 ${research ? "bg-federal-blue text-paper" : "bg-paper"}`}
             >
               <Icon name="globe" className="size-3.5" />
               Research
@@ -1328,7 +1328,7 @@ function Composer({
               onClick={onStop}
               aria-label="Stop"
               title="Stop (Esc)"
-              className="ml-auto flex size-8 items-center justify-center rounded-full bg-ink text-paper"
+              className="outline-box press ml-auto grid size-8 place-items-center rounded-sm bg-seal-red text-paper"
             >
               <Icon name="stop" className="size-3.5" />
             </button>
@@ -1337,7 +1337,7 @@ function Composer({
               type="submit"
               aria-label="Send"
               disabled={!text.trim()}
-              className="ml-auto flex size-8 items-center justify-center rounded-full bg-ink text-paper transition-opacity disabled:opacity-25"
+              className="outline-box press ml-auto grid size-8 place-items-center rounded-sm bg-federal-blue text-paper disabled:opacity-35"
             >
               <Icon name="send" className="size-4" />
             </button>
