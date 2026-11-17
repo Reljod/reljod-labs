@@ -294,3 +294,49 @@ export type Score = {
   /** Canonical forms of expected Names that were missed. */
   missed: string[];
 };
+
+// What the server hands the page --------------------------------------------------------
+
+/** A Corpus Document as a card in the picker. */
+export type CorpusCard = {
+  id: string;
+  title: string;
+  /** e.g. "Wire transfer ledger", "Court judgment", "KYC file". */
+  genre: string;
+  pages: number;
+  split: Split;
+  description: string;
+  /** Names in the Answer key. */
+  expectedNames: number;
+};
+
+export type RunStatus = "queued" | "running" | "completed" | "failed" | "stopped";
+
+export type RunSummary = {
+  id: string;
+  title: string;
+  pages: number;
+  source: DocumentSource;
+  status: RunStatus;
+  startedAt: string;
+  endedAt: string | null;
+  models: ModelChoice;
+  rulebookVersion: number;
+  costUsd: number;
+  names: number;
+  score: Score | null;
+};
+
+export type RunDetail = RunSummary & {
+  /** The Audit trail so far, in order. */
+  events: (RunEvent & { seq: number })[];
+  names: ExtractedName[];
+};
+
+export type RulebookVersion = {
+  version: number;
+  rulebook: Rulebook;
+  createdAt: string;
+  /** null for the built-in default (version 0). */
+  note: string | null;
+};
