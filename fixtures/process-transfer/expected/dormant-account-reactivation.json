@@ -1,0 +1,71 @@
+{
+  "slug": "dormant-account-reactivation",
+  "title": "Reactivating a dormant account",
+  "presenter": {
+    "name": "Delphine Marrow",
+    "role": "Branch Operations Lead"
+  },
+  "receiver": {
+    "name": "Joel Okafor-Lind",
+    "role": "Customer Service Officer"
+  },
+  "steps": [
+    {
+      "title": "Find the dormant account in Customer search",
+      "actor": "Delphine Marrow",
+      "system": "Branch Desk",
+      "at": 3.5
+    },
+    {
+      "title": "Confirm the dormancy date and the debit block",
+      "actor": "Delphine Marrow",
+      "system": "Branch Desk",
+      "at": 9.9
+    },
+    {
+      "title": "Re-check the customer's identity",
+      "actor": "Delphine Marrow",
+      "system": "Branch Desk",
+      "at": 23.5
+    },
+    {
+      "title": "Upload the new ID document",
+      "actor": "Delphine Marrow",
+      "system": "Branch Desk",
+      "at": 31
+    },
+    {
+      "title": "Post a one dollar test credit",
+      "actor": "Delphine Marrow",
+      "system": "Branch Desk",
+      "at": 50.4
+    },
+    {
+      "title": "Submit the reactivation for supervisor approval",
+      "actor": "Delphine Marrow",
+      "system": "Branch Desk",
+      "at": 66.1
+    },
+    {
+      "title": "Supervisor approves the reactivation",
+      "actor": "Supervisor (Gareth Ruskin)",
+      "system": "Branch Desk",
+      "at": 73.2
+    },
+    {
+      "title": "Send the reactivation confirmation to the customer",
+      "actor": "Delphine Marrow",
+      "system": "Branch Desk",
+      "at": 77.3
+    }
+  ],
+  "decisions": [
+    "If the ID has expired or the proof of address does not match, do not reactivate and book the customer in for a full KYC refresh; otherwise continue to the test transaction."
+  ],
+  "warnings": [
+    "Never use a debit as the test transaction: a debit on a dormant account trips the fraud rule and freezes the account for 72 hours."
+  ],
+  "openQuestions": [
+    "Whether dormancy fees are refunded on request: Delphine will confirm the fee refund rule with the Product team."
+  ]
+}

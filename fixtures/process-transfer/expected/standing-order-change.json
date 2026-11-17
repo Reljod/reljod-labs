@@ -1,0 +1,68 @@
+{
+  "slug": "standing-order-change",
+  "title": "Amending a standing order",
+  "presenter": {
+    "name": "Theo Vantongeren",
+    "role": "Payments Team Lead"
+  },
+  "receiver": {
+    "name": "Grace Imbali-Rowe",
+    "role": "Payments Officer"
+  },
+  "steps": [
+    {
+      "title": "Open the amendment request from the inbox",
+      "actor": "Theo Vantongeren",
+      "system": "PayOps Mandates",
+      "at": 4.5
+    },
+    {
+      "title": "Verify the account mandate and signatory",
+      "actor": "Theo Vantongeren",
+      "system": "PayOps Mandates",
+      "at": 24.6
+    },
+    {
+      "title": "Open the amendment form",
+      "actor": "Theo Vantongeren",
+      "system": "PayOps Mandates",
+      "at": 44.7
+    },
+    {
+      "title": "Enter the new amount and payment day",
+      "actor": "Theo Vantongeren",
+      "system": "PayOps Mandates",
+      "at": 47.7
+    },
+    {
+      "title": "Submit the amendment for dual approval",
+      "actor": "Theo Vantongeren",
+      "system": "PayOps Mandates",
+      "at": 59.2
+    },
+    {
+      "title": "Second approver approves the amendment",
+      "actor": "Ines Duarte-Vale",
+      "system": "PayOps Mandates",
+      "at": 80.9
+    },
+    {
+      "title": "Confirm the change to the customer by secure message",
+      "actor": "Theo Vantongeren",
+      "system": "PayOps Mandates",
+      "at": 86.1
+    }
+  ],
+  "decisions": [
+    "If the account is joint and both holders must sign, get the second holder's consent before amending; a sole signatory can instruct alone.",
+    "If the instruction came by phone, call the customer back on the number held on file (never the number they called from) before acting.",
+    "If the new amount is above M$2,500, submit the amendment for a second approver; under the threshold, save it directly."
+  ],
+  "warnings": [
+    "You cannot approve your own amendment; the system blocks it.",
+    "If the next payment is less than two working days away, the payment file is already built and the change only applies the following month, so tell the customer or they will pay the old amount."
+  ],
+  "openQuestions": [
+    "Whether a payment-date-only change under the threshold needs dual approval: Theo will confirm with Operational Risk."
+  ]
+}

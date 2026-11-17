@@ -1,0 +1,67 @@
+{
+  "slug": "user-access-request",
+  "title": "Provisioning core-banking access",
+  "presenter": {
+    "name": "Victor Halloran",
+    "role": "Access Management Engineer"
+  },
+  "receiver": {
+    "name": "Ruben Arkwright",
+    "role": "Access Administrator"
+  },
+  "steps": [
+    {
+      "title": "Open the access ticket",
+      "actor": "Victor Halloran",
+      "system": "Access Hub",
+      "at": 4.1
+    },
+    {
+      "title": "Confirm the line manager's approval",
+      "actor": "Victor Halloran",
+      "system": "Access Hub",
+      "at": 10.7
+    },
+    {
+      "title": "Check each requested role against the role matrix",
+      "actor": "Victor Halloran",
+      "system": "Access Hub",
+      "at": 18.4
+    },
+    {
+      "title": "Run the segregation-of-duties check",
+      "actor": "Victor Halloran",
+      "system": "Access Hub",
+      "at": 37.4
+    },
+    {
+      "title": "Reject the conflicting role and remove the old one",
+      "actor": "Victor Halloran",
+      "system": "Access Hub",
+      "at": 49.1
+    },
+    {
+      "title": "Approve and provision the roles in CoreLedger",
+      "actor": "Victor Halloran",
+      "system": "Access Hub",
+      "at": 66.9
+    },
+    {
+      "title": "Confirm the outcome to the requester and close the ticket",
+      "actor": "Victor Halloran",
+      "system": "Access Hub",
+      "at": 72.4
+    }
+  ],
+  "decisions": [
+    "If the line manager has not approved the request, send it back; do not grant access.",
+    "If a requested role is not in the role matrix for the user's department, do not grant it without an exception signed off by the role owner; if it is in the matrix, continue.",
+    "If the segregation-of-duties check finds a conflict, never grant both roles: reject the conflicting role or remove the old one first."
+  ],
+  "warnings": [
+    "Never copy another user's profile to save time: you inherit all their old roles, which is how SoD conflicts creep in."
+  ],
+  "openQuestions": [
+    "Whether temporary payments access is allowed during a mover's handover period, and on what terms: Victor will confirm with the Payments role owner."
+  ]
+}

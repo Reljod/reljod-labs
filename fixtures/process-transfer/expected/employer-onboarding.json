@@ -1,0 +1,66 @@
+{
+  "slug": "employer-onboarding",
+  "title": "Onboarding a new employer",
+  "presenter": {
+    "name": "Halima Strand",
+    "role": "Employer Relations Manager"
+  },
+  "receiver": {
+    "name": "Owen Tregarth",
+    "role": "Onboarding Analyst"
+  },
+  "steps": [
+    {
+      "title": "Start a new employer record",
+      "actor": "Halima Strand",
+      "system": "Employer Hub",
+      "at": 3.3
+    },
+    {
+      "title": "Enter the company details and create the employer",
+      "actor": "Halima Strand",
+      "system": "Employer Hub",
+      "at": 8.8
+    },
+    {
+      "title": "Upload the onboarding documents",
+      "actor": "Halima Strand",
+      "system": "Employer Hub",
+      "at": 29.4
+    },
+    {
+      "title": "Check the agreement signer against the signatory list",
+      "actor": "Halima Strand",
+      "system": "Employer Hub",
+      "at": 38.4
+    },
+    {
+      "title": "Set the contribution rates and effective date",
+      "actor": "Halima Strand",
+      "system": "Employer Hub",
+      "at": 51
+    },
+    {
+      "title": "Save the rates and activate the employer",
+      "actor": "Halima Strand",
+      "system": "Employer Hub",
+      "at": 67.8
+    },
+    {
+      "title": "Send the welcome pack",
+      "actor": "Halima Strand",
+      "system": "Employer Hub",
+      "at": 80.8
+    }
+  ],
+  "decisions": [
+    "If the person who signed the participation agreement is on the authorised signatory list, mark the documents verified; if not, stop and send the agreement back for a proper signature.",
+    "If the employer asks for an employer rate below the statutory minimum of 5%, reject it; at 5% or above, use the rate they signed for."
+  ],
+  "warnings": [
+    "Never send the welcome pack before the rates are saved: the schedule template in the pack is built from the rates and would go out blank."
+  ],
+  "openQuestions": [
+    "Whether a mid-month starter pays a full or part first month: Halima will confirm the first-contribution rule with Compliance."
+  ]
+}

@@ -1,0 +1,72 @@
+{
+  "slug": "kyc-periodic-review",
+  "title": "KYC periodic review",
+  "presenter": {
+    "name": "Femi Adeyemi-Clarke",
+    "role": "KYC Senior Analyst"
+  },
+  "receiver": {
+    "name": "Rosa Linwood",
+    "role": "KYC Analyst"
+  },
+  "steps": [
+    {
+      "title": "Load the November due list",
+      "actor": "Femi Adeyemi-Clarke",
+      "system": "KYC Workbench",
+      "at": 4.5
+    },
+    {
+      "title": "Open the first review on the list",
+      "actor": "Femi Adeyemi-Clarke",
+      "system": "KYC Workbench",
+      "at": 12.4
+    },
+    {
+      "title": "Check which documents have expired",
+      "actor": "Femi Adeyemi-Clarke",
+      "system": "KYC Workbench",
+      "at": 17.4
+    },
+    {
+      "title": "Link the director's renewed passport from her own customer record",
+      "actor": "Femi Adeyemi-Clarke",
+      "system": "KYC Workbench",
+      "at": 37.3
+    },
+    {
+      "title": "Upload the new proof of address and verify it",
+      "actor": "Femi Adeyemi-Clarke",
+      "system": "KYC Workbench",
+      "at": 43.5
+    },
+    {
+      "title": "Update the risk factors and re-score the customer",
+      "actor": "Femi Adeyemi-Clarke",
+      "system": "KYC Workbench",
+      "at": 49.8
+    },
+    {
+      "title": "Escalate the review to enhanced due diligence",
+      "actor": "Femi Adeyemi-Clarke",
+      "system": "KYC Workbench",
+      "at": 74.2
+    },
+    {
+      "title": "Record a review note for the EDD team",
+      "actor": "Femi Adeyemi-Clarke",
+      "system": "KYC Workbench",
+      "at": 90
+    }
+  ],
+  "decisions": [
+    "If a newer copy of an expired document is already held (e.g. on the director's personal record), link it; otherwise request it from the customer.",
+    "If the re-scored risk is 70 or above (High), escalate to enhanced due diligence and do not approve the review yourself; below 70, approve it and set the next review date (two years for Medium, three for Low)."
+  ],
+  "warnings": [
+    "Do not approve a review while an expired document is still on file: the system allows it, but it fails the quality check and the review is reopened."
+  ],
+  "openQuestions": [
+    "Whether Vossland is on the high-risk country list under the new policy (it changes the score): Femi will confirm with the financial crime policy team."
+  ]
+}

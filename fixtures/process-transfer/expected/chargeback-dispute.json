@@ -1,0 +1,66 @@
+{
+  "slug": "chargeback-dispute",
+  "title": "Handling a chargeback dispute",
+  "presenter": {
+    "name": "Marcus Bellweather",
+    "role": "Disputes Team Lead"
+  },
+  "receiver": {
+    "name": "Ana Lucia Ferro",
+    "role": "Disputes Analyst"
+  },
+  "steps": [
+    {
+      "title": "Pick up the new claim from the queue",
+      "actor": "Marcus Bellweather",
+      "system": "CardCase",
+      "at": 5.7
+    },
+    {
+      "title": "Check the disputed transaction against the claim",
+      "actor": "Marcus Bellweather",
+      "system": "CardCase",
+      "at": 11.3
+    },
+    {
+      "title": "Open a dispute case",
+      "actor": "Marcus Bellweather",
+      "system": "CardCase",
+      "at": 18.9
+    },
+    {
+      "title": "Choose the reason code",
+      "actor": "Marcus Bellweather",
+      "system": "CardCase",
+      "at": 23.4
+    },
+    {
+      "title": "Give the cardholder provisional credit",
+      "actor": "Marcus Bellweather",
+      "system": "CardCase",
+      "at": 46.8
+    },
+    {
+      "title": "Send the chargeback and start the evidence deadline",
+      "actor": "Marcus Bellweather",
+      "system": "CardCase",
+      "at": 49.9
+    },
+    {
+      "title": "Set a reminder before the evidence deadline",
+      "actor": "Marcus Bellweather",
+      "system": "CardCase",
+      "at": 80
+    }
+  ],
+  "decisions": [
+    "If the cardholder has already contacted the merchant, choose the reason code (goods not received) and raise the chargeback; if not, ask them to contact the merchant first and put the case on hold for ten days.",
+    "If the disputed amount is under M$1,500, give provisional credit straight away; above that, the team lead must sign it off."
+  ],
+  "warnings": [
+    "Watch the evidence deadline: if the reply window is missed, the scheme sides with the merchant and the provisional credit is reversed from the customer."
+  ],
+  "openQuestions": [
+    "Whether the 30-day evidence deadline is calendar or working days under this year's scheme rules: Marcus will confirm with the scheme liaison team."
+  ]
+}
