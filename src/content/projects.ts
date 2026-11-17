@@ -163,6 +163,7 @@ export const projects: Project[] = [
     tags: ["Video understanding", "Workflow", "Self-checking", "DOCX and PPTX"],
     status: "Live",
     href: "/demos/process-transfer",
+    marks: ["New"],
     features: [
       "Twelve recorded handover calls to try, or upload your own",
       "Every step linked to the second of the recording that shows it",
@@ -181,7 +182,7 @@ export const projects: Project[] = [
     tags: ["Agents", "MCP", "Skills", "Durable workflows", "Hybrid search"],
     status: "Live",
     href: "/demos/harness",
-    isNew: true,
+    marks: ["Beta"],
     features: [
       "Three pension pipelines run as MCP tools, with a live pipeline view",
       "Change a rule's parameters as an admin; every run records the versions it used",
@@ -200,6 +201,7 @@ export const projects: Project[] = [
     tags: ["Agents", "Sub-agents", "Sandbox", "MCP", "Durable workflows"],
     status: "Live",
     href: "/demos/name-extraction",
+    marks: ["New"],
     features: [
       "Synthetic AML files from 10 to 500 pages, or your own PDF",
       "Watch Readers fan out over page ranges and the Done gate fill",
@@ -224,8 +226,16 @@ export const liveDemos = [
   ),
   ...liveInListOrder.filter((project) => !LEAD_DEMOS.includes(project.slug)),
 ];
-export const benchProjects = projects.filter(
-  (project) => project.status !== "Live",
+/**
+ * What the landing page's "Coming soon" shows, in this order. The other
+ * projects that aren't live stay on the About page only.
+ */
+const BENCH = ["marketing-intelligence", "tennis-line-calling"];
+
+export const benchProjects = BENCH.flatMap((slug) =>
+  projects.filter(
+    (project) => project.slug === slug && project.status !== "Live",
+  ),
 );
 
 const leadingProjects = projects.slice(0, FEATURED_PROJECT_LIMIT);

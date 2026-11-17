@@ -1,9 +1,9 @@
 import Link from "next/link";
-import { Badge } from "@/components/ui/badge";
 import { ButtonLink } from "@/components/ui/button-link";
 import { Icon } from "@/components/ui/icon";
 import { LiveBadge } from "@/components/ui/live-badge";
 import { Mark } from "@/components/ui/mark";
+import { ProjectMarks } from "@/components/ui/project-marks";
 import { lab } from "@/content/lab";
 import { benchProjects, liveDemos } from "@/content/projects";
 
@@ -15,7 +15,7 @@ export function LabHero() {
       aria-labelledby="hero-title"
       className="bg-marble bg-[linear-gradient(rgb(20_33_61/0.05)_2px,transparent_2px),linear-gradient(90deg,rgb(20_33_61/0.05)_2px,transparent_2px)] bg-size-[40px_40px]"
     >
-      <div className="mx-auto grid max-w-6xl items-center gap-12 px-4 py-16 sm:px-6 lg:grid-cols-[1.25fr_1fr] lg:py-24">
+      <div className="mx-auto grid max-w-6xl items-center gap-12 px-4 py-16 sm:px-6 lg:min-h-[calc(100svh-4rem)] lg:grid-cols-[1.25fr_1fr] lg:py-10">
         <div>
           <p className="eyebrow mb-6 flex items-center gap-3 text-ink-muted">
             <Mark size={20} className="text-ink" />
@@ -54,7 +54,7 @@ export function LabHero() {
               <li key={demo.slug}>
                 <Link
                   href={demo.href ?? "#demos"}
-                  className="group flex items-center gap-4 px-5 py-4 transition-colors hover:bg-morning-haze"
+                  className="group flex items-center gap-4 px-5 py-3 transition-colors hover:bg-morning-haze"
                 >
                   <span className="font-mono text-2xl font-bold text-federal-blue">
                     {String(index + 1).padStart(2, "0")}
@@ -62,7 +62,7 @@ export function LabHero() {
                   <span className="min-w-0 flex-1">
                     <span className="flex flex-wrap items-center gap-x-2 gap-y-1 font-semibold">
                       {demo.title}
-                      {demo.isNew ? <Badge tone="brass">New</Badge> : null}
+                      <ProjectMarks marks={demo.marks} size="sm" />
                     </span>
                     <span className="eyebrow block text-ink-muted">
                       {demo.sector}
@@ -77,20 +77,6 @@ export function LabHero() {
                 </Link>
               </li>
             ))}
-            <li className="flex flex-wrap gap-2 bg-limestone px-5 py-4">
-              <span className="eyebrow mr-1 self-center text-ink-muted">
-                Soon
-              </span>
-              {benchProjects.map((project) => (
-                <a
-                  key={project.slug}
-                  href="#bench"
-                  className="eyebrow outline-box rounded-sm bg-paper px-2 py-0.5 text-ink-muted hover:text-ink"
-                >
-                  {project.title}
-                </a>
-              ))}
-            </li>
           </ol>
         </nav>
       </div>

@@ -2,6 +2,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { Badge } from "@/components/ui/badge";
 import { Icon, IconTile } from "@/components/ui/icon";
+import { ProjectMarks } from "@/components/ui/project-marks";
 import { Section } from "@/components/ui/section";
 import { featuredProjects } from "@/content/projects";
 import type { Project } from "@/content/types";
@@ -50,7 +51,7 @@ function ProjectCard({ project, index }: { project: Project; index: number }) {
         <div className="flex items-center justify-between gap-3">
           <p className="eyebrow text-ink-muted">{project.sector}</p>
           <div className="flex items-center gap-2">
-            {project.isNew ? <Badge tone="brass">New</Badge> : null}
+            <ProjectMarks marks={project.marks} />
             <Badge tone="haze">{project.status}</Badge>
           </div>
         </div>

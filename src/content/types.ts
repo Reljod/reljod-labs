@@ -59,6 +59,8 @@ export type Credential = {
 
 export type ProjectStatus = "Case study soon" | "Live" | "In progress";
 
+export type ProjectMark = "New" | "Beta";
+
 export type Project = {
   slug: string;
   icon: IconName;
@@ -71,8 +73,11 @@ export type Project = {
   /** A live demo when `status` is "Live", otherwise the case study. */
   href?: string;
   cover?: { src: string; alt: string };
-  /** Marks a recently added project with a "New" tag wherever it is listed. */
-  isNew?: boolean;
+  /**
+   * Small tags shown beside the title wherever the project is listed, and in
+   * its demo's bar: "New" for a recent addition, "Beta" for one still settling.
+   */
+  marks?: ProjectMark[];
   /** What a visitor gets to do once they open a live demo. */
   features?: string[];
 };

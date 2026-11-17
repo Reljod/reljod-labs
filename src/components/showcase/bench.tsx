@@ -1,5 +1,4 @@
 import type { CSSProperties } from "react";
-import { Badge } from "@/components/ui/badge";
 import { IconTile } from "@/components/ui/icon";
 import { Section } from "@/components/ui/section";
 import { benchProjects } from "@/content/projects";
@@ -30,10 +29,7 @@ export function Bench() {
                 } as CSSProperties
               }
             >
-              <div className="flex items-start justify-between gap-3">
-                <IconTile name={project.icon} className="bg-morning-haze" />
-                <Badge tone="limestone">Soon</Badge>
-              </div>
+              <IconTile name={project.icon} className="bg-morning-haze" />
               <h3 className="mt-4 leading-snug font-semibold">
                 {project.title}
               </h3>
