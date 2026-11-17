@@ -171,8 +171,8 @@ export function ProfileView({
                 type="button"
                 disabled={!tile.target}
                 onClick={() => tile.target && onFact(tile.target)}
-                className="h-full w-full rounded-sm border border-ink/10 bg-paper p-3 text-left transition-colors hover:border-federal-blue disabled:hover:border-ink/10"
-                style={{ boxShadow: `inset 0 3px 0 ${tile.tone}` }}
+                className="outline-box press h-full w-full rounded-sm border-t-[5px] bg-paper p-3 text-left disabled:pointer-events-none"
+                style={{ borderTopColor: tile.tone }}
               >
                 <span className="eyebrow text-[0.6rem] text-ink-muted">
                   {tile.label}
@@ -210,7 +210,7 @@ export function ProfileView({
                         <button
                           type="button"
                           onClick={() => onFact(node.key)}
-                          className="flex h-full w-full items-start gap-2.5 rounded-sm border border-ink/10 bg-paper p-2.5 text-left hover:border-federal-blue"
+                          className="outline-box press flex h-full w-full items-start gap-2.5 rounded-sm bg-paper p-2.5 text-left"
                         >
                           <span
                             className="flex size-8 shrink-0 items-center justify-center rounded-full font-mono text-[0.65rem] font-bold text-paper"
@@ -347,7 +347,7 @@ export function ProfileView({
                       <button
                         type="button"
                         onClick={() => onResearch(gap.label)}
-                        className="rounded-full border border-dashed border-stone px-2.5 py-1 text-xs text-ink-muted hover:border-federal-blue hover:text-federal-blue"
+                        className="rounded-sm border border-ink border-dashed bg-paper px-2.5 py-1 text-xs text-ink-muted hover:border-solid hover:bg-morning-haze hover:text-federal-blue"
                       >
                         {gap.label}
                       </button>
@@ -383,17 +383,17 @@ function Section<T>({
   return (
     <section
       aria-label={title}
-      className="rounded-sm border border-ink/10 bg-paper/70 p-4"
+      className="outline-box rounded-sm bg-paper p-4 shadow-hard-sm"
     >
-      <h3 className="mb-3 flex items-center gap-2 text-sm font-semibold">
+      <h3 className="mb-3 flex items-center gap-2 font-mono text-sm font-bold uppercase">
         <span
-          className="flex size-5 items-center justify-center rounded-sm text-paper"
+          className="flex size-5 items-center justify-center rounded-sm border border-ink text-paper"
           style={{ background: tone }}
         >
           <Icon name={icon} className="size-3" strokeWidth={2.4} />
         </span>
         {title}
-        <span className="font-normal text-stone">{items.length}</span>
+        <span className="font-medium text-stone">{items.length}</span>
       </h3>
       {children(shown)}
       {hidden > 0 ? (

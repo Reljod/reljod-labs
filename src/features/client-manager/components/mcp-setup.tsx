@@ -1,8 +1,8 @@
 "use client";
 
 import { motion } from "motion/react";
-import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
+import { DemoBar } from "@/components/demo/demo-bar";
 import { GUEST_TOKEN_HEADER, MCP_PATH } from "../domain/oauth-paths";
 import { MCP_SERVER_NAME, MCP_TOOLS, researchSkill } from "../domain/research";
 import { Icon } from "./icons";
@@ -88,7 +88,7 @@ export function McpSetup({ guest }: { guest: boolean }) {
   const badge = minted ? (
     <div className="flex flex-wrap items-center gap-2 text-sm">
       <span
-        className={`rounded-full px-2.5 py-0.5 font-mono text-xs font-bold uppercase ${minted.kind === "guest" ? "bg-brass/30" : "bg-ivy/15 text-ivy"}`}
+        className={`eyebrow rounded-sm border border-ink px-1.5 py-0.5 font-bold ${minted.kind === "guest" ? "bg-brass/30" : "bg-ivy/15 text-ivy"}`}
       >
         {minted.kind === "guest"
           ? "Guest token"
@@ -110,7 +110,7 @@ export function McpSetup({ guest }: { guest: boolean }) {
       onClick={() => void mint()}
       disabled={busy}
       aria-busy={busy}
-      className="flex items-center gap-2 rounded-sm bg-ink px-4 py-2 text-sm font-semibold text-paper hover:bg-federal-blue disabled:opacity-50"
+      className="outline-box press eyebrow flex items-center gap-2 rounded-sm bg-federal-blue px-4 py-2 font-bold text-paper disabled:opacity-50"
     >
       <Icon name="spark" className="size-4" />
       {busy ? "Creating…" : guest ? "Create my guest token" : "Create a token"}
@@ -128,21 +128,13 @@ export function McpSetup({ guest }: { guest: boolean }) {
 
   return (
     <div className="min-h-dvh bg-marble text-ink">
-      <header className="flex items-center gap-2 border-ink/10 border-b bg-paper px-4 py-2.5">
-        <Link
-          href="/demos/client-manager"
-          className="flex items-center gap-1 text-sm text-ink-muted hover:text-ink"
-        >
-          <Icon name="back" className="size-4" />
-          Client Manager
-        </Link>
-      </header>
+      <DemoBar slug="client-manager" name="Client Manager" />
       <main className="mx-auto max-w-3xl space-y-10 px-4 py-10 sm:px-6">
         <section className="space-y-3">
           <p className="flex items-center gap-2 font-mono text-xs font-bold tracking-[0.08em] text-federal-blue uppercase">
             <Icon name="plug" className="size-4" /> MCP
           </p>
-          <h1 className="text-3xl font-semibold tracking-tight sm:text-4xl">
+          <h1 className="font-mono text-3xl leading-[1.15] font-bold uppercase sm:text-[2.5rem]">
             Your client book, inside Claude Code
           </h1>
           <p className="max-w-xl text-ink-muted">
@@ -200,7 +192,7 @@ export function McpSetup({ guest }: { guest: boolean }) {
             <button
               type="button"
               onClick={downloadSkill}
-              className="flex items-center gap-2 rounded-sm border border-ink/20 bg-paper px-3 py-2 text-sm font-medium hover:border-federal-blue hover:text-federal-blue"
+              className="outline-box press eyebrow flex items-center gap-2 rounded-sm bg-paper px-3 py-2 font-bold"
             >
               <Icon name="download" className="size-4" />
               SKILL.md
@@ -225,8 +217,8 @@ export function McpSetup({ guest }: { guest: boolean }) {
           </p>
         </Step>
 
-        <details className="space-y-3 rounded-sm border border-ink/10 bg-paper p-4">
-          <summary className="cursor-pointer text-sm font-medium">
+        <details className="outline-box space-y-3 rounded-sm bg-paper p-4 shadow-hard-sm">
+          <summary className="eyebrow cursor-pointer font-bold">
             Client can't sign in with OAuth? Use a token
           </summary>
           <div className="mt-3 space-y-3">
@@ -257,10 +249,8 @@ export function McpSetup({ guest }: { guest: boolean }) {
         </details>
 
         <section aria-label="Tools" className="space-y-3">
-          <h2 className="font-mono text-xs font-bold tracking-[0.08em] text-stone uppercase">
-            Tools
-          </h2>
-          <ul className="grid gap-px overflow-hidden rounded-sm border border-ink/10 bg-ink/10 sm:grid-cols-2">
+          <h2 className="eyebrow font-bold text-ink-muted">Tools</h2>
+          <ul className="outline-box grid gap-px overflow-hidden rounded-sm bg-ink/20 shadow-hard-md sm:grid-cols-2">
             {MCP_TOOLS.map((tool, index) => (
               <motion.li
                 key={tool.name}
@@ -278,7 +268,7 @@ export function McpSetup({ guest }: { guest: boolean }) {
                 {tool.writes ? (
                   <span
                     title="Writes"
-                    className="rounded-sm bg-brass/30 px-1 font-mono text-[0.6rem] font-bold uppercase"
+                    className="rounded-sm border border-ink bg-brass/30 px-1 font-mono text-[0.6rem] font-bold uppercase"
                   >
                     write
                   </span>
@@ -303,10 +293,12 @@ function Step({
 }) {
   return (
     <section className="grid grid-cols-[2rem_minmax(0,1fr)] gap-x-3 gap-y-3">
-      <span className="flex size-7 items-center justify-center rounded-full bg-ink font-mono text-sm font-bold text-paper">
+      <span className="outline-box flex size-7 items-center justify-center rounded-sm bg-ink font-mono text-sm font-bold text-paper shadow-hard-sm">
         {n}
       </span>
-      <h2 className="self-center text-lg font-semibold">{title}</h2>
+      <h2 className="self-center font-mono text-lg font-bold uppercase">
+        {title}
+      </h2>
       <div className="col-start-2 space-y-3">{children}</div>
     </section>
   );
@@ -324,7 +316,7 @@ function Code({
   const [copied, setCopied] = useState(false);
   return (
     <div
-      className={`relative rounded-sm ${quiet ? "bg-paper text-ink" : "bg-ink text-morning-haze"}`}
+      className={`outline-box relative rounded-sm shadow-hard-sm ${quiet ? "bg-paper text-ink" : "bg-ink text-morning-haze"}`}
     >
       <pre
         className={`cm-scroll overflow-x-auto p-4 font-mono ${copy ? "pt-9" : ""} text-[0.8rem] leading-relaxed whitespace-pre`}
@@ -342,7 +334,7 @@ function Code({
               });
             }}
             aria-label="Copy"
-            className="flex items-center gap-1 rounded-sm bg-paper/10 px-2 py-1 font-mono text-[0.65rem] text-paper hover:bg-paper/20"
+            className="flex items-center gap-1 rounded-sm border border-paper/40 bg-paper/10 px-2 py-1 font-mono text-[0.65rem] font-bold text-paper uppercase hover:bg-paper/20"
           >
             <Icon name={copied ? "check" : "copy"} className="size-3" />
             {copied ? "copied" : "copy"}

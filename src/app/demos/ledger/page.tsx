@@ -1,9 +1,7 @@
 import type { Metadata } from "next";
-import Link from "next/link";
+import { DemoBar } from "@/components/demo/demo-bar";
 import { Contact } from "@/components/sections/contact";
 import { SiteFooter } from "@/components/sections/site-footer";
-import { SiteHeader } from "@/components/sections/site-header";
-import { LiveBadge } from "@/components/ui/live-badge";
 import { projects } from "@/content/projects";
 import { AskBox } from "@/features/ledger/components/ask-box";
 
@@ -17,7 +15,7 @@ export const metadata: Metadata = {
 export default function LedgerDemoPage() {
   return (
     <>
-      <SiteHeader />
+      <DemoBar slug="ledger" name="Ledger" />
       <main>
         <section
           aria-labelledby="ledger-title"
@@ -25,18 +23,9 @@ export default function LedgerDemoPage() {
         >
           <div className="mx-auto grid max-w-6xl items-center gap-12 px-4 py-14 sm:px-6 lg:grid-cols-[1fr_1.1fr] lg:py-24">
             <div>
-              <div className="flex items-center gap-4">
-                <Link
-                  href="/#demos"
-                  className="eyebrow font-bold text-federal-blue underline"
-                >
-                  ← All demos
-                </Link>
-                <LiveBadge />
-              </div>
               <h1
                 id="ledger-title"
-                className="mt-6 font-mono text-4xl leading-none font-bold tracking-[-0.02em] uppercase sm:text-6xl"
+                className="font-mono text-4xl leading-none font-bold tracking-[-0.02em] uppercase sm:text-6xl"
               >
                 {ledger?.title}
               </h1>

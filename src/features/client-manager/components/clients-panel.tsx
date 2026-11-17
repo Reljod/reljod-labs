@@ -46,7 +46,7 @@ export function ClientsPanel({
 
   return (
     <div className="flex h-full min-h-0 flex-col">
-      <div className="flex items-center gap-2 border-ink/10 border-b p-3">
+      <div className="flex items-center gap-2 border-ink border-b-2 p-3">
         <label className="relative min-w-0 flex-1">
           <span className="sr-only">Find a client</span>
           <Icon
@@ -57,13 +57,13 @@ export function ClientsPanel({
             value={filter}
             onChange={(event) => setFilter(event.target.value)}
             placeholder="Find a client"
-            className="w-full rounded-sm border border-ink/15 bg-paper py-1.5 pr-2 pl-8 text-sm focus:border-federal-blue focus:outline-none"
+            className="outline-box w-full rounded-sm bg-paper py-1.5 pr-2 pl-8 text-sm shadow-hard-sm focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-federal-blue"
           />
         </label>
         <button
           type="button"
           onClick={onAdd}
-          className="flex shrink-0 items-center gap-1 rounded-sm bg-ink px-2.5 py-1.5 text-sm font-semibold text-paper hover:bg-federal-blue"
+          className="outline-box press eyebrow flex shrink-0 items-center gap-1 rounded-sm bg-federal-blue px-2.5 py-1.5 font-bold text-paper"
         >
           <Icon name="plus" className="size-3.5" />
           Client
@@ -142,7 +142,7 @@ function Group({
                 type="button"
                 onClick={() => onOpen(card.id)}
                 aria-current={activeId === card.id}
-                className={`flex w-full items-center gap-3 rounded-sm p-2 text-left ${activeId === card.id ? "bg-paper shadow-hard-sm outline-box" : "hover:bg-paper/80"}`}
+                className={`flex w-full items-center gap-3 rounded-sm border-2 p-2 text-left ${activeId === card.id ? "border-ink bg-paper shadow-hard-sm" : "border-transparent hover:border-ink/20 hover:bg-paper/80"}`}
               >
                 <Portrait
                   name={card.name}
@@ -160,7 +160,7 @@ function Group({
                       : (card.persona?.archetype ?? "No persona yet")}
                   </span>
                   <span
-                    className="mt-1.5 flex h-1 overflow-hidden rounded-full bg-limestone/50"
+                    className="mt-1.5 flex h-1.5 overflow-hidden border border-ink/30 bg-limestone/50"
                     title={`${total} facts`}
                   >
                     {BRANCHES.map((branch) => {
@@ -183,7 +183,7 @@ function Group({
                 onClick={() => onAsk(card.id)}
                 aria-label={`Ask about ${card.name}`}
                 title={`Ask about ${card.name}`}
-                className="absolute top-2 right-2 rounded-sm bg-paper p-1.5 text-ink-muted opacity-0 shadow-hard-sm group-hover:opacity-100 hover:text-federal-blue focus:opacity-100"
+                className="outline-box absolute top-2 right-2 grid size-7 place-items-center rounded-sm bg-paper text-ink-muted opacity-0 shadow-hard-sm group-hover:opacity-100 hover:bg-morning-haze hover:text-federal-blue focus:opacity-100"
               >
                 <Icon name="chat" className="size-3.5" />
               </button>

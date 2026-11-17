@@ -1,7 +1,6 @@
 "use client";
 
 import { MotionConfig } from "motion/react";
-import Link from "next/link";
 import {
   type ReactNode,
   useCallback,
@@ -10,6 +9,7 @@ import {
   useRef,
   useState,
 } from "react";
+import { DemoBar } from "@/components/demo/demo-bar";
 import type { AskSessionView, StoredBuild } from "../domain/build-events";
 import { cutBlock, type Layout, type PlanStep } from "../domain/build-plan";
 import { contentTree } from "../domain/content-tree";
@@ -278,19 +278,11 @@ export function AskScreen({
   return (
     <MotionConfig reducedMotion="user">
       <div data-testid="ask-screen" data-phase={phase} data-busy={busy}>
-        <header className="sticky top-0 z-20 border-ink border-b-2 bg-marble">
-          <div className="flex h-16 items-center justify-between gap-4 px-4 sm:px-6">
-            <Link
-              href="/demos/ledger"
-              className="eyebrow font-bold text-federal-blue underline"
-            >
-              ← Ledger demo
-            </Link>
-            <p className="eyebrow text-ink-muted">
-              Ask session · Ledger rebuilds the site
-            </p>
-          </div>
-        </header>
+        <DemoBar slug="ledger" name="Ledger">
+          <p className="eyebrow hidden text-ink-muted sm:block">
+            Ask session · Ledger rebuilds the site
+          </p>
+        </DemoBar>
 
         <div className="max-lg:pb-[50vh] lg:pr-[24rem]">
           <div

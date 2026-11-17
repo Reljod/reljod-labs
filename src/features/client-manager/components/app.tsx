@@ -4,6 +4,7 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { AnimatePresence } from "motion/react";
 import Link from "next/link";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { DemoBar, demoBarControlClass } from "@/components/demo/demo-bar";
 import type { ThreadSummary, Walk } from "../domain/chat";
 import { EMPTY_HIGHLIGHT, highlightFrom } from "../domain/traversal";
 import { fetchCatalog, fetchThreads, keys, send } from "./api";
@@ -182,66 +183,52 @@ export function ClientManagerApp({
 
   return (
     <div className="flex h-dvh flex-col bg-marble text-ink">
-      <header className="flex items-center gap-3 border-ink/10 border-b bg-paper px-3 py-2">
+      <DemoBar
+        slug="client-manager"
+        name="Client Manager"
+        titleAs="h1"
+        current={tab}
+        tabs={TABS.map((item) => ({
+          id: item.id,
+          label: (
+            <>
+              <Icon name={item.icon} className="size-3.5" />
+              {item.label}
+            </>
+          ),
+          onSelect: () => goTo(item.id),
+        }))}
+      >
         <button
           type="button"
           onClick={() => setSidebar(!sidebar)}
           aria-label={sidebar ? "Hide the list" : "Show the list"}
-          className="hidden rounded-sm p-1.5 text-ink-muted hover:bg-marble hover:text-ink lg:block"
+          className={`${demoBarControlClass} hidden lg:flex`}
         >
-          <Icon name="sidebar" />
+          <Icon name="sidebar" className="size-4" />
         </button>
         <button
           type="button"
           onClick={() => setShowList(!showList)}
           aria-label={showList ? "Hide the list" : "Show the list"}
-          className="rounded-sm p-1.5 text-ink-muted hover:bg-marble hover:text-ink lg:hidden"
+          className={`${demoBarControlClass} lg:hidden`}
         >
-          <Icon name="sidebar" />
+          <Icon name="sidebar" className="size-4" />
         </button>
         <Link
-          href="/#demos"
-          className="hidden text-sm text-ink-muted hover:text-ink sm:inline"
-        >
-          Demos
-        </Link>
-        <span className="hidden text-stone sm:inline">/</span>
-        <h1 className="hidden font-mono text-sm font-bold tracking-[0.06em] uppercase sm:block">
-          Client Manager
-        </h1>
-        <div
-          aria-label="Sections"
-          role="tablist"
-          className="mx-auto flex rounded-full bg-marble p-1 sm:mx-0 sm:ml-6"
-        >
-          {TABS.map((item) => (
-            <button
-              key={item.id}
-              type="button"
-              role="tab"
-              aria-selected={tab === item.id}
-              onClick={() => goTo(item.id)}
-              className={`flex items-center gap-1.5 rounded-full px-4 py-1.5 text-sm font-medium transition-colors ${tab === item.id ? "bg-ink text-paper" : "text-ink-muted hover:text-ink"}`}
-            >
-              <Icon name={item.icon} className="size-3.5" />
-              {item.label}
-            </button>
-          ))}
-        </div>
-        <Link
           href="/demos/client-manager/mcp"
-          className="ml-auto hidden items-center gap-1.5 rounded-sm px-2.5 py-1.5 text-sm text-ink-muted hover:bg-marble hover:text-federal-blue sm:flex"
+          className={`${demoBarControlClass} hidden sm:flex`}
         >
           <Icon name="plug" className="size-4" />
           MCP
         </Link>
-      </header>
+      </DemoBar>
 
       {tab === "chat" ? (
         <div className="flex min-h-0 flex-1">
           {sidebar ? (
             <aside
-              className={`${showList ? "flex" : "hidden"} w-full shrink-0 flex-col border-ink/10 bg-marble lg:flex lg:w-64 lg:border-r`}
+              className={`${showList ? "flex" : "hidden"} w-full shrink-0 flex-col border-ink bg-marble lg:flex lg:w-64 lg:border-r-2`}
             >
               <ThreadList
                 threads={threads.data ?? []}
@@ -294,7 +281,7 @@ export function ClientManagerApp({
         <div className="flex min-h-0 flex-1">
           {sidebar ? (
             <aside
-              className={`${showList || !open ? "flex" : "hidden"} w-full shrink-0 flex-col border-ink/10 bg-marble lg:flex lg:w-80 lg:border-r`}
+              className={`${showList || !open ? "flex" : "hidden"} w-full shrink-0 flex-col border-ink bg-marble lg:flex lg:w-80 lg:border-r-2`}
             >
               <ClientsPanel
                 cards={cards}

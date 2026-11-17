@@ -32,7 +32,7 @@ export function McpConsent({
         <p className="flex items-center gap-2 font-mono text-xs font-bold tracking-[0.08em] text-federal-blue uppercase">
           <Icon name="plug" className="size-4" /> Connect an MCP client
         </p>
-        <h1 className="text-2xl font-semibold tracking-tight">
+        <h1 className="font-mono text-2xl leading-tight font-bold uppercase">
           Let {clientName} use your client book?
         </h1>
         <p className="text-ink-muted">
@@ -52,7 +52,7 @@ export function McpConsent({
             type="submit"
             disabled={pending}
             aria-busy={pending}
-            className="flex items-center gap-2 rounded-sm bg-ink px-4 py-2 text-sm font-semibold text-paper hover:bg-federal-blue disabled:opacity-50"
+            className="outline-box press eyebrow flex items-center gap-2 rounded-sm bg-federal-blue px-4 py-2 font-bold text-paper disabled:opacity-50"
           >
             <Icon name="check" className="size-4" />
             {pending ? "Connecting…" : "Allow"}
@@ -64,7 +64,7 @@ export function McpConsent({
           <button
             type="submit"
             disabled={pending}
-            className="rounded-sm border border-ink/20 bg-paper px-4 py-2 text-sm font-medium hover:border-seal-red hover:text-seal-red disabled:opacity-50"
+            className="outline-box press eyebrow rounded-sm bg-paper px-4 py-2 font-bold hover:text-seal-red disabled:opacity-50"
           >
             Deny
           </button>

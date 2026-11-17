@@ -77,7 +77,7 @@ export function AddDialog({
 
   return (
     <motion.div
-      className="fixed inset-0 z-50 flex items-end justify-center bg-ink/40 backdrop-blur-[2px] sm:items-center sm:p-6"
+      className="fixed inset-0 z-50 flex items-end justify-center bg-ink/50 sm:items-center sm:p-6"
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
@@ -96,12 +96,12 @@ export function AddDialog({
         className="outline-box w-full max-w-lg rounded-sm bg-paper p-4 shadow-hard-lg"
       >
         <div className="mb-3 flex items-center justify-between">
-          <h2 className="font-semibold">Add to {clientName}</h2>
+          <h2 className="font-mono font-bold uppercase">Add to {clientName}</h2>
           <button
             type="button"
             onClick={onClose}
             aria-label="Close"
-            className="rounded-sm p-1 text-ink-muted hover:bg-marble"
+            className="outline-box press grid size-8 place-items-center rounded-sm bg-paper"
           >
             <Icon name="close" />
           </button>
@@ -112,14 +112,14 @@ export function AddDialog({
           onChange={(event) => setNote(event.target.value)}
           rows={5}
           placeholder="What's new? A meeting note, a life event, a change of plans…"
-          className="w-full resize-none rounded-sm border border-ink/15 bg-marble/50 p-3 text-sm focus:border-federal-blue focus:outline-none"
+          className="outline-box w-full resize-none rounded-sm bg-marble/50 p-3 text-sm shadow-hard-sm focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-federal-blue"
         />
         {files.length > 0 ? (
           <ul className="mt-2 flex flex-wrap gap-1.5">
             {files.map((file) => (
               <li
                 key={file.name}
-                className="flex items-center gap-1 rounded-full bg-marble px-2.5 py-1 text-xs"
+                className="flex items-center gap-1 rounded-sm border border-ink bg-marble px-2 py-0.5 text-xs"
               >
                 {file.name}
                 <span className="text-stone">{formatBytes(file.size)}</span>
@@ -142,7 +142,7 @@ export function AddDialog({
           <button
             type="button"
             onClick={() => picker.current?.click()}
-            className="flex items-center gap-1.5 rounded-sm border border-ink/15 px-3 py-2 text-sm hover:border-federal-blue"
+            className="outline-box press eyebrow flex items-center gap-1.5 rounded-sm bg-paper px-3 py-2"
           >
             <Icon name="doc" className="size-3.5" />
             Files
@@ -164,7 +164,7 @@ export function AddDialog({
             type="submit"
             disabled={busy || (!note.trim() && files.length === 0)}
             aria-busy={busy}
-            className="ml-auto rounded-sm bg-ink px-4 py-2 text-sm font-semibold text-paper disabled:opacity-40"
+            className="outline-box press eyebrow ml-auto rounded-sm bg-federal-blue px-4 py-2 font-bold text-paper disabled:opacity-40"
           >
             {busy ? "Starting…" : "Add to the graph"}
           </button>

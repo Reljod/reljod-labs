@@ -50,7 +50,7 @@ export function BuildStrip({
       initial={{ height: 0, opacity: 0 }}
       animate={{ height: "auto", opacity: 1 }}
       exit={{ height: 0, opacity: 0 }}
-      className="overflow-hidden border-ink/10 border-b bg-ink text-paper"
+      className="overflow-hidden border-ink border-b-2 bg-ink text-paper"
       data-testid="build-card"
       data-status={status}
     >
@@ -100,7 +100,7 @@ export function BuildStrip({
                 onClick={() => void stop()}
                 disabled={stopping}
                 aria-busy={stopping}
-                className="rounded-sm bg-seal-red px-1.5 py-0.5 text-paper disabled:opacity-60"
+                className="rounded-sm border border-paper bg-seal-red px-1.5 py-0.5 font-bold text-paper uppercase disabled:opacity-60"
               >
                 {stopping ? "Stopping…" : "Stop"}
               </button>
@@ -108,7 +108,7 @@ export function BuildStrip({
                 type="button"
                 onClick={() => setConfirming(false)}
                 disabled={stopping}
-                className="rounded-sm px-1.5 py-0.5 text-paper/80 hover:bg-paper/10 disabled:opacity-60"
+                className="rounded-sm border border-paper/40 px-1.5 py-0.5 font-bold text-paper/80 uppercase hover:bg-paper/10 disabled:opacity-60"
               >
                 Keep going
               </button>
@@ -117,7 +117,7 @@ export function BuildStrip({
             <button
               type="button"
               onClick={() => setConfirming(true)}
-              className="flex items-center gap-1 rounded-sm px-1.5 py-0.5 font-mono text-[0.7rem] text-paper/80 hover:bg-seal-red hover:text-paper"
+              className="flex items-center gap-1 rounded-sm border border-paper/40 px-1.5 py-0.5 font-mono text-[0.7rem] font-bold text-paper/80 uppercase hover:border-paper hover:bg-seal-red hover:text-paper"
             >
               <Icon name="stop" className="size-3" />
               Stop

@@ -66,7 +66,7 @@ export function FactSheet({
       aria-label={`${lite?.label ?? nodeKey} details`}
       className="outline-box flex max-h-full flex-col overflow-hidden rounded-sm bg-paper shadow-hard-md"
     >
-      <header className="flex items-start gap-3 border-ink/15 border-b p-4">
+      <header className="flex items-start gap-3 border-ink border-b-2 p-4">
         <span
           aria-hidden="true"
           className="mt-1.5 size-3 shrink-0 rounded-full"
@@ -76,7 +76,7 @@ export function FactSheet({
           <p className="eyebrow text-[0.65rem] text-ink-muted">
             {isRoot ? "Client" : `${branch} › ${leaf}`}
           </p>
-          <h3 className="mt-0.5 text-lg leading-tight font-semibold [overflow-wrap:anywhere]">
+          <h3 className="mt-0.5 font-mono text-lg leading-tight font-bold uppercase [overflow-wrap:anywhere]">
             {isRoot ? clientName : (node?.label ?? lite?.label ?? nodeKey)}
           </h3>
         </div>
@@ -84,7 +84,7 @@ export function FactSheet({
           type="button"
           onClick={onClose}
           aria-label="Close details"
-          className="rounded-sm p-1.5 text-ink-muted hover:bg-marble hover:text-ink"
+          className="outline-box press grid size-8 shrink-0 place-items-center rounded-sm bg-paper"
         >
           <Icon name="close" />
         </button>
@@ -94,11 +94,11 @@ export function FactSheet({
         {!isRoot ? (
           <div className="flex items-center gap-3">
             <div
-              className="relative h-1.5 flex-1 overflow-hidden rounded-full bg-marble"
+              className="relative h-2 flex-1 overflow-hidden rounded-sm border border-ink bg-marble"
               aria-hidden="true"
             >
               <motion.div
-                className="h-full rounded-full"
+                className="h-full"
                 style={{ background: CERTAINTY_STYLE[level].color }}
                 initial={{ width: 0 }}
                 animate={{ width: `${Math.round(confidence * 100)}%` }}

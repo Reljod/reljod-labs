@@ -1,7 +1,11 @@
 "use client";
 
-import Link from "next/link";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import {
+  DemoBar,
+  DemoBarBadge,
+  demoBarControlClass,
+} from "@/components/demo/demo-bar";
 import type { CatPose } from "@/features/ledger/components/cat";
 import type { ChatEvent } from "../domain/chat-events";
 import { JOBS, type JobId } from "../domain/jobs";
@@ -740,118 +744,96 @@ export function Desk() {
 
   return (
     <div className="cw-desk flex h-dvh min-h-[620px] flex-col overflow-hidden text-ink">
-      <header className="relative z-30 flex h-12 shrink-0 items-center gap-3 bg-ink px-4 text-paper">
-        <Link
-          href="/#demos"
-          className="font-mono text-[11px] font-bold tracking-[0.1em] text-paper/70 uppercase hover:text-paper"
-        >
-          ← Labs
-        </Link>
-        <span className="h-5 w-px bg-paper/25" />
-        <h1 className="font-mono text-sm font-bold tracking-[0.14em] uppercase">
-          Teller
-        </h1>
-        <span className="hidden rounded-sm border border-brass/70 px-1.5 py-0.5 font-mono text-[10px] font-bold tracking-[0.08em] text-brass uppercase md:inline">
-          Synthetic data
-        </span>
-        <nav className="ml-3 flex gap-1" aria-label="Pages">
-          {(
-            [
-              ["desk", "Desk"],
-              ["pipelines", "Pipelines"],
-            ] as const
-          ).map(([value, label]) => (
-            <button
-              key={value}
-              type="button"
-              aria-pressed={page === value}
-              onClick={() => setPage(value)}
-              className={`h-8 rounded-sm px-3 font-mono text-[11px] font-bold tracking-[0.08em] uppercase transition-colors ${page === value ? "bg-paper text-ink" : "text-paper/70 hover:bg-paper/10 hover:text-paper"}`}
-            >
-              {label}
-            </button>
-          ))}
-        </nav>
-
-        <div className="ml-auto flex items-center gap-2">
-          <div className="relative">
-            <button
-              type="button"
-              onClick={() => setDesksOpen(!desksOpen)}
-              aria-expanded={desksOpen}
-              className="flex h-8 items-center gap-1.5 rounded-sm border border-paper/30 px-2.5 font-mono text-[11px] font-bold tracking-[0.06em] uppercase hover:bg-paper/10"
-            >
-              Desks
-              <span className="text-paper/60">{desk?.desks.length ?? ""}</span>
-              <span aria-hidden="true">▾</span>
-            </button>
-            {desksOpen && desk ? (
-              <>
-                <button
-                  type="button"
-                  aria-label="Close the list of desks"
-                  className="fixed inset-0 z-40 cursor-default"
-                  onClick={() => setDesksOpen(false)}
-                />
-                <div className="cw-reveal absolute top-10 right-0 z-50 w-80 rounded-sm border-2 border-ink bg-paper text-ink shadow-hard-md">
-                  <p className="border-ink/15 border-b px-3 py-2 text-xs text-ink-muted">
-                    Each desk keeps its own chat, runs and spend. Go back to one
-                    any time from this browser.
-                  </p>
-                  <ul className="cw-scroll max-h-72 overflow-y-auto">
-                    {desk.desks.map((item) => (
-                      <li key={item.id}>
-                        <button
-                          type="button"
-                          disabled={item.current || switching}
-                          aria-busy={switching}
-                          onClick={() => switchDesk(item.id)}
-                          className={`flex w-full items-baseline gap-2 border-ink/10 border-b px-3 py-2 text-left ${item.current ? "bg-morning-haze/60" : "hover:bg-marble"}`}
-                        >
-                          <span className="min-w-0 flex-1">
-                            <span className="block truncate text-[13px] font-semibold">
-                              {item.title}
-                            </span>
-                            <span className="block font-mono text-[10px] text-ink-muted">
-                              {item.current
-                                ? "This desk"
-                                : ago(item.lastActiveAt)}{" "}
-                              · ${item.spendUsd.toFixed(4)}
-                            </span>
-                          </span>
-                          {item.current ? null : (
-                            <span className="font-mono text-[10px] font-bold text-federal-blue uppercase">
-                              Open
-                            </span>
-                          )}
-                        </button>
-                      </li>
-                    ))}
-                  </ul>
-                  <button
-                    type="button"
-                    disabled={switching}
-                    aria-busy={switching}
-                    onClick={() => switchDesk(null)}
-                    className="w-full px-3 py-2 text-left font-mono text-[11px] font-bold tracking-[0.06em] text-federal-blue uppercase hover:bg-marble disabled:opacity-50"
-                  >
-                    {switching ? "Opening…" : "+ New desk"}
-                  </button>
-                </div>
-              </>
-            ) : null}
-          </div>
+      <DemoBar
+        slug="casework-desk"
+        name="Teller"
+        titleAs="h1"
+        badge={<DemoBarBadge>Synthetic data</DemoBarBadge>}
+        current={page}
+        tabs={(
+          [
+            ["desk", "Desk"],
+            ["pipelines", "Pipelines"],
+          ] as const
+        ).map(([id, label]) => ({ id, label, onSelect: () => setPage(id) }))}
+      >
+        <div className="relative">
           <button
             type="button"
-            onClick={() => setSettingsOpen(true)}
-            className="flex h-8 items-center gap-2 rounded-sm border border-paper/30 px-2.5 font-mono text-[11px] font-bold hover:bg-paper/10"
-            title="Spend and model settings"
+            onClick={() => setDesksOpen(!desksOpen)}
+            aria-expanded={desksOpen}
+            className={demoBarControlClass}
           >
-            <span className="text-paper/60 uppercase">Spend</span>$
-            {spend.totalUsd.toFixed(4)}
+            Desks
+            <span className="text-ink-muted">{desk?.desks.length ?? ""}</span>
+            <span aria-hidden="true">▾</span>
           </button>
+          {desksOpen && desk ? (
+            <>
+              <button
+                type="button"
+                aria-label="Close the list of desks"
+                className="fixed inset-0 z-40 cursor-default"
+                onClick={() => setDesksOpen(false)}
+              />
+              <div className="cw-reveal absolute top-12 right-0 z-50 w-80 rounded-sm border-2 border-ink bg-paper text-ink shadow-hard-md">
+                <p className="border-ink/15 border-b px-3 py-2 text-xs text-ink-muted">
+                  Each desk keeps its own chat, runs and spend. Go back to one
+                  any time from this browser.
+                </p>
+                <ul className="cw-scroll max-h-72 overflow-y-auto">
+                  {desk.desks.map((item) => (
+                    <li key={item.id}>
+                      <button
+                        type="button"
+                        disabled={item.current || switching}
+                        aria-busy={switching}
+                        onClick={() => switchDesk(item.id)}
+                        className={`flex w-full items-baseline gap-2 border-ink/10 border-b px-3 py-2 text-left ${item.current ? "bg-morning-haze/60" : "hover:bg-marble"}`}
+                      >
+                        <span className="min-w-0 flex-1">
+                          <span className="block truncate text-[13px] font-semibold">
+                            {item.title}
+                          </span>
+                          <span className="block font-mono text-[10px] text-ink-muted">
+                            {item.current
+                              ? "This desk"
+                              : ago(item.lastActiveAt)}{" "}
+                            · ${item.spendUsd.toFixed(4)}
+                          </span>
+                        </span>
+                        {item.current ? null : (
+                          <span className="font-mono text-[10px] font-bold text-federal-blue uppercase">
+                            Open
+                          </span>
+                        )}
+                      </button>
+                    </li>
+                  ))}
+                </ul>
+                <button
+                  type="button"
+                  disabled={switching}
+                  aria-busy={switching}
+                  onClick={() => switchDesk(null)}
+                  className="w-full px-3 py-2 text-left font-mono text-[11px] font-bold tracking-[0.06em] text-federal-blue uppercase hover:bg-marble disabled:opacity-50"
+                >
+                  {switching ? "Opening…" : "+ New desk"}
+                </button>
+              </div>
+            </>
+          ) : null}
         </div>
-      </header>
+        <button
+          type="button"
+          onClick={() => setSettingsOpen(true)}
+          className={demoBarControlClass}
+          title="Spend and model settings"
+        >
+          <span className="hidden text-ink-muted sm:inline">Spend</span>$
+          {spend.totalUsd.toFixed(4)}
+        </button>
+      </DemoBar>
 
       {page === "pipelines" ? (
         <div className="min-h-0 flex-1 px-3 py-3 lg:px-4 lg:py-4">

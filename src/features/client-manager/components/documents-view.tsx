@@ -40,7 +40,7 @@ export function DocumentsView({
   }
   return (
     <div className="grid h-full min-h-0 md:grid-cols-[15rem_minmax(0,1fr)]">
-      <ul className="cm-scroll max-h-48 overflow-y-auto border-ink/10 border-b p-2 md:max-h-none md:border-r md:border-b-0">
+      <ul className="cm-scroll max-h-48 overflow-y-auto border-ink border-b-2 p-2 md:max-h-none md:border-r-2 md:border-b-0">
         {client.sources.map((source, index) => (
           <motion.li
             key={source.id}
@@ -52,7 +52,7 @@ export function DocumentsView({
               type="button"
               onClick={() => onOpen(source.id)}
               aria-current={selected === source.id}
-              className={`block w-full rounded-sm px-2.5 py-2 text-left ${selected === source.id ? "bg-paper shadow-hard-sm outline-box" : "hover:bg-paper/70"}`}
+              className={`block w-full rounded-sm border-2 px-2.5 py-2 text-left ${selected === source.id ? "border-ink bg-paper shadow-hard-sm" : "border-transparent hover:border-ink/20 hover:bg-paper/70"}`}
             >
               <span className="flex items-center gap-2">
                 <SourceBadge kind={source.kind} />
@@ -64,9 +64,9 @@ export function DocumentsView({
                 className="mt-1.5 flex items-center gap-2"
                 title={`Backs ${source.facts} facts`}
               >
-                <span className="h-1 flex-1 overflow-hidden rounded-full bg-limestone/60">
+                <span className="h-1.5 flex-1 overflow-hidden border border-ink/30 bg-limestone/60">
                   <span
-                    className="block h-full rounded-full bg-federal-blue"
+                    className="block h-full bg-federal-blue"
                     style={{ width: `${(source.facts / most) * 100}%` }}
                   />
                 </span>
@@ -189,7 +189,7 @@ function DocumentReader({
       <article className="cm-scroll min-h-0 overflow-y-auto p-4 sm:p-6">
         <header className="mb-4 flex flex-wrap items-center gap-2">
           <SourceBadge kind={source.kind} />
-          <h3 className="min-w-0 flex-1 truncate font-semibold">
+          <h3 className="min-w-0 flex-1 truncate font-mono font-bold uppercase">
             {source.name}
           </h3>
           {source.url ? (
@@ -197,7 +197,7 @@ function DocumentReader({
               href={source.url}
               target="_blank"
               rel="noreferrer"
-              className="flex items-center gap-1 rounded-sm border border-ink/15 px-2 py-1 text-xs hover:border-federal-blue hover:text-federal-blue"
+              className="outline-box press eyebrow flex items-center gap-1 rounded-sm bg-paper px-2.5 py-1"
             >
               <Icon name="external" className="size-3" />
               Original
@@ -209,7 +209,7 @@ function DocumentReader({
           <img
             src={source.url}
             alt={source.name}
-            className="max-h-[60vh] rounded-sm border border-ink/10"
+            className="outline-box max-h-[60vh] rounded-sm shadow-hard-sm"
           />
         ) : source.text ? (
           <div
@@ -231,13 +231,13 @@ function DocumentReader({
       </article>
       <aside
         aria-label="Facts from this document"
-        className="cm-scroll max-h-64 min-h-0 overflow-y-auto border-ink/10 border-t bg-marble/50 p-2 lg:max-h-none lg:border-t-0 lg:border-l"
+        className="cm-scroll max-h-64 min-h-0 overflow-y-auto border-ink border-t-2 bg-marble/50 p-2 lg:max-h-none lg:border-t-0 lg:border-l-2"
       >
         <ul className="space-y-0.5">
           {source.backing.map((fact, index) => (
             <li key={`${fact.key}-${index}`}>
               <div
-                className={`flex items-start gap-2 rounded-sm px-2 py-1.5 ${active === index ? "bg-paper shadow-hard-sm" : "hover:bg-paper/70"}`}
+                className={`flex items-start gap-2 rounded-sm border-2 px-2 py-1.5 ${active === index ? "border-ink bg-paper shadow-hard-sm" : "border-transparent hover:bg-paper/70"}`}
               >
                 <button
                   type="button"
