@@ -50,6 +50,11 @@ const RATES = {
     refusal: (limit: number) =>
       `That's ${limit} Sandbox commands this hour. Try again soon.`,
   },
+  search: {
+    perHour: LIMITS.searchesPerHour,
+    refusal: (limit: number) =>
+      `That's ${limit} searches this hour. Try again soon.`,
+  },
 } as const;
 
 export type RateKind = keyof typeof RATES;

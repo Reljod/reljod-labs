@@ -8,6 +8,7 @@ Demos that call a paid model guard the work with limits (documents per run, runs
 
 - Put the number in one place (`LIMITS` in `server/runs.ts`) and apply it in the server function, not only in a zod schema or the UI.
 - When you add a path that feeds work into an existing run, check it against the same limits as the path that started it.
+- Reads count too. A search that embeds its query calls a paid model on every request: the Harness first shipped `searchKnowledge` with no cap on either the route or the MCP tool. Where refusing would break a chat turn, fall back to the unpaid path (words alone) once the cap is reached.
 
 ## Make the escape hatch work when the thing it escapes is broken
 
@@ -47,3 +48,10 @@ The Guest pass page first shipped Extend and New code as bare buttons: a click g
 - Ask to confirm a write that is destructive or hard to undo (delete, revoke, stop, a new code that replaces the old one), in a dialog that names what will happen. `ConfirmDialog` in `src/features/access/components/pass-actions.tsx` is the pattern: a native `<dialog>`, Escape and the backdrop close it except while the write runs.
 - An escape hatch is the exception: Casework's Stop (and Esc) is guarded but never asks first, because a confirm would slow down the one control that must always work and it deletes nothing.
 - Show the result where the person clicked (what changed, or the error inline). Never fail silently.
+
+## A durable workflow outlives the row that says it ended
+
+A Workflow SDK run keeps going after the app marks its database row `failed` or `stopped`: a sleep or a hook wait resumes later and runs the next steps. In the Harness, a resume that failed marked the Run `failed`, but 24 hours later the workflow woke, read back the `approved` decision and posted Schedules for a Run the screen called failed.
+
+- When a workflow resumes after a wait, check that its row is still active (`setRunStatus` returns whether it moved) before any step that writes records, and treat an ended row as "do not act".
+- Or cancel the workflow itself in the same place the row is ended. Either way, never let the row and the workflow disagree about whether work may still happen.

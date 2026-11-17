@@ -514,6 +514,7 @@ const TOOLS: Record<StaticToolName, Registration<any>> = {
     }),
     async (input, caller) => {
       const hits = await searchKnowledge(
+        caller.visitor,
         caller.owner,
         input.query,
         input.limit ?? 8,

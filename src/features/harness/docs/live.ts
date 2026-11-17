@@ -306,6 +306,8 @@ const LIMIT_TEXT: Record<LimitName, string> = {
   passagesCheckedPerSource:
     "New Passages of one Source checked against the old ones for Conflicts.",
   sandboxCommandsPerHour: "Sandbox commands a visitor may run in an hour.",
+  searchesPerHour:
+    "Knowledge searches a visitor may search by meaning in an hour. Past it, search goes by words alone.",
   auditPageSize: "Audit events one page of the trail returns.",
 };
 

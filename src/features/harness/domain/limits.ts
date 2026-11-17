@@ -34,6 +34,8 @@ export const LIMITS = {
   passagesCheckedPerSource: 24,
   /** Sandbox commands a visitor may run in an hour. */
   sandboxCommandsPerHour: 30,
+  /** Knowledge searches a visitor may embed in an hour; past it, search goes by words alone. */
+  searchesPerHour: 120,
   /** Audit events one page of the trail returns. */
   auditPageSize: 100,
 } as const;

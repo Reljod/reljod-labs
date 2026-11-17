@@ -53,7 +53,7 @@ import {
   STALE_READING_MINUTES,
 } from "./knowledge/views";
 import { embed, toVector } from "./llm";
-import { takeRate } from "./rate";
+import { takeRate, type Visitor } from "./rate";
 import { backfillKnowledge } from "./seed/knowledge";
 import { writableSession } from "./sessions";
 import { modelStubbed } from "./stub";
@@ -80,9 +80,22 @@ const staffActor = (actor: Actor) => ({
 
 const queryVectors = new Map<string, number[]>();
 
-async function queryVector(query: string): Promise<number[] | null> {
+async function queryVector(
+  who: Visitor,
+  owner: Owner,
+  query: string,
+): Promise<number[] | null> {
   const cached = queryVectors.get(query);
   if (cached) return cached;
+  try {
+    // Embedding is paid work: count it, and past the cap search by words alone.
+    await takeRate(who, owner, "search");
+  } catch (error) {
+    if (!(error instanceof LimitError)) {
+      console.error("[harness] could not count a search", error);
+    }
+    return null;
+  }
   try {
     const { embeddings } = await embed([query]);
     const vector = embeddings[0];
@@ -119,6 +132,7 @@ async function backfillSoon(owner: Owner) {
  * no embedding for the query (no gateway key) it searches by words alone.
  */
 export async function searchKnowledge(
+  who: Visitor,
   owner: Owner,
   query: string,
   limit = 8,
@@ -126,7 +140,7 @@ export async function searchKnowledge(
   const text = query.replace(/\s+/g, " ").trim().slice(0, QUERY_CHARS);
   if (!text) return [];
   const count = Math.max(1, Math.min(Math.trunc(limit) || 8, 25));
-  const embedding = await queryVector(text);
+  const embedding = await queryVector(who, owner, text);
   const rows = await sql()<HitRow[]>`
     select * from harness.search_passages(
       ${owner}, ${text}, ${embedding ? toVector(embedding) : null}::extensions.vector, ${count})`;

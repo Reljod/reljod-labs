@@ -12,14 +12,14 @@ const schema = z.object({
 /** Searches Passages by words and meaning. */
 export async function GET(request: Request) {
   try {
-    const { owner } = await requireStaff();
+    const { owner, visitor } = await requireStaff();
     const url = new URL(request.url);
     const { q, limit } = schema.parse({
       q: url.searchParams.get("q") ?? "",
       limit: url.searchParams.get("limit") ?? undefined,
     });
     return json<SearchResponse>({
-      hits: await searchKnowledge(owner, q, limit),
+      hits: await searchKnowledge(visitor, owner, q, limit),
     });
   } catch (error) {
     return failure(error);

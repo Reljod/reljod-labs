@@ -312,7 +312,12 @@ async function settleApprovalStep(
       decidedBy: decided?.decidedBy ?? null,
     };
   }
-  await setRunStatus(ctx.owner, ctx.runId, "running");
+  const stillActive = await setRunStatus(ctx.owner, ctx.runId, "running");
+  if (!stillActive && outcome.decision === "approve") {
+    // The Run was ended (failed or stopped) while it waited, e.g. a resume
+    // that failed: nothing may be posted on behalf of a Run that is over.
+    outcome = { ...outcome, decision: "expired" };
+  }
   await emit({
     type: "approval.decided",
     approvalId,
