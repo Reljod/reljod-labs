@@ -316,3 +316,19 @@ describe("run marks from mention quotes", () => {
     );
   });
 });
+
+describe("damaged spellings with context", () => {
+  it("does not mark a damaged name plus a word of context whole", () => {
+    const name = {
+      canonical: "Halyard Holdings Limited",
+      type: "organization" as const,
+      aliases: [],
+      roles: [],
+      mentions: [],
+      confidence: 0.5,
+      foundBy: ["reader" as const],
+    };
+    expect(isSurfaceForm("Halyrad Holdings Limited acted", name)).toBe(false);
+    expect(isSurfaceForm("Halyrad Holdings Limited", name)).toBe(true);
+  });
+});

@@ -259,8 +259,9 @@ const bareWord = (word: string) =>
  * whole. A quote is often the sentence around the name; that one is not
  * marked, because the name inside it is found by its canonical form or an
  * alias, and marking the sentence would paint the whole line. So a quote is
- * refused when it has more words than the longest known form plus one, or
- * when it holds a known form (as whole words) next to words that are not the
+ * refused when it has more words than the longest known form (a damaged
+ * spelling with a word of context would otherwise be painted whole), or when
+ * it holds a known form (as whole words) next to words that are not the
  * name's own.
  */
 export function isSurfaceForm(quote: string, name: ExtractedName) {
@@ -272,7 +273,7 @@ export function isSurfaceForm(quote: string, name: ExtractedName) {
   if (
     words.length === 0 ||
     words.length > SURFACE_FORM_WORDS ||
-    words.length > longest + 1
+    words.length > longest
   )
     return false;
   const folded = lowerSameLength(foldForm(quote));

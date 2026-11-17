@@ -17,11 +17,6 @@ export type PaneHandle = {
   reveal: (page: number, name: string) => void;
 };
 
-/**
- * A scrolling column of every page of a Document. Only pages near the screen
- * ask for their text (`onNear`); the rest are placeholders the browser skips
- * rendering. Reports which pages are on screen, and jumps to a page.
- */
 /** Values a page's look depends on; its shell re-renders only when one changes. */
 export type Stamp = readonly unknown[];
 
@@ -46,7 +41,7 @@ const Shell = memo(
     return (
       <div
         data-shell={page}
-        className="shrink-0 [contain-intrinsic-block-size:var(--sv-page-h,900px)] [content-visibility:auto]"
+        className="shrink-0 [contain-intrinsic-block-size:auto_var(--sv-page-h,900px)] [content-visibility:auto]"
       >
         {render(page)}
       </div>
@@ -56,6 +51,11 @@ const Shell = memo(
     before.page === after.page && sameStamp(before.stamp, after.stamp),
 );
 
+/**
+ * A scrolling column of every page of a Document. Only pages near the screen
+ * ask for their text (`onNear`); the rest are placeholders the browser skips
+ * rendering. Reports which pages are on screen, and jumps to a page.
+ */
 export function ReaderPane({
   total,
   renderPage,
