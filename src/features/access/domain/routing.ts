@@ -14,6 +14,7 @@ const BEARER_ROUTES = [
   "/api/client-manager/oauth",
   "/api/harness/mcp",
   "/api/harness/oauth",
+  "/api/name-extraction/mcp",
 ];
 
 /**

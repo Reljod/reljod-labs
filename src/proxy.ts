@@ -65,6 +65,7 @@ export const config = {
     "/api/client-manager/:path*",
     "/api/process-transfer/:path*",
     "/api/harness/:path*",
+    "/api/name-extraction/:path*",
     "/access/:path*",
   ],
 };

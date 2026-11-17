@@ -30,6 +30,7 @@ describe("featuredProjects", () => {
       "client-manager",
       "process-transfer",
       "bank-harness",
+      "name-extraction",
     ]);
   });
 

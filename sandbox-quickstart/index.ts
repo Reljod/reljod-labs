@@ -1,5 +1,5 @@
-import { config } from "dotenv";
 import { Sandbox } from "@vercel/sandbox";
+import { config } from "dotenv";
 
 // VERCEL_OIDC_TOKEN comes from `vercel env pull .env.local`; it expires after 12 hours.
 config({ path: ".env.local" });

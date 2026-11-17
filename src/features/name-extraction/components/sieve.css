@@ -1,0 +1,88 @@
+/* Sieve: the motion utilities can't express. Every animation is switched off
+   under prefers-reduced-motion at the bottom of this file. */
+
+/* Work flowing along an edge of the agent diagram. */
+@keyframes sv-flow {
+  to {
+    stroke-dashoffset: -28;
+  }
+}
+.sv-flow {
+  animation: sv-flow 0.7s linear infinite;
+}
+
+/* A toolkit node whose tool is in flight. */
+@keyframes sv-node-live {
+  50% {
+    opacity: 0.72;
+  }
+}
+.sv-node-live {
+  animation: sv-node-live 1.4s ease-in-out infinite;
+}
+
+/* The Analyst while a Run is in flight. */
+@keyframes sv-analyst-live {
+  50% {
+    stroke: var(--color-brass);
+    stroke-width: 4px;
+  }
+}
+.sv-analyst-live {
+  animation: sv-analyst-live 1.8s ease-in-out infinite;
+}
+
+/* A Reader chip still reading its pages. */
+@keyframes sv-reading {
+  from {
+    background-position: 200% 0;
+  }
+  to {
+    background-position: -200% 0;
+  }
+}
+.sv-reading {
+  background-image: linear-gradient(
+    90deg,
+    var(--color-morning-haze) 30%,
+    var(--color-paper) 50%,
+    var(--color-morning-haze) 70%
+  );
+  background-size: 200% 100%;
+  animation: sv-reading 1.6s linear infinite;
+}
+
+/* Timeline items arrive with a short fade and rise. */
+@keyframes sv-reveal {
+  from {
+    opacity: 0;
+    transform: translateY(4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+.sv-reveal {
+  animation: sv-reveal 0.22s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+.sv-drop[data-over="true"] {
+  outline: 2px dashed var(--color-federal-blue);
+  outline-offset: 3px;
+}
+
+.sv-scroll {
+  scrollbar-width: thin;
+  scrollbar-color: rgb(20 33 61 / 0.35) transparent;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .sv-flow,
+  .sv-node-live,
+  .sv-analyst-live,
+  .sv-reading,
+  .sv-reveal {
+    animation: none;
+  }
+}

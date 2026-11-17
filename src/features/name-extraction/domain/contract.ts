@@ -129,12 +129,48 @@ export type Purpose = keyof typeof PURPOSES;
 
 /** Models a visitor may pick, with USD list prices per million tokens for estimates. */
 export const MODELS = {
-  "anthropic/claude-sonnet-5.5": { label: "Claude Sonnet 5.5", input: 2, output: 10 },
-  "openai/gpt-6.1-terra": { label: "GPT-6.1 Terra", input: 1, output: 5 },
-  "anthropic/claude-haiku-5.5": { label: "Claude Haiku 5.5", input: 0.1, output: 0.5 },
-  "openai/gpt-6-luna": { label: "GPT-6 Luna", input: 0.1, output: 0.5 },
-  "google/gemini-3.8-flash": { label: "Gemini 3.8 Flash", input: 0.75, output: 3.75 },
-  "zai/glm-5.3-flash": { label: "GLM 5.3 Flash", input: 0.15, output: 0.5 },
+  "anthropic/claude-sonnet-5.5": {
+    label: "Claude Sonnet 5.5",
+    input: 2,
+    output: 10,
+    cacheRead: 0.1,
+    tier: null,
+  },
+  "openai/gpt-6.1-terra": {
+    label: "GPT-6.1 Terra",
+    input: 1,
+    output: 5,
+    cacheRead: 0.05,
+    tier: { above: 272_000, input: 2, output: 7.5 },
+  },
+  "anthropic/claude-haiku-5.5": {
+    label: "Claude Haiku 5.5",
+    input: 0.1,
+    output: 0.5,
+    cacheRead: 0.01,
+    tier: { above: 100_000, input: 0.5, output: 2.5 },
+  },
+  "openai/gpt-6-luna": {
+    label: "GPT-6 Luna",
+    input: 0.1,
+    output: 0.5,
+    cacheRead: 0.01,
+    tier: { above: 272_000, input: 0.2, output: 0.75 },
+  },
+  "google/gemini-3.8-flash": {
+    label: "Gemini 3.8 Flash",
+    input: 0.75,
+    output: 3.75,
+    cacheRead: 0.075,
+    tier: null,
+  },
+  "zai/glm-5.3-flash": {
+    label: "GLM 5.3 Flash",
+    input: 0.15,
+    output: 0.5,
+    cacheRead: 0.03,
+    tier: null,
+  },
 } as const;
 export type ModelId = keyof typeof MODELS;
 export const MODEL_IDS = Object.keys(MODELS) as ModelId[];
@@ -150,11 +186,30 @@ export const DEFAULT_MODELS: ModelChoice = {
   reader: "anthropic/claude-haiku-5.5",
 };
 
-/** USD for a call from usage, when the gateway does not report what it charged. */
-export function estimateCost(model: string, inputTokens: number, outputTokens: number) {
+/**
+ * USD for a call from usage, when the gateway does not report what it charged.
+ * Cached input is billed at the cache-read price; a call whose prompt is above
+ * the model's tier is billed at the tier's prices for the whole call (the
+ * conservative reading; docs/research/name-extraction.md).
+ */
+export function estimateCost(
+  model: string,
+  inputTokens: number,
+  outputTokens: number,
+  cachedInputTokens = 0,
+) {
   const price = MODELS[model as ModelId];
   if (!price) return 0;
-  return (inputTokens * price.input + outputTokens * price.output) / 1_000_000;
+  const tier = price.tier && inputTokens > price.tier.above ? price.tier : null;
+  const input = tier?.input ?? price.input;
+  const output = tier?.output ?? price.output;
+  const cached = Math.min(Math.max(cachedInputTokens, 0), inputTokens);
+  return (
+    ((inputTokens - cached) * input +
+      cached * price.cacheRead +
+      outputTokens * output) /
+    1_000_000
+  );
 }
 
 // The Analyst's toolkit ---------------------------------------------------------------
@@ -169,7 +224,10 @@ export const TOOLS = {
     hint: "Page count, characters per page, headings and the Sweep's counts per page",
   },
   read_pages: { label: "read_pages", hint: "The text of a few pages (capped)" },
-  grep: { label: "grep", hint: "Regex over every page, returns hits with page numbers" },
+  grep: {
+    label: "grep",
+    hint: "Regex over every page, returns hits with page numbers",
+  },
   run_code: {
     label: "run_code",
     hint: "Runs JavaScript it writes in a Vercel Sandbox with the pages on disk, no network",
@@ -178,8 +236,14 @@ export const TOOLS = {
     label: "spawn_readers",
     hint: "Fans out Readers (sub-agents) over page ranges in parallel",
   },
-  load_skill: { label: "load_skill", hint: "Loads a Skill's playbook into context" },
-  record_names: { label: "record_names", hint: "Adds or merges Names in the Register" },
+  load_skill: {
+    label: "load_skill",
+    hint: "Loads a Skill's playbook into context",
+  },
+  record_names: {
+    label: "record_names",
+    hint: "Adds or merges Names in the Register",
+  },
   finish: {
     label: "finish",
     hint: "Ends the Run; refused until the Done gate passes",
@@ -211,6 +275,9 @@ export type DoneGate = {
   candidatesOpen: number;
   passed: boolean;
 };
+
+/** exitCode of a `code` event written before the code ran. */
+export const CODE_PENDING = -1;
 
 // Run events (the audit trail) ----------------------------------------------------------
 
@@ -249,6 +316,10 @@ export type RunEvent = { at: number } & (
       ms?: number;
     }
   | {
+      /**
+       * Written twice per run_code call: before the code runs, with exitCode
+       * CODE_PENDING, then with the result (ADR 0019). Keep the last per callId.
+       */
       type: "code";
       callId: string;
       code: string;
@@ -279,7 +350,9 @@ export type RunEvent = { at: number } & (
     }
 );
 
-type DistributiveOmit<T, K extends PropertyKey> = T extends unknown ? Omit<T, K> : never;
+type DistributiveOmit<T, K extends PropertyKey> = T extends unknown
+  ? Omit<T, K>
+  : never;
 export type RunEventInput = DistributiveOmit<RunEvent, "at">;
 
 // Scoring -------------------------------------------------------------------------------
@@ -310,7 +383,12 @@ export type CorpusCard = {
   expectedNames: number;
 };
 
-export type RunStatus = "queued" | "running" | "completed" | "failed" | "stopped";
+export type RunStatus =
+  | "queued"
+  | "running"
+  | "completed"
+  | "failed"
+  | "stopped";
 
 export type RunSummary = {
   id: string;
@@ -327,7 +405,7 @@ export type RunSummary = {
   score: Score | null;
 };
 
-export type RunDetail = RunSummary & {
+export type RunDetail = Omit<RunSummary, "names"> & {
   /** The Audit trail so far, in order. */
   events: (RunEvent & { seq: number })[];
   names: ExtractedName[];

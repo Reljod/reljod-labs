@@ -20,6 +20,9 @@
     },
     "src/app/api/harness/runs/[id]/events/route.ts": {
       "supportsCancellation": true
+    },
+    "src/app/api/name-extraction/runs/[runId]/events/route.ts": {
+      "supportsCancellation": true
     }
   }
 }
