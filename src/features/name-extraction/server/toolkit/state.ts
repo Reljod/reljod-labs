@@ -29,8 +29,9 @@ export const RUN_LIMITS = {
   /** Pages one Reader may take. */
   pagesPerReader: 30,
   /**
-   * Characters one Reader may take. Bounded at one token per character, this
-   * keeps a Reader's prompt under Claude Haiku 5.5's 100k-token price tier.
+   * UTF-8 bytes of page text one Reader may take (a character of plain
+   * English is one byte). Bounded at one token per byte, this keeps a
+   * Reader's prompt under Claude Haiku 5.5's 100k-token price tier.
    */
   charsPerReader: 90_000,
   /** Pages one read_pages call returns. */
@@ -229,12 +230,14 @@ export function cap(text: string, max: number = RUN_LIMITS.toolOutputChars) {
 // Reader spend ------------------------------------------------------------------------------
 
 /**
- * An upper bound on the tokens a text costs: one per UTF-16 code unit. Real
+ * An upper bound on the tokens a text costs: one per UTF-8 byte. Real
  * tokenizers average 2.5 to 4 characters a token on prose, but dense digits,
- * IBANs and OCR noise can fall to 1 to 2, and a spend cap must hold for those.
+ * IBANs and OCR noise fall to 1 to 2, and a byte-level tokenizer can split one
+ * rare character (CJK, Ge'ez, symbols) into a token per byte. A spend cap must
+ * hold for all of them; no tokenizer emits more tokens than bytes.
  */
 export function boundTokens(text: string) {
-  return text.length;
+  return new TextEncoder().encode(text).length;
 }
 
 /**
@@ -256,7 +259,7 @@ export function worstCaseCost(
 }
 
 /** The page header and delimiters a Reader's prompt wraps around each page. */
-const PAGE_FRAME_TOKENS = 16;
+const PAGE_FRAME_TOKENS = 48;
 
 /**
  * Why a spawn_readers call may not switch to `requested`, or null when it may.
@@ -319,10 +322,10 @@ export function planReaderRanges(args: {
       continue;
     }
     const texts = pages.slice(range.from - 1, range.to);
-    const chars = texts.reduce((sum, page) => sum + page.length, 0);
+    const chars = texts.reduce((sum, page) => sum + boundTokens(page), 0);
     if (chars > RUN_LIMITS.charsPerReader) {
       notes.push(
-        `Range ${label} skipped: ${chars.toLocaleString("en")} characters, over ${RUN_LIMITS.charsPerReader.toLocaleString("en")}; split it.`,
+        `Range ${label} skipped: ${chars.toLocaleString("en")} bytes of text, over ${RUN_LIMITS.charsPerReader.toLocaleString("en")}; split it.`,
       );
       continue;
     }

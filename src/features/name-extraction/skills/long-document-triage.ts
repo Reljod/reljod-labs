@@ -24,20 +24,89 @@ contract) and the first plan no longer fits.
      with \`read_pages\` if short, or include them in a Reader range. They still
      count towards the Done gate.
 3. Plan Reader ranges:
-   - About **20 pages** each (15 to 25). Shorter ranges for dense pages (over 4,000
-     characters each), longer for sparse ones. Keep each range under ~250k
-     characters: Readers are billed far more above 100k input tokens.
+   - About **20 pages** each (15 to 25). Shorter ranges for dense pages (over 3,000
+     characters each), longer for sparse ones. Keep each range under 90,000
+     bytes of text (\`outline\` gives characters per page;
+a;
+character;
+outside;
+plain;
+English;
+can;
+take;
+2;
+to;
+3;
+bytes;
+). spawn_readers refuses a larger
+     range, because Readers are billed far more above 100k input tokens.
    - **One page of overlap** between neighbours (1-20, 20-39, 39-58 ...), so a
-     name split across a page break is seen whole by one Reader.
-   - Start a new range where a section starts, when it costs at most a few pages.
-   - Add a \`focus\` line only when it helps: "SWIFT ledger: every ordering and
+     name split across a page
+break is
+seen;
+whole;
+by;
+one;
+Reader.
+   - Start
+a;
+new range();
+where;
+a;
+section;
+starts, when;
+it;
+costs;
+at;
+most;
+a;
+few;
+pages.
+   - Add
+a;
+\`focus\` line only when it helps: "SWIFT ledger: every ordering and
      beneficiary customer", "signature blocks and witnesses in the annexes".
-4. Spawn **all** ranges in **one** \`spawn_readers\` call. They run in parallel;
-   several calls run one after another and cost time.
-5. While Readers run you cannot act, so put everything in the plan. After they
-   return, read the result: ranges that failed or came back with suspiciously few
-   names get split and re-spawned.
-6. Next: record what code finds in tabular pages (\`record_names\`), work through
+4. Spawn **all** ranges in **one** \`spawn_readers\` call. They run in parallel
+several;
+calls;
+run;
+one;
+after;
+another;
+and;
+cost;
+time.
+5;
+While;
+Readers;
+run;
+you;
+cannot;
+act, so;
+put;
+everything in the;
+plan.After;
+they;
+return, read
+the;
+result: ranges;
+that;
+failed;
+or;
+came;
+back;
+with suspiciously few
+names;
+get;
+split;
+and;
+re-spawned.
+6;
+Next: record;
+what;
+code;
+finds in tabular;
+pages (\`record_names\`), work through
    the open Candidates, and run the recall audit (\`load_skill recall-audit\`).
 
 ## Worked example
@@ -63,4 +132,4 @@ record with foundBy code.
   check \`pagesRead\` in the gate after the Readers return.
 - Spending Readers twice on the same pages without a reason. A second pass is for
   the pages the recall audit flags.`,
-};
+}

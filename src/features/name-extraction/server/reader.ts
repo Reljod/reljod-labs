@@ -49,6 +49,8 @@ export async function runReader(
   try {
     const result = await generateText({
       ...callOptions(job.model, "reader"),
+      // A retry would bill a second time against one reservation.
+      maxRetries: 0,
       instructions: `${READER_INSTRUCTIONS}\n\n${renderRulebook(ctx.rulebook, ctx.rulebookVersion)}\n\n${SCHEMA_NOTE}`,
       output: Output.object({ schema: readerOutputSchema }),
       maxOutputTokens: RUN_LIMITS.readerOutputTokens,

@@ -104,11 +104,11 @@ describe("page bookkeeping", () => {
 });
 
 describe("Reader spend", () => {
-  it("bounds tokens at one per UTF-16 code unit", () => {
+  it("bounds tokens at one per UTF-8 byte", () => {
     expect(boundTokens("")).toBe(0);
     expect(boundTokens("abcd")).toBe(4);
-    expect(boundTokens("名前")).toBe(2);
-    expect(boundTokens("😀")).toBe(2);
+    expect(boundTokens("José")).toBe(5);
+    expect(boundTokens("😀")).toBe(4);
   });
 
   it("prices the worst case: cache writes, and the tier the input could reach", () => {
@@ -162,10 +162,10 @@ describe("Reader spend", () => {
       spentUsd: 0,
       overheadTokens: 1_000,
     });
-    // 1,000 overhead + 4 focus + 2 pages of (4,000 + 16 frame) tokens.
+    // 1,000 overhead + 4 focus + 2 pages of (4,000 + 48 frame) tokens.
     const expected = worstCaseCost(
       "anthropic/claude-haiku-5.5",
-      1_000 + 4 + 2 * 4_016,
+      1_000 + 4 + 2 * 4_048,
       RUN_LIMITS.readerOutputTokens,
     );
     expect(plan.ranges).toEqual([
@@ -241,7 +241,7 @@ describe("Reader spend", () => {
     expect(plan.notes).toEqual([
       "Range 0-3 skipped: pages run 1-41.",
       `Range 1-40 skipped: over ${RUN_LIMITS.pagesPerReader} pages; split it.`,
-      expect.stringContaining("Range 41-41 skipped: 300,000 characters"),
+      expect.stringContaining("Range 41-41 skipped: 300,000 bytes of text"),
       "Range 6-10 skipped: the Run's Reader cap is reached.",
     ]);
   });
@@ -275,5 +275,37 @@ describe("Reader spend", () => {
         .reduce((sum, text) => sum + text.length, 0);
       expect(chars + 3_000 + 30 * 16).toBeLessThanOrEqual(tierAbove);
     }
+  });
+});
+
+describe("Reader spend on non-Latin text", () => {
+  it("bounds tokens by UTF-8 bytes, so 3-byte characters cannot pass the cap", () => {
+    expect(boundTokens("abc")).toBe(3);
+    expect(boundTokens("名前")).toBe(6);
+    // 30 pages of 3-byte characters: 30,000 characters, 90,000 bytes each 3k.
+    const cjk = Array.from({ length: 64 * 30 }, () => "名".repeat(1_000));
+    const plan = planReaderRanges({
+      pages: cjk,
+      ranges: Array.from({ length: 64 }, (_, index) => ({
+        from: index * 30 + 1,
+        to: index * 30 + 30,
+      })),
+      model: "anthropic/claude-haiku-5.5",
+      readersLeft: 64,
+      spentUsd: 0,
+      overheadTokens: 3_000,
+    });
+    expect(plan.reservedUsd).toBeLessThanOrEqual(RUN_LIMITS.costUsd);
+    // A range over the byte limit is refused, not under-reserved.
+    const tooBig = planReaderRanges({
+      pages: Array.from({ length: 30 }, () => "名".repeat(1_100)),
+      ranges: [{ from: 1, to: 30 }],
+      model: "anthropic/claude-haiku-5.5",
+      readersLeft: 64,
+      spentUsd: 0,
+      overheadTokens: 0,
+    });
+    expect(tooBig.ranges).toEqual([]);
+    expect(tooBig.notes[0]).toMatch(/bytes of text/);
   });
 });
