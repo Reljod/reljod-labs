@@ -55,3 +55,10 @@ A Workflow SDK run keeps going after the app marks its database row `failed` or 
 
 - When a workflow resumes after a wait, check that its row is still active (`setRunStatus` returns whether it moved) before any step that writes records, and treat an ended row as "do not act".
 - Or cancel the workflow itself in the same place the row is ended. Either way, never let the row and the workflow disagree about whether work may still happen.
+
+## A workflow's step names are its replay keys
+
+The Workflow SDK identifies a workflow and each step by file path and function name (`step//./src/features/harness/server/run-steps//saveCompute`). A run that is waiting (a 24-hour Approval hook, a sleep) replays by those ids when it wakes, so renaming a `"use workflow"` or `"use step"` function, or moving it to another file, orphans every run in flight on the old deployment. In the Harness, naming steps after Pipeline Steps (`harnessRun` to `memberRequest`, `workStep` to `classify`) changed every id.
+
+- Treat a rename or move of a workflow or step function as a breaking change: say so in the PR and ship it when no run is waiting, or let the stale sweep close the old runs.
+- Pick trace-friendly names when you first add a workflow, so you do not have to rename it later.
