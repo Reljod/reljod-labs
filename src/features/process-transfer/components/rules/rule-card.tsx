@@ -4,12 +4,12 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { describeRule, type Rule, type RuleOverride } from "../../domain/rules";
 import { saveRule } from "../../server/actions";
 import {
-  buttonClass,
   fieldClass,
   focusRing,
   InlineError,
   InlineNote,
   linkButtonClass,
+  smallButtonClass,
 } from "../ui";
 import {
   draftErrors,
@@ -221,39 +221,42 @@ export function RuleCard({
         </div>
       ) : null}
 
-      <footer className="flex flex-wrap items-center gap-x-4 gap-y-2 border-ink/15 border-t pt-3">
-        <button
-          type="button"
-          onClick={() => send("save", toOverride(def, draft))}
-          disabled={!dirty || !valid || pending !== null}
-          aria-busy={pending === "save"}
-          className={`${buttonClass} min-h-9 px-3 text-xs`}
-        >
-          {pending === "save" ? "Saving…" : "Save"}
-        </button>
-        {dirty && pending === null ? (
+      {/* mt-auto: in a row of stretched cards the spare height goes above the footer, so every Save lines up at the bottom. */}
+      <div className="mt-auto flex flex-col gap-2">
+        <footer className="flex flex-wrap items-center gap-x-4 gap-y-2 border-ink/15 border-t pt-3">
           <button
             type="button"
-            onClick={() => setDraft(draftFrom(rule))}
-            className={`${linkButtonClass} text-sm`}
+            onClick={() => send("save", toOverride(def, draft))}
+            disabled={!dirty || !valid || pending !== null}
+            aria-busy={pending === "save"}
+            className={smallButtonClass}
           >
-            Undo changes
+            {pending === "save" ? "Saving…" : "Save"}
           </button>
-        ) : null}
-        {rule.edited ? (
-          <button
-            type="button"
-            onClick={() => send("default", null)}
-            disabled={pending !== null}
-            aria-busy={pending === "default"}
-            className={`${linkButtonClass} text-sm disabled:opacity-50`}
-          >
-            {pending === "default" ? "Going back…" : "Back to default"}
-          </button>
-        ) : null}
-      </footer>
-      <InlineNote>{note}</InlineNote>
-      <InlineError>{error}</InlineError>
+          {dirty && pending === null ? (
+            <button
+              type="button"
+              onClick={() => setDraft(draftFrom(rule))}
+              className={`${linkButtonClass} text-sm`}
+            >
+              Undo changes
+            </button>
+          ) : null}
+          {rule.edited ? (
+            <button
+              type="button"
+              onClick={() => send("default", null)}
+              disabled={pending !== null}
+              aria-busy={pending === "default"}
+              className={`${linkButtonClass} text-sm disabled:opacity-50`}
+            >
+              {pending === "default" ? "Going back…" : "Back to default"}
+            </button>
+          ) : null}
+        </footer>
+        <InlineNote>{note}</InlineNote>
+        <InlineError>{error}</InlineError>
+      </div>
     </article>
   );
 }
