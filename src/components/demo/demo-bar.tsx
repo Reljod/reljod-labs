@@ -1,5 +1,6 @@
 import Link from "next/link";
 import type { ReactNode } from "react";
+import { ProjectMarks } from "@/components/ui/project-marks";
 import { liveDemos } from "@/content/projects";
 import {
   type DemoBarRowFrom,
@@ -32,8 +33,8 @@ export type DemoTab =
 
 /**
  * The bar across the top of every demo: the same back button to the live
- * demos, the demo's number and name (back to its first page), its places,
- * and room on the right for the demo's own controls.
+ * demos, the demo's number and name (back to its first page) with its
+ * New / Beta marks, its places, and room on the right for the demo's own controls.
  */
 export function DemoBar({
   slug,
@@ -63,7 +64,8 @@ export function DemoBar({
   children?: ReactNode;
 }) {
   const index = liveDemos.findIndex((demo) => demo.slug === slug);
-  const home = liveDemos[index]?.href ?? ALL_DEMOS_HREF;
+  const demo = liveDemos[index];
+  const home = demo?.href ?? ALL_DEMOS_HREF;
   const buttons = tabs.some((tab) => "onSelect" in tab);
 
   return (
@@ -98,6 +100,14 @@ export function DemoBar({
             ) : null}
             <Title className="truncate text-sm tracking-[0.1em]">{name}</Title>
           </Link>
+          {demo?.marks?.length ? (
+            <span
+              data-testid="demo-marks"
+              className="-ml-1 hidden shrink-0 items-center gap-1 sm:flex"
+            >
+              <ProjectMarks marks={demo.marks} size="sm" />
+            </span>
+          ) : null}
           {badge ? (
             <span className="hidden shrink-0 md:inline">{badge}</span>
           ) : null}

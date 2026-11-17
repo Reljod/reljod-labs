@@ -1,9 +1,9 @@
 import Link from "next/link";
 import type { ReactNode } from "react";
-import { Badge } from "@/components/ui/badge";
 import { ButtonLink } from "@/components/ui/button-link";
 import { Icon } from "@/components/ui/icon";
 import { LiveBadge } from "@/components/ui/live-badge";
+import { ProjectMarks } from "@/components/ui/project-marks";
 import { Section } from "@/components/ui/section";
 import { liveDemos } from "@/content/projects";
 import type { Project } from "@/content/types";
@@ -75,7 +75,7 @@ function DemoPanel({ demo, index }: { demo: Project; index: number }) {
             {String(index + 1).padStart(2, "0")}
           </p>
           <div className="flex flex-wrap items-center justify-end gap-2">
-            {demo.isNew ? <Badge tone="brass">New</Badge> : null}
+            <ProjectMarks marks={demo.marks} />
             <LiveBadge label="Live now" />
           </div>
         </div>
