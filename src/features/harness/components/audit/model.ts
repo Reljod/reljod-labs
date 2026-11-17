@@ -1,0 +1,244 @@
+import {
+  AUDIT_ACTIONS,
+  type AuditAction,
+  type AuditEvent,
+} from "../../domain/audit";
+import type { LinkParams, TabId } from "../../domain/place";
+
+/** Pure helpers behind the Audit tab: totals, CSV, readable detail and links. */
+
+export type AuditTotals = {
+  events: number;
+  /** Events that carry a model: the Agent's model calls. */
+  agentCalls: number;
+  inputTokens: number;
+  outputTokens: number;
+  costUsd: number;
+  /** True when some Agent call has no cost, so the sum is a floor. */
+  costPartial: boolean;
+};
+
+export function auditTotals(events: readonly AuditEvent[]): AuditTotals {
+  const totals: AuditTotals = {
+    events: events.length,
+    agentCalls: 0,
+    inputTokens: 0,
+    outputTokens: 0,
+    costUsd: 0,
+    costPartial: false,
+  };
+  for (const event of events) {
+    if (event.model === null) continue;
+    totals.agentCalls++;
+    totals.inputTokens += event.inputTokens ?? 0;
+    totals.outputTokens += event.outputTokens ?? 0;
+    if (event.costUsd === null) totals.costPartial = true;
+    else totals.costUsd += event.costUsd;
+  }
+  return totals;
+}
+
+/** The action labels in groups, for a grouped select: the part of the id before the dot names the group. */
+export const ACTION_GROUPS: { group: string; actions: AuditAction[] }[] =
+  (() => {
+    const names: Record<string, string> = {
+      session: "Sessions",
+      staff: "Staff",
+      message: "Chat",
+      file: "Chat",
+      model: "Agent",
+      tool: "Agent",
+      skill: "Skills",
+      web: "Agent",
+      run: "Runs",
+      step: "Runs",
+      finding: "Runs",
+      approval: "Runs",
+      rule: "Rules",
+      source: "Knowledge",
+      conflict: "Knowledge",
+      sandbox: "Sandbox",
+      mcp: "Claude",
+      plugin: "Claude",
+    };
+    const groups = new Map<string, AuditAction[]>();
+    for (const action of Object.keys(AUDIT_ACTIONS) as AuditAction[]) {
+      const group = names[action.split(".")[0] ?? ""] ?? "Other";
+      groups.set(group, [...(groups.get(group) ?? []), action]);
+    }
+    return [...groups].map(([group, actions]) => ({ group, actions }));
+  })();
+
+// CSV ---------------------------------------------------------------------------
+
+export const CSV_COLUMNS = [
+  "id",
+  "time",
+  "actor_kind",
+  "actor",
+  "action",
+  "action_label",
+  "target_kind",
+  "target_id",
+  "summary",
+  "session_id",
+  "run_id",
+  "model",
+  "input_tokens",
+  "output_tokens",
+  "cost_usd",
+  "detail",
+] as const;
+
+/**
+ * One CSV cell. Quotes a value with a comma, quote or line break, and keeps a
+ * spreadsheet from running a text that starts like a formula (`=`, `+`, `-`,
+ * `@`, tab, CR) by putting a `'` in front.
+ */
+export function csvCell(value: string | number | null | undefined): string {
+  if (value === null || value === undefined) return "";
+  let text = String(value);
+  if (typeof value === "string" && /^[=+\-@\t\r]/.test(text)) text = `'${text}`;
+  return /[",\r\n]/.test(text) ? `"${text.replace(/"/g, '""')}"` : text;
+}
+
+export function auditCsv(events: readonly AuditEvent[]): string {
+  const rows = events.map((event) =>
+    [
+      event.id,
+      event.createdAt,
+      event.actorKind,
+      event.actorLabel,
+      event.action,
+      AUDIT_ACTIONS[event.action] ?? event.action,
+      event.targetKind,
+      event.targetId,
+      event.summary,
+      event.sessionId,
+      event.runId,
+      event.model,
+      event.inputTokens,
+      event.outputTokens,
+      event.costUsd,
+      Object.keys(event.detail).length > 0 ? JSON.stringify(event.detail) : "",
+    ]
+      .map(csvCell)
+      .join(","),
+  );
+  return `${[CSV_COLUMNS.join(","), ...rows].join("\r\n")}\r\n`;
+}
+
+// Detail ------------------------------------------------------------------------
+
+export type DetailRow = { key: string; value: string };
+
+const MAX_ROWS = 80;
+
+function scalar(value: unknown): string {
+  if (value === null || value === undefined) return "none";
+  if (typeof value === "string") return value === "" ? "(empty)" : value;
+  if (typeof value === "number" || typeof value === "boolean") {
+    return String(value);
+  }
+  return JSON.stringify(value);
+}
+
+/** An event's detail as key/value rows: nested objects become `a.b` keys, short lists are joined, so no raw JSON blob is shown. */
+export function detailRows(detail: Record<string, unknown>): DetailRow[] {
+  const rows: DetailRow[] = [];
+  const walk = (value: unknown, path: string) => {
+    if (rows.length >= MAX_ROWS) return;
+    if (Array.isArray(value)) {
+      const flat = value.every(
+        (item) => item === null || typeof item !== "object",
+      );
+      if (flat) {
+        rows.push({
+          key: path,
+          value: value.map(scalar).join(" → ").replace(/^$/, "(empty list)"),
+        });
+        return;
+      }
+      for (const [index, item] of value.entries()) {
+        walk(item, `${path}[${index + 1}]`);
+      }
+      return;
+    }
+    if (value && typeof value === "object") {
+      const entries = Object.entries(value as Record<string, unknown>);
+      if (entries.length === 0) rows.push({ key: path, value: "(empty)" });
+      for (const [key, item] of entries)
+        walk(item, path ? `${path}.${key}` : key);
+      return;
+    }
+    rows.push({ key: path, value: scalar(value) });
+  };
+  for (const [key, value] of Object.entries(detail)) walk(value, key);
+  return rows;
+}
+
+// Links -------------------------------------------------------------------------
+
+export type EventLink =
+  | { kind: "session"; label: string; id: string }
+  | { kind: "run"; label: string; id: string }
+  | { kind: "tab"; label: string; tab: TabId; params: LinkParams };
+
+/** Where an event can take the reader: its Session and Run, and what it was done to. */
+export function eventLinks(event: AuditEvent): EventLink[] {
+  const links: EventLink[] = [];
+  if (event.sessionId) {
+    links.push({ kind: "session", label: "Open Session", id: event.sessionId });
+  }
+  if (event.runId)
+    links.push({ kind: "run", label: "Open Run", id: event.runId });
+  const id = event.targetId;
+  if (id) {
+    switch (event.targetKind) {
+      case "rule":
+        links.push({
+          kind: "tab",
+          label: "Open Rule",
+          tab: "skills",
+          params: { rule: id },
+        });
+        break;
+      case "skill":
+        links.push({
+          kind: "tab",
+          label: "Open Skill",
+          tab: "skills",
+          params: { skill: id },
+        });
+        break;
+      case "source":
+        links.push({
+          kind: "tab",
+          label: "Open Source",
+          tab: "knowledge",
+          params: { source: id },
+        });
+        break;
+      case "conflict":
+        links.push({
+          kind: "tab",
+          label: "Open Conflict",
+          tab: "knowledge",
+          params: { conflict: id },
+        });
+        break;
+    }
+  }
+  return links;
+}
+
+/** Whether the event's actor is quiet: System events are drawn small. */
+export const isQuiet = (event: Pick<AuditEvent, "actorKind">) =>
+  event.actorKind === "system";
+
+export function formatTokens(count: number): string {
+  if (count < 1000) return String(count);
+  if (count < 1_000_000)
+    return `${(count / 1000).toFixed(count < 10_000 ? 1 : 0)}k`;
+  return `${(count / 1_000_000).toFixed(1)}M`;
+}

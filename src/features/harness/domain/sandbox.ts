@@ -12,6 +12,10 @@ export type SandboxStatus = {
   } | null;
   /** What to tell the person when it cannot be used ("Sandbox offline"). */
   message: string | null;
+  /** Whether the signed-in Staff member's Role may use it (`sandbox.use`). Set by the route. */
+  canUse?: boolean;
+  /** Why not, when `canUse` is false ("Only an admin may use the Sandbox..."). */
+  cannotUseReason?: string | null;
 };
 
 /** What the Sandbox enforces on every container; the Runner holds the same numbers. */
@@ -32,6 +36,10 @@ export type SandboxRunResult = {
   /** True when the output was cut at `SANDBOX_LIMITS.outputChars`. */
   truncated: boolean;
   ms: number;
+  /** True when this command started a new container: files written earlier are gone. */
+  sandboxCreated: boolean;
+  /** True when the container was removed after this command: its files are gone. */
+  sandboxReset: boolean;
 };
 
 export type SandboxFile = {
@@ -47,3 +55,6 @@ export type SandboxFileContent = {
   bytes: number;
   truncated: boolean;
 };
+
+/** A written file; `sandboxCreated` means earlier files of the Session are gone. */
+export type SandboxWriteResult = SandboxFile & { sandboxCreated: boolean };

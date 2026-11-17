@@ -259,9 +259,12 @@ export function reduceRun(
         drafts: upsert(
           state.drafts,
           event.draft,
+          // A Step may write several Drafts of one kind (a chaser per
+          // Employer); the title tells them apart.
           (draft) =>
             draft.stepId === event.draft.stepId &&
-            draft.kind === event.draft.kind,
+            draft.kind === event.draft.kind &&
+            draft.title === event.draft.title,
         ),
       };
     case "approval.requested":

@@ -81,3 +81,127 @@
     animation: none;
   }
 }
+
+/* skills */
+
+/* A Rule card opened from a link or by Demo mode: a brief ring so the eye finds it. */
+.hx-flash {
+  animation: hx-flash 1.8s ease-out 1;
+}
+@keyframes hx-flash {
+  0% {
+    box-shadow: 0 0 0 3px rgb(30 64 124 / 0.35);
+  }
+  100% {
+    box-shadow: 0 0 0 0 rgb(30 64 124 / 0);
+  }
+}
+
+/* audit */
+
+/* Rows of the Audit trail keep their columns on a wide screen and stack on a phone (Tailwind classes do the rest). */
+@media (prefers-reduced-motion: reduce) {
+  .hx-flash {
+    animation: none;
+  }
+}
+
+/* pipelines */
+
+/* A Step at work: a soft ring that breathes around its node. */
+.hx-node-live {
+  animation: hx-node-live 1.6s ease-in-out infinite;
+}
+@keyframes hx-node-live {
+  50% {
+    box-shadow: 0 0 0 5px rgb(29 78 137 / 0.18);
+  }
+}
+
+/* The Pipeline graph: handles are only anchors for the edges. */
+.hx-flow .react-flow__handle {
+  opacity: 0;
+  pointer-events: none;
+}
+.hx-flow .react-flow__node {
+  cursor: default;
+}
+.hx-flow .react-flow__controls-button {
+  color: var(--hx-ink);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .hx-node-live {
+    animation: none;
+  }
+  .hx-flow .react-flow__edge.animated path {
+    animation: none;
+  }
+}
+
+/* chat */
+
+/* docs */
+
+/* A diagram in the Docs: inline SVG that takes the page's ink. */
+.hx-dg-figure {
+  margin: 1rem 0;
+  padding: 0.75rem;
+  overflow-x: auto;
+  border: 1px solid var(--hx-line);
+  border-radius: 2px;
+  background: var(--hx-marble);
+}
+.hx-dg {
+  display: block;
+  width: 100%;
+  min-width: 560px;
+  height: auto;
+  color: var(--hx-ink);
+}
+.hx-dg-box {
+  fill: var(--color-paper, #fff);
+  stroke: currentColor;
+  stroke-width: 1.25;
+}
+.hx-dg-accent {
+  fill: var(--color-morning-haze, #d6e4f5);
+}
+.hx-dg-person {
+  fill: rgb(217 168 78 / 0.28);
+}
+.hx-dg-stop {
+  fill: rgb(178 58 43 / 0.1);
+}
+.hx-dg-lane {
+  fill: rgb(20 33 61 / 0.04);
+  stroke: currentColor;
+  stroke-opacity: 0.25;
+  stroke-dasharray: 4 3;
+}
+.hx-dg-line {
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.25;
+}
+.hx-dg-dashed {
+  stroke-dasharray: 4 4;
+  stroke-opacity: 0.5;
+}
+.hx-dg-text {
+  fill: currentColor;
+  font-family: var(--font-sans, system-ui, sans-serif);
+  font-size: 12px;
+}
+.hx-dg-strong {
+  font-weight: 600;
+}
+.hx-dg-small {
+  font-size: 10.5px;
+  opacity: 0.85;
+}
+.hx-dg-caption {
+  margin-top: 0.5rem;
+  color: var(--color-ink-muted, #4a4f5b);
+  font-size: 0.75rem;
+}

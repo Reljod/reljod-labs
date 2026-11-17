@@ -1,19 +1,14 @@
 "use client";
 
-import { ComingPanel } from "../ui";
+import DocsViewer from "../docs/docs-viewer";
 
 /**
- * PLACEHOLDER. The Audit and Docs slice replaces this file wholesale and keeps the
- * default export: the shell imports only this path. Read who is signed in
- * and where the app is with `useHarness()`, call the API through
- * `../api`, build from `../ui`, and register a controller for Demo mode
- * with `useController`.
+ * The Docs tab: a documentation site for the Harness. The pages are written
+ * in `src/features/harness/docs/`, listed in `registry.ts`, and where a page
+ * shows tools, Pipelines, Rules, Skills, limits or Audit actions it builds
+ * the table from the code's own registry. `?tab=docs&doc=<page id>` opens a
+ * page, and `<page id>#<heading>` a heading in it.
  */
 export default function DocsTab() {
-  return (
-    <ComingPanel title="Docs">
-      How the Harness works: its Skills, Pipelines, Rules, Knowledge base,
-      Roles, Sandbox and MCP server.
-    </ComingPanel>
-  );
+  return <DocsViewer />;
 }

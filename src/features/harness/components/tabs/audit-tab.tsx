@@ -1,19 +1,406 @@
 "use client";
 
-import { ComingPanel } from "../ui";
+import { useInfiniteQuery, useQuery } from "@tanstack/react-query";
+import { useCallback, useMemo, useState } from "react";
+import {
+  ACTOR_KINDS,
+  type ActorKind,
+  AGENT_LABEL,
+  AUDIT_ACTIONS,
+  type AuditAction,
+  SYSTEM_LABEL,
+} from "../../domain/audit";
+import { LIMITS } from "../../domain/limits";
+import { api, formatCost, keys, messageOf } from "../api";
+import { EventRow } from "../audit/event-row";
+import {
+  ACTION_GROUPS,
+  auditCsv,
+  auditTotals,
+  type EventLink,
+  formatTokens,
+} from "../audit/model";
+import { useHarness } from "../harness-context";
+import { Button, cx, Empty, ErrorNote, Loading, Panel } from "../ui";
+
+type Scope = "session" | "mine" | "workspace";
+
+const SCOPES: { id: Scope; label: string }[] = [
+  { id: "session", label: "This Session" },
+  { id: "mine", label: "My Sessions" },
+  { id: "workspace", label: "Workspace" },
+];
+
+const ACTOR_LABEL: Record<ActorKind, string> = {
+  staff: "Staff",
+  agent: AGENT_LABEL,
+  system: SYSTEM_LABEL,
+};
+
+const REFRESH_MS = 5_000;
+
+const selectClass =
+  "h-8 min-w-0 rounded-sm border border-ink/25 bg-paper px-2 text-xs text-ink focus-visible:border-federal-blue focus-visible:outline-2 focus-visible:outline-federal-blue/30 disabled:bg-marble disabled:text-ink-muted";
+
+function downloadCsv(text: string) {
+  const url = URL.createObjectURL(
+    new Blob([text], { type: "text/csv;charset=utf-8" }),
+  );
+  const link = document.createElement("a");
+  link.href = url;
+  link.download = `harness-audit-${new Date().toISOString().slice(0, 10)}.csv`;
+  document.body.append(link);
+  link.click();
+  link.remove();
+  URL.revokeObjectURL(url);
+}
 
 /**
- * PLACEHOLDER. The Audit and Docs slice replaces this file wholesale and keeps the
- * default export: the shell imports only this path. Read who is signed in
- * and where the app is with `useHarness()`, call the API through
- * `../api`, build from `../ui`, and register a controller for Demo mode
- * with `useController`.
+ * The Audit trail: every action by a Staff member, the Agent or the system
+ * (ADR 0018). Scope, actor, action and Session filters; a totals strip for
+ * what is on screen; CSV of the filtered view. It refreshes every few
+ * seconds while it is the visible tab, unless paused. The server scopes what
+ * a Role may read whatever is asked.
  */
 export default function AuditTab() {
+  const {
+    staff,
+    allStaff,
+    can,
+    place,
+    sessionId,
+    openSession,
+    openRun,
+    openTab,
+  } = useHarness();
+  const admin = can("audit.read.workspace");
+  const [scope, setScope] = useState<Scope>("mine");
+  const [actor, setActor] = useState<ActorKind | "">("");
+  const [action, setAction] = useState<AuditAction | "">("");
+  const [sessionFilter, setSessionFilter] = useState("");
+  const [paused, setPaused] = useState(false);
+  const [openIds, setOpenIds] = useState<ReadonlySet<number>>(new Set());
+  const [exported, setExported] = useState<string | null>(null);
+
+  const visible = place.tab === "audit";
+  // A user cannot read the Workspace; the server scopes them anyway.
+  const effectiveScope: Scope =
+    !admin && scope === "workspace" ? "mine" : scope;
+
+  const sessions = useQuery({
+    queryKey: keys.sessions,
+    queryFn: () => api.sessions.list(),
+    enabled: visible,
+  });
+  const ownSessionIds = useMemo(
+    () =>
+      new Set(
+        (sessions.data ?? [])
+          .filter((session) => session.staff.id === staff.id)
+          .map((session) => session.id),
+      ),
+    [sessions.data, staff.id],
+  );
+
+  const sessionId_ =
+    effectiveScope === "session" ? sessionId : sessionFilter || null;
+  const waitingForSession = effectiveScope === "session" && !sessionId;
+
+  const trail = useInfiniteQuery({
+    queryKey: [
+      ...keys.audit({
+        sessionId: sessionId_,
+        actorKind: actor || null,
+        action: action || null,
+      }),
+      effectiveScope,
+    ],
+    queryFn: ({ pageParam }) =>
+      api.audit.list({
+        sessionId: sessionId_,
+        actorKind: actor || null,
+        action: action || null,
+        before: pageParam,
+        limit: LIMITS.auditPageSize,
+      }),
+    initialPageParam: null as number | null,
+    getNextPageParam: (last) => last.nextBefore,
+    enabled: visible && !waitingForSession,
+    refetchInterval: visible && !paused ? REFRESH_MS : false,
+    refetchIntervalInBackground: false,
+  });
+
+  const events = useMemo(() => {
+    const all = trail.data?.pages.flatMap((page) => page.events) ?? [];
+    // An admin's "My Sessions": the server gives the Workspace; keep their own Sessions' events.
+    return admin && effectiveScope === "mine"
+      ? all.filter(
+          (event) => event.sessionId && ownSessionIds.has(event.sessionId),
+        )
+      : all;
+  }, [trail.data, admin, effectiveScope, ownSessionIds]);
+
+  const loadError = trail.error;
+  const totals = useMemo(() => auditTotals(events), [events]);
+  const staffById = useMemo(
+    () => new Map(allStaff.map((member) => [member.id, member])),
+    [allStaff],
+  );
+
+  const toggle = useCallback((id: number) => {
+    setOpenIds((current) => {
+      const next = new Set(current);
+      if (!next.delete(id)) next.add(id);
+      return next;
+    });
+  }, []);
+
+  const follow = (link: EventLink) => {
+    if (link.kind === "session") openSession(link.id);
+    else if (link.kind === "run") openRun(link.id);
+    else openTab(link.tab, link.params);
+  };
+
+  const exportCsv = () => {
+    downloadCsv(auditCsv(events));
+    setExported(`Exported ${events.length} events.`);
+  };
+
+  const filtered = actor !== "" || action !== "" || sessionFilter !== "";
+
   return (
-    <ComingPanel title="Audit trail">
-      Every action by a Staff member, the Agent or the system, with the model,
-      tokens and cost of each Agent event.
-    </ComingPanel>
+    <div className="flex min-h-0 flex-1 flex-col gap-3 p-3 sm:p-4">
+      <Panel bodyClassName="p-3" className="shrink-0">
+        <div className="flex flex-wrap items-end gap-x-4 gap-y-3">
+          <fieldset className="m-0 flex min-w-0 rounded-sm border border-ink/25 bg-paper p-0.5">
+            <legend className="sr-only">Which events</legend>
+            {SCOPES.map((item) => {
+              const disabled = item.id === "workspace" && !admin;
+              return (
+                <button
+                  key={item.id}
+                  type="button"
+                  aria-pressed={effectiveScope === item.id}
+                  disabled={disabled}
+                  title={
+                    disabled
+                      ? "Only an admin reads the whole Workspace's Audit trail. Switch Staff to try it."
+                      : undefined
+                  }
+                  onClick={() => setScope(item.id)}
+                  className={cx(
+                    "h-7 rounded-sm px-2.5 text-xs font-medium whitespace-nowrap",
+                    effectiveScope === item.id
+                      ? "bg-ink text-paper"
+                      : "text-ink-muted hover:bg-marble hover:text-ink",
+                    disabled &&
+                      "cursor-not-allowed opacity-45 hover:bg-transparent",
+                  )}
+                >
+                  {item.label}
+                </button>
+              );
+            })}
+          </fieldset>
+
+          <label className="flex flex-col gap-1 text-[0.65rem] text-ink-muted uppercase tracking-wider">
+            Who
+            <select
+              className={selectClass}
+              value={actor}
+              onChange={(event) =>
+                setActor(event.target.value as ActorKind | "")
+              }
+            >
+              <option value="">Anyone</option>
+              {ACTOR_KINDS.map((kind) => (
+                <option key={kind} value={kind}>
+                  {ACTOR_LABEL[kind]}
+                </option>
+              ))}
+            </select>
+          </label>
+          <label className="flex flex-col gap-1 text-[0.65rem] text-ink-muted uppercase tracking-wider">
+            Action
+            <select
+              className={cx(selectClass, "max-w-52")}
+              value={action}
+              onChange={(event) =>
+                setAction(event.target.value as AuditAction | "")
+              }
+            >
+              <option value="">Any action</option>
+              {ACTION_GROUPS.map((group) => (
+                <optgroup key={group.group} label={group.group}>
+                  {group.actions.map((id) => (
+                    <option key={id} value={id}>
+                      {AUDIT_ACTIONS[id]}
+                    </option>
+                  ))}
+                </optgroup>
+              ))}
+            </select>
+          </label>
+          <label className="flex flex-col gap-1 text-[0.65rem] text-ink-muted uppercase tracking-wider">
+            Session
+            <select
+              className={cx(selectClass, "max-w-52")}
+              value={
+                effectiveScope === "session" ? (sessionId ?? "") : sessionFilter
+              }
+              disabled={effectiveScope === "session"}
+              onChange={(event) => setSessionFilter(event.target.value)}
+            >
+              <option value="">
+                {effectiveScope === "session"
+                  ? "The open Session"
+                  : "Any Session"}
+              </option>
+              {(sessions.data ?? [])
+                .filter(
+                  (session) =>
+                    effectiveScope !== "mine" ||
+                    session.staff.id === staff.id ||
+                    !admin,
+                )
+                .map((session) => (
+                  <option key={session.id} value={session.id}>
+                    {session.title}
+                  </option>
+                ))}
+            </select>
+          </label>
+
+          <div className="ml-auto flex items-center gap-2">
+            {filtered ? (
+              <Button
+                size="sm"
+                variant="ghost"
+                onClick={() => {
+                  setActor("");
+                  setAction("");
+                  setSessionFilter("");
+                }}
+              >
+                Clear filters
+              </Button>
+            ) : null}
+            <Button
+              size="sm"
+              onClick={() => setPaused((value) => !value)}
+              aria-pressed={paused}
+            >
+              {paused ? "Resume refresh" : "Pause refresh"}
+            </Button>
+            <Button
+              size="sm"
+              onClick={exportCsv}
+              disabled={events.length === 0}
+            >
+              Export CSV
+            </Button>
+          </div>
+        </div>
+        {!admin ? (
+          <p className="mt-2 text-xs text-ink-muted">
+            You read the Audit trail of your own Sessions. An admin reads the
+            whole Workspace's.
+          </p>
+        ) : null}
+        {exported ? (
+          <p className="mt-2 text-xs text-ivy" aria-live="polite">
+            {exported}
+          </p>
+        ) : null}
+      </Panel>
+
+      <dl className="grid shrink-0 grid-cols-2 gap-2 sm:grid-cols-4">
+        {[
+          ["Events", String(totals.events)],
+          ["Agent calls", String(totals.agentCalls)],
+          [
+            "Tokens in / out",
+            `${formatTokens(totals.inputTokens)} / ${formatTokens(totals.outputTokens)}`,
+          ],
+          [
+            "Cost",
+            `${totals.costPartial ? "≥ " : ""}${formatCost(totals.costUsd)}`,
+          ],
+        ].map(([label, value]) => (
+          <div
+            key={label}
+            className="rounded-sm border border-ink/15 bg-paper px-3 py-2"
+          >
+            <dt className="eyebrow text-[0.6rem] text-ink-muted">{label}</dt>
+            <dd className="font-mono text-sm font-semibold tabular-nums">
+              {value}
+            </dd>
+          </div>
+        ))}
+      </dl>
+
+      <Panel
+        className="flex min-h-0 flex-1 flex-col"
+        bodyClassName="hx-scroll min-h-0 flex-1 p-0"
+      >
+        {waitingForSession ? (
+          <Empty title="No Session is open">
+            Open a Session in Chat to see its Audit trail, or look at My
+            Sessions.
+          </Empty>
+        ) : trail.isPending ? (
+          <Loading rows={6} className="p-3" />
+        ) : trail.isError ? (
+          <div className="p-3">
+            <ErrorNote onRetry={() => void trail.refetch()}>
+              {messageOf(trail.error)}
+            </ErrorNote>
+          </div>
+        ) : events.length === 0 ? (
+          <Empty title="Nothing recorded here yet">
+            {filtered
+              ? "No events match these filters."
+              : "Events appear as people and the Agent work."}
+          </Empty>
+        ) : (
+          <>
+            <ul>
+              {events.map((event) => (
+                <EventRow
+                  key={event.id}
+                  event={event}
+                  staff={
+                    event.staffId
+                      ? (staffById.get(event.staffId) ?? null)
+                      : null
+                  }
+                  open={openIds.has(event.id)}
+                  onToggle={() => toggle(event.id)}
+                  onLink={follow}
+                />
+              ))}
+            </ul>
+            <div className="flex items-center justify-center gap-3 p-3">
+              {trail.hasNextPage ? (
+                <Button
+                  pending={trail.isFetchingNextPage}
+                  pendingLabel="Loading…"
+                  onClick={() => void trail.fetchNextPage()}
+                >
+                  Load more
+                </Button>
+              ) : (
+                <p className="text-xs text-ink-muted">End of the trail.</p>
+              )}
+            </div>
+            {trail.isFetchNextPageError ? (
+              <div className="px-3 pb-3">
+                <ErrorNote>{messageOf(loadError)}</ErrorNote>
+              </div>
+            ) : null}
+          </>
+        )}
+      </Panel>
+    </div>
   );
 }

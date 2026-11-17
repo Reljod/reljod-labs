@@ -43,6 +43,8 @@ export type PipelineInputField = {
   description: string;
   /** For `string`: the allowed values. */
   options?: string[];
+  /** Takes a list of values of `type` (several Source ids, say), not one. */
+  multiple?: boolean;
 };
 
 export type PipelineSpec = {

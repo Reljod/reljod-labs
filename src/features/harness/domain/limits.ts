@@ -18,6 +18,10 @@ export const LIMITS = {
   runsPerHour: 20,
   /** Runs at work in a Workspace at once (queued, running or waiting for an Approval). */
   maxConcurrentRuns: 3,
+  /** Sources one Run may read; each is read by a model. */
+  sourcesPerRun: 6,
+  /** Characters of one Source a model Step is given. */
+  sourceCharsPerStep: 12_000,
   /** Sources a visitor may add in an hour. */
   sourcesPerHour: 10,
   /** Sources a Workspace keeps, seed Sources included. */

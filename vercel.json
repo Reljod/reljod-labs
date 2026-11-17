@@ -11,6 +11,12 @@
     },
     "src/app/api/client-manager/builds/[buildId]/events/route.ts": {
       "supportsCancellation": true
+    },
+    "src/app/api/harness/sessions/[id]/chat/route.ts": {
+      "supportsCancellation": true
+    },
+    "src/app/api/harness/runs/[id]/events/route.ts": {
+      "supportsCancellation": true
     }
   }
 }

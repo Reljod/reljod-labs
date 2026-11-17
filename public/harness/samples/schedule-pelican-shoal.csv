@@ -1,0 +1,13 @@
+# SPECIMEN - fictional contribution Schedule for the Harbour Bank & Trust demo. Not a real employer or person.
+# Employer: Pelican Shoal Marine Services Ltd (ER-1001)
+# Contribution month: last month (give the month when you start the Run if it is another)
+member_no,member_name,earnings_kyd,employee_kyd,employer_kyd,voluntary_kyd
+HB-10001,"Orrin Bascombe-Teal",6200.00,310.00,310.00,0.00
+HB-10002,"Lysandra Quarrie-Holt",3900.00,195.00,195.00,0.00
+HB-10003,"Tobiah Renwick",7100.00,355.00,355.00,0.00
+HB-10004,"Marisol Ochoa-Vance",2650.00,132.50,132.50,0.00
+HB-10005,"Fenwick Daley-Amos",5400.00,270.00,270.00,0.00
+HB-10006,"Priya Raghunathan",6800.00,340.00,340.00,0.00
+HB-10007,"Rochelle Tibbetts-Arden",4800.00,240.00,240.00,0.00
+HB-10008,"Kalani Mercer-Oduya",5100.00,255.00,255.00,100.00
+Total,,41950.00,2097.50,2097.50,100.00

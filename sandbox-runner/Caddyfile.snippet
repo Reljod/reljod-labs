@@ -1,0 +1,24 @@
+# Add this site to the VPS's Caddyfile (install.sh prints it with your hostname
+# and port filled in), then: sudo systemctl reload caddy
+# The hostname needs an A/AAAA record pointing at the VPS before Caddy can get a certificate.
+
+sandbox.example.com {
+	# The Runner refuses bodies over 512 KB itself; this stops them one hop earlier.
+	request_body {
+		max_size 600KB
+	}
+
+	reverse_proxy 127.0.0.1:8787 {
+		transport http {
+			dial_timeout 2s
+			# A run may take 60 s plus clean-up before the Runner answers.
+			response_header_timeout 90s
+		}
+	}
+
+	header {
+		-Server
+		X-Robots-Tag "noindex, nofollow"
+		Strict-Transport-Security "max-age=31536000"
+	}
+}
