@@ -13,7 +13,7 @@ Demo mode is a guided path through the real app. It is not a recording and not a
 
 ## Opening it
 
-It opens only when you press the **Demo mode** button in the header, never by itself. A dialog lists the six Scenarios. Press **Start** on one. If you left a Scenario part way, the dialog also offers **Continue where you left off**, and a small hint with the same offer appears after a reload; you can dismiss it. Closing the dialog changes nothing: the app does not depend on Demo mode, and you can carry on by hand at any time.
+It opens only when you press the **Demo mode** button in the top bar (**Demo** on a phone), never by itself. A dialog lists the six Scenarios. Press **Start** on one. If you left a Scenario part way, the dialog also offers **Continue where you left off**, and a small hint with the same offer appears after a reload; you can dismiss it. Closing the dialog changes nothing: the app does not depend on Demo mode, and you can carry on by hand at any time.
 
 ## The Scenarios
 

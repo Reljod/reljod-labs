@@ -15,9 +15,11 @@ This takes about ten minutes. You need Access to the demos: a Host account or a 
 
 Go to §/demos/harness§. The first time, the Harness creates your private Workspace and seeds it with Staff, records and Knowledge base Sources. That takes a moment.
 
+The bar across the top is the one every demo on this site shares: **All demos** goes back to the list, **01 Jod: Harness for Bank** back to Chat, then the six tabs (Chat, Pipelines, Knowledge, Skills, Audit, Docs; arrow keys move between them, and each has its own address, §?tab=…§), and on the right **Connect Claude** (**Claude** on a narrower screen), **Demo mode** and the Staff switcher.
+
 ## 2. Pick a Staff member
 
-You start as the first Staff member with the Role **user**. The Staff switcher in the header shows who you are. Open it to see everyone in your Workspace:
+You start as the first Staff member with the Role **user**. The Staff switcher at the right of the top bar shows who you are. Open it to see everyone in your Workspace:
 
 `,
     { live: "staff" },
@@ -44,7 +46,7 @@ When the Agent starts a Run, a **run card** appears in the chat. Choose **View p
 
 The Run stops at an **Approval** and shows the Draft. A low-risk Approval can be given by you as a user. A high-risk one (a payment instruction, a rejection, a regulator report) needs an admin who did not start the Run:
 
-1. Open the Staff switcher (the button at the top right with your name and Role) and choose the admin, the Operations Manager.
+1. Open the Staff switcher (the button at the top right with your initials and Role) and choose the admin, the Operations Manager.
 2. Open the Run from the Pipelines tab (the run card in the Session still links to it).
 3. Read the Draft and the Findings, then approve it or return it.
 
@@ -58,7 +60,7 @@ Open [the Audit tab](#tab:audit). Every step you took is there: the message, the
 
 - Edit a Rule in [the Skills tab](#tab:skills), run the same case again, and compare the Findings. See [Rules editor](#doc:app-rules).
 - In [the Knowledge tab](#tab:knowledge), add the sample Pensions Circular 2023-07 with **Add sample**, which disagrees with the Member Guide, and settle the Conflict as the admin. (A file attached in Chat is not filed, so it raises no Conflict.) See [Conflicts and Resolutions](#doc:conflicts).
-- Let Demo mode drive: press the **Demo mode** button in the header. See [Demo mode](#doc:demo-mode).
+- Let Demo mode drive: press the **Demo mode** button in the top bar (**Demo** on a phone). See [Demo mode](#doc:demo-mode).
 - Connect Claude. See [Connect Claude in five minutes](#doc:connect-claude-quick).
 `,
   ],

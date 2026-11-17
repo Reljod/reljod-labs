@@ -8,7 +8,7 @@ export const page: DocPage = {
   summary: "Choose who you act as inside your Workspace.",
   body: [
     md`
-The Staff switcher is in the header. It shows who you are signed in as and their Role.
+The Staff switcher is at the right of the bar across the top, the same bar every demo on this site opens with. It shows who you are signed in as (their initials, and their name on a wide screen) and their Role. On a phone the initials alone stand for the Role: filled ink is an admin.
 
 ## Switching
 
