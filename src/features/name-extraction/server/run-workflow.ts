@@ -90,6 +90,8 @@ async function endStep(ctx: RunContext, ledger: Ledger, outcome: EndOutcome) {
 
 // Orchestration -------------------------------------------------------------------------
 
+const SPEND_CAP_NOTE = `Stopped at the spend cap of $${RUN_LIMITS.costUsd.toFixed(2)} before the Done gate passed; the Register is what was found so far.`;
+
 function ledgerOf(state: AnalystState): Ledger {
   const { messages: _messages, ...ledger } = state;
   return ledger;
@@ -120,7 +122,8 @@ async function spawnReaders(
  * calls the model once with tools that do not execute; each tool call it
  * returns is a step of its own (spawn_readers fans out into parallel Reader
  * steps). The loop ends when `finish` passes the Done gate, at the turn or
- * spend cap, or when the Owner stops the Run.
+ * spend cap (checked before every turn and every tool call), or when the Run
+ * row is over (stopped by its Owner, or failed elsewhere).
  */
 export async function nameExtractionRun(input: RunInput) {
   "use workflow";
@@ -146,6 +149,7 @@ export async function nameExtractionRun(input: RunInput) {
       if (ledger.turns >= RUN_LIMITS.analystTurns) {
         outcome = {
           status: "completed",
+          stoppedBy: "turns",
           note: `Stopped at the cap of ${RUN_LIMITS.analystTurns} Analyst turns before the Done gate passed; the Register is what was found so far.`,
         };
         break;
@@ -153,14 +157,21 @@ export async function nameExtractionRun(input: RunInput) {
       if (ledger.costUsd >= RUN_LIMITS.costUsd) {
         outcome = {
           status: "completed",
-          note: `Stopped at the spend cap of $${RUN_LIMITS.costUsd.toFixed(2)} before the Done gate passed; the Register is what was found so far.`,
+          stoppedBy: "cost",
+          note: SPEND_CAP_NOTE,
         };
         break;
       }
 
       const turn = await turnStep(ctx, messages);
-      if (turn.kind === "stopped")
-        return { runId: ctx.runId, status: "stopped" };
+      if (turn.kind === "over") {
+        // The row is already over, so end() writes nothing; it still stops the Sandbox.
+        const ended = await endStep(ctx, ledger, {
+          status: "failed",
+          error: "The Run ended outside the workflow.",
+        });
+        return { runId: ctx.runId, status: ended.status, score: null };
+      }
       messages = turn.messages;
       ledger = {
         ...ledger,
@@ -173,6 +184,7 @@ export async function nameExtractionRun(input: RunInput) {
         if (idle >= 3) {
           outcome = {
             status: "completed",
+            stoppedBy: "idle",
             note: "The Analyst stopped calling tools before the Done gate passed.",
           };
           break;
@@ -195,6 +207,13 @@ export async function nameExtractionRun(input: RunInput) {
 
       const results: ToolResultPart[] = [];
       for (const call of turn.toolCalls) {
+        // The turn's own cost, or the Readers of an earlier call in it, may have reached the cap.
+        if (!outcome && ledger.costUsd >= RUN_LIMITS.costUsd)
+          outcome = {
+            status: "completed",
+            stoppedBy: "cost",
+            note: SPEND_CAP_NOTE,
+          };
         if (outcome) {
           results.push({
             type: "tool-result",

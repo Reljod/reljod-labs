@@ -1,12 +1,16 @@
 import { describe, expect, it } from "vitest";
-import type { ExtractedName } from "../../domain/contract";
+import { type ExtractedName, estimateCost } from "../../domain/contract";
 import {
   candidateStatuses,
   cap,
   doneGate,
+  estimateTokens,
   gateRefusal,
   markRead,
+  planReaderRanges,
+  RUN_LIMITS,
   rangesText,
+  readerModelRefusal,
   type SweepCandidate,
   unreadRanges,
 } from "./state";
@@ -95,5 +99,137 @@ describe("page bookkeeping", () => {
     expect(cap("x".repeat(20), 10)).toMatch(
       /^x{10}\n… \[10 more characters cut/,
     );
+  });
+});
+
+describe("Reader spend", () => {
+  it("estimates about 4 ASCII characters a token, and a token per other character", () => {
+    expect(estimateTokens("")).toBe(0);
+    expect(estimateTokens("abcd")).toBe(1);
+    expect(estimateTokens("abcde")).toBe(2);
+    expect(estimateTokens("名前")).toBe(2);
+    expect(estimateTokens("José")).toBe(2);
+  });
+
+  it("lets a call switch only to a model no pricier than the Run's Reader model", () => {
+    const reader = "anthropic/claude-haiku-5.5";
+    expect(readerModelRefusal(reader, reader)).toBeNull();
+    // Same prices: the second family for the recall audit.
+    expect(readerModelRefusal("openai/gpt-6-luna", reader)).toBeNull();
+    // Input pricier, output equal.
+    expect(readerModelRefusal("zai/glm-5.3-flash", reader)).toContain(
+      "costs more",
+    );
+    expect(readerModelRefusal("anthropic/claude-sonnet-5.5", reader)).toMatch(
+      /^spawn_readers refused/,
+    );
+    // From a pricey Run Reader model, a cheaper one is fine.
+    expect(
+      readerModelRefusal(reader, "anthropic/claude-sonnet-5.5"),
+    ).toBeNull();
+    expect(readerModelRefusal("nobody/model", reader)).toContain(
+      "unknown model",
+    );
+  });
+
+  const page = (chars: number) => "a".repeat(chars);
+  const pages = Array.from({ length: 300 }, () => page(8_000));
+  const ranges = (count: number, size = 20) =>
+    Array.from({ length: count }, (_, index) => ({
+      from: index * size + 1,
+      to: index * size + size,
+    }));
+
+  it("reserves each Reader's worst case: its prompt uncached at its output cap", () => {
+    const plan = planReaderRanges({
+      pages,
+      ranges: [{ from: 1, to: 2, focus: "abcd" }],
+      model: "anthropic/claude-haiku-5.5",
+      readersLeft: 64,
+      spentUsd: 0,
+      overheadTokens: 1_000,
+    });
+    // 1,000 overhead + 1 focus + 2 pages of (2,000 + 16 frame) tokens.
+    const expected = estimateCost(
+      "anthropic/claude-haiku-5.5",
+      1_000 + 1 + 2 * 2_016,
+      RUN_LIMITS.readerOutputTokens,
+    );
+    expect(plan.ranges).toEqual([
+      { from: 1, to: 2, focus: "abcd", estimateUsd: expected },
+    ]);
+    expect(plan.reservedUsd).toBe(expected);
+    expect(plan.notes).toEqual([]);
+  });
+
+  it("accepts Readers only while spend plus reservations stays under the cap", () => {
+    const model = "anthropic/claude-sonnet-5.5";
+    const plan = planReaderRanges({
+      pages,
+      ranges: ranges(15),
+      model,
+      readersLeft: 64,
+      spentUsd: 0.5,
+      overheadTokens: 2_000,
+    });
+    const each = plan.ranges[0].estimateUsd;
+    const fits = Math.floor((RUN_LIMITS.costUsd - 0.5) / each);
+    expect(plan.ranges).toHaveLength(fits);
+    expect(fits).toBeLessThan(15);
+    expect(0.5 + plan.reservedUsd).toBeLessThanOrEqual(RUN_LIMITS.costUsd);
+    expect(
+      plan.notes.filter((note) => note.includes("spend cap")),
+    ).toHaveLength(15 - fits);
+    expect(plan.notes.at(-1)).toMatch(/^Spend: \$0\.500 spent/);
+  });
+
+  it("refuses every Reader once the Run has spent its cap", () => {
+    const plan = planReaderRanges({
+      pages,
+      ranges: ranges(3),
+      model: "anthropic/claude-haiku-5.5",
+      readersLeft: 64,
+      spentUsd: RUN_LIMITS.costUsd,
+      overheadTokens: 0,
+    });
+    expect(plan.ranges).toEqual([]);
+    expect(plan.reservedUsd).toBe(0);
+  });
+
+  it("bounds a full fan-out of the priciest model by the cap", () => {
+    const plan = planReaderRanges({
+      pages: Array.from({ length: 500 }, () => page(12_000)),
+      ranges: ranges(RUN_LIMITS.readersPerCall, 15),
+      model: "anthropic/claude-sonnet-5.5",
+      readersLeft: RUN_LIMITS.readers,
+      spentUsd: 0,
+      overheadTokens: 3_000,
+    });
+    expect(plan.ranges.length).toBeLessThan(RUN_LIMITS.readersPerCall);
+    expect(plan.reservedUsd).toBeLessThanOrEqual(RUN_LIMITS.costUsd);
+  });
+
+  it("checks pages, size and the Reader cap before the spend", () => {
+    const plan = planReaderRanges({
+      pages: [...pages.slice(0, 40), page(300_000)],
+      ranges: [
+        { from: 0, to: 3 },
+        { from: 1, to: 40 },
+        { from: 41, to: 41 },
+        { from: 1, to: 5 },
+        { from: 6, to: 10 },
+      ],
+      model: "anthropic/claude-haiku-5.5",
+      readersLeft: 1,
+      spentUsd: 0,
+      overheadTokens: 0,
+    });
+    expect(plan.ranges.map((range) => range.from)).toEqual([1]);
+    expect(plan.notes).toEqual([
+      "Range 0-3 skipped: pages run 1-41.",
+      `Range 1-40 skipped: over ${RUN_LIMITS.pagesPerReader} pages; split it.`,
+      expect.stringContaining("Range 41-41 skipped: 300,000 characters"),
+      "Range 6-10 skipped: the Run's Reader cap is reached.",
+    ]);
   });
 });

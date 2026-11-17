@@ -9,6 +9,7 @@ import {
   type ToolId,
 } from "../domain/contract";
 import { SKILLS } from "../skills";
+import { ConnectClient } from "./connect-client";
 import { modelLabel, modelPrice, percent } from "./format";
 import type { RunView } from "./run-view";
 import { Panel, Tag } from "./ui";
@@ -179,6 +180,7 @@ export function UsedPanel({ view }: { view: RunView }) {
             </li>
           ))}
         </ul>
+        <ConnectClient endpoint={`${origin}${MCP_PATH}`} />
       </section>
     </Panel>
   );

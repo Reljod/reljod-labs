@@ -98,7 +98,7 @@ export const spawnReadersSchema = z.object({
     .enum(MODEL_IDS as [ModelId, ...ModelId[]])
     .optional()
     .describe(
-      "Reader model for this call only, e.g. a second model family for the recall audit; default is the Run's Reader model",
+      "Reader model for this call only, e.g. a second model family for the recall audit; default is the Run's Reader model. Refused unless its input and output prices are both no higher than the Run's Reader model",
     ),
   instructions: z
     .string()
@@ -136,7 +136,7 @@ const DESCRIPTIONS: Record<ToolId, string> = {
   read_pages: `${TOOLS.read_pages.hint}: at most ${RUN_LIMITS.pagesPerRead} pages per call. Pages shown whole count as read for the Done gate.`,
   grep: `${TOOLS.grep.hint}. Use it to find where a name or a field appears.`,
   run_code: `${TOOLS.run_code.hint}. Pages at /vercel/doc/pages/0001.txt…, candidates.json, register.json, readers.json and the helper module /vercel/doc/sieve.mjs. 60 s limit, output capped. Load the sandbox-coding Skill before the first use.`,
-  spawn_readers: `${TOOLS.spawn_readers.hint}. Give every range in one call. Each Reader returns names with verbatim quotes, merged into the Register; its pages count as read when it succeeds.`,
+  spawn_readers: `${TOOLS.spawn_readers.hint}. Give every range in one call. Each Reader returns names with verbatim quotes, merged into the Register; its pages count as read when it succeeds. Each Reader's worst-case cost is reserved before it runs; ranges that would take the Run past its $${RUN_LIMITS.costUsd.toFixed(2)} spend cap are refused.`,
   load_skill: TOOLS.load_skill.hint,
   record_names: `${TOOLS.record_names.hint}, merges aliases, removes non-parties and dismisses Sweep Candidates with a reason. The only way to change the Register.`,
   finish: TOOLS.finish.hint,

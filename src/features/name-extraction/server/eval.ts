@@ -55,9 +55,11 @@ export async function evaluateCorpus(
       if (patch.status) status = patch.status;
     },
     end: async (_runId, patch) => {
+      if (status !== "queued" && status !== "running") return false;
       if (patch.status) status = patch.status;
       if (Array.isArray(patch.names)) names = patch.names.length;
       if (patch.error) error = patch.error;
+      return true;
     },
   });
   const started = Date.now();

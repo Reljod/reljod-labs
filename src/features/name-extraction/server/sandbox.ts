@@ -1,6 +1,8 @@
 import "server-only";
 import { Sandbox } from "@vercel/sandbox";
 import type { DocumentText } from "../domain/contract";
+import { runSink } from "./emit";
+import { isOver } from "./repository";
 import {
   documentFiles,
   RUN_DIR,
@@ -16,9 +18,19 @@ import {
 export const SANDBOX_LIMITS = {
   /** Wall time of one run_code. */
   commandMs: 60_000,
-  /** The Sandbox's own lifetime: a Run that dies without stopping it is reaped. */
-  sandboxMs: 30 * 60_000,
+  /**
+   * The Sandbox's own lifetime when made: short, so one a stopped Run leaves
+   * behind is reaped soon. Each run_code extends it when less than
+   * `extendBelowMs` is left.
+   */
+  sandboxMs: 10 * 60_000,
+  extendBelowMs: 2 * 60_000,
+  extendByMs: 5 * 60_000,
   outputChars: 8_000,
+  /** Bytes of stdout and of stderr read back; the rest is cut in the Sandbox. */
+  outputBytes: 32_000,
+  /** The most either stream may write to disk before node is killed (SIGXFSZ). */
+  outputFileBlocks: 20_000,
 };
 
 export function sandboxName(runId: string) {
@@ -39,6 +51,28 @@ function capOutput(text: string) {
     : text;
 }
 
+/**
+ * Runs `node $1` with stdout and stderr to files (each capped on disk by
+ * `ulimit -f`), then prints at most `outputBytes` of each and exits with
+ * node's own exit code. Output is cut in the Sandbox, so reading it back
+ * never loads more than a few KB, however much the code printed.
+ */
+const NODE_SECONDS = Math.floor(SANDBOX_LIMITS.commandMs / 1000) - 2;
+
+export const RUNNER_SCRIPT = [
+  `ulimit -f ${SANDBOX_LIMITS.outputFileBlocks} 2>/dev/null`,
+  'out="$1.out"; err="$1.err"',
+  // `timeout` kills node itself; the Sandbox's own timeout would kill only sh.
+  `if command -v timeout >/dev/null 2>&1; then timeout -k 2 ${NODE_SECONDS} node "$1" >"$out" 2>"$err"; else node "$1" >"$out" 2>"$err"; fi`,
+  "code=$?",
+  `cap() { size=$(wc -c <"$1"); head -c ${SANDBOX_LIMITS.outputBytes} "$1"; if [ "$size" -gt ${SANDBOX_LIMITS.outputBytes} ]; then printf '\\n… [%s more bytes cut]' $((size - ${SANDBOX_LIMITS.outputBytes})); fi; }`,
+  'cap "$out"; cap "$err" >&2',
+  `[ "$code" = 124 ] && printf '\\nTimed out after ${NODE_SECONDS} s.' >&2`,
+  `[ "$code" = 153 ] && printf '\\nKilled: the output passed the size limit.' >&2`,
+  'rm -f "$out" "$err"',
+  'exit "$code"',
+].join("\n");
+
 export type CodeResult = {
   stdout: string;
   stderr: string;
@@ -46,7 +80,39 @@ export type CodeResult = {
   ms: number;
 };
 
-/** Runs the Analyst's code in the Run's Sandbox, with the current state files written first. */
+const message = (error: unknown) =>
+  error instanceof Error ? error.message : String(error);
+
+/** Whether the Run has ended (stopped, failed, completed) or is gone. */
+async function runIsOver(runId: string) {
+  try {
+    const status = await runSink().status(runId);
+    return status === null || isOver(status);
+  } catch {
+    // Unknown: let the code run; the Run's end disposes the Sandbox anyway.
+    return false;
+  }
+}
+
+/** Gives the Sandbox room for one more command, best effort. */
+async function extendIfShort(sandbox: Sandbox) {
+  const expires = sandbox.expiresAt?.getTime();
+  if (expires === undefined) return;
+  if (expires - Date.now() >= SANDBOX_LIMITS.extendBelowMs) return;
+  try {
+    await sandbox.extendTimeout(SANDBOX_LIMITS.extendByMs);
+  } catch {
+    // At the plan's limit: the command still has whatever time is left.
+  }
+}
+
+/**
+ * Runs the Analyst's code in the Run's Sandbox, with the current state files
+ * written first. Never throws: every failure (no Sandbox, a write that fails,
+ * a Run that was stopped meanwhile) comes back as a result with a non-zero
+ * exit code and the reason in stderr, so the step is not retried and the
+ * pending `code` event gets its result.
+ */
 export async function runInSandbox(input: {
   runId: string;
   callId: string;
@@ -55,25 +121,43 @@ export async function runInSandbox(input: {
   state: SandboxFile[];
 }): Promise<CodeResult> {
   const started = Date.now();
-  const sandbox = await Sandbox.getOrCreate({
-    name: sandboxName(input.runId),
-    networkPolicy: "deny-all",
-    timeout: SANDBOX_LIMITS.sandboxMs,
-    onCreate: async (created) => {
-      await writeAll(created, documentFiles(await input.document()));
-    },
+  const refused = (stderr: string, exitCode = 1): CodeResult => ({
+    stdout: "",
+    stderr,
+    exitCode,
+    ms: Date.now() - started,
   });
-  // getOrCreate may hand back a Sandbox made with another policy: enforce it.
-  await sandbox.update({ networkPolicy: "deny-all" });
-  const file = `${RUN_DIR}/${input.callId.replace(/[^\w-]/g, "_").slice(0, 80)}.mjs`;
-  await writeAll(sandbox, [
-    ...input.state,
-    { path: file, content: input.code },
-  ]);
+  // A Run stopped while the Analyst was deciding must not get a new Sandbox.
+  if (await runIsOver(input.runId))
+    return refused("The Run is over; the code was not run.");
+  let sandbox: Sandbox;
   try {
-    const result = await sandbox.runCommand("node", [file], {
-      timeoutMs: SANDBOX_LIMITS.commandMs,
+    sandbox = await Sandbox.getOrCreate({
+      name: sandboxName(input.runId),
+      networkPolicy: "deny-all",
+      timeout: SANDBOX_LIMITS.sandboxMs,
+      onCreate: async (created) => {
+        await writeAll(created, documentFiles(await input.document()));
+      },
     });
+  } catch (error) {
+    return refused(`The Sandbox could not be started: ${message(error)}`);
+  }
+  try {
+    // getOrCreate may hand back a Sandbox made with another policy: enforce it.
+    await sandbox.update({ networkPolicy: "deny-all" });
+    await extendIfShort(sandbox);
+    const file = `${RUN_DIR}/${input.callId.replace(/[^\w-]/g, "_").slice(0, 80)}.mjs`;
+    await writeAll(sandbox, [
+      ...input.state,
+      { path: file, content: input.code },
+    ]);
+    const result = await sandbox.runCommand(
+      "sh",
+      ["-c", RUNNER_SCRIPT, "sieve", file],
+      // A little over node's own limit, so `timeout` fires first.
+      { timeoutMs: SANDBOX_LIMITS.commandMs + 5_000 },
+    );
     const [stdout, stderr] = await Promise.all([
       result.stdout(),
       result.stderr(),
@@ -86,16 +170,19 @@ export async function runInSandbox(input: {
     };
   } catch (error) {
     const ms = Date.now() - started;
-    const timedOut = ms >= SANDBOX_LIMITS.commandMs - 500;
+    const timedOut = ms >= SANDBOX_LIMITS.commandMs;
     return {
       stdout: "",
       stderr: timedOut
         ? `Timed out after ${SANDBOX_LIMITS.commandMs / 1000} s.`
-        : `The Sandbox could not run the code: ${error instanceof Error ? error.message : String(error)}`,
+        : `The Sandbox could not run the code: ${message(error)}`,
       // 124 is what `timeout(1)` exits with; -1 is kept for "not run yet".
       exitCode: timedOut ? 124 : 1,
       ms,
     };
+  } finally {
+    // Stopped while the code ran: stopRun's dispose may have come first.
+    if (await runIsOver(input.runId)) await disposeSandbox(input.runId);
   }
 }
 

@@ -1,5 +1,4 @@
 import "server-only";
-import { timingSafeEqual } from "node:crypto";
 import type { McpServer } from "@modelcontextprotocol/server";
 import { createMcpHandler, withMcpAuth } from "mcp-handler";
 import { z } from "zod";
@@ -14,9 +13,6 @@ import { allEvents, currentRulebook, ownedRun, toSummary } from "./repository";
 import { closeIfStale, startRun } from "./runs";
 import { readSieveToken, type SieveClaims } from "./toolkit/mcp-token";
 import type { Visitor } from "./visitor";
-
-/** The rate-limit identity of the shared NAME_EXTRACTION_MCP_TOKEN. */
-const EXTERNAL_VISITOR = "mcp-external";
 
 type Caller = { owner: Owner; visitor: Visitor };
 
@@ -157,12 +153,6 @@ const handler = createMcpHandler(registerNameExtractionTools, {
   serverInfo: { name: "sieve", version: "1.0.0" },
 });
 
-function sameSecret(given: string, expected: string) {
-  const a = Buffer.from(given);
-  const b = Buffer.from(expected);
-  return a.length === b.length && timingSafeEqual(a, b);
-}
-
 /** Whether a signed token's holder still has Access: a live Guest pass, a Host still on the list. */
 async function stillAllowed(claims: SieveClaims) {
   switch (claims.kind) {
@@ -188,45 +178,29 @@ async function stillAllowed(claims: SieveClaims) {
 }
 
 /**
- * The Sieve MCP server. A bearer is either a token minted for an Owner
- * (`mintMcpToken`, checked against the Owner's Access on every call) or the
- * shared NAME_EXTRACTION_MCP_TOKEN, which acts as the `e2e` Owner under the
- * normal rate limits.
+ * The Sieve MCP server. The only bearer is a token minted for an Owner
+ * (`mintMcpToken`, from "Connect a client" on the page), checked against the
+ * Owner's Access on every call, so a client acts for that Owner alone and
+ * under their limits. There is no shared token: one would need an Owner of
+ * its own, and borrowing `e2e` would mix outside clients with test data.
  */
 export const mcpHandler = withMcpAuth(
   handler,
   async (_request, bearer) => {
     if (!bearer) return undefined;
     const claims = readSieveToken(bearer, env.rateLimitSalt());
-    if (claims) {
-      if (!(await stillAllowed(claims))) return undefined;
-      return {
-        token: bearer,
-        clientId: `sieve-${claims.kind}`,
-        scopes: ["name-extraction"],
-        extra: {
-          caller: {
-            owner: claims.owner,
-            visitor: { hash: claims.visitor, trusted: claims.kind === "e2e" },
-          } satisfies Caller,
-        },
-      };
-    }
-    const external = env.mcpToken();
-    if (external && sameSecret(bearer, external)) {
-      return {
-        token: bearer,
-        clientId: "sieve-external",
-        scopes: ["name-extraction"],
-        extra: {
-          caller: {
-            owner: "e2e",
-            visitor: { hash: EXTERNAL_VISITOR, trusted: false },
-          } satisfies Caller,
-        },
-      };
-    }
-    return undefined;
+    if (!claims || !(await stillAllowed(claims))) return undefined;
+    return {
+      token: bearer,
+      clientId: `sieve-${claims.kind}`,
+      scopes: ["name-extraction"],
+      extra: {
+        caller: {
+          owner: claims.owner,
+          visitor: { hash: claims.visitor, trusted: claims.kind === "e2e" },
+        } satisfies Caller,
+      },
+    };
   },
   { required: true },
 );

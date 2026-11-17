@@ -22,7 +22,8 @@ before \`finish\`. Also whenever \`finish\` is refused with open Candidates.
    with a focus line naming what to look for. For a second opinion, pass a model of
    a different family (\`model: "openai/gpt-6-luna"\` when the Readers were
    Anthropic, \`"anthropic/claude-haiku-5.5"\` when they were OpenAI): different
-   families miss different names.
+   families miss different names. The second model must be no pricier than the
+   Run's Reader model (input and output price), or the call is refused.
 3. Work through the open Candidates:
    - It is a party: add it (or add it as an alias of an existing Name) with
      \`record_names\`; matching Candidates close by themselves.

@@ -4,14 +4,17 @@
  * Everything here crosses workflow step boundaries, so it stays plain JSON.
  */
 import type { ModelMessage } from "ai";
-import type {
-  DocumentSource,
-  DocumentText,
-  DoneGate,
-  ExtractedName,
-  ModelChoice,
-  Rulebook,
-  SkillId,
+import {
+  type DocumentSource,
+  type DocumentText,
+  type DoneGate,
+  type ExtractedName,
+  estimateCost,
+  MODELS,
+  type ModelChoice,
+  type ModelId,
+  type Rulebook,
+  type SkillId,
 } from "../../domain/contract";
 import { nameKey } from "../../domain/resolve";
 import type { Candidate } from "../../domain/sweep";
@@ -219,6 +222,124 @@ export function gateRefusal(
 export function cap(text: string, max: number = RUN_LIMITS.toolOutputChars) {
   if (text.length <= max) return text;
   return `${text.slice(0, max)}\n… [${text.length - max} more characters cut; narrow the request]`;
+}
+
+// Reader spend ------------------------------------------------------------------------------
+
+/**
+ * Tokens a text costs, rounded up for a spend bound: about 4 characters a
+ * token for ASCII, and a token per character for anything else, which
+ * tokenizers split finer (accents, other scripts, symbols).
+ */
+export function estimateTokens(text: string) {
+  let other = 0;
+  for (let index = 0; index < text.length; index++)
+    if (text.charCodeAt(index) > 0x7f) other++;
+  return Math.ceil((text.length - other) / 4) + other;
+}
+
+/** The page header and delimiters a Reader's prompt wraps around each page. */
+const PAGE_FRAME_TOKENS = 16;
+
+/**
+ * Why a spawn_readers call may not switch to `requested`, or null when it may.
+ * A call may switch only to a model whose input and output prices are both no
+ * higher than the Run's Reader model (a second family for the recall audit,
+ * say), so the Analyst, or text in the Document, cannot buy pricier Readers.
+ */
+export function readerModelRefusal(
+  requested: string,
+  runReader: string,
+): string | null {
+  if (requested === runReader) return null;
+  const want = MODELS[requested as ModelId];
+  const base = MODELS[runReader as ModelId];
+  if (!want || !base)
+    return `spawn_readers refused: unknown model ${requested}.`;
+  if (want.input <= base.input && want.output <= base.output) return null;
+  return `spawn_readers refused: ${requested} ($${want.input}/$${want.output} per million input/output tokens) costs more than the Run's Reader model ${runReader} ($${base.input}/$${base.output}). Pick a model no pricier than that, or leave model out.`;
+}
+
+export type ReaderRangeRequest = { from: number; to: number; focus?: string };
+export type PlannedRange = ReaderRangeRequest & {
+  /** Upper bound on the Reader's cost: its whole prompt uncached, at its output cap. */
+  estimateUsd: number;
+};
+
+/**
+ * Checks a spawn_readers call's ranges against the caps and reserves each
+ * Reader's estimated cost before it runs. A range is accepted only while what
+ * the Run has spent, plus every Reader accepted so far, stays within the
+ * spend cap; the rest are refused with a note the Analyst can act on.
+ */
+export function planReaderRanges(args: {
+  pages: string[];
+  ranges: ReaderRangeRequest[];
+  model: string;
+  /** Readers the Run may still spawn. */
+  readersLeft: number;
+  /** What the Run has spent so far. */
+  spentUsd: number;
+  /** Tokens of every Reader's prompt besides its pages and focus. */
+  overheadTokens: number;
+}): { ranges: PlannedRange[]; notes: string[]; reservedUsd: number } {
+  const { pages, model, readersLeft, spentUsd, overheadTokens } = args;
+  const total = pages.length;
+  const notes: string[] = [];
+  const ranges: PlannedRange[] = [];
+  let reservedUsd = 0;
+  let overBudget = 0;
+  for (const range of args.ranges) {
+    const label = `${range.from}-${range.to}`;
+    if (!(range.from >= 1 && range.to >= range.from && range.to <= total)) {
+      notes.push(`Range ${label} skipped: pages run 1-${total}.`);
+      continue;
+    }
+    if (range.to - range.from + 1 > RUN_LIMITS.pagesPerReader) {
+      notes.push(
+        `Range ${label} skipped: over ${RUN_LIMITS.pagesPerReader} pages; split it.`,
+      );
+      continue;
+    }
+    const texts = pages.slice(range.from - 1, range.to);
+    const chars = texts.reduce((sum, page) => sum + page.length, 0);
+    if (chars > RUN_LIMITS.charsPerReader) {
+      notes.push(
+        `Range ${label} skipped: ${chars.toLocaleString("en")} characters, over ${RUN_LIMITS.charsPerReader.toLocaleString("en")}; split it.`,
+      );
+      continue;
+    }
+    if (ranges.length >= readersLeft) {
+      notes.push(`Range ${label} skipped: the Run's Reader cap is reached.`);
+      continue;
+    }
+    const inputTokens =
+      overheadTokens +
+      estimateTokens(range.focus ?? "") +
+      texts.reduce(
+        (sum, page) => sum + estimateTokens(page) + PAGE_FRAME_TOKENS,
+        0,
+      );
+    const estimateUsd = estimateCost(
+      model,
+      inputTokens,
+      RUN_LIMITS.readerOutputTokens,
+    );
+    if (spentUsd + reservedUsd + estimateUsd > RUN_LIMITS.costUsd) {
+      overBudget++;
+      notes.push(
+        `Range ${label} skipped: its Reader could cost up to $${estimateUsd.toFixed(3)}, past the Run's $${RUN_LIMITS.costUsd.toFixed(2)} spend cap.`,
+      );
+      continue;
+    }
+    reservedUsd += estimateUsd;
+    ranges.push({ ...range, estimateUsd });
+  }
+  if (overBudget > 0)
+    notes.push(
+      `Spend: $${spentUsd.toFixed(3)} spent and $${reservedUsd.toFixed(3)} reserved for the accepted Readers leave $${Math.max(0, RUN_LIMITS.costUsd - spentUsd - reservedUsd).toFixed(3)} under the cap. Cover the skipped pages with read_pages, smaller ranges or a cheaper model.`,
+    );
+  return { ranges, notes, reservedUsd };
 }
 
 export type DocumentLoader = (ctx: RunContext) => Promise<DocumentText>;

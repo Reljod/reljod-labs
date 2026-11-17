@@ -347,8 +347,24 @@ export type RunEvent = { at: number } & (
       error?: string;
       /** Filled when the Document is from the corpus and has an answer key. */
       score?: Score;
+      /**
+       * Whether the Done gate had passed when the Run ended. Optional because
+       * ends written before this field, and ends written outside the workflow
+       * (a stop, a failed start, the stream's fallback), do not carry it.
+       */
+      gatePassed?: boolean;
+      /**
+       * Set when the harness wound a "completed" Run up before the Done gate
+       * passed: at the turn cap, at the spend cap, or after the Analyst stopped
+       * calling tools.
+       */
+      stoppedBy?: StopReason;
     }
 );
+
+/** Why the harness wound a Run up before `finish` passed the Done gate. */
+export const STOP_REASONS = ["turns", "cost", "idle"] as const;
+export type StopReason = (typeof STOP_REASONS)[number];
 
 type DistributiveOmit<T, K extends PropertyKey> = T extends unknown
   ? Omit<T, K>

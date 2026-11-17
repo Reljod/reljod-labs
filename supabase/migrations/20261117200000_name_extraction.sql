@@ -64,6 +64,11 @@ create table name_extraction.runs (
   names jsonb not null default '[]'::jsonb,
   score jsonb,
   error text,
+  -- Whether the Done gate had passed when the Run ended; null for a Run
+  -- ended outside the workflow (a stop, a failed start, a lost workflow).
+  gate_passed boolean,
+  -- Why the harness wound a "completed" Run up early, if it did.
+  stopped_by text check (stopped_by is null or stopped_by in ('turns', 'cost', 'idle')),
   -- Salted hash of the visitor's IP, used only for rate limiting.
   visitor_hash text not null,
   started_at timestamptz not null default now(),
@@ -228,27 +233,42 @@ begin
 end;
 $$;
 
--- Saving a Rulebook writes the next version for the Owner.
+-- Saving a Rulebook writes the next version for the Owner, under a daily cap
+-- per Owner (LIMITS.rulebooksPerOwnerPerDay in server/runs.ts; a trusted
+-- visitor passes null). Returns the new version, or why it was refused.
 create function name_extraction.save_rulebook(
   p_owner text,
   p_rulebook jsonb,
-  p_note text
+  p_note text,
+  p_per_owner_per_day integer
 )
-returns integer
+returns table (version integer, refusal text)
 language plpgsql
 security invoker
 set search_path = ''
 as $$
 declare
+  used integer;
   next_version integer;
 begin
   perform pg_advisory_xact_lock(hashtextextended('name_extraction:rulebook:' || p_owner, 0));
+  if p_per_owner_per_day is not null then
+    select count(*) into used
+    from name_extraction.rulebooks rb
+    where rb.owner = p_owner and rb.created_at > now() - interval '1 day';
+    if used >= p_per_owner_per_day then
+      return query select null::integer, format(
+        'That''s %s Rulebook saves today, the demo''s daily limit. Try again tomorrow.', used
+      );
+      return;
+    end if;
+  end if;
   select coalesce(max(rb.version), 0) + 1 into next_version
   from name_extraction.rulebooks rb
   where rb.owner = p_owner;
   insert into name_extraction.rulebooks (owner, version, rulebook, note)
   values (p_owner, next_version, p_rulebook, p_note);
-  return next_version;
+  return query select next_version, null::text;
 end;
 $$;
 
@@ -268,7 +288,7 @@ grant usage on schema name_extraction to service_role;
 grant all on all tables in schema name_extraction to service_role;
 grant all on all sequences in schema name_extraction to service_role;
 grant execute on function name_extraction.create_run(text, text, text, integer, jsonb, jsonb, integer, jsonb, integer, integer, integer) to service_role;
-grant execute on function name_extraction.save_rulebook(text, jsonb, text) to service_role;
+grant execute on function name_extraction.save_rulebook(text, jsonb, text, integer) to service_role;
 alter default privileges in schema name_extraction grant all on tables to service_role;
 alter default privileges in schema name_extraction grant all on sequences to service_role;
 

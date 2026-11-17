@@ -147,7 +147,14 @@ export async function saveRulebook(input: {
     typeof input?.note === "string" && input.note.trim()
       ? input.note.trim().slice(0, 500)
       : null;
-  return { version: await insertRulebook(owner, rulebook.data, note) };
+  const who = await visitor();
+  const saved = await insertRulebook(
+    owner,
+    rulebook.data,
+    note,
+    who.trusted ? null : LIMITS.rulebooksPerOwnerPerDay,
+  );
+  return "refusal" in saved ? { error: saved.refusal } : saved;
 }
 
 /** Every Rulebook version the Owner saved, newest first, then the default. */
@@ -199,7 +206,7 @@ export async function createUpload(input: {
   const path = `uploads/${ownerFolder(owner)}/${uploadId}.json`;
   const { data, error } = await supabase()
     .storage.from(BUCKET)
-    .createSignedUploadUrl(path);
+    .createSignedUploadUrl(path, { upsert: false });
   if (error || !data)
     return { error: "The upload could not be opened. Try again." };
   await insertUpload({ id: uploadId, owner, title, pages, storagePath: path });

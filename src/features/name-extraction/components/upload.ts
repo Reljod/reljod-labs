@@ -78,7 +78,7 @@ export async function uploadPdf(
   if ("error" in slot) throw new Error(slot.error);
   const response = await fetch(slot.signedUrl, {
     method: "PUT",
-    headers: { "content-type": "application/json", "x-upsert": "true" },
+    headers: { "content-type": "application/json" },
     body: JSON.stringify({ pages }),
   });
   if (!response.ok) throw new Error(`Storage said ${response.status}.`);

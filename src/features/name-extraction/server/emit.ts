@@ -37,13 +37,25 @@ export type RunSink = {
     runId: string,
     patch: Partial<Pick<RunRow, "status" | "cost_usd">>,
   ): Promise<void>;
-  /** Ends a Run still going; a Run already ended (stopped) keeps its status. */
+  /**
+   * Ends a Run still going; a Run already ended (stopped) keeps its status.
+   * True only for the call that ended it.
+   */
   end(
     runId: string,
     patch: Partial<
-      Pick<RunRow, "status" | "error" | "names" | "score" | "cost_usd">
+      Pick<
+        RunRow,
+        | "status"
+        | "error"
+        | "names"
+        | "score"
+        | "cost_usd"
+        | "gate_passed"
+        | "stopped_by"
+      >
     >,
-  ): Promise<void>;
+  ): Promise<boolean>;
 };
 
 const databaseSink: RunSink = {

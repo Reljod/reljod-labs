@@ -184,6 +184,50 @@ describe("reduceRunView", () => {
     expect(again).toBe(once);
   });
 
+  it("keeps an event that arrives late with a lower seq, in seq order", () => {
+    const at = (event: RunEvent, n: number) =>
+      ({ ...event, seq: n }) as SeqEvent;
+    const view = [
+      at(start, 1),
+      at({ at: 3, type: "thought", text: "third" }, 3),
+      // Committed after seq 3 (a parallel Reader's insert): still new.
+      at({ at: 2, type: "thought", text: "second" }, 2),
+      // A reconnect resends both.
+      at({ at: 2, type: "thought", text: "second" }, 2),
+      at({ at: 3, type: "thought", text: "third" }, 3),
+    ].reduce(reduceRunView, emptyRunView);
+    expect(view.events.map((event) => event.seq)).toEqual([1, 2, 3]);
+    expect(view.lastSeq).toBe(3);
+    expect(view.timeline).toHaveLength(2);
+  });
+
+  it("takes the stream's closing end even when it reuses the last seq", () => {
+    const running = foldEvents([
+      { ...start, seq: 7 },
+      { at: 2, type: "thought", text: "hm", seq: 8 },
+    ] as SeqEvent[]);
+    const ended = reduceRunView(running, {
+      at: 9,
+      type: "end",
+      status: "failed",
+      error: "The run lost its workflow and was closed.",
+      seq: 8,
+    });
+    expect(ended.status).toBe("failed");
+    expect(ended.error).toMatch(/lost its workflow/);
+    // The seq is not new, so the Audit trail does not grow a duplicate.
+    expect(ended.events.map((event) => event.seq)).toEqual([7, 8]);
+    // A second end with a seen seq changes nothing.
+    expect(
+      reduceRunView(ended, {
+        at: 10,
+        type: "end",
+        status: "completed",
+        seq: 8,
+      }),
+    ).toBe(ended);
+  });
+
   it("settles everything in flight when the Run ends, and keeps the score", () => {
     const view = foldEvents(
       seq([

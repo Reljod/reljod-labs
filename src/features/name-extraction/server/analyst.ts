@@ -6,7 +6,9 @@ import {
   type DoneGate,
   type ExtractedName,
   type RunEventInput,
+  type RunStatus,
   type Score,
+  type StopReason,
   type ToolId,
 } from "../domain/contract";
 import { answerKeyFor, CORPUS, generateDocument } from "../domain/corpus";
@@ -22,7 +24,12 @@ import { disposeSandbox, runInSandbox } from "./sandbox";
 import { grepPages, grepText } from "./toolkit/grep";
 import { compactHistory } from "./toolkit/history";
 import { outlineText, readPages } from "./toolkit/pages";
-import { analystBrief, analystInstructions } from "./toolkit/prompt";
+import {
+  analystBrief,
+  analystInstructions,
+  asDocumentText,
+  readerOverheadTokens,
+} from "./toolkit/prompt";
 import { applyRecord, forEvent } from "./toolkit/register";
 import { stateFiles } from "./toolkit/sandbox-files";
 import {
@@ -33,9 +40,11 @@ import {
   initialState,
   markRead,
   numbered,
+  planReaderRanges,
   RUN_LIMITS,
   type RunContext,
   rangesText,
+  readerModelRefusal,
   type SweepCandidate,
   unreadRanges,
 } from "./toolkit/state";
@@ -91,6 +100,11 @@ function gateLine(gate: DoneGate, ledger: Ledger) {
   return `[gate: pages read ${gate.pagesRead}/${gate.pagesTotal}, open Candidates ${gate.candidatesOpen}, ${gate.passed ? "PASSED, you may finish" : "not passed"} · Register ${ledger.register.length} Names · turns left ${turnsLeft} · Readers left ${RUN_LIMITS.readers - ledger.readers.length} · spent $${ledger.costUsd.toFixed(3)}]`;
 }
 
+/** A Run whose row says it is over (or is gone) must not spend another cent. */
+function isOver(status: RunStatus | null) {
+  return status !== "queued" && status !== "running";
+}
+
 // Begin ------------------------------------------------------------------------------------
 
 export async function begin(ctx: RunContext): Promise<AnalystState> {
@@ -132,7 +146,7 @@ export async function begin(ctx: RunContext): Promise<AnalystState> {
 // One Analyst turn -----------------------------------------------------------------------
 
 export type TurnResult =
-  | { kind: "stopped" }
+  | { kind: "over"; status: RunStatus | null }
   | {
       kind: "turn";
       messages: ModelMessage[];
@@ -145,8 +159,9 @@ export async function analystTurn(
   ctx: RunContext,
   messages: ModelMessage[],
 ): Promise<TurnResult> {
-  if ((await runSink().status(ctx.runId)) === "stopped")
-    return { kind: "stopped" };
+  // Stopped by its Owner, or failed or ended elsewhere: either way, stop paying.
+  const status = await runSink().status(ctx.runId);
+  if (isOver(status)) return { kind: "over", status };
   const history = compactHistory(messages);
   const started = Date.now();
   const result = await generateText({
@@ -290,10 +305,16 @@ export async function runTool(
     case "read_pages": {
       const input = parsed.value as { from: number; to?: number };
       const read = readPages(document, input);
-      output = read.text;
+      const refused = read.text.startsWith("read_pages refused");
+      output = refused
+        ? read.text
+        : asDocumentText(
+            `pages="${input.from}-${input.to ?? input.from}"`,
+            read.text,
+          );
       if (read.read.length)
         next = { ...ledger, pagesRead: markRead(ledger.pagesRead, read.read) };
-      else failed = output.startsWith("read_pages refused");
+      else failed = refused;
       break;
     }
     case "grep": {
@@ -444,43 +465,33 @@ export async function planReaders(
     return refuse(
       `spawn_readers refused: this Run has used its ${RUN_LIMITS.readers} Readers. Cover the rest with read_pages.`,
     );
-  const total = document.pages.length;
-  const notes: string[] = [];
-  const jobs: ReaderJob[] = [];
-  for (const range of input.ranges) {
-    const label = `${range.from}-${range.to}`;
-    if (!(range.from >= 1 && range.to >= range.from && range.to <= total)) {
-      notes.push(`Range ${label} skipped: pages run 1-${total}.`);
-      continue;
-    }
-    if (range.to - range.from + 1 > RUN_LIMITS.pagesPerReader) {
-      notes.push(
-        `Range ${label} skipped: over ${RUN_LIMITS.pagesPerReader} pages; split it.`,
-      );
-      continue;
-    }
-    const chars = document.pages
-      .slice(range.from - 1, range.to)
-      .reduce((sum, page) => sum + page.length, 0);
-    if (chars > RUN_LIMITS.charsPerReader) {
-      notes.push(
-        `Range ${label} skipped: ${chars.toLocaleString("en")} characters, over ${RUN_LIMITS.charsPerReader.toLocaleString("en")}; split it.`,
-      );
-      continue;
-    }
-    if (jobs.length >= left) {
-      notes.push(`Range ${label} skipped: the Run's Reader cap is reached.`);
-      continue;
-    }
-    jobs.push({
-      readerId: `${call.toolCallId}-${jobs.length + 1}`,
-      from: range.from,
-      to: range.to,
-      model: input.model ?? ctx.models.reader,
-      ...(range.focus ? { focus: range.focus } : {}),
-      ...(input.instructions ? { instructions: input.instructions } : {}),
-    });
-  }
+  const model = input.model ?? ctx.models.reader;
+  const modelRefusal = readerModelRefusal(model, ctx.models.reader);
+  if (modelRefusal) return refuse(modelRefusal);
+  // The Readers are the Run's biggest spend: none starts on a Run that is already over.
+  if (isOver(await runSink().status(ctx.runId)))
+    return refuse("spawn_readers refused: the Run is over.");
+  const planned = planReaderRanges({
+    pages: document.pages,
+    ranges: input.ranges,
+    model,
+    readersLeft: left,
+    spentUsd: ledger.costUsd,
+    overheadTokens: readerOverheadTokens(
+      ctx.rulebook,
+      ctx.rulebookVersion,
+      input.instructions,
+    ),
+  });
+  const notes = planned.notes;
+  const jobs: ReaderJob[] = planned.ranges.map((range, index) => ({
+    readerId: `${call.toolCallId}-${index + 1}`,
+    from: range.from,
+    to: range.to,
+    model,
+    ...(range.focus ? { focus: range.focus } : {}),
+    ...(input.instructions ? { instructions: input.instructions } : {}),
+  }));
   if (jobs.length === 0)
     return refuse(`spawn_readers refused: ${notes.join(" ")}`);
   await emit(ctx.runId, startEvent);
@@ -624,14 +635,28 @@ function corpusScore(
   return scoreNames(names, expected);
 }
 
+/** The status of a Run row that is over; a row that is gone counts as failed. */
+function overStatus(
+  status: RunStatus | null,
+): "completed" | "failed" | "stopped" {
+  return status === "completed" || status === "stopped" ? status : "failed";
+}
+
 export type EndOutcome =
-  | { status: "completed"; summary?: string; note?: string }
+  | {
+      status: "completed";
+      summary?: string;
+      note?: string;
+      /** Set when the harness wound the Run up before the Done gate passed. */
+      stoppedBy?: StopReason;
+    }
   | { status: "failed"; error: string };
 
 /**
  * Ends the Run: applies the Rulebook to the Register, scores a Corpus
- * Document, writes the row and the last events, and stops the Sandbox. A Run
- * already stopped by its Owner keeps "stopped" and gets no second end event.
+ * Document, writes the last events and the row, and stops the Sandbox. A Run
+ * already over (stopped by its Owner, failed elsewhere) keeps its status and
+ * gets no second end event.
  */
 export async function end(
   ctx: RunContext,
@@ -639,8 +664,8 @@ export async function end(
   outcome: EndOutcome,
 ): Promise<{ status: "completed" | "failed" | "stopped"; score?: Score }> {
   try {
-    if ((await runSink().status(ctx.runId)) === "stopped")
-      return { status: "stopped" };
+    const before = await runSink().status(ctx.runId);
+    if (isOver(before)) return { status: overStatus(before) };
     let names = ledger.register;
     let score: Score | undefined;
     let gate: DoneGate | undefined;
@@ -661,20 +686,33 @@ export async function end(
       events.push({ type: "log", level: "error", text: outcome.error });
     events.push({ type: "names", names });
     if (gate) events.push({ type: "gate", gate });
-    events.push({
-      type: "end",
-      status: outcome.status,
-      ...(outcome.status === "failed" ? { error: outcome.error } : {}),
-      ...(score ? { score } : {}),
-    });
-    // The events first, then the row: a stream that sees the Run over has already seen its end.
+    // What the Run did is on the trail before the row says it is over; the
+    // `end` event follows only if this call is the one that ended the row, so a
+    // Run stopped meanwhile never gets a second, contradicting end.
     await emit(ctx.runId, ...events);
-    await runSink().end(ctx.runId, {
+    const ended = await runSink().end(ctx.runId, {
       status: outcome.status,
       names,
       score: score ?? null,
       cost_usd: Number(ledger.costUsd.toFixed(6)),
       error: outcome.status === "failed" ? outcome.error.slice(0, 1000) : null,
+      gate_passed: gate?.passed ?? false,
+      stopped_by:
+        outcome.status === "completed" && outcome.stoppedBy
+          ? outcome.stoppedBy
+          : null,
+    });
+    if (!ended)
+      return { status: overStatus(await runSink().status(ctx.runId)) };
+    await emit(ctx.runId, {
+      type: "end",
+      status: outcome.status,
+      gatePassed: gate?.passed ?? false,
+      ...(outcome.status === "completed" && outcome.stoppedBy
+        ? { stoppedBy: outcome.stoppedBy }
+        : {}),
+      ...(outcome.status === "failed" ? { error: outcome.error } : {}),
+      ...(score ? { score } : {}),
     });
     return { status: outcome.status, ...(score ? { score } : {}) };
   } finally {

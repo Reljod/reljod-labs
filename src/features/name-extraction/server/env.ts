@@ -15,6 +15,4 @@ export const env = {
   e2eBypassToken: () => process.env.E2E_BYPASS_TOKEN ?? "",
   /** The Analyst's and the Readers' calls go through the Vercel AI Gateway with this key. */
   aiGatewayApiKey: () => required("NAME_EXTRACTION_AI_GATEWAY_API_KEY"),
-  /** Optional: lets an outside MCP client call the tools with this bearer token. */
-  mcpToken: () => process.env.NAME_EXTRACTION_MCP_TOKEN ?? "",
 };

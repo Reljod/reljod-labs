@@ -11,6 +11,7 @@ import { corpusCards } from "../domain/corpus";
 import {
   currentRulebook,
   endRunIfGoing,
+  getRunRow,
   insertEvents,
   createRun as insertRun,
   isOver,
@@ -31,6 +32,7 @@ export const LIMITS = {
   /** Runs one Owner may have going at once. */
   activePerOwner: 2,
   uploadsPerOwnerPerDay: 30,
+  rulebooksPerOwnerPerDay: 50,
   maxPages: UPLOAD_LIMITS.pages,
 };
 
@@ -42,7 +44,10 @@ export async function closeIfStale(run: RunRow): Promise<RunRow> {
   if (isOver(run.status)) return run;
   if (Date.now() - Date.parse(run.started_at) < STALE_RUN_MS) return run;
   const error = "The run lost its workflow and was closed.";
-  await endRunIfGoing(run.id, { status: "failed", error });
+  if (!(await endRunIfGoing(run.id, { status: "failed", error }))) {
+    // It ended meanwhile, with its own `end`: read what it ended as.
+    return (await getRunRow(run.id)) ?? run;
+  }
   await insertEvents(run.id, [{ type: "end", status: "failed", error }]).catch(
     () => {},
   );
@@ -123,10 +128,10 @@ export async function startRun(input: {
     await updateRun(runId, { workflow_run_id: run.runId });
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error);
-    await endRunIfGoing(runId, { status: "failed", error: message });
-    await insertEvents(runId, [
-      { type: "end", status: "failed", error: message },
-    ]).catch(() => {});
+    if (await endRunIfGoing(runId, { status: "failed", error: message }))
+      await insertEvents(runId, [
+        { type: "end", status: "failed", error: message },
+      ]).catch(() => {});
     return { error: "The run could not be started. Try again." };
   }
   return { runId };
@@ -144,7 +149,15 @@ export async function stopRun(owner: Owner, runId: string) {
   if (!run) return { error: "No such run." };
   if (isOver(run.status))
     return { runId: run.id, stopped: false, status: run.status };
-  await endRunIfGoing(run.id, { status: "stopped" });
+  if (!(await endRunIfGoing(run.id, { status: "stopped" }))) {
+    // It ended on its own between the read and the stop, and wrote its own `end`.
+    const latest = await getRunRow(run.id);
+    return {
+      runId: run.id,
+      stopped: false,
+      status: latest?.status ?? run.status,
+    };
+  }
   const events: RunEventInput[] = [
     { type: "log", level: "warn", text: "■ stopped by its Owner" },
     { type: "end", status: "stopped" },

@@ -16,6 +16,7 @@ import {
   type RunSummary,
   rulebookSchema,
   type Score,
+  type StopReason,
 } from "../domain/contract";
 import { supabase } from "./supabase";
 
@@ -55,6 +56,10 @@ export type RunRow = {
   names: ExtractedName[];
   score: Score | null;
   error: string | null;
+  /** The Done gate's verdict at the end; null when ended outside the workflow. */
+  gate_passed: boolean | null;
+  /** Why the harness wound a completed Run up early, if it did. */
+  stopped_by: StopReason | null;
   visitor_hash: string;
   started_at: string;
   ended_at: string | null;
@@ -141,21 +146,33 @@ export async function updateRun(
 
 /**
  * Ends a Run that is still going, and only then: a Run that already ended
- * keeps its status (a late "stopped" never overwrites "completed").
+ * keeps its status (a late "stopped" never overwrites "completed"). True when
+ * this call ended it, so only that caller writes the `end` event.
  */
 export async function endRunIfGoing(
   runId: string,
   patch: Partial<
-    Pick<RunRow, "status" | "error" | "names" | "score" | "cost_usd">
+    Pick<
+      RunRow,
+      | "status"
+      | "error"
+      | "names"
+      | "score"
+      | "cost_usd"
+      | "gate_passed"
+      | "stopped_by"
+    >
   >,
-) {
-  ok(
+): Promise<boolean> {
+  const ended = rows<{ id: string }[]>(
     await supabase()
       .from("runs")
       .update({ ...patch, ended_at: new Date().toISOString() })
       .eq("id", runId)
-      .in("status", ["queued", "running"]),
+      .in("status", ["queued", "running"])
+      .select("id"),
   );
+  return ended.length > 0;
 }
 
 /** A Run by id, with no Owner check: for the workflow and the stream only. */
@@ -364,18 +381,27 @@ export async function rulebookVersions(
   return [...saved.flatMap((row) => toVersion(row) ?? []), DEFAULT_VERSION];
 }
 
+/**
+ * Saves the Owner's next Rulebook version if they are under the daily cap,
+ * counted and inserted under one advisory lock. A null cap skips the check
+ * (the e2e suite).
+ */
 export async function insertRulebook(
   owner: Owner,
   rulebook: Rulebook,
   note: string | null,
-): Promise<number> {
-  return rows<number>(
+  perOwnerPerDay: number | null,
+): Promise<{ version: number } | { refusal: string }> {
+  const [row] = rows<{ version: number | null; refusal: string | null }[]>(
     await supabase().rpc("save_rulebook", {
       p_owner: owner,
       p_rulebook: rulebook,
       p_note: note,
+      p_per_owner_per_day: perOwnerPerDay,
     }),
   );
+  if (row?.version) return { version: row.version };
+  return { refusal: row?.refusal ?? "The Rulebook could not be saved." };
 }
 
 // Uploads -----------------------------------------------------------------------------------

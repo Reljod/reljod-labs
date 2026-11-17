@@ -70,8 +70,9 @@ export type CostLine = {
 };
 
 export type RunView = {
-  /** Every event, in order: the Audit tab reads it as is. */
+  /** Every event, in seq order and each seq once: the Audit tab reads it as is. */
   events: SeqEvent[];
+  /** The highest seq folded in. */
   lastSeq: number;
   document: { id: string; title: string; pages: number } | null;
   source: DocumentSource | null;
@@ -176,15 +177,50 @@ function upsertTool(
   return next;
 }
 
-/** Folds one event in. Events at or below the last seq seen are dropped (a reconnect may resend them). */
+/** Where `seq` sits in events sorted by seq: its index, or where it would go. */
+function seqIndex(events: SeqEvent[], seq: number) {
+  // Events nearly always arrive in order: check the end first.
+  const last = events.length - 1;
+  if (last < 0 || events[last].seq < seq)
+    return { index: last + 1, found: false };
+  let low = 0;
+  let high = last;
+  while (low <= high) {
+    const middle = (low + high) >> 1;
+    const at = events[middle].seq;
+    if (at === seq) return { index: middle, found: true };
+    if (at < seq) low = middle + 1;
+    else high = middle - 1;
+  }
+  return { index: low, found: false };
+}
+
+/**
+ * Folds one event in. An event whose seq is already in `events` is dropped
+ * (a reconnect resends some), but one that arrives late with a lower seq
+ * than the last is kept: seqs are taken at insert and parallel inserts may
+ * commit out of order. An `end` the view has not seen yet is never dropped,
+ * whatever its seq: the stream's closing `end` for a Run that never wrote
+ * one reuses the last seq.
+ */
 export function reduceRunView(view: RunView, event: SeqEvent): RunView {
-  if (event.seq <= view.lastSeq) return view;
+  const place = seqIndex(view.events, event.seq);
   // Nothing a stopped or failed Run reports afterwards changes it, except its cost.
   const over = isOver(view.status);
+  if (place.found && (event.type !== "end" || over)) return view;
+  const events = place.found
+    ? view.events
+    : place.index === view.events.length
+      ? [...view.events, event]
+      : [
+          ...view.events.slice(0, place.index),
+          event,
+          ...view.events.slice(place.index),
+        ];
   const next: RunView = {
     ...view,
-    events: [...view.events, event],
-    lastSeq: event.seq,
+    events,
+    lastSeq: Math.max(view.lastSeq, event.seq),
   };
   const { seq, at } = event;
   switch (event.type) {
