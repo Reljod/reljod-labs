@@ -118,7 +118,10 @@ export function AttachedSources({
   return (
     <section aria-labelledby="hx-attached-heading" className="space-y-2">
       <div>
-        <h3 id="hx-attached-heading" className="text-sm font-semibold text-ink">
+        <h3
+          id="hx-attached-heading"
+          className="font-mono text-sm font-bold tracking-[0.04em] uppercase"
+        >
           Attached in a Session, not filed
         </h3>
         <p className="text-xs text-ink-muted">

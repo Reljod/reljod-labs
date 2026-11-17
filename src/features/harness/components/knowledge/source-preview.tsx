@@ -10,7 +10,14 @@ import {
   tableOf,
 } from "../../domain/knowledge/csv-table";
 import { api, formatBytes, keys, messageOf } from "../api";
-import { Button, cx, ErrorNote, Loading } from "../ui";
+import {
+  Button,
+  cx,
+  ErrorNote,
+  Loading,
+  segmentClass,
+  segmentsClass,
+} from "../ui";
 
 export type PreviewMode = "original" | "text";
 
@@ -53,7 +60,7 @@ export function SourcePreview({
       <div
         role="radiogroup"
         aria-label="Preview view"
-        className="inline-flex rounded-sm outline-box bg-paper p-0.5"
+        className={segmentsClass}
       >
         {(
           [
@@ -68,12 +75,7 @@ export function SourcePreview({
             role="radio"
             aria-checked={mode === id}
             onClick={() => onMode(id)}
-            className={cx(
-              "h-7 rounded-sm px-3 text-xs font-medium",
-              mode === id
-                ? "bg-ink text-paper"
-                : "text-ink-muted hover:bg-marble hover:text-ink",
-            )}
+            className={segmentClass(mode === id)}
           >
             {label}
           </button>

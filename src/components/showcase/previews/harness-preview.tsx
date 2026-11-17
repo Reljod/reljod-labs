@@ -23,16 +23,20 @@ const lit = (delay: number): CSSProperties => ({
 export function HarnessPreview() {
   return (
     <div className="relative flex aspect-[960/726] flex-col overflow-hidden bg-marble">
-      <div className="flex items-center gap-[3%] border-ink/20 border-b bg-paper px-[4%] pt-[2.5%]">
+      {/* The shared demo bar, small: number, tabs as stamped boxes, the Role. */}
+      <div className="flex items-center gap-[2%] border-ink border-b-2 bg-marble px-[4%] py-[2.5%]">
+        <span className="rounded-sm bg-ink px-1 py-px font-mono text-[0.45rem] font-bold text-paper">
+          01
+        </span>
         {TABS.map((tab, index) => (
           <span
             key={tab}
-            className={`pb-[1.5%] font-mono text-[0.5rem] tracking-[0.06em] uppercase ${index === 1 ? "border-federal-blue border-b-2 font-bold text-ink" : "text-ink-muted"}`}
+            className={`rounded-sm border border-ink px-1.5 py-0.5 font-mono text-[0.45rem] font-bold tracking-[0.06em] uppercase shadow-[1px_1px_0_var(--color-ink)] ${index === 1 ? "bg-ink text-paper" : "bg-paper text-ink"}`}
           >
             {tab}
           </span>
         ))}
-        <span className="mb-[1.5%] ml-auto rounded-sm bg-ink px-1.5 py-0.5 font-mono text-[0.45rem] tracking-[0.06em] text-paper uppercase">
+        <span className="ml-auto rounded-sm border border-ink bg-ink px-1.5 py-0.5 font-mono text-[0.45rem] font-bold tracking-[0.06em] text-paper uppercase">
           Admin
         </span>
       </div>

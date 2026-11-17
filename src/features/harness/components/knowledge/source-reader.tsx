@@ -14,6 +14,8 @@ import {
   ErrorNote,
   Loading,
   Panel,
+  segmentClass,
+  segmentsClass,
   useWrite,
 } from "../ui";
 import {
@@ -138,7 +140,7 @@ export function SourceReader({
       <div
         role="radiogroup"
         aria-label="What to show"
-        className="inline-flex rounded-sm outline-box bg-paper p-0.5"
+        className={segmentsClass}
       >
         {(
           [
@@ -153,12 +155,7 @@ export function SourceReader({
             role="radio"
             aria-checked={pane === id}
             onClick={() => setPane(id)}
-            className={cx(
-              "h-7 rounded-sm px-3 text-xs font-medium",
-              pane === id
-                ? "bg-ink text-paper"
-                : "text-ink-muted hover:bg-marble hover:text-ink",
-            )}
+            className={segmentClass(pane === id)}
           >
             {label}
           </button>

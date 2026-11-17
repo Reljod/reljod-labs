@@ -235,9 +235,10 @@ export function HarnessApp({
               type="button"
               onClick={() => setDemoOpen(true)}
               aria-haspopup="dialog"
+              aria-label="Demo mode"
               className={demoBarControlClass}
             >
-              Demo mode
+              Demo<span className="hidden sm:inline">&nbsp;mode</span>
             </button>
             <StaffSwitcher />
           </DemoBar>
@@ -352,7 +353,10 @@ function StaffSwitcher() {
         <span className="hidden max-w-36 truncate text-xs font-semibold 2xl:block">
           {staff.name}
         </span>
-        <RoleBadge role={staff.role} />
+        {/* On a phone the initials' fill tells the Role; the name needs the room. */}
+        <span className="hidden sm:contents">
+          <RoleBadge role={staff.role} />
+        </span>
         <span className="sr-only">
           Signed in as {staff.name}. Change Staff member
         </span>
