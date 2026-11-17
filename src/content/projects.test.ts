@@ -46,10 +46,14 @@ describe("featuredProjects", () => {
     ]);
   });
 
-  it("marks Handover and Sieve as new, and only the Harness, the first live demo, as beta", () => {
+  it("marks the Harness, Handover and Sieve as new, and only the Harness, the first live demo, as beta", () => {
     const marked = (mark: "New" | "Beta") =>
       projects.filter((p) => p.marks?.includes(mark)).map((p) => p.slug);
-    expect(marked("New")).toEqual(["process-transfer", "name-extraction"]);
+    expect(marked("New")).toEqual([
+      "process-transfer",
+      "bank-harness",
+      "name-extraction",
+    ]);
     expect(marked("Beta")).toEqual(["bank-harness"]);
     expect(liveDemos[0]?.slug).toBe("bank-harness");
   });

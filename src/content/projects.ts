@@ -182,7 +182,7 @@ export const projects: Project[] = [
     tags: ["Agents", "MCP", "Skills", "Durable workflows", "Hybrid search"],
     status: "Live",
     href: "/demos/harness",
-    marks: ["Beta"],
+    marks: ["New", "Beta"],
     features: [
       "Three pension pipelines run as MCP tools, with a live pipeline view",
       "Change a rule's parameters as an admin; every run records the versions it used",
