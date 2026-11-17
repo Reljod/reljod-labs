@@ -19,7 +19,7 @@ export type AuditAction = keyof typeof AUDIT_ACTIONS;
 export const AUDIT_ACTION_IDS = Object.keys(AUDIT_ACTIONS) as AuditAction[];
 
 export function isAuditAction(value: unknown): value is AuditAction {
-  return typeof value === "string" && value in AUDIT_ACTIONS;
+  return typeof value === "string" && Object.hasOwn(AUDIT_ACTIONS, value);
 }
 
 /** Who did it: a person (a Host or a Guest), the model, or the system. */

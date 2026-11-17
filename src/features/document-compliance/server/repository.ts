@@ -556,7 +556,10 @@ export function asExtracted(
   };
 }
 
-/** A table the migration for Rules and the Audit trail adds, not yet there. */
+/**
+ * A table the Rules and Audit trail migration adds, not there yet. Only
+ * reading an old run tolerates it; starting a run needs the migration (ADR 0019).
+ */
 const missingTable = (error: { code?: string; message: string }) =>
   error.code === "42P01" ||
   error.code === "PGRST205" ||

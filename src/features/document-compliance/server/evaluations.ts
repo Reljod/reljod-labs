@@ -180,6 +180,13 @@ export async function reviewFinding(
       };
     }
     if (runGone(error)) return { ok: false, message: "No such run." };
+    if (error.message.includes("stale_evaluation")) {
+      return {
+        ok: false,
+        message:
+          "The run was just re-evaluated. Look at the new Evaluation and review again.",
+      };
+    }
     throw new Error(error.message);
   }
   return { ok: true };

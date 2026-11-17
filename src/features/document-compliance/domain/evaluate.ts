@@ -7,7 +7,13 @@ import {
   readDate,
 } from "./field-checks";
 import type { RequirementId, Rulebook } from "./rulebook";
-import { CERTIFICATION_PART_LABELS, type CertificationPart } from "./rules";
+import {
+  CERTIFICATION_PART_LABELS,
+  CERTIFICATION_PARTS,
+  type CertificationPart,
+  formatParam,
+  ruleSpec,
+} from "./rules";
 import type {
   ClientDeclaration,
   DocumentKind,
@@ -304,7 +310,9 @@ export function evaluate(input: PrescreenInput): Finding[] {
       );
     }
     return pass(
-      `The certification has the ${rulebook.certificationParts.map((part) => CERTIFICATION_PART_LABELS[part]).join(", ")}.`,
+      rulebook.certificationParts.length === CERTIFICATION_PARTS.length
+        ? "The certification has wording, certifier name, occupation, date and signature."
+        : `The certification has the ${formatParam(ruleSpec("certification-complete").params.requiredParts, rulebook.certificationParts)}.`,
       evidence,
     );
   }

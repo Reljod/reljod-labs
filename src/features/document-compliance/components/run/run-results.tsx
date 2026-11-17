@@ -115,6 +115,7 @@ export function RunResults({
         ) : null}
         {tab === "findings" ? (
           <FindingsReport
+            key={evaluation.number}
             view={view}
             evaluation={evaluation}
             reduceMotion={reduceMotion}

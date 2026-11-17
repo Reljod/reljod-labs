@@ -198,12 +198,15 @@ export async function reviewFinding(
 }
 
 /** The Owner's Audit trail, newest first, optionally for one run or one action. */
-export async function getAuditTrail(filter: {
-  runId?: string | null;
-  action?: string | null;
-  before?: number | null;
-}): Promise<AuditPage> {
+export async function getAuditTrail(
+  input: {
+    runId?: string | null;
+    action?: string | null;
+    before?: number | null;
+  } | null = {},
+): Promise<AuditPage> {
   const { owner } = await requireOwner();
+  const filter = input ?? {};
   const runId = filter.runId && UUID.test(filter.runId) ? filter.runId : null;
   if (filter.runId && !runId) return { events: [], before: null };
   return listAuditEvents(owner, {

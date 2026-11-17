@@ -239,7 +239,8 @@ export type Database = {
     Views: Record<never, never>;
     /**
      * Writes that land with their Audit event in one transaction. Each raises
-     * `limit_reached` past its cap and `run_not_found` for another Owner's run.
+     * `limit_reached` past its cap, `run_not_found` for another Owner's run
+     * and (`record_review`) `stale_evaluation` when a re-evaluation landed first.
      */
     Functions: {
       append_audit_event: {
