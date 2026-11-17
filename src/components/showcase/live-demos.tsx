@@ -10,6 +10,7 @@ import { BrowserFrame } from "./browser-frame";
 import { CaseworkPreview } from "./previews/casework-preview";
 import { ClientManagerPreview } from "./previews/client-manager-preview";
 import { DocumentCompliancePreview } from "./previews/document-compliance-preview";
+import { HarnessPreview } from "./previews/harness-preview";
 import { LedgerPreview } from "./previews/ledger-preview";
 
 /** Each live demo's moving preview, by project slug. */
@@ -20,6 +21,7 @@ const previews: Record<string, (project: Project) => ReactNode> = {
   ledger: () => <LedgerPreview />,
   "casework-desk": () => <CaseworkPreview />,
   "client-manager": () => <ClientManagerPreview />,
+  "bank-harness": () => <HarnessPreview />,
 };
 
 export function LiveDemos() {

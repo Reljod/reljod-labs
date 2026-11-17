@@ -7,3 +7,4 @@ Each context keeps its own language.
 - **Access**: who may open the demos: Hosts, Guest passes and Guest codes. `src/features/access/GLOSSARY.md`
 - **Casework**: the Specialist desk that runs pension, employer, structure and screening reviews as Pipelines of Jobs. `src/features/casework/GLOSSARY.md`
 - **Client Manager**: a wealth manager's clients, each with a self-correcting knowledge graph and GraphRAG chat. `src/features/client-manager/GLOSSARY.md`
+- **Harness**: Jod: Harness for Bank, a banking agent with Skills, Pipelines, a Knowledge base and a Sandbox behind one MCP server. `src/features/harness/GLOSSARY.md`

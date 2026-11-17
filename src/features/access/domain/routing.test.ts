@@ -31,6 +31,10 @@ describe("decide", () => {
     expect(visit("/demos/document-compliance/runs/1", null).kind).toBe(
       "redirect",
     );
+    expect(visit("/demos/harness", null)).toEqual({
+      kind: "redirect",
+      to: "/access?next=%2Fdemos%2Fharness",
+    });
   });
 
   it("refuses a visitor's server actions, streams and API calls", () => {
@@ -44,6 +48,11 @@ describe("decide", () => {
       ["/api/client-manager/clients", "GET"],
       ["/api/client-manager/clients/1/chat", "POST"],
       ["/api/client-manager/builds/1/events", "GET"],
+      ["/api/harness/sessions", "GET"],
+      ["/api/harness/sessions/1/chat", "POST"],
+      ["/api/harness/runs/1/events", "GET"],
+      ["/api/harness/mcp-token", "POST"],
+      ["/demos/harness", "POST"],
       ["/ask/abc/builds", "GET"],
       ["/demos/casework", "DELETE"],
     ]) {
@@ -89,5 +98,10 @@ describe("checksItsOwnBearer", () => {
     expect(checksItsOwnBearer("/api/casework/mcp/sse")).toBe(true);
     expect(checksItsOwnBearer("/api/casework/mcp-evil")).toBe(false);
     expect(checksItsOwnBearer("/api/casework/chat")).toBe(false);
+    expect(checksItsOwnBearer("/api/harness/mcp")).toBe(true);
+    expect(checksItsOwnBearer("/api/harness/oauth/token")).toBe(true);
+    expect(checksItsOwnBearer("/api/harness/mcp-token")).toBe(false);
+    expect(checksItsOwnBearer("/api/harness/sessions")).toBe(false);
+    expect(checksItsOwnBearer("/api/harness/plugin")).toBe(false);
   });
 });

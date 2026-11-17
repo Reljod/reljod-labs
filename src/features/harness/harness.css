@@ -1,0 +1,83 @@
+/*
+ * Harness: the few things Tailwind utilities do not cover. Colours repeat the
+ * Colonnade tokens of src/app/globals.css. Every animation stops under
+ * reduced motion.
+ */
+
+.hx-root {
+  --hx-ink: #14213d;
+  --hx-line: rgb(20 33 61 / 0.14);
+  --hx-marble: #f5f1e8;
+  --hx-limestone: #e4dccb;
+  -webkit-font-smoothing: antialiased;
+  font-feature-settings: "tnum" 1;
+}
+
+/* Loading: a slow sheen across a panel-shaped block. */
+.hx-shimmer {
+  background: linear-gradient(
+    100deg,
+    rgb(228 220 203 / 0.55) 20%,
+    rgb(255 255 255 / 0.9) 40%,
+    rgb(228 220 203 / 0.55) 60%
+  );
+  background-size: 300% 100%;
+  animation: hx-shimmer 1.6s ease-in-out infinite;
+}
+@keyframes hx-shimmer {
+  from {
+    background-position: 100% 0;
+  }
+  to {
+    background-position: -100% 0;
+  }
+}
+
+/* A Step at work, a Session answering: a soft pulse on a status dot. */
+.hx-pulse {
+  animation: hx-pulse 1.4s ease-in-out infinite;
+}
+@keyframes hx-pulse {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.35;
+  }
+}
+
+/* The tab strip scrolls sideways on a phone without showing a bar. */
+.hx-scroll-x {
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+.hx-scroll-x::-webkit-scrollbar {
+  display: none;
+}
+
+/* Lists and panes that scroll get a thin, quiet bar. */
+.hx-scroll {
+  overflow-y: auto;
+  scrollbar-width: thin;
+  scrollbar-color: rgb(20 33 61 / 0.25) transparent;
+}
+
+/* A wide table in Markdown scrolls inside its own box, never the page. */
+.hx-table-wrap {
+  overflow-x: auto;
+  border: 1px solid var(--hx-line);
+  border-radius: 2px;
+}
+
+.hx-dialog::backdrop {
+  background: rgb(20 33 61 / 0.4);
+  backdrop-filter: blur(2px);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .hx-shimmer,
+  .hx-pulse {
+    animation: none;
+  }
+}

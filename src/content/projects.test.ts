@@ -24,7 +24,17 @@ describe("featuredProjects", () => {
       featuredProjects
         .slice(FEATURED_PROJECT_LIMIT)
         .map((project) => project.slug),
-    ).toEqual(["ledger", "casework-desk", "client-manager"]);
+    ).toEqual(["ledger", "casework-desk", "client-manager", "bank-harness"]);
+  });
+
+  it("leads the landing page with the Harness, the rest in list order", () => {
+    expect(liveDemos.map((project) => project.slug)).toEqual([
+      "bank-harness",
+      "document-compliance-checks",
+      "ledger",
+      "casework-desk",
+      "client-manager",
+    ]);
   });
 
   it("lists each project once", () => {
