@@ -12,7 +12,7 @@ import {
   ReactFlow,
 } from "@xyflow/react";
 import "@xyflow/react/dist/style.css";
-import { useMemo } from "react";
+import { useMemo, useSyncExternalStore } from "react";
 import type { PipelineSpec, StepKind, StepSpec } from "../../domain/pipeline";
 import type {
   RunStatus,
@@ -27,6 +27,7 @@ import {
   NODE_HEIGHT,
   NODE_WIDTH,
   type PipelineLayout,
+  type PlacedStep,
 } from "./layout";
 import { STEP_STATUS_LABEL } from "./status";
 
@@ -228,27 +229,139 @@ const keepNodesClickable = () => {};
 const NODE_TYPES = { step: StepNode };
 const FIT = { padding: 0.12, maxZoom: 1.1 };
 
-/**
- * A Pipeline drawn as a graph, one row per level, so Steps that run at the
- * same time stand side by side. With a Run each node shows where the Step
- * is: pending, running (it moves), done, failed, skipped or waiting for an
- * Approval. Without one it is the Pipeline's shape.
- */
-export function PipelineGraph({
-  spec,
-  run,
-  selectedStepId,
-  onSelect,
-  now,
-  label,
-}: {
+const PHONE_QUERY = "(max-width: 639px)";
+const subscribePhone = (notify: () => void) => {
+  const list = window.matchMedia(PHONE_QUERY);
+  list.addEventListener("change", notify);
+  return () => list.removeEventListener("change", notify);
+};
+const isPhone = () => window.matchMedia(PHONE_QUERY).matches;
+const notPhone = () => false;
+
+type GraphProps = {
   spec: Pick<PipelineSpec, "steps">;
   run: RunView | null;
   selectedStepId: string | null;
   onSelect: (stepId: string) => void;
   now: number;
   label: string;
-}) {
+};
+
+/**
+ * A Pipeline's Steps, where each one is. From 640 px wide it is a graph, and
+ * on a phone a list of levels with Steps as rows (the nodes would be too
+ * small to read or tap).
+ */
+export function PipelineGraph(props: GraphProps) {
+  const phone = useSyncExternalStore(subscribePhone, isPhone, notPhone);
+  return phone ? <PipelineLevels {...props} /> : <PipelineFlow {...props} />;
+}
+
+/**
+ * The phone layout: one block per level, in the order they run, and a row per
+ * Step. Steps of a level run at the same time, and the block says so.
+ */
+function PipelineLevels({
+  spec,
+  run,
+  selectedStepId,
+  onSelect,
+  now,
+  label,
+}: GraphProps) {
+  const layout: PipelineLayout = useMemo(() => layoutPipeline(spec), [spec]);
+  if (layout.problem) {
+    return (
+      <p role="alert" className="p-4 text-sm text-seal-red">
+        This Pipeline's Steps cannot be drawn. {layout.problem}
+      </p>
+    );
+  }
+  if (layout.nodes.length === 0) {
+    return (
+      <p className="p-4 text-sm text-ink-muted">This Pipeline has no Steps.</p>
+    );
+  }
+  const levels: PlacedStep[][] = [];
+  for (const placed of layout.nodes) {
+    const row = levels[placed.level] ?? [];
+    row.push(placed);
+    levels[placed.level] = row;
+  }
+  return (
+    <section aria-label={label} className="space-y-3 p-3">
+      {levels.map((row, level) => (
+        <div key={row[0]?.step.id ?? level} className="space-y-1.5">
+          <p className="font-mono text-[0.65rem] font-bold tracking-[0.08em] text-ink-muted uppercase">
+            {level + 1}.{" "}
+            {row.length > 1 ? `${row.length} Steps at the same time` : "Step"}
+          </p>
+          <ul className="space-y-1.5">
+            {row.map(({ step }) => {
+              const view =
+                run?.steps.find((item) => item.stepId === step.id) ?? null;
+              const state = nodeState(step, view, run?.status ?? null);
+              const elapsed = elapsedOf(view, now);
+              const selected = selectedStepId === step.id;
+              return (
+                <li key={step.id}>
+                  <button
+                    type="button"
+                    aria-pressed={selected}
+                    aria-label={`${step.title}. ${KIND_LABEL[step.kind]} Step${state ? `, ${STATE_LABEL[state]}` : ""}. Show details.`}
+                    onClick={() => onSelect(step.id)}
+                    className={cx(
+                      "flex min-h-11 w-full items-center gap-2 rounded-sm border px-3 py-2 text-left transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-federal-blue",
+                      state ? STATE_CLASS[state] : "border-ink/40 bg-paper",
+                      selected &&
+                        "outline-2 outline-offset-2 outline-federal-blue",
+                    )}
+                  >
+                    <KindIcon kind={step.kind} className="text-ink-muted" />
+                    <span className="min-w-0 flex-1">
+                      <span className="block text-sm font-semibold">
+                        {step.title}
+                      </span>
+                      <span className="block text-xs text-ink-muted">
+                        {state ? STATE_LABEL[state] : KIND_LABEL[step.kind]}
+                        {step.kind === "approval"
+                          ? step.risk === "high"
+                            ? " · high risk"
+                            : ""
+                          : ""}
+                      </span>
+                    </span>
+                    {elapsed !== null ? (
+                      <span className="shrink-0 font-mono text-xs text-ink-muted">
+                        {formatDuration(elapsed)}
+                      </span>
+                    ) : null}
+                    <StateMark state={state} />
+                  </button>
+                </li>
+              );
+            })}
+          </ul>
+        </div>
+      ))}
+    </section>
+  );
+}
+
+/**
+ * A Pipeline drawn as a graph, one row per level, so Steps that run at the
+ * same time stand side by side. With a Run each node shows where the Step
+ * is: pending, running (it moves), done, failed, skipped or waiting for an
+ * Approval. Without one it is the Pipeline's shape.
+ */
+function PipelineFlow({
+  spec,
+  run,
+  selectedStepId,
+  onSelect,
+  now,
+  label,
+}: GraphProps) {
   const layout: PipelineLayout = useMemo(() => layoutPipeline(spec), [spec]);
 
   const { nodes, edges } = useMemo(() => {

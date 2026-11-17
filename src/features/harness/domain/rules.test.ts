@@ -178,7 +178,7 @@ describe("renderRuleSentence", () => {
       text: "24 months",
     });
     expect(ruleSentenceText(notice, notice.defaults)).toBe(
-      "The Member has been away for at least 24 months with a balance of at most KYD 5,000, paid by wire transfer, unless they hold permanent residence.",
+      "The Member has been away for at least 24 months with a balance of at most CI$5,000, paid by wire transfer, unless they hold permanent residence.",
     );
   });
 
@@ -212,7 +212,7 @@ describe("renderRuleSentence", () => {
 describe("formatParameter", () => {
   it("writes each kind the way a person reads it", () => {
     expect(formatParameter({ kind: "money", label: "" }, 1234.5)).toBe(
-      "KYD 1,234.5",
+      "CI$1,234.5",
     );
     expect(formatParameter({ kind: "percent", label: "" }, 5)).toBe("5%");
     expect(formatParameter({ kind: "years", label: "" }, 1)).toBe("1 year");

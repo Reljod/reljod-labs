@@ -48,6 +48,7 @@ import {
   listConflicts,
   listSources,
   readSource,
+  readSourceText,
   searchKnowledge,
 } from "./knowledge";
 import { actorOf, type McpActor, verifyBearer } from "./mcp-auth";
@@ -540,6 +541,28 @@ const TOOLS: Record<StaticToolName, Registration<any>> = {
     const found = await readSource(caller.owner, input.sourceId);
     if (!found)
       throw new NotFoundError("That Source is not in this Workspace.");
+    if (found.source.status === "pending") {
+      // Attached, not filed: no Passages yet, so the Agent reads the file's text.
+      const read = await readSourceText(caller.owner, input.sourceId);
+      if (!read)
+        throw new NotFoundError("That Source is not in this Workspace.");
+      const text = read.text.slice(0, TEXT_CHARS);
+      const cut = read.text.length > text.length;
+      return {
+        lead: `"${read.source.title}" (${read.source.kind}) is attached and not filed: it has no Passages, so there is nothing to cite. Its text follows${cut ? ` (first ${TEXT_CHARS.toLocaleString("en-US")} of ${read.text.length.toLocaleString("en-US")} characters)` : ""}. Call file_source only if the person wants it kept in the Knowledge base.\n\n${text}`,
+        data: {
+          source: {
+            id: read.source.id,
+            title: read.source.title,
+            kind: read.source.kind,
+            status: read.source.status,
+            documentDate: read.source.documentDate,
+            openConflicts: 0,
+          },
+          passages: [],
+        },
+      };
+    }
     return {
       lead: `"${found.source.title}" (${found.source.kind}, ${found.source.status}), ${found.passages.length} Passages.`,
       data: {
@@ -564,7 +587,8 @@ const TOOLS: Record<StaticToolName, Registration<any>> = {
   }),
 
   list_sources: reg(noInput, async (_input, caller) => {
-    const sources = await listSources(caller.owner);
+    // Attached-but-unfiled Sources are not in the Knowledge base yet.
+    const sources = await listSources(caller.owner, { filedOnly: true });
     return {
       lead: `${sources.length} Sources.`,
       data: sources.map((source) => ({

@@ -301,6 +301,8 @@ export const stopRunIfWaiting = (): Action => async (ctx) => {
 export const openRule =
   (ruleId: string): Action =>
   async (ctx) => {
+    // The Skills tab mounts when it is first opened: its controller exists only then.
+    await openTab("skills")(ctx);
     ctx.pending("Opening the Rule…");
     await (await ctx.host.controller("skills")).openRule(ruleId);
     ctx.log(`Opened the Rule ${ruleId}.`);
@@ -324,9 +326,17 @@ export const restoreRule =
   (ruleId: string): Action =>
   async (ctx) => {
     ctx.pending("Restoring the Default…");
-    await ctx.host.rules.restore(ruleId);
+    try {
+      await ctx.host.rules.restore(ruleId);
+      ctx.log(`Restored the Default of ${ruleId}.`);
+    } catch (caught) {
+      // Nothing to put back when the Rule was never changed (an earlier Beat was skipped).
+      if (ctx.signal.aborted || !/already says/i.test(messageOf(caught))) {
+        throw caught;
+      }
+      ctx.log(`${ruleId} already has its Default: nothing to restore.`);
+    }
     await openRule(ruleId)(ctx);
-    ctx.log(`Restored the Default of ${ruleId}.`);
   };
 
 // Knowledge base --------------------------------------------------------------------
@@ -403,7 +413,7 @@ export const openAudit =
     ctx.notice(
       scope === "session"
         ? "In the Audit tab, press “This Session” to see only this case."
-        : "In the Audit tab, press “Whole Workspace” (an admin's view).",
+        : "In the Audit tab, press “Workspace” (an admin's view).",
     );
     ctx.log("Opened the Audit trail.");
   };

@@ -76,19 +76,21 @@ export function ApprovalPanel({
       aria-label="Approval needed"
       className="rounded-sm border border-oak/60 bg-brass/10"
     >
-      <header className="flex flex-wrap items-center gap-2 border-oak/30 border-b px-4 py-2.5">
-        <h3 className="min-w-0 flex-1 text-sm font-semibold">
+      <header className="flex flex-col gap-1.5 border-oak/30 border-b px-3 py-2.5 sm:flex-row sm:flex-wrap sm:items-center sm:gap-2 sm:px-4">
+        <h3 className="min-w-0 text-sm font-semibold sm:flex-1">
           Approval needed: {approval.title}
         </h3>
-        <Badge tone={gate.risk === "high" ? "red" : "neutral"}>
-          {gate.risk === "high" ? "High risk" : "Low risk"}
-        </Badge>
-        <Badge tone="amber" dot>
-          Waiting for a person
-        </Badge>
+        <div className="flex flex-wrap items-center gap-1.5">
+          <Badge tone={gate.risk === "high" ? "red" : "neutral"}>
+            {gate.risk === "high" ? "High risk" : "Low risk"}
+          </Badge>
+          <Badge tone="amber" dot>
+            Waiting for a person
+          </Badge>
+        </div>
       </header>
 
-      <div className="space-y-3 px-4 py-3">
+      <div className="space-y-3 px-3 py-3 sm:px-4">
         <article
           aria-label={`Draft: ${draft.title}`}
           className="rounded-sm border border-ink/20 bg-paper"
@@ -119,7 +121,7 @@ export function ApprovalPanel({
           />
         </Field>
 
-        <div className="flex flex-wrap items-center gap-2">
+        <div className="grid grid-cols-2 items-center gap-2 sm:flex sm:flex-wrap">
           <Button
             variant="primary"
             disabled={!gate.allowed}
@@ -140,7 +142,9 @@ export function ApprovalPanel({
           >
             Return
           </Button>
-          <p className="text-xs text-ink-muted">Signed in as {staff.name}.</p>
+          <p className="col-span-2 text-xs text-ink-muted">
+            Signed in as {staff.name}.
+          </p>
         </div>
         {gate.reason ? (
           <p id={reasonId} className="text-xs text-oak">

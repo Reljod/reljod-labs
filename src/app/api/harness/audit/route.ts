@@ -10,6 +10,7 @@ const querySchema = z.object({
   session: z.string().uuid().optional(),
   actor: z.enum(ACTOR_KINDS).optional(),
   action: z.enum(AUDIT_ACTION_IDS as [string, ...string[]]).optional(),
+  mine: z.enum(["1"]).optional(),
   before: z.coerce.number().int().positive().optional(),
   limit: z.coerce.number().int().min(1).max(LIMITS.auditPageSize).optional(),
 });
@@ -32,6 +33,7 @@ export async function GET(request: Request) {
         sessionId: query.session ?? null,
         actorKind: query.actor ?? null,
         action,
+        mine: query.mine === "1",
         before: query.before ?? null,
         limit: query.limit ?? null,
       }),

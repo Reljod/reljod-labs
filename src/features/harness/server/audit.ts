@@ -137,6 +137,8 @@ export type AuditFilter = {
   sessionId?: string | null;
   actorKind?: ActorKind | null;
   action?: AuditAction | null;
+  /** An admin's "My Sessions": only the events of the Sessions they own. */
+  mine?: boolean;
   /** Events older than this event id. */
   before?: number | null;
   limit?: number | null;
@@ -183,6 +185,14 @@ export async function listAudit(filter: AuditFilter): Promise<{
               select s.id from harness.sessions s
               where s.owner = ${filter.owner} and s.staff_id = ${filter.staff.id}
             )`
+      }
+      ${
+        whole && filter.mine
+          ? db`and e.session_id in (
+              select s.id from harness.sessions s
+              where s.owner = ${filter.owner} and s.staff_id = ${filter.staff.id}
+            )`
+          : db``
       }
       ${filter.sessionId ? db`and e.session_id = ${filter.sessionId}` : db``}
       ${filter.actorKind ? db`and e.actor_kind = ${filter.actorKind}` : db``}

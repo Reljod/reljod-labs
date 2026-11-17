@@ -38,6 +38,9 @@ export default function DemoMode({
   const host = useHost();
   const [engine, setEngine] = useState<DemoEngine | null>(null);
   const [saved, setSaved] = useState<Saved | null>(null);
+  // The hint is only an offer: it never opens the picker. It is shown once per
+  // page load, and goes when it is dismissed, used, or the picker is opened.
+  const [hintOpen, setHintOpen] = useState(true);
   const engineRef = useRef<DemoEngine | null>(null);
   engineRef.current = engine;
 
@@ -93,8 +96,24 @@ export default function DemoMode({
     noState,
   );
 
+  const resumable = saved ? scenarioById(saved.scenarioId) : null;
+  const resumeAt =
+    resumable && saved && saved.index < resumable.beats.length ? saved : null;
+
   return (
     <>
+      {resumable && resumeAt && !engine && !open && hintOpen ? (
+        <ResumeHint
+          title={resumable.title}
+          beat={resumeAt.index + 1}
+          total={resumable.beats.length}
+          onContinue={() => {
+            setHintOpen(false);
+            start(resumable, resumeAt);
+          }}
+          onDismiss={() => setHintOpen(false)}
+        />
+      ) : null}
       {open ? (
         <Picker
           running={engine ? engine.scenario : null}
@@ -528,5 +547,45 @@ function GuideBar({
         </ConfirmDialog>
       ) : null}
     </>
+  );
+}
+
+// Resume hint -----------------------------------------------------------------------------
+
+/**
+ * A small offer to carry on with a Scenario that was in progress. It does not
+ * open Demo mode by itself: the picker opens only from the Demo mode button.
+ */
+function ResumeHint({
+  title,
+  beat,
+  total,
+  onContinue,
+  onDismiss,
+}: {
+  title: string;
+  beat: number;
+  total: number;
+  onContinue: () => void;
+  onDismiss: () => void;
+}) {
+  return (
+    <section
+      aria-label="Continue where you left off"
+      className="fixed right-3 bottom-3 left-3 z-40 flex flex-wrap items-center gap-x-3 gap-y-2 rounded-sm border border-federal-blue/30 bg-paper px-3 py-2 shadow-lg sm:left-auto sm:w-96"
+    >
+      <p className="min-w-0 flex-1 text-sm">
+        <span className="font-semibold">Continue where you left off</span>
+        <span className="block text-xs text-ink-muted">
+          {title}, Beat {beat} of {total}
+        </span>
+      </p>
+      <Button size="sm" variant="primary" onClick={onContinue}>
+        Continue
+      </Button>
+      <Button size="sm" variant="ghost" onClick={onDismiss}>
+        Dismiss
+      </Button>
+    </section>
   );
 }

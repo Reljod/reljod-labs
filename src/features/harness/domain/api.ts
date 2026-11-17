@@ -108,6 +108,7 @@ export const apiPath = {
       session: filter.sessionId,
       actor: filter.actorKind,
       action: filter.action,
+      mine: filter.mine ? "1" : null,
       before: filter.before,
       limit: filter.limit,
     })}`,
@@ -237,6 +238,8 @@ export type AuditQuery = {
   sessionId?: string | null;
   actorKind?: ActorKind | null;
   action?: AuditAction | null;
+  /** An admin's "My Sessions": only the events of Sessions they own. A user always gets that. */
+  mine?: boolean;
   /** Events older than this event id, for the next page. */
   before?: number | null;
   limit?: number | null;

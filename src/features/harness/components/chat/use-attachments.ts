@@ -17,7 +17,7 @@ export type AttachmentStore = ReturnType<typeof useAttachments>;
 /**
  * The files waiting to go with the next message, one list per draft (a
  * Session id, or `new`). An attachment is a pending Source: it is uploaded
- * and read as soon as it is added, and its id goes in the ChatRequest.
+ * as soon as it is added but not filed (no Passages, no Conflict check), and its id goes in the ChatRequest.
  * Drafts survive switching Sessions because this lives in the tab.
  */
 export function useAttachments({
@@ -86,7 +86,7 @@ export function useAttachments({
             return;
           }
           try {
-            const result = await api.sources.upload(file, {
+            const source = await api.sources.attach(file, {
               sessionId,
               onProgress: (fraction) =>
                 patch(key, item.localId, { progress: fraction }),
@@ -94,7 +94,7 @@ export function useAttachments({
             patch(key, item.localId, {
               state: "ready",
               progress: 1,
-              sourceId: result.source.id,
+              sourceId: source.id,
             });
             void queryClient.invalidateQueries({ queryKey: keys.sources });
           } catch (caught) {

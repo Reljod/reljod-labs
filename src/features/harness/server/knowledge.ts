@@ -148,10 +148,20 @@ async function clearStale(owner: Owner) {
       and reading_at < now() - make_interval(mins => ${STALE_READING_MINUTES + 2})`;
 }
 
-/** The Workspace's Sources, newest first, seed Sources after. */
-export async function listSources(owner: Owner): Promise<SourceView[]> {
+/**
+ * The Workspace's Sources, newest first, seed Sources after. `filedOnly`
+ * leaves out the attached-but-unfiled (`pending`) ones, which are not in the
+ * Knowledge base yet.
+ */
+export async function listSources(
+  owner: Owner,
+  options: { filedOnly?: boolean } = {},
+): Promise<SourceView[]> {
   await clearStale(owner);
-  return loadSources(sql(), owner);
+  const sources = await loadSources(sql(), owner);
+  return options.filedOnly
+    ? sources.filter((source) => source.status !== "pending")
+    : sources;
 }
 
 /** A Source with its Passages in order (superseded ones marked), or null when it is not in the Workspace. */
@@ -259,11 +269,14 @@ async function registerSource(
   assertCan(staff, "source.add");
   const db = sql();
 
-  // Sources registered long ago whose file never came are cleared, so they do not fill the Workspace.
+  // Sources registered long ago whose file never came are cleared, so they do
+  // not fill the Workspace. One attached in a Session is kept for a month: it
+  // may be read again when the Session is reopened.
   const stale = await db<{ storage_path: string | null }[]>`
     delete from harness.sources
     where owner = ${owner} and status = 'pending' and not is_seed
-      and created_at < now() - interval '1 day'
+      and created_at < now() - case when session_id is null
+        then interval '1 day' else interval '30 days' end
     returning storage_path`;
   for (const row of stale.slice(0, 20)) {
     if (row.storage_path) await removeFile(row.storage_path);

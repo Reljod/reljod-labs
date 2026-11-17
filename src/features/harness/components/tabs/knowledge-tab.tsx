@@ -13,7 +13,11 @@ import {
 import { ADMIN_ONLY } from "../knowledge/format";
 import { SearchPanel } from "../knowledge/search-panel";
 import { SourceReader } from "../knowledge/source-reader";
-import { SourcesList } from "../knowledge/sources-list";
+import {
+  AttachedSources,
+  isAttachedOnly,
+  SourcesList,
+} from "../knowledge/sources-list";
 import { UploadPanel } from "../knowledge/upload-panel";
 import { useUploads } from "../knowledge/use-uploads";
 import { Badge, cx, Empty, ErrorNote, Loading, Tabs } from "../ui";
@@ -159,6 +163,21 @@ export default function KnowledgeTab() {
     (conflict) => conflict.status === "open",
   ).length;
 
+  const attached = (sources.data ?? []).filter(isAttachedOnly);
+  const filed = (sources.data ?? []).filter(
+    (source) => !isAttachedOnly(source),
+  );
+  const fileAttached = useCallback(
+    async (sourceId: string) => {
+      try {
+        return await api.sources.ingest(sourceId);
+      } finally {
+        refresh();
+      }
+    },
+    [refresh],
+  );
+
   const onFiles = (files: File[]) => {
     for (const file of files) void uploads.add(file);
   };
@@ -233,12 +252,21 @@ export default function KnowledgeTab() {
                   {messageOf(sources.error)}
                 </ErrorNote>
               ) : (
-                <SourcesList
-                  sources={sources.data}
-                  selectedId={sourceParam}
-                  onOpen={openSource}
-                  onOpenConflicts={() => openConflicts()}
-                />
+                <>
+                  <AttachedSources
+                    sources={attached}
+                    canFile={can("source.add")}
+                    deniedReason={addDenied}
+                    onFile={fileAttached}
+                    onOpen={openSource}
+                  />
+                  <SourcesList
+                    sources={filed}
+                    selectedId={sourceParam}
+                    onOpen={openSource}
+                    onOpenConflicts={() => openConflicts()}
+                  />
+                </>
               )}
             </div>
             <div className={cx("min-w-0", !sourceParam && "hidden lg:block")}>

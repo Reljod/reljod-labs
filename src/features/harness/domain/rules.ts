@@ -327,7 +327,7 @@ const money = new Intl.NumberFormat("en-KY", {
 const plural = (count: number, unit: string) =>
   `${count} ${count === 1 ? unit.replace(/s$/, "") : unit}`;
 
-/** A Parameter's value as a person reads it: `KYD 5,000`, `5%`, `30 days`. */
+/** A Parameter's value as a person reads it: `CI$5,000`, `5%`, `30 days`. */
 export function formatParameter(
   spec: ParameterSpec,
   value: ParameterValue | undefined,
@@ -350,7 +350,7 @@ export function formatParameter(
   const number = Number(value);
   switch (spec.kind) {
     case "money":
-      return `KYD ${money.format(number)}`;
+      return `CI$${money.format(number)}`;
     case "percent":
       return `${number}%`;
     case "days":

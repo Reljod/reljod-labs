@@ -2,7 +2,7 @@
 
 import type { SourceView } from "../../domain/knowledge";
 import { formatBytes } from "../api";
-import { Badge, cx, Empty } from "../ui";
+import { Badge, Button, cx, Empty, useWrite } from "../ui";
 import { dateLabel, KIND_LABEL, STATUS_LABEL, STATUS_TONE } from "./format";
 
 /** The Workspace's Sources: title, kind, date, status, who added it. A seed Source says so. */
@@ -88,5 +88,108 @@ export function SourcesList({
         </li>
       ))}
     </ul>
+  );
+}
+
+/** A Source attached in a Session and never filed: readable by the Agent, with no Passages. */
+export const isAttachedOnly = (source: SourceView) =>
+  source.status === "pending" && source.sessionId !== null;
+
+/**
+ * Sources attached in a Session and not filed. They are not in the Knowledge
+ * base: the Agent can read them and a Pipeline can take them as input, but
+ * search does not find them and no Conflict check has run. Filing one reads
+ * it into Passages and checks it against the Sources already there.
+ */
+export function AttachedSources({
+  sources,
+  canFile,
+  deniedReason,
+  onFile,
+  onOpen,
+}: {
+  sources: SourceView[];
+  canFile: boolean;
+  deniedReason: string | null;
+  onFile: (sourceId: string) => Promise<unknown>;
+  onOpen: (sourceId: string) => void;
+}) {
+  if (sources.length === 0) return null;
+  return (
+    <section aria-labelledby="hx-attached-heading" className="space-y-2">
+      <div>
+        <h3 id="hx-attached-heading" className="text-sm font-semibold text-ink">
+          Attached in a Session, not filed
+        </h3>
+        <p className="text-xs text-ink-muted">
+          The Agent can read these and a Pipeline can take them as input. Search
+          does not find them and no Conflict check has run until you file one.
+        </p>
+      </div>
+      <ul className="divide-y divide-ink/10 rounded-sm border border-ink/15 bg-paper">
+        {sources.map((source) => (
+          <AttachedRow
+            key={source.id}
+            source={source}
+            canFile={canFile}
+            deniedReason={deniedReason}
+            onFile={onFile}
+            onOpen={onOpen}
+          />
+        ))}
+      </ul>
+    </section>
+  );
+}
+
+function AttachedRow({
+  source,
+  canFile,
+  deniedReason,
+  onFile,
+  onOpen,
+}: {
+  source: SourceView;
+  canFile: boolean;
+  deniedReason: string | null;
+  onFile: (sourceId: string) => Promise<unknown>;
+  onOpen: (sourceId: string) => void;
+}) {
+  const file = useWrite(() => onFile(source.id));
+  return (
+    <li className="flex flex-col gap-1.5 px-3 py-2.5">
+      <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
+        <button
+          type="button"
+          onClick={() => onOpen(source.id)}
+          className="min-w-0 flex-1 text-left text-sm font-semibold text-ink hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-federal-blue"
+        >
+          {source.title}
+        </button>
+        <Button
+          size="sm"
+          variant="primary"
+          disabled={!canFile}
+          pending={file.pending}
+          pendingLabel="Filing…"
+          title={canFile ? undefined : (deniedReason ?? undefined)}
+          onClick={() => void file.run()}
+        >
+          File
+        </Button>
+      </div>
+      <p className="text-xs text-ink-muted">
+        {KIND_LABEL[source.kind]}
+        {" · "}
+        {formatBytes(source.bytes)}
+        {" · "}
+        {source.addedBy ? `attached by ${source.addedBy.name}` : "attached"}
+      </p>
+      {file.error ? (
+        <p role="alert" className="text-xs text-seal-red">
+          {file.error}
+        </p>
+      ) : null}
+    </li>
   );
 }

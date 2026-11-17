@@ -96,19 +96,13 @@ export default function AuditTab() {
     queryFn: () => api.sessions.list(),
     enabled: visible,
   });
-  const ownSessionIds = useMemo(
-    () =>
-      new Set(
-        (sessions.data ?? [])
-          .filter((session) => session.staff.id === staff.id)
-          .map((session) => session.id),
-      ),
-    [sessions.data, staff.id],
-  );
-
   const sessionId_ =
     effectiveScope === "session" ? sessionId : sessionFilter || null;
   const waitingForSession = effectiveScope === "session" && !sessionId;
+
+  // An admin's "My Sessions" is asked of the server, so every page is the
+  // admin's own Sessions' events and "Load more" pages through only those.
+  const mine = admin && effectiveScope === "mine";
 
   const trail = useInfiniteQuery({
     queryKey: [
@@ -116,6 +110,7 @@ export default function AuditTab() {
         sessionId: sessionId_,
         actorKind: actor || null,
         action: action || null,
+        mine,
       }),
       effectiveScope,
     ],
@@ -124,6 +119,7 @@ export default function AuditTab() {
         sessionId: sessionId_,
         actorKind: actor || null,
         action: action || null,
+        mine,
         before: pageParam,
         limit: LIMITS.auditPageSize,
       }),
@@ -134,15 +130,10 @@ export default function AuditTab() {
     refetchIntervalInBackground: false,
   });
 
-  const events = useMemo(() => {
-    const all = trail.data?.pages.flatMap((page) => page.events) ?? [];
-    // An admin's "My Sessions": the server gives the Workspace; keep their own Sessions' events.
-    return admin && effectiveScope === "mine"
-      ? all.filter(
-          (event) => event.sessionId && ownSessionIds.has(event.sessionId),
-        )
-      : all;
-  }, [trail.data, admin, effectiveScope, ownSessionIds]);
+  const events = useMemo(
+    () => trail.data?.pages.flatMap((page) => page.events) ?? [],
+    [trail.data],
+  );
 
   const loadError = trail.error;
   const totals = useMemo(() => auditTotals(events), [events]);

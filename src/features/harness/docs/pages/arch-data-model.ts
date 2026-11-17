@@ -45,7 +45,7 @@ The schema is §harness§, in §supabase/migrations/20261117120000_harness.sql§
 | Table | What it holds |
 | --- | --- |
 | §employers§ | Code, name, status. |
-| §members§ | Member number, name, dates, residency, balance (KYD), status. |
+| §members§ | Member number, name, dates, residency, balance (CI$), status. |
 | §schedules§ | An Employer's month and status. |
 | §schedule_lines§ | One line per Member: earnings, employee, employer and voluntary amounts. |
 | §remittances§ | An Employer's month and the amount received. |

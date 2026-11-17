@@ -134,7 +134,7 @@ export function SourceReader({
               pendingLabel="Reading…"
               onClick={() => void reread.run()}
             >
-              {source.status === "failed" ? "Try reading again" : "Read it now"}
+              {source.status === "failed" ? "Try reading again" : "File it now"}
             </Button>
           ) : null}
           <ErrorNote>{reread.error}</ErrorNote>

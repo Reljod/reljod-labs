@@ -23,7 +23,7 @@ A fourth kind of work is answering a Member's questions. It is a Skill, not a Pi
 
 ## The records
 
-Records are in your Workspace, seeded the first time you open the Harness. The Agent reads them through MCP tools such as §find_members§, §get_member§, §get_employer§ and §list_schedules§. Amounts are in Cayman Islands dollars (KYD).
+Records are in your Workspace, seeded the first time you open the Harness. The Agent reads them through MCP tools such as §find_members§, §get_member§, §get_employer§ and §list_schedules§. Amounts are in Cayman Islands dollars (CI$).
 
 | Record | What it is |
 | --- | --- |

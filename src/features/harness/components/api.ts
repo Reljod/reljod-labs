@@ -102,6 +102,7 @@ export const keys = {
       filter.sessionId ?? "",
       filter.actorKind ?? "",
       filter.action ?? "",
+      filter.mine ? "mine" : "",
     ] as const,
   sandbox: (sessionId?: string | null) =>
     ["harness", "sandbox", sessionId ?? ""] as const,
@@ -337,14 +338,19 @@ export const api = {
       send<SourceIngestResponse>(apiPath.sourceIngest(id), "POST"),
     remove: (id: string) =>
       send<SourceRemoveResponse>(apiPath.source(id), "DELETE"),
-    /** The whole upload: register the Source, PUT the file, read it into Passages. */
-    async upload(
+    /**
+     * The upload a chat attachment makes: register the Source and PUT the
+     * file. The Source stays `pending`, attached but not filed: the Agent
+     * and a Pipeline can read it, and it has no Passages and no Conflict
+     * check until it is filed (`ingest`, or the Agent's `file_source`).
+     */
+    async attach(
       file: File,
       options: {
         sessionId?: string | null;
         onProgress?: (fraction: number) => void;
       } = {},
-    ): Promise<SourceIngestResponse> {
+    ): Promise<SourceUploadUrlResponse["source"]> {
       const { source, uploadUrl } = await api.sources.uploadUrl({
         name: file.name,
         type: file.type || "application/octet-stream",
@@ -352,7 +358,7 @@ export const api = {
         sessionId: options.sessionId ?? null,
       });
       await putFile(uploadUrl, file, options.onProgress);
-      return api.sources.ingest(source.id);
+      return source;
     },
   },
 

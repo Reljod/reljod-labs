@@ -165,7 +165,7 @@ export const STATIC_MCP_TOOLS = [
     name: "get_member",
     title: "Get a Member",
     description:
-      "One Member by id or member number, with their Employer and their Member requests. Amounts are KYD.",
+      "One Member by id or member number, with their Employer and their Member requests. Amounts are Cayman Islands dollars (CI$).",
     permission: null,
     group: "records",
     readOnly: true,
@@ -220,7 +220,7 @@ export const STATIC_MCP_TOOLS = [
     name: "read_source",
     title: "Read a Source",
     description:
-      "A Source's Passages in order, with their citation ids. Superseded Passages are marked.",
+      "A Source's Passages in order, with their citation ids. Superseded Passages are marked. A Source attached to the conversation and not yet filed has no Passages: its text is returned instead, with nothing to cite.",
     permission: null,
     group: "knowledge",
     readOnly: true,
@@ -229,7 +229,7 @@ export const STATIC_MCP_TOOLS = [
     name: "list_sources",
     title: "List Sources",
     description:
-      "The Knowledge base's Sources: title, kind, date, status (pending, reading, ready, failed) and open Conflicts.",
+      "The Knowledge base's filed Sources: title, kind, date, status (reading, ready, failed) and open Conflicts. Sources attached to a conversation and not yet filed are not listed.",
     permission: null,
     group: "knowledge",
     readOnly: true,
