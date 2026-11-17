@@ -76,7 +76,7 @@ export function EventRow({
           : { borderLeft: `3px solid hsl(${hue} 55% 50%)` }
       }
       className={cx(
-        "relative border-ink border-b-2",
+        "relative border-ink/15 border-b",
         quiet && "bg-marble/40 text-ink-muted",
         hue === null && agent && "border-l-2 border-l-federal-blue/50",
       )}

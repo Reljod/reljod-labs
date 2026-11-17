@@ -34,6 +34,8 @@ import {
   DoneNote,
   ErrorNote,
   Loading,
+  segmentClass,
+  segmentsClass,
   useWrite,
 } from "../ui";
 import { ParamField } from "./param-field";
@@ -307,7 +309,7 @@ export function RuleCard({
           <span className="text-xs text-ink-muted" aria-hidden="true">
             If not met:
           </span>
-          <div className="inline-flex rounded-sm outline-box p-0.5">
+          <div className={segmentsClass}>
             {OUTCOMES.map((outcome) => (
               <button
                 key={outcome}
@@ -315,16 +317,13 @@ export function RuleCard({
                 aria-pressed={draft.outcome === outcome}
                 title={MEANING[outcome].line}
                 onClick={() => update({ outcome })}
-                className={cx(
-                  "flex h-7 items-baseline gap-1.5 rounded-sm px-2.5 text-xs font-medium focus-visible:outline-2 focus-visible:outline-federal-blue",
-                  draft.outcome === outcome
-                    ? outcome === "block"
-                      ? "bg-seal-red text-paper"
-                      : outcome === "refer"
-                        ? "bg-oak text-paper"
-                        : "bg-ink text-paper"
-                    : "text-ink-muted hover:bg-marble hover:text-ink",
-                  "items-center disabled:cursor-default",
+                className={segmentClass(
+                  draft.outcome === outcome,
+                  outcome === "block"
+                    ? "bg-seal-red text-paper"
+                    : outcome === "refer"
+                      ? "bg-oak text-paper"
+                      : "bg-ink text-paper",
                 )}
               >
                 {OUTCOME_LABEL[outcome]}

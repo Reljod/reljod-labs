@@ -29,7 +29,7 @@ import {
   RunsList,
 } from "../pipelines/runs-list";
 import { StepDetail } from "../pipelines/step-detail";
-import { Button, cx, Empty, Panel } from "../ui";
+import { Button, cx, Empty, Panel, segmentClass, segmentsClass } from "../ui";
 
 /** Every Run opened here, each kept live by its own stream, for as long as the page stays open. */
 const runStore = new RunStore({
@@ -268,7 +268,7 @@ export default function PipelinesTab() {
               >
                 Runs
               </h2>
-              <fieldset className="flex rounded-sm outline-box text-xs">
+              <fieldset className={cx("m-0 border-0 p-0", segmentsClass)}>
                 <legend className="sr-only">Which Runs to list</legend>
                 <button
                   type="button"
@@ -280,12 +280,7 @@ export default function PipelinesTab() {
                       : "Open a Session in Chat to list its Runs"
                   }
                   onClick={() => setFilter("session")}
-                  className={cx(
-                    "px-2 py-1 focus-visible:outline-2 focus-visible:outline-federal-blue disabled:opacity-50",
-                    filter === "session"
-                      ? "bg-ink text-paper"
-                      : "hover:bg-marble",
-                  )}
+                  className={segmentClass(filter === "session")}
                 >
                   This Session
                 </button>
@@ -293,10 +288,7 @@ export default function PipelinesTab() {
                   type="button"
                   aria-pressed={filter === "all"}
                   onClick={() => setFilter("all")}
-                  className={cx(
-                    "px-2 py-1 focus-visible:outline-2 focus-visible:outline-federal-blue",
-                    filter === "all" ? "bg-ink text-paper" : "hover:bg-marble",
-                  )}
+                  className={segmentClass(filter === "all")}
                 >
                   All
                 </button>

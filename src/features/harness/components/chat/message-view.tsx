@@ -52,10 +52,12 @@ export function StaffMessage({
     >
       <Initials initials={initials} className="mt-0.5" />
       <div className="min-w-0 flex-1">
-        <p className="text-xs font-semibold text-ink-muted">{name}</p>
+        <p className="eyebrow text-[0.65rem] font-bold text-ink-muted">
+          {name}
+        </p>
         <p
           className={cx(
-            "mt-0.5 text-sm leading-relaxed whitespace-pre-wrap [overflow-wrap:anywhere]",
+            "outline-box mt-1 inline-block max-w-full rounded-sm bg-paper px-3 py-2 text-sm leading-relaxed whitespace-pre-wrap shadow-hard-sm [overflow-wrap:anywhere]",
             pending && "text-ink/80",
           )}
         >
@@ -94,7 +96,7 @@ function AgentMark() {
   return (
     <span
       aria-hidden="true"
-      className="mt-0.5 inline-flex size-7 shrink-0 items-center justify-center rounded-sm border border-federal-blue bg-federal-blue font-mono text-[0.65rem] font-bold text-paper"
+      className="mt-0.5 inline-flex size-7 shrink-0 items-center justify-center rounded-sm border-2 border-ink bg-federal-blue font-mono text-[0.65rem] font-bold text-paper"
     >
       AI
     </span>
@@ -107,7 +109,7 @@ function ToolLine({ item }: { item: Extract<ActivityItem, { type: "tool" }> }) {
     ? JSON.stringify(item.args, null, 2)
     : "";
   return (
-    <details className="group rounded-sm outline-box bg-paper text-xs open:bg-marble/50">
+    <details className="group outline-box rounded-sm bg-paper text-xs shadow-hard-sm">
       <summary className="flex cursor-pointer list-none items-center gap-2 px-2.5 py-1.5 focus-visible:outline-2 focus-visible:outline-federal-blue [&::-webkit-details-marker]:hidden">
         <span
           aria-hidden="true"
@@ -130,7 +132,7 @@ function ToolLine({ item }: { item: Extract<ActivityItem, { type: "tool" }> }) {
           </Badge>
         )}
       </summary>
-      <div className="space-y-2 border-ink border-t-2 px-2.5 py-2">
+      <div className="space-y-2 border-ink border-t-2 bg-marble px-2.5 py-2">
         {item.summary ? (
           <p className="whitespace-pre-wrap [overflow-wrap:anywhere]">
             {item.summary}
@@ -139,7 +141,7 @@ function ToolLine({ item }: { item: Extract<ActivityItem, { type: "tool" }> }) {
           <p className="text-ink-muted">Waiting for the tool to answer…</p>
         ) : null}
         {full ? (
-          <pre className="hx-scroll max-h-40 overflow-auto rounded-sm bg-ink/5 p-2 font-mono text-[0.7rem]">
+          <pre className="hx-scroll max-h-40 overflow-auto rounded-sm border border-ink bg-paper p-2 font-mono text-[0.7rem]">
             {full}
           </pre>
         ) : null}
@@ -176,7 +178,7 @@ function Activity({
       );
     case "source":
       return (
-        <div className="flex flex-wrap items-center gap-2 rounded-sm outline-box bg-paper px-3 py-2 text-sm">
+        <div className="outline-box flex flex-wrap items-center gap-2 rounded-sm bg-paper px-3 py-2 text-sm shadow-hard-sm">
           <Badge tone="neutral">Source</Badge>
           <span className="min-w-0 flex-1 truncate font-medium">
             {item.title}
@@ -209,7 +211,7 @@ function Activity({
       );
     case "conflict":
       return (
-        <div className="flex flex-wrap items-center gap-2 rounded-sm outline-box bg-brass/20 px-3 py-2 text-sm">
+        <div className="outline-box flex flex-wrap items-center gap-2 rounded-sm bg-brass/25 px-3 py-2 text-sm shadow-hard-sm">
           <Badge tone="amber">Conflict</Badge>
           <span className="min-w-0 flex-1 [overflow-wrap:anywhere]">
             {item.summary}
@@ -253,9 +255,9 @@ export function AgentMessage({
     >
       <AgentMark />
       <div className="min-w-0 flex-1 space-y-2">
-        <p className="text-xs font-semibold text-ink-muted">Agent</p>
+        <p className="eyebrow text-[0.65rem] font-bold text-ink-muted">Agent</p>
         {turn.reasoning ? (
-          <details className="rounded-sm border border-ink text-xs">
+          <details className="outline-box rounded-sm bg-paper text-xs">
             <summary className="cursor-pointer px-2.5 py-1.5 text-ink-muted focus-visible:outline-2 focus-visible:outline-federal-blue">
               Thinking
             </summary>

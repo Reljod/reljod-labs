@@ -182,7 +182,7 @@ function renderBlocks(
                 {each(block.rows, (row, rowKey) => (
                   <tr
                     key={rowKey}
-                    className="border-ink border-b-2 last:border-b-0"
+                    className="border-ink/15 border-b last:border-b-0"
                   >
                     {each(row, (cell, cellKey, index) => (
                       <td

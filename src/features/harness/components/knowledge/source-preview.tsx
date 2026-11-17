@@ -289,7 +289,7 @@ function Table({ rows, caption }: { rows: string[][]; caption?: string }) {
                 {across.map((columnIndex) => (
                   <td
                     key={columnIndex}
-                    className="border-ink border-b-2 px-2 py-1 align-top font-mono whitespace-nowrap"
+                    className="border-ink/15 border-b px-2 py-1 align-top font-mono whitespace-nowrap"
                   >
                     {row[columnIndex] ?? ""}
                   </td>

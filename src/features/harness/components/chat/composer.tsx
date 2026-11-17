@@ -287,7 +287,7 @@ export function Composer({
 
   return (
     <form
-      className="shrink-0 space-y-2 border-ink border-t-2 bg-paper px-3 py-3 sm:px-5"
+      className="shrink-0 space-y-2 px-3 pt-2 pb-3 sm:px-5"
       onSubmit={(event) => {
         event.preventDefault();
         if (blocker === null) onSend();
@@ -308,7 +308,7 @@ export function Composer({
           ))}
         </ul>
       ) : null}
-      <div className="rounded-sm outline-box bg-paper focus-within:border-federal-blue focus-within:outline-2 focus-within:outline-federal-blue/40">
+      <div className="outline-box rounded-sm bg-paper shadow-hard-md focus-within:outline-2 focus-within:outline-offset-2 focus-within:outline-federal-blue">
         <textarea
           ref={textareaRef}
           value={text}
@@ -321,7 +321,7 @@ export function Composer({
           placeholder="Ask about a Member, upload a document, start a Run…"
           className="block max-h-48 min-h-[4.25rem] w-full resize-none bg-transparent px-3 py-2.5 text-sm leading-relaxed outline-none placeholder:text-ink-muted/70"
         />
-        <div className="flex flex-wrap items-center gap-2 border-ink border-t-2 px-2 py-1.5">
+        <div className="flex flex-wrap items-center gap-2 border-ink/15 border-t px-2 py-1.5">
           <input
             ref={fileInput}
             type="file"

@@ -48,7 +48,7 @@ function SessionRow({
 
   if (editing) {
     return (
-      <li className="rounded-sm border border-federal-blue bg-paper p-2">
+      <li className="outline-box rounded-sm bg-paper p-2 shadow-hard-sm">
         <form
           onSubmit={(event) => {
             event.preventDefault();
@@ -99,10 +99,10 @@ function SessionRow({
   return (
     <li
       className={cx(
-        "group flex items-stretch rounded-sm border",
+        "group flex items-stretch rounded-sm border-2",
         active
-          ? "border-federal-blue bg-morning-haze/60"
-          : "border-transparent hover:bg-marble",
+          ? "border-ink bg-paper shadow-hard-sm"
+          : "border-transparent hover:border-ink hover:bg-paper",
       )}
     >
       <button
@@ -191,7 +191,7 @@ export function SessionSidebar({
             {error}
           </ErrorNote>
         ) : sessions && sessions.length > 0 ? (
-          <ul className="space-y-0.5">
+          <ul className="space-y-1">
             {sessions.map((session) => {
               const answering = streamingIds.has(session.id);
               const run = activeRunSessionIds.has(session.id);

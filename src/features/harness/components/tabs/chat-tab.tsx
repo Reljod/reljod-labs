@@ -375,16 +375,16 @@ export default function ChatTab() {
   const answering = stream?.status === "streaming";
 
   return (
-    <div className="relative flex min-h-0 flex-1 bg-paper">
+    <div className="relative flex min-h-0 flex-1 bg-marble">
       <aside
         aria-label="Sessions"
         className={cx(
-          "absolute inset-y-0 left-0 z-20 w-[min(20rem,85vw)] shrink-0 flex-col border-ink border-r-2 bg-paper shadow-hard-md md:static md:flex md:w-72 md:shadow-none",
+          "absolute inset-y-0 left-0 z-20 w-[min(20rem,85vw)] shrink-0 flex-col border-ink border-r-2 bg-marble shadow-hard-md md:static md:flex md:w-72 md:shadow-none",
           sidebarOpen ? "flex" : "hidden",
         )}
       >
         <div className="flex items-center justify-between border-ink border-b-2 px-3 py-2 md:hidden">
-          <span className="text-sm font-semibold">Sessions</span>
+          <span className="eyebrow font-bold">Sessions</span>
           <Button
             size="sm"
             variant="ghost"
@@ -417,7 +417,7 @@ export default function ChatTab() {
         onFiles={onFiles}
         className="flex min-h-0 min-w-0 flex-1 flex-col"
       >
-        <header className="flex items-center gap-2 border-ink border-b-2 px-3 py-2 sm:px-5">
+        <header className="flex items-center gap-2 border-ink border-b-2 bg-paper px-3 py-2 sm:px-5">
           <Button
             size="sm"
             variant="secondary"

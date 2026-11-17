@@ -22,7 +22,16 @@ import {
   sessionChoices,
 } from "../audit/model";
 import { useHarness } from "../harness-context";
-import { Button, cx, Empty, ErrorNote, Loading, Panel } from "../ui";
+import {
+  Button,
+  cx,
+  Empty,
+  ErrorNote,
+  Loading,
+  Panel,
+  segmentClass,
+  segmentsClass,
+} from "../ui";
 
 type Scope = "session" | "mine" | "workspace";
 
@@ -199,7 +208,7 @@ export default function AuditTab() {
     <div className="flex min-h-0 flex-1 flex-col gap-3 p-3 sm:p-4">
       <Panel bodyClassName="p-3" className="shrink-0">
         <div className="flex flex-wrap items-end gap-x-4 gap-y-3">
-          <fieldset className="m-0 flex min-w-0 rounded-sm outline-box bg-paper p-0.5">
+          <fieldset className={cx("m-0 min-w-0 border-0 p-0", segmentsClass)}>
             <legend className="sr-only">Which events</legend>
             {SCOPES.map((item) => {
               const disabled = item.id === "workspace" && !admin;
@@ -215,14 +224,7 @@ export default function AuditTab() {
                       : undefined
                   }
                   onClick={() => setScope(item.id)}
-                  className={cx(
-                    "h-7 rounded-sm px-2.5 text-xs font-medium whitespace-nowrap",
-                    effectiveScope === item.id
-                      ? "bg-ink text-paper"
-                      : "text-ink-muted hover:bg-marble hover:text-ink",
-                    disabled &&
-                      "cursor-not-allowed opacity-45 hover:bg-transparent",
-                  )}
+                  className={segmentClass(effectiveScope === item.id)}
                 >
                   {item.label}
                 </button>

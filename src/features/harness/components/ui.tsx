@@ -521,6 +521,22 @@ export function Tabs<Id extends string>({
   );
 }
 
+// Segments -----------------------------------------------------------------------
+
+/** A row of pressed/unpressed choices (`aria-pressed` buttons): the bar's tab boxes, small. */
+export const segmentsClass = "flex flex-wrap items-center gap-1.5";
+
+/**
+ * One choice in a row of segments. `fill` replaces the ink of the chosen one
+ * (a Rule's Block in seal red). Disabled ones stop pressing and keep their title.
+ */
+export const segmentClass = (active: boolean, fill = "bg-ink text-paper") =>
+  cx(
+    "outline-box press eyebrow inline-flex h-7 shrink-0 items-center gap-1.5 rounded-sm px-2.5 text-[0.65rem] font-bold whitespace-nowrap shadow-hard-sm",
+    active ? fill : "bg-paper text-ink hover:bg-morning-haze",
+    "disabled:translate-none disabled:cursor-not-allowed disabled:opacity-45 disabled:shadow-none",
+  );
+
 // Dialogs ------------------------------------------------------------------------
 
 /**
