@@ -11,6 +11,8 @@
 - Domain language: `src/features/document-compliance/GLOSSARY.md` (map of all contexts: `GLOSSARY-MAP.md`). Read it before naming anything in `src/features/document-compliance/`.
 - Decisions and their reasons: `docs/adr/`. Read before changing the parsing or evaluation pipeline.
 - Synthetic documents: `fixtures/document-compliance/`. Every document uses the fictional Republic of Meridia and a SPECIMEN watermark.
+- Rules are data, checks are code (`docs/adr/0019-document-compliance-rules-are-data-with-an-audit-trail.md`). A Rule's sentence, Parameters and Default live in `domain/rules.ts`; a new value is a Rule edit, a new kind of check is code in `domain/evaluate.ts`. Every Parameter a check reads comes from the `Rulebook` that `resolveRulebook` builds, never a constant.
+- Rules page `/demos/document-compliance/rules`, Audit trail `/demos/document-compliance/audit`; a run page has Pipeline and Audit tabs and Re-evaluate (code only, no model call). A new action goes in `AUDIT_ACTIONS` (`domain/audit.ts`) and the `audit_events` check constraint together. Writes that must land with their event go through the database functions in `supabase/migrations/20261117170000_document_compliance_rules_audit.sql`; that migration must be applied before this code is deployed.
 
 ## Ledger (the site's cat mascot)
 

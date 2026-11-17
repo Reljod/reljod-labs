@@ -7,6 +7,7 @@ import {
   readDate,
 } from "./field-checks";
 import type { RequirementId, Rulebook } from "./rulebook";
+import { CERTIFICATION_PART_LABELS, type CertificationPart } from "./rules";
 import type {
   ClientDeclaration,
   DocumentKind,
@@ -32,6 +33,14 @@ const KIND_LABELS: Record<DocumentKind, string> = {
 };
 
 type Result = { outcome: Outcome; reason: string; evidence: Evidence[] };
+
+/** The read field each certification part is found in; the signature is a judgment. */
+const CERTIFICATION_FIELDS: { part: CertificationPart; name: FieldName }[] = [
+  { part: "wording", name: "certification_wording" },
+  { part: "certifier_name", name: "certifier_name" },
+  { part: "certifier_occupation", name: "certifier_occupation" },
+  { part: "date", name: "certification_date" },
+];
 
 const pass = (reason: string, evidence: Evidence[] = []): Result => ({
   outcome: "pass",
@@ -131,8 +140,15 @@ export function evaluate(input: PrescreenInput): Finding[] {
     }
 
     const expiry = dates[0].date;
-    if (isExpired(expiry, prescreenDate)) {
+    if (expiry < prescreenDate) {
       return fail(`The identity document expired on ${expiry}.`, evidence);
+    }
+    if (isExpired(expiry, rulebook, prescreenDate)) {
+      const days = rulebook.identityMinValidityDays;
+      return fail(
+        `The identity document expires on ${expiry}, less than ${days} day${days === 1 ? "" : "s"} after ${prescreenDate}.`,
+        evidence,
+      );
     }
     return pass(`The identity document is valid until ${expiry}.`, evidence);
   }
@@ -168,6 +184,7 @@ export function evaluate(input: PrescreenInput): Finding[] {
   function nameMatches(): Result {
     const evidence: Evidence[] = [];
     const problems: string[] = [];
+    let mismatched = false;
     for (const document of documents) {
       const label = KIND_LABELS[document.kind];
       const field = fieldOf(document, "full_name");
@@ -175,13 +192,17 @@ export function evaluate(input: PrescreenInput): Finding[] {
       if (!usable(field)) {
         problems.push(`the name on the ${label} could not be read reliably`);
       } else if (compareField(field, context).outcome !== "pass") {
+        mismatched = true;
         problems.push(
           `the ${label} names "${field.value}", not "${declaration.fullName}"`,
         );
       }
     }
     if (problems.length > 0) {
-      return review(`Check the name: ${problems.join("; ")}.`, evidence);
+      // A confidently read name that differs is a Fail when the Rule says so.
+      const outcome =
+        mismatched && rulebook.nameMismatchOutcome === "fail" ? fail : review;
+      return outcome(`Check the name: ${problems.join("; ")}.`, evidence);
     }
     return pass(
       `Every document names ${declaration.fullName} or a consistent variant.`,
@@ -203,7 +224,7 @@ export function evaluate(input: PrescreenInput): Finding[] {
           evidence,
         );
       }
-      if (compareField(field, context).outcome === "fail") {
+      if (date !== declaration.dateOfBirth) {
         mismatch = `the ${KIND_LABELS[document.kind]} shows ${date}`;
       }
     }
@@ -211,7 +232,9 @@ export function evaluate(input: PrescreenInput): Finding[] {
       return review("No document shows a date of birth.");
     }
     if (mismatch) {
-      return fail(
+      const outcome =
+        rulebook.dateOfBirthMismatchOutcome === "fail" ? fail : review;
+      return outcome(
         `The declared date of birth is ${declaration.dateOfBirth} but ${mismatch}.`,
         evidence,
       );
@@ -234,7 +257,9 @@ export function evaluate(input: PrescreenInput): Finding[] {
       );
     }
     if (compareField(field, context).outcome !== "pass") {
-      return review(
+      const outcome =
+        rulebook.addressMismatchOutcome === "fail" ? fail : review;
+      return outcome(
         `The proof of address shows "${field.value}", which differs from the declared address.`,
         evidence,
       );
@@ -245,16 +270,13 @@ export function evaluate(input: PrescreenInput): Finding[] {
   function certificationComplete(): Result {
     const document = documentOf("certified_copy");
     if (!document) return fail("The pack has no certified copy.");
-    const parts: { name: FieldName; label: string }[] = [
-      { name: "certification_wording", label: "certification wording" },
-      { name: "certifier_name", label: "certifier's name" },
-      { name: "certifier_occupation", label: "certifier's occupation" },
-      { name: "certification_date", label: "certification date" },
-    ];
+    const required = new Set(rulebook.certificationParts);
+    const parts = CERTIFICATION_FIELDS.filter(({ part }) => required.has(part));
     const evidence: Evidence[] = [];
     const missing: string[] = [];
     const unclear: string[] = [];
-    for (const { name, label } of parts) {
+    for (const { part, name } of parts) {
+      const label = CERTIFICATION_PART_LABELS[part];
       const field = fieldOf(document, name);
       if (!field || field.value.trim() === "") {
         missing.push(label);
@@ -263,7 +285,10 @@ export function evaluate(input: PrescreenInput): Finding[] {
       evidence.push(evidenceOf(document, field));
       if (!usable(field)) unclear.push(label);
     }
-    const signature = document.judgments.signaturePresent;
+    // A signature the Rule does not ask for is as good as present.
+    const signature = required.has("signature")
+      ? document.judgments.signaturePresent
+      : true;
     if (signature === false) missing.push("signature");
     if (missing.length > 0) {
       return fail(
@@ -279,7 +304,7 @@ export function evaluate(input: PrescreenInput): Finding[] {
       );
     }
     return pass(
-      "The certification has wording, certifier name, occupation, date and signature.",
+      `The certification has the ${rulebook.certificationParts.map((part) => CERTIFICATION_PART_LABELS[part]).join(", ")}.`,
       evidence,
     );
   }

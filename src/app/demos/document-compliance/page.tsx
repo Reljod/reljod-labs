@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
-import Link from "next/link";
 import { Caveats } from "@/features/document-compliance/components/caveats";
+import { DemoHeader } from "@/features/document-compliance/components/demo-nav";
 import { PackPicker } from "@/features/document-compliance/components/pack-picker";
 import { QueryProvider } from "@/features/document-compliance/components/query-provider";
 import { SessionRuns } from "@/features/document-compliance/components/session-runs";
@@ -16,14 +16,7 @@ export default function DocumentComplianceDemoPage() {
   return (
     <QueryProvider>
       <main className="mx-auto flex max-w-6xl flex-col gap-8 px-4 py-10 sm:px-6 sm:py-12 lg:h-dvh lg:min-h-[44rem] lg:gap-6 lg:py-8">
-        <header className="flex flex-col gap-3">
-          <Link href="/" className="eyebrow text-federal-blue underline">
-            ← Reljod Labs
-          </Link>
-          <h1 className="font-mono text-3xl leading-[1.15] font-bold uppercase sm:text-[2.5rem]">
-            Document compliance checks
-          </h1>
-        </header>
+        <DemoHeader current="packs" title="Document compliance checks" />
         <PackPicker
           packs={packs.map(({ slug, title, documents }) => ({
             slug,

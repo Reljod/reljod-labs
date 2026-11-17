@@ -1,8 +1,9 @@
 import "server-only";
 import type { Owner } from "@/features/access/domain/owner";
 import { fieldChecks } from "../domain/field-checks";
-import type { Rulebook } from "../domain/rulebook";
-import { individualOnboarding } from "../domain/rulebook";
+import type { ReviewView } from "../domain/review";
+import type { RequirementId, Rulebook } from "../domain/rulebook";
+import { parseAppliedRules, rulebookFromApplied } from "../domain/rules";
 import type {
   ClientDeclaration,
   DocumentJudgments,
@@ -18,7 +19,13 @@ import {
   runTotals,
 } from "../metrics";
 import { findPack, storagePath } from "../packs";
-import type { FindingView, RunView, SessionRunView } from "../view";
+import type {
+  DocumentView,
+  EvaluationView,
+  FindingView,
+  RunView,
+  SessionRunView,
+} from "../view";
 import type { Database } from "./database.types";
 import type { RawExtraction } from "./extract";
 import { signedUrls, supabase } from "./supabase";
@@ -59,6 +66,7 @@ export async function createRun(input: {
         rulebook_id: input.rulebook.id,
         rulebook_version: input.rulebook.version,
         client_declaration: input.declaration,
+        rules_applied: input.rulebook.applied,
         visitor_hash: input.visitorHash,
         owner: input.owner,
         model: input.model,
@@ -383,7 +391,9 @@ export async function loadRun(
     ) ?? [],
   );
 
-  const runFindings = individualOnboarding.requirements.flatMap(
+  const rulesApplied = parseAppliedRules(run.rules_applied ?? null);
+  const rulebook = rulebookFromApplied(rulesApplied);
+  const runFindings = rulebook.requirements.flatMap(
     (requirement): FindingView[] => {
       const finding = findings.find(
         (row) => row.requirement_id === requirement.id,
@@ -426,11 +436,91 @@ export async function loadRun(
       .find((finding) => finding.requirementId === "no-tampering")
       ?.evidence.filter((item) => item.documentKind === kind && !item.fieldName)
       .flatMap((item) => item.spanRefs) ?? [];
-  const checkContext = {
-    rulebook: individualOnboarding,
-    prescreenDate: pack?.prescreenDate ?? "",
-    declaration: run.client_declaration as ClientDeclaration,
-  };
+  const prescreenDate = pack?.prescreenDate ?? "";
+  const declaration = run.client_declaration as ClientDeclaration;
+  const checkContext = { rulebook, prescreenDate, declaration };
+
+  const runDocuments: DocumentView[] = documents.map((document) => {
+    const documentFields = fields
+      .filter((field) => field.document_id === document.id)
+      .map((field) => ({
+        name: field.name as FieldName,
+        value: field.value,
+        verified: field.verified,
+        confidence: field.confidence,
+        spanRefs: fieldSpans
+          .filter((link) => link.extracted_field_id === field.id)
+          .map((link) => refBySpanId.get(link.span_id) ?? ""),
+      }));
+    const tampering = tamperingRefs(document.kind);
+    // Runs saved with the model's raw answer keep its judgments; older ones
+    // rebuild suspected tampering from the no-tampering Finding.
+    const judgments = storedJudgments(document.raw_output) ?? {
+      legible: true,
+      tamperingSuspected: tampering.length > 0,
+      tamperingSpanRefs: tampering,
+      signaturePresent: null,
+      notes: "",
+    };
+    return {
+      kind: document.kind,
+      parser: document.parser,
+      pageCount: document.page_count,
+      pages: (
+        pack?.documents.find((candidate) => candidate.kind === document.kind)
+          ?.pages ?? []
+      ).map((file, index) => ({
+        page: index + 1,
+        imageUrl: urls.get(storagePath(run.pack_slug, file)) ?? "",
+      })),
+      spans: spans
+        .filter((span) => span.document_id === document.id)
+        .map((span) => ({
+          ref: span.ref,
+          page: span.page,
+          text: span.text,
+          box: { x0: span.x0, y0: span.y0, x1: span.x1, y1: span.y1 },
+          confidence: span.confidence,
+        })),
+      fields: documentFields,
+      judgments,
+      metrics: documentMetrics(document),
+      raw: document.raw_output ?? null,
+      checks: fieldChecks(
+        asExtracted({ kind: document.kind, fields: documentFields, judgments }),
+        checkContext,
+      ),
+    };
+  });
+
+  const [savedEvaluations, reviews] = await Promise.all([
+    loadEvaluations(runId),
+    loadReviews(runId),
+  ]);
+  const evaluations: EvaluationView[] = [
+    {
+      number: 1,
+      createdAt: run.completed_at ?? run.created_at,
+      createdBy: null,
+      rules: rulebook.applied,
+      findings: runFindings,
+      checks: runDocuments.flatMap((document) => document.checks),
+    },
+    ...savedEvaluations.map((evaluation): EvaluationView => {
+      const evaluationRulebook = rulebookFromApplied(evaluation.rules);
+      return {
+        ...evaluation,
+        rules: evaluationRulebook.applied,
+        checks: runDocuments.flatMap((document) =>
+          fieldChecks(asExtracted(document), {
+            rulebook: evaluationRulebook,
+            prescreenDate,
+            declaration,
+          }),
+        ),
+      };
+    }),
+  ];
 
   return {
     id: run.id,
@@ -440,69 +530,98 @@ export async function loadRun(
     model: run.model,
     createdAt: run.created_at,
     completedAt: run.completed_at,
-    prescreenDate: pack?.prescreenDate ?? "",
-    documents: documents.map((document) => {
-      const documentFields = fields
-        .filter((field) => field.document_id === document.id)
-        .map((field) => ({
-          name: field.name as FieldName,
-          value: field.value,
-          verified: field.verified,
-          confidence: field.confidence,
-          spanRefs: fieldSpans
-            .filter((link) => link.extracted_field_id === field.id)
-            .map((link) => refBySpanId.get(link.span_id) ?? ""),
-        }));
-      const tampering = tamperingRefs(document.kind);
-      // Runs saved with the model's raw answer keep its judgments; older ones
-      // rebuild suspected tampering from the no-tampering Finding.
-      const judgments = storedJudgments(document.raw_output) ?? {
-        legible: true,
-        tamperingSuspected: tampering.length > 0,
-        tamperingSpanRefs: tampering,
-        signaturePresent: null,
-        notes: "",
-      };
-      return {
-        kind: document.kind,
-        parser: document.parser,
-        pageCount: document.page_count,
-        pages: (
-          pack?.documents.find((candidate) => candidate.kind === document.kind)
-            ?.pages ?? []
-        ).map((file, index) => ({
-          page: index + 1,
-          imageUrl: urls.get(storagePath(run.pack_slug, file)) ?? "",
-        })),
-        spans: spans
-          .filter((span) => span.document_id === document.id)
-          .map((span) => ({
-            ref: span.ref,
-            page: span.page,
-            text: span.text,
-            box: { x0: span.x0, y0: span.y0, x1: span.x1, y1: span.y1 },
-            confidence: span.confidence,
-          })),
-        fields: documentFields,
-        judgments,
-        metrics: documentMetrics(document),
-        raw: document.raw_output ?? null,
-        checks: fieldChecks(
-          {
-            kind: document.kind,
-            spans: [],
-            fields: documentFields.map((field) => ({
-              ...field,
-              confidence: field.confidence ?? 0,
-            })),
-            judgments,
-          },
-          checkContext,
-        ),
-      };
-    }),
+    prescreenDate,
+    documents: runDocuments,
     findings: runFindings,
+    evaluations,
+    reviews,
   };
+}
+
+/** A stored Document as evaluation reads it: its fields and the model's judgments. */
+export function asExtracted(
+  document: Pick<DocumentView, "kind" | "fields" | "judgments">,
+): ExtractedDocument {
+  return {
+    kind: document.kind,
+    spans: [],
+    fields: document.fields.map((field) => ({
+      name: field.name,
+      value: field.value,
+      spanRefs: field.spanRefs,
+      verified: field.verified,
+      confidence: field.confidence ?? 0,
+    })),
+    judgments: document.judgments,
+  };
+}
+
+/** A table the migration for Rules and the Audit trail adds, not yet there. */
+const missingTable = (error: { code?: string; message: string }) =>
+  error.code === "42P01" ||
+  error.code === "PGRST205" ||
+  error.message.includes("schema cache");
+
+/** A run's re-evaluations, oldest first; none before the migration is applied. */
+async function loadEvaluations(runId: string) {
+  const { data, error } = await supabase()
+    .from("evaluations")
+    .select("number, rules_applied, findings, created_by, created_at")
+    .eq("run_id", runId)
+    .order("number", { ascending: true });
+  if (error) {
+    if (missingTable(error)) return [];
+    throw new Error(error.message);
+  }
+  type Row = {
+    number: number;
+    rules_applied: unknown;
+    findings: unknown;
+    created_by: string;
+    created_at: string;
+  };
+  return ((data ?? []) as Row[]).map((row) => ({
+    number: row.number,
+    createdAt: row.created_at,
+    createdBy: row.created_by,
+    rules: parseAppliedRules(row.rules_applied),
+    findings: Array.isArray(row.findings)
+      ? (row.findings as FindingView[])
+      : [],
+  }));
+}
+
+/** A run's Reviewer decisions, oldest first. */
+async function loadReviews(runId: string): Promise<ReviewView[]> {
+  const { data, error } = await supabase()
+    .from("finding_reviews")
+    .select(
+      "evaluation, requirement_id, finding_outcome, outcome, note, reviewer, created_at",
+    )
+    .eq("run_id", runId)
+    .order("id", { ascending: true });
+  if (error) {
+    if (missingTable(error)) return [];
+    throw new Error(error.message);
+  }
+  type Row = {
+    evaluation: number;
+    requirement_id: string;
+    finding_outcome: ReviewView["findingOutcome"];
+    outcome: ReviewView["outcome"];
+    note: string;
+    reviewer: string;
+    created_at: string;
+  };
+  return ((data ?? []) as Row[]).map((row) => ({
+    requirementId: row.requirement_id as RequirementId,
+    evaluation: row.evaluation,
+    findingOutcome: row.finding_outcome,
+    outcome: row.outcome,
+    note: row.note,
+    reviewer: row.reviewer,
+    at: row.created_at,
+  }));
 }
 
 type MetricRow = Pick<

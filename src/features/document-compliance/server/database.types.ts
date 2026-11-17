@@ -40,6 +40,8 @@ type RunRow = {
   session_id: string | null;
   /** The Owner (`host:…`, `guest:…` or `e2e`); null on runs from before Owners. */
   owner: string | null;
+  /** Every Rule as the run applied it; null on runs from before Rules were edited. */
+  rules_applied: Json | null;
   created_at: string;
   completed_at: string | null;
   expires_at: string;
@@ -109,6 +111,59 @@ type FindingEvidenceRow = {
   span_id: number | null;
 };
 
+type RuleVersionRow = {
+  id: number;
+  owner: string;
+  rule_id: string;
+  version: number;
+  enabled: boolean;
+  params: Json;
+  restored_from: number | null;
+  saved_by: string;
+  created_at: string;
+};
+
+type EvaluationRow = {
+  id: number;
+  run_id: string;
+  number: number;
+  rules_applied: Json;
+  findings: Json;
+  created_by: string;
+  created_at: string;
+};
+
+type FindingReviewRow = {
+  id: number;
+  run_id: string;
+  evaluation: number;
+  requirement_id: string;
+  finding_outcome: "pass" | "fail" | "needs_review";
+  outcome: "pass" | "fail";
+  note: string;
+  reviewer: string;
+  created_at: string;
+};
+
+type AuditTrailRow = { owner: string; created_at: string };
+
+type AuditEventRow = {
+  id: number;
+  owner: string;
+  run_id: string | null;
+  actor_kind: "person" | "model" | "system";
+  actor_label: string;
+  action: string;
+  summary: string;
+  details: Json;
+  model: string | null;
+  input_tokens: number | null;
+  output_tokens: number | null;
+  /** `numeric` may arrive as a string from PostgREST. */
+  cost_usd: number | string | null;
+  created_at: string;
+};
+
 /** Insert shape: generated and nullable columns become optional. */
 type WithoutGenerated<Row, Generated extends keyof Row> = {
   [K in keyof Row as K extends Generated
@@ -138,6 +193,7 @@ export type Database = {
           | "workflow_run_id"
           | "session_id"
           | "owner"
+          | "rules_applied"
           | "created_at"
           | "completed_at"
           | "expires_at"
@@ -158,9 +214,94 @@ export type Database = {
         FindingEvidenceRow,
         WithoutGenerated<FindingEvidenceRow, "id">
       >;
+      rule_versions: Table<
+        RuleVersionRow,
+        WithoutGenerated<RuleVersionRow, "id" | "created_at">
+      >;
+      evaluations: Table<
+        EvaluationRow,
+        WithoutGenerated<EvaluationRow, "id" | "created_at">
+      >;
+      finding_reviews: Table<
+        FindingReviewRow,
+        WithoutGenerated<FindingReviewRow, "id" | "created_at">
+      >;
+      audit_trails: Table<
+        AuditTrailRow,
+        WithoutGenerated<AuditTrailRow, "created_at">
+      >;
+      /** Append-only: written through `append_audit_event` and the functions below. */
+      audit_events: Table<
+        AuditEventRow,
+        WithoutGenerated<AuditEventRow, "id" | "created_at">
+      >;
     };
     Views: Record<never, never>;
-    Functions: Record<never, never>;
+    /**
+     * Writes that land with their Audit event in one transaction. Each raises
+     * `limit_reached` past its cap and `run_not_found` for another Owner's run.
+     */
+    Functions: {
+      append_audit_event: {
+        Args: {
+          p_owner: string;
+          p_run_id: string | null;
+          p_actor_kind: AuditEventRow["actor_kind"];
+          p_actor_label: string;
+          p_action: string;
+          p_summary: string;
+          p_details?: Json;
+          p_model?: string | null;
+          p_input_tokens?: number | null;
+          p_output_tokens?: number | null;
+          p_cost_usd?: number | null;
+        };
+        Returns: number;
+      };
+      save_rule_version: {
+        Args: {
+          p_owner: string;
+          p_rule_id: string;
+          p_enabled: boolean;
+          p_params: Json;
+          p_restored_from: number | null;
+          p_saved_by: string;
+          p_summary: string;
+          p_details: Json;
+          p_max_per_hour: number;
+        };
+        Returns: number;
+      };
+      record_evaluation: {
+        Args: {
+          p_owner: string;
+          p_run_id: string;
+          p_rules_applied: Json;
+          p_findings: Json;
+          p_created_by: string;
+          p_summary: string;
+          p_details: Json;
+          p_max: number;
+        };
+        Returns: number;
+      };
+      record_review: {
+        Args: {
+          p_owner: string;
+          p_run_id: string;
+          p_evaluation: number;
+          p_requirement_id: string;
+          p_finding_outcome: FindingReviewRow["finding_outcome"];
+          p_outcome: FindingReviewRow["outcome"];
+          p_note: string;
+          p_reviewer: string;
+          p_summary: string;
+          p_details: Json;
+          p_max: number;
+        };
+        Returns: number;
+      };
+    };
     Enums: Record<never, never>;
     CompositeTypes: Record<never, never>;
   };

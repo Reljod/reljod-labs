@@ -1,3 +1,10 @@
+import {
+  type AppliedRule,
+  type CertificationPart,
+  type MismatchOutcome,
+  resolveRulebook,
+} from "./rules";
+
 export type Requirement = {
   id: RequirementId;
   title: string;
@@ -18,56 +25,38 @@ export const REQUIREMENT_IDS = [
 
 export type RequirementId = (typeof REQUIREMENT_IDS)[number];
 
+/**
+ * The Requirements a Pre-screen applies and the values its checks read,
+ * resolved from the Owner's Rules (`resolveRulebook` in `rules.ts`).
+ */
 export type Rulebook = {
   id: string;
   version: string;
   title: string;
   jurisdiction: string;
-  /** Oldest a proof of address may be, in calendar months before the Pre-screen date. */
-  proofOfAddressMaxAgeMonths: number;
   /** Readings below this confidence can only produce `needs_review`. */
   minFieldConfidence: number;
+  /** Days an identity document must still be valid after the Pre-screen date. */
+  identityMinValidityDays: number;
+  /** Oldest a proof of address may be, in calendar months before the Pre-screen date. */
+  proofOfAddressMaxAgeMonths: number;
+  nameMismatchOutcome: MismatchOutcome;
+  dateOfBirthMismatchOutcome: MismatchOutcome;
+  addressMismatchOutcome: MismatchOutcome;
+  /** What a certified copy must carry. */
+  certificationParts: CertificationPart[];
+  /** The Requirements switched on, in order. */
   requirements: Requirement[];
+  /** Every Rule's Version and state, as the run applies it. */
+  applied: AppliedRule[];
 };
 
-export const individualOnboarding: Rulebook = {
-  id: "individual-onboarding",
-  version: "1",
-  title: "Individual onboarding",
-  jurisdiction: "Meridian AML/CFT customer due diligence",
-  proofOfAddressMaxAgeMonths: 3,
-  minFieldConfidence: 0.6,
-  requirements: [
-    {
-      id: "identity-document-present",
-      title: "Identity document is present",
-    },
-    {
-      id: "identity-document-not-expired",
-      title: "Identity document has not expired",
-    },
-    {
-      id: "proof-of-address-present",
-      title: "Proof of address is present",
-    },
-    {
-      id: "proof-of-address-recent",
-      title: "Proof of address is dated within 3 months",
-    },
-    { id: "name-matches", title: "Name matches across all documents" },
-    {
-      id: "date-of-birth-matches",
-      title: "Date of birth matches across documents",
-    },
-    {
-      id: "address-matches",
-      title: "Address matches the declared address",
-    },
-    {
-      id: "certification-complete",
-      title: "Certified copy has a complete certification",
-    },
-    { id: "documents-legible", title: "Every document is legible" },
-    { id: "no-tampering", title: "No document shows signs of tampering" },
-  ],
-};
+/** The Rulebook with every Rule at its Default. */
+export const individualOnboarding: Rulebook = resolveRulebook({});
+
+export function isRequirementId(value: unknown): value is RequirementId {
+  return (
+    typeof value === "string" &&
+    (REQUIREMENT_IDS as readonly string[]).includes(value)
+  );
+}

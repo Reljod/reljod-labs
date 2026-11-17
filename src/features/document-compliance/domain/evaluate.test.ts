@@ -2,7 +2,8 @@ import { describe, expect, it } from "vitest";
 import { findPack, type Pack } from "../packs";
 import { evaluate } from "./evaluate";
 import { fieldChecks } from "./field-checks";
-import { individualOnboarding } from "./rulebook";
+import { individualOnboarding, type Rulebook } from "./rulebook";
+import { defaultRuleStates, type RuleId, resolveRulebook } from "./rules";
 import type {
   DocumentJudgments,
   DocumentKind,
@@ -140,9 +141,13 @@ const idealExtractions: Record<string, ExtractedDocument[]> = {
   ],
 };
 
-function prescreen(pack: Pack, documents: ExtractedDocument[]) {
+function prescreen(
+  pack: Pack,
+  documents: ExtractedDocument[],
+  rulebook: Rulebook = individualOnboarding,
+) {
   return evaluate({
-    rulebook: individualOnboarding,
+    rulebook,
     prescreenDate: pack.prescreenDate,
     declaration: pack.clientDeclaration,
     documents,
@@ -287,5 +292,118 @@ describe("evaluate safeguards", () => {
         spanRefs: ["p1-mrz_date_of_expiry"],
       },
     ]);
+  });
+});
+
+describe("evaluate with edited Rules", () => {
+  /** The Rulebook with one Rule's Parameters (or switch) changed. */
+  function edited(
+    id: RuleId,
+    params: Record<string, unknown>,
+    enabled = true,
+  ): Rulebook {
+    const states = defaultRuleStates();
+    states[id] = {
+      version: 1,
+      enabled,
+      params: { ...states[id].params, ...params } as never,
+    };
+    return resolveRulebook(states);
+  }
+  const outcome = (
+    slug: string,
+    rulebook: Rulebook,
+    id: string,
+    documents = idealExtractions[slug],
+  ) =>
+    prescreen(findPack(slug) as Pack, documents, rulebook).find(
+      (finding) => finding.requirementId === id,
+    )?.outcome;
+
+  it("matches the shipped Rulebook at the Defaults", () => {
+    expect(resolveRulebook(defaultRuleStates())).toEqual(individualOnboarding);
+  });
+
+  it("fails an identity document that expires inside the validity window", () => {
+    const soon = [
+      document("identity_document", {
+        ...passport,
+        date_of_expiry: "30 DEC 2026",
+        mrz_date_of_expiry: "261230",
+      }),
+      ...idealExtractions.clean.slice(1),
+    ];
+    const id = "identity-document-not-expired";
+    expect(outcome("clean", individualOnboarding, id, soon)).toBe("pass");
+    expect(
+      outcome("clean", edited(id, { minValidityDays: 90 }), id, soon),
+    ).toBe("fail");
+  });
+
+  it("lets an older proof of address pass when the Rule allows it", () => {
+    const id = "proof-of-address-recent";
+    expect(outcome("stale-bill", individualOnboarding, id)).toBe("fail");
+    expect(outcome("stale-bill", edited(id, { maxAgeMonths: 6 }), id)).toBe(
+      "pass",
+    );
+  });
+
+  it("fails a differing name when the Rule says so", () => {
+    const id = "name-matches";
+    expect(outcome("name-mismatch", individualOnboarding, id)).toBe(
+      "needs_review",
+    );
+    expect(
+      outcome("name-mismatch", edited(id, { onMismatch: "fail" }), id),
+    ).toBe("fail");
+  });
+
+  it("keeps an unreadable name at needs_review even when mismatches fail", () => {
+    const blurred = [
+      document("identity_document", passport, {}, 0.4),
+      ...idealExtractions.clean.slice(1),
+    ];
+    const id = "name-matches";
+    expect(
+      outcome("clean", edited(id, { onMismatch: "fail" }), id, blurred),
+    ).toBe("needs_review");
+  });
+
+  it("asks a certification only for the parts the Rule requires", () => {
+    const id = "certification-complete";
+    expect(outcome("incomplete-certification", individualOnboarding, id)).toBe(
+      "fail",
+    );
+    expect(
+      outcome(
+        "incomplete-certification",
+        edited(id, { requiredParts: ["wording", "certifier_name"] }),
+        id,
+      ),
+    ).toBe("pass");
+  });
+
+  it("makes no Finding for a Rule that is switched off", () => {
+    const findings = prescreen(
+      findPack("tampered-passport") as Pack,
+      idealExtractions["tampered-passport"],
+      edited("no-tampering", {}, false),
+    );
+    expect(findings.map((finding) => finding.requirementId)).not.toContain(
+      "no-tampering",
+    );
+    expect(findings).toHaveLength(9);
+  });
+
+  it("gives the Field check the outcome the Finding uses", () => {
+    const rulebook = edited("name-matches", { onMismatch: "fail" });
+    const pack = findPack("name-mismatch") as Pack;
+    const bill = idealExtractions["name-mismatch"][1];
+    const check = fieldChecks(bill, {
+      rulebook,
+      prescreenDate: pack.prescreenDate,
+      declaration: pack.clientDeclaration,
+    }).find((item) => item.fieldName === "full_name");
+    expect(check?.outcome).toBe("fail");
   });
 });
