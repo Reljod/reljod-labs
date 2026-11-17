@@ -419,6 +419,10 @@ export type RunSummary = {
   costUsd: number;
   names: number;
   score: Score | null;
+  /** Whether the Done gate passed; null for a Run still going or ended early. */
+  gatePassed: boolean | null;
+  /** Set when a cap, not the Done gate, ended a completed Run. */
+  stoppedBy: StopReason | null;
 };
 
 export type RunDetail = Omit<RunSummary, "names"> & {

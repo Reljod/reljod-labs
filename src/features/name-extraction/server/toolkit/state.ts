@@ -9,7 +9,6 @@ import {
   type DocumentText,
   type DoneGate,
   type ExtractedName,
-  estimateCost,
   MODELS,
   type ModelChoice,
   type ModelId,
@@ -29,8 +28,11 @@ export const RUN_LIMITS = {
   readersPerCall: 32,
   /** Pages one Reader may take. */
   pagesPerReader: 30,
-  /** Characters one Reader may take: keeps a call under ~100k input tokens. */
-  charsPerReader: 250_000,
+  /**
+   * Characters one Reader may take. Bounded at one token per character, this
+   * keeps a Reader's prompt under Claude Haiku 5.5's 100k-token price tier.
+   */
+  charsPerReader: 90_000,
   /** Pages one read_pages call returns. */
   pagesPerRead: 6,
   /** Characters one read_pages call returns. */
@@ -227,15 +229,30 @@ export function cap(text: string, max: number = RUN_LIMITS.toolOutputChars) {
 // Reader spend ------------------------------------------------------------------------------
 
 /**
- * Tokens a text costs, rounded up for a spend bound: about 4 characters a
- * token for ASCII, and a token per character for anything else, which
- * tokenizers split finer (accents, other scripts, symbols).
+ * An upper bound on the tokens a text costs: one per UTF-16 code unit. Real
+ * tokenizers average 2.5 to 4 characters a token on prose, but dense digits,
+ * IBANs and OCR noise can fall to 1 to 2, and a spend cap must hold for those.
  */
-export function estimateTokens(text: string) {
-  let other = 0;
-  for (let index = 0; index < text.length; index++)
-    if (text.charCodeAt(index) > 0x7f) other++;
-  return Math.ceil((text.length - other) / 4) + other;
+export function boundTokens(text: string) {
+  return text.length;
+}
+
+/**
+ * The most a Reader call can cost: every input token uncached and billed at
+ * the cache-write price (1.25x input, caching is on), the whole call at the
+ * price tier its input could reach, and the output at its cap.
+ */
+export function worstCaseCost(
+  model: string,
+  inputTokens: number,
+  outputTokens: number,
+) {
+  const price = MODELS[model as ModelId];
+  if (!price) return Number.POSITIVE_INFINITY;
+  const tier = price.tier && inputTokens > price.tier.above ? price.tier : null;
+  const input = (tier?.input ?? price.input) * 1.25;
+  const output = tier?.output ?? price.output;
+  return (inputTokens * input + outputTokens * output) / 1_000_000;
 }
 
 /** The page header and delimiters a Reader's prompt wraps around each page. */
@@ -315,12 +332,12 @@ export function planReaderRanges(args: {
     }
     const inputTokens =
       overheadTokens +
-      estimateTokens(range.focus ?? "") +
+      boundTokens(range.focus ?? "") +
       texts.reduce(
-        (sum, page) => sum + estimateTokens(page) + PAGE_FRAME_TOKENS,
+        (sum, page) => sum + boundTokens(page) + PAGE_FRAME_TOKENS,
         0,
       );
-    const estimateUsd = estimateCost(
+    const estimateUsd = worstCaseCost(
       model,
       inputTokens,
       RUN_LIMITS.readerOutputTokens,

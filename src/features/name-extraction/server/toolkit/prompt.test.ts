@@ -121,7 +121,7 @@ describe("Document text", () => {
     const base = readerOverheadTokens(DEFAULT_RULEBOOK, 1);
     expect(base).toBeGreaterThan(2_000);
     expect(readerOverheadTokens(DEFAULT_RULEBOOK, 1, "x".repeat(400))).toBe(
-      base + 100,
+      base + 400,
     );
   });
 });

@@ -88,7 +88,7 @@ export function RunsHistory({
                   </p>
                 </td>
                 <td className="px-2 py-2">
-                  <StatusTag status={run.status} />
+                  <StatusTag status={run.status} stoppedBy={run.stoppedBy} />
                 </td>
                 <td className="px-2 py-2 font-mono text-xs tabular-nums">
                   {WHEN.format(new Date(run.startedAt))}

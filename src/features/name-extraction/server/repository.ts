@@ -84,6 +84,8 @@ export function toSummary(row: RunRow): RunSummary {
     costUsd: Number(row.cost_usd) || 0,
     names: Array.isArray(row.names) ? row.names.length : 0,
     score: row.score ?? null,
+    gatePassed: row.gate_passed ?? null,
+    stoppedBy: row.stopped_by ?? null,
   };
 }
 

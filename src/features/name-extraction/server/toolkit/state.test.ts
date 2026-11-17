@@ -1,10 +1,10 @@
 import { describe, expect, it } from "vitest";
-import { type ExtractedName, estimateCost } from "../../domain/contract";
+import type { ExtractedName } from "../../domain/contract";
 import {
+  boundTokens,
   candidateStatuses,
   cap,
   doneGate,
-  estimateTokens,
   gateRefusal,
   markRead,
   planReaderRanges,
@@ -13,6 +13,7 @@ import {
   readerModelRefusal,
   type SweepCandidate,
   unreadRanges,
+  worstCaseCost,
 } from "./state";
 
 const candidate = (id: number, text: string, pages = [1]): SweepCandidate => ({
@@ -103,12 +104,24 @@ describe("page bookkeeping", () => {
 });
 
 describe("Reader spend", () => {
-  it("estimates about 4 ASCII characters a token, and a token per other character", () => {
-    expect(estimateTokens("")).toBe(0);
-    expect(estimateTokens("abcd")).toBe(1);
-    expect(estimateTokens("abcde")).toBe(2);
-    expect(estimateTokens("名前")).toBe(2);
-    expect(estimateTokens("José")).toBe(2);
+  it("bounds tokens at one per UTF-16 code unit", () => {
+    expect(boundTokens("")).toBe(0);
+    expect(boundTokens("abcd")).toBe(4);
+    expect(boundTokens("名前")).toBe(2);
+    expect(boundTokens("😀")).toBe(2);
+  });
+
+  it("prices the worst case: cache writes, and the tier the input could reach", () => {
+    const haiku = "anthropic/claude-haiku-5.5";
+    // Under the 100k tier: input at 1.25x for cache writes.
+    expect(worstCaseCost(haiku, 100_000, 0)).toBeCloseTo(
+      (100_000 * 0.1 * 1.25) / 1e6,
+    );
+    // Over it: the whole call at the tier's prices.
+    expect(worstCaseCost(haiku, 100_001, 1_000)).toBeCloseTo(
+      (100_001 * 0.5 * 1.25 + 1_000 * 2.5) / 1e6,
+    );
+    expect(worstCaseCost("nobody/model", 1, 1)).toBe(Number.POSITIVE_INFINITY);
   });
 
   it("lets a call switch only to a model no pricier than the Run's Reader model", () => {
@@ -133,7 +146,7 @@ describe("Reader spend", () => {
   });
 
   const page = (chars: number) => "a".repeat(chars);
-  const pages = Array.from({ length: 300 }, () => page(8_000));
+  const pages = Array.from({ length: 300 }, () => page(4_000));
   const ranges = (count: number, size = 20) =>
     Array.from({ length: count }, (_, index) => ({
       from: index * size + 1,
@@ -149,10 +162,10 @@ describe("Reader spend", () => {
       spentUsd: 0,
       overheadTokens: 1_000,
     });
-    // 1,000 overhead + 1 focus + 2 pages of (2,000 + 16 frame) tokens.
-    const expected = estimateCost(
+    // 1,000 overhead + 4 focus + 2 pages of (4,000 + 16 frame) tokens.
+    const expected = worstCaseCost(
       "anthropic/claude-haiku-5.5",
-      1_000 + 1 + 2 * 2_016,
+      1_000 + 4 + 2 * 4_016,
       RUN_LIMITS.readerOutputTokens,
     );
     expect(plan.ranges).toEqual([
@@ -231,5 +244,36 @@ describe("Reader spend", () => {
       expect.stringContaining("Range 41-41 skipped: 300,000 characters"),
       "Range 6-10 skipped: the Run's Reader cap is reached.",
     ]);
+  });
+
+  it("keeps dense tables and OCR noise within the cap and under Haiku's tier", () => {
+    // 30 pages of digits and punctuation, 3,000 characters each: 90,000
+    // characters, which tokenize far denser than prose.
+    const dense = Array.from({ length: 64 * 30 }, (_, index) =>
+      `${String(index).padStart(6, "0")}|DE89 3704 0044 0532 0130 00|`
+        .repeat(60)
+        .slice(0, 3_000),
+    );
+    const model = "anthropic/claude-haiku-5.5";
+    const wanted = Array.from({ length: 64 }, (_, index) => ({
+      from: index * 30 + 1,
+      to: index * 30 + 30,
+    }));
+    const plan = planReaderRanges({
+      pages: dense,
+      ranges: wanted,
+      model,
+      readersLeft: 64,
+      spentUsd: 0,
+      overheadTokens: 3_000,
+    });
+    expect(plan.reservedUsd).toBeLessThanOrEqual(RUN_LIMITS.costUsd);
+    const tierAbove = 100_000;
+    for (const range of plan.ranges) {
+      const chars = dense
+        .slice(range.from - 1, range.to)
+        .reduce((sum, text) => sum + text.length, 0);
+      expect(chars + 3_000 + 30 * 16).toBeLessThanOrEqual(tierAbove);
+    }
   });
 });

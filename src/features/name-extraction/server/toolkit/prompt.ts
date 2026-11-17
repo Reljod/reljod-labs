@@ -10,7 +10,7 @@ import {
   TOOLS,
 } from "../../domain/contract";
 import { SKILLS } from "../../skills";
-import { estimateTokens, RUN_LIMITS } from "./state";
+import { boundTokens, RUN_LIMITS } from "./state";
 
 /** The Rulebook as numbered rules a model follows. */
 export function renderRulebook(rulebook: Rulebook, version: number) {
@@ -177,9 +177,9 @@ export function readerOverheadTokens(
   instructions = "",
 ) {
   return (
-    estimateTokens(READER_INSTRUCTIONS) +
-    estimateTokens(renderRulebook(rulebook, version)) +
-    estimateTokens(instructions) +
+    boundTokens(READER_INSTRUCTIONS) +
+    boundTokens(renderRulebook(rulebook, version)) +
+    boundTokens(instructions) +
     READER_SCHEMA_ALLOWANCE_TOKENS
   );
 }

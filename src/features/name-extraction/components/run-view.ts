@@ -15,7 +15,7 @@ import type {
   SkillId,
   ToolId,
 } from "../domain/contract";
-import { CODE_PENDING } from "../domain/contract";
+import { CODE_PENDING, type StopReason } from "../domain/contract";
 
 export type SeqEvent = RunEvent & { seq: number };
 
@@ -81,6 +81,8 @@ export type RunView = {
   status: RunStatus;
   error: string | null;
   score: Score | null;
+  /** Set when a cap, not the Done gate, ended the Run. */
+  stoppedBy: StopReason | null;
   startedAt: number | null;
   endedAt: number | null;
   timeline: TimelineItem[];
@@ -115,6 +117,7 @@ export const emptyRunView: RunView = {
   status: "queued",
   error: null,
   score: null,
+  stoppedBy: null,
   startedAt: null,
   endedAt: null,
   timeline: [],
@@ -380,6 +383,7 @@ export function reduceRunView(view: RunView, event: SeqEvent): RunView {
         status: event.status,
         error: event.error ?? null,
         score: event.score ?? null,
+        stoppedBy: event.stoppedBy ?? null,
         endedAt: at,
         // Nothing is still running once the Run has ended.
         readers: view.readers.map((reader) =>

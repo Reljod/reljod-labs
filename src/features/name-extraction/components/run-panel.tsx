@@ -1,7 +1,12 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { PURPOSES, type Purpose, TOOLS } from "../domain/contract";
+import {
+  PURPOSES,
+  type Purpose,
+  type StopReason,
+  TOOLS,
+} from "../domain/contract";
 import { SKILLS } from "../skills";
 import { duration, modelLabel, tokens, usd } from "./format";
 import {
@@ -22,11 +27,25 @@ const STATUS_TONE = {
   stopped: "brass",
 } as const;
 
-export function StatusTag({ status }: { status: RunView["status"] }) {
+const STOPPED_BY_LABEL: Record<StopReason, string> = {
+  turns: "turn cap",
+  cost: "spend cap",
+  idle: "idle",
+};
+
+/** A Run's status; a completed Run a cap ended says so instead of "completed". */
+export function StatusTag({
+  status,
+  stoppedBy = null,
+}: {
+  status: RunView["status"];
+  stoppedBy?: StopReason | null;
+}) {
+  const capped = status === "completed" && stoppedBy !== null;
   return (
-    <Tag tone={STATUS_TONE[status]}>
+    <Tag tone={capped ? STATUS_TONE.stopped : STATUS_TONE[status]}>
       {status === "running" ? <Spinner className="size-2.5" /> : null}
-      {status}
+      {capped ? `ended at ${STOPPED_BY_LABEL[stoppedBy]}` : status}
     </Tag>
   );
 }
@@ -72,7 +91,7 @@ export function RunPanel({
         title={view.document?.title ?? "Starting…"}
         actions={
           <>
-            <StatusTag status={view.status} />
+            <StatusTag status={view.status} stoppedBy={view.stoppedBy} />
             <span className="font-mono text-xs text-ink-muted tabular-nums">
               {duration(Math.max(0, elapsed))}
             </span>

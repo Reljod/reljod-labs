@@ -322,7 +322,9 @@ export async function runTool(
         document.pages,
         parsed.value as Parameters<typeof grepPages>[1],
       );
-      output = grepText(result);
+      output = result.ok
+        ? asDocumentText('source="grep"', grepText(result))
+        : grepText(result);
       failed = !result.ok;
       break;
     }
@@ -349,8 +351,12 @@ export async function runTool(
       });
       output = [
         `exit ${result.exitCode} · ${(result.ms / 1000).toFixed(1)} s`,
-        result.stdout ? `stdout:\n${result.stdout}` : "stdout: (empty)",
-        result.stderr ? `stderr:\n${result.stderr}` : "",
+        result.stdout
+          ? asDocumentText('source="run_code stdout"', result.stdout)
+          : "stdout: (empty)",
+        result.stderr
+          ? asDocumentText('source="run_code stderr"', result.stderr)
+          : "",
       ]
         .filter(Boolean)
         .join("\n");
@@ -503,6 +509,19 @@ export async function readOneRange(
   ctx: RunContext,
   job: ReaderJob,
 ): Promise<ReaderResult> {
+  // A Run stopped or failed while earlier Readers ran starts no more of them.
+  if (isOver(await runSink().status(ctx.runId)))
+    return {
+      readerId: job.readerId,
+      from: job.from,
+      to: job.to,
+      model: job.model,
+      names: [],
+      dropped: 0,
+      cost: null,
+      error: "The Run is over; this Reader was not started.",
+      ms: 0,
+    };
   const { document } = await prepare(ctx);
   await emit(ctx.runId, {
     type: "reader",
