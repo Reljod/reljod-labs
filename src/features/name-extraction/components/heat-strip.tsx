@@ -93,13 +93,13 @@ export function HeatStrip({
       onPointerDown={onPointer}
       onPointerMove={onPointer}
       onKeyDown={onKey}
-      className="relative w-3.5 shrink-0 cursor-pointer touch-none rounded-full bg-ink/[0.06] ring-1 ring-ink/10 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-federal-blue sm:w-5"
+      className="relative w-3.5 shrink-0 cursor-pointer touch-none rounded-sm border-2 border-ink bg-paper focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-federal-blue sm:w-5"
     >
       <svg
         aria-hidden="true"
         viewBox={`0 0 10 ${total}`}
         preserveAspectRatio="none"
-        className="absolute inset-0 size-full overflow-hidden rounded-full"
+        className="absolute inset-0 size-full overflow-hidden"
       >
         {bars}
         {ticks.map((tick, index) => (

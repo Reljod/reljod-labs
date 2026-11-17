@@ -51,7 +51,7 @@ function Part({
       initial={{ opacity: 0, y: 10 }}
       whileInView={{ opacity: 1, y: 0 }}
       viewport={{ once: true }}
-      className="flex min-w-0 flex-col gap-2 rounded-md border-2 border-ink bg-paper p-3 shadow-hard-sm"
+      className="flex min-w-0 flex-col gap-2 rounded-sm border-2 border-ink bg-paper p-3 shadow-hard-sm"
     >
       <div className="flex h-12 items-center">{art}</div>
       <p className="font-mono text-xs font-bold uppercase">{title}</p>
@@ -137,7 +137,7 @@ export function HowItWorks({ loaded }: { loaded: SkillId[] }) {
             title="Final check"
             line="Refuses to finish while a page or lead is left."
             art={
-              <span className="flex size-10 items-center justify-center rounded-full border-2 border-ivy bg-ivy/10 font-mono text-lg font-bold text-ivy">
+              <span className="flex size-10 items-center justify-center rounded-sm border-2 border-ivy bg-ivy/10 font-mono text-lg font-bold text-ivy">
                 ✓
               </span>
             }
@@ -145,7 +145,7 @@ export function HowItWorks({ loaded }: { loaded: SkillId[] }) {
         </ul>
       </div>
 
-      <details className="group rounded-md border border-ink/15 bg-paper">
+      <details className="group outline-box rounded-sm bg-paper">
         <summary className="flex cursor-pointer list-none flex-wrap items-center gap-2 px-4 py-3 text-sm font-semibold">
           <span aria-hidden="true" className="font-mono group-open:rotate-90">
             ▸

@@ -85,7 +85,7 @@ function Legend() {
         <li key={item.status} className="flex items-center gap-1.5">
           <span
             className={cx(
-              "rounded-[4px] px-1.5 font-mono text-[0.68rem]",
+              "rounded-sm px-1.5 font-mono text-[0.68rem]",
               MARK_CLASS[item.status],
             )}
           >
@@ -202,7 +202,7 @@ export function ComparisonView({
         initial={{ opacity: 0, y: 12 }}
         animate={{ opacity: 1, y: 0 }}
         transition={SOFT}
-        className="flex flex-col items-center gap-5 rounded-md border-2 border-ink bg-paper p-5 shadow-hard-md sm:flex-row sm:gap-8 sm:p-7"
+        className="outline-box flex flex-col items-center gap-5 rounded-sm bg-paper p-5 shadow-hard-md sm:flex-row sm:gap-8 sm:p-7"
       >
         <ScoreRing found={hit} expected={expected} />
         <div className="flex min-w-0 flex-col items-center gap-2 text-center sm:items-start sm:text-left">
@@ -240,7 +240,7 @@ export function ComparisonView({
       </motion.div>
 
       <div className="flex flex-col gap-4">
-        <aside className="grid min-w-0 gap-3 md:grid-cols-3 [&>*]:max-h-56 [&>*]:overflow-y-auto [&>*]:rounded-md [&>*]:border [&>*]:border-ink/15 [&>*]:bg-paper [&>*]:p-2">
+        <aside className="grid min-w-0 gap-3 md:grid-cols-3 [&>*]:max-h-56 [&>*]:overflow-y-auto [&>*]:rounded-sm [&>*]:border-2 [&>*]:border-ink [&>*]:bg-paper [&>*]:p-2">
           <RowList
             title="Missed"
             tone="missed"
@@ -293,7 +293,7 @@ export function ComparisonView({
                 aria-selected={side === item}
                 onClick={() => setSide(item)}
                 className={cx(
-                  "h-9 flex-1 rounded-full border-2 border-ink font-mono text-xs font-bold uppercase",
+                  "outline-box press h-9 flex-1 rounded-sm font-mono text-xs font-bold uppercase",
                   side === item ? "bg-ink text-paper" : "bg-paper",
                 )}
               >
@@ -327,7 +327,7 @@ export function ComparisonView({
               handle={jumper.pane}
               onNear={(page) => void pages.ensure(page)}
               onRange={jumper.onRange}
-              className="min-w-0 flex-1 rounded-md bg-limestone/40 p-2 sm:p-3"
+              className="outline-box min-w-0 flex-1 rounded-sm bg-limestone p-2 sm:p-3"
               renderPage={(page) => {
                 const item = pages.get(page);
                 const pulse = jumper.pulse?.page === page ? jumper.pulse : null;

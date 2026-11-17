@@ -15,7 +15,8 @@
       "!build",
       "!fixtures/casework/cases",
       "!fixtures/casework/watchlist",
-      "!fixtures/casework/out"
+      "!fixtures/casework/out",
+      "!public/name-extraction/replays"
     ]
   },
   "formatter": {

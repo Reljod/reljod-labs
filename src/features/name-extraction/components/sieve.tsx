@@ -1,8 +1,8 @@
 "use client";
 
-import { AnimatePresence, LayoutGroup, motion } from "motion/react";
-import Link from "next/link";
+import { LayoutGroup } from "motion/react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { DemoBar, demoBarControlClass } from "@/components/demo/demo-bar";
 import {
   type CorpusCard,
   DEFAULT_MODELS,
@@ -31,8 +31,15 @@ import { type OpenDoc, ReplayComparison, Workspace } from "./workspace";
 
 type Stage =
   | { kind: "home" }
-  | { kind: "doc"; doc: OpenDoc; runId: string | null }
-  | { kind: "replay"; replay: Replay };
+  | { kind: "doc"; doc: OpenDoc; runId: string | null };
+
+/** Sieve's places, as tabs in the shared demo bar. */
+const TABS = [
+  { id: "demo", label: "Demo" },
+  { id: "documents", label: "Documents" },
+  { id: "hood", label: "Under the hood" },
+] as const;
+type Tab = (typeof TABS)[number]["id"];
 
 const docOfCard = (card: CorpusCard): OpenDoc => ({
   source: { kind: "corpus", corpusId: card.id },
@@ -49,14 +56,15 @@ const docOfCard = (card: CorpusCard): OpenDoc => ({
  * result checked against the answer key. Depth lives under the hood.
  */
 export function Sieve() {
+  const [tab, setTab] = useState<Tab>("demo");
   const [stage, setStage] = useState<Stage>({ kind: "home" });
+  const [replay, setReplay] = useState<Replay | null>(null);
   const [corpus, setCorpus] = useState<CorpusCard[] | null>(null);
   const [corpusError, setCorpusError] = useState<string | null>(null);
   const [runs, setRuns] = useState<RunSummary[] | null>(null);
   const [runsError, setRunsError] = useState<string | null>(null);
   const [rulebooks, setRulebooks] = useState<RulebookVersion[]>([]);
   const [models, setModels] = useState<ModelChoice>(DEFAULT_MODELS);
-  const top = useRef<HTMLDivElement>(null);
   const uploadInput = useRef<HTMLInputElement>(null);
   const runId = stage.kind === "doc" ? stage.runId : null;
   const run = useRun(runId);
@@ -90,19 +98,25 @@ export function Sieve() {
     Boolean(inFlight && inFlight.id !== runId) ||
     (Boolean(runId) && !over && !run.missing && !run.loading);
 
+  const toTop = () =>
+    requestAnimationFrame(() =>
+      window.scrollTo({ top: 0, behavior: "smooth" }),
+    );
+  /** Opens the Documents tab on a document, or on the list. */
   const go = (next: Stage) => {
     setStage(next);
-    requestAnimationFrame(() =>
-      top.current?.scrollIntoView({ behavior: "smooth", block: "start" }),
-    );
+    setTab("documents");
+    toTop();
   };
-  const scrollToDocuments = () => {
-    if (stage.kind !== "home") setStage({ kind: "home" });
-    requestAnimationFrame(() =>
-      document
-        .getElementById("sv-documents")
-        ?.scrollIntoView({ behavior: "smooth" }),
-    );
+  const toDocuments = () => go({ kind: "home" });
+  const select = (next: Tab) => {
+    // Choosing the open tab again goes back to its start (the list, the hero).
+    if (next === tab) {
+      if (next === "documents") setStage({ kind: "home" });
+      if (next === "demo") setReplay(null);
+    }
+    setTab(next);
+    toTop();
   };
 
   const start = async (doc: OpenDoc) => {
@@ -110,6 +124,7 @@ export function Sieve() {
       const result = await startRun({ source: doc.source, models });
       if ("error" in result) return result.error;
       setStage({ kind: "doc", doc, runId: result.runId });
+      setTab("documents");
       void refreshRuns();
       return null;
     } catch (error) {
@@ -183,100 +198,107 @@ export function Sieve() {
   }, [rulebooks, run.view.rulebookVersion]);
 
   return (
-    <main className="mx-auto flex max-w-7xl flex-col gap-14 px-4 py-8 sm:px-6 sm:py-10">
-      <nav className="flex items-center justify-between gap-3">
-        <Link
-          href="/"
-          className="eyebrow text-federal-blue underline-offset-4 hover:underline"
-        >
-          ← Reljod Labs
-        </Link>
-        <a
-          href="#sv-under-the-hood"
-          className="eyebrow text-ink-muted underline-offset-4 hover:text-ink hover:underline"
-        >
-          Under the hood ↓
-        </a>
-      </nav>
-
-      <div ref={top} className="-mt-10 scroll-mt-6" />
-
-      <AnimatePresence>
-        {inFlight && stage.kind === "home" ? (
-          <motion.button
+    <div className="flex min-h-dvh flex-col">
+      <DemoBar
+        slug="name-extraction"
+        name="Sieve"
+        current={tab}
+        panelsId="sv"
+        tabs={TABS.map((item) => ({
+          id: item.id,
+          label: item.label,
+          onSelect: () => select(item.id),
+        }))}
+      >
+        {inFlight ? (
+          <button
             type="button"
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: 20 }}
             onClick={() => openRun(inFlight)}
-            className="press fixed right-4 bottom-4 z-30 flex max-w-[calc(100vw-2rem)] items-center gap-2 rounded-full border-2 border-ink bg-paper px-4 py-2 text-sm font-semibold"
+            title={`Open the run in progress: ${inFlight.title}`}
+            className={demoBarControlClass}
           >
-            <span className="size-2 shrink-0 rounded-full bg-seal-red motion-safe:animate-pulse" />
-            <span className="truncate">Run in progress: {inFlight.title}</span>
-            <span className="text-federal-blue">Open →</span>
-          </motion.button>
+            <span className="size-2 shrink-0 bg-seal-red motion-safe:animate-pulse" />
+            Live run
+          </button>
         ) : null}
-      </AnimatePresence>
+      </DemoBar>
 
-      <LayoutGroup>
-        {stage.kind === "home" ? (
-          <>
-            <Hero
-              onCompare={(replay) => go({ kind: "replay", replay })}
-              onTry={scrollToDocuments}
-              onUpload={() => uploadInput.current?.click()}
-            />
-            <Shelf
-              corpus={corpus}
-              error={corpusError}
-              onOpen={(card) =>
-                go({ kind: "doc", doc: docOfCard(card), runId: null })
-              }
-              onUploaded={onUploaded}
-              uploadRef={uploadInput}
-            />
-          </>
-        ) : stage.kind === "replay" ? (
-          <ReplayComparison
-            replay={stage.replay}
-            onBack={scrollToDocuments}
-            onRunIt={() => {
-              const card = corpus?.find(
-                (item) => item.id === stage.replay.corpusId,
-              );
-              if (card) go({ kind: "doc", doc: docOfCard(card), runId: null });
-              else scrollToDocuments();
+      <main
+        id={`sv-panel-${tab}`}
+        role="tabpanel"
+        aria-labelledby={`sv-tab-${tab}`}
+        className="mx-auto flex w-full max-w-7xl flex-1 flex-col gap-14 px-4 py-8 sm:px-6 sm:py-10"
+      >
+        <LayoutGroup>
+          {tab === "demo" ? (
+            replay ? (
+              <ReplayComparison
+                replay={replay}
+                onRunIt={() => {
+                  const card = corpus?.find(
+                    (item) => item.id === replay.corpusId,
+                  );
+                  if (card)
+                    go({ kind: "doc", doc: docOfCard(card), runId: null });
+                  else toDocuments();
+                }}
+              />
+            ) : (
+              <Hero
+                onCompare={(next) => {
+                  setReplay(next);
+                  toTop();
+                }}
+                onTry={toDocuments}
+                onUpload={() => {
+                  toDocuments();
+                  setTimeout(() => uploadInput.current?.click(), 50);
+                }}
+              />
+            )
+          ) : null}
+          {tab === "documents" ? (
+            stage.kind === "home" ? (
+              <Shelf
+                corpus={corpus}
+                error={corpusError}
+                onOpen={(card) =>
+                  go({ kind: "doc", doc: docOfCard(card), runId: null })
+                }
+                onUploaded={onUploaded}
+                uploadRef={uploadInput}
+              />
+            ) : (
+              <Workspace
+                key={`${stage.doc.stack}-${stage.runId ?? "preview"}`}
+                doc={stage.doc}
+                runId={stage.runId}
+                run={run}
+                busy={busy}
+                reviewBelow={reviewBelow}
+                onStart={() => start(stage.doc)}
+                onStop={stop}
+              />
+            )
+          ) : null}
+        </LayoutGroup>
+        {tab === "hood" ? (
+          <UnderTheHood
+            view={runId ? run.view : null}
+            runId={runId}
+            title={run.view.document?.title ?? "run"}
+            runs={runs}
+            runsError={runsError}
+            models={models}
+            onModels={setModels}
+            onOpenRun={openRun}
+            onRefreshRuns={() => void refreshRuns()}
+            onRulesSaved={() => {
+              rulebookHistory().then(setRulebooks, () => undefined);
             }}
           />
-        ) : (
-          <Workspace
-            key={`${stage.doc.stack}-${stage.runId ?? "preview"}`}
-            doc={stage.doc}
-            runId={stage.runId}
-            run={run}
-            busy={busy}
-            reviewBelow={reviewBelow}
-            onBack={scrollToDocuments}
-            onStart={() => start(stage.doc)}
-            onStop={stop}
-          />
-        )}
-      </LayoutGroup>
-
-      <UnderTheHood
-        view={runId ? run.view : null}
-        runId={runId}
-        title={run.view.document?.title ?? "run"}
-        runs={runs}
-        runsError={runsError}
-        models={models}
-        onModels={setModels}
-        onOpenRun={openRun}
-        onRefreshRuns={() => void refreshRuns()}
-        onRulesSaved={() => {
-          rulebookHistory().then(setRulebooks, () => undefined);
-        }}
-      />
-    </main>
+        ) : null}
+      </main>
+    </div>
   );
 }

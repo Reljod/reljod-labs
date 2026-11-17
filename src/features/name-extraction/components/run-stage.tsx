@@ -150,7 +150,7 @@ function NamesFeed({
   const latest = useMemo(() => names.slice(-30).reverse(), [names]);
   const people = names.filter((name) => name.type === "person").length;
   return (
-    <div className="flex min-h-0 min-w-0 flex-col rounded-sm bg-paper/[0.06] ring-1 ring-paper/10">
+    <div className="flex min-h-0 min-w-0 flex-col rounded-sm border-2 border-paper/25 bg-paper/[0.04]">
       <div
         ref={listRef}
         className="flex items-baseline justify-between gap-2 border-paper/10 border-b px-3 py-2"
@@ -289,7 +289,7 @@ export function RunStage({
   return (
     <div
       ref={stage}
-      className="sv-stage relative isolate overflow-hidden rounded-md bg-ink text-paper shadow-[0_30px_80px_-30px_rgb(20_33_61_/_0.7)]"
+      className="sv-stage outline-box relative isolate overflow-hidden rounded-sm bg-ink text-paper shadow-hard-lg"
     >
       {top}
       <div className="grid grid-cols-2 gap-x-4 gap-y-4 border-paper/10 border-b px-4 py-4 sm:grid-cols-4 sm:px-6">
@@ -344,7 +344,7 @@ export function RunStage({
               read
             </span>
             <span className="flex items-center gap-1.5">
-              <span className="h-1 w-2.5 rounded-full bg-brass" />
+              <span className="h-1 w-2.5 bg-brass" />
               names on the page
             </span>
           </div>
@@ -359,7 +359,7 @@ export function RunStage({
         {sparks.map((spark) => (
           <motion.span
             key={spark.id}
-            className="absolute top-0 left-0 max-w-[11rem] truncate rounded-full bg-brass px-2 py-0.5 font-mono text-[0.62rem] whitespace-nowrap text-ink shadow-lg"
+            className="absolute top-0 left-0 max-w-[11rem] truncate rounded-sm border-2 border-ink bg-brass px-1.5 py-0.5 font-mono text-[0.62rem] font-bold whitespace-nowrap text-ink shadow-[2px_2px_0_var(--color-paper)]"
             initial={{ x: spark.x, y: spark.y, scale: 0.3, opacity: 0 }}
             animate={{
               x: [spark.x, spark.x + spark.dx * 0.35, spark.x + spark.dx],

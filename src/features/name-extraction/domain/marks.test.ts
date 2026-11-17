@@ -3,6 +3,7 @@ import type { ExtractedName, PageMark } from "./contract";
 import type { ExpectedName } from "./corpus";
 import { generateDocumentDetailed } from "./corpus";
 import {
+  isSurfaceForm,
   keyMarks,
   MAX_MARKS_PER_PAGE,
   type MarkTarget,
@@ -239,5 +240,53 @@ describe("splitPieces", () => {
         keyMarks(71, text, key, () => "missed", pieces),
       ),
     ).toEqual(["Irina"]);
+  });
+});
+
+describe("run marks from mention quotes", () => {
+  const name = {
+    canonical: "Meridian Deposit Guarantee Scheme",
+    type: "organization" as const,
+    aliases: [],
+    roles: [],
+    mentions: [],
+    confidence: 0.5,
+    foundBy: ["reader" as const],
+  };
+
+  it("marks a quote that is the name as printed, not a sentence around it", () => {
+    expect(
+      isSurfaceForm("j0seph okonkwo", { ...name, canonical: "Joseph Okonkwo" }),
+    ).toBe(true);
+    expect(
+      isSurfaceForm(
+        "Deposits are protected by the Meridian Deposit Guarantee Scheme up to M$ 100,000 per depositor.",
+        name,
+      ),
+    ).toBe(false);
+    expect(
+      isSurfaceForm("by the Meridian Deposit Guarantee Scheme", name),
+    ).toBe(false);
+    expect(isSurfaceForm("Meridian Deposit Guarantee Scheme", name)).toBe(true);
+  });
+
+  it("marks only the name inside a sentence quote", () => {
+    const text =
+      "Deposits are protected by the Meridian Deposit Guarantee Scheme up to M$ 100,000 per depositor.";
+    const marks = runMarks(
+      1,
+      text,
+      [
+        {
+          ...name,
+          mentions: [{ page: 1, quote: text }],
+        },
+      ],
+      (n) => ({ name: n.canonical, status: "extra" }),
+    );
+    expect(marks).toHaveLength(1);
+    expect(text.slice(marks[0].start, marks[0].end)).toBe(
+      "Meridian Deposit Guarantee Scheme",
+    );
   });
 });

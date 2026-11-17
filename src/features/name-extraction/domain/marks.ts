@@ -233,10 +233,34 @@ export function runMarks(
         ...label(name),
         type: name.type,
         forms: [
-          ...name.mentions.filter((m) => m.page === page).map((m) => m.quote),
+          ...name.mentions
+            .filter((m) => m.page === page)
+            .map((m) => m.quote)
+            .filter((quote) => isSurfaceForm(quote, name)),
           name.canonical,
           ...name.aliases,
         ],
       })),
   );
+}
+
+/** The most words a quote may have to be marked as the name itself. */
+const SURFACE_FORM_WORDS = 8;
+
+/**
+ * Whether a mention's quote is the name as printed (a damaged or reordered
+ * form, such as "j0seph okonkwo" or "OKAFOR, Folake"), and so worth marking
+ * whole. A quote is often the sentence around the name; that one is not
+ * marked, because the name inside it is found by its canonical form or an
+ * alias, and marking the sentence would paint the whole line.
+ */
+export function isSurfaceForm(quote: string, name: ExtractedName) {
+  const words = quote.trim().split(/\s+/).filter(Boolean);
+  if (words.length === 0 || words.length > SURFACE_FORM_WORDS) return false;
+  const lower = quote.toLowerCase();
+  const forms = [name.canonical, ...name.aliases].map((form) =>
+    form.toLowerCase(),
+  );
+  // A quote that holds a known form with more around it is context, not the name.
+  return !forms.some((form) => form !== lower && lower.includes(form));
 }

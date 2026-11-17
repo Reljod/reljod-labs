@@ -34,10 +34,9 @@ function DocumentCard({
         animate="rest"
         whileHover="hover"
         whileFocus="hover"
-        whileTap={{ scale: 0.98 }}
         onClick={() => onOpen(card)}
         aria-label={`Open ${card.title}, ${card.pages} pages, ${card.expectedNames} names inside`}
-        className="group flex h-full w-full flex-col overflow-hidden rounded-md border-2 border-ink bg-paper text-left shadow-hard-sm transition-shadow hover:shadow-hard-md focus-visible:outline-2 focus-visible:outline-offset-3 focus-visible:outline-federal-blue"
+        className="group outline-box press flex h-full w-full flex-col overflow-hidden rounded-sm bg-paper text-left focus-visible:outline-2 focus-visible:outline-offset-3 focus-visible:outline-federal-blue"
       >
         <span className="relative flex h-44 items-center justify-center overflow-hidden border-ink border-b-2 bg-limestone/45">
           <span
@@ -49,7 +48,7 @@ function DocumentCard({
             layoutId={stackId(card.id)}
             seed={index}
           />
-          <span className="absolute top-2.5 right-2.5 rounded-full bg-ink px-2 py-0.5 font-mono text-[0.65rem] font-bold text-paper">
+          <span className="absolute top-2.5 right-2.5 rounded-sm bg-ink px-1.5 py-0.5 font-mono text-[0.65rem] font-bold text-paper">
             {card.pages} pp
           </span>
         </span>
@@ -65,7 +64,7 @@ function DocumentCard({
           </span>
           <span className="mt-auto flex items-center justify-between gap-2 pt-2 font-mono text-xs">
             <span className="inline-flex items-center gap-1.5">
-              <span className="h-1.5 w-3 rounded-full bg-brass" />
+              <span className="h-1.5 w-3 bg-brass" />
               {plural(card.expectedNames, "name")} inside
             </span>
             <span className="font-semibold text-federal-blue transition-transform group-hover:translate-x-0.5">
@@ -135,7 +134,7 @@ export function Shelf({
               <li
                 // biome-ignore lint/suspicious/noArrayIndexKey: placeholders
                 key={index}
-                className="h-[19rem] animate-pulse rounded-md border-2 border-ink/10 bg-paper/60"
+                className="h-[19rem] animate-pulse rounded-sm border-2 border-ink/20 bg-paper/60"
               />
             ))
           : null}
@@ -157,8 +156,8 @@ export function Shelf({
           aria-expanded={all}
           onClick={() => setAll((value) => !value)}
           className={cx(
-            "mx-auto inline-flex h-10 items-center gap-2 rounded-full border-2 border-ink px-5 font-mono text-xs font-bold uppercase transition-colors",
-            "hover:bg-ink hover:text-paper focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-federal-blue",
+            "outline-box press mx-auto inline-flex h-10 items-center gap-2 rounded-sm bg-paper px-5 font-mono text-xs font-bold uppercase",
+            "focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-federal-blue",
           )}
         >
           {all ? "Fewer documents" : `More documents (${rest.length})`}

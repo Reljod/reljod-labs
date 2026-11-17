@@ -88,11 +88,11 @@ export function UploadZone({
         void take(event.dataTransfer.files[0]);
       }}
       className={cx(
-        "sv-drop group relative flex min-h-56 cursor-pointer flex-col items-center justify-center gap-3 overflow-hidden rounded-md border-2 border-dashed px-6 py-8 text-center transition-colors",
+        "sv-drop group relative flex min-h-56 cursor-pointer flex-col items-center justify-center gap-3 overflow-hidden rounded-sm border-2 border-dashed px-6 py-8 text-center shadow-hard-sm transition-colors",
         "focus-within:outline-2 focus-within:outline-offset-4 focus-within:outline-federal-blue",
         over
           ? "border-federal-blue bg-morning-haze"
-          : "border-ink/30 bg-paper/60 hover:border-ink/60 hover:bg-paper",
+          : "border-ink bg-paper/70 hover:bg-paper",
         pending && "cursor-progress",
       )}
     >
@@ -121,7 +121,7 @@ export function UploadZone({
         <span className="h-[3px] w-4/5 bg-ink/20" />
         <span className="h-[3px] w-full bg-brass" />
         <span className="h-[3px] w-2/3 bg-ink/20" />
-        <span className="absolute -right-2 -bottom-2 flex size-6 items-center justify-center rounded-full border-2 border-ink bg-brass font-mono text-sm font-bold">
+        <span className="absolute -right-2 -bottom-2 flex size-6 items-center justify-center rounded-sm border-2 border-ink bg-brass font-mono text-sm font-bold">
           ↑
         </span>
       </motion.span>
@@ -134,7 +134,7 @@ export function UploadZone({
           : `or click to choose one · up to ${MAX_PAGES} pages · the text is read in your browser`}
       </span>
       {pending ? (
-        <span className="h-1.5 w-48 overflow-hidden rounded-full bg-ink/10">
+        <span className="h-2 w-48 overflow-hidden rounded-sm border-2 border-ink bg-paper">
           <motion.span
             className="block h-full origin-left bg-federal-blue"
             animate={{ scaleX: share }}

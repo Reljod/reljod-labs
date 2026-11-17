@@ -1,6 +1,5 @@
 "use client";
 
-import { LayoutGroup, motion } from "motion/react";
 import dynamic from "next/dynamic";
 import { useEffect, useState } from "react";
 import type {
@@ -16,7 +15,7 @@ import { RunsHistory } from "./runs-history";
 import { cx } from "./ui";
 
 const loading = () => (
-  <div className="h-64 animate-pulse rounded-md border border-ink/10 bg-paper/60" />
+  <div className="h-64 animate-pulse rounded-sm border border-ink/10 bg-paper/60" />
 );
 const RulesEditor = dynamic(
   () => import("./rules-editor").then((module) => module.RulesEditor),
@@ -51,7 +50,7 @@ function Connect() {
   const [origin, setOrigin] = useState("");
   useEffect(() => setOrigin(window.location.origin), []);
   return (
-    <div className="flex max-w-3xl flex-col gap-3 rounded-md border border-ink/15 bg-paper p-4 text-sm">
+    <div className="outline-box flex max-w-3xl flex-col gap-3 rounded-sm bg-paper p-4 text-sm">
       <p>
         Sieve is also an MCP server: Claude, or any MCP client, can list the
         documents, start a run and read its result.
@@ -105,7 +104,7 @@ export function UnderTheHood({
     <section
       id="sv-under-the-hood"
       aria-labelledby="sv-under-title"
-      className="flex flex-col gap-5 border-ink/15 border-t pt-10"
+      className="flex flex-col gap-5"
     >
       <div className="flex flex-col gap-1">
         <h2
@@ -118,45 +117,35 @@ export function UnderTheHood({
           For the technically curious. Everything here is live.
         </p>
       </div>
-      <LayoutGroup id="sv-hood">
+      <div>
         <div
           role="tablist"
           aria-label="Under the hood"
-          className="sv-scroll -mx-4 flex gap-1 overflow-x-auto px-4 pb-1 sm:mx-0 sm:flex-wrap sm:px-0"
+          className="flex flex-wrap gap-2 pb-1"
         >
           {TABS.map((item) => (
             <button
               key={item.id}
               type="button"
               role="tab"
-              id={`sv-tab-${item.id}`}
+              id={`sv-hood-tab-${item.id}`}
               aria-selected={tab === item.id}
-              aria-controls={`sv-panel-${item.id}`}
+              aria-controls={`sv-hood-panel-${item.id}`}
               onClick={() => setTab(item.id)}
               className={cx(
-                "relative h-9 shrink-0 rounded-full px-4 font-mono text-xs font-bold uppercase transition-colors",
-                "focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-federal-blue",
-                tab === item.id
-                  ? "text-paper"
-                  : "text-ink-muted hover:text-ink",
+                "outline-box press eyebrow flex h-9 shrink-0 items-center rounded-sm px-3 font-bold",
+                tab === item.id ? "bg-ink text-paper" : "bg-paper",
               )}
             >
-              {tab === item.id ? (
-                <motion.span
-                  layoutId="sv-hood-tab"
-                  className="absolute inset-0 rounded-full bg-ink"
-                  transition={{ type: "spring", stiffness: 420, damping: 34 }}
-                />
-              ) : null}
-              <span className="relative">{item.label}</span>
+              {item.label}
             </button>
           ))}
         </div>
-      </LayoutGroup>
+      </div>
       <div
         role="tabpanel"
-        id={`sv-panel-${tab}`}
-        aria-labelledby={`sv-tab-${tab}`}
+        id={`sv-hood-panel-${tab}`}
+        aria-labelledby={`sv-hood-tab-${tab}`}
       >
         {tab === "how" ? <HowItWorks loaded={view?.skills ?? []} /> : null}
         {tab === "rules" ? <RulesEditor onSaved={onRulesSaved} /> : null}

@@ -14,8 +14,9 @@ import { SPEEDS, useReplayFile, useReplayPlayer } from "./use-replay";
 
 const REPLAY_PATHS = REPLAYS.map((item) => item.path);
 
-const pill =
-  "inline-flex h-8 items-center gap-1.5 rounded-full px-3 font-mono text-xs font-medium transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-clear-sky";
+/** A replay control: the bar's box and press, smaller. */
+const control =
+  "outline-box press eyebrow inline-flex h-8 items-center justify-center gap-1.5 rounded-sm px-2.5 font-bold";
 
 function useOnScreen<T extends Element>() {
   const ref = useRef<T>(null);
@@ -60,20 +61,20 @@ function EndMoment({
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
-      className="absolute inset-0 z-10 flex items-start justify-center bg-ink/75 p-4 pt-20 backdrop-blur-[3px] sm:pt-28"
+      className="absolute inset-0 z-10 flex items-start justify-center bg-ink/80 p-4 pt-16 sm:pt-24"
     >
       <motion.div
         role="status"
         initial={{ scale: 0.92, y: 16, opacity: 0 }}
         animate={{ scale: 1, y: 0, opacity: 1 }}
         transition={{ ...SPRING, delay: 0.1 }}
-        className="relative flex w-full max-w-xl flex-col items-center gap-4 rounded-md bg-paper px-5 py-7 text-center text-ink shadow-hard-lg sm:px-8"
+        className="outline-box relative flex w-full max-w-xl flex-col items-center gap-4 rounded-sm bg-paper px-5 py-7 text-center text-ink shadow-[8px_8px_0_var(--color-brass)] sm:px-8"
       >
         <button
           type="button"
           onClick={onHide}
           aria-label="Hide the summary and look at the map"
-          className="absolute top-2 right-2 inline-flex size-8 items-center justify-center rounded-full text-ink-muted hover:bg-marble hover:text-ink focus-visible:outline-2 focus-visible:outline-federal-blue"
+          className={cx(control, "absolute top-3 right-3 size-8 bg-paper px-0")}
         >
           ×
         </button>
@@ -104,21 +105,21 @@ function EndMoment({
           <button
             type="button"
             onClick={onCompare}
-            className="press inline-flex h-10 items-center gap-2 rounded-sm border-2 border-ink bg-brass px-4 text-sm font-semibold"
+            className="outline-box press inline-flex h-10 items-center gap-2 rounded-sm bg-brass px-4 font-mono text-xs font-bold uppercase"
           >
             See it side by side →
           </button>
           <button
             type="button"
             onClick={onTry}
-            className="press inline-flex h-10 items-center rounded-sm border-2 border-ink bg-paper px-4 text-sm font-semibold"
+            className="outline-box press inline-flex h-10 items-center rounded-sm bg-paper px-4 font-mono text-xs font-bold uppercase"
           >
             Try a document
           </button>
           <button
             type="button"
             onClick={onUpload}
-            className="inline-flex h-10 items-center rounded-sm px-3 text-sm font-semibold text-federal-blue underline-offset-4 hover:underline focus-visible:outline-2 focus-visible:outline-federal-blue"
+            className="outline-box press inline-flex h-10 items-center rounded-sm bg-paper px-4 font-mono text-xs font-bold text-federal-blue uppercase"
           >
             Upload a PDF
           </button>
@@ -126,7 +127,7 @@ function EndMoment({
         <button
           type="button"
           onClick={onReplay}
-          className="font-mono text-xs text-ink-muted hover:text-ink focus-visible:outline-2 focus-visible:outline-federal-blue"
+          className="eyebrow text-ink-muted underline-offset-4 hover:text-ink hover:underline focus-visible:outline-2 focus-visible:outline-federal-blue"
         >
           ↻ Watch again
         </button>
@@ -181,6 +182,52 @@ export function Hero({
         </h1>
       </motion.div>
 
+      {replay ? (
+        <div className="-mb-2 flex flex-wrap items-center justify-end gap-2">
+          <fieldset className="flex gap-1.5">
+            <legend className="sr-only">Playback speed</legend>
+            {SPEEDS.map((speed) => (
+              <button
+                key={speed}
+                type="button"
+                aria-pressed={player.speed === speed}
+                onClick={() => player.setSpeed(speed)}
+                className={cx(
+                  control,
+                  player.speed === speed ? "bg-ink text-paper" : "bg-paper",
+                )}
+              >
+                {speed}×
+              </button>
+            ))}
+          </fieldset>
+          <button
+            type="button"
+            onClick={player.playing ? player.pause : player.resume}
+            aria-label={player.playing ? "Pause" : "Play"}
+            className={cx(control, "w-9 bg-paper")}
+          >
+            {player.playing ? "❚❚" : "▶"}
+          </button>
+          <button
+            type="button"
+            onClick={player.restart}
+            aria-label="Replay from the start"
+            className={cx(control, "w-9 bg-paper")}
+          >
+            ↻
+          </button>
+          <button
+            type="button"
+            onClick={player.skip}
+            disabled={!player.playing}
+            className={cx(control, "bg-paper disabled:opacity-40")}
+          >
+            Skip to end
+          </button>
+        </div>
+      ) : null}
+
       <div ref={ref}>
         <RunStage
           view={replay ? player.view : emptyRunView}
@@ -192,7 +239,7 @@ export function Hero({
               <p className="flex min-w-0 items-center gap-2 text-sm">
                 <span
                   className={cx(
-                    "size-2 shrink-0 rounded-full",
+                    "size-2 shrink-0 rounded-sm",
                     player.playing
                       ? "bg-seal-red motion-safe:animate-pulse"
                       : "bg-paper/40",
@@ -213,61 +260,6 @@ export function Hero({
                   )}
                 </span>
               </p>
-              {replay ? (
-                <div className="flex items-center gap-1.5">
-                  <fieldset className="flex rounded-full bg-paper/10 p-0.5">
-                    <legend className="sr-only">Playback speed</legend>
-                    {SPEEDS.map((speed) => (
-                      <button
-                        key={speed}
-                        type="button"
-                        aria-pressed={player.speed === speed}
-                        onClick={() => player.setSpeed(speed)}
-                        className={cx(
-                          pill,
-                          "h-7 px-2.5",
-                          player.speed === speed
-                            ? "bg-paper text-ink"
-                            : "text-paper/70 hover:text-paper",
-                        )}
-                      >
-                        {speed}×
-                      </button>
-                    ))}
-                  </fieldset>
-                  <button
-                    type="button"
-                    onClick={player.playing ? player.pause : player.resume}
-                    aria-label={player.playing ? "Pause" : "Play"}
-                    className={cx(
-                      pill,
-                      "bg-paper/10 text-paper hover:bg-paper/20",
-                    )}
-                  >
-                    {player.playing ? "❚❚" : "▶"}
-                  </button>
-                  <button
-                    type="button"
-                    onClick={player.restart}
-                    aria-label="Replay from the start"
-                    className={cx(
-                      pill,
-                      "bg-paper/10 text-paper hover:bg-paper/20",
-                    )}
-                  >
-                    ↻
-                  </button>
-                  {player.playing ? (
-                    <button
-                      type="button"
-                      onClick={player.skip}
-                      className={cx(pill, "text-paper/70 hover:text-paper")}
-                    >
-                      Skip to end
-                    </button>
-                  ) : null}
-                </div>
-              ) : null}
             </div>
           }
           overlay={
@@ -297,7 +289,7 @@ export function Hero({
                     <button
                       type="button"
                       onClick={onTry}
-                      className="press inline-flex h-10 items-center rounded-sm border-2 border-paper bg-brass px-4 text-sm font-semibold text-ink"
+                      className="outline-box press inline-flex h-10 items-center rounded-sm bg-brass px-4 font-mono text-xs font-bold text-ink uppercase"
                     >
                       Pick a document ↓
                     </button>

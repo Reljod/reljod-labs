@@ -64,7 +64,7 @@ export function LiveRun({
         top={
           <div className="flex flex-wrap items-center justify-between gap-2 border-paper/10 border-b px-4 py-2.5 sm:px-6">
             <p className="flex items-center gap-2 text-sm">
-              <span className="size-2 rounded-full bg-seal-red motion-safe:animate-pulse" />
+              <span className="size-2 bg-seal-red motion-safe:animate-pulse" />
               {view.status === "queued" || view.startedAt === null
                 ? "Starting up…"
                 : "Live · reading the document"}
@@ -82,7 +82,7 @@ export function LiveRun({
         }
       />
       {stopError ? <ErrorNote>{stopError}</ErrorNote> : null}
-      <details className="group rounded-md border border-ink/15 bg-paper">
+      <details className="group outline-box rounded-sm bg-paper">
         <summary className="flex cursor-pointer list-none items-center gap-2 px-4 py-3 font-mono text-xs font-bold uppercase">
           <span aria-hidden="true" className="group-open:rotate-90">
             ▸

@@ -76,7 +76,7 @@ export const PageTiles = memo(function PageTiles({
       >
         {names > 0 && state === PAGE_READ ? (
           <span
-            className="absolute inset-x-[18%] bottom-[14%] rounded-full bg-brass"
+            className="absolute inset-x-[18%] bottom-[14%] bg-brass"
             style={{ height: names > 2 ? "22%" : names > 1 ? "15%" : "9%" }}
           />
         ) : null}

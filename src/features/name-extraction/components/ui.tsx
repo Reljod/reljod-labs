@@ -48,13 +48,10 @@ export function Panel({
 }) {
   return (
     <section
-      className={cx(
-        "min-w-0 rounded-sm border border-ink/15 bg-paper",
-        className,
-      )}
+      className={cx("outline-box min-w-0 rounded-sm bg-paper", className)}
     >
       {title || eyebrow || actions ? (
-        <header className="flex min-h-11 flex-wrap items-center gap-x-3 gap-y-1 border-ink/10 border-b px-4 py-2">
+        <header className="flex min-h-11 flex-wrap items-center gap-x-3 gap-y-1 border-ink border-b-2 bg-marble px-4 py-2">
           <div className="min-w-0 flex-1">
             {eyebrow ? (
               <p className="eyebrow text-[0.65rem] text-ink-muted">{eyebrow}</p>
@@ -80,19 +77,16 @@ export function Panel({
 type Variant = "primary" | "secondary" | "ghost" | "danger";
 
 const VARIANT: Record<Variant, string> = {
-  primary:
-    "border border-federal-blue bg-federal-blue text-paper hover:border-ink hover:bg-ink",
-  secondary:
-    "border border-ink/25 bg-paper text-ink hover:border-ink/50 hover:bg-marble",
+  primary: "outline-box press bg-federal-blue text-paper",
+  secondary: "outline-box press bg-paper text-ink",
   ghost:
-    "border border-transparent text-ink-muted hover:bg-marble hover:text-ink",
-  danger:
-    "border border-seal-red bg-seal-red text-paper hover:border-ink hover:bg-ink",
+    "border-2 border-transparent text-ink-muted hover:border-ink hover:bg-paper hover:text-ink",
+  danger: "outline-box press bg-seal-red text-paper",
 };
 
 const SIZE = {
-  sm: "h-7 gap-1.5 px-2.5 text-xs",
-  md: "h-9 gap-2 px-3.5 text-sm",
+  sm: "h-8 gap-1.5 px-2.5 text-[0.7rem]",
+  md: "h-10 gap-2 px-3.5 text-xs",
 } as const;
 
 /**
@@ -123,9 +117,9 @@ export function Button({
       disabled={disabled || pending}
       aria-busy={pending || undefined}
       className={cx(
-        "inline-flex shrink-0 items-center justify-center rounded-sm font-medium whitespace-nowrap transition-colors",
+        "inline-flex shrink-0 items-center justify-center rounded-sm font-mono font-bold whitespace-nowrap uppercase transition-colors",
         "focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-federal-blue",
-        "disabled:cursor-not-allowed disabled:opacity-55",
+        "disabled:cursor-not-allowed disabled:opacity-55 disabled:shadow-none disabled:translate-x-0 disabled:translate-y-0",
         VARIANT[variant],
         SIZE[size],
         className,
@@ -170,7 +164,7 @@ export function Tag({
 }
 
 export const fieldClass =
-  "h-9 min-w-0 rounded-sm border border-ink/25 bg-paper px-2 text-sm text-ink focus-visible:border-federal-blue focus-visible:outline-2 focus-visible:outline-federal-blue/30 disabled:bg-marble disabled:text-ink-muted";
+  "h-9 min-w-0 rounded-sm border-2 border-ink bg-paper px-2 text-sm text-ink focus-visible:border-federal-blue focus-visible:outline-2 focus-visible:outline-federal-blue/30 disabled:bg-marble disabled:text-ink-muted";
 
 export function ErrorNote({ children }: { children: ReactNode }) {
   return (
@@ -261,7 +255,7 @@ export function ConfirmDialog({
       onClick={(event) => {
         if (event.target === event.currentTarget) tryClose();
       }}
-      className="m-auto w-[min(28rem,calc(100vw-2rem))] rounded-sm border border-ink/20 bg-paper p-0 text-ink shadow-hard-md backdrop:bg-ink/40 backdrop:backdrop-blur-[2px]"
+      className="outline-box m-auto w-[min(28rem,calc(100vw-2rem))] rounded-sm bg-paper p-0 text-ink shadow-hard-lg backdrop:bg-ink/50"
     >
       <div className="flex flex-col gap-4 p-5">
         <h3

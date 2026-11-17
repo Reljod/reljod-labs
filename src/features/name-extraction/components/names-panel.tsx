@@ -36,7 +36,7 @@ export function HardChip({ reason }: { reason?: HardReason | null }) {
   return (
     <span
       title={why}
-      className="inline-flex shrink-0 cursor-help items-center rounded-full border border-oak/40 bg-brass/20 px-1.5 font-mono text-[0.58rem] font-bold tracking-wide text-oak uppercase"
+      className="inline-flex shrink-0 cursor-help items-center rounded-sm border border-oak bg-brass/30 px-1.5 font-mono text-[0.58rem] font-bold tracking-wide text-oak uppercase"
     >
       hard case<span className="sr-only">. {why}</span>
     </span>
@@ -115,7 +115,7 @@ export function NamesPanel({
     { type: "organization", label: "Organizations" },
   ] as const;
   return (
-    <aside className="flex min-h-0 min-w-0 flex-col rounded-md border border-ink/15 bg-paper">
+    <aside className="outline-box flex min-h-0 min-w-0 flex-col rounded-sm bg-paper">
       <div className="flex flex-col gap-2 border-ink/10 border-b p-3">
         <h3 className="flex items-baseline justify-between gap-2">
           <span className="font-mono text-sm font-bold uppercase">{title}</span>

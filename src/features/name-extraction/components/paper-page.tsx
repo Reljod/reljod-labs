@@ -46,7 +46,7 @@ export const PaperPage = memo(function PaperPage({
   return (
     <article
       aria-label={`Page ${number} of ${total}${label ? `, ${label}` : ""}`}
-      className="sv-paper relative flex min-w-0 flex-col rounded-[3px] border border-ink/15 bg-paper shadow-[0_1px_0_rgb(20_33_61_/_0.06),0_10px_24px_-14px_rgb(20_33_61_/_0.35)]"
+      className="sv-paper relative flex min-w-0 flex-col rounded-sm border-2 border-ink bg-paper shadow-hard-sm"
     >
       <header className="flex items-center justify-between gap-2 border-ink/10 border-b px-4 py-1.5 font-mono text-[0.6rem] tracking-[0.12em] text-ink-muted uppercase">
         <span className="truncate">{label ?? "Specimen"}</span>
@@ -64,9 +64,7 @@ export const PaperPage = memo(function PaperPage({
                 data-name={part.mark.name}
                 className={cx(
                   "box-decoration-clone px-[3px] py-[1px]",
-                  part.mark.type === "person"
-                    ? "rounded-[5px]"
-                    : "rounded-[1px]",
+                  part.mark.type === "person" ? "rounded-sm" : "rounded-none",
                   MARK_CLASS[part.mark.status],
                   pulse?.name === part.mark.name &&
                     (part.mark.status === "missed"

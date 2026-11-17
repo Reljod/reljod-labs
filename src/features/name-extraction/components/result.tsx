@@ -36,7 +36,7 @@ function EndNote({ view }: { view: RunView }) {
     );
   if (view.status === "stopped" || view.stoppedBy)
     return (
-      <p className="rounded-md border border-brass bg-brass/15 px-3 py-2 text-sm">
+      <p className="rounded-sm border border-brass bg-brass/15 px-3 py-2 text-sm">
         This run ended early
         {view.stoppedBy === "cost"
           ? " at its spending limit"
@@ -112,11 +112,11 @@ export function RunResult({
             summary={factsOf(view, total)}
           />
         ) : error ? null : (
-          <div className="h-48 animate-pulse rounded-md border-2 border-ink/10 bg-paper/60" />
+          <div className="h-48 animate-pulse rounded-sm border-2 border-ink/10 bg-paper/60" />
         )
       ) : (
         <>
-          <div className="flex flex-col gap-1 rounded-md border-2 border-ink bg-paper p-5 shadow-hard-md">
+          <div className="flex flex-col gap-1 rounded-sm border-2 border-ink bg-paper p-5 shadow-hard-md">
             <p className="eyebrow text-[0.65rem] text-ivy">Finished</p>
             <p className="font-mono text-2xl font-bold uppercase sm:text-3xl">
               {plural(view.names.length, "name")} found
@@ -138,7 +138,7 @@ export function RunResult({
           />
         </>
       )}
-      <details className="group rounded-md border border-ink/15 bg-paper">
+      <details className="group outline-box rounded-sm bg-paper">
         <summary className="flex cursor-pointer list-none items-center gap-2 px-4 py-3 font-mono text-xs font-bold uppercase">
           <span aria-hidden="true" className="group-open:rotate-90">
             ▸

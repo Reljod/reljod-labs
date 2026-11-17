@@ -75,7 +75,7 @@ export function PageStack({
         }}
         transition={{ type: "spring", stiffness: 300, damping: 24 }}
         className={cx(
-          "absolute top-0 left-0 flex flex-col overflow-hidden rounded-[2px] border border-ink/40 bg-paper shadow-[2px_3px_0_rgb(20_33_61_/_0.18)]",
+          "absolute top-0 left-0 flex flex-col overflow-hidden rounded-[2px] border border-ink/40 bg-paper shadow-[2px_2px_0_rgb(20_33_61_/_0.18)]",
           small ? "gap-[2px] p-1" : "gap-[5px] p-2",
         )}
         style={{ width, height: width * 1.3 }}

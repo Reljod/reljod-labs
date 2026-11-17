@@ -39,24 +39,15 @@ export const sourceKey = (source: DocumentSource) =>
 
 function Header({
   doc,
-  onBack,
   action,
   eyebrow,
 }: {
   doc: OpenDoc;
-  onBack: () => void;
   action?: ReactNode;
   eyebrow: string;
 }) {
   return (
     <div className="flex flex-col gap-4">
-      <button
-        type="button"
-        onClick={onBack}
-        className="self-start font-mono text-xs font-bold text-federal-blue uppercase underline-offset-4 hover:underline focus-visible:outline-2 focus-visible:outline-federal-blue"
-      >
-        ← All documents
-      </button>
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:gap-6">
         <div className="flex min-w-0 flex-1 items-center gap-4 sm:gap-6">
           <PageStack pages={doc.pages} layoutId={doc.stack} size="sm" />
@@ -110,7 +101,6 @@ export function Workspace({
   run,
   busy,
   reviewBelow,
-  onBack,
   onStart,
   onStop,
 }: {
@@ -120,7 +110,6 @@ export function Workspace({
   /** A Run of this person's is in flight elsewhere. */
   busy: boolean;
   reviewBelow: number;
-  onBack: () => void;
   /** Resolves to an error message, or null. */
   onStart: () => Promise<string | null>;
   onStop: () => Promise<string | null>;
@@ -176,7 +165,6 @@ export function Workspace({
     >
       <Header
         doc={doc}
-        onBack={onBack}
         eyebrow={
           runId === null
             ? doc.expected !== null
@@ -210,7 +198,7 @@ export function Workspace({
           }
         />
       ) : run.loading ? (
-        <div className="h-96 animate-pulse rounded-md bg-ink/80" />
+        <div className="h-96 animate-pulse rounded-sm bg-ink/80" />
       ) : run.missing ? (
         <ErrorNote>
           That run isn't on your account, or it can't load right now.
@@ -234,11 +222,9 @@ export function Workspace({
 /** The hero's recorded Run, set side by side against the answer key. */
 export function ReplayComparison({
   replay,
-  onBack,
   onRunIt,
 }: {
   replay: Replay;
-  onBack: () => void;
   onRunIt: () => void;
 }) {
   const source: DocumentSource = useMemo(
@@ -269,7 +255,6 @@ export function ReplayComparison({
     >
       <Header
         doc={doc}
-        onBack={onBack}
         eyebrow="The recorded run, checked against the answer key"
         action={
           <Button variant="primary" onClick={onRunIt}>
