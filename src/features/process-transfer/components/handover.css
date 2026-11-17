@@ -1,0 +1,126 @@
+/* Handover: motion the utilities cannot express. Every animation is switched
+   off under prefers-reduced-motion at the bottom of this file. */
+
+.ho-ground {
+  background-color: var(--color-marble);
+  background-image: radial-gradient(rgb(20 33 61 / 0.07) 1px, transparent 1px);
+  background-size: 18px 18px;
+}
+
+/* A running Stage breathes. */
+@keyframes ho-pulse {
+  0%,
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.35;
+    transform: scale(0.7);
+  }
+}
+.ho-pulse {
+  animation: ho-pulse 1.2s ease-in-out infinite;
+}
+
+/* Placeholder bars while something loads. */
+@keyframes ho-shimmer {
+  from {
+    background-position: 200% 0;
+  }
+  to {
+    background-position: -200% 0;
+  }
+}
+.ho-shimmer {
+  background-image: linear-gradient(
+    90deg,
+    var(--color-limestone) 0%,
+    var(--color-marble) 50%,
+    var(--color-limestone) 100%
+  );
+  background-size: 200% 100%;
+  animation: ho-shimmer 1.6s linear infinite;
+}
+
+/* The work flowing along a running Stage's rail. */
+@keyframes ho-flow {
+  from {
+    background-position: 0 0;
+  }
+  to {
+    background-position: 0 24px;
+  }
+}
+.ho-flow {
+  background-image: repeating-linear-gradient(
+    180deg,
+    var(--color-federal-blue) 0 8px,
+    transparent 8px 12px
+  );
+  background-size: 100% 24px;
+  animation: ho-flow 0.6s linear infinite;
+}
+
+/* The Approval stamp lands. */
+@keyframes ho-stamp {
+  0% {
+    opacity: 0;
+    transform: scale(2.2) rotate(-12deg);
+  }
+  60% {
+    opacity: 1;
+    transform: scale(0.94) rotate(-6deg);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1) rotate(-6deg);
+  }
+}
+.ho-stamp {
+  transform: rotate(-6deg);
+  animation: ho-stamp 0.5s cubic-bezier(0.2, 0.9, 0.3, 1.2) both;
+}
+
+/* A Step a Check pointed at lights up for a moment. */
+@keyframes ho-flash {
+  0%,
+  40% {
+    box-shadow: 0 0 0 4px var(--color-brass);
+  }
+  100% {
+    box-shadow: 0 0 0 0 transparent;
+  }
+}
+.ho-flash {
+  animation: ho-flash 1.6s ease-out both;
+}
+
+/* New content arrives. */
+@keyframes ho-in {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+.ho-in {
+  animation: ho-in 0.35s ease-out both;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ho-pulse,
+  .ho-shimmer,
+  .ho-flow,
+  .ho-stamp,
+  .ho-flash,
+  .ho-in {
+    animation: none;
+  }
+  .ho-stamp {
+    transform: rotate(-6deg);
+  }
+}

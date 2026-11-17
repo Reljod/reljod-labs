@@ -1,0 +1,59 @@
+{
+  "slug": "wire-recall",
+  "title": "Recalling an outgoing wire",
+  "presenter": {
+    "name": "Rafael Quintero",
+    "role": "Senior Payments Officer"
+  },
+  "receiver": {
+    "name": "Priya Castellane",
+    "role": "Payments Officer"
+  },
+  "steps": [
+    {
+      "title": "Find the payment by the customer reference",
+      "actor": "Rafael Quintero",
+      "system": "PayOps",
+      "at": 4.3
+    },
+    {
+      "title": "Open the payment and check its tracking status",
+      "actor": "Rafael Quintero",
+      "system": "PayOps",
+      "at": 12.8
+    },
+    {
+      "title": "Decide between cancellation and recall from the tracking status",
+      "actor": "Rafael Quintero",
+      "system": "PayOps",
+      "at": 23.9
+    },
+    {
+      "title": "Send the recall message to the receiving bank",
+      "actor": "Rafael Quintero",
+      "system": "PayOps",
+      "at": 40.3
+    },
+    {
+      "title": "Log an investigation case for the recall",
+      "actor": "Rafael Quintero",
+      "system": "PayOps",
+      "at": 59.9
+    },
+    {
+      "title": "Set a chase date and add the case note",
+      "actor": "Rafael Quintero",
+      "system": "PayOps",
+      "at": 64.3
+    }
+  ],
+  "decisions": [
+    "If the payment is still pending at the receiving bank, send a cancellation (it usually comes back); if it has already been credited to the beneficiary, send a recall request, which needs the beneficiary's consent and is not guaranteed."
+  ],
+  "warnings": [
+    "Do not send the corrected payment until the recall is confirmed; if the recall fails, the customer will have paid twice."
+  ],
+  "openQuestions": [
+    "Whether Bank of Estuary Isles charges a recall fee, and how much: Rafael will check with the correspondent banking team."
+  ]
+}

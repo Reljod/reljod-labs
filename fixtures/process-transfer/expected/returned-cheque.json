@@ -1,0 +1,66 @@
+{
+  "slug": "returned-cheque",
+  "title": "Processing a returned cheque",
+  "presenter": {
+    "name": "Margot Pellew",
+    "role": "Clearing Supervisor"
+  },
+  "receiver": {
+    "name": "Samira Achterberg",
+    "role": "Clearing Clerk"
+  },
+  "steps": [
+    {
+      "title": "Load the inward returns file",
+      "actor": "Margot Pellew",
+      "system": "Clearing Desk",
+      "at": 4.3
+    },
+    {
+      "title": "Open the first returned cheque",
+      "actor": "Margot Pellew",
+      "system": "Clearing Desk",
+      "at": 12.7
+    },
+    {
+      "title": "Check the amount and the return reason",
+      "actor": "Margot Pellew",
+      "system": "Clearing Desk",
+      "at": 16.8
+    },
+    {
+      "title": "Reverse the full credit from the customer's account",
+      "actor": "Margot Pellew",
+      "system": "Clearing Desk",
+      "at": 51.1
+    },
+    {
+      "title": "Charge the returned-cheque fee",
+      "actor": "Margot Pellew",
+      "system": "Clearing Desk",
+      "at": 69.8
+    },
+    {
+      "title": "Notify the customer",
+      "actor": "Margot Pellew",
+      "system": "Clearing Desk",
+      "at": 86.9
+    },
+    {
+      "title": "Tick off the checklist and complete the return",
+      "actor": "Margot Pellew",
+      "system": "Clearing Desk",
+      "at": 94.8
+    }
+  ],
+  "decisions": [
+    "If the return is technical (e.g. missing endorsement or stale date), re-present the cheque once with no fee; if it is insufficient funds or a stopped cheque, reverse the credit and charge the returned-cheque fee.",
+    "Waive the fee only with the supervisor's approval and only for a first return in twelve months; this customer had a return in June, so no waiver."
+  ],
+  "warnings": [
+    "Always reverse the full amount, even if it takes the customer overdrawn; never part-reverse, because a partial reversal leaves a break for Treasury."
+  ],
+  "openQuestions": [
+    "Whether returns arriving after the 15:00 cut-off go into today's or tomorrow's batch: Margot will confirm with the clearing house liaison."
+  ]
+}

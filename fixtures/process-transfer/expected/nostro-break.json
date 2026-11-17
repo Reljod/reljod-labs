@@ -1,0 +1,72 @@
+{
+  "slug": "nostro-break",
+  "title": "Investigating a nostro break",
+  "presenter": {
+    "name": "Ingrid Solberg-Ade",
+    "role": "Treasury Operations Manager"
+  },
+  "receiver": {
+    "name": "Kenji Abernathy",
+    "role": "Reconciliations Analyst"
+  },
+  "steps": [
+    {
+      "title": "Open the USD nostro account with breaks",
+      "actor": "Ingrid Solberg-Ade",
+      "system": "Recon Station",
+      "at": 5.6
+    },
+    {
+      "title": "Filter to unmatched items",
+      "actor": "Ingrid Solberg-Ade",
+      "system": "Recon Station",
+      "at": 12.4
+    },
+    {
+      "title": "Select the statement debit and the ledger payment and compare them",
+      "actor": "Ingrid Solberg-Ade",
+      "system": "Recon Station",
+      "at": 19
+    },
+    {
+      "title": "Check amount, reference and value date",
+      "actor": "Ingrid Solberg-Ade",
+      "system": "Recon Station",
+      "at": 28.8
+    },
+    {
+      "title": "Manually match the pair with reason 'value date difference'",
+      "actor": "Ingrid Solberg-Ade",
+      "system": "Recon Station",
+      "at": 54.9
+    },
+    {
+      "title": "Raise a query to the correspondent for the unexplained debit",
+      "actor": "Ingrid Solberg-Ade",
+      "system": "Recon Station",
+      "at": 71
+    },
+    {
+      "title": "Write the query, set a follow-up date and send it",
+      "actor": "Ingrid Solberg-Ade",
+      "system": "Recon Station",
+      "at": 77.2
+    },
+    {
+      "title": "Refresh and check the unmatched value equals the open break",
+      "actor": "Ingrid Solberg-Ade",
+      "system": "Recon Station",
+      "at": 94
+    }
+  ],
+  "decisions": [
+    "If the amount and reference agree and the value dates are one business day apart, manually match the pair with the reason 'value date difference'; if the amount differs or there is no ledger item, do not match and raise a query with the correspondent."
+  ],
+  "warnings": [
+    "Never force a match where the amounts differ just to clear the ageing report; audit samples manual matches every month.",
+    "Queries go out without approval, but write-offs need approval."
+  ],
+  "openQuestions": [
+    "Whether Coraline Federal Trust has started a monthly account fee that explains the USD 240 debit: Ingrid will confirm with the correspondent banking team before the next statement."
+  ]
+}

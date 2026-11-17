@@ -44,6 +44,8 @@ describe("decide", () => {
       ["/api/client-manager/clients", "GET"],
       ["/api/client-manager/clients/1/chat", "POST"],
       ["/api/client-manager/builds/1/events", "GET"],
+      ["/api/process-transfer/runs/1/events", "GET"],
+      ["/demos/process-transfer", "POST"],
       ["/ask/abc/builds", "GET"],
       ["/demos/casework", "DELETE"],
     ]) {

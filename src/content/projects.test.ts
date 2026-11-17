@@ -24,7 +24,12 @@ describe("featuredProjects", () => {
       featuredProjects
         .slice(FEATURED_PROJECT_LIMIT)
         .map((project) => project.slug),
-    ).toEqual(["ledger", "casework-desk", "client-manager"]);
+    ).toEqual([
+      "ledger",
+      "casework-desk",
+      "client-manager",
+      "process-transfer",
+    ]);
   });
 
   it("lists each project once", () => {

@@ -1,0 +1,19 @@
+# A Deck is written by a model, laid out by code, and approved only by Checks
+
+Handover turns a Recording of a handover call into a workflow document and a slide Deck. A model can read a call and write good words, but a deck it formats itself comes out misaligned, overfull and different every time, and nobody can say why it is "fine". So the work is split. A model that takes video (**Watch**) turns the Recording into Observations: what was said and what the shared screen showed, with times. A second model (**Extract**) writes the Process from them. For the Deck a model writes only the **Deck plan**: slides as words. **Layout** is code: one layout per slide kind on a 12-column grid, a fixed type scale, an entrance for every point and one transition style. The result is a **Deck**, where every element has a position, a size and an animation. The preview on the page, the Checks and the PPTX are all made from that one Deck, so what was checked is what is downloaded.
+
+**Checks** are code too: each applies one **Rule** to the laid-out Deck (inside the margins, nothing overlapping, text fits its box by measurement, edges line up, contrast, bullets and words per slide, every step covered, a transition on every slide, entrances in reading order and within a budget). A reviewer model reads the slides against the Process and raises **Findings**. A failed Round sends the failures and Findings back to the model for a revision. The last Round may be **fit by rule**: code splits or trims the slides that still fail. A Deck is **approved** only when no blocking Check fails on the Deck or on the Process and nothing major was found; otherwise it is **held** for a person. The page does not hand over the PPTX of a held Deck, and the server refuses to record that download.
+
+Rules are data (`domain/rules.ts`) with Parameters a person edits; the code that applies them is keyed by Rule id. A Run records the Rules, their version and the models it used, so an old Run still explains itself after the Rules change. **Redo** runs Design, Check and Approve again under the current Rules, and applies the current Process Rules to the Process again before deciding. A Run that stopped before its Process was verified cannot be redone.
+
+We chose this over asking a model for a finished file, and over a model judging a rendered image of each slide: neither can be measured, repeated or explained to the person whose rule it broke. The DOCX and PPTX are built in the browser from the Run's data, with stills captured from the video there, so the server stores no generated files and a function never has to carry a video frame. The only file it keeps is an uploaded Recording.
+
+## Consequences
+
+- With the default models, the sample Recordings (about two minutes each) cost $0.03 to $0.05 a Run and took 90 to 140 seconds when this was written: one video call to Watch, one or two to write, one or two to review, and up to three Rounds. A larger Write model or more Rounds costs more.
+- The Recording goes to the Watch model inline, so uploads are capped at 18 MB and ten minutes, and only MP4 and MOV are taken: a file whose length cannot be read is refused. Only models that take video can Watch.
+- The workflow document has no model in it: the same Process always gives the same document.
+- A Process whose own text is too long for a slide (a very long warning or branch) continues on another slide; what cannot be fitted is held, not shrunk below the Rules' type sizes.
+- Stills need the video in the browser. If it cannot be read, the files are built without screenshots.
+- The Audit trail is append-only: Runs, every model call with its cost, Rule changes with before and after, Approvals and downloads.
+- Uploaded Recordings stay in the bucket: the Owner purge removes rows, not files. Uploads are capped per Owner per day; a job that removes Recordings no Run points at is still to be written.

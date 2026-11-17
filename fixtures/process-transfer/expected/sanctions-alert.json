@@ -1,0 +1,67 @@
+{
+  "slug": "sanctions-alert",
+  "title": "Dispositioning a sanctions alert",
+  "presenter": {
+    "name": "Nadia Corvell",
+    "role": "Financial Crime Analyst"
+  },
+  "receiver": {
+    "name": "Arjun Pellegrini",
+    "role": "Screening Analyst"
+  },
+  "steps": [
+    {
+      "title": "Open the highest-scoring alert from the queue",
+      "actor": "Nadia Corvell",
+      "system": "ScreenGuard",
+      "at": 5.3
+    },
+    {
+      "title": "Compare the names and alias",
+      "actor": "Nadia Corvell",
+      "system": "ScreenGuard",
+      "at": 19.2
+    },
+    {
+      "title": "Compare date of birth, country and gender",
+      "actor": "Nadia Corvell",
+      "system": "ScreenGuard",
+      "at": 42.1
+    },
+    {
+      "title": "Check the date of birth against the passport on file",
+      "actor": "Nadia Corvell",
+      "system": "ScreenGuard",
+      "at": 53.7
+    },
+    {
+      "title": "Record the false positive disposition and rationale",
+      "actor": "Nadia Corvell",
+      "system": "ScreenGuard",
+      "at": 72.5
+    },
+    {
+      "title": "Close the alert and release the payment",
+      "actor": "Nadia Corvell",
+      "system": "ScreenGuard",
+      "at": 93.8
+    },
+    {
+      "title": "Return to the queue for the next alert",
+      "actor": "Nadia Corvell",
+      "system": "ScreenGuard",
+      "at": 98.4
+    }
+  ],
+  "decisions": [
+    "If the date of birth and the country both differ and the identity document confirms it, disposition the alert as a false positive; if any two of name, date of birth or country match, escalate to the MLRO and do not release the payment.",
+    "A similar but differently spelled name is marked partial, never no match, because of transliteration."
+  ],
+  "warnings": [
+    "Do not add a customer to the good-guy list after a first false positive; only after QA signs off a second one, or a real match could be suppressed later.",
+    "Never release a held payment yourself once an alert is escalated to the MLRO."
+  ],
+  "openQuestions": [
+    "The current turnaround time for alerts escalated to the MLRO: Nadia will confirm it with the MLRO's office."
+  ]
+}

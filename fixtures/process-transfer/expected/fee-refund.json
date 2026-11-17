@@ -1,0 +1,67 @@
+{
+  "slug": "fee-refund",
+  "title": "Approving a fee refund",
+  "presenter": {
+    "name": "Lorna Quayle",
+    "role": "Customer Care Team Lead"
+  },
+  "receiver": {
+    "name": "Dev Okonjo-Hart",
+    "role": "Customer Care Agent"
+  },
+  "steps": [
+    {
+      "title": "Search for the customer and open the account",
+      "actor": "Lorna Quayle",
+      "system": "Care Console",
+      "at": 3.7
+    },
+    {
+      "title": "Identify the disputed fees",
+      "actor": "Lorna Quayle",
+      "system": "Care Console",
+      "at": 11.5
+    },
+    {
+      "title": "Check the refund eligibility rules",
+      "actor": "Lorna Quayle",
+      "system": "Care Console",
+      "at": 22.5
+    },
+    {
+      "title": "Check the amount against the refund authority limit",
+      "actor": "Lorna Quayle",
+      "system": "Care Console",
+      "at": 34.1
+    },
+    {
+      "title": "Post the refund to the account",
+      "actor": "Lorna Quayle",
+      "system": "Care Console",
+      "at": 45
+    },
+    {
+      "title": "Leave a note on the account",
+      "actor": "Lorna Quayle",
+      "system": "Care Console",
+      "at": 65.4
+    },
+    {
+      "title": "Resolve the complaint",
+      "actor": "Lorna Quayle",
+      "system": "Care Console",
+      "at": 70.7
+    }
+  ],
+  "decisions": [
+    "If the customer has had a fee refund in the last 12 months, decline politely unless the fee was the bank's mistake; otherwise, if the eligibility checks pass, refund.",
+    "Agents approve refunds up to M$50; up to M$250 goes to a team lead; above M$250 goes to the Complaints team.",
+    "If the customer asks for compensation on top of the refund, note it and pass it to Complaints."
+  ],
+  "warnings": [
+    "Refund only to the account the fee was taken from; crediting a different account is a payment, not a refund, and gets flagged."
+  ],
+  "openQuestions": [
+    "Whether the unpaid item fee counts toward the customer's yearly goodwill allowance: Lorna will check with the Product team."
+  ]
+}
