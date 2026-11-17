@@ -324,7 +324,9 @@ begin
     raise exception 'run_not_found' using errcode = 'P0001';
   end if;
 
-  -- A re-evaluation that landed after the Reviewer looked makes the decision stale.
+  -- The decision is on the Evaluation the Reviewer looked at; if a
+  -- re-evaluation has replaced it, it is stale. Checked under the run lock
+  -- that record_evaluation also takes.
   if p_evaluation <> (
     select coalesce(max(e.number), 1) from document_compliance.evaluations e
     where e.run_id = p_run_id

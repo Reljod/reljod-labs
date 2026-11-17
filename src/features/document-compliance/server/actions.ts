@@ -189,11 +189,15 @@ export async function reevaluateRun(
 export async function reviewFinding(
   runId: string,
   requirementId: string,
+  evaluation: number,
   input: ReviewInput,
 ): Promise<ReviewResult> {
   if (!UUID.test(runId)) return { ok: false, message: "No such run." };
+  if (!Number.isInteger(evaluation) || evaluation < 1) {
+    return { ok: false, message: "No such Evaluation." };
+  }
   return asOwner("save the decision", (owner, actor) =>
-    review(owner, actor, runId, requirementId, input),
+    review(owner, actor, runId, requirementId, evaluation, input),
   );
 }
 

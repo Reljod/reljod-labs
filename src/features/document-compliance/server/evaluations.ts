@@ -111,6 +111,9 @@ export async function reevaluateRun(
   return { ok: true, number: Number(data), changes };
 }
 
+const STALE_MESSAGE =
+  "The run was just re-evaluated. Look at the new Evaluation and review again.";
+
 export type ReviewResult = { ok: true } | { ok: false; message: string };
 
 /**
@@ -122,6 +125,8 @@ export async function reviewFinding(
   actor: AuditActor,
   runId: string,
   requirementId: unknown,
+  /** The Evaluation the Reviewer was looking at. */
+  evaluation: number,
   input: ReviewInput,
 ): Promise<ReviewResult> {
   if (!isRequirementId(requirementId)) {
@@ -136,10 +141,16 @@ export async function reviewFinding(
     return { ok: false, message: "Only a finished run can be reviewed." };
   }
   const latest = view.evaluations.at(-1);
-  const finding = latest?.findings.find(
+  // A decision stands on the Finding the Reviewer read; if a re-evaluation
+  // has replaced it since, they must look again. The database checks the
+  // same under the run lock, for a re-evaluation that lands after this load.
+  if (!latest || latest.number !== evaluation) {
+    return { ok: false, message: STALE_MESSAGE };
+  }
+  const finding = latest.findings.find(
     (item) => item.requirementId === requirementId,
   );
-  if (!latest || !finding) {
+  if (!finding) {
     return { ok: false, message: "The latest Evaluation has no such Finding." };
   }
   if (!needsReviewer(finding.outcome)) {
@@ -156,7 +167,7 @@ export async function reviewFinding(
   const { error } = await supabase().rpc("record_review", {
     p_owner: owner,
     p_run_id: runId,
-    p_evaluation: latest.number,
+    p_evaluation: evaluation,
     p_requirement_id: requirementId,
     p_finding_outcome: finding.outcome,
     p_outcome: checked.outcome,
@@ -181,11 +192,7 @@ export async function reviewFinding(
     }
     if (runGone(error)) return { ok: false, message: "No such run." };
     if (error.message.includes("stale_evaluation")) {
-      return {
-        ok: false,
-        message:
-          "The run was just re-evaluated. Look at the new Evaluation and review again.",
-      };
+      return { ok: false, message: STALE_MESSAGE };
     }
     throw new Error(error.message);
   }

@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { trimDetails } from "./domain/audit";
+import { isAuditAction, trimDetails } from "./domain/audit";
 import { resolveRulebook } from "./domain/rules";
 import { pipelineOf } from "./pipeline";
 import type { EvaluationView, RunView } from "./view";
@@ -196,5 +196,14 @@ describe("trimDetails", () => {
     }) as { note: string; deep: unknown };
     expect(trimmed.note).toHaveLength(301);
     expect(trimmed.deep).toEqual({ a: { b: "{…}" } });
+  });
+});
+
+describe("isAuditAction", () => {
+  it("accepts the listed actions and nothing inherited", () => {
+    expect(isAuditAction("finding.reviewed")).toBe(true);
+    expect(isAuditAction("toString")).toBe(false);
+    expect(isAuditAction("constructor")).toBe(false);
+    expect(isAuditAction(null)).toBe(false);
   });
 });

@@ -1,21 +1,29 @@
 -- Checks the guarantees of 20261117170000_document_compliance_rules_audit.sql.
--- Run with scripts/test-document-compliance-migration.sh (a throwaway
--- Postgres in Docker); every block raises if a guarantee does not hold.
-
-\set ON_ERROR_STOP 1
+-- Run with `pnpm test:sql` (supabase/tests/run-document-compliance-rules-audit.sh,
+-- a throwaway Postgres in Docker); it raises if a guarantee does not hold.
 
 insert into document_compliance.prescreen_runs (id, owner, status) values
   ('11111111-1111-1111-1111-111111111111', 'guest:a', 'completed'),
   ('22222222-2222-2222-2222-222222222222', 'guest:b', 'completed');
 
+-- Raises unless `sql` fails with an error that mentions `expected`. The
+-- statement runs in its own block, so the "it did not fail" error below is
+-- raised outside the handler and cannot be swallowed by it.
 create function pg_temp.expect_error(sql text, expected text) returns void
 language plpgsql as $$
+declare
+  raised boolean := false;
 begin
-  execute sql;
-  raise exception 'expected "%" from: %', expected, sql;
-exception when others then
-  if position(expected in sqlerrm) = 0 then
-    raise exception 'expected "%" but got "%" from: %', expected, sqlerrm, sql;
+  begin
+    execute sql;
+  exception when others then
+    if position(expected in sqlerrm) = 0 then
+      raise exception 'expected "%" but got "%" from: %', expected, sqlerrm, sql;
+    end if;
+    raised := true;
+  end;
+  if not raised then
+    raise exception 'expected "%" but it succeeded: %', expected, sql;
   end if;
 end;
 $$;

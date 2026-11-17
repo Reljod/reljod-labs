@@ -320,6 +320,16 @@ describe("evaluate with edited Rules", () => {
       (finding) => finding.requirementId === id,
     )?.outcome;
 
+  it("keeps the certification reason it gave before Rules were editable", () => {
+    const finding = prescreen(
+      findPack("clean") as Pack,
+      idealExtractions.clean,
+    ).find((item) => item.requirementId === "certification-complete");
+    expect(finding?.reason).toBe(
+      "The certification has wording, certifier name, occupation, date and signature.",
+    );
+  });
+
   it("matches the shipped Rulebook at the Defaults", () => {
     expect(resolveRulebook(defaultRuleStates())).toEqual(individualOnboarding);
   });

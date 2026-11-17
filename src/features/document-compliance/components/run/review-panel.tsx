@@ -40,7 +40,10 @@ export function ReviewPanel({
   const busy = useRef(false);
   const save = useMutation({
     mutationFn: () =>
-      reviewFinding(runId, finding.requirementId, { outcome, note }),
+      reviewFinding(runId, finding.requirementId, evaluation, {
+        outcome,
+        note,
+      }),
     onSuccess: async (result) => {
       if (!result.ok) {
         setError(result.message);
