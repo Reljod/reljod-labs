@@ -25,7 +25,7 @@
   "documents": [
     {
       "id": "ne-tr-01",
-      "title": "Harbour corridor MT103 batch",
+      "title": "Outgoing SWIFT payments batch, March 2026",
       "genre": "Wire transfer ledger",
       "split": "train",
       "pages": 10,
@@ -34,7 +34,7 @@
     },
     {
       "id": "ne-tr-02",
-      "title": "Freight forwarder current account",
+      "title": "Freight forwarder current account statements, 2025",
       "genre": "Bank statement",
       "split": "train",
       "pages": 25,
@@ -52,7 +52,7 @@
     },
     {
       "id": "ne-tr-04",
-      "title": "Layered holding structure extract",
+      "title": "Holding company registry extracts",
       "genre": "Corporate registry extract",
       "split": "train",
       "pages": 75,
@@ -61,7 +61,7 @@
     },
     {
       "id": "ne-tr-05",
-      "title": "Tracing claim over mixed accounts",
+      "title": "Commercial Court judgment on a tracing claim",
       "genre": "Court judgment",
       "split": "train",
       "pages": 100,
@@ -70,7 +70,7 @@
     },
     {
       "id": "ne-tr-06",
-      "title": "Structured cash deposits review",
+      "title": "Suspicious activity review: structured cash deposits",
       "genre": "SAR narrative",
       "split": "train",
       "pages": 150,
@@ -79,7 +79,7 @@
     },
     {
       "id": "ne-tr-07",
-      "title": "Shipping desk mailbox export",
+      "title": "Shipping desk mailbox export, Q3 2025",
       "genre": "Email and chat export",
       "split": "train",
       "pages": 200,
@@ -88,7 +88,7 @@
     },
     {
       "id": "ne-tr-08",
-      "title": "Seafood import credit file",
+      "title": "Seafood importer letters of credit, 2025",
       "genre": "Trade finance file",
       "split": "train",
       "pages": 250,
@@ -97,7 +97,7 @@
     },
     {
       "id": "ne-tr-09",
-      "title": "Shipping group board minutes",
+      "title": "Shipping group board minutes, 2024-2025",
       "genre": "Board minutes",
       "split": "train",
       "pages": 300,
@@ -106,7 +106,7 @@
     },
     {
       "id": "ne-tr-10",
-      "title": "Trading company statements, 2025-2026",
+      "title": "Trading company bank statements, 2025-2026",
       "genre": "Bank statement",
       "split": "train",
       "pages": 400,
@@ -115,7 +115,7 @@
     },
     {
       "id": "ne-tr-11",
-      "title": "Correspondent banking payments archive",
+      "title": "Correspondent banking payments archive, FY2025",
       "genre": "Wire transfer ledger",
       "split": "train",
       "pages": 500,
@@ -124,7 +124,7 @@
     },
     {
       "id": "ne-tr-12",
-      "title": "Corporate customer periodic review",
+      "title": "Corporate customer periodic review, 2026",
       "genre": "KYC file",
       "split": "train",
       "pages": 25,
@@ -133,7 +133,7 @@
     },
     {
       "id": "ne-tr-13",
-      "title": "Rapid movement of funds alert",
+      "title": "Transaction monitoring alert: rapid movement of funds",
       "genre": "SAR narrative",
       "split": "train",
       "pages": 10,
@@ -142,7 +142,7 @@
     },
     {
       "id": "ne-va-01",
-      "title": "Shelf company extract",
+      "title": "Shelf company registry extract",
       "genre": "Corporate registry extract",
       "split": "validation",
       "pages": 10,
@@ -151,7 +151,7 @@
     },
     {
       "id": "ne-va-02",
-      "title": "Broker chat review set",
+      "title": "Broker chat and email review set",
       "genre": "Email and chat export",
       "split": "validation",
       "pages": 50,
@@ -160,7 +160,7 @@
     },
     {
       "id": "ne-va-03",
-      "title": "Property company board minutes",
+      "title": "Property company board minutes, 2025",
       "genre": "Board minutes",
       "split": "validation",
       "pages": 100,
@@ -169,7 +169,7 @@
     },
     {
       "id": "ne-va-04",
-      "title": "Asset recovery judgment",
+      "title": "High Court judgment: invoice fraud recovery",
       "genre": "Court judgment",
       "split": "validation",
       "pages": 150,
@@ -178,7 +178,7 @@
     },
     {
       "id": "ne-va-05",
-      "title": "Remittance hub ledger",
+      "title": "Remittance hub payments ledger, H1 2026",
       "genre": "Wire transfer ledger",
       "split": "validation",
       "pages": 300,
@@ -187,7 +187,7 @@
     },
     {
       "id": "ne-va-06",
-      "title": "Commodity trader credit archive",
+      "title": "Commodity trader documentary credits archive, 2024-2026",
       "genre": "Trade finance file",
       "split": "validation",
       "pages": 500,
@@ -196,7 +196,7 @@
     },
     {
       "id": "ne-va-07",
-      "title": "Trust and foundation onboarding",
+      "title": "Family trust and foundation onboarding file",
       "genre": "KYC file",
       "split": "validation",
       "pages": 75,
@@ -205,7 +205,7 @@
     },
     {
       "id": "ne-te-01",
-      "title": "Retail customer onboarding",
+      "title": "Retail customer account-opening file",
       "genre": "KYC file",
       "split": "test",
       "pages": 10,
@@ -214,7 +214,7 @@
     },
     {
       "id": "ne-te-02",
-      "title": "Mule account cluster",
+      "title": "Suspicious activity report: money mule accounts",
       "genre": "SAR narrative",
       "split": "test",
       "pages": 25,
@@ -223,7 +223,7 @@
     },
     {
       "id": "ne-te-03",
-      "title": "Logistics group minutes",
+      "title": "Logistics group board minutes, 2025",
       "genre": "Board minutes",
       "split": "test",
       "pages": 75,
@@ -232,7 +232,7 @@
     },
     {
       "id": "ne-te-04",
-      "title": "Offshore chain registry pack",
+      "title": "Offshore company chain registry pack",
       "genre": "Corporate registry extract",
       "split": "test",
       "pages": 100,
@@ -241,7 +241,7 @@
     },
     {
       "id": "ne-te-05",
-      "title": "Trade desk eDiscovery set",
+      "title": "Trade desk eDiscovery review set",
       "genre": "Email and chat export",
       "split": "test",
       "pages": 250,
@@ -250,7 +250,7 @@
     },
     {
       "id": "ne-te-06",
-      "title": "Import business statements archive",
+      "title": "Import business bank statements, 2024-2026",
       "genre": "Bank statement",
       "split": "test",
       "pages": 500,
@@ -259,7 +259,7 @@
     },
     {
       "id": "ne-te-07",
-      "title": "Nominee director judgment",
+      "title": "Court judgment on nominee directors",
       "genre": "Court judgment",
       "split": "test",
       "pages": 200,

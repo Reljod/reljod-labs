@@ -195,7 +195,7 @@ export const projects: Project[] = [
     title: "Sieve",
     sector: "AML screening",
     summary:
-      "Finds every party a 10 to 500 page AML document names, with every alias and every page. One agent with tools, not a fixed pipeline: it fans out Reader sub-agents, loads skills on demand, writes code in a sandbox, and cannot finish until every page is read.",
+      "Finds every person and company named in a 10 to 500 page AML file, with every alias and every page, in minutes and for cents. Watch it read a 500-page ledger, then check every name it found side by side with the document.",
     outcome: "Recall first, scored against an answer key",
     tags: ["Agents", "Sub-agents", "Sandbox", "MCP", "Durable workflows"],
     status: "Live",

@@ -397,6 +397,8 @@ export type CorpusCard = {
   description: string;
   /** Names in the Answer key. */
   expectedNames: number;
+  /** Shown first: one per genre, 10 to 500 pages. */
+  featured: boolean;
 };
 
 export type RunStatus =
@@ -437,4 +439,111 @@ export type RulebookVersion = {
   createdAt: string;
   /** null for the built-in default (version 0). */
   note: string | null;
+};
+
+// Showing the Document ----------------------------------------------------------------------
+
+/**
+ * How a highlighted name stands against the answer key.
+ * - `expected`: in the answer key (a demo Document previewed before any Run).
+ * - `found`: Sieve found it (and, on a demo Document, the key has it too).
+ * - `missed`: in the key, not found by the Run.
+ * - `extra`: found by the Run, not in the key (an Upload has no key, so
+ *   everything a Run finds on an Upload is `found`).
+ */
+export type MarkStatus = "expected" | "found" | "missed" | "extra";
+
+/** One highlighted span of a page's text. Offsets are UTF-16, end exclusive. */
+export type PageMark = {
+  start: number;
+  end: number;
+  status: MarkStatus;
+  /** The Name's canonical form, so every mention of one party shares a colour and a click target. */
+  name: string;
+  type: EntityType;
+};
+
+/** A page ready to show. `key` marks the answer key's view, `run` the Run's. */
+export type PreviewPage = {
+  page: number;
+  text: string;
+  /** Answer-key marks (demo Documents only): `expected` before a Run; `found` or `missed` after one. */
+  key: PageMark[] | null;
+  /** The Run's marks (with a Run only): `found`, or `extra` on a demo Document. */
+  run: PageMark[] | null;
+};
+
+/** One party in a Run's comparison against the answer key, or in an Upload's list. */
+export type ComparisonRow = {
+  name: string;
+  type: EntityType;
+  status: "found" | "missed" | "extra";
+  /** How the Run wrote it, when it differs from the key's canonical form. */
+  foundAs: string | null;
+  /** Pages it appears on (key pages for found/missed, Run pages for extra), ascending. */
+  pages: number[];
+  /** True for the parties the corpus prints only in damaged forms (OCR, split, initials). */
+  hard: boolean;
+  /** How a hard party is damaged, when known. */
+  hardReason?: HardReason | null;
+};
+
+/** How the corpus damages a hard-only party's name. */
+export const HARD_REASONS = {
+  ocr: "Only printed in a bad scan: the letters are garbled.",
+  cell: "Only printed in an unlabelled table cell.",
+  pagesplit: "Split across a page break: neither page prints it whole.",
+  handle: "Only printed inside an email address or a handle.",
+  initials: "Only printed as initials.",
+} as const;
+export type HardReason = keyof typeof HARD_REASONS;
+
+export type Comparison = {
+  rows: ComparisonRow[];
+  /** null for an Upload, which has no answer key. */
+  score: Score | null;
+};
+
+/** What the page shows about a Document before it opens a single page. */
+export type DocumentOverview = {
+  title: string;
+  genre: string;
+  pages: number;
+  /** Names on each page (answer key for demo Documents, the Run's for a Run), index 0 = page 1. */
+  density: number[];
+  /**
+   * Every name with the pages it is on (the answer key's, `expected` before a
+   * Run, `found`/`missed` after one, plus the Run's `extra` names; an
+   * Upload's Run: `found`). Empty for an Upload with no Run.
+   */
+  names: OverviewName[];
+};
+
+export type OverviewName = {
+  name: string;
+  type: EntityType;
+  /** Ascending. */
+  pages: number[];
+  status?: MarkStatus;
+};
+
+/**
+ * A real Run, recorded by the eval script and shipped as static JSON
+ * (`public/name-extraction/replays/<corpusId>.json`), so the page can play a
+ * Run the moment it opens, without spending anything. Event times are real;
+ * the player speeds them up.
+ */
+export type Replay = {
+  corpusId: string;
+  title: string;
+  genre: string;
+  pages: number;
+  models: ModelChoice;
+  durationMs: number;
+  costUsd: number;
+  /** The Audit trail, slimmed: long tool outputs cut, one `names` event per change kept. */
+  events: (RunEvent & { seq: number })[];
+  names: ExtractedName[];
+  comparison: Comparison;
+  recordedAt: string;
 };

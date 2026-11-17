@@ -305,3 +305,19 @@ export function useNow(live: boolean) {
   }, [live]);
   return now;
 }
+
+/**
+ * A failure as a visitor should read it. A database the demo cannot reach
+ * (a schema not exposed yet, a network blip) says so in plain words instead
+ * of a PostgREST code.
+ */
+export function friendly(error: unknown, fallback: string) {
+  const text = error instanceof Error ? error.message : String(error ?? "");
+  if (
+    /PGRST|schema|relation .* does not exist|fetch failed|ECONN|Failed to fetch|NetworkError/i.test(
+      text,
+    )
+  )
+    return `${fallback} Saved data isn't reachable from this server right now.`;
+  return text && text.length < 160 ? text : fallback;
+}

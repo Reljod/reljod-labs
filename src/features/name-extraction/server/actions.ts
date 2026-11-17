@@ -4,11 +4,14 @@ import { createHash, randomUUID } from "node:crypto";
 import { z } from "zod";
 import { requireOwner } from "@/features/access/server/gate";
 import {
+  type Comparison,
   type CorpusCard,
+  type DocumentOverview,
   type DocumentSource,
   type ExtractedName,
   type ModelChoice,
   modelChoiceSchema,
+  type PreviewPage,
   type Rulebook,
   type RulebookVersion,
   type RunDetail,
@@ -17,6 +20,7 @@ import {
 } from "../domain/contract";
 import { corpusCards } from "../domain/corpus";
 import { env } from "./env";
+import { comparison, overview, pages } from "./preview";
 import {
   allEvents,
   countUploadsSince,
@@ -116,6 +120,59 @@ export async function getRun(runId: string): Promise<RunDetail | null> {
   // The detail carries the list in place of the summary's count.
   const { names: _count, ...summary } = toSummary(run);
   return { ...summary, events, names };
+}
+
+/** A Run id from the browser: absent, or a string (the repository checks its shape). */
+function runIdOf(value: unknown): string | undefined | null {
+  if (value === undefined || value === null || value === "") return undefined;
+  return typeof value === "string" ? value : null;
+}
+
+/**
+ * What the page shows about a Document before opening a page: title, genre,
+ * page count and names per page. With a Run, the Run's own Document and
+ * Names (the `source` argument is ignored).
+ */
+export async function documentOverview(input: {
+  source: DocumentSource;
+  runId?: string;
+}): Promise<DocumentOverview | { error: string }> {
+  const { owner } = await requireOwner();
+  const runId = runIdOf(input?.runId);
+  if (runId === null) return { error: "No such Run." };
+  const source = sourceSchema.safeParse(input?.source);
+  return overview(owner, source.success ? source.data : null, runId);
+}
+
+/**
+ * Pages `from` to `to` (1-based, inclusive, at most 12) with their marks:
+ * the answer key's on a demo Document, the Run's with a Run.
+ */
+export async function previewPages(input: {
+  source: DocumentSource;
+  runId?: string;
+  from: number;
+  to: number;
+}): Promise<{ total: number; pages: PreviewPage[] } | { error: string }> {
+  const { owner } = await requireOwner();
+  const runId = runIdOf(input?.runId);
+  if (runId === null) return { error: "No such Run." };
+  const source = sourceSchema.safeParse(input?.source);
+  return pages(
+    owner,
+    source.success ? source.data : null,
+    { from: Number(input?.from), to: Number(input?.to) },
+    runId,
+  );
+}
+
+/** One of the Owner's Runs set against the answer key, row by row (an Upload's: all found, no score). */
+export async function compareRun(
+  runId: string,
+): Promise<Comparison | { error: string }> {
+  const { owner } = await requireOwner();
+  if (typeof runId !== "string") return { error: "No such Run." };
+  return comparison(owner, runId);
 }
 
 /** The Owner's current Rulebook (version 0 is the built-in default). */

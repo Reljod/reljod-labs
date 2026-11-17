@@ -1,8 +1,8 @@
 "use client";
 
 import type { RunSummary } from "../domain/contract";
-import { modelLabel, percent, usd } from "./format";
-import { StatusTag } from "./run-panel";
+import { modelLabel, usd } from "./format";
+import { StatusTag } from "./timeline";
 import { Button, cx, ErrorNote, Panel } from "./ui";
 
 const WHEN = new Intl.DateTimeFormat("en-GB", {
@@ -12,7 +12,7 @@ const WHEN = new Intl.DateTimeFormat("en-GB", {
   minute: "2-digit",
 });
 
-/** Past Runs with cost, recall and status; open one to replay its trail. */
+/** Past Runs with cost, names found and status; open one to see its result. */
 export function RunsHistory({
   runs,
   error,
@@ -23,7 +23,7 @@ export function RunsHistory({
   runs: RunSummary[] | null;
   error: string | null;
   openId: string | null;
-  onOpen: (runId: string) => void;
+  onOpen: (run: RunSummary) => void;
   onRefresh: () => void;
 }) {
   return (
@@ -50,8 +50,7 @@ export function RunsHistory({
               <th className="px-2 py-2 font-medium">Status</th>
               <th className="px-2 py-2 font-medium">Started</th>
               <th className="px-2 py-2 font-medium">Models</th>
-              <th className="px-2 py-2 text-right font-medium">Names</th>
-              <th className="px-2 py-2 text-right font-medium">Recall</th>
+              <th className="px-2 py-2 text-right font-medium">Names found</th>
               <th className="px-2 py-2 text-right font-medium">Cost</th>
               <th className="px-4 py-2" />
             </tr>
@@ -59,15 +58,15 @@ export function RunsHistory({
           <tbody>
             {runs === null && !error ? (
               <tr>
-                <td colSpan={8} className="px-4 py-3 text-ink-muted">
+                <td colSpan={7} className="px-4 py-3 text-ink-muted">
                   Loading…
                 </td>
               </tr>
             ) : null}
             {runs?.length === 0 ? (
               <tr>
-                <td colSpan={8} className="px-4 py-3 text-ink-muted">
-                  No runs yet. Pick a document above.
+                <td colSpan={7} className="px-4 py-3 text-ink-muted">
+                  No runs yet. Open a document above and run Sieve on it.
                 </td>
               </tr>
             ) : null}
@@ -83,8 +82,8 @@ export function RunsHistory({
                   <p className="font-semibold">{run.title}</p>
                   <p className="font-mono text-[0.68rem] text-ink-muted">
                     {run.pages} pages ·{" "}
-                    {run.source.kind === "corpus" ? "corpus" : "upload"} ·
-                    Rulebook v{run.rulebookVersion}
+                    {run.source.kind === "corpus" ? "demo document" : "upload"}{" "}
+                    · rules v{run.rulebookVersion}
                   </p>
                 </td>
                 <td className="px-2 py-2">
@@ -96,14 +95,13 @@ export function RunsHistory({
                 <td className="px-2 py-2 text-xs">
                   {modelLabel(run.models.analyst)}
                   <span className="block text-ink-muted">
-                    Readers: {modelLabel(run.models.reader)}
+                    readers: {modelLabel(run.models.reader)}
                   </span>
                 </td>
                 <td className="px-2 py-2 text-right font-mono tabular-nums">
-                  {run.names}
-                </td>
-                <td className="px-2 py-2 text-right font-mono font-semibold tabular-nums">
-                  {run.score ? percent(run.score.recall) : "–"}
+                  {run.score
+                    ? `${run.score.truePositives} of ${run.score.expected}`
+                    : run.names}
                 </td>
                 <td className="px-2 py-2 text-right font-mono tabular-nums">
                   {usd(run.costUsd)}
@@ -113,9 +111,9 @@ export function RunsHistory({
                     size="sm"
                     variant={run.id === openId ? "ghost" : "secondary"}
                     disabled={run.id === openId}
-                    onClick={() => onOpen(run.id)}
+                    onClick={() => onOpen(run)}
                   >
-                    {run.id === openId ? "Open" : "Replay"}
+                    {run.id === openId ? "Opened" : "Open"}
                   </Button>
                 </td>
               </tr>

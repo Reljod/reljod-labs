@@ -4,6 +4,7 @@ import {
   answerKeyFor,
   CORPUS,
   corpusCards,
+  FEATURED,
   generateDocument,
   generateDocumentDetailed,
 } from "./corpus";
@@ -63,6 +64,27 @@ describe("the Corpus", () => {
 
   it("spans the genres of an AML file", () => {
     expect(new Set(CORPUS.map((e) => e.genre)).size).toBeGreaterThanOrEqual(9);
+  });
+
+  it("features one Document per genre, from 10 to 500 pages", () => {
+    const featured = corpusCards().filter((card) => card.featured);
+    expect(featured.map((card) => card.id)).toEqual(
+      CORPUS.filter((e) => FEATURED.includes(e.id)).map((e) => e.id),
+    );
+    expect(new Set(featured.map((card) => card.genre))).toEqual(
+      new Set(CORPUS.map((e) => e.genre)),
+    );
+    const pages = featured.map((card) => card.pages);
+    expect(pages).toContain(10);
+    expect(pages).toContain(500);
+    expect(pages.some((n) => n >= 90 && n <= 110)).toBe(true);
+  });
+
+  it("titles read as files, not dataset ids", () => {
+    for (const e of CORPUS) {
+      expect(e.title).not.toMatch(/ne-|\b(train|test|validation)\b/i);
+      expect(e.description).toMatch(/^[A-Z].+\.$/);
+    }
   });
 
   it("cards count the same names the Answer key holds", () => {

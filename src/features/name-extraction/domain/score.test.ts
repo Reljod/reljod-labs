@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import type { ExtractedName } from "./contract";
 import type { ExpectedName } from "./corpus";
-import { scoreNames } from "./score";
+import { matchNames, scoreNames } from "./score";
 
 const found = (canonical: string, aliases: string[] = []): ExtractedName => ({
   canonical,
@@ -86,5 +86,57 @@ describe("scoreNames", () => {
       recall: 1,
       precision: 0,
     });
+  });
+});
+
+describe("matchNames", () => {
+  it("pairs one to one and lists the unmatched on both sides", () => {
+    const grace = found("Grace Okafor");
+    const mrs = found("Mrs Okafor");
+    const street = found("Rua Almirante Costa");
+    const match = matchNames(
+      [mrs, street, grace],
+      [
+        expected("Grace Okafor"),
+        expected("Ngozi Okafor"),
+        expected("Erik Lindqvist"),
+      ],
+    );
+    expect(
+      match.pairs.map((p) => [p.expected.canonical, p.found.canonical]),
+    ).toEqual([
+      ["Grace Okafor", "Grace Okafor"],
+      ["Ngozi Okafor", "Mrs Okafor"],
+    ]);
+    expect(match.missed.map((e) => e.canonical)).toEqual(["Erik Lindqvist"]);
+    expect(match.extra).toEqual([street]);
+  });
+
+  it("never pairs one found Name twice", () => {
+    const match = matchNames(
+      [found("Mrs Okafor")],
+      [expected("Grace Okafor"), expected("Ngozi Okafor")],
+    );
+    expect(match.pairs).toHaveLength(1);
+    expect(match.missed).toHaveLength(1);
+    expect(match.extra).toEqual([]);
+  });
+
+  it("agrees with scoreNames", () => {
+    const f = [
+      found("A. L. Ferreira-Vos"),
+      found("Port Selene"),
+      found("Chuck", ["Emeka Okafor"]),
+    ];
+    const e = [
+      expected("Ana Lucía Ferreira-Vos"),
+      expected("Chukwuemeka Okafor", ["OKAFOR, Chukwuemeka"]),
+      expected("Erik Lindqvist"),
+    ];
+    const match = matchNames(f, e);
+    const score = scoreNames(f, e);
+    expect(score.truePositives).toBe(match.pairs.length);
+    expect(score.missed).toEqual(match.missed.map((m) => m.canonical));
+    expect(score.found - score.truePositives).toBe(match.extra.length);
   });
 });

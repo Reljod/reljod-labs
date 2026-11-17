@@ -7,10 +7,13 @@
  *   node --env-file-if-exists=.env.local scripts/eval-name-extraction.mts            # the test split
  *   node --env-file-if-exists=.env.local scripts/eval-name-extraction.mts ne-va-01 ne-va-03
  *   ... --split=validation --analyst=anthropic/claude-sonnet-5.5 --reader=openai/gpt-6-luna --verbose
+ *   ... ne-tr-11 --record   # also writes public/name-extraction/replays/ne-tr-11.json
  *
  * Needs NAME_EXTRACTION_AI_GATEWAY_API_KEY, and VERCEL_OIDC_TOKEN (from
  * `vercel env pull .env.local`) for run_code.
  */
+import { mkdir, writeFile } from "node:fs/promises";
+import { join } from "node:path";
 import { createViteServer } from "vitest/node";
 
 const root = new URL("..", import.meta.url).pathname.replace(/\/$/, "");
@@ -18,6 +21,10 @@ const args = process.argv.slice(2);
 const flag = (name: string) =>
   args.find((arg) => arg.startsWith(`--${name}=`))?.split("=")[1];
 const verbose = args.includes("--verbose");
+const record = args.includes("--record");
+const REPLAYS = "public/name-extraction/replays";
+/** A Replay above this is too heavy to ship to every visitor. */
+const REPLAY_MAX_BYTES = 600_000;
 const ids = args.filter((arg) => !arg.startsWith("--"));
 
 if (!process.env.NAME_EXTRACTION_AI_GATEWAY_API_KEY) {
@@ -64,6 +71,7 @@ type Result = {
   readerCalls: number;
   names: number;
   error?: string;
+  replay?: unknown;
 };
 
 try {
@@ -100,6 +108,7 @@ try {
         else
           console.log(`  [${event.type}]`, JSON.stringify(event).slice(0, 200));
       },
+      { record },
     )) as Result;
     results.push(result);
     const score = result.score;
@@ -122,6 +131,20 @@ try {
         `           missed: ${score.missed.slice(0, 12).join("; ")}${score.missed.length > 12 ? " …" : ""}`,
       );
     if (result.error) console.log(`           error: ${result.error}`);
+    if (record && result.replay) {
+      if (result.status !== "completed") {
+        console.log(`           not recorded: the Run ${result.status}`);
+      } else {
+        const json = `${JSON.stringify(result.replay)}\n`;
+        const bytes = Buffer.byteLength(json);
+        await mkdir(join(root, REPLAYS), { recursive: true });
+        const file = join(root, REPLAYS, `${id}.json`);
+        await writeFile(file, json);
+        console.log(
+          `           recorded ${REPLAYS}/${id}.json (${(bytes / 1024).toFixed(0)} KB)${bytes > REPLAY_MAX_BYTES ? "  WARNING: over 600 KB" : ""}`,
+        );
+      }
+    }
   }
   const scored = results.filter((result) => result.score);
   const expected = scored.reduce(

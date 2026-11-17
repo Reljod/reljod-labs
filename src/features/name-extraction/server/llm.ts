@@ -42,7 +42,12 @@ export function callOptions(model: string, purpose: Purpose) {
 
 export type CallCost = Extract<RunEventInput, { type: "cost" }>;
 
-/** The price the gateway charged, from `providerMetadata.gateway.cost`, or null. */
+/**
+ * What a call is worth according to the gateway: the larger of what it
+ * charged (`cost`) and the list price (`marketCost`), or null when it reports
+ * neither. A call paid by credits reports `cost` 0; the demo shows and caps
+ * spend at what the call is worth, so it takes the market price.
+ */
 export function gatewayCost(providerMetadata: unknown): number | null {
   const meta =
     typeof providerMetadata === "object" && providerMetadata !== null
@@ -50,12 +55,29 @@ export function gatewayCost(providerMetadata: unknown): number | null {
       : undefined;
   if (typeof meta !== "object" || meta === null) return null;
   const { cost, marketCost } = meta as { cost?: unknown; marketCost?: unknown };
+  let best: number | null = null;
   for (const value of [cost, marketCost]) {
     const number = typeof value === "string" ? Number(value) : value;
     if (typeof number === "number" && Number.isFinite(number) && number >= 0)
-      return number;
+      best = Math.max(best ?? 0, number);
   }
-  return null;
+  return best;
+}
+
+/**
+ * The cost to show and to count against the cap: the gateway's figure, or
+ * the list-price estimate when the gateway has none, or reports 0 for a call
+ * that used tokens.
+ */
+export function callCost(
+  model: string,
+  providerMetadata: unknown,
+  tokens: { input: number; output: number; cached: number },
+) {
+  const reported = gatewayCost(providerMetadata);
+  if (reported !== null && (reported > 0 || tokens.input + tokens.output === 0))
+    return reported;
+  return estimateCost(model, tokens.input, tokens.output, tokens.cached);
 }
 
 /**
@@ -75,9 +97,11 @@ export async function trackCall(input: {
   const outputTokens = input.usage?.outputTokens ?? 0;
   const cachedInputTokens =
     input.usage?.inputTokenDetails?.cacheReadTokens ?? 0;
-  const costUsd =
-    gatewayCost(input.providerMetadata) ??
-    estimateCost(input.model, inputTokens, outputTokens, cachedInputTokens);
+  const costUsd = callCost(input.model, input.providerMetadata, {
+    input: inputTokens,
+    output: outputTokens,
+    cached: cachedInputTokens,
+  });
   const ms = Date.now() - input.started;
   await recordCall({
     runId: input.runId,

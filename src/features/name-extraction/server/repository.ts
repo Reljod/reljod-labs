@@ -291,6 +291,26 @@ export async function allEvents(runId: string, max = 20_000) {
   return events;
 }
 
+/** The Register in a Run's latest `names` event, or null when it has none yet. */
+export async function latestNames(
+  runId: string,
+): Promise<ExtractedName[] | null> {
+  const [row] = rows<EventRow[]>(
+    await supabase()
+      .from("run_events")
+      .select("seq, at, type, payload")
+      .eq("run_id", runId)
+      .eq("type", "names")
+      .order("seq", { ascending: false })
+      .limit(1),
+  );
+  if (!row) return null;
+  const event = toEvent(row);
+  return event.type === "names" && Array.isArray(event.names)
+    ? event.names
+    : null;
+}
+
 // Model calls ---------------------------------------------------------------------------
 
 export async function recordModelCall(input: {

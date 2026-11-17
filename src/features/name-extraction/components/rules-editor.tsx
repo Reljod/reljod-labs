@@ -16,6 +16,7 @@ import {
   cx,
   ErrorNote,
   fieldClass,
+  friendly,
   Panel,
   Tag,
   useWrite,
@@ -35,8 +36,8 @@ const TOGGLES = [
   {
     key: "resolveAliases",
     title: "Resolve aliases",
-    on: "Fold initials, reordered and transliterated forms into one Name.",
-    off: "Keep every surface form as its own Name.",
+    on: "Treat initials, reordered and transliterated spellings of one party as one name.",
+    off: "List every spelling as its own name.",
   },
   {
     key: "includeHandles",
@@ -144,7 +145,7 @@ export function RulesEditor({
       return rulebook;
     } catch (error) {
       setLoadError(
-        error instanceof Error ? error.message : "The Rulebook could not load.",
+        friendly(error, "The rules could not load, so the defaults are shown."),
       );
       return null;
     }
@@ -190,7 +191,7 @@ export function RulesEditor({
   const save = useWrite(async () => {
     setResult(null);
     const error = await write(draft, note).catch((caught: unknown) =>
-      caught instanceof Error ? caught.message : "Could not save.",
+      friendly(caught, "Could not save."),
     );
     if (error) setResult({ ok: false, text: error });
   });
@@ -200,9 +201,7 @@ export function RulesEditor({
     const error = await write(
       version.rulebook,
       `Restored version ${version.version}`,
-    ).catch((caught: unknown) =>
-      caught instanceof Error ? caught.message : "Could not restore.",
-    );
+    ).catch((caught: unknown) => friendly(caught, "Could not restore."));
     if (error) setResult({ ok: false, text: error });
   });
 
@@ -238,7 +237,7 @@ export function RulesEditor({
             ? `Rulebook · version ${current.version}${current.version === 0 ? " (default)" : ""}`
             : "Rulebook"
         }
-        title="The rules of extraction"
+        title="What counts as a name"
         actions={
           <Button
             size="sm"
@@ -290,7 +289,7 @@ export function RulesEditor({
             }
           >
             <span className="block">
-              Flag a name as <strong>in doubt</strong> below
+              Flag a name <strong>for review</strong> when confidence is below
               <Slider
                 label="Review below"
                 value={draft.reviewBelow}
@@ -298,13 +297,16 @@ export function RulesEditor({
               />
             </span>
             <span className="block">
-              Drop a name only below
+              Leave a name out only below
               <Slider
                 label="Drop below"
                 value={draft.dropBelow}
                 onChange={(value) => edit({ dropBelow: value })}
               />
-              <span className="text-xs text-ink-muted"> Recall first: 0%.</span>
+              <span className="text-xs text-ink-muted">
+                {" "}
+                Default 0%: never leave one out.
+              </span>
             </span>
           </RuleCard>
           {TOGGLES.map((toggle) => (
@@ -389,7 +391,7 @@ export function RulesEditor({
           )}
         >
           <h3 className="text-sm font-semibold">
-            Instructions the Analyst and its Readers follow
+            Instructions every agent follows, in plain language
           </h3>
           <ol className="flex flex-col gap-1.5">
             {draft.instructions.map((instruction, index) => (

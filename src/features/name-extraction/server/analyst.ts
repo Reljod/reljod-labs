@@ -650,7 +650,7 @@ function corpusScore(
   const expected = answerKeyFor(
     generateDocument(corpusId).answerKey,
     ctx.rulebook,
-  ).filter((name) => ctx.rulebook.entityTypes.includes(name.type));
+  );
   return scoreNames(names, expected);
 }
 

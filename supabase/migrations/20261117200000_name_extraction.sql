@@ -1,6 +1,6 @@
 -- Name Extraction (shown to visitors as "Sieve"): one Analyst lists every
 -- party a long AML Document names. Language: src/features/name-extraction/GLOSSARY.md.
--- Decision: docs/adr/0019-one-analyst-with-tools-not-a-pipeline.md.
+-- Decision: docs/adr/0020-one-analyst-with-tools-not-a-pipeline.md.
 --
 -- Accessed only from server code with the service role; never from the
 -- browser. The `name_extraction` schema must be listed under

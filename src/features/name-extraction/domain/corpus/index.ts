@@ -22,8 +22,27 @@ export type CorpusEntry = {
   pages: number;
   split: Split;
   seed: number;
+  /** One plain sentence for the card. */
   description: string;
+  /** Shown first in the picker; see FEATURED. */
+  featured: boolean;
 };
+
+/**
+ * The Documents the picker shows first: one per genre, from 10 to 500 pages.
+ * The page's recorded replays come from these (public/name-extraction/replays).
+ */
+export const FEATURED: readonly string[] = [
+  "ne-te-01",
+  "ne-tr-02",
+  "ne-va-02",
+  "ne-tr-04",
+  "ne-tr-05",
+  "ne-tr-06",
+  "ne-tr-08",
+  "ne-tr-09",
+  "ne-tr-11",
+];
 
 const entry = (
   id: string,
@@ -41,6 +60,7 @@ const entry = (
   split,
   seed,
   description,
+  featured: FEATURED.includes(id),
 });
 
 export const CORPUS: CorpusEntry[] = [
@@ -51,8 +71,8 @@ export const CORPUS: CorpusEntry[] = [
     "wire",
     10,
     1101,
-    "Harbour corridor MT103 batch",
-    "Ten pages of outgoing SWIFT messages and a payments ledger from the Port Selene desk.",
+    "Outgoing SWIFT payments batch, March 2026",
+    "Ten pages of outgoing MT103 payment messages and the payments ledger from one day at the harbour desk.",
   ),
   entry(
     "ne-tr-02",
@@ -60,8 +80,8 @@ export const CORPUS: CorpusEntry[] = [
     "statement",
     25,
     1102,
-    "Freight forwarder current account",
-    "Monthly statements of a freight forwarder with round-sum transfers in and out.",
+    "Freight forwarder current account statements, 2025",
+    "A year of monthly statements for a freight forwarder, with round-sum transfers in and out.",
   ),
   entry(
     "ne-tr-03",
@@ -70,7 +90,7 @@ export const CORPUS: CorpusEntry[] = [
     50,
     1103,
     "Private client onboarding file",
-    "Customer due diligence for a high-net-worth customer: profile, related parties, certified copies.",
+    "Due diligence on a wealthy private client: profile, related parties and certified copies.",
   ),
   entry(
     "ne-tr-04",
@@ -78,8 +98,8 @@ export const CORPUS: CorpusEntry[] = [
     "registry",
     75,
     1104,
-    "Layered holding structure extract",
-    "Registry extracts for a chain of holding companies, nominee shareholders and declared owners.",
+    "Holding company registry extracts",
+    "Registry extracts for a chain of holding companies, with nominee shareholders and declared owners.",
   ),
   entry(
     "ne-tr-05",
@@ -87,8 +107,8 @@ export const CORPUS: CorpusEntry[] = [
     "judgment",
     100,
     1105,
-    "Tracing claim over mixed accounts",
-    "A commercial court judgment following funds through nominee and company accounts.",
+    "Commercial Court judgment on a tracing claim",
+    "A judgment that follows stolen funds through nominee and company accounts.",
   ),
   entry(
     "ne-tr-06",
@@ -96,8 +116,8 @@ export const CORPUS: CorpusEntry[] = [
     "sar",
     150,
     1106,
-    "Structured cash deposits review",
-    "An internal suspicious activity review of structured deposits and onward transfers.",
+    "Suspicious activity review: structured cash deposits",
+    "An internal review of cash deposits kept under the reporting limit and moved on.",
   ),
   entry(
     "ne-tr-07",
@@ -105,7 +125,7 @@ export const CORPUS: CorpusEntry[] = [
     "comms",
     200,
     1107,
-    "Shipping desk mailbox export",
+    "Shipping desk mailbox export, Q3 2025",
     "Emails and chat messages between a trading desk, shippers and intermediaries.",
   ),
   entry(
@@ -114,7 +134,7 @@ export const CORPUS: CorpusEntry[] = [
     "tradefinance",
     250,
     1108,
-    "Seafood import credit file",
+    "Seafood importer letters of credit, 2025",
     "Letters of credit, bills of lading and signed presentations for a seafood importer.",
   ),
   entry(
@@ -123,8 +143,8 @@ export const CORPUS: CorpusEntry[] = [
     "minutes",
     300,
     1109,
-    "Shipping group board minutes",
-    "Two years of board minutes: appointments, interests declared and related-party loans.",
+    "Shipping group board minutes, 2024-2025",
+    "Two years of board minutes: appointments, declared interests and loans between related parties.",
   ),
   entry(
     "ne-tr-10",
@@ -132,7 +152,7 @@ export const CORPUS: CorpusEntry[] = [
     "statement",
     400,
     1110,
-    "Trading company statements, 2025-2026",
+    "Trading company bank statements, 2025-2026",
     "A long run of statements where most pages are routine and a few carry the counterparties.",
   ),
   entry(
@@ -141,8 +161,8 @@ export const CORPUS: CorpusEntry[] = [
     "wire",
     500,
     1111,
-    "Correspondent banking payments archive",
-    "Five hundred pages of MT103 traffic; the names cluster in a few sections.",
+    "Correspondent banking payments archive, FY2025",
+    "A year of cross-border payment messages; the names cluster in a few sections.",
   ),
   entry(
     "ne-tr-12",
@@ -150,8 +170,8 @@ export const CORPUS: CorpusEntry[] = [
     "kyc",
     25,
     1112,
-    "Corporate customer periodic review",
-    "A periodic review of a corporate customer with signatories and an introducer.",
+    "Corporate customer periodic review, 2026",
+    "A periodic review of a business customer, its signatories and the person who introduced it.",
   ),
   entry(
     "ne-tr-13",
@@ -159,8 +179,8 @@ export const CORPUS: CorpusEntry[] = [
     "sar",
     10,
     1113,
-    "Rapid movement of funds alert",
-    "A short alert narrative about funds moving through three accounts in two days.",
+    "Transaction monitoring alert: rapid movement of funds",
+    "A short alert about money passing through three accounts in two days.",
   ),
   // validation
   entry(
@@ -169,8 +189,8 @@ export const CORPUS: CorpusEntry[] = [
     "registry",
     10,
     2101,
-    "Shelf company extract",
-    "A short registry extract for a recently bought shelf company.",
+    "Shelf company registry extract",
+    "A short registry extract for a ready-made company that was recently bought.",
   ),
   entry(
     "ne-va-02",
@@ -178,7 +198,7 @@ export const CORPUS: CorpusEntry[] = [
     "comms",
     50,
     2102,
-    "Broker chat review set",
+    "Broker chat and email review set",
     "Chat and email between a broker, a buyer and a nominee director.",
   ),
   entry(
@@ -187,8 +207,8 @@ export const CORPUS: CorpusEntry[] = [
     "minutes",
     100,
     2103,
-    "Property company board minutes",
-    "Board minutes of a property company with loans from connected parties.",
+    "Property company board minutes, 2025",
+    "Board minutes of a property company that borrowed from connected parties.",
   ),
   entry(
     "ne-va-04",
@@ -196,7 +216,7 @@ export const CORPUS: CorpusEntry[] = [
     "judgment",
     150,
     2104,
-    "Asset recovery judgment",
+    "High Court judgment: invoice fraud recovery",
     "A judgment on recovering the proceeds of an invoice fraud.",
   ),
   entry(
@@ -205,8 +225,8 @@ export const CORPUS: CorpusEntry[] = [
     "wire",
     300,
     2105,
-    "Remittance hub ledger",
-    "A remittance hub's ledger of MT103 messages and returns.",
+    "Remittance hub payments ledger, H1 2026",
+    "Six months of a money-transfer business's payment messages and returns.",
   ),
   entry(
     "ne-va-06",
@@ -214,8 +234,8 @@ export const CORPUS: CorpusEntry[] = [
     "tradefinance",
     500,
     2106,
-    "Commodity trader credit archive",
-    "Five hundred pages of documentary credits, bills of lading and discrepancy notices.",
+    "Commodity trader documentary credits archive, 2024-2026",
+    "Letters of credit, bills of lading and discrepancy notices for a commodity trader.",
   ),
   entry(
     "ne-va-07",
@@ -223,8 +243,8 @@ export const CORPUS: CorpusEntry[] = [
     "kyc",
     75,
     2107,
-    "Trust and foundation onboarding",
-    "Onboarding of a family trust and a foundation with their settlors and protectors.",
+    "Family trust and foundation onboarding file",
+    "Onboarding of a family trust and a foundation, with the people who set up and oversee them.",
   ),
   // test
   entry(
@@ -233,8 +253,8 @@ export const CORPUS: CorpusEntry[] = [
     "kyc",
     10,
     3101,
-    "Retail customer onboarding",
-    "Ten pages of onboarding for a retail customer with two related parties.",
+    "Retail customer account-opening file",
+    "Account opening for a personal customer and two people connected to them.",
   ),
   entry(
     "ne-te-02",
@@ -242,8 +262,8 @@ export const CORPUS: CorpusEntry[] = [
     "sar",
     25,
     3102,
-    "Mule account cluster",
-    "A narrative about a cluster of accounts used to pass on fraud proceeds.",
+    "Suspicious activity report: money mule accounts",
+    "A report on a group of accounts used to pass on fraud proceeds.",
   ),
   entry(
     "ne-te-03",
@@ -251,7 +271,7 @@ export const CORPUS: CorpusEntry[] = [
     "minutes",
     75,
     3103,
-    "Logistics group minutes",
+    "Logistics group board minutes, 2025",
     "Board minutes of a logistics group, with conflicts of interest and resignations.",
   ),
   entry(
@@ -260,8 +280,8 @@ export const CORPUS: CorpusEntry[] = [
     "registry",
     100,
     3104,
-    "Offshore chain registry pack",
-    "Registry extracts for a chain of companies ending in a trust.",
+    "Offshore company chain registry pack",
+    "Registry extracts for a chain of offshore companies that ends in a trust.",
   ),
   entry(
     "ne-te-05",
@@ -269,8 +289,8 @@ export const CORPUS: CorpusEntry[] = [
     "comms",
     250,
     3105,
-    "Trade desk eDiscovery set",
-    "A review set from a trade desk mailbox, with nicknames and handles.",
+    "Trade desk eDiscovery review set",
+    "Emails and chats from a trade desk mailbox, full of nicknames and handles.",
   ),
   entry(
     "ne-te-06",
@@ -278,8 +298,8 @@ export const CORPUS: CorpusEntry[] = [
     "statement",
     500,
     3106,
-    "Import business statements archive",
-    "Five hundred pages of statements; most counterparties appear only in a few sections.",
+    "Import business bank statements, 2024-2026",
+    "Two years of statements; most counterparties appear only in a few sections.",
   ),
   entry(
     "ne-te-07",
@@ -287,8 +307,8 @@ export const CORPUS: CorpusEntry[] = [
     "judgment",
     200,
     3107,
-    "Nominee director judgment",
-    "A judgment on nominee directors who signed for an absent owner.",
+    "Court judgment on nominee directors",
+    "A judgment on nominee directors who signed for an owner who stayed out of sight.",
   ),
 ];
 
@@ -327,15 +347,20 @@ export function generateDocument(id: string): {
 
 /**
  * The Answer key a Run under this Rulebook should reach: names printed only
- * as an email address count only when the Rulebook includes handles.
+ * as an email address count only when the Rulebook includes handles, and
+ * only the entity types it extracts count (all of them when not given).
  */
 export function answerKeyFor(
   answerKey: ExpectedName[],
-  rulebook: Pick<Rulebook, "includeHandles">,
+  rulebook: Pick<Rulebook, "includeHandles"> &
+    Partial<Pick<Rulebook, "entityTypes">>,
 ): ExpectedName[] {
-  return rulebook.includeHandles
-    ? answerKey
-    : answerKey.filter((name) => !name.handleOnly);
+  const types = rulebook.entityTypes;
+  return answerKey.filter(
+    (name) =>
+      (rulebook.includeHandles || !name.handleOnly) &&
+      (!types || types.includes(name.type)),
+  );
 }
 
 export function corpusCards(): CorpusCard[] {
@@ -346,6 +371,7 @@ export function corpusCards(): CorpusCard[] {
     pages: e.pages,
     split: e.split,
     description: e.description,
+    featured: e.featured,
     expectedNames: planParties(input(e)).parties.length,
   }));
 }
