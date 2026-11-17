@@ -169,12 +169,43 @@ export const projects: Project[] = [
       "Editable rules, the cost of every model call and an audit trail",
     ],
   },
+  // Appended last for the same reason; `LEAD_DEMOS` below puts it first on the landing page.
+  {
+    slug: "bank-harness",
+    icon: "agents",
+    title: "Jod: Harness for Bank",
+    sector: "Banking operations",
+    summary:
+      "Like Claude, but set up for one bank desk. A chat agent with editable skills, deterministic pipelines that wait for a person's approval, a knowledge base that spots conflicting documents, staff roles and an audit trail, all behind one MCP server that Claude can use too.",
+    outcome: "Every action by a person or the agent on the audit trail",
+    tags: ["Agents", "MCP", "Skills", "Durable workflows", "Hybrid search"],
+    status: "Live",
+    href: "/demos/harness",
+    isNew: true,
+    features: [
+      "Three pension pipelines run as MCP tools, with a live pipeline view",
+      "Change a rule's parameters as an admin; every run records the versions it used",
+      "Upload a circular and settle the conflicts it raises with older guidance",
+    ],
+  },
 ];
 
+/**
+ * Live demos that lead the landing page, in this order. The rest follow in
+ * list order. The landing page numbers demos by their place in `liveDemos`,
+ * so this is what makes a demo 01 without moving it in `projects`.
+ */
+const LEAD_DEMOS = ["bank-harness"];
+
+const liveInListOrder = projects.filter((project) => project.status === "Live");
+
 /** The landing page's split: live demos take the stage, the rest wait on the bench. */
-export const liveDemos = projects.filter(
-  (project) => project.status === "Live",
-);
+export const liveDemos = [
+  ...LEAD_DEMOS.flatMap((slug) =>
+    liveInListOrder.filter((project) => project.slug === slug),
+  ),
+  ...liveInListOrder.filter((project) => !LEAD_DEMOS.includes(project.slug)),
+];
 export const benchProjects = projects.filter(
   (project) => project.status !== "Live",
 );
@@ -183,12 +214,13 @@ const leadingProjects = projects.slice(0, FEATURED_PROJECT_LIMIT);
 
 /**
  * The About page's Projects: the first entries, then every live demo not
- * already among them, in list order. The first entries keep their
- * `projects.<index>` source paths; the appended demos are numbered by their
- * order among live demos, so add a new live demo at the end of `projects` to
- * keep the others' paths stable.
+ * already among them, in list order (not the landing page's order). The first
+ * entries keep their `projects.<index>` source paths; the appended demos are
+ * numbered by their order among live demos in the list, so add a new live demo
+ * at the end of `projects` to keep the others' paths stable, and name it in
+ * `LEAD_DEMOS` if it should lead the landing page.
  */
 export const featuredProjects = [
   ...leadingProjects,
-  ...liveDemos.filter((project) => !leadingProjects.includes(project)),
+  ...liveInListOrder.filter((project) => !leadingProjects.includes(project)),
 ];

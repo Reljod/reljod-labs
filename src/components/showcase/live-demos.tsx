@@ -1,5 +1,6 @@
 import Link from "next/link";
 import type { ReactNode } from "react";
+import { Badge } from "@/components/ui/badge";
 import { ButtonLink } from "@/components/ui/button-link";
 import { Icon } from "@/components/ui/icon";
 import { LiveBadge } from "@/components/ui/live-badge";
@@ -10,6 +11,7 @@ import { BrowserFrame } from "./browser-frame";
 import { CaseworkPreview } from "./previews/casework-preview";
 import { ClientManagerPreview } from "./previews/client-manager-preview";
 import { DocumentCompliancePreview } from "./previews/document-compliance-preview";
+import { HarnessPreview } from "./previews/harness-preview";
 import { LedgerPreview } from "./previews/ledger-preview";
 import { ProcessTransferPreview } from "./previews/process-transfer-preview";
 
@@ -22,6 +24,7 @@ const previews: Record<string, (project: Project) => ReactNode> = {
   "casework-desk": () => <CaseworkPreview />,
   "client-manager": () => <ClientManagerPreview />,
   "process-transfer": () => <ProcessTransferPreview />,
+  "bank-harness": () => <HarnessPreview />,
 };
 
 export function LiveDemos() {
@@ -71,7 +74,10 @@ function DemoPanel({ demo, index }: { demo: Project; index: number }) {
           <p className="font-mono text-5xl leading-none font-bold text-federal-blue">
             {String(index + 1).padStart(2, "0")}
           </p>
-          <LiveBadge label="Live now" />
+          <div className="flex flex-wrap items-center justify-end gap-2">
+            {demo.isNew ? <Badge tone="brass">New</Badge> : null}
+            <LiveBadge label="Live now" />
+          </div>
         </div>
         <p className="eyebrow mt-8 text-ink-muted">{demo.sector}</p>
         <h3

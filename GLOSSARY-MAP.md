@@ -8,3 +8,4 @@ Each context keeps its own language.
 - **Casework**: the Specialist desk that runs pension, employer, structure and screening reviews as Pipelines of Jobs. `src/features/casework/GLOSSARY.md`
 - **Client Manager**: a wealth manager's clients, each with a self-correcting knowledge graph and GraphRAG chat. `src/features/client-manager/GLOSSARY.md`
 - **Process transfer**: a recorded handover call turned into a Process, a workflow document and a checked, approved Deck. `src/features/process-transfer/GLOSSARY.md`
+- **Harness**: Jod: Harness for Bank, a banking agent with Skills, Pipelines, a Knowledge base and a Sandbox behind one MCP server. `src/features/harness/GLOSSARY.md`

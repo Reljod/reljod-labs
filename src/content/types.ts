@@ -71,6 +71,8 @@ export type Project = {
   /** A live demo when `status` is "Live", otherwise the case study. */
   href?: string;
   cover?: { src: string; alt: string };
+  /** Marks a recently added project with a "New" tag wherever it is listed. */
+  isNew?: boolean;
   /** What a visitor gets to do once they open a live demo. */
   features?: string[];
 };

@@ -35,7 +35,7 @@ All copy lives in typed data files under `src/content/`, so most updates never t
 | `projects.ts` | Every demo and project. `status: "Live"` puts one on the landing stage; anything else floats on the bench. The About page shows the first `FEATURED_PROJECT_LIMIT` (6) |
 | `navigation.ts` | Header and footer links |
 
-Project entries are templates. Replace bracketed placeholders such as `[Outcome metric]` with real, approved figures, and set `href` once a case study exists to turn on its "Read case study" link. A new live demo also needs a moving preview: add one under `src/components/showcase/previews/` and register it by slug in `live-demos.tsx`. Add new projects at the end of the list: Ledger's source paths point at projects by index.
+Project entries are templates. Replace bracketed placeholders such as `[Outcome metric]` with real, approved figures, and set `href` once a case study exists to turn on its "Read case study" link. A new live demo also needs a moving preview: add one under `src/components/showcase/previews/` and register it by slug in `live-demos.tsx`. Add new projects at the end of the list: Ledger's source paths point at projects by index. To put a live demo first on the landing page, name its slug in `LEAD_DEMOS` in `src/content/projects.ts` instead of moving it.
 
 ## Design system
 

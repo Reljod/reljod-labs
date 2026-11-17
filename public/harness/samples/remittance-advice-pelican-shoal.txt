@@ -1,0 +1,14 @@
+SPECIMEN - fictional remittance advice for the Harbour Bank & Trust demo. Not a real employer or payment.
+
+REMITTANCE ADVICE
+
+From: Pelican Shoal Marine Services Ltd (ER-1001)
+To: Pensions Operations Desk, Harbour Bank & Trust
+Contribution month: last month
+Reference: ER-1001 pension contributions
+Amount: CI$4,295.00
+Paid by: bank transfer, by the 15th as required
+Lines on the Schedule: 8
+
+Please apply this payment to the contribution Schedule we sent for the same month.
+Contact: payroll@pelicanshoal.example

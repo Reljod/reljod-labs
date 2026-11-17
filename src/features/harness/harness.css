@@ -1,0 +1,351 @@
+/*
+ * Harness: the few things Tailwind utilities do not cover. Colours repeat the
+ * Colonnade tokens of src/app/globals.css. Every animation stops under
+ * reduced motion.
+ */
+
+.hx-root {
+  --hx-ink: #14213d;
+  --hx-line: rgb(20 33 61 / 0.14);
+  --hx-marble: #f5f1e8;
+  --hx-limestone: #e4dccb;
+  -webkit-font-smoothing: antialiased;
+  font-feature-settings: "tnum" 1;
+}
+
+/* Loading: a slow sheen across a panel-shaped block. */
+.hx-shimmer {
+  background: linear-gradient(
+    100deg,
+    rgb(228 220 203 / 0.55) 20%,
+    rgb(255 255 255 / 0.9) 40%,
+    rgb(228 220 203 / 0.55) 60%
+  );
+  background-size: 300% 100%;
+  animation: hx-shimmer 1.6s ease-in-out infinite;
+}
+@keyframes hx-shimmer {
+  from {
+    background-position: 100% 0;
+  }
+  to {
+    background-position: -100% 0;
+  }
+}
+
+/* A Step at work, a Session answering: a soft pulse on a status dot. */
+.hx-pulse {
+  animation: hx-pulse 1.4s ease-in-out infinite;
+}
+@keyframes hx-pulse {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.35;
+  }
+}
+
+/* The tab strip scrolls sideways on a phone without showing a bar. */
+.hx-scroll-x {
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+.hx-scroll-x::-webkit-scrollbar {
+  display: none;
+}
+
+/* Lists and panes that scroll get a thin, quiet bar. */
+.hx-scroll {
+  overflow-y: auto;
+  scrollbar-width: thin;
+  scrollbar-color: rgb(20 33 61 / 0.25) transparent;
+}
+
+/* A wide table in Markdown scrolls inside its own box, never the page. */
+.hx-table-wrap {
+  overflow-x: auto;
+  border: 1px solid var(--hx-line);
+  border-radius: 2px;
+}
+
+.hx-dialog::backdrop {
+  background: rgb(20 33 61 / 0.4);
+  backdrop-filter: blur(2px);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .hx-shimmer,
+  .hx-pulse {
+    animation: none;
+  }
+}
+
+/* skills */
+
+/* A Rule card opened from a link or by Demo mode: a brief ring so the eye finds it. */
+.hx-flash {
+  animation: hx-flash 1.8s ease-out 1;
+}
+@keyframes hx-flash {
+  0% {
+    box-shadow: 0 0 0 3px rgb(30 64 124 / 0.35);
+  }
+  100% {
+    box-shadow: 0 0 0 0 rgb(30 64 124 / 0);
+  }
+}
+
+/* audit */
+
+/* Rows of the Audit trail keep their columns on a wide screen and stack on a phone (Tailwind classes do the rest). */
+@media (prefers-reduced-motion: reduce) {
+  .hx-flash {
+    animation: none;
+  }
+}
+
+/* pipelines */
+
+/* A Step at work: a soft ring that breathes around its node. */
+.hx-node-live {
+  animation: hx-node-live 1.6s ease-in-out infinite;
+}
+@keyframes hx-node-live {
+  50% {
+    box-shadow: 0 0 0 5px rgb(29 78 137 / 0.18);
+  }
+}
+
+/* A running Step: a light sweeps along its foot. */
+.hx-node-shimmer {
+  position: absolute;
+  inset: auto 0 0 0;
+  height: 3px;
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    rgb(29 78 137 / 0.85) 45%,
+    transparent 90%
+  );
+  background-size: 60% 100%;
+  background-repeat: no-repeat;
+  animation: hx-node-shimmer 1.3s ease-in-out infinite;
+}
+@keyframes hx-node-shimmer {
+  from {
+    background-position: -70% 0;
+  }
+  to {
+    background-position: 170% 0;
+  }
+}
+
+/* An Approval that waits for a person: a warm glow that breathes. */
+.hx-node-glow {
+  animation: hx-node-glow 1.8s ease-in-out infinite;
+}
+@keyframes hx-node-glow {
+  0%,
+  100% {
+    box-shadow:
+      0 0 0 0 rgb(217 168 78 / 0.55),
+      0 0 10px 1px rgb(217 168 78 / 0.35);
+  }
+  50% {
+    box-shadow:
+      0 0 0 6px rgb(217 168 78 / 0.18),
+      0 0 24px 6px rgb(217 168 78 / 0.55);
+  }
+}
+
+/* The dashes that run toward a Step at work. */
+.hx-edge-flow {
+  stroke-dasharray: 2 12;
+  animation: hx-edge-flow 0.7s linear infinite;
+}
+@keyframes hx-edge-flow {
+  to {
+    stroke-dashoffset: -14;
+  }
+}
+
+/* The band behind Steps that run together. */
+.hx-band {
+  position: relative;
+}
+.hx-band-label {
+  position: absolute;
+  top: -0.7rem;
+  left: 0.75rem;
+  padding: 0 0.5rem;
+  border-radius: 999px;
+  background: var(--color-morning-haze, #d6e4f5);
+  color: #1d4e89;
+  font-family: var(--font-plex-mono, monospace);
+  font-size: 0.7rem;
+  font-weight: 700;
+  line-height: 1.2rem;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+/* The Pipeline graph: handles are only anchors for the edges. */
+.hx-flow .react-flow__handle {
+  opacity: 0;
+  pointer-events: none;
+}
+.hx-flow .react-flow__node {
+  cursor: default;
+}
+.hx-flow .react-flow__controls-button {
+  color: var(--hx-ink);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .hx-node-live,
+  .hx-node-glow,
+  .hx-node-shimmer,
+  .hx-edge-flow {
+    animation: none;
+  }
+  .hx-flow .react-flow__edge.animated path {
+    animation: none;
+  }
+}
+
+/* chat */
+
+/* docs */
+
+/* A diagram in the Docs: inline SVG that takes the page's ink. */
+.hx-dg-figure {
+  margin: 1rem 0;
+  padding: 0.75rem;
+  overflow-x: auto;
+  border: 1px solid var(--hx-line);
+  border-radius: 2px;
+  background: var(--hx-marble);
+}
+.hx-dg {
+  display: block;
+  width: 100%;
+  min-width: 560px;
+  height: auto;
+  color: var(--hx-ink);
+}
+.hx-dg-box {
+  fill: var(--color-paper, #fff);
+  stroke: currentColor;
+  stroke-width: 1.25;
+}
+.hx-dg-accent {
+  fill: var(--color-morning-haze, #d6e4f5);
+}
+.hx-dg-person {
+  fill: rgb(217 168 78 / 0.28);
+}
+.hx-dg-stop {
+  fill: rgb(178 58 43 / 0.1);
+}
+.hx-dg-lane {
+  fill: rgb(20 33 61 / 0.04);
+  stroke: currentColor;
+  stroke-opacity: 0.25;
+  stroke-dasharray: 4 3;
+}
+.hx-dg-line {
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.25;
+}
+.hx-dg-dashed {
+  stroke-dasharray: 4 4;
+  stroke-opacity: 0.5;
+}
+.hx-dg-text {
+  fill: currentColor;
+  font-family: var(--font-sans, system-ui, sans-serif);
+  font-size: 12px;
+}
+.hx-dg-strong {
+  font-weight: 600;
+}
+.hx-dg-small {
+  font-size: 10.5px;
+  opacity: 0.85;
+}
+.hx-dg-caption {
+  margin-top: 0.5rem;
+  color: var(--color-ink-muted, #4a4f5b);
+  font-size: 0.75rem;
+}
+
+/* demo mode */
+
+/*
+ * The guide bar is a sibling of the app inside .hx-shell (a column the height
+ * of the window, see app.tsx), in the flow, so the app gives up exactly the
+ * bar's height without anything measuring it. `order` puts it above the app
+ * when the visitor moves it up.
+ */
+.hx-demo-bar {
+  flex: none;
+  max-height: 45dvh;
+  overflow-y: auto;
+  background: #fff;
+  color: var(--hx-ink);
+  box-shadow: 0 0 0 1px var(--hx-line);
+}
+.hx-demo-bar[data-edge="bottom"] {
+  order: 1;
+  border-top: 2px solid #1e407c;
+}
+.hx-demo-bar[data-edge="top"] {
+  order: -1;
+  border-bottom: 2px solid #1e407c;
+}
+.hx-demo-bar:focus-visible {
+  outline: 2px solid #1e407c;
+  outline-offset: -4px;
+}
+
+/*
+ * The ring on the part of the app a Beat acts on. The guide sets
+ * data-demo-focus on <html>; the selectors are the shell's own tab and panel
+ * ids (harness-tab-<tab> and harness-tab-<tab>-panel in app.tsx).
+ */
+html[data-demo-focus="chat"] [id="harness-tab-chat-panel"],
+html[data-demo-focus="pipelines"] [id="harness-tab-pipelines-panel"],
+html[data-demo-focus="knowledge"] [id="harness-tab-knowledge-panel"],
+html[data-demo-focus="skills"] [id="harness-tab-skills-panel"],
+html[data-demo-focus="audit"] [id="harness-tab-audit-panel"],
+html[data-demo-focus="docs"] [id="harness-tab-docs-panel"],
+html[data-demo-focus="chat"] [id="harness-tab-chat"],
+html[data-demo-focus="pipelines"] [id="harness-tab-pipelines"],
+html[data-demo-focus="knowledge"] [id="harness-tab-knowledge"],
+html[data-demo-focus="skills"] [id="harness-tab-skills"],
+html[data-demo-focus="audit"] [id="harness-tab-audit"],
+html[data-demo-focus="docs"] [id="harness-tab-docs"] {
+  outline: 2px solid rgb(30 64 124 / 0.7);
+  outline-offset: -2px;
+  animation: hx-demo-ring 1.8s ease-in-out infinite;
+}
+@keyframes hx-demo-ring {
+  50% {
+    outline-color: rgb(30 64 124 / 0.2);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html[data-demo-focus] [id^="harness-tab-"] {
+    animation: none;
+  }
+}
+
+@media (max-width: 640px) {
+  .hx-demo-bar {
+    max-height: 40dvh;
+  }
+}

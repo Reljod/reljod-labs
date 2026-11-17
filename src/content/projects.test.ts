@@ -29,7 +29,26 @@ describe("featuredProjects", () => {
       "casework-desk",
       "client-manager",
       "process-transfer",
+      "bank-harness",
     ]);
+  });
+
+  it("leads the landing page with the Harness, the rest in list order", () => {
+    expect(liveDemos.map((project) => project.slug)).toEqual([
+      "bank-harness",
+      "document-compliance-checks",
+      "ledger",
+      "casework-desk",
+      "client-manager",
+      "process-transfer",
+    ]);
+  });
+
+  it("marks only the Harness as new, and it is the first live demo", () => {
+    expect(projects.filter((p) => p.isNew).map((p) => p.slug)).toEqual([
+      "bank-harness",
+    ]);
+    expect(liveDemos[0]?.isNew).toBe(true);
   });
 
   it("lists each project once", () => {
