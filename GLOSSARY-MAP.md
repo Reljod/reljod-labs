@@ -9,3 +9,4 @@ Each context keeps its own language.
 - **Client Manager**: a wealth manager's clients, each with a self-correcting knowledge graph and GraphRAG chat. `src/features/client-manager/GLOSSARY.md`
 - **Process transfer**: a recorded handover call turned into a Process, a workflow document and a checked, approved Deck. `src/features/process-transfer/GLOSSARY.md`
 - **Harness**: Jod: Harness for Bank, a banking agent with Skills, Pipelines, a Knowledge base and a Sandbox behind one MCP server. `src/features/harness/GLOSSARY.md`
+- **Name Extraction** (shown as Sieve): one Analyst agent lists every party named in a long AML document, recall first. `src/features/name-extraction/GLOSSARY.md`
