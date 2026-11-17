@@ -1,6 +1,14 @@
 import Link from "next/link";
 import type { ReactNode } from "react";
 import { liveDemos } from "@/content/projects";
+import {
+  demoBarControlClass,
+  demoTabClass,
+  demoTabsClass,
+} from "./demo-bar-styles";
+import { DemoTabs, type DemoViewTab } from "./demo-tabs";
+
+export { demoBarControlClass };
 
 /** Where every demo's back button goes: the landing page's live demos. */
 export const ALL_DEMOS_HREF = "/#demos";
@@ -9,23 +17,13 @@ type DemoSlug =
   | "document-compliance-checks"
   | "ledger"
   | "casework-desk"
-  | "client-manager";
+  | "client-manager"
+  | "process-transfer";
 
 /** A place inside a demo: a page (`href`) or a view the demo swaps itself (`onSelect`). */
-export type DemoTab = {
-  id: string;
-  label: ReactNode;
-  testId?: string;
-} & ({ href: string } | { onSelect: () => void });
-
-/** On phones the places take their own row under the name. */
-const tabsClass =
-  "order-last flex w-full flex-wrap gap-2 pb-1 lg:order-none lg:ml-3 lg:w-auto lg:pb-0";
-
-const tabClass = (active: boolean) =>
-  `outline-box press eyebrow flex h-9 items-center gap-1.5 rounded-sm px-3 ${
-    active ? "bg-ink text-paper" : "bg-paper"
-  }`;
+export type DemoTab =
+  | DemoViewTab
+  | { id: string; label: ReactNode; testId?: string; href: string };
 
 /**
  * The bar across the top of every demo: the same back button to the live
@@ -37,6 +35,7 @@ export function DemoBar({
   name,
   tabs = [],
   current,
+  panelsId,
   titleAs: Title = "span",
   badge,
   children,
@@ -47,6 +46,8 @@ export function DemoBar({
   tabs?: DemoTab[];
   /** The id of the tab that is open, if any. */
   current?: string;
+  /** For view tabs: ties each tab to its panel (see `DemoTabs`). */
+  panelsId?: string;
   /** "h1" when the bar carries the page's only title. */
   titleAs?: "h1" | "span";
   /** A small mark beside the name, such as "Synthetic data". */
@@ -91,25 +92,13 @@ export function DemoBar({
         </div>
 
         {tabs.length === 0 ? null : buttons ? (
-          <div role="tablist" aria-label="Sections" className={tabsClass}>
-            {tabs.map((tab) =>
-              "onSelect" in tab ? (
-                <button
-                  key={tab.id}
-                  type="button"
-                  role="tab"
-                  data-testid={tab.testId}
-                  aria-selected={tab.id === current}
-                  onClick={tab.onSelect}
-                  className={tabClass(tab.id === current)}
-                >
-                  {tab.label}
-                </button>
-              ) : null,
-            )}
-          </div>
+          <DemoTabs
+            tabs={tabs.filter((tab): tab is DemoViewTab => "onSelect" in tab)}
+            current={current}
+            panelsId={panelsId}
+          />
         ) : (
-          <nav aria-label={name} className={tabsClass}>
+          <nav aria-label={name} className={demoTabsClass}>
             {tabs.map((tab) =>
               "href" in tab ? (
                 <Link
@@ -117,7 +106,7 @@ export function DemoBar({
                   href={tab.href}
                   data-testid={tab.testId}
                   aria-current={tab.id === current ? "page" : undefined}
-                  className={tabClass(tab.id === current)}
+                  className={demoTabClass(tab.id === current)}
                 >
                   {tab.label}
                 </Link>
@@ -144,7 +133,3 @@ export function DemoBarBadge({ children }: { children: ReactNode }) {
     </span>
   );
 }
-
-/** A control on the right of the bar: same box and press as a tab. */
-export const demoBarControlClass =
-  "outline-box press eyebrow flex h-9 items-center gap-1.5 rounded-sm bg-paper px-2.5 font-bold";

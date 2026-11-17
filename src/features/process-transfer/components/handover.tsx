@@ -1,7 +1,7 @@
 "use client";
 
-import Link from "next/link";
 import { useCallback, useEffect, useState } from "react";
+import { DemoBar, DemoBarBadge } from "@/components/demo/demo-bar";
 import { DEMO_PATH } from "../domain/limits";
 import type { DeskView } from "../domain/run";
 import { loadDesk } from "../server/actions";
@@ -14,7 +14,7 @@ import "./handover.css";
 import { PipelineView } from "./pipeline/pipeline-view";
 import { RulesEditor } from "./rules/rules-editor";
 import { RunsList } from "./runs/runs-list";
-import { buttonClass, InlineError, Skeleton, Tabs, tabPanelProps } from "./ui";
+import { buttonClass, InlineError, Skeleton, tabPanelProps } from "./ui";
 
 const TAB_LABEL: Record<HandoverTab, string> = {
   convert: "Convert",
@@ -99,51 +99,25 @@ export function Handover({
 
   return (
     <div className="ho-ground flex min-h-dvh flex-col text-ink">
-      <header className="border-ink border-b-2 bg-paper">
-        <div className="mx-auto flex max-w-[1400px] flex-col gap-3 px-4 pt-3 sm:px-6">
-          <div className="flex flex-wrap items-center justify-between gap-x-6 gap-y-3">
-            <div className="flex min-w-0 items-center gap-3">
-              <Link
-                href="/#demos"
-                className="whitespace-nowrap font-mono text-[11px] font-bold tracking-[0.1em] text-ink-muted uppercase hover:text-ink focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-federal-blue"
-              >
-                ← Labs
-              </Link>
-              <span aria-hidden="true" className="h-8 w-0.5 bg-ink/20" />
-              <div className="min-w-0">
-                <div className="flex flex-wrap items-center gap-2">
-                  <h1 className="font-mono text-lg font-bold tracking-[0.12em] uppercase">
-                    Handover
-                  </h1>
-                  <span className="rounded-sm border border-seal-red/60 px-1.5 py-px font-mono text-[10px] font-bold tracking-[0.08em] text-seal-red uppercase">
-                    Synthetic data
-                  </span>
-                </div>
-                <p className="hidden text-sm text-ink-muted sm:block">
-                  A recorded handover call becomes a written process, a workflow
-                  document and a checked slide deck.
-                </p>
-              </div>
-            </div>
-            <SpendMeter spend={desk?.spend ?? null} />
-          </div>
-          <Tabs<HandoverTab>
-            id="ho"
-            label="Handover"
-            value={tab}
-            onChange={setTab}
-            items={HANDOVER_TABS.map((id) => ({
-              id,
-              label: TAB_LABEL[id],
-              badge:
-                id === "runs" && desk && desk.runs.length > 0
-                  ? desk.runs.length
-                  : undefined,
-            }))}
-            className="-mb-0.5 pb-2"
-          />
-        </div>
-      </header>
+      <DemoBar
+        slug="process-transfer"
+        name="Handover"
+        titleAs="h1"
+        badge={<DemoBarBadge>Synthetic data</DemoBarBadge>}
+        current={tab}
+        panelsId="ho"
+        tabs={HANDOVER_TABS.map((id) => ({
+          id,
+          label: TAB_LABEL[id],
+          badge:
+            id === "runs" && desk && desk.runs.length > 0
+              ? desk.runs.length
+              : undefined,
+          onSelect: () => setTab(id),
+        }))}
+      >
+        <SpendMeter spend={desk?.spend ?? null} />
+      </DemoBar>
 
       <main className="mx-auto w-full max-w-[1400px] flex-1 px-4 py-6 sm:px-6">
         <div {...tabPanelProps("ho", tab)}>
@@ -225,7 +199,7 @@ function SpendMeter({ spend }: { spend: DeskView["spend"] | null }) {
   const share =
     spend.capUsd > 0 ? Math.min(1, spend.todayUsd / spend.capUsd) : 0;
   return (
-    <div className="flex min-w-[12rem] flex-col gap-1">
+    <div className="flex min-w-[10rem] flex-col gap-1 sm:min-w-[12rem]">
       <p className="flex items-baseline justify-between gap-3 text-sm">
         <span>
           <span className="font-mono font-bold">
@@ -236,7 +210,7 @@ function SpendMeter({ spend }: { spend: DeskView["spend"] | null }) {
             of {usdCents(spend.capUsd)} today
           </span>
         </span>
-        <span className="font-mono text-[11px] text-ink-muted">
+        <span className="hidden font-mono text-[11px] text-ink-muted sm:inline">
           {spend.runsLeftThisHour}{" "}
           {spend.runsLeftThisHour === 1 ? "Run" : "Runs"} left this hour
         </span>
