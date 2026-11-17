@@ -15,7 +15,7 @@ export function LabHero() {
       aria-labelledby="hero-title"
       className="bg-marble bg-[linear-gradient(rgb(20_33_61/0.05)_2px,transparent_2px),linear-gradient(90deg,rgb(20_33_61/0.05)_2px,transparent_2px)] bg-size-[40px_40px]"
     >
-      <div className="mx-auto grid max-w-6xl items-center gap-12 px-4 py-16 sm:px-6 lg:min-h-[calc(100svh-4rem)] lg:grid-cols-[1.25fr_1fr] lg:py-10">
+      <div className="mx-auto grid max-w-6xl items-center gap-12 px-4 py-16 sm:px-6 lg:min-h-[calc(100svh-4rem)] lg:grid-cols-[1.1fr_1fr] lg:gap-10 lg:py-10">
         <div>
           <p className="eyebrow mb-6 flex items-center gap-3 text-ink-muted">
             <Mark size={20} className="text-ink" />
@@ -54,14 +54,14 @@ export function LabHero() {
               <li key={demo.slug}>
                 <Link
                   href={demo.href ?? "#demos"}
-                  className="group flex items-center gap-4 px-5 py-3 transition-colors hover:bg-morning-haze"
+                  className="group flex items-center gap-3 px-4 py-3 transition-colors hover:bg-morning-haze"
                 >
                   <span className="font-mono text-2xl font-bold text-federal-blue">
                     {String(index + 1).padStart(2, "0")}
                   </span>
                   <span className="min-w-0 flex-1">
-                    <span className="flex flex-wrap items-center gap-x-2 gap-y-1 font-semibold">
-                      {demo.title}
+                    <span className="flex items-center gap-1.5 font-semibold">
+                      <span className="truncate">{demo.title}</span>
                       <ProjectMarks marks={demo.marks} size="sm" />
                     </span>
                     <span className="eyebrow block text-ink-muted">
