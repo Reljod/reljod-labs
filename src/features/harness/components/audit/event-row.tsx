@@ -76,7 +76,7 @@ export function EventRow({
           : { borderLeft: `3px solid hsl(${hue} 55% 50%)` }
       }
       className={cx(
-        "relative border-ink/10 border-b",
+        "relative border-ink border-b-2",
         quiet && "bg-marble/40 text-ink-muted",
         hue === null && agent && "border-l-2 border-l-federal-blue/50",
       )}
@@ -161,7 +161,7 @@ export function EventRow({
         </button>
       ) : null}
       {open ? (
-        <div className="space-y-2 border-ink/10 border-t bg-marble/30 px-3 py-3 sm:pl-[9.5rem]">
+        <div className="space-y-2 border-ink border-t-2 bg-marble/30 px-3 py-3 sm:pl-[9.5rem]">
           {rows.length > 0 ? (
             <dl className="grid gap-x-4 gap-y-1 text-xs sm:grid-cols-[minmax(8rem,14rem)_minmax(0,1fr)]">
               {rows.map((row) => (
@@ -185,7 +185,7 @@ export function EventRow({
                   key={`${link.kind}-${link.label}`}
                   type="button"
                   onClick={() => onLink(link)}
-                  className="rounded-sm border border-ink/25 bg-paper px-2 py-1 text-xs font-medium hover:border-ink/50 hover:bg-marble"
+                  className="rounded-sm outline-box bg-paper px-2 py-1 text-xs font-medium press shadow-hard-sm hover:bg-marble"
                 >
                   {link.label}
                 </button>

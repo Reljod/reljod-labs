@@ -138,7 +138,7 @@ export function SourceReader({
       <div
         role="radiogroup"
         aria-label="What to show"
-        className="inline-flex rounded-sm border border-ink/25 bg-paper p-0.5"
+        className="inline-flex rounded-sm outline-box bg-paper p-0.5"
       >
         {(
           [
@@ -174,7 +174,7 @@ export function SourceReader({
       ) : null}
 
       {source.status === "pending" || source.status === "failed" ? (
-        <div className="space-y-2 rounded-sm border border-ink/15 bg-marble/60 p-3 text-sm">
+        <div className="space-y-2 rounded-sm outline-box bg-marble/60 p-3 text-sm">
           <p className="text-ink-muted">
             {source.status === "pending"
               ? "This Source is attached but not yet filed. It has no Passages and search does not find it."
@@ -218,10 +218,8 @@ export function SourceReader({
               key={passage.id}
               id={`passage-${passage.id}`}
               className={cx(
-                "rounded-sm border px-3 py-2",
-                superseded
-                  ? "border-ink/10 bg-marble/60 text-ink-muted"
-                  : "border-ink/15 bg-paper",
+                "rounded-sm border border-ink px-3 py-2",
+                superseded ? "bg-marble text-ink-muted" : "bg-paper",
               )}
             >
               <div className="flex flex-wrap items-center gap-x-2 gap-y-0.5">
@@ -280,7 +278,7 @@ export function SourceReader({
         })}
       </ol>
 
-      <div className="flex flex-wrap items-center gap-2 border-ink/10 border-t pt-3">
+      <div className="flex flex-wrap items-center gap-2 border-ink border-t-2 pt-3">
         {source.isSeed ? (
           <p className="text-xs text-ink-muted">
             A seed Source is part of the Workspace and cannot be removed.

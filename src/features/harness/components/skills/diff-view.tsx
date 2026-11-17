@@ -20,7 +20,7 @@ export function DiffView({
   const { added, removed } = diffStats(lines);
   if (added === 0 && removed === 0) {
     return (
-      <p className="rounded-sm border border-ink/15 bg-marble/50 px-3 py-6 text-center text-sm text-ink-muted">
+      <p className="rounded-sm outline-box bg-marble/50 px-3 py-6 text-center text-sm text-ink-muted">
         No difference: this is the same as the {beforeLabel.toLowerCase()}.
       </p>
     );
@@ -59,8 +59,8 @@ export function DiffView({
   if (hidden > 0)
     rows.push({ key: "fend", kind: "fold", text: `${hidden} unchanged lines` });
   return (
-    <div className="rounded-sm border border-ink/15">
-      <p className="border-ink/10 border-b px-3 py-1.5 font-mono text-xs text-ink-muted">
+    <div className="rounded-sm outline-box">
+      <p className="border-ink border-b-2 px-3 py-1.5 font-mono text-xs text-ink-muted">
         {beforeLabel} → {afterLabel}: <span className="text-ivy">+{added}</span>{" "}
         <span className="text-seal-red">−{removed}</span>
       </p>

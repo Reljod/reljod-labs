@@ -1,7 +1,11 @@
 "use client";
 
 import { type KeyboardEvent, type ReactNode, useRef } from "react";
-import { demoTabClass, demoTabsClass } from "./demo-bar-styles";
+import {
+  type DemoBarRowFrom,
+  demoTabClass,
+  demoTabsClass,
+} from "./demo-bar-styles";
 
 export type DemoViewTab = {
   id: string;
@@ -21,10 +25,12 @@ export function DemoTabs({
   tabs,
   current,
   panelsId,
+  rowFrom = "lg",
 }: {
   tabs: DemoViewTab[];
   current?: string;
   panelsId?: string;
+  rowFrom?: DemoBarRowFrom;
 }) {
   const refs = useRef<Record<string, HTMLButtonElement | null>>({});
 
@@ -60,7 +66,7 @@ export function DemoTabs({
       role="tablist"
       aria-label="Sections"
       onKeyDown={onKeyDown}
-      className={demoTabsClass}
+      className={demoTabsClass(rowFrom)}
     >
       {tabs.map((tab) => {
         const active = tab.id === current;

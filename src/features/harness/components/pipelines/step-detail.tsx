@@ -74,7 +74,7 @@ function FindingRow({
   onOpenRule: (ruleId: string) => void;
 }) {
   return (
-    <li className="space-y-1.5 rounded-sm border border-ink/15 bg-paper p-2.5">
+    <li className="space-y-1.5 rounded-sm outline-box bg-paper p-2.5">
       <div className="flex flex-wrap items-center gap-1.5">
         <button
           type="button"
@@ -214,7 +214,7 @@ export function StepDetail({
         <section
           key={approval.id}
           aria-label="Approval"
-          className="rounded-sm border border-ink/15 bg-marble/50 p-2.5 text-xs"
+          className="rounded-sm outline-box bg-marble/50 p-2.5 text-xs"
         >
           <p className="flex flex-wrap items-center gap-1.5">
             <span className="font-semibold">{approval.title}</span>

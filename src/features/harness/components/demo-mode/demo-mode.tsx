@@ -184,14 +184,14 @@ function Picker({
       </p>
 
       {running ? (
-        <p className="mt-3 rounded-sm border border-federal-blue/30 bg-morning-haze/50 px-3 py-2 text-sm">
+        <p className="mt-3 rounded-sm outline-box bg-morning-haze/50 px-3 py-2 text-sm">
           Running now: <strong>{running.title}</strong>. Close this to carry on,
           or pick another Scenario to start it instead.
         </p>
       ) : null}
 
       {resumeAt && resumable && !running ? (
-        <div className="mt-3 flex flex-wrap items-center gap-x-3 gap-y-2 rounded-sm border border-federal-blue/30 bg-morning-haze/50 px-3 py-2">
+        <div className="mt-3 flex flex-wrap items-center gap-x-3 gap-y-2 rounded-sm outline-box bg-morning-haze/50 px-3 py-2">
           <p className="min-w-0 flex-1 text-sm">
             <span className="font-semibold">Continue where you left off</span>
             <span className="block text-xs text-ink-muted">
@@ -214,13 +214,12 @@ function Picker({
 
       <ul className="mt-4 space-y-3">
         {SCENARIOS.map((scenario) => (
-          <li
-            key={scenario.id}
-            className="rounded-sm border border-ink/15 bg-paper p-3"
-          >
+          <li key={scenario.id} className="rounded-sm outline-box bg-paper p-3">
             <div className="flex flex-wrap items-start gap-x-3 gap-y-2">
               <div className="min-w-0 flex-1">
-                <h3 className="text-sm font-semibold">{scenario.title}</h3>
+                <h3 className="font-mono text-sm font-bold uppercase">
+                  {scenario.title}
+                </h3>
                 <p className="mt-1 text-sm text-ink-muted">
                   {scenario.summary}
                 </p>
@@ -417,7 +416,7 @@ function GuideBar({
             ) : null}
 
             {stuck && state.problem ? (
-              <output className="block space-y-1 rounded-sm border border-federal-blue/25 bg-morning-haze/40 px-3 py-2 text-sm">
+              <output className="block space-y-1 rounded-sm outline-box bg-morning-haze/40 px-3 py-2 text-sm">
                 <p className="font-medium">
                   {state.status === "drifted"
                     ? "The Agent did not do this one on its own."
@@ -590,7 +589,7 @@ function ResumeHint({
   return (
     <section
       aria-label="Continue where you left off"
-      className="fixed right-3 bottom-3 left-3 z-40 flex flex-wrap items-center gap-x-3 gap-y-2 rounded-sm border border-federal-blue/30 bg-paper px-3 py-2 shadow-lg sm:left-auto sm:w-96"
+      className="fixed right-3 bottom-3 left-3 z-40 flex flex-wrap items-center gap-x-3 gap-y-2 rounded-sm outline-box bg-paper px-3 py-2 shadow-lg sm:left-auto sm:w-96"
     >
       <p className="min-w-0 flex-1 text-sm">
         <span className="font-semibold">Continue where you left off</span>

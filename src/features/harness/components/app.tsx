@@ -10,10 +10,12 @@ import {
   useRef,
   useState,
 } from "react";
+import { DemoBar, demoBarControlClass } from "@/components/demo/demo-bar";
 import { type Action, can as roleCan } from "../domain/permissions";
 import type { Staff } from "../domain/staff";
 import { api, keys } from "./api";
 import DemoMode from "./demo-mode/demo-mode";
+import { PANELS_ID, PRODUCT_NAME, TAB_LABEL } from "./harness-bar";
 import {
   createControllerRegistry,
   HarnessContext,
@@ -34,31 +36,11 @@ import DocsTab from "./tabs/docs-tab";
 import KnowledgeTab from "./tabs/knowledge-tab";
 import PipelinesTab from "./tabs/pipelines-tab";
 import SkillsTab from "./tabs/skills-tab";
-import {
-  Button,
-  cx,
-  ErrorNote,
-  Initials,
-  RoleBadge,
-  Spinner,
-  type TabItem,
-  Tabs,
-  useWrite,
-} from "./ui";
+import { cx, ErrorNote, Initials, RoleBadge, Spinner, useWrite } from "./ui";
 import "../harness.css";
 
-export const PRODUCT_NAME = "Jod: Harness for Bank";
-export const DESK_NAME = "Pensions Operations Desk";
-export const BANK_NAME = "Harbour Bank & Trust";
-
-const TABS: TabItem<TabId>[] = [
-  { id: "chat", label: "Chat" },
-  { id: "pipelines", label: "Pipelines" },
-  { id: "knowledge", label: "Knowledge" },
-  { id: "skills", label: "Skills" },
-  { id: "audit", label: "Audit" },
-  { id: "docs", label: "Docs" },
-];
+/** The Connect page (`HARNESS_CONNECT_PATH`), named here to keep the MCP tool list out of the browser bundle. */
+const CONNECT_PATH = "/demos/harness/mcp";
 
 const TAB_VIEW: Record<TabId, () => React.ReactNode> = {
   chat: ChatTab,
@@ -68,8 +50,6 @@ const TAB_VIEW: Record<TabId, () => React.ReactNode> = {
   audit: AuditTab,
   docs: DocsTab,
 };
-
-const TAB_PREFIX = "harness-tab";
 
 /** Lays link params over a place: a value opens, null closes, a name left out stays. */
 function withParams(place: Place, tab: TabId, params: LinkParams = {}): Place {
@@ -86,8 +66,8 @@ function withParams(place: Place, tab: TabId, params: LinkParams = {}): Place {
 const samePlace = (a: Place, b: Place) => hrefOf(a) === hrefOf(b);
 
 /**
- * The Harness shell: the header (the desk, Demo mode, who is signed in), the
- * tabs, and the context every tab reads. A tab is mounted the first time it
+ * The Harness shell: the shared demo bar (its tabs, then Connect Claude, Demo
+ * mode and who is signed in), and the context every tab reads. A tab is mounted the first time it
  * is opened and then stays mounted, hidden, so a Session that is answering
  * or a Run that is streaming carries on while the person looks elsewhere.
  */
@@ -229,51 +209,38 @@ export function HarnessApp({
       */}
       <div className="hx-shell flex h-dvh flex-col overflow-clip">
         <div className="hx-root flex min-h-0 flex-1 flex-col bg-marble text-ink">
-          <header className="shrink-0 border-ink/15 border-b bg-paper">
-            <div className="flex flex-wrap items-center gap-x-4 gap-y-2 px-3 pt-2.5 sm:px-5">
-              <div className="flex min-w-0 flex-1 items-baseline gap-2">
-                <Link
-                  href="/#demos"
-                  className="hidden shrink-0 text-xs text-ink-muted hover:text-ink sm:inline"
-                >
-                  Demos
-                </Link>
-                <span
-                  className="hidden text-stone sm:inline"
-                  aria-hidden="true"
-                >
-                  /
-                </span>
-                <div className="min-w-0">
-                  <h1 className="truncate font-mono text-sm font-bold tracking-[0.04em] uppercase">
-                    {PRODUCT_NAME}
-                  </h1>
-                  <p className="truncate text-xs text-ink-muted">
-                    {DESK_NAME} · {BANK_NAME}
-                  </p>
-                </div>
-              </div>
-              <div className="flex shrink-0 items-center gap-2">
-                <Button
-                  size="sm"
-                  variant="secondary"
-                  onClick={() => setDemoOpen(true)}
-                  aria-haspopup="dialog"
-                >
-                  Demo mode
-                </Button>
-                <StaffSwitcher />
-              </div>
-            </div>
-            <Tabs
-              tabs={TABS}
-              value={place.tab}
-              onChange={(tab) => openTab(tab)}
-              label="Harness sections"
-              idPrefix={TAB_PREFIX}
-              className="mt-1 px-1 sm:px-3"
-            />
-          </header>
+          <DemoBar
+            slug="bank-harness"
+            name={PRODUCT_NAME}
+            titleAs="h1"
+            rowFrom="xl"
+            current={place.tab}
+            panelsId={PANELS_ID}
+            tabs={TAB_IDS.map((tab) => ({
+              id: tab,
+              label: TAB_LABEL[tab],
+              onSelect: () => openTab(tab),
+            }))}
+          >
+            <Link
+              href={CONNECT_PATH}
+              className={cx(demoBarControlClass, "hidden sm:flex")}
+              aria-label="Connect Claude"
+              title="Connect Claude to the Harness MCP server"
+            >
+              <span className="hidden min-[1440px]:inline">Connect</span>
+              Claude
+            </Link>
+            <button
+              type="button"
+              onClick={() => setDemoOpen(true)}
+              aria-haspopup="dialog"
+              className={demoBarControlClass}
+            >
+              Demo mode
+            </button>
+            <StaffSwitcher />
+          </DemoBar>
 
           <main className="flex min-h-0 flex-1 flex-col">
             {TAB_IDS.filter((tab) => visited.includes(tab)).map((tab) => {
@@ -282,8 +249,8 @@ export function HarnessApp({
                 <div
                   key={tab}
                   role="tabpanel"
-                  id={`${TAB_PREFIX}-${tab}-panel`}
-                  aria-labelledby={`${TAB_PREFIX}-${tab}`}
+                  id={`${PANELS_ID}-panel-${tab}`}
+                  aria-labelledby={`${PANELS_ID}-tab-${tab}`}
                   className={cx(
                     "min-h-0 flex-1 flex-col",
                     place.tab === tab ? "flex" : "hidden",
@@ -375,16 +342,15 @@ function StaffSwitcher() {
           write.reset();
           setOpen((current) => !current);
         }}
-        className="flex items-center gap-2 rounded-sm border border-ink/25 bg-paper py-1 pr-2 pl-1 text-left hover:border-ink/50 hover:bg-marble focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-federal-blue"
+        className="outline-box press flex h-9 items-center gap-2 rounded-sm bg-paper pr-2 pl-1 text-left"
       >
-        <Initials initials={staff.initials} role={staff.role} />
-        <span className="hidden min-w-0 sm:block">
-          <span className="block max-w-40 truncate text-xs leading-tight font-semibold">
-            {staff.name}
-          </span>
-          <span className="block max-w-40 truncate text-[0.7rem] leading-tight text-ink-muted">
-            {staff.title}
-          </span>
+        <Initials
+          initials={staff.initials}
+          role={staff.role}
+          className="size-6 border"
+        />
+        <span className="hidden max-w-36 truncate text-xs font-semibold 2xl:block">
+          {staff.name}
         </span>
         <RoleBadge role={staff.role} />
         <span className="sr-only">
@@ -400,12 +366,12 @@ function StaffSwitcher() {
           id={menuId}
           role="menu"
           aria-label="Sign in as a Staff member"
-          className="absolute right-0 z-30 mt-1 w-[min(20rem,calc(100vw-1.5rem))] rounded-sm border border-ink/25 bg-paper shadow-hard-sm"
+          className="outline-box absolute right-0 z-40 mt-2 w-[min(20rem,calc(100vw-1.5rem))] rounded-sm bg-paper shadow-hard-md"
         >
-          <p className="eyebrow border-ink/10 border-b px-3 py-2 text-[0.65rem] text-ink-muted">
+          <p className="eyebrow border-ink border-b-2 px-3 py-2 text-[0.65rem] font-bold text-ink-muted">
             Signed in as
           </p>
-          <ul className="py-1">
+          <ul className="divide-y divide-ink/10">
             {allStaff.map((member) => {
               const current = member.id === staff.id;
               const busy = write.pending && target === member.id;
@@ -419,7 +385,7 @@ function StaffSwitcher() {
                     onClick={() => void write.run(member.id)}
                     className={cx(
                       "flex w-full items-center gap-2.5 px-3 py-2 text-left disabled:cursor-default",
-                      current ? "bg-morning-haze/60" : "hover:bg-marble",
+                      current ? "bg-morning-haze" : "hover:bg-marble",
                       write.pending && !busy && !current && "opacity-50",
                     )}
                   >
@@ -438,7 +404,7 @@ function StaffSwitcher() {
               );
             })}
           </ul>
-          <div className="space-y-2 border-ink/10 border-t px-3 py-2">
+          <div className="space-y-2 border-ink border-t-2 bg-marble px-3 py-2">
             <ErrorNote>{write.error}</ErrorNote>
             <p className="text-xs text-ink-muted">
               A user works cases. An admin also edits Skills and Rules, settles

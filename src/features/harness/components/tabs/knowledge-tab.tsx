@@ -196,7 +196,7 @@ export default function KnowledgeTab() {
 
   return (
     <div className="flex min-h-0 flex-1 flex-col">
-      <div className="shrink-0 border-ink/10 border-b bg-paper px-2 sm:px-4">
+      <div className="shrink-0 border-ink border-b-2 bg-paper px-2 sm:px-4">
         <Tabs<View>
           label="Knowledge base"
           idPrefix={TAB_PREFIX}

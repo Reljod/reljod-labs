@@ -26,10 +26,8 @@ function Side({
   return (
     <div
       className={cx(
-        "min-w-0 rounded-sm border px-3 py-2",
-        tone === "new"
-          ? "border-federal-blue/30 bg-morning-haze/50"
-          : "border-ink/15 bg-marble/50",
+        "min-w-0 rounded-sm border border-ink px-3 py-2",
+        tone === "new" ? "bg-morning-haze" : "bg-marble",
       )}
     >
       <p className="eyebrow text-[0.65rem] text-ink-muted">{label}</p>
@@ -103,7 +101,7 @@ export function ConflictCard({
         />
       </div>
 
-      <div className="rounded-sm border border-ink/15 bg-paper px-3 py-2 text-sm">
+      <div className="rounded-sm outline-box bg-paper px-3 py-2 text-sm">
         <p className="eyebrow text-[0.65rem] text-ink-muted">
           What the Agent proposes
         </p>

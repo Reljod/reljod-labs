@@ -3,6 +3,7 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { Suspense } from "react";
 import { AccessDeniedError } from "@/features/access/server/gate";
+import { HarnessPageBar } from "@/features/harness/components/harness-bar";
 import { HARNESS_CONNECT_PATH } from "@/features/harness/domain/mcp-tools";
 import { parseAuthorizationRequest } from "@/features/harness/domain/oauth";
 import { requireStaff } from "@/features/harness/server/context";
@@ -26,7 +27,8 @@ export default function AuthorizePage({
 }: PageProps<"/demos/harness/mcp/authorize">) {
   return (
     <div className="min-h-dvh bg-marble text-ink">
-      <main className="mx-auto max-w-xl px-4 py-16 sm:px-6">
+      <HarnessPageBar />
+      <main className="mx-auto max-w-xl px-4 py-12 sm:px-6">
         <Suspense fallback={<p className="text-ink-muted">Checking…</p>}>
           <Consent searchParams={searchParams} />
         </Suspense>
@@ -38,13 +40,13 @@ export default function AuthorizePage({
 function CannotConnect({ message }: { message: string }) {
   return (
     <div className="space-y-3">
-      <h1 className="text-2xl font-semibold tracking-tight">
+      <h1 className="font-mono text-2xl leading-tight font-bold uppercase">
         Can't connect this app
       </h1>
       <p className="text-ink-muted">{message}</p>
       <Link
         href={HARNESS_CONNECT_PATH}
-        className="text-sm text-federal-blue underline"
+        className="outline-box press eyebrow inline-flex rounded-sm bg-paper px-3 py-1.5 font-bold"
       >
         How to connect Claude
       </Link>

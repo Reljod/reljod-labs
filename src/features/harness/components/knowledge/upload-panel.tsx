@@ -73,10 +73,10 @@ export function UploadPanel({
           if (dropped.length > 0) onFiles(dropped);
         }}
         className={cx(
-          "flex flex-col items-center gap-2 rounded-sm border border-dashed px-3 py-5 text-center",
+          "flex flex-col items-center gap-2 rounded-sm border-2 border-dashed px-3 py-5 text-center",
           dragging
             ? "border-federal-blue bg-morning-haze"
-            : "border-ink/25 bg-marble/50",
+            : "border-ink bg-marble",
         )}
       >
         <p className="text-sm text-ink-muted">
@@ -129,7 +129,7 @@ export function UploadPanel({
             value={sample}
             onChange={(event) => setSample(event.target.value)}
             disabled={locked || useSample.pending || busy}
-            className="h-9 min-w-0 flex-1 rounded-sm border border-ink/25 bg-paper px-2 text-sm text-ink focus-visible:border-federal-blue focus-visible:outline-2 focus-visible:outline-federal-blue/30 disabled:bg-marble disabled:text-ink-muted"
+            className="h-9 min-w-0 flex-1 rounded-sm outline-box bg-paper px-2 text-sm text-ink focus-visible:border-federal-blue focus-visible:outline-2 focus-visible:outline-federal-blue/30 disabled:bg-marble disabled:text-ink-muted"
           >
             {KNOWLEDGE_SAMPLES.map((item) => (
               <option key={item.id} value={item.id}>
@@ -158,7 +158,7 @@ export function UploadPanel({
           {jobs.map((job) => (
             <li
               key={job.key}
-              className="rounded-sm border border-ink/15 bg-paper px-3 py-2"
+              className="rounded-sm outline-box bg-paper px-3 py-2"
             >
               <div className="flex flex-wrap items-center gap-2">
                 <span className="min-w-0 flex-1 truncate text-sm font-medium">

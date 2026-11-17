@@ -69,7 +69,7 @@ function SessionRow({
                 setEditing(false);
               }
             }}
-            className="w-full rounded-sm border border-ink/30 px-2 py-1 text-sm focus-visible:outline-2 focus-visible:outline-federal-blue"
+            className="w-full rounded-sm outline-box px-2 py-1 text-sm focus-visible:outline-2 focus-visible:outline-federal-blue"
           />
           <div className="flex gap-1.5">
             <Button
@@ -170,7 +170,7 @@ export function SessionSidebar({
 }) {
   return (
     <nav aria-label="Sessions" className="flex min-h-0 flex-1 flex-col">
-      <div className="space-y-2 border-ink/10 border-b p-2.5">
+      <div className="space-y-2 border-ink border-b-2 p-2.5">
         <Button
           variant="primary"
           size="md"
@@ -221,7 +221,7 @@ export function SessionSidebar({
         )}
       </div>
       {sessions ? (
-        <p className="flex items-center gap-1.5 border-ink/10 border-t px-3 py-1.5 text-[0.7rem] text-stone">
+        <p className="flex items-center gap-1.5 border-ink border-t-2 px-3 py-1.5 text-[0.7rem] text-stone">
           {sessions.length} of {LIMITS.sessionsPerWorkspace} Sessions
           {creating ? <Spinner /> : null}
         </p>

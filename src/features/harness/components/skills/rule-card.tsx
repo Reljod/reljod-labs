@@ -201,8 +201,8 @@ export function RuleCard({
       id={`rule-${spec.id}`}
       aria-labelledby={titleId}
       className={cx(
-        "rounded-sm border bg-paper",
-        highlighted ? "hx-flash border-federal-blue" : "border-ink/15",
+        "rounded-sm border-2 bg-paper shadow-hard-sm",
+        highlighted ? "hx-flash border-federal-blue" : "border-ink",
         dirty && "border-brass",
       )}
     >
@@ -215,17 +215,15 @@ export function RuleCard({
           disabled={readOnly}
           onClick={() => update({ enabled: !draft.enabled })}
           className={cx(
-            "relative h-5 w-9 shrink-0 rounded-full border transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-federal-blue disabled:opacity-60",
-            draft.enabled
-              ? "border-federal-blue bg-federal-blue"
-              : "border-ink/30 bg-marble",
+            "relative h-5 w-9 shrink-0 rounded-sm border-2 border-ink transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-federal-blue disabled:opacity-60",
+            draft.enabled ? "bg-federal-blue" : "bg-marble",
           )}
         >
           <span
             aria-hidden="true"
             className={cx(
-              "absolute top-0.5 size-3.5 rounded-full bg-paper shadow transition-[left]",
-              draft.enabled ? "left-[1.2rem]" : "left-0.5 bg-ink/40",
+              "absolute top-0.5 size-3 rounded-[1px] bg-paper ring-1 ring-ink transition-[left]",
+              draft.enabled ? "left-[1.05rem]" : "left-0.5 bg-ink/60",
             )}
           />
         </button>
@@ -270,7 +268,7 @@ export function RuleCard({
 
       <div
         className={cx(
-          "space-y-3 border-ink/10 border-t px-3 py-3",
+          "space-y-3 border-ink border-t-2 px-3 py-3",
           off && "opacity-60",
         )}
       >
@@ -309,7 +307,7 @@ export function RuleCard({
           <span className="text-xs text-ink-muted" aria-hidden="true">
             If not met:
           </span>
-          <div className="inline-flex rounded-sm border border-ink/25 p-0.5">
+          <div className="inline-flex rounded-sm outline-box p-0.5">
             {OUTCOMES.map((outcome) => (
               <button
                 key={outcome}
@@ -348,7 +346,7 @@ export function RuleCard({
 
         {scheduled.text ? (
           <p
-            className="rounded-sm border border-brass/50 bg-brass/10 px-2 py-1 text-xs text-ink"
+            className="rounded-sm outline-box bg-brass/20 px-2 py-1 text-xs text-ink"
             title="The card shows the latest Version. See History for the Version in force."
           >
             {scheduled.text}
@@ -371,7 +369,7 @@ export function RuleCard({
         ) : null}
       </div>
 
-      <footer className="flex flex-wrap items-center gap-x-4 gap-y-2 border-ink/10 border-t px-3 py-2 text-xs text-ink-muted">
+      <footer className="flex flex-wrap items-center gap-x-4 gap-y-2 border-ink border-t-2 px-3 py-2 text-xs text-ink-muted">
         <span className="min-w-0 [overflow-wrap:anywhere]">
           {spec.citation}
         </span>
@@ -392,14 +390,14 @@ export function RuleCard({
               "rounded-sm border bg-paper px-1.5 py-0.5 font-mono text-xs text-ink aria-[invalid=true]:border-seal-red",
               draft.effectiveFrom !== spec.effectiveFrom
                 ? "border-brass bg-brass/15"
-                : "border-ink/25",
+                : "border-ink",
             )}
           />
         </label>
       </footer>
 
       {dirty || save.error || saved ? (
-        <div className="flex flex-wrap items-center gap-2 border-ink/10 border-t bg-marble/40 px-3 py-2">
+        <div className="flex flex-wrap items-center gap-2 border-ink border-t-2 bg-marble/40 px-3 py-2">
           {dirty ? (
             <>
               <Button
@@ -543,7 +541,7 @@ function VersionRow({
     .map((segment) => segment.text)
     .join("");
   return (
-    <li className="rounded-sm border border-ink/15 p-3">
+    <li className="rounded-sm outline-box p-3">
       <div className="flex flex-wrap items-center gap-2">
         <Badge tone={current ? "blue" : "neutral"}>v{version.version}</Badge>
         {inForce ? <Badge tone="green">in force</Badge> : null}

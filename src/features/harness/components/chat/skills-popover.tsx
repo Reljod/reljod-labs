@@ -61,7 +61,7 @@ function Body({
           </ul>
         )}
       </div>
-      <p className="border-ink/10 border-t pt-2 text-xs text-ink-muted">
+      <p className="border-ink border-t-2 pt-2 text-xs text-ink-muted">
         Its tools come from the Harness MCP server, the same one Claude can
         connect to.{" "}
         <Link

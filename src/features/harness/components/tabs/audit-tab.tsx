@@ -41,7 +41,7 @@ const ACTOR_LABEL: Record<ActorKind, string> = {
 const REFRESH_MS = 5_000;
 
 const selectClass =
-  "h-8 min-w-0 rounded-sm border border-ink/25 bg-paper px-2 text-xs text-ink focus-visible:border-federal-blue focus-visible:outline-2 focus-visible:outline-federal-blue/30 disabled:bg-marble disabled:text-ink-muted";
+  "h-8 min-w-0 rounded-sm outline-box bg-paper px-2 text-xs text-ink focus-visible:border-federal-blue focus-visible:outline-2 focus-visible:outline-federal-blue/30 disabled:bg-marble disabled:text-ink-muted";
 
 function downloadCsv(text: string) {
   const url = URL.createObjectURL(
@@ -199,7 +199,7 @@ export default function AuditTab() {
     <div className="flex min-h-0 flex-1 flex-col gap-3 p-3 sm:p-4">
       <Panel bodyClassName="p-3" className="shrink-0">
         <div className="flex flex-wrap items-end gap-x-4 gap-y-3">
-          <fieldset className="m-0 flex min-w-0 rounded-sm border border-ink/25 bg-paper p-0.5">
+          <fieldset className="m-0 flex min-w-0 rounded-sm outline-box bg-paper p-0.5">
             <legend className="sr-only">Which events</legend>
             {SCOPES.map((item) => {
               const disabled = item.id === "workspace" && !admin;
@@ -349,7 +349,7 @@ export default function AuditTab() {
         ].map(([label, value]) => (
           <div
             key={label}
-            className="rounded-sm border border-ink/15 bg-paper px-3 py-2"
+            className="rounded-sm outline-box bg-paper px-3 py-2"
           >
             <dt className="eyebrow text-[0.6rem] text-ink-muted">{label}</dt>
             <dd className="font-mono text-sm font-semibold tabular-nums">

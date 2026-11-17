@@ -18,7 +18,7 @@ export function ChatEmptyState({
 }) {
   return (
     <div className="mx-auto w-full max-w-3xl px-3 py-6 sm:px-5 sm:py-10">
-      <h2 className="text-lg font-semibold">
+      <h2 className="font-mono text-xl leading-tight font-bold uppercase">
         Good to see you, {staffName.split(" ")[0]}.
       </h2>
       <p className="mt-2 max-w-prose text-sm leading-relaxed text-ink-muted">
@@ -47,9 +47,8 @@ export function ChatEmptyState({
                 aria-describedby={locked ? reasonId : undefined}
                 onClick={() => onPrompt(prompt)}
                 className={cx(
-                  "h-full w-full rounded-sm border border-ink/20 bg-paper px-3 py-2.5 text-left transition-colors",
-                  "hover:border-ink/50 hover:bg-marble focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-federal-blue",
-                  "disabled:cursor-not-allowed disabled:opacity-60 disabled:hover:border-ink/20 disabled:hover:bg-paper",
+                  "outline-box press h-full w-full rounded-sm bg-paper px-3 py-2.5 text-left hover:bg-morning-haze",
+                  "disabled:translate-none disabled:cursor-not-allowed disabled:bg-marble disabled:opacity-60 disabled:shadow-none",
                 )}
               >
                 <span className="block text-sm font-semibold">

@@ -26,7 +26,7 @@ export function SourcesList({
     );
   }
   return (
-    <ul className="divide-y divide-ink/10 rounded-sm border border-ink/15 bg-paper">
+    <ul className="divide-y divide-ink/10 rounded-sm outline-box bg-paper">
       {sources.map((source) => (
         <li key={source.id}>
           <div
@@ -126,7 +126,7 @@ export function AttachedSources({
           does not find them and no Conflict check has run until you file one.
         </p>
       </div>
-      <ul className="divide-y divide-ink/10 rounded-sm border border-ink/15 bg-paper">
+      <ul className="divide-y divide-ink/10 rounded-sm outline-box bg-paper">
         {sources.map((source) => (
           <AttachedRow
             key={source.id}

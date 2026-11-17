@@ -1,15 +1,11 @@
 /*
- * Harness: the few things Tailwind utilities do not cover. Colours repeat the
- * Colonnade tokens of src/app/globals.css. Every animation stops under
- * reduced motion.
+ * Harness: the few things Tailwind utilities do not cover. Colours are the
+ * Colonnade tokens of src/app/globals.css (var(--color-*)); boxes, shadows
+ * and presses come from its utilities. Every animation stops under reduced
+ * motion.
  */
 
 .hx-root {
-  --hx-ink: #14213d;
-  --hx-line: rgb(20 33 61 / 0.14);
-  --hx-marble: #f5f1e8;
-  --hx-limestone: #e4dccb;
-  -webkit-font-smoothing: antialiased;
   font-feature-settings: "tnum" 1;
 }
 
@@ -60,19 +56,20 @@
 .hx-scroll {
   overflow-y: auto;
   scrollbar-width: thin;
-  scrollbar-color: rgb(20 33 61 / 0.25) transparent;
+  scrollbar-color: color-mix(in srgb, var(--color-ink) 35%, transparent)
+    transparent;
 }
 
 /* A wide table in Markdown scrolls inside its own box, never the page. */
 .hx-table-wrap {
   overflow-x: auto;
-  border: 1px solid var(--hx-line);
+  border: 2px solid var(--color-ink);
   border-radius: 2px;
 }
 
+/* No blur: a flat ink wash, like the other demos' dialogs. */
 .hx-dialog::backdrop {
-  background: rgb(20 33 61 / 0.4);
-  backdrop-filter: blur(2px);
+  background: color-mix(in srgb, var(--color-ink) 45%, transparent);
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -90,10 +87,12 @@
 }
 @keyframes hx-flash {
   0% {
-    box-shadow: 0 0 0 3px rgb(30 64 124 / 0.35);
+    outline: 3px solid var(--color-federal-blue);
+    outline-offset: 3px;
   }
   100% {
-    box-shadow: 0 0 0 0 rgb(30 64 124 / 0);
+    outline: 3px solid transparent;
+    outline-offset: 3px;
   }
 }
 
@@ -180,10 +179,11 @@
   top: -0.7rem;
   left: 0.75rem;
   padding: 0 0.5rem;
-  border-radius: 999px;
-  background: var(--color-morning-haze, #d6e4f5);
-  color: #1d4e89;
-  font-family: var(--font-plex-mono, monospace);
+  border: 1px solid var(--color-ink);
+  border-radius: 2px;
+  background: var(--color-morning-haze);
+  color: var(--color-federal-blue);
+  font-family: var(--font-mono);
   font-size: 0.7rem;
   font-weight: 700;
   line-height: 1.2rem;
@@ -200,7 +200,7 @@
   cursor: default;
 }
 .hx-flow .react-flow__controls-button {
-  color: var(--hx-ink);
+  color: var(--color-ink);
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -224,16 +224,17 @@
   margin: 1rem 0;
   padding: 0.75rem;
   overflow-x: auto;
-  border: 1px solid var(--hx-line);
+  border: 2px solid var(--color-ink);
   border-radius: 2px;
-  background: var(--hx-marble);
+  background: var(--color-marble);
+  box-shadow: var(--shadow-hard-sm);
 }
 .hx-dg {
   display: block;
   width: 100%;
   min-width: 560px;
   height: auto;
-  color: var(--hx-ink);
+  color: var(--color-ink);
 }
 .hx-dg-box {
   fill: var(--color-paper, #fff);
@@ -294,52 +295,56 @@
   flex: none;
   max-height: 45dvh;
   overflow-y: auto;
-  background: #fff;
-  color: var(--hx-ink);
-  box-shadow: 0 0 0 1px var(--hx-line);
+  background: var(--color-paper);
+  color: var(--color-ink);
 }
 .hx-demo-bar[data-edge="bottom"] {
   order: 1;
-  border-top: 2px solid #1e407c;
+  border-top: 2px solid var(--color-ink);
 }
 .hx-demo-bar[data-edge="top"] {
   order: -1;
-  border-bottom: 2px solid #1e407c;
+  border-bottom: 2px solid var(--color-ink);
 }
 .hx-demo-bar:focus-visible {
-  outline: 2px solid #1e407c;
+  outline: 2px solid var(--color-federal-blue);
   outline-offset: -4px;
 }
 
 /*
  * The ring on the part of the app a Beat acts on. The guide sets
- * data-demo-focus on <html>; the selectors are the shell's own tab and panel
- * ids (harness-tab-<tab> and harness-tab-<tab>-panel in app.tsx).
+ * data-demo-focus on <html>; the selectors are the shell's tab and panel ids
+ * (harness-tab-<tab> and harness-panel-<tab>, from DemoBar's tabs in app.tsx).
  */
-html[data-demo-focus="chat"] [id="harness-tab-chat-panel"],
-html[data-demo-focus="pipelines"] [id="harness-tab-pipelines-panel"],
-html[data-demo-focus="knowledge"] [id="harness-tab-knowledge-panel"],
-html[data-demo-focus="skills"] [id="harness-tab-skills-panel"],
-html[data-demo-focus="audit"] [id="harness-tab-audit-panel"],
-html[data-demo-focus="docs"] [id="harness-tab-docs-panel"],
+html[data-demo-focus="chat"] [id="harness-panel-chat"],
+html[data-demo-focus="pipelines"] [id="harness-panel-pipelines"],
+html[data-demo-focus="knowledge"] [id="harness-panel-knowledge"],
+html[data-demo-focus="skills"] [id="harness-panel-skills"],
+html[data-demo-focus="audit"] [id="harness-panel-audit"],
+html[data-demo-focus="docs"] [id="harness-panel-docs"],
 html[data-demo-focus="chat"] [id="harness-tab-chat"],
 html[data-demo-focus="pipelines"] [id="harness-tab-pipelines"],
 html[data-demo-focus="knowledge"] [id="harness-tab-knowledge"],
 html[data-demo-focus="skills"] [id="harness-tab-skills"],
 html[data-demo-focus="audit"] [id="harness-tab-audit"],
 html[data-demo-focus="docs"] [id="harness-tab-docs"] {
-  outline: 2px solid rgb(30 64 124 / 0.7);
+  outline: 2px solid var(--color-federal-blue);
   outline-offset: -2px;
   animation: hx-demo-ring 1.8s ease-in-out infinite;
 }
 @keyframes hx-demo-ring {
   50% {
-    outline-color: rgb(30 64 124 / 0.2);
+    outline-color: color-mix(
+      in srgb,
+      var(--color-federal-blue) 25%,
+      transparent
+    );
   }
 }
 
 @media (prefers-reduced-motion: reduce) {
-  html[data-demo-focus] [id^="harness-tab-"] {
+  html[data-demo-focus] [id^="harness-tab-"],
+  html[data-demo-focus] [id^="harness-panel-"] {
     animation: none;
   }
 }

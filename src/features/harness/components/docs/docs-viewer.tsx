@@ -112,7 +112,7 @@ export default function DocsViewer() {
 
   const navigation = (
     <div className="flex min-h-0 flex-1 flex-col">
-      <div className="border-ink/10 border-b p-3">
+      <div className="border-ink border-b-2 p-3">
         <label htmlFor={searchId} className="sr-only">
           Search the documentation
         </label>
@@ -194,7 +194,7 @@ export default function DocsViewer() {
 
   return (
     <div className="hx-docs flex min-h-0 flex-1">
-      <aside className="hidden w-64 shrink-0 flex-col border-ink/10 border-r bg-paper md:flex">
+      <aside className="hidden w-64 shrink-0 flex-col border-ink border-r-2 bg-paper md:flex">
         {navigation}
       </aside>
 
@@ -210,7 +210,7 @@ export default function DocsViewer() {
             className="absolute inset-y-0 left-0 flex w-[min(20rem,85vw)] flex-col bg-paper shadow-xl"
             aria-label="Pages"
           >
-            <div className="flex items-center justify-between border-ink/10 border-b px-3 py-2">
+            <div className="flex items-center justify-between border-ink border-b-2 px-3 py-2">
               <span className="text-sm font-semibold">Pages</span>
               <button
                 type="button"
@@ -235,7 +235,7 @@ export default function DocsViewer() {
             <button
               type="button"
               onClick={() => setDrawer(true)}
-              className="mb-4 inline-flex h-8 items-center gap-2 rounded-sm border border-ink/25 px-3 text-sm md:hidden"
+              className="mb-4 inline-flex h-8 items-center gap-2 rounded-sm outline-box px-3 text-sm md:hidden"
             >
               <span aria-hidden="true">☰</span> Pages
             </button>
@@ -243,13 +243,13 @@ export default function DocsViewer() {
             <p className="eyebrow text-[0.65rem] text-ink-muted">
               {sectionTitle(page)}
             </p>
-            <h1 className="mt-1 font-mono text-2xl font-bold tracking-[0.01em]">
+            <h1 className="mt-1 font-mono text-2xl leading-tight font-bold uppercase">
               {page.title}
             </h1>
             <p className="mt-2 text-base text-ink-muted">{page.summary}</p>
 
             {outline.length > 0 ? (
-              <details className="mt-4 rounded-sm border border-ink/15 xl:hidden">
+              <details className="mt-4 rounded-sm outline-box xl:hidden">
                 <summary className="cursor-pointer px-3 py-2 text-sm font-medium">
                   On this page
                 </summary>
@@ -264,7 +264,7 @@ export default function DocsViewer() {
               <PageBody page={page} onLink={onLink} />
             </div>
 
-            <footer className="mt-10 grid gap-3 border-ink/10 border-t pt-4 sm:grid-cols-2">
+            <footer className="mt-10 grid gap-3 border-ink border-t-2 pt-4 sm:grid-cols-2">
               {previous ? (
                 pageLink(
                   previous,
@@ -274,7 +274,7 @@ export default function DocsViewer() {
                     </span>
                     <span className="block font-medium">{previous.title}</span>
                   </>,
-                  "block rounded-sm border border-ink/15 px-3 py-2 hover:bg-marble focus-visible:outline-2 focus-visible:outline-federal-blue",
+                  "block rounded-sm outline-box px-3 py-2 hover:bg-marble focus-visible:outline-2 focus-visible:outline-federal-blue",
                 )
               ) : (
                 <span />
@@ -286,7 +286,7 @@ export default function DocsViewer() {
                       <span className="block text-xs text-ink-muted">Next</span>
                       <span className="block font-medium">{next.title}</span>
                     </>,
-                    "block rounded-sm border border-ink/15 px-3 py-2 text-right hover:bg-marble focus-visible:outline-2 focus-visible:outline-federal-blue sm:col-start-2",
+                    "block rounded-sm outline-box px-3 py-2 text-right hover:bg-marble focus-visible:outline-2 focus-visible:outline-federal-blue sm:col-start-2",
                   )
                 : null}
             </footer>

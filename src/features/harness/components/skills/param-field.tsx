@@ -36,7 +36,7 @@ export function ParamField({
   describedBy?: string;
 }) {
   const id = useId();
-  const border = changed ? "border-brass bg-brass/15" : "border-ink/25";
+  const border = changed ? "border-brass bg-brass/15" : "border-ink";
   const defaultText = formatParameter(spec, defaultValue);
   const hint = (
     <span
@@ -193,7 +193,7 @@ function ListField({
                         : "border-federal-blue/40 bg-morning-haze",
                       "text-ink",
                     )
-                  : "border-ink/20 border-dashed text-ink-muted",
+                  : "border-ink border-dashed text-ink-muted",
                 invalid && "border-seal-red",
                 !disabled && "hover:border-ink/50",
               )}
@@ -246,7 +246,7 @@ function ListField({
             }
           }}
           onBlur={add}
-          className={cx(fieldBase, "w-20 border-ink/25 text-xs")}
+          className={cx(fieldBase, "w-20 border-ink text-xs")}
         />
       )}
       {changed ? hint : null}

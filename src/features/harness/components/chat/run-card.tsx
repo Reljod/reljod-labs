@@ -55,7 +55,7 @@ export function RunCard({
   return (
     <section
       aria-label={`Run: ${title}`}
-      className="rounded-sm border border-ink/25 bg-paper px-3 py-2.5"
+      className="rounded-sm outline-box bg-paper px-3 py-2.5"
     >
       <div className="flex flex-wrap items-center gap-x-3 gap-y-2">
         <div className="min-w-0 flex-1">
@@ -95,7 +95,7 @@ export function RunCard({
           aria-valuemin={0}
           aria-valuemax={progress.total}
           aria-valuenow={progress.finished}
-          className="mt-2 h-1 overflow-hidden rounded-full bg-ink/10"
+          className="mt-2 h-2 overflow-hidden rounded-sm border border-ink bg-marble"
         >
           <div
             className={cx(

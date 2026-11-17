@@ -53,7 +53,7 @@ export function SourcePreview({
       <div
         role="radiogroup"
         aria-label="Preview view"
-        className="inline-flex rounded-sm border border-ink/25 bg-paper p-0.5"
+        className="inline-flex rounded-sm outline-box bg-paper p-0.5"
       >
         {(
           [
@@ -103,7 +103,7 @@ function RawText({ data }: { data: SourcePreviewResponse }) {
   useEffect(() => () => clearTimeout(timer.current), []);
   if (data.text === null) {
     return (
-      <p className="rounded-sm border border-ink/15 bg-marble/60 p-3 text-sm text-ink-muted">
+      <p className="rounded-sm outline-box bg-marble/60 p-3 text-sm text-ink-muted">
         {data.textError ?? "No text could be read from this Source."}
       </p>
     );
@@ -149,7 +149,7 @@ function RawText({ data }: { data: SourcePreviewResponse }) {
       <pre
         // biome-ignore lint/a11y/noNoninteractiveTabindex: a scrolling box must take focus so the keyboard can scroll it
         tabIndex={0}
-        className="hx-scroll max-h-[28rem] overflow-x-auto rounded-sm border border-ink/15 bg-paper p-3 font-mono text-xs leading-relaxed break-words whitespace-pre-wrap focus-visible:outline-2 focus-visible:outline-federal-blue"
+        className="hx-scroll max-h-[28rem] overflow-x-auto rounded-sm outline-box bg-paper p-3 font-mono text-xs leading-relaxed break-words whitespace-pre-wrap focus-visible:outline-2 focus-visible:outline-federal-blue"
       >
         {text}
       </pre>
@@ -227,7 +227,7 @@ function PlainText({
 }) {
   if (text === null) {
     return (
-      <p className="rounded-sm border border-ink/15 bg-marble/60 p-3 text-sm text-ink-muted">
+      <p className="rounded-sm outline-box bg-marble/60 p-3 text-sm text-ink-muted">
         {error ?? "No text could be read from this Source."}
       </p>
     );
@@ -236,7 +236,7 @@ function PlainText({
     <pre
       // biome-ignore lint/a11y/noNoninteractiveTabindex: a scrolling box must take focus so the keyboard can scroll it
       tabIndex={0}
-      className="hx-scroll max-h-[32rem] overflow-x-auto rounded-sm border border-ink/15 bg-paper p-3 text-sm leading-relaxed break-words whitespace-pre-wrap focus-visible:outline-2 focus-visible:outline-federal-blue"
+      className="hx-scroll max-h-[32rem] overflow-x-auto rounded-sm outline-box bg-paper p-3 text-sm leading-relaxed break-words whitespace-pre-wrap focus-visible:outline-2 focus-visible:outline-federal-blue"
     >
       {text}
     </pre>
@@ -266,7 +266,7 @@ function Table({ rows, caption }: { rows: string[][]; caption?: string }) {
         // biome-ignore lint/a11y/noNoninteractiveTabindex: a scrolling box must take focus so the keyboard can scroll it
         tabIndex={0}
         aria-label={caption ?? "Table"}
-        className="hx-scroll max-h-[28rem] overflow-auto rounded-sm border border-ink/15 bg-paper focus-visible:outline-2 focus-visible:outline-federal-blue"
+        className="hx-scroll max-h-[28rem] overflow-auto rounded-sm outline-box bg-paper focus-visible:outline-2 focus-visible:outline-federal-blue"
       >
         <table className="min-w-full border-collapse text-xs">
           <thead>
@@ -275,7 +275,7 @@ function Table({ rows, caption }: { rows: string[][]; caption?: string }) {
                 <th
                   key={index}
                   scope="col"
-                  className="sticky top-0 z-10 border-ink/20 border-b bg-marble px-2 py-1.5 text-left font-semibold whitespace-nowrap"
+                  className="sticky top-0 z-10 border-ink border-b-2 bg-marble px-2 py-1.5 text-left font-semibold whitespace-nowrap"
                 >
                   {head[index] ?? ""}
                 </th>
@@ -289,7 +289,7 @@ function Table({ rows, caption }: { rows: string[][]; caption?: string }) {
                 {across.map((columnIndex) => (
                   <td
                     key={columnIndex}
-                    className="border-ink/10 border-b px-2 py-1 align-top font-mono whitespace-nowrap"
+                    className="border-ink border-b-2 px-2 py-1 align-top font-mono whitespace-nowrap"
                   >
                     {row[columnIndex] ?? ""}
                   </td>
@@ -352,10 +352,10 @@ function Sheets({
               aria-selected={index === picked}
               onClick={() => setPicked(index)}
               className={cx(
-                "rounded-sm border px-2 py-1 text-xs",
+                "outline-box press eyebrow rounded-sm px-2 py-1 text-[0.7rem] shadow-hard-sm",
                 index === picked
-                  ? "border-ink bg-ink text-paper"
-                  : "border-ink/25 hover:bg-marble",
+                  ? "bg-ink text-paper"
+                  : "bg-paper hover:bg-morning-haze",
               )}
             >
               {item.name}
@@ -420,7 +420,7 @@ function PdfPages({ url }: { url: string }) {
           canvas.style.maxWidth = "100%";
           canvas.style.height = "auto";
           canvas.className =
-            "mx-auto mb-3 block border border-ink/15 bg-white shadow-sm";
+            "mx-auto mb-3 block outline-box bg-paper shadow-hard-sm";
           canvas.setAttribute("role", "img");
           canvas.setAttribute(
             "aria-label",
@@ -468,7 +468,7 @@ function PdfPages({ url }: { url: string }) {
         // biome-ignore lint/a11y/noNoninteractiveTabindex: a scrolling box must take focus so the keyboard can scroll it
         tabIndex={0}
         aria-label="PDF pages"
-        className="hx-scroll max-h-[34rem] overflow-y-auto rounded-sm border border-ink/15 bg-marble/60 p-3 focus-visible:outline-2 focus-visible:outline-federal-blue"
+        className="hx-scroll max-h-[34rem] overflow-y-auto rounded-sm outline-box bg-marble/60 p-3 focus-visible:outline-2 focus-visible:outline-federal-blue"
       />
       {state.kind === "ready" && state.pages > MAX_PDF_PAGES ? (
         <p className="text-xs text-ink-muted">

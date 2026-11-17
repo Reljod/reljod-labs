@@ -48,7 +48,7 @@ export function RunHeader({
     <header className="space-y-2">
       <div className="flex flex-wrap items-start gap-x-3 gap-y-2">
         <div className="min-w-0 flex-1">
-          <h2 className="flex flex-wrap items-center gap-2 text-base font-semibold">
+          <h2 className="flex flex-wrap items-center gap-2 font-mono text-base font-bold uppercase">
             <span className="min-w-0 [overflow-wrap:anywhere]">
               {runTitle(spec, run)}
             </span>
@@ -99,11 +99,11 @@ export function RunHeader({
       </p>
       <ErrorNote>{stop.error}</ErrorNote>
       {versions.length > 0 ? (
-        <details className="rounded-sm border border-ink/15 bg-paper text-xs">
+        <details className="rounded-sm outline-box bg-paper text-xs">
           <summary className="cursor-pointer px-2.5 py-1.5 font-medium focus-visible:outline-2 focus-visible:outline-federal-blue">
             Rule Versions used ({versions.length})
           </summary>
-          <ul className="grid gap-x-4 gap-y-0.5 border-ink/10 border-t px-2.5 py-2 sm:grid-cols-2">
+          <ul className="grid gap-x-4 gap-y-0.5 border-ink border-t-2 px-2.5 py-2 sm:grid-cols-2">
             {versions.map(([ruleId, version]) => (
               <li key={ruleId} className="flex items-center gap-2">
                 <button

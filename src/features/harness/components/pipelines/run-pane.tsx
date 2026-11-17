@@ -105,7 +105,7 @@ export function RunPane({
       {watch.state === "reconnecting" ? (
         <output
           aria-live="polite"
-          className="block rounded-sm border border-brass/60 bg-brass/10 px-3 py-2 text-xs text-oak"
+          className="block rounded-sm outline-box bg-brass/20 px-3 py-2 text-xs text-oak"
         >
           The live view lost its connection. Reconnecting; nothing is lost.
         </output>

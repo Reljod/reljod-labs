@@ -81,7 +81,7 @@ function Item({
             {skill.id}
           </span>
           {skill.kind === "rulebook" ? (
-            <span className="shrink-0 rounded-sm border border-ink/20 px-1 font-mono text-[0.55rem] text-ink-muted uppercase">
+            <span className="shrink-0 rounded-sm outline-box px-1 font-mono text-[0.55rem] text-ink-muted uppercase">
               rules
             </span>
           ) : null}
@@ -116,7 +116,7 @@ export function SkillList({
   const none = groups.pipelines.length === 0 && groups.general.length === 0;
   return (
     <div className="flex min-h-0 flex-1 flex-col">
-      <div className="shrink-0 border-ink/10 border-b p-2">
+      <div className="shrink-0 border-ink border-b-2 p-2">
         <input
           type="search"
           aria-label="Search Skills"

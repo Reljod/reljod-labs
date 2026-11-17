@@ -105,7 +105,7 @@ function AttachmentChip({
         "flex max-w-full items-center gap-1.5 rounded-sm border px-2 py-1 text-xs",
         attachment.state === "failed"
           ? "border-seal-red/40 bg-seal-red/5 text-seal-red"
-          : "border-ink/20 bg-paper",
+          : "border-ink bg-paper",
       )}
     >
       {attachment.state === "uploading" ? <Spinner /> : null}
@@ -173,7 +173,7 @@ function SamplePicker({
                           onPick(sample);
                           close();
                         }}
-                        className="w-full rounded-sm border border-transparent px-2 py-1.5 text-left hover:border-ink/20 hover:bg-marble focus-visible:outline-2 focus-visible:outline-federal-blue disabled:opacity-55"
+                        className="w-full rounded-sm border border-transparent px-2 py-1.5 text-left hover:border-ink hover:bg-marble focus-visible:outline-2 focus-visible:outline-federal-blue disabled:opacity-55"
                       >
                         <span className="block text-sm font-medium">
                           {sample.title}
@@ -287,7 +287,7 @@ export function Composer({
 
   return (
     <form
-      className="shrink-0 space-y-2 border-ink/15 border-t bg-paper px-3 py-3 sm:px-5"
+      className="shrink-0 space-y-2 border-ink border-t-2 bg-paper px-3 py-3 sm:px-5"
       onSubmit={(event) => {
         event.preventDefault();
         if (blocker === null) onSend();
@@ -308,7 +308,7 @@ export function Composer({
           ))}
         </ul>
       ) : null}
-      <div className="rounded-sm border border-ink/30 bg-paper focus-within:border-federal-blue focus-within:outline-2 focus-within:outline-federal-blue/40">
+      <div className="rounded-sm outline-box bg-paper focus-within:border-federal-blue focus-within:outline-2 focus-within:outline-federal-blue/40">
         <textarea
           ref={textareaRef}
           value={text}
@@ -321,7 +321,7 @@ export function Composer({
           placeholder="Ask about a Member, upload a document, start a Run…"
           className="block max-h-48 min-h-[4.25rem] w-full resize-none bg-transparent px-3 py-2.5 text-sm leading-relaxed outline-none placeholder:text-ink-muted/70"
         />
-        <div className="flex flex-wrap items-center gap-2 border-ink/10 border-t px-2 py-1.5">
+        <div className="flex flex-wrap items-center gap-2 border-ink border-t-2 px-2 py-1.5">
           <input
             ref={fileInput}
             type="file"

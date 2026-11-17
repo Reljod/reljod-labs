@@ -1,8 +1,8 @@
 "use client";
 
-import Link from "next/link";
 import { useEffect, useState } from "react";
 import { api } from "@/features/harness/components/api";
+import { HarnessPageBar } from "@/features/harness/components/harness-bar";
 import {
   Badge,
   Button,
@@ -27,7 +27,7 @@ function Code({ text, copy = true }: { text: string; copy?: boolean }) {
   const [copied, setCopied] = useState(false);
   return (
     <div className="relative">
-      <pre className="overflow-x-auto rounded-sm border border-ink/15 bg-marble p-3 pr-20 font-mono text-xs leading-relaxed whitespace-pre-wrap break-all">
+      <pre className="overflow-x-auto rounded-sm outline-box bg-marble p-3 pr-20 font-mono text-xs leading-relaxed whitespace-pre-wrap break-all">
         {text}
       </pre>
       {copy ? (
@@ -112,18 +112,11 @@ export function Connect({ guest, staff }: { guest: boolean; staff: Staff }) {
 
   return (
     <div className="min-h-dvh bg-marble text-ink">
-      <header className="flex items-center gap-2 border-ink/10 border-b bg-paper px-4 py-2.5">
-        <Link
-          href="/demos/harness"
-          className="text-sm text-ink-muted hover:text-ink"
-        >
-          ← Harness
-        </Link>
-      </header>
+      <HarnessPageBar />
       <main className="mx-auto max-w-3xl space-y-6 px-4 py-10 sm:px-6">
         <section className="space-y-2">
-          <p className="eyebrow text-[0.65rem] text-federal-blue">MCP</p>
-          <h1 className="text-3xl font-semibold tracking-tight">
+          <p className="eyebrow font-bold text-federal-blue">MCP</p>
+          <h1 className="font-mono text-3xl leading-[1.15] font-bold uppercase sm:text-[2.5rem]">
             Connect Claude to the Harness
           </h1>
           <p className="max-w-xl text-sm text-ink-muted">
@@ -209,8 +202,8 @@ export function Connect({ guest, staff }: { guest: boolean; staff: Staff }) {
         </Panel>
 
         {!guest ? (
-          <details className="rounded-sm border border-ink/15 bg-paper p-4">
-            <summary className="cursor-pointer text-sm font-semibold">
+          <details className="outline-box rounded-sm bg-paper p-4 shadow-hard-sm">
+            <summary className="eyebrow cursor-pointer font-bold">
               No OAuth? Paste a token instead
             </summary>
             <div className="mt-3 space-y-3">
@@ -260,7 +253,7 @@ export function Connect({ guest, staff }: { guest: boolean; staff: Staff }) {
               );
             })}
           </div>
-          <p className="border-ink/10 border-t px-4 py-3 text-xs text-ink-muted">
+          <p className="border-ink border-t-2 px-4 py-3 text-xs text-ink-muted">
             No tool gives an Approval or settles a Conflict: a person does that
             in the app.
           </p>

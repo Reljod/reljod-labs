@@ -107,7 +107,7 @@ function ToolLine({ item }: { item: Extract<ActivityItem, { type: "tool" }> }) {
     ? JSON.stringify(item.args, null, 2)
     : "";
   return (
-    <details className="group rounded-sm border border-ink/15 bg-paper text-xs open:bg-marble/50">
+    <details className="group rounded-sm outline-box bg-paper text-xs open:bg-marble/50">
       <summary className="flex cursor-pointer list-none items-center gap-2 px-2.5 py-1.5 focus-visible:outline-2 focus-visible:outline-federal-blue [&::-webkit-details-marker]:hidden">
         <span
           aria-hidden="true"
@@ -130,7 +130,7 @@ function ToolLine({ item }: { item: Extract<ActivityItem, { type: "tool" }> }) {
           </Badge>
         )}
       </summary>
-      <div className="space-y-2 border-ink/10 border-t px-2.5 py-2">
+      <div className="space-y-2 border-ink border-t-2 px-2.5 py-2">
         {item.summary ? (
           <p className="whitespace-pre-wrap [overflow-wrap:anywhere]">
             {item.summary}
@@ -176,7 +176,7 @@ function Activity({
       );
     case "source":
       return (
-        <div className="flex flex-wrap items-center gap-2 rounded-sm border border-ink/25 bg-paper px-3 py-2 text-sm">
+        <div className="flex flex-wrap items-center gap-2 rounded-sm outline-box bg-paper px-3 py-2 text-sm">
           <Badge tone="neutral">Source</Badge>
           <span className="min-w-0 flex-1 truncate font-medium">
             {item.title}
@@ -209,7 +209,7 @@ function Activity({
       );
     case "conflict":
       return (
-        <div className="flex flex-wrap items-center gap-2 rounded-sm border border-brass/60 bg-brass/10 px-3 py-2 text-sm">
+        <div className="flex flex-wrap items-center gap-2 rounded-sm outline-box bg-brass/20 px-3 py-2 text-sm">
           <Badge tone="amber">Conflict</Badge>
           <span className="min-w-0 flex-1 [overflow-wrap:anywhere]">
             {item.summary}
@@ -255,11 +255,11 @@ export function AgentMessage({
       <div className="min-w-0 flex-1 space-y-2">
         <p className="text-xs font-semibold text-ink-muted">Agent</p>
         {turn.reasoning ? (
-          <details className="rounded-sm border border-ink/10 text-xs">
+          <details className="rounded-sm border border-ink text-xs">
             <summary className="cursor-pointer px-2.5 py-1.5 text-ink-muted focus-visible:outline-2 focus-visible:outline-federal-blue">
               Thinking
             </summary>
-            <p className="border-ink/10 border-t px-2.5 py-2 whitespace-pre-wrap text-ink-muted [overflow-wrap:anywhere]">
+            <p className="border-ink border-t-2 px-2.5 py-2 whitespace-pre-wrap text-ink-muted [overflow-wrap:anywhere]">
               {turn.reasoning}
             </p>
           </details>

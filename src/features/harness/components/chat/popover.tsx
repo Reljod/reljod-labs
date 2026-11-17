@@ -88,7 +88,7 @@ export function Popover({
         <div
           id={panelId}
           className={cx(
-            "absolute z-30 w-[min(22rem,calc(100vw-2rem))] rounded-sm border border-ink/25 bg-paper p-3 text-sm shadow-hard-md",
+            "absolute z-30 w-[min(22rem,calc(100vw-2rem))] rounded-sm outline-box bg-paper p-3 text-sm shadow-hard-md",
             side === "bottom" ? "top-full mt-1" : "bottom-full mb-1",
             align === "left" ? "left-0" : "right-0",
             panelClassName,

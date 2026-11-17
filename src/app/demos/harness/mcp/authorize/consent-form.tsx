@@ -47,7 +47,7 @@ export function ConsentForm({
         <p className="eyebrow text-[0.65rem] text-federal-blue">
           Connect Claude to the Harness
         </p>
-        <h1 className="text-2xl font-semibold tracking-tight">
+        <h1 className="font-mono text-2xl leading-tight font-bold uppercase">
           Let {clientName} work at the desk?
         </h1>
         <p className="text-sm text-ink-muted">

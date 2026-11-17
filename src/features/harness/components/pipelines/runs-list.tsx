@@ -34,10 +34,10 @@ export function PipelineCatalogue({
             aria-pressed={selectedId === pipeline.id}
             onClick={() => onSelect(pipeline.id)}
             className={cx(
-              "w-full rounded-sm border px-2.5 py-2 text-left focus-visible:outline-2 focus-visible:outline-federal-blue",
+              "outline-box press w-full rounded-sm px-2.5 py-2 text-left shadow-hard-sm",
               selectedId === pipeline.id
-                ? "border-federal-blue bg-morning-haze/60"
-                : "border-ink/15 bg-paper hover:bg-marble",
+                ? "bg-morning-haze"
+                : "bg-paper hover:bg-marble",
             )}
           >
             <span className="flex items-center gap-2">
@@ -99,12 +99,12 @@ export function RunsList({
               aria-current={selectedId === run.id ? "true" : undefined}
               onClick={() => onSelect(run.id)}
               className={cx(
-                "w-full rounded-sm border px-2.5 py-2 text-left focus-visible:outline-2 focus-visible:outline-federal-blue",
+                "outline-box press w-full rounded-sm px-2.5 py-2 text-left shadow-hard-sm",
                 selectedId === run.id
-                  ? "border-federal-blue bg-morning-haze/60"
+                  ? "bg-morning-haze"
                   : isRunActive(status)
-                    ? "border-federal-blue/40 bg-paper hover:bg-marble"
-                    : "border-ink/15 bg-paper hover:bg-marble",
+                    ? "border-federal-blue bg-paper hover:bg-marble"
+                    : "bg-paper hover:bg-marble",
               )}
             >
               <span className="flex items-center gap-2">

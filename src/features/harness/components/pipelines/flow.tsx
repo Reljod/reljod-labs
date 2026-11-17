@@ -67,12 +67,12 @@ export function nodeState(
 }
 
 const STATE_CLASS: Record<Exclude<NodeState, null>, string> = {
-  pending: "border-dashed border-ink/30 bg-paper text-ink-muted",
+  pending: "border-dashed border-ink bg-paper text-ink-muted",
   running: "hx-node-live border-federal-blue bg-morning-haze",
   waiting: "hx-node-live border-oak bg-brass/20",
-  done: "border-ivy/60 bg-paper",
+  done: "border-ivy bg-paper",
   failed: "border-seal-red bg-seal-red/5",
-  skipped: "border-ink/20 bg-marble text-ink-muted",
+  skipped: "border-dashed border-ink bg-marble text-ink-muted",
 };
 
 const STATE_LABEL: Record<Exclude<NodeState, null>, string> = {
@@ -240,8 +240,8 @@ function StepNode({ data }: NodeProps<Node<StepNodeData>>) {
           },
         }}
         className={cx(
-          "relative h-full w-full overflow-hidden rounded-md border-[1.5px] bg-paper transition-colors duration-300",
-          state ? STATE_CLASS[state] : "border-ink/40 bg-paper",
+          "relative h-full w-full overflow-hidden rounded-sm border-2 bg-paper shadow-hard-sm transition-colors duration-300",
+          state ? STATE_CLASS[state] : "border-ink bg-paper",
           state === "waiting" && "hx-node-glow",
           selected && "outline-2 outline-offset-2 outline-federal-blue",
         )}
@@ -295,7 +295,7 @@ function BandNode({
       initial={{ opacity: 0, scaleX: 0.96 }}
       animate={{ opacity: 1, scaleX: 1 }}
       transition={{ delay: Math.min(data.level * 0.07, 0.8), duration: 0.5 }}
-      className="hx-band h-full w-full rounded-xl border border-dashed border-federal-blue/35 bg-federal-blue/[0.06]"
+      className="hx-band h-full w-full rounded-sm border-2 border-dashed border-federal-blue bg-morning-haze/40"
     >
       <span className="hx-band-label">{data.count} at once</span>
     </motion.div>
@@ -449,7 +449,7 @@ function PipelineLevels({
                     onClick={() => onSelect(step.id)}
                     className={cx(
                       "flex min-h-11 w-full items-center gap-2 rounded-sm border px-3 py-2 text-left transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-federal-blue",
-                      state ? STATE_CLASS[state] : "border-ink/40 bg-paper",
+                      state ? STATE_CLASS[state] : "border-ink bg-paper",
                       selected &&
                         "outline-2 outline-offset-2 outline-federal-blue",
                     )}
@@ -522,7 +522,7 @@ function LevelRail({
   onStop?: () => void;
 }) {
   return (
-    <div className="sticky top-0 z-20 flex flex-wrap items-center gap-x-4 gap-y-2 border-ink/10 border-b bg-paper/95 px-4 py-2.5 backdrop-blur">
+    <div className="sticky top-0 z-20 flex flex-wrap items-center gap-x-4 gap-y-2 border-ink border-b-2 bg-paper px-4 py-2.5">
       <div className="min-w-0 flex-1 basis-60">
         <p className="flex flex-wrap items-baseline gap-x-2 text-sm">
           <span className="font-semibold" aria-live="polite">
@@ -544,11 +544,11 @@ function LevelRail({
             <span
               // biome-ignore lint/suspicious/noArrayIndexKey: a level is its place
               key={index}
-              className="relative h-1.5 min-w-2 flex-1 overflow-hidden rounded-full bg-ink/12"
+              className="relative h-2 min-w-2 flex-1 overflow-hidden rounded-sm border border-ink bg-marble"
             >
               <motion.span
                 className={cx(
-                  "absolute inset-y-0 left-0 rounded-full",
+                  "absolute inset-y-0 left-0",
                   segment === "failed" ? "bg-seal-red" : "bg-federal-blue",
                   segment === "active" && "hx-pulse",
                 )}

@@ -23,7 +23,7 @@ export function PipelinePreview({
   return (
     <div className="space-y-4">
       <header className="space-y-1">
-        <h2 className="flex flex-wrap items-center gap-2 text-base font-semibold">
+        <h2 className="flex flex-wrap items-center gap-2 font-mono text-base font-bold uppercase">
           {spec.title}
           <Badge>{spec.steps.length} Steps</Badge>
           {layout.parallelism > 1 ? (

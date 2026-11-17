@@ -174,11 +174,11 @@ export default function SkillsTab() {
       <aside
         aria-label="Skills"
         className={cx(
-          "min-h-0 w-full flex-col border-ink/10 bg-paper lg:flex lg:w-80 lg:shrink-0 lg:border-r",
+          "min-h-0 w-full flex-col border-ink bg-paper lg:flex lg:w-80 lg:shrink-0 lg:border-r-2",
           showEditor ? "hidden" : "flex",
         )}
       >
-        <div className="shrink-0 space-y-2 border-ink/10 border-b p-3">
+        <div className="shrink-0 space-y-2 border-ink border-b-2 p-3">
           <p className="text-xs text-ink-muted">
             What the Agent reads, as SKILL.md. Claude gets the same Skills from
             the plugin.

@@ -47,7 +47,7 @@ export function RulebookEditor({
 
   return (
     <div className="flex min-h-0 flex-1 flex-col">
-      <header className="shrink-0 space-y-2 border-ink/10 border-b px-3 py-3 sm:px-4">
+      <header className="shrink-0 space-y-2 border-ink border-b-2 px-3 py-3 sm:px-4">
         <div className="flex flex-wrap items-center gap-2">
           <Button
             size="sm"
@@ -59,7 +59,7 @@ export function RulebookEditor({
           </Button>
           <div className="min-w-0 flex-1">
             <p className="eyebrow text-[0.65rem] text-ink-muted">Rulebook</p>
-            <h2 className="truncate font-mono text-sm font-bold">
+            <h2 className="truncate font-mono text-sm font-bold uppercase">
               {pipeline?.title ?? skill.name}
             </h2>
           </div>
@@ -89,7 +89,7 @@ export function RulebookEditor({
           </span>
         </p>
         {!canEdit ? (
-          <p className="rounded-sm border border-ink/15 bg-marble/60 px-3 py-1.5 text-xs text-ink-muted">
+          <p className="rounded-sm outline-box bg-marble/60 px-3 py-1.5 text-xs text-ink-muted">
             {readOnlyReason}
           </p>
         ) : null}
@@ -107,7 +107,7 @@ export function RulebookEditor({
                     document.getElementById(`step-${skill.id}-${group.stepId}`),
                   )
                 }
-                className="shrink-0 rounded-sm border border-ink/20 bg-paper px-2 py-1 text-xs font-medium text-ink-muted hover:border-ink/40 hover:text-ink"
+                className="shrink-0 rounded-sm outline-box bg-paper px-2 py-1 text-xs font-medium text-ink-muted press shadow-hard-sm hover:text-ink"
               >
                 {group.title}
                 <span className="ml-1 font-mono text-[0.65rem]">
@@ -126,7 +126,7 @@ export function RulebookEditor({
               This is what the Agent and Claude read. It is built from the Rules
               on the cards: change a card and this text changes.
             </p>
-            <pre className="overflow-x-auto whitespace-pre-wrap rounded-sm border border-ink/15 bg-marble/40 p-3 font-mono text-xs leading-5 [overflow-wrap:anywhere]">
+            <pre className="overflow-x-auto whitespace-pre-wrap rounded-sm outline-box bg-marble/40 p-3 font-mono text-xs leading-5 [overflow-wrap:anywhere]">
               {renderSkillMd(skill)}
             </pre>
           </div>
@@ -145,7 +145,7 @@ export function RulebookEditor({
                 aria-label={group.title}
                 className="space-y-2"
               >
-                <h3 className="eyebrow sticky top-0 z-10 -mx-3 border-ink/10 border-b bg-paper px-3 py-2 text-[0.7rem] text-ink-muted sm:-mx-4 sm:px-4">
+                <h3 className="eyebrow sticky top-0 z-10 -mx-3 border-ink border-b-2 bg-paper px-3 py-2 text-[0.7rem] text-ink-muted sm:-mx-4 sm:px-4">
                   {group.title}
                 </h3>
                 <div className={cx("space-y-3")}>

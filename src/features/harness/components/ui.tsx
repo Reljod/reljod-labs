@@ -8,6 +8,7 @@ import {
   useId,
   useRef,
 } from "react";
+import { demoTabClass } from "@/components/demo/demo-bar-styles";
 import { ROLE_LABEL, type Role } from "../domain/staff";
 import { useWrite } from "./use-write";
 
@@ -16,9 +17,10 @@ export { useWrite } from "./use-write";
 
 /*
  * The Harness's shared primitives. Every tab builds from these so the app
- * reads as one product: dense, calm, a bank back office. Colours and type
- * come from the site's tokens in src/app/globals.css; borders are a thin ink
- * line rather than the landing page's 2px outline.
+ * reads as one product, and as a sibling of the other demos: the Colonnade
+ * language of src/app/globals.css (2px ink outlines with `outline-box`, hard
+ * offset shadows, `press` on everything clickable, mono `eyebrow` labels and
+ * the site's colour tokens). Inner rules between rows stay a thin ink line.
  */
 
 const cx = (...parts: (string | false | null | undefined)[]) =>
@@ -74,15 +76,24 @@ export function Panel({
   as?: "section" | "div" | "article" | "aside";
 }) {
   return (
-    <Tag className={cx("rounded-sm border border-ink/15 bg-paper", className)}>
+    <Tag
+      className={cx(
+        "outline-box rounded-sm bg-paper shadow-hard-sm",
+        className,
+      )}
+    >
       {title || eyebrow || actions ? (
-        <header className="flex min-h-11 flex-wrap items-center gap-x-3 gap-y-1 border-ink/10 border-b px-4 py-2">
+        <header className="flex min-h-11 flex-wrap items-center gap-x-3 gap-y-1 border-ink border-b-2 px-4 py-2">
           <div className="min-w-0 flex-1">
             {eyebrow ? (
-              <p className="eyebrow text-[0.65rem] text-ink-muted">{eyebrow}</p>
+              <p className="eyebrow text-[0.65rem] font-bold text-ink-muted">
+                {eyebrow}
+              </p>
             ) : null}
             {title ? (
-              <h2 className="truncate text-sm font-semibold">{title}</h2>
+              <h2 className="truncate font-mono text-sm font-bold tracking-[0.04em] uppercase">
+                {title}
+              </h2>
             ) : null}
           </div>
           {actions ? (
@@ -103,20 +114,18 @@ export function Panel({
 
 export type ButtonVariant = "primary" | "secondary" | "ghost" | "danger";
 
+// Every variant is an ink-outlined box that presses; only the fill changes.
+// A ghost is the quiet one: no fill, muted text, a smaller shadow.
 const BUTTON_VARIANT: Record<ButtonVariant, string> = {
-  primary:
-    "border border-federal-blue bg-federal-blue text-paper hover:border-ink hover:bg-ink",
-  secondary:
-    "border border-ink/25 bg-paper text-ink hover:border-ink/50 hover:bg-marble",
-  ghost:
-    "border border-transparent text-ink-muted hover:bg-marble hover:text-ink",
-  danger:
-    "border border-seal-red bg-seal-red text-paper hover:border-ink hover:bg-ink",
+  primary: "press bg-federal-blue text-paper",
+  secondary: "press bg-paper text-ink hover:bg-morning-haze",
+  ghost: "press shadow-hard-sm bg-marble text-ink-muted hover:text-ink",
+  danger: "press bg-seal-red text-paper",
 };
 
 const BUTTON_SIZE = {
-  sm: "h-7 gap-1.5 px-2.5 text-xs",
-  md: "h-9 gap-2 px-3.5 text-sm",
+  sm: "h-8 gap-1.5 px-2.5 text-[0.7rem]",
+  md: "h-9 gap-2 px-3.5 text-xs",
 } as const;
 
 export const buttonClass = (
@@ -124,10 +133,10 @@ export const buttonClass = (
   size: keyof typeof BUTTON_SIZE = "md",
 ) =>
   cx(
-    "inline-flex shrink-0 items-center justify-center rounded-sm font-medium whitespace-nowrap transition-colors",
-    "focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-federal-blue",
-    "disabled:cursor-not-allowed disabled:opacity-55",
+    "outline-box inline-flex shrink-0 items-center justify-center rounded-sm font-mono font-bold tracking-[0.08em] whitespace-nowrap uppercase",
     BUTTON_VARIANT[variant],
+    // A disabled button stops pressing but keeps its title (no pointer-events-none).
+    "disabled:translate-none disabled:cursor-not-allowed disabled:opacity-50 disabled:shadow-none",
     BUTTON_SIZE[size],
   );
 
@@ -175,13 +184,14 @@ export function Button({
 
 export type Tone = "neutral" | "blue" | "green" | "amber" | "red" | "ink";
 
+// Stamped like the bar's badge: a 1px ink edge, a flat fill, mono caps.
 const TONE: Record<Tone, string> = {
-  neutral: "border-ink/15 bg-marble text-ink-muted",
-  blue: "border-federal-blue/30 bg-morning-haze text-federal-blue",
-  green: "border-ivy/30 bg-ivy/10 text-ivy",
-  amber: "border-brass/60 bg-brass/15 text-oak",
-  red: "border-seal-red/30 bg-seal-red/10 text-seal-red",
-  ink: "border-ink bg-ink text-paper",
+  neutral: "bg-marble text-ink-muted",
+  blue: "bg-morning-haze text-federal-blue",
+  green: "bg-ivy/15 text-ivy",
+  amber: "bg-brass/35 text-ink",
+  red: "bg-seal-red/10 text-seal-red",
+  ink: "bg-ink text-paper",
 };
 
 /** A small label for a state: a Run's status, an Outcome, a Version. */
@@ -203,7 +213,7 @@ export function Badge({
     <span
       title={title}
       className={cx(
-        "inline-flex h-5 shrink-0 items-center gap-1 rounded-sm border px-1.5 font-mono text-[0.65rem] font-medium tracking-[0.06em] whitespace-nowrap uppercase",
+        "inline-flex h-5 shrink-0 items-center gap-1 rounded-sm border border-ink px-1.5 font-mono text-[0.65rem] font-bold tracking-[0.06em] whitespace-nowrap uppercase",
         TONE[tone],
         className,
       )}
@@ -248,10 +258,8 @@ export function Initials({
     <span
       aria-hidden="true"
       className={cx(
-        "inline-flex size-7 shrink-0 items-center justify-center rounded-sm border font-mono text-[0.65rem] font-bold",
-        role === "admin"
-          ? "border-ink bg-ink text-paper"
-          : "border-ink/25 bg-morning-haze text-ink",
+        "inline-flex size-7 shrink-0 items-center justify-center rounded-sm border-2 border-ink font-mono text-[0.65rem] font-bold",
+        role === "admin" ? "bg-ink text-paper" : "bg-morning-haze text-ink",
         className,
       )}
     >
@@ -281,7 +289,9 @@ export function Empty({
         className,
       )}
     >
-      <p className="text-sm font-semibold">{title}</p>
+      <p className="font-mono text-sm font-bold tracking-[0.04em] uppercase">
+        {title}
+      </p>
       {children ? (
         <p className="max-w-sm text-sm text-ink-muted">{children}</p>
       ) : null}
@@ -305,7 +315,7 @@ export function ErrorNote({
     <p
       role="alert"
       className={cx(
-        "flex flex-wrap items-center gap-x-3 gap-y-1 rounded-sm border border-seal-red/30 bg-seal-red/5 px-3 py-2 text-sm text-seal-red",
+        "outline-box flex flex-wrap items-center gap-x-3 gap-y-1 rounded-sm border-seal-red bg-paper px-3 py-2 text-sm text-seal-red",
         className,
       )}
     >
@@ -314,7 +324,7 @@ export function ErrorNote({
         <button
           type="button"
           onClick={onRetry}
-          className="font-medium underline underline-offset-2"
+          className="outline-box press eyebrow rounded-sm bg-paper px-2 py-0.5 font-bold text-ink shadow-hard-sm"
         >
           Try again
         </button>
@@ -336,7 +346,7 @@ export function DoneNote({
     <p
       aria-live="polite"
       className={cx(
-        "rounded-sm border border-ivy/30 bg-ivy/5 px-3 py-2 text-sm text-ivy",
+        "outline-box rounded-sm border-ivy bg-paper px-3 py-2 text-sm text-ivy",
         className,
       )}
     >
@@ -357,7 +367,10 @@ export function Loading({
     <div aria-busy="true" className={cx("space-y-2", className)}>
       <span className="sr-only">Loading</span>
       {Array.from({ length: rows }, (_, row) => `row-${row}`).map((key) => (
-        <div key={key} className="hx-shimmer h-9 rounded-sm" />
+        <div
+          key={key}
+          className="hx-shimmer h-9 rounded-sm border-2 border-ink/20"
+        />
       ))}
     </div>
   );
@@ -373,8 +386,10 @@ export function ComingPanel({
 }) {
   return (
     <div className="flex min-h-0 flex-1 items-center justify-center p-4 sm:p-8">
-      <div className="w-full max-w-md rounded-sm border border-ink/20 border-dashed bg-paper/60 px-6 py-10 text-center">
-        <p className="eyebrow text-[0.65rem] text-ink-muted">Coming</p>
+      <div className="w-full max-w-md rounded-sm border-2 border-ink border-dashed bg-paper px-6 py-10 text-center">
+        <p className="eyebrow text-[0.65rem] font-bold text-ink-muted">
+          Coming
+        </p>
         <h2 className="mt-2 font-mono text-base font-bold uppercase">
           {title}
         </h2>
@@ -387,7 +402,7 @@ export function ComingPanel({
 // Field --------------------------------------------------------------------------
 
 export const inputClass =
-  "w-full rounded-sm border border-ink/25 bg-paper px-2.5 py-1.5 text-sm text-ink placeholder:text-stone focus-visible:border-federal-blue focus-visible:outline-2 focus-visible:outline-offset-0 focus-visible:outline-federal-blue/30 disabled:bg-marble disabled:text-ink-muted aria-[invalid=true]:border-seal-red";
+  "outline-box w-full rounded-sm bg-paper px-2.5 py-1.5 text-sm text-ink shadow-hard-sm placeholder:text-stone focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-federal-blue disabled:bg-marble disabled:text-ink-muted disabled:shadow-none aria-[invalid=true]:border-seal-red";
 
 /**
  * A labelled control. Give the control inside the `id` you pass as `htmlFor`,
@@ -412,7 +427,7 @@ export function Field({
     <div className={cx("flex flex-col gap-1", className)}>
       <label
         htmlFor={htmlFor}
-        className="eyebrow text-[0.65rem] text-ink-muted"
+        className="eyebrow text-[0.65rem] font-bold text-ink-muted"
       >
         {label}
       </label>
@@ -478,7 +493,7 @@ export function Tabs<Id extends string>({
       role="tablist"
       aria-label={label}
       onKeyDown={onKeyDown}
-      className={cx("hx-scroll-x flex items-stretch gap-1", className)}
+      className={cx("flex flex-wrap items-center gap-2", className)}
     >
       {tabs.map((tab) => {
         const selected = tab.id === value;
@@ -492,12 +507,9 @@ export function Tabs<Id extends string>({
             tabIndex={selected ? 0 : -1}
             onClick={() => onChange(tab.id)}
             className={cx(
-              "inline-flex shrink-0 items-center gap-1.5 border-b-2 font-medium whitespace-nowrap transition-colors",
-              "focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-federal-blue",
-              size === "sm" ? "px-2.5 py-1.5 text-xs" : "px-3 py-2.5 text-sm",
-              selected
-                ? "border-federal-blue text-ink"
-                : "border-transparent text-ink-muted hover:border-ink/20 hover:text-ink",
+              demoTabClass(selected),
+              "shrink-0 whitespace-nowrap",
+              size === "sm" && "h-8 px-2.5 text-[0.7rem] shadow-hard-sm",
             )}
           >
             {tab.label}
@@ -558,15 +570,18 @@ export function Dialog({
         if (event.target === event.currentTarget) tryClose();
       }}
       className={cx(
-        "hx-dialog m-auto max-h-[calc(100dvh-2rem)] rounded-sm border border-ink/30 bg-paper p-0 text-ink shadow-hard-md",
+        "hx-dialog outline-box m-auto max-h-[calc(100dvh-2rem)] rounded-sm bg-paper p-0 text-ink shadow-hard-lg",
         wide
           ? "w-[min(44rem,calc(100vw-2rem))]"
           : "w-[min(28rem,calc(100vw-2rem))]",
       )}
     >
       <div className="flex max-h-[calc(100dvh-2rem)] flex-col">
-        <header className="flex items-center gap-3 border-ink/10 border-b px-5 py-3">
-          <h2 id={titleId} className="min-w-0 flex-1 text-sm font-semibold">
+        <header className="flex items-center gap-3 border-ink border-b-2 px-5 py-3">
+          <h2
+            id={titleId}
+            className="min-w-0 flex-1 font-mono text-sm font-bold tracking-[0.04em] uppercase"
+          >
             {title}
           </h2>
           <button
@@ -574,7 +589,7 @@ export function Dialog({
             onClick={tryClose}
             disabled={busy}
             aria-label="Close"
-            className="rounded-sm px-1.5 text-lg leading-none text-ink-muted hover:bg-marble hover:text-ink disabled:opacity-40"
+            className="outline-box press grid size-8 shrink-0 place-items-center rounded-sm bg-paper text-lg leading-none shadow-hard-sm disabled:translate-none disabled:opacity-40 disabled:shadow-none"
           >
             ×
           </button>
@@ -583,7 +598,7 @@ export function Dialog({
           {children}
         </div>
         {footer ? (
-          <footer className="flex flex-wrap items-center justify-end gap-2 border-ink/10 border-t px-5 py-3">
+          <footer className="flex flex-wrap items-center justify-end gap-2 border-ink border-t-2 bg-marble px-5 py-3">
             {footer}
           </footer>
         ) : null}

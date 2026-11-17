@@ -121,7 +121,7 @@ export function SkillEditor({
 
   return (
     <div className="flex min-h-0 flex-1 flex-col">
-      <header className="shrink-0 space-y-2 border-ink/10 border-b px-3 py-3 sm:px-4">
+      <header className="shrink-0 space-y-2 border-ink border-b-2 px-3 py-3 sm:px-4">
         <div className="flex flex-wrap items-center gap-2">
           <Button
             size="sm"
@@ -133,7 +133,9 @@ export function SkillEditor({
           </Button>
           <div className="min-w-0 flex-1">
             <p className="eyebrow text-[0.65rem] text-ink-muted">Skill</p>
-            <h2 className="truncate font-mono text-sm font-bold">{skill.id}</h2>
+            <h2 className="truncate font-mono text-sm font-bold uppercase">
+              {skill.id}
+            </h2>
           </div>
           {dirty ? <Badge tone="amber">unsaved</Badge> : null}
           <Badge tone={skill.version === 0 ? "neutral" : "blue"}>
@@ -159,7 +161,7 @@ export function SkillEditor({
           </p>
         )}
         {readOnly ? (
-          <p className="rounded-sm border border-ink/15 bg-marble/60 px-3 py-1.5 text-xs text-ink-muted">
+          <p className="rounded-sm outline-box bg-marble/60 px-3 py-1.5 text-xs text-ink-muted">
             {readOnlyReason}
           </p>
         ) : null}
@@ -265,7 +267,7 @@ export function SkillEditor({
               ) : null}
             </>
           ) : view === "preview" ? (
-            <div className="min-h-[12rem] rounded-sm border border-ink/15 bg-paper p-4">
+            <div className="min-h-[12rem] rounded-sm outline-box bg-paper p-4">
               <Markdown text={draft.body} />
             </div>
           ) : (
@@ -280,7 +282,7 @@ export function SkillEditor({
       </div>
 
       {canEdit ? (
-        <footer className="shrink-0 space-y-2 border-ink/10 border-t bg-marble/40 px-3 py-3 sm:px-4">
+        <footer className="shrink-0 space-y-2 border-ink border-t-2 bg-marble/40 px-3 py-3 sm:px-4">
           <div className="flex flex-wrap items-center gap-2">
             <input
               aria-label="Note for this Version (optional)"
@@ -393,7 +395,7 @@ function SkillHistory({
               return (
                 <li
                   key={version.version}
-                  className="flex flex-wrap items-center gap-2 rounded-sm border border-ink/15 p-2.5"
+                  className="flex flex-wrap items-center gap-2 rounded-sm outline-box p-2.5"
                 >
                   <Badge tone={current ? "blue" : "neutral"}>
                     v{version.version}

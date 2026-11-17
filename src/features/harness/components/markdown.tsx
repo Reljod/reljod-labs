@@ -50,7 +50,7 @@ function renderInline(inlines: Inline[], onLink?: LinkHandler): ReactNode[] {
         return (
           <code
             key={key}
-            className="rounded-sm border border-ink/10 bg-marble px-1 py-px font-mono text-[0.85em] [overflow-wrap:anywhere]"
+            className="rounded-sm border border-ink/25 bg-marble px-1 py-px font-mono text-[0.85em] [overflow-wrap:anywhere]"
           >
             {inline.text}
           </code>
@@ -125,7 +125,7 @@ function renderBlocks(
           <pre
             key={key}
             data-lang={block.lang ?? undefined}
-            className="my-3 overflow-x-auto rounded-sm border border-ink/15 bg-ink p-3 font-mono text-xs leading-relaxed text-paper first:mt-0 last:mb-0"
+            className="my-3 overflow-x-auto rounded-sm outline-box bg-ink p-3 font-mono text-xs leading-relaxed text-paper first:mt-0 last:mb-0"
           >
             <code>{block.text}</code>
           </pre>
@@ -171,7 +171,7 @@ function renderBlocks(
                     <th
                       key={cellKey}
                       scope="col"
-                      className={`border-ink/15 border-b px-2.5 py-1.5 font-semibold ${ALIGN[block.align[index] ?? "left"]}`}
+                      className={`border-ink border-b-2 px-2.5 py-1.5 font-semibold ${ALIGN[block.align[index] ?? "left"]}`}
                     >
                       {renderInline(cell, options.onLink)}
                     </th>
@@ -182,7 +182,7 @@ function renderBlocks(
                 {each(block.rows, (row, rowKey) => (
                   <tr
                     key={rowKey}
-                    className="border-ink/10 border-b last:border-b-0"
+                    className="border-ink border-b-2 last:border-b-0"
                   >
                     {each(row, (cell, cellKey, index) => (
                       <td

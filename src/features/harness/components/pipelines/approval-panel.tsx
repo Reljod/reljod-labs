@@ -74,10 +74,10 @@ export function ApprovalPanel({
   return (
     <section
       aria-label="Approval needed"
-      className="rounded-sm border border-oak/60 bg-brass/10"
+      className="rounded-sm outline-box bg-brass/20"
     >
       <header className="flex flex-col gap-1.5 border-oak/30 border-b px-3 py-2.5 sm:flex-row sm:flex-wrap sm:items-center sm:gap-2 sm:px-4">
-        <h3 className="min-w-0 text-sm font-semibold sm:flex-1">
+        <h3 className="min-w-0 font-mono text-sm font-bold uppercase sm:flex-1">
           Approval needed: {approval.title}
         </h3>
         <div className="flex flex-wrap items-center gap-1.5">
@@ -93,9 +93,9 @@ export function ApprovalPanel({
       <div className="space-y-3 px-3 py-3 sm:px-4">
         <article
           aria-label={`Draft: ${draft.title}`}
-          className="rounded-sm border border-ink/20 bg-paper"
+          className="rounded-sm outline-box bg-paper"
         >
-          <div className="flex flex-wrap items-baseline gap-x-3 gap-y-0.5 border-ink/10 border-b px-3 py-2">
+          <div className="flex flex-wrap items-baseline gap-x-3 gap-y-0.5 border-ink border-b-2 px-3 py-2">
             <p className="font-mono text-[0.65rem] font-bold tracking-[0.08em] text-ink-muted uppercase">
               Draft · {draftLabel(draft.kind)}
             </p>

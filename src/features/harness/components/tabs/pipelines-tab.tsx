@@ -237,7 +237,7 @@ export default function PipelinesTab() {
       <aside
         aria-label="Pipelines and Runs"
         className={cx(
-          "min-h-0 w-full shrink-0 flex-col border-ink/15 border-r bg-paper md:flex md:w-80",
+          "min-h-0 w-full shrink-0 flex-col border-ink border-r-2 bg-paper md:flex md:w-80",
           showMain ? "hidden" : "flex",
         )}
       >
@@ -268,7 +268,7 @@ export default function PipelinesTab() {
               >
                 Runs
               </h2>
-              <fieldset className="flex rounded-sm border border-ink/20 text-xs">
+              <fieldset className="flex rounded-sm outline-box text-xs">
                 <legend className="sr-only">Which Runs to list</legend>
                 <button
                   type="button"

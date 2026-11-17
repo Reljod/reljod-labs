@@ -97,7 +97,7 @@ export function SearchPanel({
               key={example}
               type="button"
               onClick={() => submit(example)}
-              className="rounded-sm border border-ink/20 bg-paper px-2 py-1 text-xs text-ink-muted hover:border-ink/40 hover:text-ink focus-visible:outline-2 focus-visible:outline-federal-blue"
+              className="rounded-sm outline-box bg-paper px-2 py-1 text-xs text-ink-muted press shadow-hard-sm hover:text-ink focus-visible:outline-2 focus-visible:outline-federal-blue"
             >
               {example}
             </button>
@@ -154,7 +154,7 @@ function HitCard({
   const long = hit.body.length > SNIPPET;
   const width = top > 0 ? Math.max(4, Math.round((hit.score / top) * 100)) : 4;
   return (
-    <li className="rounded-sm border border-ink/15 bg-paper px-3 py-2.5">
+    <li className="rounded-sm outline-box bg-paper px-3 py-2.5">
       <div className="flex flex-wrap items-center gap-1.5">
         <span className="font-mono text-xs text-ink-muted">#{rank}</span>
         <button
@@ -194,12 +194,12 @@ function HitCard({
       ) : null}
       <div className="mt-2 flex flex-wrap items-center gap-2">
         <div
-          className="h-1.5 w-24 shrink-0 rounded-full bg-marble"
+          className="h-2 w-24 shrink-0 overflow-hidden rounded-sm border border-ink bg-marble"
           role="img"
           aria-label={`Score ${hit.score.toFixed(4)}`}
         >
           <div
-            className="h-full rounded-full bg-federal-blue"
+            className="h-full bg-federal-blue"
             style={{ width: `${width}%` }}
           />
         </div>
