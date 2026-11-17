@@ -1,13 +1,17 @@
 import { getStepMetadata, getWritable } from "workflow";
+import type { Owner } from "@/features/access/domain/owner";
+import { MODEL_ACTOR, SYSTEM_ACTOR } from "../domain/audit";
 import { evaluate } from "../domain/evaluate";
 import { fieldChecks } from "../domain/field-checks";
-import { individualOnboarding } from "../domain/rulebook";
+import { countOutcomes } from "../domain/review";
+import { type AppliedRule, rulebookFromApplied } from "../domain/rules";
 import type { DocumentKind, ExtractedDocument, Span } from "../domain/types";
 import { correctSpans, verifyReading } from "../domain/verify";
 import type { ReadUsage } from "../metrics";
 import { findPack, type Pack, type PackDocument, storagePath } from "../packs";
 import type { ScanEvent } from "../scan-events";
 import { findingViews } from "../view";
+import { auditBestEffort } from "./audit";
 import { extractDocument, type RawExtraction } from "./extract";
 import { type ParsedDocument, parseDocument } from "./parsers";
 import {
@@ -152,13 +156,13 @@ export type ReadRecord = {
  * corrected Spans and marks its Field check.
  */
 async function readStep(
-  packSlug: string,
+  run: RunContext,
   kind: DocumentKind,
   ocrSpans: Span[],
   ocr: boolean,
 ): Promise<{ extracted: ExtractedDocument; read: ReadRecord }> {
   "use step";
-  const { pack, document } = packAndDocument(packSlug, kind);
+  const { pack, document } = packAndDocument(run.packSlug, kind);
   const { value: read, ms } = await staged(kind, "read", async () => {
     const extraction = await extractDocument({
       kind,
@@ -192,12 +196,30 @@ async function readStep(
     type: "checks",
     kind,
     checks: fieldChecks(extracted, {
-      rulebook: individualOnboarding,
+      rulebook: rulebookFromApplied(run.rules),
       prescreenDate: pack.prescreenDate,
       declaration: pack.clientDeclaration,
     }),
     judgments: extracted.judgments,
   });
+  if (run.owner) {
+    const verified = extracted.fields.filter((field) => field.verified).length;
+    await auditBestEffort({
+      owner: run.owner,
+      runId: run.runId,
+      actor: { ...MODEL_ACTOR, label: usage.model ?? MODEL_ACTOR.label },
+      action: "document.read",
+      summary: `Read the ${kind.replaceAll("_", " ")}: ${extracted.fields.length} fields, ${verified} found on the page`,
+      details: {
+        kind,
+        fields: extracted.fields.length,
+        verified,
+        readMs: ms,
+        provider: usage.provider,
+      },
+      usage,
+    });
+  }
   return { extracted, read: { usage, readMs: ms, raw } };
 }
 readStep.maxRetries = 2;
@@ -210,14 +232,14 @@ type ProcessedDocument = {
 
 /** Evaluates the Rulebook, persists the whole chain and ends the stream. */
 async function saveStep(
-  runId: string,
-  packSlug: string,
+  run: RunContext,
   processed: ProcessedDocument[],
 ): Promise<void> {
   "use step";
+  const { runId, packSlug } = run;
   const pack = findPack(packSlug);
   if (!pack) throw new Error(`Unknown pack ${packSlug}`);
-  const rulebook = individualOnboarding;
+  const rulebook = rulebookFromApplied(run.rules);
 
   const saved = new Map<DocumentKind, SavedDocument>();
   for (const { parsed, extracted, read } of processed) {
@@ -250,14 +272,35 @@ async function saveStep(
     documents: processed.map(({ extracted }) => extracted),
   });
   await saveFindings(runId, findings, saved);
+  if (run.owner) {
+    const counts = countOutcomes(findings);
+    await auditBestEffort({
+      owner: run.owner,
+      runId,
+      actor: SYSTEM_ACTOR,
+      action: "run.finished",
+      summary: `${pack.title}: ${counts.pass} pass, ${counts.fail} fail, ${counts.needs_review} needs review`,
+      details: { pack: pack.slug, counts },
+    });
+  }
   await emit({ type: "findings", findings: findingViews(rulebook, findings) });
   await emit({ type: "end", status: "completed" });
   await getWritable().close();
 }
 
-async function failStep(runId: string, message: string): Promise<void> {
+async function failStep(run: RunContext, message: string): Promise<void> {
   "use step";
-  await failRun(runId, message);
+  await failRun(run.runId, message);
+  if (run.owner) {
+    await auditBestEffort({
+      owner: run.owner,
+      runId: run.runId,
+      actor: SYSTEM_ACTOR,
+      action: "run.failed",
+      summary: `Failed: ${message.slice(0, 200)}`,
+      details: { pack: run.packSlug },
+    });
+  }
   await emit({ type: "end", status: "failed", error: message });
   await getWritable().close();
 }
@@ -266,20 +309,38 @@ async function failStep(runId: string, message: string): Promise<void> {
  * One Pre-screen run (ADR 0003): every Document is parsed and read in parallel,
  * each stage a retryable step, then the Rulebook is evaluated over all of them.
  */
+/** What every step of one run needs to know; plain data, so steps can take it. */
+type RunContext = {
+  runId: string;
+  packSlug: string;
+  /** The Rules the run applies; null for a run started before Rules were edited. */
+  rules: AppliedRule[] | null;
+  /** Whose Audit trail the run writes to; null for a run started before it. */
+  owner: Owner | null;
+};
+
 export async function prescreenWorkflow(input: {
   runId: string;
   packSlug: string;
   kinds: DocumentKind[];
+  rules?: AppliedRule[];
+  owner?: Owner;
 }) {
   "use workflow";
   const { runId, packSlug, kinds } = input;
+  const run: RunContext = {
+    runId,
+    packSlug,
+    rules: input.rules ?? null,
+    owner: input.owner ?? null,
+  };
   try {
     await markStatus(runId, "parsing");
     const processed = await Promise.all(
       kinds.map(async (kind): Promise<ProcessedDocument> => {
         const { spans, ...parsed } = await parseStep(packSlug, kind);
         const { extracted, read } = await readStep(
-          packSlug,
+          run,
           kind,
           spans,
           parsed.parser === "tesseract",
@@ -288,11 +349,8 @@ export async function prescreenWorkflow(input: {
       }),
     );
     await markStatus(runId, "evaluating");
-    await saveStep(runId, packSlug, processed);
+    await saveStep(run, processed);
   } catch (error) {
-    await failStep(
-      runId,
-      error instanceof Error ? error.message : String(error),
-    );
+    await failStep(run, error instanceof Error ? error.message : String(error));
   }
 }

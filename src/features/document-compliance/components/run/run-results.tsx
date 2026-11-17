@@ -10,18 +10,23 @@ import {
   runTotals,
 } from "../../metrics";
 import { DOCUMENT_ORDER } from "../../scan-events";
-import type { DocumentView, RunView } from "../../view";
+import type { DocumentView, EvaluationView, RunView } from "../../view";
+import { AuditTrail } from "../audit/audit-trail";
 import { DOCUMENT_LABELS } from "../labels";
 import { DocumentInspector } from "./document-inspector";
+import { EvaluationBar } from "./evaluation-bar";
 import { FindingsReport } from "./findings-report";
+import { PipelineView } from "./pipeline-view";
 
-type Tab = "findings" | "fields" | "raw" | "run";
+type Tab = "findings" | "pipeline" | "fields" | "raw" | "run" | "audit";
 
 const TABS: { id: Tab; label: string }[] = [
   { id: "findings", label: "Findings" },
+  { id: "pipeline", label: "Pipeline" },
   { id: "fields", label: "Fields" },
   { id: "raw", label: "Raw data" },
   { id: "run", label: "Run details" },
+  { id: "audit", label: "Audit" },
 ];
 
 const ordered = (documents: DocumentView[]) =>
@@ -55,6 +60,20 @@ export function RunResults({
   reduceMotion: boolean;
 }) {
   const [tab, setTab] = useState<Tab>("findings");
+  // Null follows the latest Evaluation, so a re-evaluation comes into view.
+  const [evaluationNumber, setEvaluationNumber] = useState<number | null>(null);
+  const evaluation: EvaluationView = view.evaluations.find(
+    (item) => item.number === evaluationNumber,
+  ) ??
+    view.evaluations.at(-1) ?? {
+      number: 1,
+      createdAt: view.createdAt,
+      createdBy: null,
+      rules: [],
+      findings: view.findings,
+      checks: view.documents.flatMap((document) => document.checks),
+    };
+  const showsEvaluation = tab === "findings" || tab === "pipeline";
   return (
     <div className="flex flex-col gap-6">
       <RunSummary view={view} reduceMotion={reduceMotion} />
@@ -85,13 +104,30 @@ export function RunResults({
         role="tabpanel"
         id={`results-panel-${tab}`}
         aria-labelledby={`results-tab-${tab}`}
+        className="flex flex-col gap-6"
       >
+        {showsEvaluation && view.status === "completed" ? (
+          <EvaluationBar
+            view={view}
+            selected={evaluation}
+            onSelect={setEvaluationNumber}
+          />
+        ) : null}
         {tab === "findings" ? (
-          <FindingsReport view={view} reduceMotion={reduceMotion} />
+          <FindingsReport
+            key={evaluation.number}
+            view={view}
+            evaluation={evaluation}
+            reduceMotion={reduceMotion}
+          />
+        ) : tab === "pipeline" ? (
+          <PipelineView view={view} evaluation={evaluation} />
         ) : tab === "fields" ? (
           <DocumentInspector view={view} mode="fields" />
         ) : tab === "raw" ? (
           <DocumentInspector view={view} mode="raw" />
+        ) : tab === "audit" ? (
+          <AuditTrail runId={view.id} />
         ) : (
           <RunDetails view={view} />
         )}

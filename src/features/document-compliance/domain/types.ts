@@ -7,6 +7,12 @@ export type SourceFormat = "image" | "pdf_digital" | "pdf_scanned";
 
 export type Outcome = "pass" | "fail" | "needs_review";
 
+export const OUTCOME_LABELS: Record<Outcome, string> = {
+  pass: "Pass",
+  fail: "Fail",
+  needs_review: "Needs review",
+};
+
 /** A box on a page, normalised to 0-1 with a top-left origin. */
 export type Box = { x0: number; y0: number; x1: number; y1: number };
 
