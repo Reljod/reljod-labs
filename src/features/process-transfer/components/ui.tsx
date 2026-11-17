@@ -12,6 +12,10 @@ const buttonBase =
 
 export const buttonClass = `${buttonBase} bg-federal-blue`;
 
+/** The primary button at card size. Appending `min-h-9 px-3` to `buttonClass` does not work: both utilities stay and CSS order picks the larger. */
+export const smallButtonClass =
+  "outline-box press inline-flex min-h-9 items-center justify-center gap-1.5 rounded-sm bg-federal-blue px-3 font-mono text-xs font-bold tracking-[0.1em] text-paper uppercase disabled:cursor-not-allowed disabled:opacity-50 disabled:shadow-none disabled:hover:translate-x-0 disabled:hover:translate-y-0";
+
 export const dangerButtonClass = `${buttonBase} bg-seal-red`;
 
 export const quietButtonClass =

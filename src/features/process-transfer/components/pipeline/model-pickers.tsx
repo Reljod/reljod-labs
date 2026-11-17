@@ -11,11 +11,11 @@ import {
 } from "../../domain/models";
 import { saveModels } from "../../server/actions";
 import {
-  buttonClass,
   fieldClass,
   InlineError,
   InlineNote,
   linkButtonClass,
+  smallButtonClass,
 } from "../ui";
 
 function same(a: ModelChoice, b: ModelChoice): boolean {
@@ -126,7 +126,7 @@ export function ModelPickers({
           onClick={save}
           disabled={!dirty || pending}
           aria-busy={pending}
-          className={`${buttonClass} min-h-9 px-4 text-xs`}
+          className={smallButtonClass}
         >
           {pending ? "Saving…" : "Save models"}
         </button>
