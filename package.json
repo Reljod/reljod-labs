@@ -18,7 +18,9 @@
     "render:casework": "node fixtures/casework/render.mjs",
     "render:client-manager-samples": "node --experimental-strip-types scripts/render-client-manager-samples.mts",
     "render:process-transfer-samples": "node --experimental-strip-types scripts/render-process-transfer-samples.mts",
-    "seed:client-manager": "node --env-file-if-exists=.env.local scripts/seed-client-manager.mts"
+    "seed:client-manager": "node --env-file-if-exists=.env.local scripts/seed-client-manager.mts",
+    "render:name-extraction-corpus": "node --experimental-strip-types scripts/render-name-extraction-corpus.mts",
+    "eval:name-extraction": "node --env-file-if-exists=.env.local scripts/eval-name-extraction.mts"
   },
   "dependencies": {
     "@ai-sdk/mcp": "^2.0.93",
@@ -27,6 +29,7 @@
     "@supabase/supabase-js": "^2.119.0",
     "@tanstack/react-query": "^5.106.1",
     "@vercel/analytics": "^2.0.1",
+    "@vercel/sandbox": "^3.9.1",
     "@vercel/speed-insights": "^2.1.0",
     "@xyflow/react": "^12.12.1",
     "ai": "^7.0.163",

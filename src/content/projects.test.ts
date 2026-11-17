@@ -30,6 +30,7 @@ describe("featuredProjects", () => {
       "client-manager",
       "process-transfer",
       "bank-harness",
+      "name-extraction",
     ]);
   });
 
@@ -41,6 +42,7 @@ describe("featuredProjects", () => {
       "casework-desk",
       "client-manager",
       "process-transfer",
+      "name-extraction",
     ]);
   });
 

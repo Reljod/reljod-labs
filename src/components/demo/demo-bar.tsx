@@ -22,7 +22,8 @@ type DemoSlug =
   | "casework-desk"
   | "client-manager"
   | "process-transfer"
-  | "bank-harness";
+  | "bank-harness"
+  | "name-extraction";
 
 /** A place inside a demo: a page (`href`) or a view the demo swaps itself (`onSelect`). */
 export type DemoTab =

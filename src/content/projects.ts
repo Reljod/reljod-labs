@@ -188,6 +188,24 @@ export const projects: Project[] = [
       "Upload a circular and settle the conflicts it raises with older guidance",
     ],
   },
+  // Appended last, like the others, so every `projects.<index>` source path keeps its entry.
+  {
+    slug: "name-extraction",
+    icon: "scan",
+    title: "Sieve",
+    sector: "AML screening",
+    summary:
+      "Finds every person and company named in a 10 to 500 page AML file, with every alias and every page, in minutes and for cents. Watch it read a 500-page ledger, then check every name it found side by side with the document.",
+    outcome: "Recall first, scored against an answer key",
+    tags: ["Agents", "Sub-agents", "Sandbox", "MCP", "Durable workflows"],
+    status: "Live",
+    href: "/demos/name-extraction",
+    features: [
+      "Synthetic AML files from 10 to 500 pages, or your own PDF",
+      "Watch Readers fan out over page ranges and the Done gate fill",
+      "An editable, versioned rulebook and a full audit trail with cost",
+    ],
+  },
 ];
 
 /**
