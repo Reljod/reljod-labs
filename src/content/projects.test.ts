@@ -42,6 +42,7 @@ describe("featuredProjects", () => {
       "casework-desk",
       "client-manager",
       "process-transfer",
+      "name-extraction",
     ]);
   });
 
