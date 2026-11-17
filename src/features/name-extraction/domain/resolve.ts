@@ -253,6 +253,9 @@ const NICKNAMES: Record<string, string> = {
   raj: "rajesh",
 };
 
+/** NICKNAMES as a Map: a lookup that is fast for any token and never reaches Object.prototype. */
+const NICKNAME = new Map(Object.entries(NICKNAMES));
+
 const CANON = new Map<string, string>();
 for (const group of TRANSLIT)
   for (const spelling of group) CANON.set(spelling, group[0]);
@@ -345,17 +348,25 @@ function personParts(text: string): PersonParts | null {
 }
 
 function canonToken(t: string): string {
-  return NICKNAMES[t] ?? CANON.get(t) ?? t;
+  return NICKNAME.get(t) ?? CANON.get(t) ?? t;
 }
 
-/** Consonant skeleton for unknown transliterations ("Mohamad" ~ "Muhammad"). */
+const skeletonCache = new Map<string, string>();
+
+/** Consonant skeleton for unknown transliterations ("Mohamad" ~ "Muhammad"), memoised per token. */
 function skeleton(t: string): string {
-  return t
-    .replace(/x/g, "ks")
-    .replace(/ph/g, "f")
-    .replace(/h$/, "")
-    .replace(/[aeiouy]/g, "")
-    .replace(/(.)\1+/g, "$1");
+  let out = skeletonCache.get(t);
+  if (out === undefined) {
+    out = t
+      .replace(/x/g, "ks")
+      .replace(/ph/g, "f")
+      .replace(/h$/, "")
+      .replace(/[aeiouy]/g, "")
+      .replace(/(.)\1+/g, "$1");
+    if (skeletonCache.size > 50_000) skeletonCache.clear();
+    skeletonCache.set(t, out);
+  }
+  return out;
 }
 
 function sameToken(a: string, b: string): boolean {
@@ -495,18 +506,30 @@ export function nameKey(text: string): string {
   return [...parts.given, parts.surname].join(" ");
 }
 
+/**
+ * Each printed form parsed once, with a person's readings: sameParty runs
+ * for every pair of forms when a Register is matched against a key, so the
+ * parse is a lookup after the first time.
+ */
 const partyCache = new Map<
   string,
-  { org: boolean; person: PersonParts | null; orgParts: OrgParts | null }
+  {
+    org: boolean;
+    person: PersonParts | null;
+    readings: PersonParts[];
+    orgParts: OrgParts | null;
+  }
 >();
 
 function parse(text: string) {
   let parsed = partyCache.get(text);
   if (!parsed) {
     const org = isOrgLike(text);
+    const person = org ? null : personParts(text);
     parsed = {
       org,
-      person: org ? null : personParts(text),
+      person,
+      readings: person ? readings(person) : [],
       orgParts: org ? orgParts(text) : null,
     };
     if (partyCache.size > 50_000) partyCache.clear();
@@ -527,9 +550,7 @@ export function sameParty(a: string, b: string): boolean {
   if (x.org !== y.org) return false;
   if (x.org && x.orgParts && y.orgParts) return sameOrg(x.orgParts, y.orgParts);
   if (!x.person || !y.person) return false;
-  const left = readings(x.person);
-  const right = readings(y.person);
-  return left.some((l) => right.some((r) => samePerson(l, r)));
+  return x.readings.some((l) => y.readings.some((r) => samePerson(l, r)));
 }
 
 /** Ways to read a person's tokens: as printed, surname first, or with a lost hyphen ("ferreira vos"). */

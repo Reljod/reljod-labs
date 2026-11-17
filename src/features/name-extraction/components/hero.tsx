@@ -3,7 +3,7 @@
 import { AnimatePresence, motion, useMotionValue } from "motion/react";
 import { useEffect, useRef, useState } from "react";
 import type { Replay } from "../domain/contract";
-import { REPLAYS } from "../server/replays";
+import { REPLAYS } from "../domain/replays";
 import { clockText, usd } from "./format";
 import { SOFT, SPRING } from "./motion-kit";
 import { plural } from "./plain";

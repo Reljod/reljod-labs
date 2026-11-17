@@ -9,6 +9,7 @@ const mocks = vi.hoisted(() => ({
   ownedUpload: vi.fn(),
   latestNames: vi.fn(),
   loadDocument: vi.fn(),
+  currentRulebook: vi.fn(),
 }));
 
 vi.mock("./repository", () => ({
@@ -17,6 +18,7 @@ vi.mock("./repository", () => ({
   ownedRun: mocks.ownedRun,
   ownedUpload: mocks.ownedUpload,
   latestNames: mocks.latestNames,
+  currentRulebook: mocks.currentRulebook,
 }));
 vi.mock("./document", () => ({
   isCorpusId: (id: string) => id.startsWith("ne-"),
@@ -101,6 +103,47 @@ describe("overview", () => {
     const result = await overview(OWNER, corpus, RUN);
     if ("error" in result) throw new Error(result.error);
     expect(result.density[2]).toBe(1);
+  });
+
+  it("matches a Run still going again once its Register moves", async () => {
+    const first = answerKey[0];
+    const statusOf = async () => {
+      const result = await overview(OWNER, corpus, RUN);
+      if ("error" in result) throw new Error(result.error);
+      return result.names.find((n) => n.name === first.canonical)?.status;
+    };
+    mocks.ownedRun.mockResolvedValue(run({ status: "running", names: [] }));
+    mocks.latestNames.mockResolvedValue([asFound("Someone Else", 3)]);
+    expect(await statusOf()).toBe("missed");
+    mocks.latestNames.mockResolvedValue([
+      asFound("Someone Else", 3),
+      asFound(first.canonical, first.pages[0]),
+    ]);
+    expect(await statusOf()).toBe("found");
+  });
+
+  it("keys a Document before a Run under the Owner's current Rulebook", async () => {
+    const types = async () => {
+      const result = await overview(OWNER, corpus);
+      if ("error" in result) throw new Error(result.error);
+      return new Set(result.names.map((n) => n.type));
+    };
+    expect(answerKey.some((n) => n.type === "organization")).toBe(true);
+    mocks.currentRulebook.mockResolvedValue({
+      version: 3,
+      rulebook: { ...DEFAULT_RULEBOOK, entityTypes: ["person"] },
+      createdAt: new Date(0).toISOString(),
+      note: null,
+    });
+    expect(await types()).toEqual(new Set(["person"]));
+    expect(mocks.currentRulebook).toHaveBeenCalledWith(OWNER);
+  });
+
+  it("falls back to the default Rulebook when the Owner's cannot be read", async () => {
+    mocks.currentRulebook.mockRejectedValue(new Error("schema not exposed"));
+    const result = await overview(OWNER, corpus);
+    if ("error" in result) throw new Error(result.error);
+    expect(result.names.some((n) => n.type === "organization")).toBe(true);
   });
 });
 

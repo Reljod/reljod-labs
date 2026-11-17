@@ -121,6 +121,11 @@ export function DocReader({
             onNear={(page) => void pages.ensure(page)}
             onRange={jumper.onRange}
             className="outline-box min-w-0 flex-1 rounded-sm bg-limestone p-2 sm:p-4"
+            stamp={(page) => [
+              pages.get(page),
+              jumper.pulse?.page === page ? jumper.pulse.nonce : 0,
+              side,
+            ]}
             renderPage={(page) => {
               const item = pages.get(page);
               return (

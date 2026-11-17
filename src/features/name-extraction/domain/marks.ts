@@ -247,20 +247,43 @@ export function runMarks(
 /** The most words a quote may have to be marked as the name itself. */
 const SURFACE_FORM_WORDS = 8;
 
+const wordsOf = (text: string) => text.trim().split(/\s+/).filter(Boolean);
+
+/** A word with its punctuation stripped, lower-cased ("OKAFOR," -> "okafor"). */
+const bareWord = (word: string) =>
+  word.replace(/[^\p{L}\p{N}]+/gu, "").toLowerCase();
+
 /**
  * Whether a mention's quote is the name as printed (a damaged or reordered
  * form, such as "j0seph okonkwo" or "OKAFOR, Folake"), and so worth marking
  * whole. A quote is often the sentence around the name; that one is not
  * marked, because the name inside it is found by its canonical form or an
- * alias, and marking the sentence would paint the whole line.
+ * alias, and marking the sentence would paint the whole line. So a quote is
+ * refused when it has more words than the longest known form plus one, or
+ * when it holds a known form (as whole words) next to words that are not the
+ * name's own.
  */
 export function isSurfaceForm(quote: string, name: ExtractedName) {
-  const words = quote.trim().split(/\s+/).filter(Boolean);
-  if (words.length === 0 || words.length > SURFACE_FORM_WORDS) return false;
-  const lower = quote.toLowerCase();
-  const forms = [name.canonical, ...name.aliases].map((form) =>
-    form.toLowerCase(),
+  const words = wordsOf(quote);
+  const forms = [name.canonical, ...name.aliases]
+    .map(foldForm)
+    .filter((form) => form.length > 0);
+  const longest = Math.max(0, ...forms.map((form) => wordsOf(form).length));
+  if (
+    words.length === 0 ||
+    words.length > SURFACE_FORM_WORDS ||
+    words.length > longest + 1
+  )
+    return false;
+  const folded = lowerSameLength(foldForm(quote));
+  const own = new Set(forms.flatMap(wordsOf).map(bareWord));
+  const holdsForm = forms.some((form) => {
+    const lower = lowerSameLength(form);
+    return lower !== folded && occurrences(folded, lower).length > 0;
+  });
+  // A known form with other words around it is context, not the name.
+  return (
+    !holdsForm ||
+    words.every((word) => bareWord(word) === "" || own.has(bareWord(word)))
   );
-  // A quote that holds a known form with more around it is context, not the name.
-  return !forms.some((form) => form !== lower && lower.includes(form));
 }

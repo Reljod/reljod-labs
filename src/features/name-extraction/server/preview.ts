@@ -33,6 +33,7 @@ import {
 } from "../domain/marks";
 import { isCorpusId, loadDocument } from "./document";
 import {
+  currentRulebook,
   isOver,
   latestNames,
   ownedRun,
@@ -78,6 +79,47 @@ function corpusDoc(corpusId: string): CorpusDoc {
   return doc;
 }
 
+/**
+ * A Run's standing against its key, kept per instance: matching a 500-page
+ * Run's Register against its key takes tens of milliseconds, and scrolling
+ * its preview asks for pages many times over. Keyed by the Run and what it
+ * was matched on (a Run that is over by when it ended; a live one by its
+ * Register), so a Run whose Register moved is matched again.
+ */
+const standingCache = new Map<string, Standing>();
+const STANDING_CACHE_SIZE = 8;
+
+/** A short fingerprint of a string (FNV-1a, 32 bits) with its length. */
+function fingerprint(text: string): string {
+  let hash = 0x811c9dc5;
+  for (let i = 0; i < text.length; i++) {
+    hash ^= text.charCodeAt(i);
+    hash = Math.imul(hash, 0x01000193);
+  }
+  return `${text.length}:${(hash >>> 0).toString(36)}`;
+}
+
+function cachedStanding(target: Target): Standing | null {
+  if (!target.names) return null;
+  const key = target.runKey;
+  const hit = key ? standingCache.get(key) : undefined;
+  if (key && hit) {
+    standingCache.delete(key);
+    standingCache.set(key, hit);
+    return hit;
+  }
+  const view = standing(target.names, target.expected);
+  if (key) {
+    standingCache.set(key, view);
+    while (standingCache.size > STANDING_CACHE_SIZE) {
+      const oldest = standingCache.keys().next().value;
+      if (oldest === undefined) break;
+      standingCache.delete(oldest);
+    }
+  }
+  return view;
+}
+
 /** What a preview shows: the Document, its key (demo Documents), the Run's Names (with a Run). */
 type Target = {
   title: string;
@@ -89,7 +131,35 @@ type Target = {
   pieces: SplitPieces;
   /** The Run's Register; null without a Run. */
   names: ExtractedName[] | null;
+  /** What the Run's standing is cached under; null without a Run. */
+  runKey: string | null;
 };
+
+/** The cache key of a Run's standing: same key, same Register and key. */
+function runKeyOf(
+  owner: Owner,
+  run: RunRow,
+  names: ExtractedName[],
+  rulebook: Rulebook,
+): string {
+  const settled =
+    isOver(run.status) && run.ended_at
+      ? `over:${run.ended_at}`
+      : `live:${fingerprint(JSON.stringify(names))}`;
+  return `${owner}\u0000${run.id}\u0000${settled}\u0000${fingerprint(JSON.stringify(rulebook))}`;
+}
+
+/**
+ * The Owner's current Rulebook, for a preview before any Run; the default
+ * when it cannot be read (the preview still works without the Data API).
+ */
+async function currentRulebookOrDefault(owner: Owner): Promise<Rulebook> {
+  try {
+    return (await currentRulebook(owner)).rulebook;
+  } catch {
+    return DEFAULT_RULEBOOK;
+  }
+}
 
 /** The Rulebook a Run ran under (stored on its row); the default if the row's is unreadable. */
 function rulebookOf(run: RunRow): Rulebook {
@@ -107,7 +177,7 @@ async function registerOf(run: RunRow): Promise<ExtractedName[]> {
 /**
  * Loads what to preview, Owner-scoped. With a Run, its own source, Rulebook
  * and Register (the `source` argument is ignored); without one, the
- * Document alone, keyed under the default Rulebook.
+ * Document alone, keyed under the Owner's current Rulebook.
  */
 async function loadTarget(
   owner: Owner,
@@ -118,6 +188,7 @@ async function loadTarget(
   let rulebook: Rulebook = DEFAULT_RULEBOOK;
   let names: ExtractedName[] | null = null;
   let title: string | null = null;
+  let runKey: string | null = null;
   if (runId !== undefined) {
     const run = await ownedRun(owner, runId);
     if (!run) return { error: "No such Run." };
@@ -125,11 +196,13 @@ async function loadTarget(
     rulebook = rulebookOf(run);
     names = await registerOf(run);
     title = run.title;
+    runKey = runKeyOf(owner, run, names, rulebook);
   }
   if (!source) return { error: "Pick a demo document or an upload." };
   if (source.kind === "corpus") {
     if (!isCorpusId(source.corpusId))
       return { error: "No such demo document." };
+    if (runId === undefined) rulebook = await currentRulebookOrDefault(owner);
     const entry = corpusEntry(source.corpusId);
     const doc = corpusDoc(source.corpusId);
     return {
@@ -140,6 +213,7 @@ async function loadTarget(
       hard: doc.hard,
       pieces: doc.pieces,
       names,
+      runKey,
     };
   }
   // A Run's Upload is the Owner's (the Run is); without a Run, check it is.
@@ -155,6 +229,7 @@ async function loadTarget(
       hard: new Map(),
       pieces: new Map(),
       names,
+      runKey,
     };
   } catch (error) {
     return {
@@ -197,7 +272,7 @@ export async function overview(
 /** Every name with its pages: the key's (standing against the Run, if any) and the Run's extras. */
 function overviewNames(target: Target): OverviewName[] {
   const out: OverviewName[] = [];
-  const view = target.names ? standing(target.names, target.expected) : null;
+  const view = cachedStanding(target);
   if (target.expected)
     for (const name of target.expected)
       out.push({
@@ -236,9 +311,7 @@ export async function pages(
   const total = target.document.pages.length;
   if (from > total) return { error: `The document has ${total} pages.` };
   const last = Math.min(to, total);
-  const view: Standing | null = target.names
-    ? standing(target.names, target.expected)
-    : null;
+  const view = cachedStanding(target);
   const out: PreviewPage[] = [];
   for (let page = from; page <= last; page++) {
     const text = target.document.pages[page - 1];

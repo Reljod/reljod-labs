@@ -270,6 +270,32 @@ describe("run marks from mention quotes", () => {
     expect(isSurfaceForm("Meridian Deposit Guarantee Scheme", name)).toBe(true);
   });
 
+  it("refuses a damaged spelling quoted with the sentence around it", () => {
+    const halyard = { ...name, canonical: "Halyard Holdings Limited" };
+    expect(isSurfaceForm("Halyrad Holdings Limited", halyard)).toBe(true);
+    expect(
+      isSurfaceForm("Halyrad Holdings Limited acted as nominee", halyard),
+    ).toBe(false);
+  });
+
+  it("takes a reordered form that holds a bare-surname alias", () => {
+    const okafor = {
+      ...name,
+      type: "person" as const,
+      canonical: "Folake Okafor",
+      aliases: ["Okafor"],
+    };
+    expect(isSurfaceForm("OKAFOR, Folake", okafor)).toBe(true);
+    expect(isSurfaceForm("Mrs Okafor signed", okafor)).toBe(false);
+  });
+
+  it("matches a known form on word boundaries only", () => {
+    const ana = { ...name, type: "person" as const, canonical: "Ana" };
+    // "ana" inside "Banana" is not the alias, so the quote is not context.
+    expect(isSurfaceForm("Banana", ana)).toBe(true);
+    expect(isSurfaceForm("Ana Lucía", ana)).toBe(false);
+  });
+
   it("marks only the name inside a sentence quote", () => {
     const text =
       "Deposits are protected by the Meridian Deposit Guarantee Scheme up to M$ 100,000 per depositor.";

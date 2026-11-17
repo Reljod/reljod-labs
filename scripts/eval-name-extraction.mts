@@ -137,11 +137,19 @@ try {
       } else {
         const json = `${JSON.stringify(result.replay)}\n`;
         const bytes = Buffer.byteLength(json);
+        if (bytes > REPLAY_MAX_BYTES) {
+          // Too heavy to ship; slim the trail further (domain/replay.ts) and record again.
+          console.error(
+            `           not recorded: ${id}'s Replay is ${(bytes / 1024).toFixed(0)} KB, over the ${(REPLAY_MAX_BYTES / 1000).toFixed(0)} KB limit`,
+          );
+          process.exitCode = 1;
+          continue;
+        }
         await mkdir(join(root, REPLAYS), { recursive: true });
         const file = join(root, REPLAYS, `${id}.json`);
         await writeFile(file, json);
         console.log(
-          `           recorded ${REPLAYS}/${id}.json (${(bytes / 1024).toFixed(0)} KB)${bytes > REPLAY_MAX_BYTES ? "  WARNING: over 600 KB" : ""}`,
+          `           recorded ${REPLAYS}/${id}.json (${(bytes / 1024).toFixed(0)} KB)`,
         );
       }
     }

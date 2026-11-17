@@ -1,7 +1,7 @@
 "use client";
 
-import { useReducedMotion } from "motion/react";
 import {
+  memo,
   type ReactNode,
   type RefObject,
   useCallback,
@@ -22,9 +22,44 @@ export type PaneHandle = {
  * ask for their text (`onNear`); the rest are placeholders the browser skips
  * rendering. Reports which pages are on screen, and jumps to a page.
  */
+/** Values a page's look depends on; its shell re-renders only when one changes. */
+export type Stamp = readonly unknown[];
+
+const sameStamp = (a: Stamp, b: Stamp) =>
+  a.length === b.length &&
+  a.every((value, index) => Object.is(value, b[index]));
+
+/**
+ * One page's place in the column. The browser skips laying out and painting
+ * it while it is off screen (`content-visibility`), and React skips it unless
+ * its stamp changed.
+ */
+const Shell = memo(
+  function Shell({
+    page,
+    render,
+  }: {
+    page: number;
+    stamp: Stamp;
+    render: (page: number) => ReactNode;
+  }) {
+    return (
+      <div
+        data-shell={page}
+        className="shrink-0 [contain-intrinsic-block-size:var(--sv-page-h,900px)] [content-visibility:auto]"
+      >
+        {render(page)}
+      </div>
+    );
+  },
+  (before, after) =>
+    before.page === after.page && sameStamp(before.stamp, after.stamp),
+);
+
 export function ReaderPane({
   total,
   renderPage,
+  stamp,
   onNear,
   onRange,
   handle,
@@ -32,22 +67,30 @@ export function ReaderPane({
 }: {
   total: number;
   renderPage: (page: number) => ReactNode;
+  /** What page `page` shows depends on; see `Shell`. */
+  stamp: (page: number) => Stamp;
   onNear: (page: number) => void;
   onRange: (first: number, last: number) => void;
   handle: RefObject<PaneHandle | null>;
   className?: string;
 }) {
   const pane = useRef<HTMLDivElement>(null);
-  const reduce = useReducedMotion();
   const near = useRef(onNear);
   near.current = onNear;
   const range = useRef(onRange);
   range.current = onRange;
 
+  // One reveal at a time: a new one, the visitor taking over, or unmount ends it.
+  const revealing = useRef<AbortController | null>(null);
+  useEffect(() => () => revealing.current?.abort(), []);
+
   useImperativeHandle(
     handle,
     () => ({
+      // Instant, so the observer only sees the target's pages and fetches
+      // just their chunk, not every chunk along a smooth scroll.
       jump: (page: number) => {
+        revealing.current?.abort();
         const element = pane.current?.querySelector<HTMLElement>(
           `[data-shell="${page}"]`,
         );
@@ -55,15 +98,30 @@ export function ReaderPane({
         near.current(page);
         pane.current.scrollTo({
           top: element.offsetTop - 12,
-          behavior: reduce ? "auto" : "smooth",
+          behavior: "instant",
         });
       },
       reveal: (page: number, name: string) => {
+        revealing.current?.abort();
         const root = pane.current;
         const shell = root?.querySelector<HTMLElement>(
           `[data-shell="${page}"]`,
         );
         if (!root || !shell) return;
+        const controller = new AbortController();
+        revealing.current = controller;
+        const { signal } = controller;
+        for (const type of ["pointerdown", "keydown", "wheel", "touchstart"])
+          root.addEventListener(type, () => controller.abort(), {
+            signal,
+            passive: true,
+          });
+        let timer = 0;
+        signal.addEventListener("abort", () => clearTimeout(timer));
+        const later = (ms: number) => {
+          if (!signal.aborted) timer = window.setTimeout(find, ms);
+        };
+
         near.current(page);
         // The lists sit above the pane: bring the pane itself on screen too.
         const box = root.getBoundingClientRect();
@@ -71,21 +129,12 @@ export function ReaderPane({
           root.scrollIntoView({ block: "start", behavior: "instant" });
         root.scrollTo({ top: shell.offsetTop - 12, behavior: "instant" });
         // Pages above load while we wait and change height, so keep the mark
-        // centred for a moment, unless the visitor starts scrolling.
+        // centred for a moment.
         let tries = 0;
         let held = 0;
-        let touched = false;
-        const stop = () => {
-          touched = true;
-        };
-        root.addEventListener("wheel", stop, { once: true, passive: true });
-        root.addEventListener("touchstart", stop, {
-          once: true,
-          passive: true,
-        });
-        const find = () => {
-          if (touched) return;
-          const mark = shell.querySelector<HTMLElement>(
+        function find() {
+          if (!root || signal.aborted) return;
+          const mark = shell?.querySelector<HTMLElement>(
             `mark[data-name="${CSS.escape(name)}"]`,
           );
           if (mark) {
@@ -95,16 +144,20 @@ export function ReaderPane({
             const target = root.scrollTop + offset - root.clientHeight / 3;
             if (Math.abs(target - root.scrollTop) > 2)
               root.scrollTo({ top: target, behavior: "instant" });
-            if (held++ < 8) setTimeout(find, 200);
+            if (held++ < 8) later(200);
+            else controller.abort();
           } else if (tries++ < 20) {
-            root.scrollTo({ top: shell.offsetTop - 12, behavior: "instant" });
-            setTimeout(find, 100);
-          }
-        };
+            root.scrollTo({
+              top: (shell?.offsetTop ?? 0) - 12,
+              behavior: "instant",
+            });
+            later(100);
+          } else controller.abort();
+        }
         find();
       },
     }),
-    [reduce],
+    [],
   );
 
   useEffect(() => {
@@ -149,6 +202,29 @@ export function ReaderPane({
     report();
   }, [report]);
 
+  // Off-screen pages take the height of the first page drawn with its
+  // text, set once: changing it later would shift every page and the jump.
+  useEffect(() => {
+    const root = pane.current;
+    if (!root) return;
+    const sizer = new ResizeObserver((entries) => {
+      const drawn = entries.find(
+        (entry) =>
+          entry.target.querySelector("pre") &&
+          entry.target.checkVisibility({ contentVisibilityAuto: true }),
+      );
+      if (!drawn) return;
+      root.style.setProperty(
+        "--sv-page-h",
+        `${(drawn.target as HTMLElement).offsetHeight}px`,
+      );
+      sizer.disconnect();
+    });
+    for (const shell of root.querySelectorAll("[data-shell]"))
+      sizer.observe(shell);
+    return () => sizer.disconnect();
+  }, []);
+
   return (
     <div
       ref={pane}
@@ -162,14 +238,13 @@ export function ReaderPane({
       className={`sv-scroll relative flex flex-col gap-4 overflow-y-auto overscroll-contain ${className}`}
     >
       {Array.from({ length: total }, (_, index) => (
-        <div
+        <Shell
           // biome-ignore lint/suspicious/noArrayIndexKey: one shell per page number, never reordered
           key={index}
-          data-shell={index + 1}
-          className="[overflow-anchor:auto]"
-        >
-          {renderPage(index + 1)}
-        </div>
+          page={index + 1}
+          stamp={stamp(index + 1)}
+          render={renderPage}
+        />
       ))}
     </div>
   );

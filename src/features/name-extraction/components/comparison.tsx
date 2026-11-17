@@ -170,23 +170,23 @@ export function ComparisonView({
   const jumper = useJumper();
   const [side, setSide] = useState<"key" | "run">("key");
   const { rows, score } = comparison;
-  const missed = rows.filter((row) => row.status === "missed");
-  const extras = rows.filter((row) => row.status === "extra");
-  const found = rows.filter((row) => row.status === "found");
-  const expected = score?.expected ?? found.length + missed.length;
-  const hit = score?.truePositives ?? found.length;
-
-  const ticks = useMemo<Tick[]>(
-    () => [
+  const { missed, extras, found, ticks } = useMemo(() => {
+    const missed = rows.filter((row) => row.status === "missed");
+    const extras = rows.filter((row) => row.status === "extra");
+    const found = rows.filter((row) => row.status === "found");
+    const ticks: Tick[] = [
       ...extras.flatMap((row) =>
         row.pages.map((page) => ({ page, tone: "extra" as const })),
       ),
       ...missed.flatMap((row) =>
         row.pages.map((page) => ({ page, tone: "missed" as const })),
       ),
-    ],
-    [extras, missed],
-  );
+    ];
+    return { missed, extras, found, ticks };
+  }, [rows]);
+  const expected = score?.expected ?? found.length + missed.length;
+  const hit = score?.truePositives ?? found.length;
+
   const density = useMemo(() => {
     const counts = new Uint16Array(total);
     for (const row of rows)
@@ -328,6 +328,11 @@ export function ComparisonView({
               onNear={(page) => void pages.ensure(page)}
               onRange={jumper.onRange}
               className="outline-box min-w-0 flex-1 rounded-sm bg-limestone p-2 sm:p-3"
+              stamp={(page) => [
+                pages.get(page),
+                jumper.pulse?.page === page ? jumper.pulse.nonce : 0,
+                side,
+              ]}
               renderPage={(page) => {
                 const item = pages.get(page);
                 const pulse = jumper.pulse?.page === page ? jumper.pulse : null;
