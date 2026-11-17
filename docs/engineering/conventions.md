@@ -47,3 +47,10 @@ The Guest pass page first shipped Extend and New code as bare buttons: a click g
 - Ask to confirm a write that is destructive or hard to undo (delete, revoke, stop, a new code that replaces the old one), in a dialog that names what will happen. `ConfirmDialog` in `src/features/access/components/pass-actions.tsx` is the pattern: a native `<dialog>`, Escape and the backdrop close it except while the write runs.
 - An escape hatch is the exception: Casework's Stop (and Esc) is guarded but never asks first, because a confirm would slow down the one control that must always work and it deletes nothing.
 - Show the result where the person clicked (what changed, or the error inline). Never fail silently.
+
+## Appending a Tailwind class does not override one already in the string
+
+The Handover rule cards wrote `${buttonClass} min-h-9 px-3 text-xs` to shrink the primary button, but the button stayed full size. The repo has no `tailwind-merge`, so both `min-h-11` and `min-h-9` reach the element, and the one that comes later in the generated CSS wins, whatever order the class string has. In this build `min-h-11` and `px-5` come after `min-h-9` and `px-3`. Pairs like `text-ink` + `text-seal-red` only work because of where they happen to land.
+
+- To change a size, padding or colour that a shared class already sets, add a named variant next to the shared one (`smallButtonClass` beside `buttonClass` in `src/features/process-transfer/components/ui.tsx`), built from a base string that leaves that property out.
+- Appending is fine only for properties the shared class does not set (`self-start`, `mt-auto`).
