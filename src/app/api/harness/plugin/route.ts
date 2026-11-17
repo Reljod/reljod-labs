@@ -2,6 +2,7 @@ import { PluginError } from "@/features/harness/domain/plugin";
 import { audit } from "@/features/harness/server/audit";
 import { staffOrDenied } from "@/features/harness/server/context";
 import { InvalidError } from "@/features/harness/server/errors";
+import { originOf } from "@/features/harness/server/oauth-http";
 import { failure } from "@/features/harness/server/respond";
 import { buildPluginZip } from "@/features/harness/server/skills";
 
@@ -10,7 +11,8 @@ export async function GET(request: Request) {
   try {
     const context = await staffOrDenied("plugin.download");
     if (context instanceof Response) return context;
-    const origin = new URL(request.url).origin;
+    // The public address, as the MCP token and the OAuth metadata give it.
+    const origin = originOf(request);
     let built: Awaited<ReturnType<typeof buildPluginZip>>;
     try {
       built = await buildPluginZip(context.owner, origin);

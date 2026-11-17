@@ -288,7 +288,11 @@ export type AppendMessageInput = {
     }
   | {
       role: "agent";
-      /** What the turn cost: saved on the message and on its Audit event. */
+      /**
+       * What the turn cost: saved on the message row. Not on its Audit
+       * event: the chat records each model call's cost once, on
+       * `model.called`, so the trail never counts a call twice.
+       */
       usage: AuditUsage | null;
     }
 );
@@ -361,7 +365,8 @@ export async function appendMessage(
         chars: input.content.length,
         parts: parts.map((part) => part.type),
       },
-      usage,
+      // Cost and tokens live on `model.called` only (one event per call).
+      usage: null,
     });
     return inserted;
   });

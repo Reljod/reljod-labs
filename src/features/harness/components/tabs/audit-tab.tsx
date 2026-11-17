@@ -74,7 +74,10 @@ export default function AuditTab() {
     openTab,
   } = useHarness();
   const admin = can("audit.read.workspace");
-  const [scope, setScope] = useState<Scope>("mine");
+  // Null until the person picks one: an admin starts on the Workspace (Rule
+  // and Skill saves and Conflict settlements belong to no Session), a user on
+  // their own Sessions.
+  const [scope, setScope] = useState<Scope | null>(null);
   const [actor, setActor] = useState<ActorKind | "">("");
   const [action, setAction] = useState<AuditAction | "">("");
   const [sessionFilter, setSessionFilter] = useState("");
@@ -84,8 +87,9 @@ export default function AuditTab() {
 
   const visible = place.tab === "audit";
   // A user cannot read the Workspace; the server scopes them anyway.
+  const chosenScope: Scope = scope ?? (admin ? "workspace" : "mine");
   const effectiveScope: Scope =
-    !admin && scope === "workspace" ? "mine" : scope;
+    !admin && chosenScope === "workspace" ? "mine" : chosenScope;
 
   const sessions = useQuery({
     queryKey: keys.sessions,

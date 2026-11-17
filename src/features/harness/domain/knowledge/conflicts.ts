@@ -137,6 +137,143 @@ export function conflictPrompt(
   ].join("\n\n");
 }
 
+// The e2e stand-in for the model ---------------------------------------------------
+
+/** Words too common in this Knowledge base to say two sentences are about the same thing. */
+const COMMON_WORDS = new Set([
+  "pension",
+  "pensions",
+  "member",
+  "members",
+  "contribution",
+  "contributions",
+  "administrator",
+  "islands",
+  "cayman",
+  "caymanian",
+  "before",
+  "after",
+  "within",
+  "should",
+  "which",
+  "their",
+  "under",
+  "amount",
+  "amounts",
+]);
+
+const contentWords = (text: string) =>
+  new Set(
+    (text.toLowerCase().match(/[a-z]{6,}/g) ?? []).filter(
+      (word) => !COMMON_WORDS.has(word),
+    ),
+  );
+
+type AmountSentence = {
+  amounts: Set<number>;
+  words: Set<string>;
+  /** Says the amount is a rule (a cap, a minimum), not one case's figure. */
+  limit: boolean;
+};
+
+const LIMIT_WORDS =
+  /\b(maximum|minimum|most|least|cap|caps|limit|limits|up to|no more than)\b/i;
+
+/**
+ * The pieces of a text that state CI$ amounts: the amounts, and the piece's
+ * words. A piece is a sentence, or with `paragraphs` a whole paragraph.
+ */
+function amountSentences(text: string, paragraphs = false): AmountSentence[] {
+  const flat = text.replace(/[ \t]*\n(?!\n)[ \t]*/g, " ");
+  return (
+    paragraphs ? flat.split(/\n{2,}/) : flat.split(/(?<=[.!?])\s+|\n{2,}/)
+  ).flatMap((sentence) => {
+    const amounts = new Set(
+      [...sentence.matchAll(/CI\$\s?(\d[\d,]*)/g)].map((match) =>
+        Number((match[1] ?? "").replace(/,/g, "")),
+      ),
+    );
+    return amounts.size > 0
+      ? [
+          {
+            amounts,
+            words: contentWords(sentence),
+            limit: LIMIT_WORDS.test(sentence),
+          },
+        ]
+      : [];
+  });
+}
+
+/** Content words two Passages must share before their amounts are compared. */
+const SAME_TOPIC_WORDS = 4;
+/** Content words a new sentence and an old paragraph, both stating amounts, must share to be about the same subject. */
+const SAME_SUBJECT_WORDS = 3;
+
+const money = (amounts: Set<number>) =>
+  [...amounts]
+    .map((amount) => `CI$${amount.toLocaleString("en-US")}`)
+    .join(" and ");
+
+/**
+ * The Conflict check's answer without a model, for the e2e suite only (no
+ * spend, same every time). A candidate conflicts when the two Passages are on
+ * the same topic (they share several content words) and a sentence of the
+ * new one and a paragraph of the old one state CI$ amounts about the same
+ * subject (they share words) with no amount in common, and both say it as a
+ * rule (a cap, a minimum), not as one case's figure. The later document is
+ * proposed to supersede.
+ */
+export function stubVerdicts(
+  newPassage: PassageForPrompt,
+  candidates: PassageForPrompt[],
+): Verdicts["verdicts"] {
+  const newText = `${newPassage.heading ?? ""}\n\n${newPassage.body}`;
+  const newWords = contentWords(newText);
+  const newSentences = amountSentences(newText);
+  return candidates.map((candidate, index) => {
+    const oldText = `${candidate.heading ?? ""}\n\n${candidate.body}`;
+    const topic = [...contentWords(oldText)].filter((word) =>
+      newWords.has(word),
+    ).length;
+    let pair: [AmountSentence, AmountSentence] | null = null;
+    if (topic >= SAME_TOPIC_WORDS) {
+      for (const old of amountSentences(oldText, true)) {
+        for (const fresh of newSentences) {
+          const sameSubject =
+            [...fresh.words].filter((word) => old.words.has(word)).length >=
+            SAME_SUBJECT_WORDS;
+          const shared = [...fresh.amounts].some((amount) =>
+            old.amounts.has(amount),
+          );
+          if (sameSubject && !shared && fresh.limit && old.limit)
+            pair ??= [fresh, old];
+        }
+      }
+    }
+    const newer =
+      newPassage.documentDate && candidate.documentDate
+        ? newPassage.documentDate > candidate.documentDate
+        : null;
+    return {
+      candidate: index + 1,
+      conflicts: pair !== null,
+      summary: pair
+        ? `${newPassage.sourceTitle} states ${money(pair[0].amounts)} where ${candidate.sourceTitle} states ${money(pair[1].amounts)}.`
+        : "",
+      proposal:
+        !pair || newer === null
+          ? "keep_both"
+          : newer
+            ? "supersede"
+            : "set_aside",
+      reasoning: pair
+        ? "Stubbed check (e2e): the two state different CI$ amounts for the same subject."
+        : "Stubbed check (e2e): no different CI$ amounts for the same subject.",
+    };
+  });
+}
+
 export type AcceptedConflict = {
   /** Index into the candidates given (0-based). */
   candidate: number;

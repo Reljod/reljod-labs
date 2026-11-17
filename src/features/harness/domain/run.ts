@@ -1,6 +1,7 @@
 import type { AuditUsage } from "./audit";
 import type { ApprovalRisk } from "./permissions";
 import type { PipelineId } from "./pipeline";
+import { subjectOf } from "./pipelines/index";
 import type { Outcome } from "./rules";
 
 export const RUN_STATUSES = [
@@ -204,6 +205,20 @@ const upsert = <T>(items: T[], item: T, same: (a: T) => boolean) =>
  * before `run.started` are dropped, and nothing but `run.started` changes the
  * status of a Run that has already ended.
  */
+/**
+ * The subject once a Run has ended: it names the Member or Employer the Run
+ * read, as the server's does. Kept as it was when the result adds nothing.
+ */
+function finishedSubject(
+  state: RunView,
+  result: Record<string, unknown> | null,
+): string {
+  const after = subjectOf(state.pipelineId, state.input, result);
+  return after === subjectOf(state.pipelineId, state.input, null)
+    ? state.subject
+    : after;
+}
+
 export function reduceRun(
   state: RunView | null,
   event: RunEvent,
@@ -301,6 +316,7 @@ export function reduceRun(
     case "run.finished":
       return {
         ...touched,
+        subject: finishedSubject(state, event.result),
         status: event.status,
         result: event.result,
         error: event.error,

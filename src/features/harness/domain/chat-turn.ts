@@ -2,6 +2,7 @@ import { redactDetail } from "./audit";
 import type { ChatEvent } from "./chat-events";
 import type { SourceKind, SourceStatus } from "./knowledge";
 import { isPipelineId, type PipelineId } from "./pipeline";
+import { addPeriods, periodOf } from "./pipelines/dates";
 import type { MessagePart, MessageView } from "./session";
 import type { SkillKind } from "./skills";
 import type { Staff } from "./staff";
@@ -301,4 +302,47 @@ How to answer: short and plain, like a colleague in the back office. Lead with t
 export function stubReplyOf(text: string, attachments: number): string {
   const said = text.trim().replace(/\s+/g, " ").slice(0, 80);
   return `Stub reply: I read "${said}"${attachments > 0 ? ` with ${attachments} attachment${attachments === 1 ? "" : "s"}` : ""}. No model was called.`;
+}
+
+/** The one tool a stubbed turn calls on the real MCP server, so the e2e suite sees cards without a model. */
+export type StubToolCall = { name: string; args: Record<string, unknown> };
+
+/**
+ * What a stubbed chat turn does (e2e, no model spend): a fixed choice of one
+ * Harness MCP tool from the words and the attachments, called in process like
+ * a real turn's. "delinquency" runs the report for last month; a CSV or XLSX
+ * attachment runs Contribution processing on it; any other attachment runs a
+ * Member request on them all; otherwise it searches the Knowledge base.
+ */
+export function stubToolCallOf(
+  text: string,
+  attached: Pick<AttachmentNote, "sourceId" | "kind">[],
+  today: string,
+): StubToolCall | null {
+  const words = text.trim();
+  if (/delinquen/i.test(words)) {
+    return {
+      name: "pipeline_delinquency_report",
+      args: { period: addPeriods(periodOf(today), -1) },
+    };
+  }
+  const schedule = attached.find(
+    (source) => source.kind === "csv" || source.kind === "sheet",
+  );
+  if (schedule) {
+    return {
+      name: "pipeline_contribution_processing",
+      args: { sourceId: schedule.sourceId },
+    };
+  }
+  if (attached.length > 0) {
+    return {
+      name: "pipeline_member_request",
+      args: { sourceIds: attached.map((source) => source.sourceId) },
+    };
+  }
+  if (words.length >= 3) {
+    return { name: "search_knowledge", args: { query: words.slice(0, 300) } };
+  }
+  return null;
 }

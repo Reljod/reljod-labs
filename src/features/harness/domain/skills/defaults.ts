@@ -16,14 +16,13 @@ A Member request is a Member asking the plan to do something: transfer out, with
 
 ## Before you start
 
-Gather, from the person or the attached papers:
+The Pipeline reads the request papers itself: it works out the kind of request, the Member and the date received from them. You give it:
 
-1. Which Member. Look them up first with the records tools (member number or name). If more than one Member matches, ask which; never guess.
-2. What kind of request it is, in the Pipeline's own terms (see the tool's input schema for the exact values).
-3. The date the request was received.
-4. Which supporting papers came with it. A paper that is a case paper (a signed form, an ID copy) stays with the case; a paper that explains the plan belongs in the Knowledge base (use the \`knowledge-filing\` Skill).
+- \`sourceIds\` (required): a list of the ids of the request papers attached in this Session, one or more. Send a list, even for one paper. A paper that explains the plan, not this case, belongs in the Knowledge base instead (use the \`knowledge-filing\` Skill).
+- \`memberNo\` (optional): the Member's number (HB-10001) when you know it. Look it up first with the records tools (member number or name); if more than one Member matches, ask which, never guess. Leave it out to let the Pipeline read it from the papers.
+- \`note\` (optional): anything the Staff member wants the Draft to take into account, in their words.
 
-If something required is missing, ask for it in one short message. Do not start a Run on invented values.
+If no request paper is attached, ask for it in one short message. Do not start a Run on invented values.
 
 ## Run it
 
@@ -52,15 +51,16 @@ Each month an Employer sends a Schedule (one line per Member) and a Remittance (
 
 ## Before you start
 
-You need:
+The Pipeline reads the Schedule file and matches it to the Remittance in the records. You give it:
 
-1. The Employer (look it up with the records tools; confirm if the name is ambiguous).
-2. The month the contributions are for.
-3. The Schedule for that month and the Remittance. If the person attached a file, check that it is the Schedule you mean. If a Schedule or Remittance is missing from the records, say so instead of starting.
+- \`sourceId\` (required): the id of the Schedule, a CSV or XLSX attached in this Session. If the person attached a file, check that it is the Schedule you mean. Without one, ask for it instead of starting.
+- \`employerCode\` (optional): the Employer's code (ER-1001), only when the file does not say. Look it up with the records tools; confirm if the name is ambiguous.
+- \`period\` (optional): the contribution month as YYYY-MM, only when the file does not say. Otherwise last month is assumed.
+- \`overrideExceptions\` (optional, true or false): post the Schedule even with exceptions. Only when the person asks for it in so many words; it makes the Approval high risk.
 
 ## Run it
 
-Call \`pipeline_contribution_processing\` with the Employer and the month. One call per Employer and month.
+Call \`pipeline_contribution_processing\` once per Schedule. One call per Employer and month.
 
 ## Read the result back
 
@@ -82,14 +82,15 @@ An Employer is delinquent when contributions are not remitted by the due date. T
 
 ## Before you start
 
-Gather:
+You give it one input:
 
-1. The as-of date (the date the report is for; default to today only if the person says so).
-2. Optionally one Employer, when the person asks about a single company. Otherwise the Pipeline looks at all of them.
+- \`period\` (required): the contribution month to report on, as YYYY-MM. It must be a month that has ended; ask which month if the person did not say ("last month" is fine when they say so).
+
+The Pipeline always looks at every Employer. When the person asks about a single company, run it for the month and report that Employer's line.
 
 ## Run it
 
-Call \`pipeline_delinquency_report\` once with those inputs.
+Call \`pipeline_delinquency_report\` once for that month.
 
 ## Read the result back
 

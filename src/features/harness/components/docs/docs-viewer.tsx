@@ -20,6 +20,7 @@ import { liveMarkdown } from "../../docs/live";
 import { FIRST_PAGE_ID, PAGES, pageById, SECTIONS } from "../../docs/registry";
 import type { DocBlock, DocPage } from "../../docs/types";
 import { useHarness } from "../harness-context";
+import { scrollWithin } from "../scroll";
 import { cx, inputClass, Markdown } from "../ui";
 import { Diagram } from "./diagrams";
 
@@ -52,7 +53,7 @@ export default function DocsViewer() {
     const target = Array.from(root.querySelectorAll<HTMLElement>("[id]")).find(
       (element) => element.id === slug,
     );
-    target?.scrollIntoView({ block: "start" });
+    scrollWithin(target, "start", "auto");
   };
 
   // A new page starts at the top, or at the heading the link named.

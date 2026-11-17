@@ -1,5 +1,4 @@
 import "server-only";
-import { headers } from "next/headers";
 import { getRun as getWorkflowRun, resumeHook, start } from "workflow/api";
 import type { Owner } from "@/features/access/domain/owner";
 import { LIMITS } from "../domain/limits";
@@ -21,6 +20,7 @@ import {
   type RunView,
   type StartedVia,
 } from "../domain/run";
+import type { Staff } from "../domain/staff";
 import type { Actor, PaidActor } from "./actor";
 import { audit, auditIn } from "./audit";
 import { assertCan } from "./context";
@@ -45,6 +45,8 @@ import type { ApprovalAnswer, RunContext } from "./pipelines/types";
 import { takeRate } from "./rate";
 import { currentRuleStates } from "./rules";
 import { harnessRun } from "./run-workflow";
+import { writableSession } from "./sessions";
+import { modelStubbed } from "./stub";
 
 /*
  * The Runs API. The routes under `/api/harness/runs` and `/api/harness/
@@ -52,25 +54,12 @@ import { harnessRun } from "./run-workflow";
  * and nothing else to reach a Run.
  */
 
-/** e2e only: with the bypass token, a Run spends nothing unless this header asks for the live model. */
-export const LIVE_HEADER = "x-harness-live";
-
 /** A Run still `queued` or `running` this long after its last change has lost its workflow. */
 const STALE_RUNNING = "1 hour";
 /** A Run waiting this long has outlived its Approval's wait (24 hours). */
 const STALE_WAITING = "25 hours";
 
 const SCHEDULE_FORMATS = /\.(csv|xlsx)$/i;
-
-async function stubbedRun(trusted: boolean): Promise<boolean> {
-  if (!trusted) return false;
-  try {
-    return (await headers()).get(LIVE_HEADER) !== "1";
-  } catch {
-    // Not in a request: a trusted caller with no header is stubbed.
-    return true;
-  }
-}
 
 /**
  * The Rule states a Run applies: the Workspace's current states laid over
@@ -92,17 +81,13 @@ const tooMany = (active: number) =>
     `${active} Runs are already at work in this Workspace (at most ${LIMITS.maxConcurrentRuns}). Let one finish or stop it first.`,
   );
 
+/** The Session a Run is started in: only the Staff member's own (a Run's card appears there). */
 async function sessionOf(
-  owner: Owner,
+  input: { owner: Owner; staff: Pick<Staff, "id"> },
   sessionId: string | null,
 ): Promise<string | null> {
   if (!sessionId) return null;
-  if (!isUuid(sessionId))
-    throw new NotFoundError("That Session is not in this Workspace.");
-  const [row] = await sql()<{ id: string }[]>`
-    select id from harness.sessions where owner = ${owner} and id = ${sessionId}`;
-  if (!row) throw new NotFoundError("That Session is not in this Workspace.");
-  return row.id;
+  return (await writableSession(input, sessionId)).id;
 }
 
 /**
@@ -147,7 +132,7 @@ export async function startRun(
     if (!looksRight)
       throw new InvalidError("A Schedule must be a CSV or XLSX file.");
   }
-  const sessionId = await sessionOf(owner, input.sessionId);
+  const sessionId = await sessionOf(input, input.sessionId);
 
   // Refuse a full Workspace before spending one of the visitor's Runs this
   // hour; the transaction below checks again under the lock.
@@ -204,7 +189,7 @@ export async function startRun(
     pipelineId: spec.id,
     input: parsed.input,
     asOf,
-    stubbed: await stubbedRun(visitor.trusted),
+    stubbed: await modelStubbed(visitor.trusted),
     states,
     startedBy: { id: staff.id, name: staff.name },
   };

@@ -58,3 +58,18 @@ export type SandboxFileContent = {
 
 /** A written file; `sandboxCreated` means earlier files of the Session are gone. */
 export type SandboxWriteResult = SandboxFile & { sandboxCreated: boolean };
+
+/**
+ * What the Agent must know when the Runner started a fresh container: any
+ * file written before is gone, so it writes them again before relying on them.
+ */
+export function sandboxNote(result: {
+  sandboxCreated?: boolean;
+  sandboxReset?: boolean;
+}): string {
+  if (result.sandboxReset)
+    return " The Sandbox was reset before this ran (it had been idle or was stopped): files written earlier in this Session are gone; write them again.";
+  if (result.sandboxCreated)
+    return " This started a new Sandbox: any files written earlier in this Session are gone.";
+  return "";
+}

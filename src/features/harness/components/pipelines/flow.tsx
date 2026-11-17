@@ -222,6 +222,9 @@ function StepNode({ data }: NodeProps<Node<StepNodeData>>) {
   );
 }
 
+/** See `onNodeClick` below: present so nodes take pointer events. */
+const keepNodesClickable = () => {};
+
 const NODE_TYPES = { step: StepNode };
 const FIT = { padding: 0.12, maxZoom: 1.1 };
 
@@ -327,6 +330,11 @@ export function PipelineGraph({
         nodesFocusable={false}
         edgesFocusable={false}
         elementsSelectable={false}
+        // React Flow gives a node `pointer-events: none` when it is neither
+        // selectable, draggable nor has a click handler, and the pane then
+        // swallows every click on the node's own button. The button does the
+        // work; this handler only keeps the node clickable.
+        onNodeClick={keepNodesClickable}
         zoomOnScroll={false}
         preventScrolling={false}
       >

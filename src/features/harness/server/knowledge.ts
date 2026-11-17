@@ -55,6 +55,8 @@ import {
 import { embed, toVector } from "./llm";
 import { takeRate } from "./rate";
 import { backfillKnowledge } from "./seed/knowledge";
+import { writableSession } from "./sessions";
+import { modelStubbed } from "./stub";
 
 /*
  * The Knowledge base (ADR 0016): Sources, the Passages search finds, and
@@ -274,9 +276,12 @@ async function registerSource(
       `This Workspace holds ${LIMITS.sourcesPerWorkspace} Sources. An admin can remove one first.`,
     );
   }
+  // A Source is attached in the Staff member's own Session, never another's.
+  const session = source.sessionId
+    ? (await writableSession(input, source.sessionId)).id
+    : null;
   await takeRate(input.visitor, owner, "source");
 
-  const session = isUuid(source.sessionId) ? source.sessionId : null;
   await db`
     insert into harness.sources (
       id, owner, title, kind, storage_path, bytes, status, added_by,
@@ -284,7 +289,7 @@ async function registerSource(
     ) values (
       ${source.id}, ${owner}, ${source.title}, ${source.kind},
       ${source.storagePath}, ${source.bytes}, 'pending', ${staff.id},
-      (select id from harness.sessions where id = ${session} and owner = ${owner}),
+      ${session},
       ${source.documentDate}, ${source.text}
     )`;
   const view = await loadSource(db, owner, source.id);
@@ -574,6 +579,7 @@ export async function ingestSource(
           embedding: embedded.vectors[row.ordinal] ?? null,
         })),
       deadline: started + INGEST_BUDGET_MS,
+      stubbed: await modelStubbed(input.visitor.trusted),
     });
 
     const conflictIds = await sql().begin(async (tx) => {

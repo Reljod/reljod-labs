@@ -4,9 +4,6 @@ import { isoOf, periodStart } from "../../domain/pipelines/dates";
 import { buildSeedBook } from "../../domain/pipelines/seed-data";
 import type { Db } from "../db";
 
-/** The seed version that first carried the records. */
-const RECORDS_SINCE = 1;
-
 /**
  * Seeds a new Workspace's records: the Employers, Members, Schedules,
  * Remittances and Member requests of the fictional Harbour Bank & Trust
@@ -14,18 +11,15 @@ const RECORDS_SINCE = 1;
  * month always has its problems in place.
  *
  * Called by `ensureWorkspace` inside the transaction that holds the
- * Workspace's row lock: a handful of multi-row inserts, no model. Safe to
- * run twice: Employers and Members insert `on conflict do nothing`, and the
- * month-by-month records go in only when the Workspace has none yet (they
- * have no natural key to conflict on). Needs migration
+ * Workspace's row lock: a handful of multi-row inserts, no model. Like the
+ * other seeders it adds only what is missing, whatever seed the Workspace
+ * held before, so a raised `SEED_VERSION` tops it up: Employers and Members
+ * insert `on conflict do nothing`, and the month-by-month records go in only
+ * when the Workspace has none yet (they have no natural key to conflict
+ * on). Needs migration
  * `20261117130000_harness_pipelines.sql` (`members.started_work_on`).
  */
-export async function seedRecords(
-  tx: Db,
-  owner: Owner,
-  fromVersion: number,
-): Promise<void> {
-  if (fromVersion >= RECORDS_SINCE) return;
+export async function seedRecords(tx: Db, owner: Owner): Promise<void> {
   const book = buildSeedBook(isoOf(new Date()));
 
   await tx`

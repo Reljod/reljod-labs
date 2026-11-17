@@ -237,3 +237,29 @@ describe("reduceRun", () => {
     expect(run).toEqual(before);
   });
 });
+
+describe("a finished Run's subject", () => {
+  it("names the Member the Run read, and keeps the old subject otherwise", () => {
+    const started = {
+      ...run,
+      subject: "Member request · 1 paper",
+      input: { sourceIds: ["a"] },
+    };
+    const finish = (result: Record<string, unknown>) =>
+      replayRun([
+        event(1, { type: "run.started", run: started }),
+        event(2, {
+          type: "run.finished",
+          status: "completed",
+          result,
+          error: null,
+        }),
+      ]);
+    expect(
+      finish({ kind: "cessation_of_residence", memberNo: "HB-10042" })?.subject,
+    ).toBe("Withdrawal on leaving Cayman · HB-10042");
+    expect(finish({ letter: "sent" })?.subject).toBe(
+      "Member request · 1 paper",
+    );
+  });
+});

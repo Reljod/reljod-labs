@@ -16,11 +16,7 @@ import { embedAll, setEmbeddings } from "../knowledge/embeddings";
  * keyed on `seed_key`, so running it twice, or topping up a Workspace on an
  * older seed, adds only what is missing.
  */
-export async function seedKnowledge(
-  tx: Db,
-  owner: Owner,
-  _fromVersion: number,
-): Promise<void> {
+export async function seedKnowledge(tx: Db, owner: Owner): Promise<void> {
   for (const source of SEED_SOURCES) {
     if (!source.text) continue;
     const [row] = await tx<{ id: string }[]>`

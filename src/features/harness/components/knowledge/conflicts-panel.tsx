@@ -2,6 +2,7 @@
 
 import { useEffect } from "react";
 import type { ConflictView, Resolution } from "../../domain/knowledge";
+import { scrollWithin } from "../scroll";
 import { Empty, Tabs } from "../ui";
 import { ConflictCard } from "./conflict-card";
 
@@ -44,9 +45,7 @@ export function ConflictsPanel({
       onFilter("all");
       return;
     }
-    document
-      .getElementById(`conflict-${focusId}`)
-      ?.scrollIntoView({ block: "nearest", behavior: "smooth" });
+    scrollWithin(document.getElementById(`conflict-${focusId}`), "nearest");
   }, [focusId, conflicts, filter, onFilter]);
 
   return (

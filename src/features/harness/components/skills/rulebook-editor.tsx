@@ -5,6 +5,7 @@ import { pipelineOf } from "../../domain/pipelines";
 import type { RuleView } from "../../domain/rules";
 import { renderSkillMd, type SkillView } from "../../domain/skills";
 import { groupRulesByStep, ruleSummary } from "../../domain/skills/group";
+import { scrollWithin } from "../scroll";
 import { Button, cx, Empty } from "../ui";
 import { RuleCard, type RuleCardHandle } from "./rule-card";
 
@@ -92,9 +93,9 @@ export function RulebookEditor({
                 key={group.stepId}
                 type="button"
                 onClick={() =>
-                  document
-                    .getElementById(`step-${skill.id}-${group.stepId}`)
-                    ?.scrollIntoView({ behavior: "smooth", block: "start" })
+                  scrollWithin(
+                    document.getElementById(`step-${skill.id}-${group.stepId}`),
+                  )
                 }
                 className="shrink-0 rounded-sm border border-ink/20 bg-paper px-2 py-1 text-xs font-medium text-ink-muted hover:border-ink/40 hover:text-ink"
               >

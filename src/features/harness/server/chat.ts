@@ -13,6 +13,7 @@ import {
   partsOf,
   type SkillIndexEntry,
   stubReplyOf,
+  stubToolCallOf,
   toolOk,
   toolSummaryOf,
   webSummaryOf,
@@ -171,14 +172,79 @@ async function finish(
   return { type: "done", messageId: message.id };
 }
 
-/** The e2e suite's turn: the same events and saves, a canned reply, no model. */
+/** The Harness MCP server, called in process with this turn's token (ADR 0013). */
+function turnMcpClient(turn: PreparedTurn) {
+  const { context } = turn;
+  return createMCPClient({
+    transport: {
+      type: "http",
+      url: `${turn.origin}${HARNESS_MCP_PATH}`,
+      headers: {
+        authorization: `Bearer ${chatToken({
+          access: context.access,
+          owner: context.owner,
+          staff: context.staff,
+          visitor: context.visitor,
+          sessionId: turn.session.id,
+        })}`,
+      },
+      fetch: (url, init) => mcpHandler(new Request(url, init)),
+    },
+  });
+}
+
+/**
+ * The e2e suite's turn: the same events and saves, no model. It calls one
+ * Harness MCP tool chosen by `stubToolCallOf` through the same in-process
+ * client a real turn uses (so a Run card, a Source card and the Audit trail
+ * are real), then gives a canned reply.
+ */
 async function* stubTurn(turn: PreparedTurn): AsyncGenerator<ChatEvent> {
-  const reply = stubReplyOf(turn.text, turn.attached.length);
   const events: ChatEvent[] = [];
-  for (const word of reply.split(/(?<= )/)) {
-    const event: ChatEvent = { type: "text.delta", text: word };
+  const emit = (event: ChatEvent) => {
     events.push(event);
-    yield event;
+    return event;
+  };
+  const plan = stubToolCallOf(turn.text, turn.attached, today());
+  let called = "";
+  if (plan) {
+    const mcp = await turnMcpClient(turn);
+    try {
+      const tools = (await mcp.tools()) as unknown as ToolSet;
+      const chosen = tools[plan.name];
+      if (chosen?.execute) {
+        const id = `stub-${crypto.randomUUID()}`;
+        yield emit({
+          type: "tool.started",
+          id,
+          name: plan.name,
+          args: cutArgs(plan.args),
+        });
+        // MCP tools take their arguments as JSON; the schema is checked by the server.
+        const execute = chosen.execute as unknown as (
+          args: Record<string, unknown>,
+          options: { toolCallId: string; messages: [] },
+        ) => Promise<unknown>;
+        const output = await execute(plan.args, {
+          toolCallId: id,
+          messages: [],
+        });
+        yield emit({
+          type: "tool.finished",
+          id,
+          ok: toolOk(output),
+          summary: toolSummaryOf(output),
+        });
+        for (const card of cardEventsOf(output)) yield emit(card);
+        called = ` Called ${plan.name}: ${toolSummaryOf(output)}`;
+      }
+    } finally {
+      await mcp.close().catch(() => {});
+    }
+  }
+  const reply = `${stubReplyOf(turn.text, turn.attached.length)}${called}`;
+  for (const word of reply.split(/(?<= )/)) {
+    yield emit({ type: "text.delta", text: word });
   }
   yield {
     type: "usage",
@@ -211,22 +277,7 @@ export async function* streamTurn(
   const model = env.chatModel();
   const skills = await skillIndex(context);
 
-  const mcp = await createMCPClient({
-    transport: {
-      type: "http",
-      url: `${turn.origin}${HARNESS_MCP_PATH}`,
-      headers: {
-        authorization: `Bearer ${chatToken({
-          access: context.access,
-          owner,
-          staff,
-          visitor: context.visitor,
-          sessionId,
-        })}`,
-      },
-      fetch: (url, init) => mcpHandler(new Request(url, init)),
-    },
-  });
+  const mcp = await turnMcpClient(turn);
 
   const events: ChatEvent[] = [];
   const emit = (event: ChatEvent) => {

@@ -23,6 +23,7 @@ import {
   type ParamDraft,
 } from "../../domain/skills/rule-fields";
 import { ApiFailure, api, keys, messageOf } from "../api";
+import { scrollWithin } from "../scroll";
 import {
   Badge,
   Button,
@@ -98,8 +99,7 @@ export function RuleCard({
   }, [stateKey, base]);
 
   useEffect(() => {
-    if (highlighted)
-      ref.current?.scrollIntoView({ block: "center", behavior: "smooth" });
+    if (highlighted) scrollWithin(ref.current, "center");
   }, [highlighted]);
 
   const dirty = isDirty(spec, base, draft);

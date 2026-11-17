@@ -11,6 +11,7 @@ import {
   type Neighbour,
   queryOf,
   selectCandidates,
+  stubVerdicts,
   verdictSchema,
 } from "../../domain/knowledge/conflicts";
 import { LIMITS } from "../../domain/limits";
@@ -90,6 +91,8 @@ export async function checkForConflicts(input: {
   /** `Date.now()` after which no new check is started. */
   deadline: number;
   cap?: number;
+  /** The e2e suite: answer with `stubVerdicts` instead of the model, spending nothing. */
+  stubbed?: boolean;
 }): Promise<CheckResult> {
   const cap = input.cap ?? LIMITS.passagesCheckedPerSource;
   const chosen = choosePassagesToCheck(input.passages, cap);
@@ -121,40 +124,46 @@ export async function checkForConflicts(input: {
       if (candidates.length === 0) return;
 
       result.asked++;
-      const model = env.stepModel();
-      const answer = await generateText({
-        model: stepModel(),
-        instructions: CONFLICT_SYSTEM,
-        output: Output.object({ schema: verdictSchema }),
-        prompt: conflictPrompt(
-          {
-            sourceTitle: input.source.title,
-            documentDate: input.source.documentDate,
-            heading: passage.heading,
-            body: passage.body,
-          },
-          candidates.map((hit) => ({
-            sourceTitle: hit.sourceTitle,
-            documentDate: hit.documentDate,
-            heading: hit.heading,
-            body: hit.body,
-          })),
-        ),
-        temperature: 0,
-        maxOutputTokens: 900,
-      });
-      const usage = usageOf({
-        model,
-        usage: answer.usage,
-        providerMetadata: answer.providerMetadata,
-      });
+      const newForPrompt = {
+        sourceTitle: input.source.title,
+        documentDate: input.source.documentDate,
+        heading: passage.heading,
+        body: passage.body,
+      };
+      const candidatesForPrompt = candidates.map((hit) => ({
+        sourceTitle: hit.sourceTitle,
+        documentDate: hit.documentDate,
+        heading: hit.heading,
+        body: hit.body,
+      }));
+      let verdicts: ReturnType<typeof stubVerdicts>;
+      let usage: AuditUsage | null = null;
+      if (input.stubbed) {
+        verdicts = stubVerdicts(newForPrompt, candidatesForPrompt);
+      } else {
+        const model = env.stepModel();
+        const answer = await generateText({
+          model: stepModel(),
+          instructions: CONFLICT_SYSTEM,
+          output: Output.object({ schema: verdictSchema }),
+          prompt: conflictPrompt(newForPrompt, candidatesForPrompt),
+          temperature: 0,
+          maxOutputTokens: 900,
+        });
+        verdicts = answer.output.verdicts;
+        usage = usageOf({
+          model,
+          usage: answer.usage,
+          providerMetadata: answer.providerMetadata,
+        });
+      }
       const accepted = acceptVerdicts(
-        answer.output.verdicts,
+        verdicts,
         candidates,
         input.source.documentDate,
       );
       if (accepted.length === 0) {
-        result.quietUsage.push(usage);
+        if (usage) result.quietUsage.push(usage);
         return;
       }
       accepted.forEach((conflict, order) => {

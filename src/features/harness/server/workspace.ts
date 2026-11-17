@@ -9,7 +9,10 @@ import { seedRecords } from "./seed/records";
 /**
  * The seed a Workspace should hold. Raise it when `SEED_STAFF`, `seedRecords`
  * or `seedKnowledge` grows; Workspaces on an older number are topped up the
- * next time they are opened.
+ * next time they are opened. The number only decides whether to run the
+ * seeders: each of them adds only what is missing (by Staff key, Employer
+ * code, Member number, seed Source key), so a fresh Workspace gets everything
+ * once and a top-up never duplicates.
  */
 export const SEED_VERSION = 1;
 
@@ -54,8 +57,8 @@ export async function ensureWorkspace(owner: Owner): Promise<void> {
                 ${member.role}, ${member.initials})
         on conflict (owner, key) do nothing`;
     }
-    await seedRecords(tx, owner, from);
-    await seedKnowledge(tx, owner, from);
+    await seedRecords(tx, owner);
+    await seedKnowledge(tx, owner);
     await tx`
       update harness.workspaces
       set seed_version = ${SEED_VERSION}, seeded_at = coalesce(seeded_at, now())

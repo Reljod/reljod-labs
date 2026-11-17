@@ -21,19 +21,16 @@ import {
   toolAllowed,
 } from "../domain/mcp-tools";
 import { guestTokenProblem, type HarnessClaims } from "../domain/oauth";
-import {
-  levels,
-  PIPELINE_IDS,
-  type PipelineInputField,
-  type PipelineSpec,
-} from "../domain/pipeline";
+import { levels, PIPELINE_IDS } from "../domain/pipeline";
 import { PIPELINES } from "../domain/pipelines";
+import { pipelineInputSchema } from "../domain/pipelines/tool-schema";
 import {
   MEMBER_REQUEST_KINDS,
   type MemberRequestStatus,
 } from "../domain/records";
 import { ruleSentenceText } from "../domain/rules";
 import type { RunView } from "../domain/run";
+import { sandboxNote } from "../domain/sandbox";
 import { renderSkillMd } from "../domain/skills";
 import { audit, listAudit } from "./audit";
 import { env } from "./env";
@@ -221,47 +218,6 @@ const absolute = (caller: Caller, path: string) =>
   caller.origin ? `${caller.origin}${path}` : path;
 
 // Pipelines ------------------------------------------------------------------------------
-
-function fieldSchema(field: PipelineInputField): z.ZodType {
-  let schema: z.ZodType;
-  switch (field.type) {
-    case "number":
-      schema = z.number();
-      break;
-    case "boolean":
-      schema = z.boolean();
-      break;
-    case "date":
-      schema = z
-        .string()
-        .regex(/^\d{4}-\d{2}-\d{2}$/, `${field.name} is a date, YYYY-MM-DD`);
-      break;
-    case "month":
-      schema = z
-        .string()
-        .regex(/^\d{4}-\d{2}(-01)?$/, `${field.name} is a month, YYYY-MM`);
-      break;
-    case "id":
-      schema = z.string().min(1).max(80);
-      break;
-    default:
-      schema =
-        field.options && field.options.length > 0
-          ? z.enum(field.options as [string, ...string[]])
-          : z.string().max(2_000);
-  }
-  schema = schema.describe(field.description);
-  return field.required ? schema : schema.optional();
-}
-
-/** A Pipeline's input as a tool's input schema. */
-export function pipelineInputSchema(spec: Pick<PipelineSpec, "inputSchema">) {
-  return z.object(
-    Object.fromEntries(
-      spec.inputSchema.map((field) => [field.name, fieldSchema(field)]),
-    ),
-  );
-}
 
 /** A Run as the model reads it: what happened, and what waits for a person. */
 function runBrief(run: RunView, caller: Caller) {
@@ -793,8 +749,12 @@ const TOOLS: Record<StaticToolName, Registration<any>> = {
         sessionId,
         path: input.path,
         content: input.content,
+        via: "agent",
       });
-      return { lead: `Wrote ${file.path} (${file.bytes} bytes).`, data: file };
+      return {
+        lead: `Wrote ${file.path} (${file.bytes} bytes).${sandboxNote(file)}`,
+        data: file,
+      };
     },
   ),
 
@@ -811,9 +771,10 @@ const TOOLS: Record<StaticToolName, Registration<any>> = {
         visitor: caller.visitor,
         sessionId,
         command: input.command,
+        via: "agent",
       });
       return {
-        lead: `Exit ${result.exitCode ?? "none"}${result.timedOut ? " (timed out)" : ""}${result.truncated ? " (output cut)" : ""}.`,
+        lead: `Exit ${result.exitCode ?? "none"}${result.timedOut ? " (timed out)" : ""}${result.truncated ? " (output cut)" : ""}.${sandboxNote(result)}`,
         data: result,
       };
     },

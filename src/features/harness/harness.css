@@ -205,3 +205,80 @@
   color: var(--color-ink-muted, #4a4f5b);
   font-size: 0.75rem;
 }
+
+/* demo mode */
+
+/*
+ * The guide bar is docked to the bottom (or the top, on request) of the
+ * window. It measures its own height into --demo-bar-h and the app shell
+ * (.hx-root, a full-height column) gives that much room up, so the bar never
+ * covers the composer or an Approval panel.
+ */
+.hx-demo-bar {
+  position: fixed;
+  inset-inline: 0;
+  z-index: 40;
+  max-height: 60dvh;
+  overflow-y: auto;
+  background: #fff;
+  color: var(--hx-ink);
+  box-shadow: 0 0 0 1px var(--hx-line);
+}
+.hx-demo-bar[data-edge="bottom"] {
+  bottom: 0;
+  border-top: 2px solid #1e407c;
+}
+.hx-demo-bar[data-edge="top"] {
+  top: 0;
+  border-bottom: 2px solid #1e407c;
+}
+.hx-demo-bar:focus-visible {
+  outline: 2px solid #1e407c;
+  outline-offset: -4px;
+}
+html[data-demo-bar="bottom"] .hx-root {
+  height: calc(100dvh - var(--demo-bar-h, 0px));
+}
+html[data-demo-bar="top"] .hx-root {
+  margin-top: var(--demo-bar-h, 0px);
+  height: calc(100dvh - var(--demo-bar-h, 0px));
+}
+
+/*
+ * The ring on the part of the app a Beat acts on. The guide sets
+ * data-demo-focus on <html>; the selectors are the shell's own tab and panel
+ * ids (harness-tab-<tab> and harness-tab-<tab>-panel in app.tsx).
+ */
+html[data-demo-focus="chat"] [id="harness-tab-chat-panel"],
+html[data-demo-focus="pipelines"] [id="harness-tab-pipelines-panel"],
+html[data-demo-focus="knowledge"] [id="harness-tab-knowledge-panel"],
+html[data-demo-focus="skills"] [id="harness-tab-skills-panel"],
+html[data-demo-focus="audit"] [id="harness-tab-audit-panel"],
+html[data-demo-focus="docs"] [id="harness-tab-docs-panel"],
+html[data-demo-focus="chat"] [id="harness-tab-chat"],
+html[data-demo-focus="pipelines"] [id="harness-tab-pipelines"],
+html[data-demo-focus="knowledge"] [id="harness-tab-knowledge"],
+html[data-demo-focus="skills"] [id="harness-tab-skills"],
+html[data-demo-focus="audit"] [id="harness-tab-audit"],
+html[data-demo-focus="docs"] [id="harness-tab-docs"] {
+  outline: 2px solid rgb(30 64 124 / 0.7);
+  outline-offset: -2px;
+  animation: hx-demo-ring 1.8s ease-in-out infinite;
+}
+@keyframes hx-demo-ring {
+  50% {
+    outline-color: rgb(30 64 124 / 0.2);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html[data-demo-focus] [id^="harness-tab-"] {
+    animation: none;
+  }
+}
+
+@media (max-width: 640px) {
+  .hx-demo-bar {
+    max-height: 50dvh;
+  }
+}

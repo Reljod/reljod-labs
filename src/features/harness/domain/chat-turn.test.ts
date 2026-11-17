@@ -8,6 +8,7 @@ import {
   instructionsFor,
   partsOf,
   stubReplyOf,
+  stubToolCallOf,
   toolOk,
   toolSummaryOf,
   webSummaryOf,
@@ -234,5 +235,44 @@ describe("the e2e stub", () => {
     expect(stubReplyOf("hello  there", 2)).toBe(
       'Stub reply: I read "hello there" with 2 attachments. No model was called.',
     );
+  });
+});
+
+describe("stubToolCallOf (the e2e chat turn)", () => {
+  const id = "123e4567-e89b-42d3-a456-426614174000";
+  it("runs the delinquency report for last month", () => {
+    expect(
+      stubToolCallOf("Prepare the delinquency report", [], "2026-01-10"),
+    ).toEqual({
+      name: "pipeline_delinquency_report",
+      args: { period: "2025-12" },
+    });
+  });
+  it("runs Contribution processing on an attached Schedule", () => {
+    expect(
+      stubToolCallOf(
+        "Process this",
+        [{ sourceId: id, kind: "csv" }],
+        "2026-01-10",
+      ),
+    ).toEqual({
+      name: "pipeline_contribution_processing",
+      args: { sourceId: id },
+    });
+  });
+  it("runs a Member request on other attachments, as a list", () => {
+    expect(
+      stubToolCallOf(
+        "Handle it",
+        [{ sourceId: id, kind: "text" }],
+        "2026-01-10",
+      ),
+    ).toEqual({ name: "pipeline_member_request", args: { sourceIds: [id] } });
+  });
+  it("searches the Knowledge base otherwise", () => {
+    expect(
+      stubToolCallOf("What is the property cap?", [], "2026-01-10")?.name,
+    ).toBe("search_knowledge");
+    expect(stubToolCallOf("", [], "2026-01-10")).toBeNull();
   });
 });
