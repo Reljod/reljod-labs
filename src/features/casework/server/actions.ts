@@ -1,7 +1,6 @@
 "use server";
 
 import { createHmac, randomUUID, timingSafeEqual } from "node:crypto";
-import { ASK_TOOL, type ChoiceOption } from "../domain/chat-events";
 import {
   type ModelSettings,
   modelSettingsSchema,
@@ -10,239 +9,31 @@ import {
 } from "../domain/model-config";
 import { type Answer, answerSchema } from "../domain/run-events";
 import type { SourceFormat } from "../domain/run-state";
-import type { DeskSummary, DeskView, DocView, SpendView } from "../view";
+import type { DeskView, DocView } from "../view";
+import { deskView, docView, thumbUrls } from "./desk-view";
 import { env } from "./env";
 import {
-  type CaseFileRow,
   countUploads,
   type DocumentRow,
-  documentsByIds,
   insertUpload,
-  loadCabinetDocuments,
-  loadCaseFiles,
-  loadMessages,
-  runCosts,
-  runsForSession,
-  type SessionRow,
-  sessionSpend,
   setModelOverrides,
-  spendBySession,
 } from "./repository";
 import { answerQuestion, settingsFor, stopActiveRun, stopRun } from "./runs";
 import {
+  ensureDesk,
   ensureSession,
-  ownedDesks,
   startSession,
   switchSession,
 } from "./session";
-import { BUCKET, signedUrls, supabase } from "./supabase";
+import { BUCKET, supabase } from "./supabase";
 
 const MAX_UPLOAD_BYTES = 10 * 1024 * 1024;
 const MAX_UPLOADS_PER_SESSION = 30;
 
-/** Label fields that name who a Document is about (not who certified, paid or wrote it). */
-const ENTITY_FIELDS = [
-  "full_name",
-  "member_name",
-  "customer_name",
-  "person_name",
-  "subject_name",
-  "account_holder",
-  "entity_name",
-  "employer_name",
-  "licensee_name",
-  "top_entity",
-  "trust_name",
-];
-
-function entitiesOf(label: DocumentRow["label"]) {
-  if (!label) return [];
-  const names = ENTITY_FIELDS.flatMap((field) => {
-    const value = label[field];
-    return typeof value === "string" && value.trim() ? [value.trim()] : [];
-  });
-  // The same person is often written two ways; keep the first spelling of each.
-  const seen = new Set<string>();
-  return names.filter((name) => {
-    const key = name.toLowerCase().replace(/[^a-z0-9]+/g, "");
-    if (seen.has(key)) return false;
-    seen.add(key);
-    return true;
-  });
-}
-
-function docView(
-  row: DocumentRow,
-  urls: Map<string, string>,
-  folders?: Map<string, CaseFileRow>,
-): DocView {
-  const thumb = row.page_paths[0];
-  return {
-    id: row.id,
-    name: row.name,
-    sourceFormat: row.source_format,
-    pageCount: Math.max(1, row.page_paths.length),
-    thumbUrl: thumb ? (urls.get(thumb) ?? null) : null,
-    sizeBytes: row.size_bytes,
-    kind: row.label_kind,
-    entities: entitiesOf(row.label),
-    folder: row.case_file_slug
-      ? (folders?.get(row.case_file_slug)?.title ?? null)
-      : null,
-  };
-}
-
-async function deskList(current: SessionRow): Promise<DeskSummary[]> {
-  const owned = await ownedDesks();
-  const sessions = owned.some((session) => session.id === current.id)
-    ? owned
-    : [current, ...owned];
-  const spend = await spendBySession(sessions.map((session) => session.id));
-  return sessions
-    .filter((session) => session.id === current.id || session.title)
-    .map((session) => ({
-      id: session.id,
-      title: session.title ?? "New desk",
-      lastActiveAt: session.last_active_at,
-      spendUsd: spend.get(session.id) ?? 0,
-      current: session.id === current.id,
-    }));
-}
-
-async function spendView(sessionId: string): Promise<SpendView> {
-  const rows = await sessionSpend(sessionId);
-  return {
-    totalUsd: rows.reduce((sum, row) => sum + row.costUsd, 0),
-    rows,
-  };
-}
-
 /** Everything the desk shows on load: the Cabinet, the chat so far, runs, spend, settings. */
 export async function openDesk(): Promise<DeskView> {
-  const session = await ensureSession();
-  const [folders, documents, messages, runs, spend, settings, desks] =
-    await Promise.all([
-      loadCaseFiles(),
-      loadCabinetDocuments(session.id),
-      loadMessages(session.id, 80),
-      runsForSession(session.id),
-      spendView(session.id),
-      settingsFor(session),
-      deskList(session),
-    ]);
-  const costs = await runCosts(runs.map((run) => run.id));
-  const bySlug = new Map(folders.map((folder) => [folder.slug, folder]));
-  const urls = await signedUrls(
-    documents.flatMap((row) => (row.page_paths[0] ? [row.page_paths[0]] : [])),
-    6 * 3600,
-  );
-  return {
-    sessionId: session.id,
-    desks,
-    folders: folders.map((folder) => ({
-      slug: folder.slug,
-      title: folder.title,
-      scenario: folder.scenario,
-      summary: folder.summary,
-      split: folder.split,
-      documents: documents
-        .filter((row) => row.case_file_slug === folder.slug)
-        .map((row) => docView(row, urls, bySlug)),
-    })),
-    uploads: documents
-      .filter((row) => row.session_id === session.id)
-      .map((row) => docView(row, urls)),
-    messages: messages.map((message) => {
-      const asked = message.tool_calls.find((call) => call.name === ASK_TOOL)
-        ?.input as { question?: string; options?: ChoiceOption[] } | undefined;
-      return {
-        id: message.id,
-        role: message.role,
-        text: message.text,
-        documentIds: message.document_ids,
-        runId: message.run_id,
-        tools: message.tool_calls
-          .filter((call) => call.name !== ASK_TOOL)
-          .map((call) => ({
-            name: call.name,
-            ok: call.ok !== false,
-            summary: call.summary,
-          })),
-        choices:
-          asked?.question && Array.isArray(asked.options)
-            ? { question: asked.question, options: asked.options }
-            : null,
-      };
-    }),
-    runs: runs.map((run) => ({
-      id: run.id,
-      pipeline: run.pipeline,
-      jobs: run.jobs,
-      status: run.status,
-      recommendation: run.recommendation,
-      createdAt: run.created_at,
-      costUsd: costs.get(run.id)?.costUsd ?? 0,
-      calls: costs.get(run.id)?.calls ?? 0,
-      documentIds: run.document_ids,
-    })),
-    spend,
-    settings,
-  };
-}
-
-export type DocumentPages = {
-  id: string;
-  name: string;
-  sourceFormat: DocumentRow["source_format"];
-  pages: string[];
-  csv: string | null;
-};
-
-/**
- * Signed page images for several Documents in one call, so a Run's pages can
- * be fetched up front rather than one by one as each is shown.
- */
-export async function documentsPages(
-  documentIds: string[],
-): Promise<Record<string, DocumentPages>> {
-  const session = await ensureSession();
-  const found = await documentsByIds(documentIds.slice(0, 60), session.id);
-  const pathsOf = (row: DocumentRow) =>
-    row.page_paths.length ? row.page_paths : [row.storage_path];
-  const urls = await signedUrls(
-    found.flatMap((row) => (row.source_format === "csv" ? [] : pathsOf(row))),
-    3600,
-  );
-  const entries = await Promise.all(
-    found.map(async (row): Promise<[string, DocumentPages]> => {
-      let csv: string | null = null;
-      if (row.source_format === "csv") {
-        const { data } = await supabase()
-          .storage.from(BUCKET)
-          .download(row.storage_path);
-        csv = data ? (await data.text()).slice(0, 20_000) : null;
-      }
-      return [
-        row.id,
-        {
-          id: row.id,
-          name: row.name,
-          sourceFormat: row.source_format,
-          pages:
-            row.source_format === "csv"
-              ? []
-              : pathsOf(row).map((path) => urls.get(path) ?? ""),
-          csv,
-        },
-      ];
-    }),
-  );
-  return Object.fromEntries(entries);
-}
-
-export async function getSpend() {
-  const session = await ensureSession();
-  return spendView(session.id);
+  const { owner, session } = await ensureDesk();
+  return deskView(owner, session);
 }
 
 export async function answer(questionId: string, reply: Answer) {
@@ -273,14 +64,19 @@ export async function resetModelSettings() {
   return settingsFor({ ...session, model_overrides: {} });
 }
 
-/** A fresh desk: a new session. The old ones stay on the list to go back to. */
-export async function newDesk() {
-  await startSession();
+/** A fresh desk: a new session, opened. The old ones stay on the list to go back to. */
+export async function newDesk(): Promise<DeskView> {
+  const { owner, session } = await startSession();
+  return deskView(owner, session);
 }
 
-/** Goes back to an earlier desk of this Owner. */
-export async function openEarlierDesk(id: string) {
-  return switchSession(String(id));
+/**
+ * Goes back to an earlier desk of this Owner and opens it in the same call,
+ * or answers null when it is not theirs.
+ */
+export async function openEarlierDesk(id: string): Promise<DeskView | null> {
+  const opened = await switchSession(String(id));
+  return opened ? deskView(opened.owner, opened.session) : null;
 }
 
 /** Stops a Run, or whatever this desk has going. */
@@ -470,9 +266,6 @@ export async function finishUpload(tickets: string[]): Promise<DocView[]> {
       }),
     );
   }
-  const urls = await signedUrls(
-    created.flatMap((row) => (row.page_paths[0] ? [row.page_paths[0]] : [])),
-    6 * 3600,
-  );
+  const urls = await thumbUrls(created);
   return created.map((row) => docView(row, urls));
 }

@@ -18,6 +18,7 @@ import type { DocView, RunSummary } from "../view";
 import { readDragDocs } from "./cabinet";
 import { FileGlyph, RECOMMENDATION_STYLE } from "./glyphs";
 import type { OpenQuestion } from "./run-reducer";
+import { TranscriptSkeleton } from "./skeletons";
 import { filesFromDrop, hasFiles } from "./upload";
 
 export type ChatTool = {
@@ -116,6 +117,8 @@ type ChatPanelProps = {
   busy: boolean;
   /** The desk is not open yet. */
   disabled: boolean;
+  /** The transcript is on its way (the desk is opening or switching). */
+  loading?: boolean;
   /** Something from the Cabinet is being dragged. */
   dragging: boolean;
   question: OpenQuestion | null;
@@ -230,9 +233,12 @@ export function ChatPanel(props: ChatPanelProps) {
       <div
         ref={listRef}
         aria-live="polite"
-        className="cw-scroll flex min-h-0 flex-1 flex-col gap-4 overflow-y-auto px-4 py-4 text-[13.5px] leading-relaxed"
+        aria-busy={props.loading || undefined}
+        className={`cw-scroll flex min-h-0 flex-1 flex-col gap-4 overflow-y-auto px-4 py-4 text-[13.5px] leading-relaxed transition-opacity ${props.loading && !empty ? "opacity-50" : ""}`}
       >
-        {empty ? (
+        {empty && props.loading ? (
+          <TranscriptSkeleton />
+        ) : empty ? (
           <div className="cw-reveal my-auto">
             <p className="font-mono text-[11px] tracking-[0.1em] text-federal-blue uppercase">
               ✻ Welcome to the desk

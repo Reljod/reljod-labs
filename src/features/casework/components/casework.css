@@ -276,3 +276,20 @@
     animation: none;
   }
 }
+
+/* Where content will land while it loads: a flat bone that breathes, no soft shadow. */
+@keyframes cw-bone {
+  50% {
+    opacity: 0.55;
+  }
+}
+.cw-bone {
+  border-radius: 2px;
+  background: rgb(20 33 61 / 0.1);
+  animation: cw-bone 1.4s ease-in-out infinite;
+}
+@media (prefers-reduced-motion: reduce) {
+  .cw-bone {
+    animation: none;
+  }
+}

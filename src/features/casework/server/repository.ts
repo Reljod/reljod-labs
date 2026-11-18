@@ -164,6 +164,28 @@ export async function loadCabinetDocuments(sessionId: string) {
   );
 }
 
+/** The Case files' synthetic Documents: shared seed data, the same for everyone. */
+export async function loadSeedDocuments() {
+  return rows<DocumentRow[]>(
+    await supabase()
+      .from("documents")
+      .select(`${DOCUMENT_COLUMNS}, label`)
+      .not("case_file_slug", "is", null)
+      .order("name"),
+  );
+}
+
+/** One desk's own uploads. */
+export async function loadUploads(sessionId: string) {
+  return rows<DocumentRow[]>(
+    await supabase()
+      .from("documents")
+      .select(`${DOCUMENT_COLUMNS}, label`)
+      .eq("session_id", sessionId)
+      .order("name"),
+  );
+}
+
 /** Documents by id that this session may use: the Cabinet's, or its own uploads. */
 export async function documentsByIds(ids: string[], sessionId: string | null) {
   const valid = ids.filter((id) => /^[0-9a-f-]{36}$/i.test(id));

@@ -17,12 +17,16 @@ export async function GET(
 ) {
   const { runId } = await params;
   // `currentSession` passes the Access gate before it reads the desk cookie.
-  const session = await currentSession().catch((error) => {
-    if (error instanceof AccessDeniedError) return denied();
-    throw error;
-  });
+  // The Run is looked up alongside, and answered only once the gate passes
+  // and the Run is the Desk's.
+  const [session, run] = await Promise.all([
+    currentSession().catch((error) => {
+      if (error instanceof AccessDeniedError) return denied();
+      throw error;
+    }),
+    getRun(runId),
+  ]);
   if (session instanceof Response) return session;
-  const run = await getRun(runId);
   if (!run?.workflow_run_id || !session || run.session_id !== session.id) {
     return new Response("Not found", { status: 404 });
   }
