@@ -24,7 +24,7 @@ import { friendly } from "./ui";
 import { UnderTheHood } from "./under-the-hood";
 import type { Uploaded } from "./upload-zone";
 import { prefetchFirstPages } from "./use-pages";
-import { useRun } from "./use-run";
+import { forgetFinishedRuns, useRun } from "./use-run";
 import { type OpenDoc, ReplayComparison, Workspace } from "./workspace";
 
 type Stage =
@@ -124,6 +124,7 @@ export function Sieve({
     () => () => {
       runsRequest.current?.abort();
       reads.clear();
+      forgetFinishedRuns();
     },
     [],
   );

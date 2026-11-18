@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useReducer } from "react";
+import { useEffect, useReducer, useRef } from "react";
 import { apiPath } from "../domain/api";
 import type { RunEvent } from "../domain/contract";
 import { ApiError, api } from "./api";
@@ -51,6 +51,29 @@ function reducer(state: RunState, action: Action): RunState {
   }
 }
 
+/**
+ * Finished Runs' views, for this tab: a finished Run never changes, so
+ * opening it again shows it at once, with no request and no replay. Bounded;
+ * Sieve clears it when it unmounts.
+ */
+const finished = new Map<string, RunView>();
+const FINISHED_SIZE = 8;
+
+function rememberFinished(runId: string, view: RunView) {
+  finished.delete(runId);
+  finished.set(runId, view);
+  while (finished.size > FINISHED_SIZE) {
+    const oldest = finished.keys().next().value;
+    if (oldest === undefined) break;
+    finished.delete(oldest);
+  }
+}
+
+/** Forgets every finished Run's view (Sieve unmounting). */
+export function forgetFinishedRuns() {
+  finished.clear();
+}
+
 const RECONNECT_MS = 1200;
 const ATTEMPTS = 30;
 
@@ -62,12 +85,25 @@ const ATTEMPTS = 30;
  */
 export function useRun(runId: string | null): RunState {
   const [state, dispatch] = useReducer(reducer, initial);
+  /** The Run whose trail has ended: its view is final once rendered. */
+  const final = useRef<string | null>(null);
+
+  useEffect(() => {
+    if (runId && final.current === runId && isOver(state.view.status))
+      rememberFinished(runId, state.view);
+  }, [runId, state.view]);
 
   useEffect(() => {
     if (!runId) {
       dispatch({ type: "missing" });
       return;
     }
+    const known = finished.get(runId);
+    if (known) {
+      dispatch({ type: "load", view: known });
+      return;
+    }
+    final.current = null;
     dispatch({ type: "reset" });
     const controller = new AbortController();
     let seen = 0;
@@ -104,7 +140,10 @@ export function useRun(runId: string | null): RunState {
               );
               seen = Math.max(seen, event.seq + 1);
               dispatch({ type: "event", event });
-              if (event.type === "end") ended = true;
+              if (event.type === "end") {
+                ended = true;
+                final.current = runId;
+              }
             }
           }
         } catch {
@@ -143,6 +182,7 @@ export function useRun(runId: string | null): RunState {
         dispatch({ type: "load", view });
         seen = events.length === 0 ? 0 : view.lastSeq + 1;
         ended = isOver(detail.status) && isOver(view.status);
+        if (ended) final.current = runId;
         if (!ended) await follow();
       } catch {
         if (!controller.signal.aborted) await follow();
