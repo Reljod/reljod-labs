@@ -8,8 +8,7 @@ type Props = { axis: "x" | "y"; className: string };
 
 /**
  * A brass rule drawn along a list as you scroll through it: across (`x`) or
- * down (`y`). Decoration only; nothing renders outside a moving page, and
- * with reduced motion it is simply drawn.
+ * down (`y`). Decoration only; nothing renders outside a moving page.
  */
 export function ScrollRule(props: Props) {
   const animated = useCopyMotion();

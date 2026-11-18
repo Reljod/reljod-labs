@@ -16,8 +16,7 @@ type Props = {
 /**
  * A block that tips up into place as it comes up the screen, scrubbed by
  * scroll. `lean` sets which way it comes from. Outside a moving page (see
- * `CopyMotionProvider`) it renders a plain block; reduced motion is handled
- * in motion.css.
+ * `CopyMotionProvider`) it renders a plain block.
  */
 export function ScrollIn(props: Props) {
   const animated = useCopyMotion();

@@ -70,7 +70,7 @@ export function WhoChapter() {
 function Lines() {
   const step = (LINES[1] - LINES[0]) / who.lines.length;
   return (
-    <h2 className="space-y-1.5 font-mono text-[1.45rem] leading-[1.12] font-bold uppercase sm:text-4xl lg:space-y-2 lg:text-[2.5rem]">
+    <h2 className="space-y-1.5 font-mono text-[clamp(1.2rem,min(5.6vw,4.4svh),2.5rem)] leading-[1.12] font-bold uppercase lg:space-y-2">
       {who.lines.map((line, index) => {
         const from = LINES[0] + index * step;
         const last = index === who.lines.length - 1;
@@ -123,7 +123,7 @@ function Figures() {
               />
               <span
                 aria-hidden="true"
-                className="mt-1.5 block text-[0.6875rem] leading-snug text-marble sm:text-xs lg:text-sm"
+                className="mt-1.5 block text-[0.6875rem] leading-snug text-marble sm:text-xs lg:text-sm [@media(max-height:620px)]:hidden"
               >
                 {metric.label}
               </span>
@@ -168,7 +168,7 @@ function Road() {
                 <span className="mt-1 block font-mono text-xs font-bold uppercase">
                   {stop.short}
                 </span>
-                <span className="mt-1.5 block text-[0.8125rem] leading-snug text-marble">
+                <span className="mt-1.5 block text-[0.8125rem] leading-snug text-marble [@media(max-height:700px)]:hidden">
                   {stop.what}
                 </span>
               </span>

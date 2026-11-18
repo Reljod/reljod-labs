@@ -47,7 +47,7 @@ export function CatalogCard({
   onHover: (slug: string) => void;
 }) {
   const { demo } = entry;
-  const href = demo.href ?? "#everything";
+  const href = demo.href ?? "/demos";
   const ref = useRef<HTMLDivElement>(null);
   const reduce = useReducedMotion();
   const canHover = useCanHover();

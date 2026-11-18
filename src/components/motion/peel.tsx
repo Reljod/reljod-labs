@@ -115,8 +115,10 @@ function DrivenPeel({
     return () => controls.stop();
   }, [on, delay, duration, reduce, mounted]);
 
+  // Reduced motion only skips the reveal that plays on its own (on mount);
+  // one scrubbed by scroll still follows the visitor's scrolling.
   const q: MotionValue<number> =
-    reduce || timing.on === "mount" ? mounted : scrollYProgress;
+    timing.on === "mount" ? mounted : scrollYProgress;
 
   return (
     <motion.span

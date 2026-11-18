@@ -11,10 +11,10 @@ import {
 } from "motion/react";
 import Link from "next/link";
 import { type PointerEvent, useEffect, useState } from "react";
+import { demoPreviews } from "@/components/landing/demo-previews";
 import { BrowserFrame } from "@/components/showcase/browser-frame";
 import { Icon } from "@/components/ui/icon";
 import { ProjectMarks } from "@/components/ui/project-marks";
-import { demoPreviews } from "../demo-previews";
 import type { CatalogEntry } from "./catalog-query";
 import { Highlight } from "./highlight";
 import { useCanHover } from "./use-can-hover";
@@ -87,7 +87,7 @@ export function CatalogIndex({
               className="bg-paper"
             >
               <Link
-                href={entry.demo.href ?? "#everything"}
+                href={entry.demo.href ?? "/demos"}
                 onPointerEnter={(event) => {
                   if (event.pointerType !== "mouse") return;
                   place(event.clientX, event.clientY);

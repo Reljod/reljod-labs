@@ -1,9 +1,9 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import { demoPreviews } from "@/components/landing/demo-previews";
 import { IconTile } from "@/components/ui/icon";
 import type { Project } from "@/content/types";
-import { demoPreviews } from "../demo-previews";
 
 /** Mounts a demo's moving preview only once it comes near the screen, then keeps it. */
 export function LazyPreview({ demo }: { demo: Project }) {

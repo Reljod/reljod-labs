@@ -3,6 +3,7 @@
 import { AnimatePresence, motion } from "motion/react";
 import { useEffect, useRef, useState } from "react";
 import { type SceneId, sceneNumber, scenes } from "@/content/landing";
+import { PauseGlyph, PlayGlyph, useTourPlayer } from "./tour-player";
 
 /**
  * The page's index, always a thumb away: which scene you are in, how far
@@ -81,6 +82,7 @@ export function SceneIndex() {
   }, [open]);
 
   const total = String(scenes.length).padStart(2, "0");
+  const tour = useTourPlayer();
 
   return (
     <nav
@@ -133,24 +135,39 @@ export function SceneIndex() {
         ) : null}
       </AnimatePresence>
 
-      <button
-        ref={buttonRef}
-        type="button"
-        aria-expanded={open}
-        aria-controls="scene-index-list"
-        onClick={() => setOpen((value) => !value)}
-        className="outline-box press relative flex min-h-11 items-center gap-3 overflow-hidden rounded-sm bg-paper px-4 font-mono text-sm font-bold uppercase tracking-[0.1em]"
-      >
-        <span>Index</span>
-        <span className="text-federal-blue">
-          {sceneNumber(current)}/{total}
-        </span>
-        <span
-          ref={barRef}
-          aria-hidden="true"
-          className="absolute inset-x-0 bottom-0 h-1 origin-left scale-x-0 bg-brass"
-        />
-      </button>
+      <div className="flex items-stretch gap-2">
+        <button
+          type="button"
+          onClick={tour.toggle}
+          aria-pressed={tour.playing}
+          data-tour-control=""
+          aria-label={tour.playing ? "Pause the tour" : "Play the tour"}
+          className={`play-tour outline-box press flex min-h-11 items-center gap-2 rounded-sm px-3 font-mono text-sm font-bold uppercase tracking-[0.1em] ${tour.playing ? "bg-ink text-paper" : "bg-brass text-ink"}`}
+        >
+          {tour.playing ? <PauseGlyph /> : <PlayGlyph />}
+          <span className="hidden sm:inline">
+            {tour.playing ? "Pause" : "Play"}
+          </span>
+        </button>
+        <button
+          ref={buttonRef}
+          type="button"
+          aria-expanded={open}
+          aria-controls="scene-index-list"
+          onClick={() => setOpen((value) => !value)}
+          className="outline-box press relative flex min-h-11 items-center gap-3 overflow-hidden rounded-sm bg-paper px-4 font-mono text-sm font-bold uppercase tracking-[0.1em]"
+        >
+          <span>Index</span>
+          <span className="text-federal-blue">
+            {sceneNumber(current)}/{total}
+          </span>
+          <span
+            ref={barRef}
+            aria-hidden="true"
+            className="absolute inset-x-0 bottom-0 h-1 origin-left scale-x-0 bg-brass"
+          />
+        </button>
+      </div>
     </nav>
   );
 }

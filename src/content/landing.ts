@@ -11,7 +11,7 @@ export const scenes = [
   { id: "who", title: "Who's reading" },
   { id: "demos", title: "Seven problems" },
   { id: "lab", title: "What this site is" },
-  { id: "everything", title: "The catalog" },
+  { id: "finale", title: "That's the tour" },
 ] as const;
 
 export type SceneId = (typeof scenes)[number]["id"];
@@ -25,20 +25,38 @@ export function sceneNumber(id: SceneId): string {
 }
 
 export const opening = {
-  eyebrow: "reljod.com · a one-person AI lab",
-  lines: ["Banks run on paperwork.", "I build AI that reads it."],
+  eyebrow: "reljod.com · Reljod Oreta's AI lab",
+  lines: [
+    "Someone has to read all this paperwork.",
+    "I build the AI that does.",
+  ],
   intro:
     "I'm Reljod Oreta, a software engineer in Metro Manila. Every project here is a working AI helper for banks: it reads the documents, finds what matters, and shows a person exactly where.",
   /** The intro for a short phone screen, where the full one won't fit. */
   short: "I'm Reljod. I build AI that reads bank paperwork.",
   cue: "Scroll to watch it read",
   pages: 500,
-  /** What a person still needs to see after the pile is read. */
+  /**
+   * The pages the AI pulls out of the pile for a person: the line it caught
+   * (`label`, `value`) and why, in plain words.
+   */
   flags: [
-    { text: "Name spelled two ways", page: 12 },
-    { text: "No signature", page: 87 },
-    { text: "Cash 40× the usual", page: 361 },
+    {
+      page: 12,
+      label: "Name",
+      value: "Quison / Quizon",
+      text: "Spelled two ways",
+    },
+    { page: 87, label: "Signature", value: "", text: "Never signed" },
+    {
+      page: 361,
+      label: "Cash in",
+      value: "MRD 480,000",
+      text: "40× the usual",
+    },
   ],
+  /** Under the pulled pages, once the pile is read. */
+  verdict: "500 read. 3 pulled out for a person.",
 } as const;
 
 /** One customer, two documents, compared by the AI. */
@@ -181,9 +199,9 @@ export const demoShelves = [
   },
 ] as const;
 
-/** Words for the catalog at the end of the landing page. */
+/** Words for the catalog page (`/demos`). */
 export const catalog = {
-  title: "That's the tour. Here's every demo, filed.",
+  title: "Every demo, filed.",
   intro:
     "Seven working demos: real AI over made-up paperwork. Hover a card to watch it work. They open with a guest code, so ask me for one.",
   /** The search box types these as hints; each must find at least one demo. */
@@ -192,6 +210,28 @@ export const catalog = {
   drawer: "Pull a card at random",
   picked: "Picked for you",
   empty: "Nothing on file under",
+} as const;
+
+/** Where the tour ends: three ways on from here. */
+export const finale = {
+  title: "That's the tour. Where to next?",
+  doors: [
+    {
+      href: "/demos",
+      label: "Browse every demo",
+      body: "All seven, filed in one catalog: search them, shuffle them, watch each one work.",
+    },
+    {
+      href: "/about",
+      label: "The longer story",
+      body: "Seven years, from financial data to a digital bank to AI for clients.",
+    },
+    {
+      href: "#contact",
+      label: "Say hello",
+      body: "Tell me where your team loses hours to checks and reviews.",
+    },
+  ],
 } as const;
 
 export const labFacts = [

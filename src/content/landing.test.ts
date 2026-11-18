@@ -28,9 +28,7 @@ describe("landing copy", () => {
   it("numbers scenes in page order, with unique ids", () => {
     expect(new Set(scenes.map((scene) => scene.id)).size).toBe(scenes.length);
     expect(sceneNumber("top")).toBe("01");
-    expect(sceneNumber("everything")).toBe(
-      String(scenes.length).padStart(2, "0"),
-    );
+    expect(sceneNumber("finale")).toBe(String(scenes.length).padStart(2, "0"));
   });
 
   it("retells only jobs on the résumé, oldest first, with their start year", () => {

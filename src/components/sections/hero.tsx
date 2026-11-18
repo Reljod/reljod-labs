@@ -35,7 +35,7 @@ export function Hero({ aside }: { aside?: ReactNode }) {
               Book a call
               <Icon name="arrow" size={18} />
             </ButtonLink>
-            <ButtonLink href="/#demos" variant="secondary">
+            <ButtonLink href="/demos" variant="secondary">
               See the demos
             </ButtonLink>
           </div>

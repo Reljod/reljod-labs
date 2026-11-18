@@ -58,12 +58,12 @@ export function UpCloseChapter() {
       className="bg-paper"
       stageClassName="bg-paper"
     >
-      <div className="mx-auto flex h-full max-w-6xl flex-col gap-4 px-4 py-6 sm:px-6 lg:grid lg:grid-cols-[0.9fr_1.1fr] lg:items-center lg:gap-12 lg:py-10">
+      <div className="mx-auto flex h-full max-w-6xl flex-col gap-4 px-4 py-6 sm:px-6 lg:grid lg:grid-cols-[0.9fr_1.1fr] lg:grid-rows-[minmax(0,1fr)] lg:items-center lg:gap-12 lg:py-10">
         <div>
           <p className="eyebrow mb-3 text-ink-muted lg:mb-5">
             {sceneNumber("how")} · Up close
           </p>
-          <ol className="relative min-h-[5.5rem] font-mono text-xl leading-[1.15] font-bold uppercase sm:min-h-[7rem] sm:text-3xl lg:min-h-[12rem] lg:text-4xl">
+          <ol className="relative min-h-[3.6em] font-mono text-[clamp(1.1rem,min(4.6vw,4.4svh),2.25rem)] leading-[1.15] font-bold uppercase lg:min-h-[5.4em]">
             {upClose.captions.map((caption, index) => {
               const [from, to] = CAPTIONS[index];
               const shown = captionOpacity(from, to);
@@ -107,7 +107,7 @@ export function UpCloseChapter() {
           </Link>
         </div>
 
-        <div className="relative min-h-0 flex-1 [container-type:size] lg:aspect-square lg:w-full lg:flex-none">
+        <div className="relative min-h-0 flex-1 [container-type:size] lg:h-full lg:w-full lg:flex-none">
           <Desk />
         </div>
       </div>

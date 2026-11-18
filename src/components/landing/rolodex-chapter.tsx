@@ -83,7 +83,7 @@ function Drum() {
         <p className="eyebrow mb-2 text-ink-muted lg:mb-4">
           {sceneNumber("demos")} · The projects
         </p>
-        <h2 className="font-mono text-2xl leading-[1.1] font-bold uppercase sm:text-4xl">
+        <h2 className="font-mono text-[clamp(1.35rem,min(5vw,5svh),2.25rem)] leading-[1.1] font-bold uppercase">
           Seven problems I&apos;ve built for.
         </h2>
 
@@ -93,7 +93,7 @@ function Drum() {
               <motion.p
                 key={item.slug}
                 aria-hidden={index !== active}
-                className="problem absolute inset-x-0 top-0 text-base leading-snug sm:text-xl lg:text-[1.65rem] lg:leading-[1.25]"
+                className="problem absolute inset-x-0 top-0 text-[clamp(0.95rem,min(3.4vw,2.9svh),1.65rem)] leading-snug lg:leading-[1.25]"
                 style={at(position, index)}
               >
                 “{demoProblems[item.slug]}”
@@ -120,7 +120,7 @@ function Drum() {
           ))}
         </nav>
         <Link
-          href={demo.href ?? "#everything"}
+          href={demo.href ?? "/demos"}
           className="eyebrow mt-6 hidden items-center gap-2 font-bold text-federal-blue hover:underline lg:inline-flex"
         >
           Open {demo.title}
@@ -134,7 +134,7 @@ function Drum() {
           <motion.article
             key={item.slug}
             aria-hidden={index !== active}
-            className={`drum-card absolute top-1/2 left-1/2 w-[min(76vw,19rem)] sm:w-[min(80vw,28rem)] lg:w-[min(100%,31rem)] ${index === active ? "" : "pointer-events-none"}`}
+            className={`drum-card absolute top-1/2 left-1/2 w-[min(76vw,19rem,max(13rem,(100svh-23rem)*1.1))] sm:w-[min(80vw,28rem,max(13rem,(100svh-21rem)*1.1))] lg:w-[min(100%,31rem,max(16rem,(100svh-12rem)*1.05))] ${index === active ? "" : "pointer-events-none"}`}
             style={at(position, index)}
           >
             <span
@@ -151,7 +151,7 @@ function Drum() {
                 <LiveBadge />
               </div>
               <Link
-                href={item.href ?? "#everything"}
+                href={item.href ?? "/demos"}
                 tabIndex={index === active ? 0 : -1}
                 aria-label={`Open the ${item.title} demo`}
                 className="group block bg-limestone p-3 sm:p-4"

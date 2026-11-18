@@ -59,7 +59,8 @@ export async function proxy(request: NextRequest) {
 
 export const config = {
   matcher: [
-    "/demos/:path*",
+    // `+`, not `*`: the catalog at `/demos` itself is public; every demo under it is gated.
+    "/demos/:path+",
     "/ask/:path*",
     "/api/document-compliance/:path*",
     "/api/casework/:path*",

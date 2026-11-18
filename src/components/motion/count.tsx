@@ -33,7 +33,9 @@ export function Count({
 }) {
   const animated = useCopyMotion();
   const reduce = useReduced();
-  const still = !animated || reduce;
+  // Counting with a chapter follows the scroll, so it runs even with reduced
+  // motion; counting on its own does not.
+  const still = !animated || (reduce && !progress);
   const ref = useRef<HTMLSpanElement>(null);
   const seen = useInView(ref, { once: true, amount: 0.6 });
   const own = useMotionValue(0);

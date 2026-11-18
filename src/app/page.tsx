@@ -1,4 +1,4 @@
-import { Everything } from "@/components/landing/everything";
+import { Finale } from "@/components/landing/finale";
 import { OpeningChapter } from "@/components/landing/opening-chapter";
 import { RolodexChapter } from "@/components/landing/rolodex-chapter";
 import { SceneIndex } from "@/components/landing/scene-index";
@@ -15,8 +15,8 @@ import { Bench } from "@/components/showcase/bench";
  * The landing page is a tour you scroll through, for a visitor who may not
  * work in tech. Each chapter pins to the screen and scrolling plays it: the
  * pile of paper the AI reads, two documents checked up close, who's behind
- * it, the projects on a Rolodex, and what the site is. Then everything is
- * laid out to browse. The Index and "Skip the tour" jump anywhere.
+ * it, the projects on a Rolodex, and what the site is, then three ways on;
+ * every demo is laid out on `/demos`. The Index jumps to any chapter.
  */
 export default function Home() {
   return (
@@ -29,7 +29,7 @@ export default function Home() {
           <WhoChapter />
           <RolodexChapter />
           <StampChapter />
-          <Everything />
+          <Finale />
           <Bench />
           <Contact />
         </main>

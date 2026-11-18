@@ -49,12 +49,12 @@ export function StampChapter() {
       className="bg-morning-haze"
       stageClassName="bg-morning-haze"
     >
-      <div className="mx-auto flex h-full max-w-6xl flex-col gap-4 px-4 py-5 sm:px-6 lg:grid lg:grid-cols-[1.1fr_0.9fr] lg:items-center lg:gap-14 lg:py-10">
+      <div className="mx-auto flex h-full max-w-6xl flex-col gap-4 px-4 py-5 sm:px-6 lg:grid lg:grid-cols-[1.1fr_0.9fr] lg:grid-rows-[minmax(0,1fr)] lg:items-center lg:gap-14 lg:py-10">
         <div className="lg:order-1">
           <p className="eyebrow mb-2 text-ink-muted lg:mb-5">
             {sceneNumber("lab")} · What this site is
           </p>
-          <h2 className="font-mono text-2xl leading-[1.1] font-bold uppercase sm:text-4xl">
+          <h2 className="font-mono text-[clamp(1.35rem,min(5vw,5svh),2.25rem)] leading-[1.1] font-bold uppercase">
             A workshop, not a brochure.
           </h2>
           <p className="mt-3 hidden text-lg leading-relaxed lg:block">
@@ -89,7 +89,7 @@ export function StampChapter() {
           </ol>
         </div>
 
-        <div className="relative min-h-0 flex-1 [container-type:size] lg:order-2 lg:aspect-[4/5] lg:w-full lg:flex-none">
+        <div className="relative min-h-0 flex-1 [container-type:size] lg:order-2 lg:h-full lg:w-full lg:flex-none">
           <Passport />
         </div>
       </div>

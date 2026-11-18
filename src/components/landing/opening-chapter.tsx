@@ -15,9 +15,9 @@ import {
   within,
 } from "@/components/motion/scroll-math";
 import { ButtonLink } from "@/components/ui/button-link";
-import { Icon } from "@/components/ui/icon";
 import { opening } from "@/content/landing";
 import "./landing.css";
+import { PlayTourButton } from "./tour-player";
 
 /** Sheets drawn for the pile; they stand for all `opening.pages`. */
 const SHEETS = 10;
@@ -105,14 +105,14 @@ export function OpeningChapter() {
       stageClassName="bg-marble bg-[linear-gradient(rgb(20_33_61/0.05)_2px,transparent_2px),linear-gradient(90deg,rgb(20_33_61/0.05)_2px,transparent_2px)] bg-size-[40px_40px]"
     >
       <div
-        className="relative mx-auto flex h-full max-w-6xl flex-col gap-5 px-4 pt-6 pb-16 sm:px-6 lg:grid lg:grid-cols-[0.85fr_1.2fr] lg:items-center lg:gap-10 lg:py-8"
+        className="relative mx-auto flex h-full max-w-6xl flex-col gap-5 px-4 pt-6 pb-16 sm:px-6 lg:grid lg:grid-cols-[1fr_1.05fr] lg:items-center lg:gap-12 lg:py-8"
         style={{ "--lift": smooth(seg(0.03, 0.11)) } as CSSProperties}
       >
         <div className="opening-text relative z-10">
           <p className="eyebrow mb-4 text-ink-muted lg:mb-6">
             {opening.eyebrow}
           </p>
-          <h1 className="font-mono text-[2rem] leading-[1.05] font-bold tracking-[-0.02em] uppercase sm:text-5xl lg:text-6xl">
+          <h1 className="font-mono text-[clamp(1.6rem,min(6.4vw,6.2svh),3.4rem)] leading-[1.06] font-bold tracking-[-0.02em] uppercase">
             <Peel
               text={opening.lines[0]}
               timing={{ on: "mount", delay: 0.2, duration: 0.9 }}
@@ -124,19 +124,16 @@ export function OpeningChapter() {
               className="block text-federal-blue"
             />
           </h1>
-          <p className="mt-4 max-w-xl text-base leading-relaxed sm:text-lg lg:mt-6 lg:text-xl [@media(max-width:1023px)_and_(max-height:760px)]:hidden">
+          <p className="mt-4 max-w-xl text-base leading-relaxed sm:text-lg lg:mt-6 lg:text-xl [@media(max-height:760px)]:hidden">
             {opening.intro}
           </p>
-          <p className="mt-3 hidden text-base leading-snug [@media(max-width:1023px)_and_(max-height:760px)]:block">
+          <p className="mt-3 hidden text-base leading-snug sm:text-lg [@media(max-height:760px)]:block">
             {opening.short}
           </p>
-          <div className="mt-5 flex flex-wrap gap-3 lg:mt-8 lg:gap-4">
-            <ButtonLink href="#demos">
-              See the projects
-              <Icon name="arrow" size={18} />
-            </ButtonLink>
-            <ButtonLink href="#everything" variant="secondary">
-              Skip the tour
+          <div className="mt-5 flex flex-wrap items-center gap-3 lg:mt-8 lg:gap-4">
+            <PlayTourButton />
+            <ButtonLink href="/demos" variant="secondary">
+              Skip to all demos
             </ButtonLink>
           </div>
         </div>
@@ -179,14 +176,15 @@ function Reader() {
   return (
     <div
       className="reader relative min-h-0 flex-1 [container-type:size] lg:aspect-square lg:h-auto lg:max-h-full lg:flex-none"
-      aria-label={`A pile of ${opening.pages} pages passes through the AI and comes out read, with ${opening.flags.length} pages tabbed for a person.`}
+      aria-label={`A pile of ${opening.pages} pages passes through the AI. It pulls out ${opening.flags.length} for a person: ${opening.flags.map((flag) => `page ${flag.page}, ${flag.text.toLowerCase()}`).join("; ")}.`}
       role="img"
     >
       <div
         className="absolute inset-0"
         style={{
-          opacity: `calc(1 - 0.55 * ${answer})`,
-          transform: `translateY(calc(-4cqh * ${answer}))`,
+          // The machine steps back a little so the pulled pages lead.
+          opacity: `calc(1 - 0.3 * ${answer})`,
+          transform: `scale(calc(1 - 0.06 * ${answer}))`,
         }}
       >
         {/* Desk line and trays. */}
@@ -235,37 +233,94 @@ function Reader() {
         ))}
       </div>
 
-      <div
-        className="absolute top-[18cqh] left-1/2 w-[min(86cqw,30rem)] border-2 border-ink bg-paper shadow-hard-lg"
+      {FAN_ORDER.map((index) => (
+        <PulledPage
+          key={opening.flags[index].page}
+          flag={opening.flags[index]}
+          index={index}
+        />
+      ))}
+
+      <p
+        className="absolute inset-x-0 top-[86cqh] text-center font-mono text-[max(11px,3.2cqmin)] font-bold tracking-[0.08em] uppercase"
         style={{
-          opacity: answer,
-          transform: `translate(-50%, calc(14cqh * (1 - ${answer}))) rotate(calc(-1.5deg * (1 - ${answer})))`,
+          opacity: seg(within(...ANSWER, 0.7), ANSWER[1]),
+          transform: `translateY(calc(2cqh * (1 - ${seg(within(...ANSWER, 0.7), ANSWER[1])})))`,
         }}
       >
-        <p className="border-ink border-b-2 bg-ink px-[4cqmin] py-[2cqmin] font-mono text-[max(10px,3cqmin)] font-bold tracking-[0.1em] text-paper uppercase">
-          {opening.pages} pages read · {opening.flags.length} for a person
-        </p>
-        <ul className="divide-y-2 divide-ink/15">
-          {opening.flags.map((flag, index) => (
-            <li
-              key={flag.text}
-              className="flex items-center gap-[3cqmin] px-[4cqmin] py-[2.4cqmin] text-[max(12px,3.8cqmin)] font-semibold"
-              style={{
-                opacity: seg(
-                  within(...ANSWER, 0.3 + index * 0.15),
-                  within(...ANSWER, 0.55 + index * 0.15),
-                ),
-              }}
-            >
-              <span className="size-[2.6cqmin] shrink-0 bg-seal-red" />
-              {flag.text}
-              <span className="ml-auto font-mono text-[max(10px,3cqmin)] text-ink-muted">
-                p.&nbsp;{flag.page}
-              </span>
-            </li>
-          ))}
-        </ul>
-      </div>
+        {opening.verdict}
+      </p>
     </div>
+  );
+}
+
+/** Where each pulled page lands: fanned out in front of the machine. */
+const FAN = [
+  { x: 20, y: 40, rotate: -9 },
+  { x: 50, y: 33, rotate: 1.5 },
+  { x: 80, y: 40, rotate: 9 },
+] as const;
+/** Paint order: the outer pages first, so the middle one lies on top. */
+const FAN_ORDER = [0, 2, 1] as const;
+
+/**
+ * A page the AI pulls out of the read stack for a person. It lifts off the
+ * stack, arcs forward and lands in the fan, the caught line boxed in red and
+ * a plain note saying why.
+ */
+function PulledPage({
+  flag,
+  index,
+}: {
+  flag: (typeof opening.flags)[number];
+  index: number;
+}) {
+  const start = within(...ANSWER, index * 0.14);
+  const end = within(...ANSWER, 0.5 + index * 0.14);
+  const linear = seg(start, end);
+  const t = smooth(linear);
+  const fan = FAN[index];
+  return (
+    <span
+      aria-hidden="true"
+      className="pulled absolute top-0 left-0 flex h-[44cqmin] w-[31cqmin] flex-col border-2 border-ink bg-paper p-[2.4cqmin] shadow-hard-md"
+      style={{
+        opacity: seg(start, within(start, end, 0.15)),
+        transform: [
+          `translate(calc(${mix(76, fan.x, t, "cqw")} - 15.5cqmin),`,
+          `calc(${mix(48, fan.y, t, "cqh")} - 22cqmin - 10cqh * ${bump(linear)}))`,
+          `rotate(${mix(0.8, fan.rotate, t, "deg")})`,
+          `scale(${mix(0.85, 1, t)})`,
+        ].join(" "),
+      }}
+    >
+      <span className="flex items-center justify-between font-mono text-[max(9px,2.4cqmin)] font-bold text-ink-muted">
+        <span>p. {flag.page}</span>
+        <span className="h-[3.4cqmin] w-[2.6cqmin] bg-seal-red" />
+      </span>
+      <span className="mt-[2cqmin] space-y-[1.6cqmin]">
+        <span className="sheet-line block w-full" />
+        <span className="sheet-line block w-4/5" />
+      </span>
+      {/* The line the AI caught, boxed in red. */}
+      <span className="mt-[2cqmin] block border-[0.5cqmin] border-seal-red bg-seal-red/10 px-[1.4cqmin] py-[1cqmin]">
+        <span className="block font-mono text-[max(8px,1.9cqmin)] tracking-[0.08em] text-ink-muted uppercase">
+          {flag.label}
+        </span>
+        {flag.value ? (
+          <span className="block font-mono text-[max(9px,2.4cqmin)] leading-tight font-bold">
+            {flag.value}
+          </span>
+        ) : (
+          <span className="mt-[0.6cqmin] block h-[2.6cqmin] border-seal-red/70 border-b-2 border-dashed" />
+        )}
+      </span>
+      <span className="mt-[1.6cqmin] space-y-[1.6cqmin]">
+        <span className="sheet-line block w-full" />
+      </span>
+      <span className="mt-auto block pr-[1cqmin] pl-[3cqmin] font-semibold text-[max(11px,3.2cqmin)] leading-tight text-seal-red">
+        {flag.text}
+      </span>
+    </span>
   );
 }

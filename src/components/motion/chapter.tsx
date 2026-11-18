@@ -16,7 +16,6 @@ import {
   useRef,
 } from "react";
 import "./motion.css";
-import { useReduced } from "./use-reduced";
 
 const ChapterProgress = createContext<MotionValue<number> | null>(null);
 
@@ -59,8 +58,7 @@ export function chapterScrollTop(section: HTMLElement, p: number): number {
  * plays out over the first `length - 2` screens and holds its last frame for
  * the final one, darkening a little as it's covered.
  *
- * With reduced motion nothing is pinned (motion.css) and the stage shows its
- * last frame. The markup never depends on that setting, so hydration matches.
+ * It plays with reduced motion too: it only moves while the visitor scrolls.
  */
 export function Chapter({
   id,
@@ -88,7 +86,6 @@ export function Chapter({
   stageClassName?: string;
   children: ReactNode;
 }) {
-  const reduce = useReduced();
   const ref = useRef<HTMLElement>(null);
   const { scrollYProgress } = useScroll({
     target: ref,
@@ -99,18 +96,13 @@ export function Chapter({
   const progress = useMotionValue(0);
   const dim = useMotionValue(0);
   const update = (raw: number) => {
-    if (reduce) {
-      progress.set(1);
-      dim.set(0);
-      return;
-    }
     const { share } = measure(ref.current?.offsetHeight ?? 0, covered);
     progress.set(Math.min(1, raw / (1 - share)));
     dim.set(share > 0 ? Math.max(0, (raw - (1 - share)) / share) * 0.45 : 0);
   };
   useMotionValueEvent(scrollYProgress, "change", update);
-  // biome-ignore lint/correctness/useExhaustiveDependencies: re-run when the setting changes or the scene mounts.
-  useEffect(() => update(scrollYProgress.get()), [reduce]);
+  // biome-ignore lint/correctness/useExhaustiveDependencies: paint once for where the page already is.
+  useEffect(() => update(scrollYProgress.get()), []);
 
   return (
     <section

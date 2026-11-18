@@ -37,10 +37,8 @@
  * Everything here is transforms and opacity, so scrolling never relays out.
  */
 /* A section that slides up over the finished chapter before it. */
-@media (prefers-reduced-motion: no-preference) {
-  .slide-over {
-    margin-top: calc(-100svh + 4.125rem);
-  }
+.slide-over {
+  margin-top: calc(-100svh + 4.125rem);
 }
 
 .chapter-stage {
@@ -92,39 +90,10 @@
 }
 
 /*
- * Reduced motion, decided in CSS so the server's HTML is right from the start:
- * chapters aren't pinned or stacked, and scrubbed pieces sit at their end.
+ * Reduced motion: the tour still plays, because nothing in it moves unless the
+ * visitor scrolls. What runs on its own (the print-in, the loops in
+ * landing.css, the headline reveal) honours the setting.
  */
-@media (prefers-reduced-motion: reduce) {
-  .chapter {
-    /* biome-ignore lint/complexity/noImportantStyles: must beat the inline scroll styles. */
-    height: auto !important;
-  }
-
-  .chapter-stage {
-    /* biome-ignore lint/complexity/noImportantStyles: must beat the inline scroll styles. */
-    position: relative !important;
-    /* biome-ignore lint/complexity/noImportantStyles: must beat the inline scroll styles. */
-    --p: 1 !important;
-  }
-
-  .chapter-dim {
-    display: none;
-  }
-
-  .peel,
-  .scroll-in {
-    /* biome-ignore lint/complexity/noImportantStyles: must beat the inline scroll styles. */
-    --q: 1 !important;
-  }
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .scroll-rule {
-    /* biome-ignore lint/complexity/noImportantStyles: must beat the inline scroll styles. */
-    transform: none !important;
-  }
-}
 
 @media (prefers-reduced-motion: no-preference) {
   .print-in {
