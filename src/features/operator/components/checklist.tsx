@@ -206,7 +206,10 @@ export function VerdictCard({
             <p className="eyebrow text-[0.65rem] opacity-80">
               Verdict, computed from the Findings
             </p>
-            <p className="font-mono text-3xl leading-tight font-bold uppercase">
+            <p
+              data-testid="verdict"
+              className="font-mono text-3xl leading-tight font-bold uppercase"
+            >
               {verdict ? VERDICT[verdict].word : "No Verdict"}
             </p>
           </div>

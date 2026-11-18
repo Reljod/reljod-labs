@@ -203,7 +203,11 @@ export function evaluate(input: EvaluateInput): {
         title: `${bad.length} container number${bad.length === 1 ? "" : "s"} in the Books fail the check digit`,
         detail: bad.join(", "),
       });
-    else if (changes.some((change) => change.record === "line"))
+    else if (
+      changes.some(
+        (change) => change.record === "line" && change.op !== "delete",
+      )
+    )
       findings.push({
         id: "containers.check-digit",
         level: "pass",

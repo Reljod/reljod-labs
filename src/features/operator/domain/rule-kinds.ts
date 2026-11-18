@@ -49,7 +49,9 @@ export function actionKindOf(change: Change): ActionKind {
     if (op === "add") return "hold.place";
     // Taking a hold off the file, or marking it RELEASED, both let the box go.
     if (op === "delete") return "hold.release";
-    return change.after?.status === "RELEASED" ? "hold.release" : "hold.place";
+    // An edit to a hold that was already released lets nothing go.
+    if (change.after?.status !== "RELEASED") return "hold.place";
+    return change.before?.status === "RELEASED" ? "hold.place" : "hold.release";
   }
   return op === "add"
     ? "berth.allocate"

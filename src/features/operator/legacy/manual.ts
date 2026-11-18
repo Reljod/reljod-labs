@@ -358,7 +358,7 @@ SEAL NO   10  Seal number.
 GR WT KG   5  Gross weight in kg, digits only, at most 99999.
 POL        5  Port of loading, 5 letters, e.g. MRKLD.
 CNEE CD    5  Consignee code Cnnnn, e.g. C0412.
-GOODS     24  Description; shorten it yourself to 24 characters.
+GOODS     24  Description; if longer, key its first 24 characters.
 HAZ CL     3  IMDG class, e.g. 3 or 5.1. Optional.
 Enter FILES THE LINE AT ONCE; there is no confirm step.
 MODE ADD: HM0321 LINE nn ADDED, form cleared for the next line.

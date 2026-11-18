@@ -259,7 +259,10 @@ function RunDepth({ run }: { run: RunDetail }) {
         )}
       </Panel>
 
-      <Panel eyebrow="Rules that fired" title={`${fired.length} times`}>
+      <Panel
+        eyebrow="Rules that fired"
+        title={fired.length === 1 ? "Once" : `${fired.length} times`}
+      >
         {fired.length === 0 ? (
           <Quiet>No Rule refused or paused an Action in this Run.</Quiet>
         ) : (

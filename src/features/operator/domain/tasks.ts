@@ -103,7 +103,7 @@ const CORVINA_LINES = [
     goods: "OLIVE OIL IN DRUMS",
     haz: "",
   },
-  // 35 characters in the file; the field keeps 24, so the clerk shortens it.
+  // 35 characters in the file; the field keeps 24, and the desk rule is to key the first 24.
   {
     container: "KLDU1188345",
     isoType: "45G1",
@@ -111,7 +111,7 @@ const CORVINA_LINES = [
     grossKg: 24600,
     pol: "MRKLD",
     consignee: "C0207",
-    goods: "AGRICULTURAL MACH PARTS",
+    goods: "MACHINE PARTS, AGRICULTU",
     haz: "",
   },
   {
@@ -145,8 +145,6 @@ const CORVINA_LINES = [
     haz: "",
   },
 ];
-/** The line whose goods the Operator has to shorten in its own words. */
-const SHORTENED = "KLDU1188345";
 
 const arrivalCorvina: SampleTask = {
   id: "arrival-corvina",
@@ -169,13 +167,13 @@ const arrivalCorvina: SampleTask = {
       values: CORVINA,
     },
     ...CORVINA_LINES.map((line, i): Expectation => {
-      const { container, goods, ...rest } = line;
+      const { container, ...rest } = line;
       return {
         label: `Manifest line ${i + 1}: ${spacedContainer(container)}`,
         op: "add",
         record: "line",
         where: { voyage: CORVINA.voyage, container },
-        values: container === SHORTENED ? rest : { ...rest, goods },
+        values: rest,
       };
     }),
     {

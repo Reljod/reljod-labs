@@ -96,7 +96,7 @@ export async function performAction(
       ruleId: blocked.decision.ruleId,
       outcome: blocked.decision.kind === "pause" ? "paused" : "refused",
       reason: blocked.decision.reason,
-      label: `${label} (${blocked.input})`,
+      label: label === blocked.input ? label : `${label} (${blocked.input})`,
       screen: result.screen,
       frame: n,
     });
