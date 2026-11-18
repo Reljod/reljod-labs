@@ -113,6 +113,12 @@
 
 - A button that writes is disabled while the write runs, shows a pending label, and shows the result or error where it was clicked. Destructive or hard-to-undo writes confirm first in a dialog (pattern: `ConfirmDialog` in `src/features/access/components/pass-actions.tsx`). Details: "A write button fires once" in `docs/engineering/conventions.md`.
 
+## Landing page
+
+- `/` plays as short scenes for a visitor outside tech (`src/components/landing/`): the desk, who, what the AI does, the projects, coming soon, what the site is, contact. Every scene has something to touch (the paper pile, flip cards, the lens, the problem list, the SPECIMEN stamp) and the floating Index jumps to any scene.
+- Words live in `src/content/landing.ts`; facts about Reljod come only from `profile.ts`, `experience.ts` and `projects.ts`. A new live demo needs a plain problem in `demoProblems` and a preview in `demo-picker.tsx` (`landing.test.ts` checks the first).
+- Motion stays short and never gates reading: text is in the HTML, reveals run once, and `LandingMotion` honours reduced motion.
+
 ## Analytics
 
 - Vercel Web Analytics and Speed Insights load in `src/app/layout.tsx`. Turn both on in the Vercel project (Analytics and Speed Insights tabs); they collect only on Vercel deployments.
