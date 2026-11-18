@@ -26,7 +26,7 @@ const number = (index: number) => String(index + 1).padStart(2, "0");
 
 /**
  * The cards worth drawing around the front one (the one just flipped, and up
- * to three waiting), back to front, so the front card paints on top.
+ * to three waiting), back to front; the card sliding out paints over all.
  */
 function near(active: number) {
   return liveDemos

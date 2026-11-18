@@ -185,20 +185,22 @@
 
 /*
  * The cards to come wait behind in a stack, leaning back with their tabs
- * showing; the front card, once flipped, drops away and fades. Cards are
+ * showing; the front card, once flipped, slides out of the drum, solid. Cards are
  * painted in reverse order (front card last), so no 3D sorting is needed.
  */
 .drum-card {
   transform-origin: 50% 100%;
   transform: translate(-50%, -50%)
-    translateY(calc(var(--ahead) * -1.5rem + var(--gone) * 55%))
+    translateY(calc(var(--ahead) * -1.5rem + var(--gone) * 135%))
     scale(calc(1 - var(--ahead) * 0.04))
-    rotateX(calc(var(--ahead) * 6deg - var(--gone) * 28deg));
+    rotateX(calc(var(--ahead) * 6deg))
+    rotate(calc(var(--gone) * 7deg));
+  /* A flipped card stays solid while it slides out: no cross-fading text. */
   opacity: calc(
     clamp(0, 3.4 - var(--ahead), 1) *
-    clamp(0, 1 - var(--gone) * 1.8, 1)
+    clamp(0, (1 - var(--gone)) * 5, 1)
   );
-  will-change: transform, opacity;
+  will-change: transform;
 }
 
 .drum-shade {
