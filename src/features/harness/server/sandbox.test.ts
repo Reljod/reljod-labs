@@ -64,6 +64,7 @@ import {
   sandboxReadFile,
   sandboxRun,
   sandboxWriteFile,
+  sdkReason,
 } from "./sandbox";
 
 /** A user, not an admin: every Role may use the Sandbox. */
@@ -329,5 +330,33 @@ describe("the Session's Sandbox", () => {
     expect(listed).toEqual([
       { path: "data/b.csv", bytes: 3, directory: false },
     ]);
+  });
+});
+
+describe("sdkReason", () => {
+  it("shows Vercel's status, code and message, with anything token-shaped cut", () => {
+    const apiError = Object.assign(new Error("Bad Request"), {
+      response: { status: 400 },
+      json: {
+        error: {
+          code: "bad_request",
+          message: `Invalid cwd for token ${"a".repeat(40)}`,
+        },
+      },
+    });
+    expect(sdkReason(apiError)).toBe(
+      "HTTP 400 bad_request: Invalid cwd for token [hidden]",
+    );
+  });
+
+  it("shows a stream error's code, and only the name of an unknown error", () => {
+    const stream = Object.assign(new Error("sandbox stopped"), {
+      name: "StreamError",
+      code: "sandbox_stopped",
+    });
+    expect(sdkReason(stream)).toBe("sandbox_stopped: sandbox stopped");
+    expect(sdkReason(new TypeError("Bearer abc at api.vercel.com"))).toBe(
+      "TypeError",
+    );
   });
 });

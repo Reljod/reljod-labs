@@ -50,6 +50,43 @@ function requireConfigured() {
 const messageOf = (error: unknown) =>
   error instanceof Error ? error.message : String(error);
 
+const REASON_CHARS = 160;
+
+/**
+ * Why the SDK failed, safe to show: the HTTP status and Vercel's error code
+ * and message, or a stream error's code. Anything token-shaped is cut, so a
+ * credential can never ride along. Unknown errors give only their name.
+ */
+export function sdkReason(error: unknown): string {
+  if (!(error instanceof Error)) return "unknown error";
+  const e = error as Error & {
+    response?: { status?: number };
+    json?: { error?: { code?: unknown; message?: unknown } };
+    code?: unknown;
+  };
+  const parts: string[] = [];
+  if (typeof e.response?.status === "number")
+    parts.push(`HTTP ${e.response.status}`);
+  const code = e.json?.error?.code ?? e.code;
+  if (typeof code === "string" && code) parts.push(code);
+  const text =
+    typeof e.json?.error?.message === "string"
+      ? e.json.error.message
+      : parts.length > 0 || e.name === "StreamError"
+        ? e.message
+        : "";
+  const head = parts.length > 0 ? parts.join(" ") : e.name || "Error";
+  const said = text
+    .replace(/Bearer\s+\S+/gi, "[hidden]")
+    .replace(/[A-Za-z0-9_\-.]{32,}/g, "[hidden]")
+    .replace(/\s+/g, " ")
+    .trim();
+  const reason = said ? `${head}: ${said}` : head;
+  return reason.length > REASON_CHARS
+    ? `${reason.slice(0, REASON_CHARS)}…`
+    : reason;
+}
+
 export type Opened = { sandbox: Sandbox; created: boolean };
 
 /**
@@ -86,7 +123,9 @@ export async function openSandbox(
     await sandbox.update({ networkPolicy: "deny-all" });
   } catch (error) {
     console.error("[harness] sandbox start failed", messageOf(error));
-    throw unavailable("it could not be started; try again in a minute");
+    throw unavailable(
+      `it could not be started (${sdkReason(error)}); try again in a minute`,
+    );
   }
   await extendIfShort(sandbox);
   return { sandbox, created };
@@ -150,7 +189,7 @@ export async function execIn(
     const result = await sandbox.runCommand({
       cmd: "sh",
       args: ["-c", runnerScript(seconds), "harness", command],
-      cwd: SANDBOX_WORKDIR,
+      // No cwd: the Sandbox's default is already SANDBOX_WORKDIR, as Sieve relies on.
       // A little over the command's own limit, so `timeout` fires first.
       timeoutMs: seconds * 1000 + 5_000,
     });
@@ -181,7 +220,9 @@ export async function execIn(
       };
     }
     console.error("[harness] sandbox command failed", messageOf(error));
-    throw unavailable("the command could not be run; try again");
+    throw unavailable(
+      `the command could not be run (${sdkReason(error)}); try again`,
+    );
   }
 }
 
@@ -285,7 +326,9 @@ export async function sandboxWriteFile(
     ]);
   } catch (error) {
     console.error("[harness] sandbox write failed", messageOf(error));
-    throw unavailable("the file could not be written; try again");
+    throw unavailable(
+      `the file could not be written (${sdkReason(error)}); try again`,
+    );
   }
   // Always recorded: the path and size, never the content.
   await record({
@@ -423,7 +466,9 @@ export async function sandboxReadFile(
     buffer = await sandbox.readFileToBuffer({ path, cwd: SANDBOX_WORKDIR });
   } catch (error) {
     console.error("[harness] sandbox read failed", messageOf(error));
-    throw unavailable("the file could not be read; try again");
+    throw unavailable(
+      `the file could not be read (${sdkReason(error)}); try again`,
+    );
   }
   if (!buffer) throw new NotFoundError(`No file ${path} in the Sandbox.`);
   const truncated = buffer.byteLength > SANDBOX_LIMITS.fileBytes;
