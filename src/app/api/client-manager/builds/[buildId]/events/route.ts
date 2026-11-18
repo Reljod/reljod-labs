@@ -1,7 +1,7 @@
 import { getRun } from "workflow/api";
+import { failure } from "@/features/client-manager/server/respond";
 import { viewableBuild } from "@/features/client-manager/server/service";
 import { currentOwner } from "@/features/client-manager/server/session";
-import { failure } from "../../../respond";
 
 // Stays open while the Build streams; a reconnect resumes from `from`.
 export const maxDuration = 300;

@@ -1,3 +1,5 @@
+import type { ThreadsResponse } from "@/features/client-manager/domain/api";
+import { failure, json } from "@/features/client-manager/server/respond";
 import {
   currentOwner,
   visitor,
@@ -6,12 +8,11 @@ import {
   openThread,
   threadsOf,
 } from "@/features/client-manager/server/threads";
-import { failure } from "../respond";
 
 /** This browser's chats, newest first. */
 export async function GET() {
   try {
-    return Response.json({
+    return json<ThreadsResponse>({
       threads: await threadsOf(await currentOwner()),
     });
   } catch (error) {
@@ -24,7 +25,7 @@ export async function POST(request: Request) {
   try {
     const owner = await currentOwner();
     const body = await request.json().catch(() => ({}));
-    return Response.json(await openThread(body, owner, await visitor()));
+    return json(await openThread(body, owner, await visitor()));
   } catch (error) {
     return failure(error);
   }

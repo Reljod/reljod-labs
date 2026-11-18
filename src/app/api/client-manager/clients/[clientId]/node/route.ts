@@ -1,9 +1,20 @@
+import { z } from "zod";
+import type { NodeResponse } from "@/features/client-manager/domain/api";
+import {
+  failure,
+  json,
+  NO_STORE,
+  notFound,
+  SEED,
+} from "@/features/client-manager/server/respond";
 import {
   clientNode,
-  viewableClient,
+  gatedClient,
 } from "@/features/client-manager/server/service";
-import { currentOwner } from "@/features/client-manager/server/session";
-import { failure, notFound } from "../../../respond";
+
+const querySchema = z.object({
+  key: z.string().min(1, "Which fact?").max(160, "That key is too long."),
+});
 
 /** One fact in full: its quotes, and every relation with its own quotes. */
 export async function GET(
@@ -12,12 +23,17 @@ export async function GET(
 ) {
   try {
     const { clientId } = await params;
-    const client = await viewableClient(clientId, await currentOwner());
+    const { key } = querySchema.parse({
+      key: new URL(request.url).searchParams.get("key") ?? "",
+    });
+    const { client } = await gatedClient(clientId);
     if (!client) return notFound();
-    const key = new URL(request.url).searchParams.get("key") ?? "";
-    if (!key || key.length > 160) return notFound();
     const node = await clientNode(client.id, key);
-    return node ? Response.json(node) : notFound();
+    return node
+      ? json<NodeResponse>(node, {
+          cache: client.is_sample ? SEED : NO_STORE,
+        })
+      : notFound();
   } catch (error) {
     return failure(error);
   }

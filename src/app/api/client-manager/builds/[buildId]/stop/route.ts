@@ -1,3 +1,4 @@
+import { failure, notFound } from "@/features/client-manager/server/respond";
 import {
   ownedClient,
   stopBuild,
@@ -7,7 +8,6 @@ import {
   currentOwner,
   visitor,
 } from "@/features/client-manager/server/session";
-import { failure, notFound } from "../../../respond";
 
 /** Stops a running Build: Stop button, Escape, or telling the Navigator. */
 export async function POST(

@@ -2,18 +2,19 @@
 
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { AnimatePresence, motion } from "motion/react";
+import dynamic from "next/dynamic";
 import { useEffect, useState } from "react";
 import type { Highlight } from "../domain/traversal";
-import type { CatalogCard } from "../server/service";
+import type { CatalogCard, ClientSummary } from "../server/service";
 import { AddDialog } from "./add-dialog";
-import { fetchClient, keys, send } from "./api";
+import { clientQuery, keys, send } from "./api";
 import { BuildStrip } from "./build-strip";
-import { DocumentsView } from "./documents-view";
+import { DocumentsView, sourceQuery } from "./documents-view";
 import { FactSheet } from "./fact-sheet";
 import { Icon, type IconName } from "./icons";
-import { MapView } from "./map-view";
 import { Portrait } from "./portrait";
 import { ProfileView } from "./profile-view";
+import { DocumentSkeleton, MapSkeleton, ProfileSkeleton } from "./skeletons";
 import { useBuildFeed } from "./use-build-feed";
 
 export type DashboardView = "profile" | "map" | "documents";
@@ -26,6 +27,13 @@ const VIEWS: { id: DashboardView; label: string; icon: IconName }[] = [
 
 const RISK: Record<string, number> = { low: 1, moderate: 2, high: 3 };
 
+// The Map's renderer (graph canvas, layout) loads when the Map is first
+// opened, and starts loading when the pointer or focus reaches its tab.
+const loadMap = () => import("./map-view");
+const MapView = dynamic(() => loadMap().then((module) => module.MapView), {
+  loading: () => <MapSkeleton />,
+});
+
 /**
  * One client: the business Profile first, the relationship Map and the
  * Documents behind every fact. Opens from the client's card at once and fills
@@ -33,6 +41,8 @@ const RISK: Record<string, number> = { low: 1, moderate: 2, high: 3 };
  */
 export function ClientDashboard({
   clientId,
+  initialClient = null,
+  loadedAt = 0,
   card,
   view,
   focusKey,
@@ -46,6 +56,9 @@ export function ClientDashboard({
   onBack,
 }: {
   clientId: string;
+  /** The page's server read of this client, when it opened on it. */
+  initialClient?: ClientSummary | null;
+  loadedAt?: number;
   card: CatalogCard | undefined;
   view: DashboardView;
   focusKey: string | null;
@@ -61,9 +74,10 @@ export function ClientDashboard({
 }) {
   const queryClient = useQueryClient();
   const query = useQuery({
-    queryKey: keys.client(clientId),
-    queryFn: () => fetchClient(clientId),
-    retry: (count, error) => error.message !== "not-found" && count < 2,
+    ...clientQuery(clientId),
+    ...(initialClient
+      ? { initialData: initialClient, initialDataUpdatedAt: loadedAt }
+      : {}),
   });
   const client = query.data;
 
@@ -100,6 +114,17 @@ export function ClientDashboard({
   const persona = live.persona ?? client?.persona ?? card?.persona ?? null;
   const portraitUrl =
     live.portraitUrl ?? client?.portraitUrl ?? card?.portraitUrl ?? null;
+
+  // What a sub-tab shows first starts loading on hover or focus, so the
+  // click finds it ready.
+  const prefetchView = (next: DashboardView) => {
+    if (next === "map") void loadMap();
+    if (next === "documents" && client) {
+      const sourceId = doc.sourceId ?? client.sources[0]?.id;
+      if (sourceId)
+        void queryClient.prefetchQuery(sourceQuery(client.id, sourceId));
+    }
+  };
 
   const openSource = (sourceId: string, quote?: string) => {
     onDoc(sourceId, quote);
@@ -197,6 +222,8 @@ export function ClientDashboard({
               key={item.id}
               type="button"
               onClick={() => onView(item.id)}
+              onPointerEnter={() => prefetchView(item.id)}
+              onFocus={() => prefetchView(item.id)}
               aria-current={view === item.id}
               className={`outline-box press eyebrow flex items-center gap-1.5 rounded-sm px-3 py-1.5 ${view === item.id ? "bg-ink text-paper" : "bg-paper"}`}
             >
@@ -238,7 +265,13 @@ export function ClientDashboard({
               : "This client didn't load. Try again."}
           </p>
         ) : !client ? (
-          <DashboardSkeleton />
+          view === "map" ? (
+            <MapSkeleton />
+          ) : view === "documents" ? (
+            <DocumentSkeleton />
+          ) : (
+            <ProfileSkeleton />
+          )
         ) : (
           <motion.div
             key={view}
@@ -339,19 +372,5 @@ function ToolButton({
     >
       <Icon name={icon} />
     </button>
-  );
-}
-
-function DashboardSkeleton() {
-  return (
-    <div className="grid gap-4 p-6 lg:grid-cols-2">
-      {[0, 1, 2, 3].map((index) => (
-        <div
-          key={index}
-          className="cm-shimmer h-40 rounded-sm"
-          style={{ animationDelay: `${index * 0.12}s` }}
-        />
-      ))}
-    </div>
   );
 }

@@ -1,6 +1,6 @@
 "use client";
 
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { motion } from "motion/react";
 import { Fragment, useEffect, useMemo, useRef, useState } from "react";
 import { toneOf } from "../domain/categories";
@@ -9,6 +9,7 @@ import type { ClientSummary, SourceFull } from "../server/service";
 import { fetchSource, keys } from "./api";
 import { CertaintyDot } from "./certainty";
 import { Icon } from "./icons";
+import { DocumentSkeleton } from "./skeletons";
 import { SourceBadge } from "./source-badge";
 
 /**
@@ -28,6 +29,10 @@ export function DocumentsView({
   onOpen: (sourceId: string | null, quote?: string) => void;
   onFact: (key: string) => void;
 }) {
+  const queryClient = useQueryClient();
+  // A Document starts loading when the pointer or focus reaches it.
+  const prefetch = (sourceId: string) =>
+    void queryClient.prefetchQuery(sourceQuery(client.id, sourceId));
   const most = Math.max(1, ...client.sources.map((source) => source.facts));
   const selected = openId ?? client.sources[0]?.id ?? null;
 
@@ -51,6 +56,8 @@ export function DocumentsView({
             <button
               type="button"
               onClick={() => onOpen(source.id)}
+              onPointerEnter={() => prefetch(source.id)}
+              onFocus={() => prefetch(source.id)}
               aria-current={selected === source.id}
               className={`block w-full rounded-sm border-2 px-2.5 py-2 text-left ${selected === source.id ? "border-ink bg-paper shadow-hard-sm" : "border-transparent hover:border-ink/20 hover:bg-paper/70"}`}
             >
@@ -90,6 +97,13 @@ export function DocumentsView({
     </div>
   );
 }
+
+export const sourceQuery = (clientId: string, sourceId: string) => ({
+  queryKey: keys.source(clientId, sourceId),
+  queryFn: ({ signal }: { signal: AbortSignal }) =>
+    fetchSource(clientId, sourceId, { signal }),
+  staleTime: 60_000,
+});
 
 type Range = { start: number; end: number; index: number };
 
@@ -139,11 +153,7 @@ function DocumentReader({
   quote: string | null;
   onFact: (key: string) => void;
 }) {
-  const query = useQuery({
-    queryKey: keys.source(clientId, sourceId),
-    queryFn: () => fetchSource(clientId, sourceId),
-    staleTime: 60_000,
-  });
+  const query = useQuery(sourceQuery(clientId, sourceId));
   const source = query.data;
   const [active, setActive] = useState<number | null>(null);
   const body = useRef<HTMLDivElement>(null);
@@ -175,14 +185,16 @@ function DocumentReader({
     mark?.scrollIntoView({ behavior: "smooth", block: "center" });
   }, [active, ranges]);
 
-  if (query.isLoading || !source) {
+  if (query.isError) {
     return (
-      <div className="space-y-3 p-6">
-        <div className="cm-shimmer h-5 w-1/2 rounded-sm" />
-        <div className="cm-shimmer h-40 rounded-sm" />
-      </div>
+      <p role="alert" className="p-8 text-center text-sm text-ink-muted">
+        {query.error.message === "not-found"
+          ? "This document is gone."
+          : "This document didn't load. Try again."}
+      </p>
     );
   }
+  if (!source) return <DocumentSkeleton />;
 
   return (
     <div className="grid min-h-0 lg:grid-cols-[minmax(0,1fr)_16rem]">

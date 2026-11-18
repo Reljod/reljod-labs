@@ -1,5 +1,6 @@
 import "server-only";
 import { createClient } from "@supabase/supabase-js";
+import { seedUrlCache } from "../domain/seed-urls";
 import { env } from "./env";
 
 export const BUCKET = "client-manager";
@@ -63,6 +64,19 @@ export async function signedUrls(paths: string[], expiresInSeconds = 3600) {
 
 export async function signedUrl(path: string, expiresInSeconds = 3600) {
   return (await signedUrls([path], expiresInSeconds)).get(path) ?? null;
+}
+
+const sampleSigned = seedUrlCache((paths, seconds) =>
+  signedUrls(paths, seconds),
+);
+
+/** Links to Sample clients' files only: kept and reused (see `seedUrlCache`). */
+export function sampleUrls(paths: string[]) {
+  return sampleSigned(paths);
+}
+
+export async function sampleUrl(path: string) {
+  return (await sampleSigned([path])).get(path) ?? null;
 }
 
 /** Every object under a folder, depth first; Storage lists one level at a time. */

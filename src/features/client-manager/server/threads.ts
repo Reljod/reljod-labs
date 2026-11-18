@@ -31,7 +31,7 @@ import {
   updateThread,
 } from "./repository";
 import { addFacts, checkLimits, LIMITS, LimitError } from "./service";
-import type { Visitor } from "./session";
+import { currentOwner, type Visitor } from "./session";
 
 /** Threads: the book-wide chat of one browser session. */
 
@@ -60,6 +60,18 @@ export async function threadsOf(owner: Owner | null) {
 export async function ownedThread(threadId: string, owner: Owner | null) {
   const thread = await getThread(threadId);
   return thread && owner && thread.owner === owner ? thread : null;
+}
+
+/**
+ * For a read route: the Access gate and the Thread's row, started together.
+ * The Thread is returned only once the gate passed and only to its Owner.
+ */
+export async function gatedThread(threadId: string) {
+  const [owner, thread] = await Promise.all([
+    currentOwner(),
+    getThread(threadId),
+  ]);
+  return { owner, thread: thread && thread.owner === owner ? thread : null };
 }
 
 /** Whether this Owner may scope a Thread to the client: one it can see. */

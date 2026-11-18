@@ -106,7 +106,9 @@ export function MapView({
   const { shown, done } = useReveal(baseNodes, building);
 
   // Relations load by the part of the map you are looking at.
-  const [scopes, setScopes] = useState<string[]>([]);
+  // The client's own relations are asked for at once, alongside the reveal,
+  // not after it: they land while the Nodes are still arriving.
+  const [scopes, setScopes] = useState<string[]>(building ? [] : ["root"]);
   const wanted =
     target.kind === "branch"
       ? `branch:${target.id}`
@@ -116,17 +118,18 @@ export function MapView({
           ? `node:${target.key}`
           : "root";
   useEffect(() => {
-    if (!done || building) return;
+    if (building) return;
     // The client's own relations first, then whatever is opened.
     setScopes((list) => {
       const next = new Set([...list, "root", wanted]);
       return next.size === list.length ? list : [...next];
     });
-  }, [wanted, done, building]);
+  }, [wanted, building]);
   const { edges: loaded, loadingEdges } = useQueries({
     queries: scopes.map((scope) => ({
       queryKey: keys.edges(client.id, scope),
-      queryFn: () => fetchEdges(client.id, scope),
+      queryFn: ({ signal }: { signal: AbortSignal }) =>
+        fetchEdges(client.id, scope, { signal }),
       staleTime: 60_000,
     })),
     combine: (results) => {

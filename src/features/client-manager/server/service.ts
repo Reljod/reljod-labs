@@ -21,14 +21,13 @@ import {
   type ClientRow,
   canView,
   claimBuild,
-  clientSpend,
+  clientStats,
   createBuild,
   createClientRow,
   createSources,
   deleteClient,
   type EdgeScope,
   edgesInScope,
-  edgeTotal,
   factsPerSource,
   getBuild,
   getClient,
@@ -43,8 +42,15 @@ import {
   updateBuild,
   usageSince,
 } from "./repository";
-import type { Visitor } from "./session";
-import { removeFolder, signedUrl, signedUrls, uploadUrl } from "./storage";
+import { currentOwner, type Visitor } from "./session";
+import {
+  removeFolder,
+  sampleUrl,
+  sampleUrls,
+  signedUrl,
+  signedUrls,
+  uploadUrl,
+} from "./storage";
 
 export const LIMITS = {
   files: 8,
@@ -462,6 +468,20 @@ export async function viewableClient(clientId: string, owner: Owner | null) {
   return client && canView(client, owner) ? client : null;
 }
 
+/**
+ * For a read route: the Access gate and the client's row, started together
+ * so the gate's auth call and the lookup overlap. The row is only returned
+ * once the gate has passed and only if this Owner may see it; if the gate
+ * refuses, this throws its AccessDeniedError and the row is dropped.
+ */
+export async function gatedClient(clientId: string) {
+  const [owner, client] = await Promise.all([
+    currentOwner(),
+    getClient(clientId),
+  ]);
+  return { owner, client: client && canView(client, owner) ? client : null };
+}
+
 export async function ownedClient(
   clientId: string,
   owner: Owner | null,
@@ -492,9 +512,16 @@ export type CatalogCard = {
 
 export async function catalog(owner: Owner | null): Promise<CatalogCard[]> {
   const rows = await listCatalog(owner);
-  const urls = await signedUrls(
-    rows.flatMap((row) => (row.portrait_path ? [row.portrait_path] : [])),
-  );
+  const portraits = (sample: boolean) =>
+    rows.flatMap((row) =>
+      row.portrait_path && row.is_sample === sample ? [row.portrait_path] : [],
+    );
+  // Samples' links are kept and reused; an Owner's own are signed now.
+  const [shared, own] = await Promise.all([
+    sampleUrls(portraits(true)),
+    signedUrls(portraits(false)),
+  ]);
+  const urls = new Map([...own, ...shared]);
   return rows.map((row: CatalogRow) => ({
     id: row.id,
     name: row.name,
@@ -559,18 +586,17 @@ export async function clientSummary(
   owner: Owner | null,
   visitor: Visitor | null,
 ): Promise<ClientSummary> {
-  const [nodes, sources, counts, build, spend, portraitUrl, edgeCount] =
-    await Promise.all([
-      nodesLite(client.id),
-      sourcesOfClient(client.id),
-      factsPerSource(client.id),
-      latestBuild(client.id),
-      clientSpend(client.id),
-      client.portrait_path
-        ? signedUrl(client.portrait_path)
-        : Promise.resolve(null),
-      edgeTotal(client.id),
-    ]);
+  // Four database queries, so they fit the pool (max 4) in one round.
+  const [nodes, sources, counts, stats, portraitUrl] = await Promise.all([
+    nodesLite(client.id),
+    sourcesOfClient(client.id),
+    factsPerSource(client.id),
+    clientStats(client.id),
+    client.portrait_path
+      ? (client.is_sample ? sampleUrl : signedUrl)(client.portrait_path)
+      : Promise.resolve(null),
+  ]);
+  const build = stats.build;
   const backed = new Map(counts.map((row) => [row.source_id, row.total]));
   return {
     id: client.id,
@@ -591,7 +617,7 @@ export async function clientSummary(
       sourceIds: node.source_ids,
       quotes: node.quotes,
     })),
-    edgeCount,
+    edgeCount: stats.edges,
     sources: sources.map((source) => ({
       id: source.id,
       name: source.name,
@@ -611,7 +637,7 @@ export async function clientSummary(
           error: build.error,
         }
       : null,
-    spend: { costUsd: spend.cost, tokens: spend.tokens },
+    spend: { costUsd: stats.cost, tokens: stats.tokens },
     canAdd: canAdd(client, owner, visitor),
   };
 }
@@ -709,6 +735,8 @@ export type SourceFull = SourceSummary & {
 export async function clientSource(
   clientId: string,
   sourceId: string,
+  /** A Sample's file link is shared and kept; an Owner's is signed per request. */
+  isSample = false,
 ): Promise<SourceFull | null> {
   const detail = await sourceDetail(clientId, sourceId);
   if (!detail) return null;
@@ -723,7 +751,9 @@ export async function clientSource(
     createdAt: source.created_at.toISOString(),
     facts: facts.length,
     text: source.text,
-    url: source.storage_path ? await signedUrl(source.storage_path) : null,
+    url: source.storage_path
+      ? await (isSample ? sampleUrl : signedUrl)(source.storage_path)
+      : null,
     backing: facts.map((fact) => ({
       quote: fact.quote,
       key: fact.node_key,

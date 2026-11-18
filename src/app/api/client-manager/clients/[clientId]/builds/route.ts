@@ -1,3 +1,4 @@
+import { failure, notFound } from "@/features/client-manager/server/respond";
 import {
   createAddition,
   viewableClient,
@@ -6,7 +7,6 @@ import {
   currentOwner,
   visitor,
 } from "@/features/client-manager/server/session";
-import { failure, notFound } from "../../../respond";
 
 /** An addition: more notes or files folded into an existing Client graph. */
 export async function POST(
