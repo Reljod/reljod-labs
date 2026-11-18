@@ -65,6 +65,27 @@ const paths = {
     </>
   ),
   arrow: <path d="M5 12h14M13 6l6 6-6 6" />,
+  search: (
+    <>
+      <circle cx="10.5" cy="10.5" r="6.5" />
+      <path d="M15.5 15.5L21 21" />
+    </>
+  ),
+  grid: (
+    <>
+      <rect x="3" y="3" width="7" height="7" />
+      <rect x="14" y="3" width="7" height="7" />
+      <rect x="3" y="14" width="7" height="7" />
+      <rect x="14" y="14" width="7" height="7" />
+    </>
+  ),
+  list: <path d="M8 6h13M8 12h13M8 18h13M3 6h1M3 12h1M3 18h1" />,
+  dice: (
+    <>
+      <rect x="3" y="3" width="18" height="18" />
+      <path d="M8 8h.01M16 8h.01M12 12h.01M8 16h.01M16 16h.01" />
+    </>
+  ),
   mail: (
     <>
       <rect x="3" y="5" width="18" height="14" />

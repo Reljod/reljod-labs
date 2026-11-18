@@ -1,3 +1,5 @@
+import { ScrollIn } from "@/components/motion/scroll-in";
+import { ScrollRule } from "@/components/motion/scroll-rule";
 import { Section } from "@/components/ui/section";
 import { approach } from "@/content/services";
 import { source, sourcePath } from "@/features/ledger/domain/source-paths";
@@ -11,9 +13,11 @@ export function Approach() {
       intro="The hardest part is rarely the model. It's getting the business to say where it is today and where it wants to be. This is how I get there."
       ground="limestone"
     >
-      <ol className="outline-box grid bg-paper md:grid-cols-2 lg:grid-cols-4">
+      <ol className="outline-box relative grid bg-paper md:grid-cols-2 lg:grid-cols-4">
+        <ScrollRule axis="x" className="inset-x-0 -top-0.5 h-1.5" />
         {approach.map((step, index) => (
-          <li
+          <ScrollIn
+            as="li"
             key={step.title}
             {...source(sourcePath.approachStep(index))}
             className="border-ink p-6 not-last:border-b-2 md:max-lg:odd:border-r-2 md:max-lg:nth-3:border-b-0 lg:not-last:border-r-2 lg:not-last:border-b-0"
@@ -30,7 +34,7 @@ export function Approach() {
             >
               {step.summary}
             </p>
-          </li>
+          </ScrollIn>
         ))}
       </ol>
     </Section>

@@ -1,0 +1,257 @@
+/* The landing chapters' pieces. Progress comes in as `--p` (see motion.css). */
+
+.sheet {
+  will-change: transform;
+}
+
+/*
+ * On a phone the words make room once you start scrolling: they slide away
+ * and the reader grows into the space (`--lift` 0..1).
+ */
+@media (max-width: 1023px) {
+  .opening-text {
+    opacity: calc(1 - var(--lift, 0));
+    transform: translateY(calc(-2.5rem * var(--lift, 0)));
+  }
+
+  .reader {
+    position: absolute;
+    inset-inline: 1rem;
+    bottom: 3.5rem;
+    top: calc(54% - 44% * var(--lift, 0));
+  }
+}
+
+.sheet-line {
+  position: relative;
+  display: block;
+  height: 1.3cqmin;
+  background: rgb(20 33 61 / 0.18);
+}
+
+/* A line the AI picked out: brass once the page has passed the reader. */
+.sheet-lit::after {
+  content: "";
+  position: absolute;
+  inset: -0.4cqmin -0.6cqmin;
+  background: var(--color-brass);
+  opacity: var(--lit, 0);
+}
+
+.sheet-tab {
+  position: absolute;
+  top: 18%;
+  right: -4.4cqmin;
+  width: 4.4cqmin;
+  height: 6cqmin;
+  border: 2px solid var(--color-ink);
+  border-left: 0;
+  background: var(--color-seal-red);
+  transform-origin: left center;
+  transform: scaleX(var(--lit, 0));
+}
+
+.reader-beam {
+  border-inline: 2px solid var(--color-ink);
+  background: linear-gradient(
+    90deg,
+    rgb(111 160 220 / 0.15),
+    rgb(111 160 220 / 0.85) 50%,
+    rgb(111 160 220 / 0.15)
+  );
+  opacity: calc(0.35 + 0.65 * var(--glow, 0));
+}
+
+/* The glow is painted once and only faded, so reading never repaints it. */
+.reader-beam::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  box-shadow: 0 0 6cqmin rgb(111 160 220 / 0.9);
+  opacity: var(--glow, 0);
+}
+
+.scroll-cue {
+  position: relative;
+  display: block;
+  width: 2px;
+  height: 1.75rem;
+  overflow: hidden;
+  background: rgb(20 33 61 / 0.2);
+}
+
+.scroll-cue::after {
+  content: "";
+  position: absolute;
+  inset-inline: 0;
+  top: 0;
+  height: 40%;
+  background: var(--color-ink);
+}
+
+/* A drawn string: set `pathLength="1"` on the path and `--draw` 0..1. */
+.drawn {
+  stroke-dasharray: 1;
+  stroke-dashoffset: calc(1 - var(--draw, 1));
+  opacity: clamp(0, var(--draw, 1) * 40, 1);
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .scroll-cue::after {
+    animation: scroll-cue 1.6s cubic-bezier(0.6, 0, 0.3, 1) infinite;
+  }
+
+  .landing-steam {
+    animation: landing-steam 2.4s ease-in-out infinite;
+  }
+}
+
+@keyframes scroll-cue {
+  from {
+    transform: translateY(-100%);
+  }
+  to {
+    transform: translateY(260%);
+  }
+}
+
+@keyframes landing-steam {
+  0% {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  40% {
+    opacity: 0.8;
+  }
+  100% {
+    opacity: 0;
+    transform: translateY(-8px);
+  }
+}
+
+/* A line on a document: brass while the AI reads it, red once it doesn't match. */
+.field::before,
+.field::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+
+.field::before {
+  background: var(--color-brass);
+  opacity: calc(var(--lit, 0) * 0.5 * (1 - var(--red, 0)));
+}
+
+.field::after {
+  border: 0.45cqw solid var(--color-seal-red);
+  background: rgb(178 58 43 / 0.14);
+  opacity: var(--red, 0);
+}
+
+/*
+ * A job on the road pops up off the rail when the marker reaches it
+ * (`--reached`) and settles back once the next one does (`--passed`).
+ */
+.road-card {
+  transform-origin: 50% 100%;
+  opacity: calc(var(--reached, 1) * (1 - 0.55 * var(--passed, 0)));
+  transform: translateY(calc(1.25rem * (1 - var(--reached, 1))))
+    scale(calc(0.86 + 0.14 * var(--reached, 1)));
+}
+
+.road-year {
+  opacity: calc(0.35 + 0.65 * var(--reached, 1));
+}
+
+/*
+ * The Rolodex. `--d` is the drum's position (0..6, dwelling on whole cards);
+ * each card knows its `--i`, so `--o` is how far it is from the front.
+ */
+.drum {
+  perspective: 1500px;
+}
+
+.drum-card,
+.drum-shade,
+.problem,
+.career-date {
+  --o: calc(var(--d, 0) - var(--i));
+  --a: max(var(--o), calc(-1 * var(--o)));
+  /* Cards still to come (behind), and the card being flipped (0..1, then gone). */
+  --ahead: max(calc(-1 * var(--o)), 0);
+  --gone: clamp(0, var(--o), 1);
+}
+
+/*
+ * The cards to come wait behind in a stack, leaning back with their tabs
+ * showing; the front card, once flipped, slides out of the drum, solid. Cards are
+ * painted in reverse order (front card last), so no 3D sorting is needed.
+ */
+.drum-card {
+  transform-origin: 50% 100%;
+  transform: translate(-50%, -50%)
+    translateY(calc(var(--ahead) * -1.5rem + var(--gone) * 135%))
+    scale(calc(1 - var(--ahead) * 0.04)) rotateX(calc(var(--ahead) * 6deg))
+    rotate(calc(var(--gone) * 7deg));
+  /* A flipped card stays solid while it slides out: no cross-fading text. */
+  opacity: calc(
+    clamp(0, 3.4 - var(--ahead), 1) *
+    clamp(0, (1 - var(--gone)) * 5, 1)
+  );
+  will-change: transform;
+}
+
+.drum-shade {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: var(--color-ink);
+  opacity: clamp(0, var(--ahead) * 0.16, 0.5);
+}
+
+.problem {
+  opacity: clamp(0, 1 - var(--a) * 2.4, 1);
+  transform: translateY(calc(var(--o) * -1.4rem));
+}
+
+.stamp {
+  border-color: var(--ink);
+  color: var(--ink);
+}
+
+/* A job's dates stamp onto its card as the card settles at the front. */
+.career-date {
+  transform-origin: left center;
+  transform: rotate(-3deg) scale(calc(1 + 1.2 * min(1, var(--a, 0) * 4)));
+  opacity: clamp(0, 1 - var(--a, 0) * 4, 1);
+}
+
+.pulled {
+  will-change: transform, opacity;
+}
+
+/* The Play buttons call for attention with a slow ring, until the tour plays. */
+@media (prefers-reduced-motion: no-preference) {
+  .play-tour[aria-pressed="false"]::after {
+    content: "";
+    position: absolute;
+    inset: -2px;
+    border: 2px solid var(--color-brass);
+    border-radius: 2px;
+    pointer-events: none;
+    animation: play-ring 2.2s cubic-bezier(0.2, 0.7, 0.3, 1) infinite;
+  }
+}
+
+@keyframes play-ring {
+  0% {
+    opacity: 0.9;
+    transform: scale(1);
+  }
+  70%,
+  100% {
+    opacity: 0;
+    transform: scale(1.18, 1.5);
+  }
+}

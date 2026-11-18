@@ -81,7 +81,7 @@
 
 ## Access (the gate in front of the demos)
 
-- The demos call a paid model, so `/demos/*`, `/ask/*`, `/api/casework/*`, `/api/client-manager/*`, `/api/document-compliance/*`, `/api/process-transfer/*`, `/api/harness/*` and `/api/name-extraction/*` open only to a Host (a Supabase Auth account) or a Guest on a live Guest pass. `/` and `/about` stay public. Domain language: `src/features/access/GLOSSARY.md`.
+- The demos call a paid model, so `/demos/*`, `/ask/*`, `/api/casework/*`, `/api/client-manager/*`, `/api/document-compliance/*`, `/api/process-transfer/*`, `/api/harness/*` and `/api/name-extraction/*` open only to a Host (a Supabase Auth account) or a Guest on a live Guest pass. `/`, `/about` and the catalog at `/demos` itself stay public (the proxy matches `/demos/:path+`, not `/demos`). Domain language: `src/features/access/GLOSSARY.md`.
 - Two gates, both required. `src/proxy.ts` turns visitors away before a demo page or route runs. Every server action and route handler of a demo also calls `requireAccess()` (or `accessOrDenied()`) from `src/features/access/server/gate.ts`, because a server action can be posted to any page. A new demo entry point must do the same, and a new demo path must be added to the proxy matcher.
 - A Guest is an anonymous Supabase Auth user. Anyone can become one, so an Auth session alone grants nothing: Access comes from a row binding the user to a live Guest pass, written only by `access.redeem_guest_pass`.
 - Env: `SUPABASE_PUBLISHABLE_KEY` (or the legacy `SUPABASE_ANON_KEY`; server only, never `NEXT_PUBLIC_`), `ACCESS_HOST_EMAILS` (comma-separated; empty means nobody is a Host); shares `RATE_LIMIT_SALT`. A request carrying `E2E_BYPASS_TOKEN` passes the gate. Data lives in the Supabase `access` schema (listed under Data API > Exposed schemas). Anonymous sign-ins must be enabled in Supabase Auth.
@@ -102,7 +102,7 @@
 
 ## Demo pages share one bar
 
-- Every demo page opens with `DemoBar` (`src/components/demo/demo-bar.tsx`): the "All demos" back button (always `/`, the top of the landing page, never a history back), the demo's number from `liveDemos` order, its name linking to the demo's first page, its places as tabs, and the demo's own controls on the right. A demo whose places and controls do not fit one row at 1024px passes `rowFrom="xl"`. Don't add a second back link inside a demo; a sub-page is reached and left through the tabs or the name.
+- Every demo page opens with `DemoBar` (`src/components/demo/demo-bar.tsx`): the "All demos" back button (always `/demos`, the catalog page, never a history back), the demo's number from `liveDemos` order, its name linking to the demo's first page, its places as tabs, and the demo's own controls on the right. A demo whose places and controls do not fit one row at 1024px passes `rowFrom="xl"`. Don't add a second back link inside a demo; a sub-page is reached and left through the tabs or the name.
 - Demos are drawn in the Colonnade language of Document compliance: 2px ink outlines (`outline-box`), `rounded-sm`, hard offset shadows, `press` on everything clickable, `eyebrow` labels. No soft shadows or pill shapes.
 
 ## Demo speed
@@ -113,6 +113,13 @@
 ## Buttons that write
 
 - A button that writes is disabled while the write runs, shows a pending label, and shows the result or error where it was clicked. Destructive or hard-to-undo writes confirm first in a dialog (pattern: `ConfirmDialog` in `src/features/access/components/pass-actions.tsx`). Details: "A write button fires once" in `docs/engineering/conventions.md`.
+
+## Landing page
+
+- `/` is a tour you scroll through, for a visitor outside tech (`src/components/landing/`): Paperwork, Up close, Who's reading, Seven problems (a Rolodex), What this site is, then a short finale, Coming soon and Contact. Each chapter is a `Chapter` (`src/components/motion/`): a pinned stage whose scroll progress is the CSS variable `--p`, read by pieces through `scroll-math.ts` expressions, so scrolling never re-renders React. Animate only transforms and opacity. The next section slides over a finished chapter (`overlap`). The tour plays whatever the visitor's reduced-motion setting, because nothing moves unless they scroll; only autoplay and looping motion honours it.
+- Words live in `src/content/landing.ts`; facts about Reljod come only from `profile.ts`, `experience.ts` and `projects.ts`. A new live demo needs a plain problem in `demoProblems` and a preview in `demo-previews.tsx` (`landing.test.ts` and `demo-previews.test.ts` check them).
+- `/demos` lists every live demo (`src/components/catalog/`) as an index card whose preview stays paused (`animation-play-state`) until the card is hovered, focused or, on touch, centred, so a preview must animate with CSS only. Search, shelves and sort are pure functions in `catalog-query.ts`; shelves are `demoShelves` in `landing.ts`, so put a new demo on any shelf that fits.
+- The About sections also render inside Ledger's Ask sessions, which measure them, so their motion runs only under `CopyMotionProvider` (on `/about` and `/`); without it every motion piece renders plain.
 
 ## Analytics
 

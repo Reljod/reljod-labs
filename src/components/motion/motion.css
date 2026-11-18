@@ -1,0 +1,113 @@
+/*
+ * A drum's variables don't inherit, so moving the drum re-styles only the
+ * pieces that ask for them (see `at()` in drum.ts).
+ */
+@property --d {
+  syntax: "<number>";
+  inherits: false;
+  initial-value: 0;
+}
+
+@property --o {
+  syntax: "<number>";
+  inherits: false;
+  initial-value: 0;
+}
+
+@property --a {
+  syntax: "<number>";
+  inherits: false;
+  initial-value: 0;
+}
+
+@property --ahead {
+  syntax: "<number>";
+  inherits: false;
+  initial-value: 0;
+}
+
+@property --gone {
+  syntax: "<number>";
+  inherits: false;
+  initial-value: 0;
+}
+
+/*
+ * Shared scroll motion. A chapter writes `--p` (0..1); a Peel writes `--q`.
+ * Everything here is transforms and opacity, so scrolling never relays out.
+ */
+/* A section that slides up over the finished chapter before it. */
+.slide-over {
+  margin-top: calc(-100svh + 4.125rem);
+}
+
+.chapter-stage {
+  top: 4.125rem; /* under the sticky site header */
+  height: calc(100svh - 4.125rem);
+  /* Nothing inside a stage can change the page's layout or paint outside it. */
+  contain: layout paint;
+}
+
+/* Redaction bars that lift word by word. */
+.peel-w {
+  position: relative;
+  display: inline-block;
+}
+
+.peel-w::after {
+  content: "";
+  position: absolute;
+  inset: 0.08em -0.06em 0.04em -0.06em;
+  background: var(--peel-bar, var(--color-ink));
+  box-shadow: -0.14em 0 0 var(--peel-edge, var(--color-brass));
+  transform-origin: right center;
+  transform: scaleX(clamp(0, 1 - (var(--q, 1) - var(--at)) / var(--w), 1));
+  pointer-events: none;
+}
+
+/* Tips up into place: hinged at the bottom edge, like a card stood up. */
+.scroll-in {
+  --e: calc(1 - (1 - var(--q, 1)) * (1 - var(--q, 1)));
+  opacity: calc(0.15 + 0.85 * var(--e));
+  transform: perspective(1100px) translateY(calc((1 - var(--e)) * 3.5rem))
+    rotateX(calc((1 - var(--e)) * 24deg))
+    rotate(calc((1 - var(--e)) * var(--lean, 0deg)));
+  transform-origin: 50% 100%;
+}
+
+/* On a moving page (`data-moving`), a job's dates stay put while its story scrolls. */
+@media (min-width: 768px) {
+  [data-moving] .stick-on-move {
+    position: sticky;
+    top: 6rem;
+    align-self: start;
+  }
+}
+
+/* Unfilled "[Client sector]"-style fields stay out of the moving About page. */
+[data-moving] [data-placeholder] {
+  display: none;
+}
+
+/*
+ * Reduced motion: the tour still plays, because nothing in it moves unless the
+ * visitor scrolls. What runs on its own (the print-in, the loops in
+ * landing.css, the headline reveal) honours the setting.
+ */
+
+@media (prefers-reduced-motion: no-preference) {
+  .print-in {
+    animation: print-in 1.1s cubic-bezier(0.3, 0, 0.15, 1) 0.35s both;
+  }
+}
+
+@keyframes print-in {
+  from {
+    clip-path: inset(-16px -16px 100% -16px);
+    transform: translateY(-36px) rotate(-2deg);
+  }
+  to {
+    clip-path: inset(-16px -16px -16px -16px);
+    transform: none;
+  }
+}

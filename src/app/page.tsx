@@ -1,22 +1,40 @@
+import { Finale } from "@/components/landing/finale";
+import { OpeningChapter } from "@/components/landing/opening-chapter";
+import { RolodexChapter } from "@/components/landing/rolodex-chapter";
+import { SceneIndex } from "@/components/landing/scene-index";
+import { StampChapter } from "@/components/landing/stamp-chapter";
+import { UpCloseChapter } from "@/components/landing/up-close-chapter";
+import { WhoChapter } from "@/components/landing/who-chapter";
+import { CopyMotionProvider } from "@/components/motion/copy-motion";
 import { Contact } from "@/components/sections/contact";
 import { SiteFooter } from "@/components/sections/site-footer";
 import { SiteHeader } from "@/components/sections/site-header";
-import { AboutTeaser } from "@/components/showcase/about-teaser";
 import { Bench } from "@/components/showcase/bench";
-import { LabHero } from "@/components/showcase/lab-hero";
-import { LiveDemos } from "@/components/showcase/live-demos";
 
+/**
+ * The landing page is a tour you scroll through, for a visitor who may not
+ * work in tech. Each chapter pins to the screen and scrolling plays it: the
+ * pile of paper the AI reads, two documents checked up close, who's behind
+ * it, the projects on a Rolodex, and what the site is, then three ways on;
+ * every demo is laid out on `/demos`. The Index jumps to any chapter.
+ */
 export default function Home() {
   return (
     <>
       <SiteHeader />
-      <main>
-        <LabHero />
-        <LiveDemos />
-        <Bench />
-        <AboutTeaser />
-        <Contact />
-      </main>
+      <CopyMotionProvider animated>
+        <main className="overflow-x-clip">
+          <OpeningChapter />
+          <UpCloseChapter />
+          <WhoChapter />
+          <RolodexChapter />
+          <StampChapter />
+          <Finale />
+          <Bench />
+          <Contact />
+        </main>
+        <SceneIndex />
+      </CopyMotionProvider>
       <SiteFooter />
     </>
   );
