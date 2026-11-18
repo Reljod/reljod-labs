@@ -1,5 +1,5 @@
 import type { ReactNode } from "react";
-import { Peel } from "@/components/motion/peel";
+import { ScrollRule } from "@/components/motion/scroll-rule";
 
 const grounds = {
   marble: "bg-marble",
@@ -34,14 +34,15 @@ export function Section({
       className={`border-ink border-t-2 ${grounds[ground]}`}
     >
       <div className="mx-auto max-w-6xl px-4 py-16 sm:px-6">
-        <header className="mb-12 max-w-3xl">
+        <header className="relative mb-12 max-w-3xl">
           <p className="eyebrow mb-3 text-ink-muted">{eyebrow}</p>
           <h2
             id={headingId}
             className="font-mono text-3xl leading-[1.15] font-bold uppercase sm:text-[2rem]"
           >
-            <Peel text={title} timing={{ on: "scroll" }} />
+            {title}
           </h2>
+          <ScrollRule axis="x" className="-bottom-5 left-0 h-1 w-28" />
           {intro ? (
             <p className="mt-4 text-lg text-ink-muted">{intro}</p>
           ) : null}

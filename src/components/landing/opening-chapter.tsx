@@ -2,7 +2,7 @@
 
 import { useMotionValueEvent } from "motion/react";
 import type { CSSProperties } from "react";
-import { useRef } from "react";
+import { useEffect, useRef } from "react";
 import { Chapter, useChapterProgress } from "@/components/motion/chapter";
 import { Peel } from "@/components/motion/peel";
 import {
@@ -24,18 +24,28 @@ const SHEETS = 14;
 /** The first few are on the desk before you scroll. */
 const ON_DESK = 3;
 /** Pages fly onto the pile over this part of the chapter… */
-const ARRIVE = [0.02, 0.36] as const;
+const ARRIVE = [0.02, 0.3] as const;
 /** …and pass through the reader over this part. */
-const READ = [0.4, 0.84] as const;
-const ANSWER = [0.86, 0.97] as const;
+const READ = [0.32, 0.7] as const;
+/** The answer lands, then holds until the chapter hands over. */
+const ANSWER = [0.73, 0.83] as const;
 /** Sheets that come out with a red tab: the pages a person must see. */
 const FLAGGED = new Set([3, 8, 11]);
 
-/** Stable pseudo-random in [-1, 1], so server and browser agree. */
+/**
+ * Stable pseudo-random in [-1, 1], rounded, so the server and the browser
+ * write identical styles (integer hashing, not `Math.sin`, whose last digits
+ * can differ between engines).
+ */
 function jitter(index: number, salt: number): number {
-  const x = Math.sin(index * 12.9898 + salt * 78.233) * 43758.5453;
-  return (x - Math.floor(x)) * 2 - 1;
+  let h = Math.imul(index + 1, 374761393) ^ Math.imul(salt + 7, 668265263);
+  h = Math.imul(h ^ (h >>> 13), 1274126177);
+  h ^= h >>> 16;
+  return Math.round(((h >>> 0) / 4294967295) * 2000 - 1000) / 1000;
 }
+
+/** Keeps generated CSS numbers short and identical on server and client. */
+const r = (value: number) => Math.round(value * 1000) / 1000;
 
 const arriveAt = stagger(SHEETS - ON_DESK, 0.16);
 const readAt = stagger(SHEETS, 0.12);
@@ -43,14 +53,14 @@ const readAt = stagger(SHEETS, 0.12);
 function sheetStyle(index: number): CSSProperties {
   // Where it starts (off the machine), lands (the messy pile) and ends (the neat stack).
   // They rise from below the desk, so they never cross the headline.
-  const x0 = 50 + jitter(index, 1) * 60;
-  const y0 = 175 + jitter(index, 6) * 25;
-  const r0 = jitter(index, 2) * 70;
-  const xp = 24 + jitter(index, 3) * 6;
-  const yp = 54 - index * 0.9 + jitter(index, 4) * 3;
-  const rp = jitter(index, 5) * 16;
+  const x0 = r(50 + jitter(index, 1) * 60);
+  const y0 = r(175 + jitter(index, 6) * 25);
+  const r0 = r(jitter(index, 2) * 70);
+  const xp = r(24 + jitter(index, 3) * 6);
+  const yp = r(54 - index * 0.9 + jitter(index, 4) * 3);
+  const rp = r(jitter(index, 5) * 16);
   const xn = 76;
-  const yn = 54 - index * 0.9;
+  const yn = r(54 - index * 0.9);
   const rn = index % 2 ? 0.8 : -0.8;
 
   const arrive =
@@ -74,16 +84,15 @@ function sheetStyle(index: number): CSSProperties {
       within(readStart, readEnd, 0.6),
     ),
     transform: [
-      `translate(calc(${settled ? `${xp}cqw` : mix(x0, xp, arrive, "cqw")} + ${xn - xp}cqw * ${pass} - 14cqmin),`,
-      `calc(${settled ? `${yp}cqh` : mix(y0, yp, arrive, "cqh")} + ${yn - yp}cqh * ${pass} - 9cqh * ${bump(passLinear)} - 18cqmin))`,
-      `rotate(calc(${settled ? `${rp}deg` : mix(r0, rp, arrive, "deg")} + ${rn - rp}deg * ${pass}))`,
+      `translate(calc(${settled ? `${xp}cqw` : mix(x0, xp, arrive, "cqw")} + ${r(xn - xp)}cqw * ${pass} - 14cqmin),`,
+      `calc(${settled ? `${yp}cqh` : mix(y0, yp, arrive, "cqh")} + ${r(yn - yp)}cqh * ${pass} - 9cqh * ${bump(passLinear)} - 18cqmin))`,
+      `rotate(calc(${settled ? `${rp}deg` : mix(r0, rp, arrive, "deg")} + ${r(rn - rp)}deg * ${pass}))`,
     ].join(" "),
   } as CSSProperties;
 }
 
 /**
- * The opening chapter. The second line of the headline is redacted until you
- * scroll; meanwhile a pile of paper lands on the desk, passes through the
+ * The opening chapter. The headline declassifies on load; as you scroll a pile of paper lands on the desk, passes through the
  * reader and comes out tidy, with the pages a person must see tabbed red.
  */
 export function OpeningChapter() {
@@ -91,12 +100,15 @@ export function OpeningChapter() {
     <Chapter
       id="top"
       label="Paperwork"
-      length={2.9}
+      length={3.4}
       className="border-t-0 bg-marble"
       stageClassName="bg-marble bg-[linear-gradient(rgb(20_33_61/0.05)_2px,transparent_2px),linear-gradient(90deg,rgb(20_33_61/0.05)_2px,transparent_2px)] bg-size-[40px_40px]"
     >
-      <div className="mx-auto flex h-full max-w-6xl flex-col gap-5 px-4 pt-6 pb-16 sm:px-6 lg:grid lg:grid-cols-[1fr_1.05fr] lg:items-center lg:gap-12 lg:py-10">
-        <div className="relative z-10">
+      <div
+        className="relative mx-auto flex h-full max-w-6xl flex-col gap-5 px-4 pt-6 pb-16 sm:px-6 lg:grid lg:grid-cols-[0.85fr_1.2fr] lg:items-center lg:gap-10 lg:py-8"
+        style={{ "--lift": smooth(seg(0.03, 0.11)) } as CSSProperties}
+      >
+        <div className="opening-text relative z-10">
           <p className="eyebrow mb-4 text-ink-muted lg:mb-6">
             {opening.eyebrow}
           </p>
@@ -108,12 +120,15 @@ export function OpeningChapter() {
             />
             <Peel
               text={opening.lines[1]}
-              timing={{ on: "chapter", from: 0.03, to: 0.26 }}
+              timing={{ on: "mount", delay: 1, duration: 0.8 }}
               className="block text-federal-blue"
             />
           </h1>
           <p className="mt-4 max-w-xl text-base leading-relaxed sm:text-lg lg:mt-6 lg:text-xl [@media(max-width:1023px)_and_(max-height:760px)]:hidden">
             {opening.intro}
+          </p>
+          <p className="mt-3 hidden text-base leading-snug [@media(max-width:1023px)_and_(max-height:760px)]:block">
+            {opening.short}
           </p>
           <div className="mt-5 flex flex-wrap gap-3 lg:mt-8 lg:gap-4">
             <ButtonLink href="#demos">
@@ -148,19 +163,22 @@ function Reader() {
   const leftRef = useRef<HTMLSpanElement>(null);
 
   // The counters follow the pages through the reader, without a re-render.
-  useMotionValueEvent(progress, "change", (p) => {
+  function paint(p: number) {
     const t = Math.min(1, Math.max(0, (p - READ[0]) / (READ[1] - READ[0])));
     const read = Math.round(opening.pages * t);
     if (readRef.current) readRef.current.textContent = String(read);
     if (leftRef.current)
       leftRef.current.textContent = String(opening.pages - read);
-  });
+  }
+  useMotionValueEvent(progress, "change", paint);
+  // biome-ignore lint/correctness/useExhaustiveDependencies: paint once for where the page already is.
+  useEffect(() => paint(progress.get()), []);
 
   const answer = smooth(seg(...ANSWER));
 
   return (
     <div
-      className="relative min-h-0 flex-1 [container-type:size] lg:aspect-square lg:h-auto lg:max-h-full lg:flex-none"
+      className="reader relative min-h-0 flex-1 [container-type:size] lg:aspect-square lg:h-auto lg:max-h-full lg:flex-none"
       aria-label={`A pile of ${opening.pages} pages passes through the AI and comes out read, with ${opening.flags.length} pages tabbed for a person.`}
       role="img"
     >
@@ -224,14 +242,14 @@ function Reader() {
           transform: `translate(-50%, calc(14cqh * (1 - ${answer}))) rotate(calc(-1.5deg * (1 - ${answer})))`,
         }}
       >
-        <p className="border-ink border-b-2 bg-ink px-[4cqmin] py-[2cqmin] font-mono text-[3cqmin] font-bold tracking-[0.1em] text-paper uppercase">
+        <p className="border-ink border-b-2 bg-ink px-[4cqmin] py-[2cqmin] font-mono text-[max(10px,3cqmin)] font-bold tracking-[0.1em] text-paper uppercase">
           {opening.pages} pages read · {opening.flags.length} for a person
         </p>
         <ul className="divide-y-2 divide-ink/15">
           {opening.flags.map((flag, index) => (
             <li
               key={flag.text}
-              className="flex items-center gap-[3cqmin] px-[4cqmin] py-[2.4cqmin] text-[3.8cqmin] font-semibold"
+              className="flex items-center gap-[3cqmin] px-[4cqmin] py-[2.4cqmin] text-[max(12px,3.8cqmin)] font-semibold"
               style={{
                 opacity: seg(
                   within(...ANSWER, 0.3 + index * 0.15),
@@ -241,7 +259,7 @@ function Reader() {
             >
               <span className="size-[2.6cqmin] shrink-0 bg-seal-red" />
               {flag.text}
-              <span className="ml-auto font-mono text-[3cqmin] text-ink-muted">
+              <span className="ml-auto font-mono text-[max(10px,3cqmin)] text-ink-muted">
                 p.&nbsp;{flag.page}
               </span>
             </li>

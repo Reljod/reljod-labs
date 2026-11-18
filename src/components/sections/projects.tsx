@@ -8,6 +8,7 @@ import { Section } from "@/components/ui/section";
 import { featuredProjects } from "@/content/projects";
 import type { Project } from "@/content/types";
 import { source, sourcePath } from "@/features/ledger/domain/source-paths";
+import { LiveCover } from "./live-cover";
 
 export function Projects() {
   return (
@@ -23,6 +24,7 @@ export function Projects() {
           <ScrollIn
             as="li"
             lean={index % 2 === 0 ? -2 : 2}
+            className="min-w-0"
             key={project.slug}
             {...source(sourcePath.project(index))}
           >
@@ -32,6 +34,14 @@ export function Projects() {
       </ul>
     </Section>
   );
+}
+
+/**
+ * Marks a "[To be filled]" field so the About page can hide it
+ * (`[data-moving] [data-placeholder]`). Ledger's copy keeps every field.
+ */
+function placeholder(value: string): "" | undefined {
+  return value.startsWith("[") ? "" : undefined;
 }
 
 function ProjectCard({ project, index }: { project: Project; index: number }) {
@@ -49,13 +59,24 @@ function ProjectCard({ project, index }: { project: Project; index: number }) {
         </div>
       ) : (
         // Cover placeholder: swap for a screenshot or diagram per project.
-        <div className="flex aspect-[16/9] items-center justify-center border-ink border-b-2 bg-limestone bg-[repeating-linear-gradient(135deg,transparent_0_12px,rgb(20_33_61/0.06)_12px_14px)]">
-          <IconTile name={project.icon} />
-        </div>
+        // A live demo shows its moving preview instead, on the About page.
+        <LiveCover
+          project={project}
+          fallback={
+            <div className="flex aspect-[16/9] items-center justify-center border-ink border-b-2 bg-limestone bg-[repeating-linear-gradient(135deg,transparent_0_12px,rgb(20_33_61/0.06)_12px_14px)]">
+              <IconTile name={project.icon} />
+            </div>
+          }
+        />
       )}
       <div className="flex flex-1 flex-col p-6">
         <div className="flex items-center justify-between gap-3">
-          <p className="eyebrow text-ink-muted">{project.sector}</p>
+          <p
+            className="eyebrow text-ink-muted"
+            data-placeholder={placeholder(project.sector)}
+          >
+            {project.sector}
+          </p>
           <div className="flex items-center gap-2">
             <ProjectMarks marks={project.marks} />
             <Badge tone="haze">{project.status}</Badge>
@@ -72,6 +93,7 @@ function ProjectCard({ project, index }: { project: Project; index: number }) {
         </p>
         <p
           className="mt-4 font-mono text-sm font-bold text-ivy"
+          data-placeholder={placeholder(project.outcome)}
           {...source(sourcePath.projectOutcome(index))}
         >
           {project.outcome}

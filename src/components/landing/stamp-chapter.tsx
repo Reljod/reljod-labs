@@ -2,7 +2,6 @@
 
 import type { CSSProperties } from "react";
 import { Chapter } from "@/components/motion/chapter";
-import { Peel } from "@/components/motion/peel";
 import {
   bump,
   easeOut,
@@ -18,20 +17,20 @@ const DROPS = [
   {
     from: 0.12,
     to: 0.24,
-    x: 30,
-    y: 60,
-    rotate: -14,
+    x: 34,
+    y: 58,
+    rotate: -12,
     color: "var(--color-federal-blue)",
   },
   {
     from: 0.38,
     to: 0.5,
-    x: 64,
-    y: 38,
-    rotate: 9,
+    x: 26,
+    y: 31,
+    rotate: 18,
     color: "var(--color-seal-red)",
   },
-  { from: 0.64, to: 0.76, x: 52, y: 82, rotate: -5, color: "var(--color-ivy)" },
+  { from: 0.64, to: 0.76, x: 62, y: 72, rotate: -5, color: "var(--color-ivy)" },
 ] as const;
 
 /** The page jolts as each stamp hits it. */
@@ -45,7 +44,8 @@ export function StampChapter() {
     <Chapter
       id="lab"
       label="What this site is"
-      length={2.4}
+      length={3.2}
+      overlap
       className="bg-morning-haze"
       stageClassName="bg-morning-haze"
     >
@@ -55,10 +55,7 @@ export function StampChapter() {
             {sceneNumber("lab")} · What this site is
           </p>
           <h2 className="font-mono text-2xl leading-[1.1] font-bold uppercase sm:text-4xl">
-            <Peel
-              text="A workshop, not a brochure."
-              timing={{ on: "scroll" }}
-            />
+            A workshop, not a brochure.
           </h2>
           <p className="mt-3 hidden text-lg leading-relaxed lg:block">
             Reljod Labs is where I build AI for banks in the open, so you can
@@ -82,7 +79,7 @@ export function StampChapter() {
                     <span className="block font-mono text-sm font-bold uppercase lg:text-base">
                       {fact.title}
                     </span>
-                    <span className="mt-0.5 block text-sm leading-snug text-ink-muted lg:text-base">
+                    <span className="mt-0.5 block text-sm leading-snug text-ink-muted lg:text-base [@media(max-width:1023px)_and_(max-height:740px)]:sr-only">
                       {fact.body}
                     </span>
                   </span>
@@ -174,7 +171,6 @@ function Passport() {
                   top: `${drop.y}%`,
                   opacity: seg(drop.from, within(drop.from, drop.to, 0.25)),
                   transform: `translate(-50%, -50%) rotate(${drop.rotate}deg) scale(${mix(3.2, 1, land)})`,
-                  filter: `blur(calc(0.5cqw * (1 - ${fall})))`,
                 } as CSSProperties
               }
             >

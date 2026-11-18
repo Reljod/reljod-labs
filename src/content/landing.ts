@@ -29,6 +29,8 @@ export const opening = {
   lines: ["Banks run on paperwork.", "I build AI that reads it."],
   intro:
     "I'm Reljod Oreta, a software engineer in Metro Manila. Every project here is a working AI helper for banks: it reads the documents, finds what matters, and shows a person exactly where.",
+  /** The intro for a short phone screen, where the full one won't fit. */
+  short: "I'm Reljod. I build AI that reads bank paperwork.",
   cue: "Scroll to watch it read",
   pages: 500,
   /** What a person still needs to see after the pile is read. */

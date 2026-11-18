@@ -1,15 +1,15 @@
 "use client";
 
-import {
-  motion,
-  useMotionValueEvent,
-  useReducedMotion,
-  useTransform,
-} from "motion/react";
+import { motion, useMotionValueEvent, useTransform } from "motion/react";
 import Link from "next/link";
-import { type CSSProperties, useState } from "react";
-import { Chapter, useChapterProgress } from "@/components/motion/chapter";
-import { Peel } from "@/components/motion/peel";
+import { useEffect, useState } from "react";
+import {
+  Chapter,
+  chapterScrollTop,
+  useChapterProgress,
+} from "@/components/motion/chapter";
+import { at, drumPosition } from "@/components/motion/drum";
+import { useReduced } from "@/components/motion/use-reduced";
 import { BrowserFrame } from "@/components/showcase/browser-frame";
 import { Icon, IconTile } from "@/components/ui/icon";
 import { LiveBadge } from "@/components/ui/live-badge";
@@ -24,29 +24,14 @@ const TURN = [0.06, 0.92] as const;
 
 const number = (index: number) => String(index + 1).padStart(2, "0");
 
-/**
- * Card position on the drum for a chapter progress: it dwells on each card
- * and flips quickly between them, like a Rolodex clicking over.
- */
-export function drumPosition(progress: number): number {
-  const t = Math.min(
-    1,
-    Math.max(0, (progress - TURN[0]) / (TURN[1] - TURN[0])),
-  );
-  const x = t * (COUNT - 1);
-  const card = Math.min(COUNT - 2, Math.floor(x));
-  const r = x - card;
-  // Smootherstep: flat at both ends, so each card holds before the next flips.
-  return card + r * r * r * (r * (r * 6 - 15) + 10);
-}
-
 /** Seven problems: the live demos on a Rolodex that turns as you scroll. */
 export function RolodexChapter() {
   return (
     <Chapter
       id="demos"
       label="Seven problems I've built for"
-      length={4.3}
+      length={4.5}
+      overlap
       className="bg-limestone"
       stageClassName="bg-limestone"
     >
@@ -57,21 +42,24 @@ export function RolodexChapter() {
 
 function Drum() {
   const progress = useChapterProgress();
-  const reduce = useReducedMotion();
-  const position = useTransform(progress, drumPosition);
+  const reduce = useReduced();
+  const position = useTransform(progress, (p) => drumPosition(p, COUNT, TURN));
   const [active, setActive] = useState(0);
   useMotionValueEvent(position, "change", (value) =>
     setActive(Math.round(value)),
   );
+  // Start on the card the drum is really showing (the last one when the
+  // chapter is shown finished), not on card 01.
+  // biome-ignore lint/correctness/useExhaustiveDependencies: re-read once the setting arrives.
+  useEffect(() => setActive(Math.round(position.get())), [reduce]);
 
   // Each number on the rail scrolls the page to that card.
   function jump(index: number) {
     const section = document.getElementById("demos");
     if (!section) return;
-    const range = section.offsetHeight - (window.innerHeight - 66);
     const p = TURN[0] + (index / (COUNT - 1)) * (TURN[1] - TURN[0]);
     window.scrollTo({
-      top: section.offsetTop + p * range,
+      top: chapterScrollTop(section, p),
       behavior: reduce ? "auto" : "smooth",
     });
   }
@@ -79,34 +67,25 @@ function Drum() {
   const demo = liveDemos[active];
 
   return (
-    <motion.div
-      className="mx-auto flex h-full max-w-6xl flex-col gap-4 px-4 py-5 sm:px-6 lg:grid lg:grid-cols-[0.85fr_1.15fr] lg:items-center lg:gap-10 lg:py-10"
-      style={{ "--d": position } as unknown as CSSProperties}
-    >
+    <div className="mx-auto flex h-full max-w-6xl flex-col gap-4 px-4 py-5 sm:px-6 lg:grid lg:grid-cols-[0.85fr_1.15fr] lg:items-center lg:gap-10 lg:py-10">
       <div>
         <p className="eyebrow mb-2 text-ink-muted lg:mb-4">
           {sceneNumber("demos")} · The projects
         </p>
         <h2 className="font-mono text-2xl leading-[1.1] font-bold uppercase sm:text-4xl">
-          <Peel
-            text="Seven problems I've built for."
-            timing={{ on: "scroll" }}
-          />
+          Seven problems I&apos;ve built for.
         </h2>
 
-        <div
-          aria-live="polite"
-          className="relative mt-3 min-h-[3.25rem] sm:min-h-[4.5rem] lg:mt-8 lg:min-h-[9rem]"
-        >
+        <div className="relative mt-3 min-h-[3.25rem] sm:min-h-[4.5rem] lg:mt-8 lg:min-h-[9rem]">
           {liveDemos.map((item, index) => (
-            <p
+            <motion.p
               key={item.slug}
               aria-hidden={index !== active}
               className="problem absolute inset-x-0 top-0 text-base leading-snug sm:text-xl lg:text-[1.65rem] lg:leading-[1.25]"
-              style={{ "--i": index } as CSSProperties}
+              style={at(position, index)}
             >
               “{demoProblems[item.slug]}”
-            </p>
+            </motion.p>
           ))}
         </div>
 
@@ -138,11 +117,11 @@ function Drum() {
 
       <div className="drum relative min-h-0 flex-1 lg:h-[min(38rem,100%)] lg:flex-none">
         {liveDemos.map((item, index) => (
-          <article
+          <motion.article
             key={item.slug}
             aria-hidden={index !== active}
-            className={`drum-card absolute top-1/2 left-1/2 w-[min(86vw,22rem)] sm:w-[min(80vw,28rem)] lg:w-[min(100%,31rem)] ${index === active ? "" : "pointer-events-none"}`}
-            style={{ "--i": index } as CSSProperties}
+            className={`drum-card absolute top-1/2 left-1/2 w-[min(76vw,19rem)] sm:w-[min(80vw,28rem)] lg:w-[min(100%,31rem)] ${index === active ? "" : "pointer-events-none"}`}
+            style={at(position, index)}
           >
             <span
               className="absolute -top-[1.85rem] flex h-[1.85rem] items-center gap-2 border-2 border-ink border-b-0 bg-paper px-3 font-mono text-xs font-bold"
@@ -164,7 +143,7 @@ function Drum() {
                 className="group block bg-limestone p-3 sm:p-4"
               >
                 <BrowserFrame address={item.href ?? ""}>
-                  {Math.abs(index - active) <= 1 ? (
+                  {index === active ? (
                     demoPreviews[item.slug]?.(item)
                   ) : (
                     <div className="flex aspect-[960/726] items-center justify-center bg-marble">
@@ -182,11 +161,15 @@ function Drum() {
                   Open <Icon name="arrow" size={14} />
                 </span>
               </p>
-              <span aria-hidden="true" className="drum-shade" />
+              <motion.span
+                aria-hidden="true"
+                className="drum-shade"
+                style={at(position, index)}
+              />
             </div>
-          </article>
+          </motion.article>
         ))}
       </div>
-    </motion.div>
+    </div>
   );
 }

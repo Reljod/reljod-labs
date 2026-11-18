@@ -5,13 +5,13 @@ import {
   type MotionValue,
   motion,
   useMotionValue,
-  useReducedMotion,
   useScroll,
 } from "motion/react";
 import { type CSSProperties, useEffect, useRef } from "react";
 import "./motion.css";
 import { useCopyMotion } from "./copy-motion";
 import { seg } from "./scroll-math";
+import { useReduced } from "./use-reduced";
 
 type Timing =
   /** Plays once on load, over `duration` seconds (an opening headline). */
@@ -23,7 +23,7 @@ type Timing =
 
 /**
  * Words under redaction bars that lift as you go, like a bank document being
- * declassified. Screen readers get the line once; the bars are decoration.
+ * declassified.
  */
 export function Peel({
   text,
@@ -45,29 +45,23 @@ export function Peel({
     ...(timing.on === "chapter" ? { "--q": seg(timing.from, timing.to) } : {}),
   } as CSSProperties;
 
-  const body = (
-    <>
-      <span className="sr-only">{text}</span>
-      <span aria-hidden="true">
-        {words.map((word, index) => (
-          <span key={`${index}-${word}`}>
-            <span
-              className="peel-w"
-              style={
-                {
-                  "--at":
-                    words.length > 1 ? (index / (words.length - 1)) * span : 0,
-                } as CSSProperties
-              }
-            >
-              {word}
-            </span>
-            {index < words.length - 1 ? " " : null}
-          </span>
-        ))}
+  // The words are the text itself; the bars are `::after` decoration, so
+  // screen readers, search and copy-paste all get the line once.
+  const body = words.map((word, index) => (
+    <span key={`${index}-${word}`}>
+      <span
+        className="peel-w"
+        style={
+          {
+            "--at": words.length > 1 ? (index / (words.length - 1)) * span : 0,
+          } as CSSProperties
+        }
+      >
+        {word}
       </span>
-    </>
-  );
+      {index < words.length - 1 ? " " : null}
+    </span>
+  ));
 
   if (timing.on === "chapter")
     return (
@@ -93,7 +87,7 @@ function DrivenPeel({
   vars: CSSProperties;
   children: React.ReactNode;
 }) {
-  const reduce = useReducedMotion();
+  const reduce = useReduced();
   const ref = useRef<HTMLSpanElement>(null);
   const { scrollYProgress } = useScroll({
     target: ref,
@@ -104,19 +98,22 @@ function DrivenPeel({
   });
   const mounted = useMotionValue(reduce ? 1 : 0);
 
+  const on = timing.on;
+  const delay = timing.on === "mount" ? timing.delay : undefined;
+  const duration = timing.on === "mount" ? timing.duration : undefined;
   useEffect(() => {
-    if (timing.on !== "mount") return;
+    if (on !== "mount") return;
     if (reduce) {
       mounted.set(1);
       return;
     }
     const controls = animate(mounted, 1, {
-      duration: timing.duration ?? 1.1,
-      delay: timing.delay ?? 0,
+      duration: duration ?? 1.1,
+      delay: delay ?? 0,
       ease: [0.35, 0, 0.2, 1],
     });
     return () => controls.stop();
-  }, [timing, reduce, mounted]);
+  }, [on, delay, duration, reduce, mounted]);
 
   const q: MotionValue<number> =
     reduce || timing.on === "mount" ? mounted : scrollYProgress;

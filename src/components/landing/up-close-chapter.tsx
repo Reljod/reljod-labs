@@ -38,10 +38,13 @@ const CAPTIONS = [
   [0.72, 2],
 ] as const;
 
-/** A caption is fully shown inside its window and crossfades at the edges. */
+/**
+ * A caption fades in just after its window opens and out just before it
+ * closes, so two captions are never on screen together.
+ */
 function captionOpacity(from: number, to: number): string {
-  const fade = 0.03;
-  return `calc(${seg(from - fade, from + fade)} * (1 - ${seg(to - fade, to + fade)}))`;
+  const fade = 0.025;
+  return `calc(${seg(from, from + fade)} * (1 - ${seg(to - fade, to)}))`;
 }
 
 /** Up close: the AI reads an ID card and a bill, and strings up what doesn't match. */
@@ -50,7 +53,8 @@ export function UpCloseChapter() {
     <Chapter
       id="how"
       label="Up close: how the AI checks two documents"
-      length={3}
+      length={3.6}
+      overlap
       className="bg-paper"
       stageClassName="bg-paper"
     >
@@ -113,12 +117,17 @@ export function UpCloseChapter() {
 
 function Desk() {
   const stamp = easeOut(seg(...STAMP));
+  const impact = bump(seg(STAMP[1] - 0.004, STAMP[1] + 0.03));
   const { idCard, bill, findings } = upClose;
   return (
     <div
       role="img"
       aria-label={`An ID card and a utility bill. The AI found: ${findings.name}, ${findings.address}, ${findings.expiry}. Verdict: ${upClose.verdict}.`}
-      className="absolute top-1/2 left-1/2 size-[min(100cqw,100cqh)] -translate-1/2 [container-type:size]"
+      className="absolute top-1/2 left-1/2 size-[min(100cqw,100cqh)] [container-type:size]"
+      style={{
+        // The desk jumps as the stamp hits it.
+        transform: `translate(-50%, calc(-50% + 1.2cqw * ${impact}))`,
+      }}
     >
       <Document
         box={ID_BOX}
@@ -264,14 +273,20 @@ function Desk() {
         {findings.expiry}
       </Chip>
 
+      {/* The verdict lands in the empty corner, clear of the evidence. */}
       <span
-        className="absolute top-[78%] left-[27%] border-[0.9cqw] border-seal-red bg-paper/80 px-[2.4cqw] py-[1cqw] font-mono text-[5.6cqw] leading-none font-bold tracking-[0.06em] whitespace-nowrap text-seal-red uppercase mix-blend-multiply outline-[0.4cqw] outline-offset-[0.6cqw] outline-seal-red outline-solid"
+        className="absolute top-[76%] left-[18%] flex flex-col items-center border-[0.9cqw] border-seal-red bg-paper/70 px-[2.2cqw] py-[1.2cqw] font-mono leading-none font-bold whitespace-nowrap text-seal-red uppercase mix-blend-multiply outline-[0.4cqw] outline-offset-[0.6cqw] outline-seal-red outline-solid"
         style={{
           opacity: seg(STAMP[0], within(...STAMP, 0.3)),
-          transform: `translate(-50%, -50%) rotate(-9deg) scale(${mix(2.6, 1, stamp)})`,
+          transform: `translate(-50%, -50%) rotate(-8deg) scale(${mix(2.6, 1, stamp)})`,
         }}
       >
-        {upClose.verdict}
+        <span className="text-[8cqw] tracking-[0.12em]">
+          {upClose.verdict.split(" · ")[0]}
+        </span>
+        <span className="mt-[1cqw] text-[3cqw] tracking-[0.1em]">
+          {upClose.verdict.split(" · ")[1]}
+        </span>
       </span>
     </div>
   );
@@ -316,7 +331,8 @@ function Document({
       <span
         className="pointer-events-none absolute inset-x-0 h-[10%] border-federal-blue border-b-[0.5cqw] bg-linear-to-b from-transparent to-clear-sky/55"
         style={{
-          top: `calc(-10% + 110% * ${sweep})`,
+          top: "-10%",
+          transform: `translateY(calc(1100% * ${sweep}))`,
           opacity: bump(sweep),
         }}
       />
@@ -362,11 +378,11 @@ function Field({
       }
     >
       {label ? (
-        <span className="relative font-mono text-[1.7cqw] leading-none tracking-[0.1em] text-ink-muted uppercase">
+        <span className="relative font-mono text-[max(7.5px,1.7cqw)] leading-none tracking-[0.1em] text-ink-muted uppercase">
           {label}
         </span>
       ) : null}
-      <span className="relative truncate font-mono text-[2.9cqw] leading-tight font-bold">
+      <span className="relative truncate font-mono text-[max(9.5px,2.9cqw)] leading-tight font-bold">
         {value}
       </span>
     </span>

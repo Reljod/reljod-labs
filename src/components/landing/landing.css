@@ -4,6 +4,24 @@
   will-change: transform;
 }
 
+/*
+ * On a phone the words make room once you start scrolling: they slide away
+ * and the reader grows into the space (`--lift` 0..1).
+ */
+@media (max-width: 1023px) {
+  .opening-text {
+    opacity: calc(1 - var(--lift, 0));
+    transform: translateY(calc(-2.5rem * var(--lift, 0)));
+  }
+
+  .reader {
+    position: absolute;
+    inset-inline: 1rem;
+    bottom: 3.5rem;
+    top: calc(54% - 44% * var(--lift, 0));
+  }
+}
+
 .sheet-line {
   position: relative;
   display: block;
@@ -42,7 +60,15 @@
     rgb(111 160 220 / 0.15)
   );
   opacity: calc(0.35 + 0.65 * var(--glow, 0));
-  box-shadow: 0 0 calc(6cqmin * var(--glow, 0)) rgb(111 160 220 / 0.9);
+}
+
+/* The glow is painted once and only faded, so reading never repaints it. */
+.reader-beam::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  box-shadow: 0 0 6cqmin rgb(111 160 220 / 0.9);
+  opacity: var(--glow, 0);
 }
 
 .scroll-cue {
@@ -123,18 +149,19 @@
   opacity: var(--red, 0);
 }
 
-/* A stop on the road lights up once the rail reaches it. */
-.road-dot::after {
-  content: "";
-  position: absolute;
-  inset: -2px;
-  border-radius: 9999px;
-  background: var(--color-brass);
-  transform: scale(var(--lit, 0));
+/*
+ * A job on the road pops up off the rail when the marker reaches it
+ * (`--reached`) and settles back once the next one does (`--passed`).
+ */
+.road-card {
+  transform-origin: 50% 100%;
+  opacity: calc(var(--reached, 1) * (1 - 0.55 * var(--passed, 0)));
+  transform: translateY(calc(1.25rem * (1 - var(--reached, 1))))
+    scale(calc(0.86 + 0.14 * var(--reached, 1)));
 }
 
-.road-text {
-  opacity: calc(0.35 + 0.65 * var(--lit, 0));
+.road-year {
+  opacity: calc(0.35 + 0.65 * var(--reached, 1));
 }
 
 /*
@@ -147,12 +174,14 @@
 }
 
 .drum-card,
-.problem {
+.drum-shade,
+.problem,
+.career-date {
   --o: calc(var(--d, 0) - var(--i));
   --a: max(var(--o), calc(-1 * var(--o)));
-  /* Cards still to come (behind), and cards already flipped (fallen forward). */
+  /* Cards still to come (behind), and the card being flipped (0..1, then gone). */
   --ahead: max(calc(-1 * var(--o)), 0);
-  --gone: max(var(--o), 0);
+  --gone: clamp(0, var(--o), 1);
 }
 
 /*
@@ -162,9 +191,12 @@
 .drum-card {
   transform-origin: 50% 100%;
   transform: translate(-50%, -50%) translateY(calc(var(--ahead) * -1.5rem))
-    translateZ(calc(var(--ahead) * -4rem))
+    translateZ(calc(var(--ahead) * -4rem)) translateY(calc(var(--gone) * 2rem))
     rotateX(calc(var(--ahead) * 4deg - var(--gone) * 105deg));
-  opacity: clamp(0, 3.4 - var(--ahead), 1);
+  opacity: calc(
+    clamp(0, 3.4 - var(--ahead), 1) *
+    clamp(0, (0.85 - var(--o)) * 6, 1)
+  );
   backface-visibility: hidden;
   will-change: transform;
 }
@@ -185,4 +217,11 @@
 .stamp {
   border-color: var(--ink);
   color: var(--ink);
+}
+
+/* A job's dates stamp onto its card as the card settles at the front. */
+.career-date {
+  transform-origin: left center;
+  transform: rotate(-3deg) scale(calc(1 + 1.2 * min(1, var(--a, 0) * 4)));
+  opacity: clamp(0, 1 - var(--a, 0) * 4, 1);
 }

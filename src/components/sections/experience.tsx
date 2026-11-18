@@ -1,4 +1,3 @@
-import { Peel } from "@/components/motion/peel";
 import { ScrollIn } from "@/components/motion/scroll-in";
 import { ScrollRule } from "@/components/motion/scroll-rule";
 import { Badge, type BadgeTone } from "@/components/ui/badge";
@@ -6,6 +5,7 @@ import { Section } from "@/components/ui/section";
 import { credentials, experience } from "@/content/experience";
 import type { ExperienceSector } from "@/content/types";
 import { source, sourcePath } from "@/features/ledger/domain/source-paths";
+import { CareerDrum } from "./career-drum";
 
 const sectorTone: Record<ExperienceSector, BadgeTone> = {
   Banking: "ink",
@@ -23,6 +23,7 @@ export function Experience() {
       title="Seven years, from finance data to digital banking"
       intro="Three years inside a leading Philippine digital bank, two at a global financial data company, and the last two shipping production AI."
     >
+      <CareerDrum />
       <ol className="outline-box relative divide-y-2 divide-ink bg-paper">
         <ScrollRule axis="y" className="inset-y-0 -left-0.5 w-1.5" />
         {experience.map((job, index) => (
@@ -34,7 +35,7 @@ export function Experience() {
           >
             <div className="stick-on-move">
               <p className="font-mono text-sm font-bold uppercase">
-                <Peel text={job.period} timing={{ on: "scroll" }} />
+                {job.period}
               </p>
               <p className="mt-1 text-sm text-ink-muted">{job.location}</p>
               <div className="mt-3">

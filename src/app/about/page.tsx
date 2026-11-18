@@ -22,7 +22,7 @@ export default function AboutPage() {
     <>
       <SiteHeader />
       <CopyMotionProvider animated>
-        <main data-moving="">
+        <main data-moving="" className="overflow-x-clip">
           <AboutSections
             heroAside={
               <PrintIn>

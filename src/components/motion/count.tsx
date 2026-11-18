@@ -1,18 +1,21 @@
 "use client";
 
 import {
+  animate,
   type MotionValue,
+  useInView,
+  useMotionValue,
   useMotionValueEvent,
-  useReducedMotion,
-  useScroll,
 } from "motion/react";
 import { useEffect, useRef } from "react";
 import { useCopyMotion } from "./copy-motion";
-import { splitFigure } from "./scroll-math";
+import { useReduced } from "./use-reduced";
 
 /**
- * A figure ("7 yrs", "95–97%") whose first number counts up with scroll. The
- * HTML holds the real figure; counting only starts once the script runs.
+ * A figure ("7 yrs", "95–97%") that counts up. Inside a Chapter it follows
+ * the chapter's progress between `from` and `to`; on its own it counts once,
+ * the first time it comes into view, so it never rests on a half-counted
+ * (wrong) number. The HTML always holds the real figure.
  */
 export function Count({
   figure,
@@ -22,25 +25,22 @@ export function Count({
   className,
 }: {
   figure: string;
-  /** A chapter's progress; without one the figure counts on its own way up the screen. */
+  /** A chapter's progress; without one the figure counts once when seen. */
   progress?: MotionValue<number>;
   from?: number;
   to?: number;
   className?: string;
 }) {
   const animated = useCopyMotion();
-  const reduce = useReducedMotion();
+  const reduce = useReduced();
   const still = !animated || reduce;
   const ref = useRef<HTMLSpanElement>(null);
-  const { scrollYProgress } = useScroll({
-    target: ref,
-    offset: ["start 0.95", "start 0.6"],
-  });
-  const source = progress ?? scrollYProgress;
-  const parts = splitFigure(figure);
+  const seen = useInView(ref, { once: true, amount: 0.6 });
+  const own = useMotionValue(0);
+  const source = progress ?? own;
 
   function paint(value: number) {
-    if (!ref.current || !parts) return;
+    if (!ref.current) return;
     if (still) {
       ref.current.textContent = figure;
       return;
@@ -54,8 +54,14 @@ export function Count({
   }
 
   useMotionValueEvent(source, "change", paint);
-  // biome-ignore lint/correctness/useExhaustiveDependencies: paint once on mount with the current scroll.
-  useEffect(() => paint(source.get()), []);
+  // biome-ignore lint/correctness/useExhaustiveDependencies: paint on mount, and when the setting arrives.
+  useEffect(() => paint(source.get()), [still]);
+
+  useEffect(() => {
+    if (progress || !seen || still) return;
+    const controls = animate(own, 1, { duration: 0.9, ease: "linear" });
+    return () => controls.stop();
+  }, [progress, seen, own, still]);
 
   return (
     <span ref={ref} className={`tabular-nums ${className ?? ""}`}>

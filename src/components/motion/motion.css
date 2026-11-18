@@ -1,7 +1,48 @@
 /*
+ * A drum's variables don't inherit, so moving the drum re-styles only the
+ * pieces that ask for them (see `at()` in drum.ts).
+ */
+@property --d {
+  syntax: "<number>";
+  inherits: false;
+  initial-value: 0;
+}
+
+@property --o {
+  syntax: "<number>";
+  inherits: false;
+  initial-value: 0;
+}
+
+@property --a {
+  syntax: "<number>";
+  inherits: false;
+  initial-value: 0;
+}
+
+@property --ahead {
+  syntax: "<number>";
+  inherits: false;
+  initial-value: 0;
+}
+
+@property --gone {
+  syntax: "<number>";
+  inherits: false;
+  initial-value: 0;
+}
+
+/*
  * Shared scroll motion. A chapter writes `--p` (0..1); a Peel writes `--q`.
  * Everything here is transforms and opacity, so scrolling never relays out.
  */
+/* A section that slides up over the finished chapter before it. */
+@media (prefers-reduced-motion: no-preference) {
+  .slide-over {
+    margin-top: calc(-100svh + 4.125rem);
+  }
+}
+
 .chapter-stage {
   top: 4.125rem; /* under the sticky site header */
   height: calc(100svh - 4.125rem);
@@ -40,5 +81,62 @@
     position: sticky;
     top: 6rem;
     align-self: start;
+  }
+}
+
+/* Unfilled "[Client sector]"-style fields stay out of the moving About page. */
+[data-moving] [data-placeholder] {
+  display: none;
+}
+
+/*
+ * Reduced motion, decided in CSS so the server's HTML is right from the start:
+ * chapters aren't pinned or stacked, and scrubbed pieces sit at their end.
+ */
+@media (prefers-reduced-motion: reduce) {
+  .chapter {
+    /* biome-ignore lint/complexity/noImportantStyles: must beat the inline scroll styles. */
+    height: auto !important;
+  }
+
+  .chapter-stage {
+    /* biome-ignore lint/complexity/noImportantStyles: must beat the inline scroll styles. */
+    position: relative !important;
+    /* biome-ignore lint/complexity/noImportantStyles: must beat the inline scroll styles. */
+    --p: 1 !important;
+  }
+
+  .chapter-dim {
+    display: none;
+  }
+
+  .peel,
+  .scroll-in {
+    /* biome-ignore lint/complexity/noImportantStyles: must beat the inline scroll styles. */
+    --q: 1 !important;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .scroll-rule {
+    /* biome-ignore lint/complexity/noImportantStyles: must beat the inline scroll styles. */
+    transform: none !important;
+  }
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .print-in {
+    animation: print-in 1.1s cubic-bezier(0.3, 0, 0.15, 1) 0.35s both;
+  }
+}
+
+@keyframes print-in {
+  from {
+    clip-path: inset(-16px -16px 100% -16px);
+    transform: translateY(-36px) rotate(-2deg);
+  }
+  to {
+    clip-path: inset(-16px -16px -16px -16px);
+    transform: none;
   }
 }

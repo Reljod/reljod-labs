@@ -23,7 +23,7 @@ export default function Home() {
     <>
       <SiteHeader />
       <CopyMotionProvider animated>
-        <main>
+        <main className="overflow-x-clip">
           <OpeningChapter />
           <UpCloseChapter />
           <WhoChapter />
