@@ -15,6 +15,7 @@ import { audit } from "./audit";
 import { isUuid } from "./db";
 import { ForbiddenError, NotFoundError } from "./errors";
 import { type Visitor, visitor } from "./rate";
+import { NO_STORE } from "./respond";
 import { listStaff } from "./staff";
 import { ensureWorkspace, forgetWorkspace } from "./workspace";
 
@@ -39,26 +40,32 @@ const COOKIE = {
   path: "/",
 };
 
-/** The Workspace's Staff, seeding the Workspace first if it is new (or gone). */
+/**
+ * The Workspace's Staff, seeding the Workspace first if it is new (or gone).
+ * The seed check and the Staff read start together: on a Workspace already
+ * seeded (every visit after the first) that is one database round, not two.
+ */
 async function workspaceStaff(owner: Owner): Promise<Staff[]> {
-  await ensureWorkspace(owner);
-  const staff = await listStaff(owner);
+  const [, staff] = await Promise.all([
+    ensureWorkspace(owner),
+    listStaff(owner),
+  ]);
   if (staff.length > 0) return staff;
-  // Remembered as seeded, but the Workspace was purged since: seed it again.
+  // A new Workspace (the read raced its seed), or one remembered as seeded
+  // but purged since: seed it again if need be, then read once more.
   forgetWorkspace(owner);
   await ensureWorkspace(owner);
   return listStaff(owner);
 }
 
 /**
- * The gate every Harness entry point passes (ADR 0014): the Access gate
- * (`requireOwner`), the Owner's Workspace (created with its seed on first
- * use), and the Staff member. The `harness_staff` cookie only remembers
- * which of the Owner's own Staff is active: it is checked against the Owner
- * here on every request, and anything else falls back to the first `user`.
- * Throws AccessDeniedError without Access.
+ * `requireStaff`, plus everyone in the Workspace, which the gate reads
+ * anyway. For the page and the Staff route, so neither reads the Staff twice.
  */
-export async function requireStaff(): Promise<StaffContext> {
+export async function resolveStaff(): Promise<{
+  context: StaffContext;
+  everyone: Staff[];
+}> {
   const { access, owner } = await requireOwner();
   const [staff, who, jar] = await Promise.all([
     workspaceStaff(owner),
@@ -70,7 +77,22 @@ export async function requireStaff(): Promise<StaffContext> {
     (isUuid(chosen) ? staff.find((member) => member.id === chosen) : null) ??
     defaultStaff(staff);
   if (!current) throw new Error("The Workspace has no Staff");
-  return { access, owner, staff: current, visitor: who };
+  return {
+    context: { access, owner, staff: current, visitor: who },
+    everyone: staff,
+  };
+}
+
+/**
+ * The gate every Harness entry point passes (ADR 0014): the Access gate
+ * (`requireOwner`), the Owner's Workspace (created with its seed on first
+ * use), and the Staff member. The `harness_staff` cookie only remembers
+ * which of the Owner's own Staff is active: it is checked against the Owner
+ * here on every request, and anything else falls back to the first `user`.
+ * Throws AccessDeniedError without Access.
+ */
+export async function requireStaff(): Promise<StaffContext> {
+  return (await resolveStaff()).context;
 }
 
 /**
@@ -97,8 +119,10 @@ export function assertCan(staff: Pick<Staff, "role">, action: Action): void {
  * action: a page render cannot set the cookie.
  */
 export async function switchStaff(staffId: string): Promise<Staff> {
-  const { owner, staff: from } = await requireStaff();
-  const all = await listStaff(owner);
+  const {
+    context: { owner, staff: from },
+    everyone: all,
+  } = await resolveStaff();
   const to = isUuid(staffId)
     ? all.find((member) => member.id === staffId)
     : undefined;
@@ -125,7 +149,7 @@ export async function switchStaff(staffId: string): Promise<Staff> {
 export function forbidden(message = "Your Role may not do that.") {
   return Response.json(
     { error: message },
-    { status: 403, headers: { "cache-control": "no-store" } },
+    { status: 403, headers: { "cache-control": NO_STORE } },
   );
 }
 

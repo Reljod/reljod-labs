@@ -12,11 +12,15 @@ import {
   StateError,
 } from "./errors";
 
+/**
+ * Every Harness answer: all of it is one Owner's, and can change. Harness has
+ * no shared seed responses (each Workspace gets its own copy of the seed), so
+ * it has no `SEED` cache policy like the other demos'.
+ */
+export const NO_STORE = "private, no-store";
+
 const answer = (status: number, error: string) =>
-  Response.json(
-    { error },
-    { status, headers: { "cache-control": "no-store" } },
-  );
+  Response.json({ error }, { status, headers: { "cache-control": NO_STORE } });
 
 /**
  * Turns what a Harness route handler threw into the JSON answer the contract
@@ -35,7 +39,7 @@ export function failure(error: unknown): Response {
   if (error instanceof RuleRefusedError) {
     return Response.json(
       { error: error.message, errors: error.errors },
-      { status: 400, headers: { "cache-control": "no-store" } },
+      { status: 400, headers: { "cache-control": NO_STORE } },
     );
   }
   if (error instanceof InvalidError) return answer(400, error.message);
@@ -55,7 +59,7 @@ export const notFound = (message = "Not found") => answer(404, message);
 export function json<T>(body: T, init?: { status?: number }): Response {
   return Response.json(body, {
     status: init?.status ?? 200,
-    headers: { "cache-control": "no-store" },
+    headers: { "cache-control": NO_STORE },
   });
 }
 
@@ -67,6 +71,6 @@ export async function bodyOf(request: Request): Promise<unknown> {
 /** The response headers of an NDJSON stream (chat, Run events). */
 export const NDJSON_HEADERS = {
   "content-type": "application/x-ndjson; charset=utf-8",
-  "cache-control": "no-store, no-transform",
+  "cache-control": `${NO_STORE}, no-transform`,
   "x-accel-buffering": "no",
 } as const;
