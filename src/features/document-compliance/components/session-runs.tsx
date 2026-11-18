@@ -5,11 +5,9 @@ import Link from "next/link";
 import type { Outcome } from "../domain/types";
 import { formatTokens, formatUsd } from "../metrics";
 import { findPack } from "../packs";
-import { getSessionRuns } from "../server/actions";
-import { isFinished } from "../view";
+import { isFinished, type SessionRunView } from "../view";
 import { OUTCOME_STYLES } from "./labels";
-
-export const SESSION_RUNS_KEY = ["prescreen-session-runs"];
+import { sessionRunsQuery } from "./queries";
 
 const OUTCOMES: Outcome[] = ["fail", "needs_review", "pass"];
 
@@ -25,10 +23,17 @@ const time = (iso: string) =>
  * The Pre-screen runs this Owner started, newest first, so they can go back to
  * any of them from any device. Hidden until the Session has its first run.
  */
-export function SessionRuns({ currentRunId }: { currentRunId?: string }) {
+export function SessionRuns({
+  currentRunId,
+  initialRuns,
+}: {
+  currentRunId?: string;
+  /** Read by the page on the server, so the list is there on first paint. */
+  initialRuns?: SessionRunView[];
+}) {
   const runs = useQuery({
-    queryKey: SESSION_RUNS_KEY,
-    queryFn: () => getSessionRuns(),
+    ...sessionRunsQuery(),
+    initialData: initialRuns,
     // A run still going shows its status; check back until it settles.
     refetchInterval: (query) =>
       query.state.data?.some((run) => !isFinished(run.status)) ? 5000 : false,

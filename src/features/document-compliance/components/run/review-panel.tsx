@@ -11,6 +11,7 @@ import {
 import { OUTCOME_LABELS } from "../../domain/types";
 import { reviewFinding } from "../../server/actions";
 import type { FindingView } from "../../view";
+import { AUDIT_KEY, runKey } from "../queries";
 
 /**
  * A Reviewer's decision on one flagged Finding: what stands now, and (on the
@@ -49,12 +50,10 @@ export function ReviewPanel({
         setError(result.message);
         return;
       }
-      await queryClient.invalidateQueries({
-        queryKey: ["prescreen-run", runId],
-      });
-      await queryClient.invalidateQueries({
-        queryKey: ["document-compliance-audit"],
-      });
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: runKey(runId) }),
+        queryClient.invalidateQueries({ queryKey: [AUDIT_KEY] }),
+      ]);
       setOpen(false);
       setNote("");
       setOutcome(null);

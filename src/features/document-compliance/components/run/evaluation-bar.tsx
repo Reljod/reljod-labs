@@ -7,6 +7,7 @@ import { diffFindings, type FindingChange } from "../../domain/review";
 import { OUTCOME_LABELS } from "../../domain/types";
 import { reevaluateRun } from "../../server/actions";
 import type { EvaluationView, RunView } from "../../view";
+import { AUDIT_KEY, runKey } from "../queries";
 
 const outcomeText = (outcome: FindingChange["from"]) =>
   outcome ? OUTCOME_LABELS[outcome] : "off";
@@ -54,12 +55,10 @@ export function EvaluationBar({
     mutationFn: () => reevaluateRun(view.id),
     onSuccess: async (result) => {
       if (result.ok) {
-        await queryClient.invalidateQueries({
-          queryKey: ["prescreen-run", view.id],
-        });
-        await queryClient.invalidateQueries({
-          queryKey: ["document-compliance-audit"],
-        });
+        await Promise.all([
+          queryClient.invalidateQueries({ queryKey: runKey(view.id) }),
+          queryClient.invalidateQueries({ queryKey: [AUDIT_KEY] }),
+        ]);
         onSelect(null);
         setNotice({ ok: true, number: result.number });
       } else {

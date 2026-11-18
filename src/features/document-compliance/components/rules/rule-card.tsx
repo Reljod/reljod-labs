@@ -10,19 +10,10 @@ import {
   ruleSpec,
   sentenceParts,
 } from "../../domain/rules";
-import {
-  getRuleVersions,
-  restoreRule,
-  saveRule,
-} from "../../server/rule-actions";
+import { restoreRule, saveRule } from "../../server/rule-actions";
 import type { RuleView } from "../../view";
+import { RULES_KEY, ruleVersionsKey, ruleVersionsQuery } from "../queries";
 import { ParamInput } from "./param-input";
-
-export const RULES_KEY = ["document-compliance-rules"];
-const versionsKey = (ruleId: string) => [
-  "document-compliance-rule-versions",
-  ruleId,
-];
 
 const when = (iso: string) =>
   new Date(iso).toLocaleString("en-GB", {
@@ -63,7 +54,7 @@ export function RuleCard({ rule }: { rule: RuleView }) {
   const refresh = async () => {
     await Promise.all([
       queryClient.invalidateQueries({ queryKey: RULES_KEY }),
-      queryClient.invalidateQueries({ queryKey: versionsKey(rule.id) }),
+      queryClient.invalidateQueries({ queryKey: ruleVersionsKey(rule.id) }),
     ]);
   };
 
@@ -106,6 +97,10 @@ export function RuleCard({ rule }: { rule: RuleView }) {
     setSyncedVersion(rule.state.version);
     setDraft({ enabled: rule.state.enabled, params: rule.state.params });
   }
+
+  const prefetchVersions = () => {
+    void queryClient.prefetchQuery(ruleVersionsQuery(rule.id));
+  };
 
   const errorFor = (name: string | null) =>
     errors.find((error) => error.param === name);
@@ -217,6 +212,9 @@ export function RuleCard({ rule }: { rule: RuleView }) {
           data-testid="rule-versions-toggle"
           aria-expanded={showVersions}
           onClick={() => setShowVersions((open) => !open)}
+          // Start reading the Versions on intent, so they are there on click.
+          onPointerEnter={prefetchVersions}
+          onFocus={prefetchVersions}
           className="outline-box press min-h-9 rounded-sm bg-paper px-3 font-mono text-xs font-bold uppercase"
         >
           Versions ({rule.versionCount + 1})
@@ -262,10 +260,7 @@ function RuleVersions({
   onRestored: (version: number) => Promise<void>;
 }) {
   const spec = ruleSpec(ruleId);
-  const versions = useQuery({
-    queryKey: versionsKey(ruleId),
-    queryFn: () => getRuleVersions(ruleId),
-  });
+  const versions = useQuery(ruleVersionsQuery(ruleId));
   const [error, setError] = useState<string | null>(null);
   const busy = useRef(false);
   const restore = useMutation({

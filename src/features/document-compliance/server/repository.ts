@@ -28,7 +28,7 @@ import type {
 } from "../view";
 import type { Database } from "./database.types";
 import type { RawExtraction } from "./extract";
-import { signedUrls, supabase } from "./supabase";
+import { packPageUrls, supabase } from "./supabase";
 
 type Tables = Database["document_compliance"]["Tables"];
 type RunStatus = Tables["prescreen_runs"]["Row"]["status"];
@@ -357,24 +357,52 @@ export async function loadRun(
   if (!run || run.owner !== owner) return null;
   const pack = findPack(run.pack_slug);
 
-  const documents = await selectIn("documents", "run_id", [runId]);
-  const documentIds = documents.map((document) => document.id);
-  const [spans, fields, findings] = await Promise.all([
-    selectIn("spans", "document_id", documentIds),
-    selectIn("extracted_fields", "document_id", documentIds),
-    selectIn("findings", "run_id", [runId]),
-  ]);
-  const [fieldSpans, evidence] = await Promise.all([
-    selectIn(
-      "extracted_field_spans",
-      "extracted_field_id",
-      fields.map((field) => field.id),
-    ),
-    selectIn(
+  // Once the run is known to be the Owner's, every read that does not need
+  // another's ids starts at once; each chain waits only on its own parent.
+  const documentsRead = (async () => {
+    const documents = await selectIn("documents", "run_id", [runId]);
+    const documentIds = documents.map((document) => document.id);
+    const [spans, fields] = await Promise.all([
+      selectIn("spans", "document_id", documentIds),
+      (async () => {
+        const fields = await selectIn(
+          "extracted_fields",
+          "document_id",
+          documentIds,
+        );
+        const fieldSpans = await selectIn(
+          "extracted_field_spans",
+          "extracted_field_id",
+          fields.map((field) => field.id),
+        );
+        return { fields, fieldSpans };
+      })(),
+    ]);
+    return { documents, spans, ...fields };
+  })();
+  const findingsRead = (async () => {
+    const findings = await selectIn("findings", "run_id", [runId]);
+    const evidence = await selectIn(
       "finding_evidence",
       "finding_id",
       findings.map((finding) => finding.id),
+    );
+    return { findings, evidence };
+  })();
+  const [
+    { documents, spans, fields, fieldSpans },
+    { findings, evidence },
+    urls,
+    [savedEvaluations, reviews],
+  ] = await Promise.all([
+    documentsRead,
+    findingsRead,
+    packPageUrls(
+      pack?.documents.flatMap((document) =>
+        document.pages.map((page) => storagePath(pack.slug, page)),
+      ) ?? [],
     ),
+    Promise.all([loadEvaluations(runId), loadReviews(runId)]),
   ]);
 
   const refBySpanId = new Map(spans.map((span) => [span.id, span.ref]));
@@ -383,12 +411,6 @@ export async function loadRun(
   );
   const fieldNameById = new Map(
     fields.map((field) => [field.id, field.name as FieldName]),
-  );
-
-  const urls = await signedUrls(
-    pack?.documents.flatMap((document) =>
-      document.pages.map((page) => storagePath(pack.slug, page)),
-    ) ?? [],
   );
 
   const rulesApplied = parseAppliedRules(run.rules_applied ?? null);
@@ -493,10 +515,6 @@ export async function loadRun(
     };
   });
 
-  const [savedEvaluations, reviews] = await Promise.all([
-    loadEvaluations(runId),
-    loadReviews(runId),
-  ]);
   const evaluations: EvaluationView[] = [
     {
       number: 1,

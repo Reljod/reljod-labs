@@ -1,5 +1,6 @@
 "use client";
 
+import { useQueryClient } from "@tanstack/react-query";
 import { motion } from "motion/react";
 import { useState } from "react";
 import {
@@ -13,6 +14,7 @@ import { DOCUMENT_ORDER } from "../../scan-events";
 import type { DocumentView, EvaluationView, RunView } from "../../view";
 import { AuditTrail } from "../audit/audit-trail";
 import { DOCUMENT_LABELS } from "../labels";
+import { auditQuery } from "../queries";
 import { DocumentInspector } from "./document-inspector";
 import { EvaluationBar } from "./evaluation-bar";
 import { FindingsReport } from "./findings-report";
@@ -60,6 +62,11 @@ export function RunResults({
   reduceMotion: boolean;
 }) {
   const [tab, setTab] = useState<Tab>("findings");
+  const queryClient = useQueryClient();
+  // The Audit tab is the only one that reads more; start on intent.
+  const prefetchAudit = () => {
+    void queryClient.prefetchInfiniteQuery(auditQuery(view.id, ""));
+  };
   // Null follows the latest Evaluation, so a re-evaluation comes into view.
   const [evaluationNumber, setEvaluationNumber] = useState<number | null>(null);
   const evaluation: EvaluationView = view.evaluations.find(
@@ -92,6 +99,8 @@ export function RunResults({
             aria-selected={tab === item.id}
             aria-controls={`results-panel-${item.id}`}
             onClick={() => setTab(item.id)}
+            onPointerEnter={item.id === "audit" ? prefetchAudit : undefined}
+            onFocus={item.id === "audit" ? prefetchAudit : undefined}
             className={`outline-box eyebrow rounded-sm px-3 py-2 ${
               tab === item.id ? "bg-ink text-paper" : "bg-paper"
             }`}

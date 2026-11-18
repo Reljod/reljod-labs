@@ -3,8 +3,9 @@
 import { useQuery } from "@tanstack/react-query";
 import Link from "next/link";
 import { ruleSpec } from "../../domain/rules";
-import { getRules } from "../../server/rule-actions";
-import { RULES_KEY, RuleCard } from "./rule-card";
+import type { RuleView } from "../../view";
+import { rulesQuery } from "../queries";
+import { RuleCard } from "./rule-card";
 
 const STAGES = [
   {
@@ -25,18 +26,15 @@ const STAGES = [
  * uses it. A new Pre-screen applies the Rules as they are when it starts;
  * a finished run can be re-evaluated against them without calling the model.
  */
-export function RulebookEditor() {
-  const rules = useQuery({ queryKey: RULES_KEY, queryFn: () => getRules() });
+export function RulebookEditor({
+  initialRules,
+}: {
+  /** Read by the page on the server, so the Rules are there on first paint. */
+  initialRules?: RuleView[];
+}) {
+  const rules = useQuery({ ...rulesQuery(), initialData: initialRules });
 
-  if (rules.isPending) {
-    return (
-      <div className="flex animate-pulse flex-col gap-3" aria-busy>
-        <div className="h-28 rounded-sm bg-limestone" />
-        <div className="h-28 rounded-sm bg-limestone" />
-        <div className="h-28 rounded-sm bg-limestone" />
-      </div>
-    );
-  }
+  if (rules.isPending) return <RulebookSkeleton />;
   if (rules.isError) {
     return (
       <p role="alert" className="outline-box rounded-sm bg-limestone px-4 py-3">
@@ -101,6 +99,35 @@ export function RulebookEditor() {
         real customer due diligence regime, not at any real statute; this is a
         demo, not legal advice.
       </p>
+    </div>
+  );
+}
+
+/** Rule cards in outline, while the Rules load. */
+export function RulebookSkeleton() {
+  return (
+    <div className="flex flex-col gap-8" aria-busy="true">
+      <span className="sr-only" aria-live="polite">
+        Loading the Rules…
+      </span>
+      <div className="h-24 animate-pulse rounded-sm bg-limestone" />
+      {[3, 2].map((cards, stage) => (
+        // biome-ignore lint/suspicious/noArrayIndexKey: placeholders have no identity
+        <div key={stage} className="flex flex-col gap-3">
+          <div className="h-6 w-40 animate-pulse rounded-sm bg-limestone" />
+          {Array.from({ length: cards }, (_, card) => (
+            <div
+              // biome-ignore lint/suspicious/noArrayIndexKey: placeholders have no identity
+              key={card}
+              className="outline-box flex animate-pulse flex-col gap-3 rounded-sm bg-paper p-4"
+            >
+              <div className="h-4 w-1/3 rounded-sm bg-limestone" />
+              <div className="h-4 w-5/6 rounded-sm bg-limestone" />
+              <div className="h-8 w-48 rounded-sm bg-limestone" />
+            </div>
+          ))}
+        </div>
+      ))}
     </div>
   );
 }

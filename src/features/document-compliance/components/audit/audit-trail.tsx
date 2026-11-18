@@ -1,6 +1,6 @@
 "use client";
 
-import { useInfiniteQuery } from "@tanstack/react-query";
+import { keepPreviousData, useInfiniteQuery } from "@tanstack/react-query";
 import Link from "next/link";
 import { useState } from "react";
 import {
@@ -8,15 +8,10 @@ import {
   AUDIT_ACTIONS,
   type AuditAction,
   type AuditEventView,
+  type AuditPage,
 } from "../../domain/audit";
 import { formatTokens, formatUsd } from "../../metrics";
-import { getAuditTrail } from "../../server/actions";
-
-export const auditKey = (runId: string | null, action: string) => [
-  "document-compliance-audit",
-  runId,
-  action,
-];
+import { auditQuery } from "../queries";
 
 const ACTOR_STYLES: Record<AuditEventView["actor"]["kind"], string> = {
   person: "bg-federal-blue text-paper",
@@ -50,16 +45,28 @@ function download(events: AuditEventView[], runId: string | null) {
  * Versions and which model at what cost. Events are only ever added (ADR 0019).
  * With `runId`, only that run's events.
  */
-export function AuditTrail({ runId = null }: { runId?: string | null }) {
+export function AuditTrail({
+  runId = null,
+  initialPage,
+}: {
+  runId?: string | null;
+  /** The first unfiltered page, read by the page on the server. */
+  initialPage?: AuditPage;
+}) {
   const [action, setAction] = useState<AuditAction | "">("");
   const trail = useInfiniteQuery({
-    queryKey: auditKey(runId, action),
-    queryFn: ({ pageParam }) =>
-      getAuditTrail({ runId, action: action || null, before: pageParam }),
-    initialPageParam: null as number | null,
-    getNextPageParam: (page) => page.before,
+    ...auditQuery(runId, action),
+    // Only the unfiltered trail was read on the server.
+    initialData:
+      initialPage && action === ""
+        ? { pages: [initialPage], pageParams: [null] }
+        : undefined,
+    // A new filter keeps the old list on screen (marked busy) until it lands.
+    placeholderData: keepPreviousData,
   });
   const events = trail.data?.pages.flatMap((page) => page.events) ?? [];
+  // A new filter is loading while the previous list stays on screen.
+  const refiltering = trail.isPlaceholderData;
 
   return (
     <section
@@ -86,10 +93,13 @@ export function AuditTrail({ runId = null }: { runId?: string | null }) {
             ))}
           </select>
         </label>
-        <span className="font-mono text-xs text-ink-muted">
-          {events.length} event{events.length === 1 ? "" : "s"}
-          {trail.hasNextPage ? " loaded" : ""}
-        </span>
+        <output aria-live="polite" className="font-mono text-xs text-ink-muted">
+          {trail.isPending || refiltering
+            ? "Loading events…"
+            : `${events.length} event${events.length === 1 ? "" : "s"}${
+                trail.hasNextPage ? " loaded" : ""
+              }`}
+        </output>
         <button
           type="button"
           data-testid="audit-export"
@@ -102,7 +112,7 @@ export function AuditTrail({ runId = null }: { runId?: string | null }) {
       </div>
 
       {trail.isPending ? (
-        <div className="h-40 animate-pulse rounded-sm bg-limestone" aria-busy />
+        <AuditSkeleton />
       ) : trail.isError ? (
         <p
           role="alert"
@@ -116,7 +126,12 @@ export function AuditTrail({ runId = null }: { runId?: string | null }) {
           up here.
         </p>
       ) : (
-        <ol className="outline-box divide-y divide-ink/15 rounded-sm bg-paper">
+        <ol
+          aria-busy={refiltering}
+          className={`outline-box divide-y divide-ink/15 rounded-sm bg-paper transition-opacity ${
+            refiltering ? "opacity-60" : ""
+          }`}
+        >
           {events.map((event) => (
             <EventRow key={event.id} event={event} showRun={!runId} />
           ))}
@@ -136,6 +151,49 @@ export function AuditTrail({ runId = null }: { runId?: string | null }) {
         </button>
       ) : null}
     </section>
+  );
+}
+
+/** Rows shaped like Audit events, while the first page loads. */
+export function AuditSkeleton({
+  rows = 5,
+  withToolbar = false,
+}: {
+  rows?: number;
+  /** The page's fallback stands in for the filter row too, so nothing shifts. */
+  withToolbar?: boolean;
+}) {
+  const list = (
+    <ol
+      aria-busy="true"
+      aria-label="Loading the Audit trail"
+      className="outline-box divide-y divide-ink/15 rounded-sm bg-paper"
+    >
+      {Array.from({ length: rows }, (_, index) => (
+        // biome-ignore lint/suspicious/noArrayIndexKey: placeholders have no identity
+        <li key={index} className="flex animate-pulse flex-col gap-2 px-4 py-3">
+          <div className="flex items-center gap-2">
+            <span className="h-3 w-28 rounded-sm bg-limestone" />
+            <span className="h-4 w-14 rounded-sm bg-limestone" />
+            <span className="h-3 w-32 rounded-sm bg-limestone" />
+          </div>
+          <span className="h-3.5 w-3/4 rounded-sm bg-limestone" />
+        </li>
+      ))}
+    </ol>
+  );
+  if (!withToolbar) return list;
+  return (
+    <div className="flex flex-col gap-4" aria-busy="true">
+      <span className="sr-only" aria-live="polite">
+        Loading the Audit trail…
+      </span>
+      <div className="flex items-center gap-2">
+        <span className="h-8 w-48 animate-pulse rounded-sm bg-limestone" />
+        <span className="ml-auto h-9 w-32 animate-pulse rounded-sm bg-limestone" />
+      </div>
+      {list}
+    </div>
   );
 }
 

@@ -7,11 +7,15 @@ import { useEffect, useState } from "react";
 import { formatTokens, formatUsd, runTotals } from "../../metrics";
 import { findPack } from "../../packs";
 import { DOCUMENT_ORDER } from "../../scan-events";
-import { getRun } from "../../server/actions";
-import { isFinished as isFinishedStatus, type RunView } from "../../view";
+import {
+  isFinished as isFinishedStatus,
+  type RunView,
+  type SessionRunView,
+} from "../../view";
 import { Caveats } from "../caveats";
 import { DOCUMENT_LABELS } from "../labels";
-import { SESSION_RUNS_KEY, SessionRuns } from "../session-runs";
+import { runKey, runQuery, SESSION_RUNS_KEY } from "../queries";
+import { SessionRuns } from "../session-runs";
 import { ProgressRail } from "./progress-rail";
 import { RunResults } from "./run-results";
 import { ScanStage } from "./scan-stage";
@@ -24,12 +28,20 @@ type Mode = "live" | "replay" | "results";
 const isFinished = (view: RunView) => isFinishedStatus(view.status);
 
 /** One Pre-screen run: the live (or replayed) scan, then its Findings. */
-export function RunScreen({ runId }: { runId: string }) {
+export function RunScreen({
+  runId,
+  initialRun,
+  initialRuns,
+}: {
+  runId: string;
+  /** Read by the page on the server; null for a run that is not the Owner's. */
+  initialRun?: RunView | null;
+  initialRuns?: SessionRunView[];
+}) {
   const replayParam = useSearchParams().get("replay");
   const reduceMotion = useReducedMotion() ?? false;
   const queryClient = useQueryClient();
-  const queryKey = ["prescreen-run", runId];
-  const run = useQuery({ queryKey, queryFn: () => getRun(runId) });
+  const run = useQuery({ ...runQuery(runId), initialData: initialRun });
   const view = run.data ?? null;
 
   const [mode, setMode] = useState<Mode | null>(null);
@@ -69,7 +81,7 @@ export function RunScreen({ runId }: { runId: string }) {
   // biome-ignore lint/correctness/useExhaustiveDependencies: refetch once per run end
   useEffect(() => {
     if (ended && mode === "live") {
-      void queryClient.invalidateQueries({ queryKey });
+      void queryClient.invalidateQueries({ queryKey: runKey(runId) });
       void queryClient.invalidateQueries({ queryKey: SESSION_RUNS_KEY });
     }
   }, [ended, mode]);
@@ -243,7 +255,7 @@ export function RunScreen({ runId }: { runId: string }) {
         reduceMotion={reduceMotion}
       />
 
-      <SessionRuns currentRunId={runId} />
+      <SessionRuns currentRunId={runId} initialRuns={initialRuns} />
 
       <Caveats />
     </div>
@@ -275,7 +287,10 @@ function ModeBadge({ mode, ended }: { mode: Mode; ended: boolean }) {
 
 export function RunSkeleton() {
   return (
-    <div className="flex animate-pulse flex-col gap-6" aria-busy>
+    <div className="flex animate-pulse flex-col gap-6" aria-busy="true">
+      <span className="sr-only" aria-live="polite">
+        Loading the run…
+      </span>
       <div className="h-10 w-64 rounded-sm bg-limestone" />
       <div className="grid grid-cols-3 gap-4">
         <div className="h-16 rounded-sm bg-limestone" />
