@@ -164,6 +164,32 @@ export function evaluate(input: EvaluateInput): {
     }
   }
 
+  // An own Task has no Expectations: say what changed, so a person can judge it.
+  if (!input.expected) {
+    if (changes.length === 0)
+      findings.push({
+        id: "task.outcome",
+        level: "info",
+        title: "Nothing in the Books changed",
+      });
+    for (const change of changes)
+      findings.push({
+        id: "task.outcome",
+        level: "info",
+        title: `Changed: ${describeChange(change)}`,
+        ...(change.fields?.length
+          ? {
+              detail: change.fields
+                .map(
+                  (field) =>
+                    `${field}: "${String(change.before?.[field] ?? "")}" to "${String(change.after?.[field] ?? "")}"`,
+                )
+                .join("; "),
+            }
+          : {}),
+      });
+  }
+
   // The Manifest ---------------------------------------------------------------------
   if (input.manifest && rulebook.manifest.enabled) {
     const { lines, voyage } = input.manifest;
