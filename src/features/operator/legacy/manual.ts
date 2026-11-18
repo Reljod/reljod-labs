@@ -311,7 +311,7 @@ VSL NM           20  Vessel name, e.g. MV CORVINA.
 IMO NO            7  Exactly 7 digits. Must not be on file (HM0206).
 CALL SGN          7  Radio call sign.
 FLAG              3  3 letters.
-VOY NO            5  Voyage number, e.g. 0412N. Must not be on file (HM0207).
+VOY NO            5  Voyage number, e.g. 0412N. Not yet on file (HM0207).
 ETA DT (DDMMYY)   6  Day, month, 2-digit year, no separators: 041226.
 ETA TM (HHMM)     4  24-hour clock, no separator: 0630.
 LOA M             3  Length overall in metres, digits.

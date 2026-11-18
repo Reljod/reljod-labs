@@ -226,7 +226,7 @@ async function main() {
   let chain: Promise<unknown> = Promise.resolve();
 
   /** The atomic steps of an Action, each sent as a real key or mouse event. */
-  function unitsOf(action: ScreenAction): (() => Promise<void>)[] {
+  function unitsOf(action: ScreenAction): (() => Promise<unknown>)[] {
     switch (action.type) {
       case "click":
         return [

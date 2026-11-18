@@ -63,7 +63,8 @@ export function domKeyToInput(
   if (key.length === 1) {
     return key >= " " && key <= "~" ? { kind: "char", char: key } : null;
   }
-  if (Object.hasOwn(LEGACY_KEY, key)) {
+  // "Shift+Tab" is an Action key, never a browser key.
+  if (key !== "Shift+Tab" && Object.hasOwn(LEGACY_KEY, key)) {
     return { kind: "key", key: LEGACY_KEY[key as ActionKey] };
   }
   return null;

@@ -33,9 +33,7 @@ describe("hrefOf", () => {
       "?replay=arrival-corvina",
     ]) {
       const place = placeOf(search);
-      expect(hrefOf(place, "/demos/operator")).toBe(
-        `/demos/operator${search}`,
-      );
+      expect(hrefOf(place, "/demos/operator")).toBe(`/demos/operator${search}`);
       expect(samePlace(placeOf(hrefOf(place, "")), place)).toBe(true);
     }
   });

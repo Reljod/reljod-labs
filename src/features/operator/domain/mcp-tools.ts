@@ -26,7 +26,7 @@ export const MCP_TOOLS: McpToolInfo[] = [
     name: "start_run",
     title: "Start a Run",
     summary:
-      "Start a Run of a sample Task or your own words. `driver: operator` lets the in-app Operator key it; `driver: client` hands you the keyboard.",
+      "Start a Run of a sample Task or your own words. driver "operator" lets the in-app Operator key it; driver "client" hands you the keyboard.",
     group: "runs",
   },
   {

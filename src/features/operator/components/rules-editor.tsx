@@ -336,7 +336,9 @@ function RuleCard({
     <li
       className={cx(
         "flex min-w-0 flex-col gap-3 rounded-sm border-2 bg-paper p-3",
-        changed ? "border-brass shadow-[3px_3px_0_var(--color-brass)]" : "border-ink",
+        changed
+          ? "border-brass shadow-[3px_3px_0_var(--color-brass)]"
+          : "border-ink",
         hasParameters ? "md:col-span-2" : "",
       )}
     >
@@ -352,7 +354,10 @@ function RuleCard({
           checked={enabled}
           label={`${rule.title}: ${enabled ? "on" : "off"}`}
           onChange={(checked) =>
-            edit({ ...draft, [rule.key]: { ...draft[rule.key], enabled: checked } })
+            edit({
+              ...draft,
+              [rule.key]: { ...draft[rule.key], enabled: checked },
+            })
           }
         />
       </div>
@@ -415,9 +420,7 @@ export function RulesEditor({
     seeded?.[0]?.rulebook ?? DEFAULT_RULEBOOK,
   );
   /** Which version the draft was loaded from, when it was loaded from history. */
-  const [loadedFrom, setLoadedFrom] = useState<number | "default" | null>(
-    null,
-  );
+  const [loadedFrom, setLoadedFrom] = useState<number | "default" | null>(null);
   const [note, setNote] = useState("");
   const [loading, setLoading] = useState(seeded === null);
   const [loadError, setLoadError] = useState<string | null>(null);
@@ -557,16 +560,14 @@ export function RulesEditor({
       >
         <p className="max-w-3xl text-sm leading-relaxed text-ink-muted">
           Rules are data; the Guard and the checks that apply them are code.
-          Every Run records the Rulebook version it ran under. A change you
-          save applies to the next Run, never to one already going.
+          Every Run records the Rulebook version it ran under. A change you save
+          applies to the next Run, never to one already going.
         </p>
         {loadError ? <ErrorNote>{loadError}</ErrorNote> : null}
         {loadedFrom !== null ? (
           <p className="rounded-sm border-2 border-federal-blue/40 bg-morning-haze px-3 py-2 text-xs">
             The draft holds{" "}
-            {loadedFrom === "default"
-              ? "the Default"
-              : `version ${loadedFrom}`}
+            {loadedFrom === "default" ? "the Default" : `version ${loadedFrom}`}
             . Nothing is saved until you press Save.
           </p>
         ) : null}
@@ -595,7 +596,9 @@ export function RulesEditor({
               <span className="font-normal normal-case">
                 {": "}
                 {changed
-                  .map((ruleId) => RULES.find((rule) => rule.id === ruleId)?.title)
+                  .map(
+                    (ruleId) => RULES.find((rule) => rule.id === ruleId)?.title,
+                  )
                   .join(", ")}
               </span>
             ) : null}

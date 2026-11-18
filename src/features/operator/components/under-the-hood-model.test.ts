@@ -110,7 +110,12 @@ describe("tilesOf", () => {
 describe("actionRowsOf", () => {
   it("skips Frame 0, marks the slowest Action and names what it committed", () => {
     const rows = actionRowsOf(
-      trail([frame(0, 0), frame(1, 120), frame(2, 900, [addLine]), frame(3, 300)]),
+      trail([
+        frame(0, 0),
+        frame(1, 120),
+        frame(2, 900, [addLine]),
+        frame(3, 300),
+      ]),
     );
     expect(rows.map((row) => row.n)).toEqual([1, 2, 3]);
     expect(rows.filter((row) => row.slowest).map((row) => row.n)).toEqual([2]);
@@ -224,9 +229,9 @@ describe("stopOf", () => {
       }),
     );
     expect(stop.headline).toMatch(/Turn cap \(40/);
-    expect(stop.caps.filter((cap) => cap.hit).map((cap) => cap.label)).toEqual(
-      ["Turns"],
-    );
+    expect(stop.caps.filter((cap) => cap.hit).map((cap) => cap.label)).toEqual([
+      "Turns",
+    ]);
     expect(stop.caps[0].share).toBe(1);
   });
 

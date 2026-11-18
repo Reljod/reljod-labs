@@ -2,7 +2,11 @@
  * "Take the keyboard": what a key press or a click in the browser is, as an
  * Action on the Screen. Pure, so the mapping is tested without a DOM.
  */
-import { ACTION_KEYS, type ActionKey, type ScreenAction } from "../domain/actions";
+import {
+  ACTION_KEYS,
+  type ActionKey,
+  type ScreenAction,
+} from "../domain/actions";
 import { GEOMETRY } from "../legacy/types";
 
 export type KeyPress = {

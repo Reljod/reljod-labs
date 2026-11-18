@@ -1,4 +1,3 @@
-import type { ScreenCode } from "../legacy/types";
 import {
   type Driver,
   MODELS,
@@ -9,7 +8,8 @@ import {
 } from "../domain/contract";
 import { describeChange } from "../domain/guard";
 import { LIMITS } from "../domain/limits";
-import { ruleInfo, type RuleId } from "../domain/rules";
+import { type RuleId, ruleInfo } from "../domain/rules";
+import type { ScreenCode } from "../legacy/types";
 
 /**
  * What "Under the hood" shows about one Run, derived from the Run alone
