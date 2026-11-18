@@ -1,7 +1,12 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
-import { isOver, type RunStatus, type RunView } from "../../domain/run";
+import {
+  isOver,
+  type RunStatus,
+  type RunView,
+  type StageId,
+} from "../../domain/run";
 import { ago, usd } from "../format";
 import {
   buttonClass,
@@ -18,9 +23,12 @@ import { CostPanel } from "./cost-panel";
 import { DeckPanel } from "./deck-panel";
 import { DocumentPanel, recordingName } from "./document-panel";
 import { RunLogList, StageRail, StopButton } from "./stage-rail";
+import { RESULT_ANCHOR, type ResultTab, stageResults } from "./stage-results";
 import { StepsPanel } from "./steps-panel";
 
-type ResultTab = "steps" | "document" | "deck" | "cost";
+function prefersReducedMotion(): boolean {
+  return window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+}
 
 export const RUN_STATUS: Record<
   RunStatus,
@@ -177,6 +185,32 @@ function OpenRun({
     }
   }, []);
 
+  /** A Stage clicked in the rail: its section, scrolled to once its tab has rendered. */
+  const [reveal, setReveal] = useState<{ anchor: string; n: number } | null>(
+    null,
+  );
+  const openStage = useCallback((stage: StageId) => {
+    const target = stageResults(stage);
+    setTab(target.tab);
+    setReveal((current) => ({
+      anchor: target.anchor,
+      n: (current?.n ?? 0) + 1,
+    }));
+  }, []);
+  useEffect(() => {
+    if (!reveal) return;
+    const element =
+      document.getElementById(reveal.anchor) ??
+      document.getElementById(RESULT_ANCHOR.results);
+    if (!element) return;
+    if (element instanceof HTMLDetailsElement) element.open = true;
+    element.scrollIntoView({
+      behavior: prefersReducedMotion() ? "auto" : "smooth",
+      block: "start",
+    });
+    element.focus({ preventScroll: true });
+  }, [reveal]);
+
   const over = isOver(run.status);
   const deckBadge = run.approval
     ? run.approval.status === "approved"
@@ -243,7 +277,8 @@ function OpenRun({
 
       <div className="grid items-start gap-6 lg:grid-cols-[minmax(0,5fr)_minmax(0,7fr)]">
         <aside className="flex min-w-0 flex-col gap-4 lg:sticky lg:top-4 lg:max-h-[calc(100dvh-2rem)] lg:overflow-y-auto lg:pr-1">
-          <div className="outline-box overflow-hidden rounded-sm bg-ink shadow-hard-md">
+          {/* shrink-0: the sticky aside has a max height, and a flex child with overflow-hidden would shrink and crop the video. */}
+          <div className="outline-box shrink-0 overflow-hidden rounded-sm bg-ink shadow-hard-md">
             {run.videoUrl && !videoBroken ? (
               // biome-ignore lint/a11y/useMediaCaption: the Steps and the transcript are the text version of the call
               <video
@@ -261,17 +296,23 @@ function OpenRun({
               </div>
             )}
           </div>
-          <div className="outline-box rounded-sm bg-paper p-4">
+          <div className="outline-box shrink-0 rounded-sm bg-paper p-4">
             <div className="mb-3 flex items-center justify-between gap-2">
               <p className="eyebrow font-bold">Pipeline</p>
               {over ? null : <StopButton runId={run.id} />}
             </div>
-            <StageRail run={run} />
+            <StageRail run={run} onOpen={openStage} />
           </div>
-          <RunLogList logs={run.logs} />
+          <div className="shrink-0">
+            <RunLogList logs={run.logs} />
+          </div>
         </aside>
 
-        <div className="flex min-w-0 flex-col gap-4">
+        <div
+          id={RESULT_ANCHOR.results}
+          tabIndex={-1}
+          className="flex min-w-0 scroll-mt-4 flex-col gap-4 focus:outline-none"
+        >
           <Tabs<ResultTab>
             id="ho-result"
             label="Results"

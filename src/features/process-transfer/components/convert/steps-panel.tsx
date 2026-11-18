@@ -17,6 +17,7 @@ import { isOver, type RunView } from "../../domain/run";
 import { plural } from "../format";
 import { focusRing, Panel, Skeleton } from "../ui";
 import { ChecksList, checksLine, FindingsList } from "./checks-list";
+import { RESULT_ANCHOR } from "./stage-results";
 
 function prefersReducedMotion(): boolean {
   return (
@@ -63,7 +64,9 @@ export function StepsPanel({
               ? "Writing the Process from what was said and shown…"
               : "What the call said and showed, moment by moment."}
           </p>
-          <Transcript watch={run.watch} onSeek={onSeek} />
+          <div id={RESULT_ANCHOR.transcript} tabIndex={-1}>
+            <Transcript watch={run.watch} onSeek={onSeek} />
+          </div>
         </div>
       );
     }
@@ -100,7 +103,12 @@ export function StepsPanel({
   return (
     <div className="flex flex-col gap-6">
       <ProcessHeader process={process} />
-      <section aria-labelledby="ho-steps-title" className="flex flex-col gap-3">
+      <section
+        id={RESULT_ANCHOR.steps}
+        tabIndex={-1}
+        aria-labelledby="ho-steps-title"
+        className="flex flex-col gap-3 focus:outline-none"
+      >
         <h3 id="ho-steps-title" className="eyebrow flex items-baseline gap-2">
           <span className="font-bold">Steps</span>
           <span className="text-ink-muted">
@@ -121,6 +129,7 @@ export function StepsPanel({
         </ol>
       </section>
       <Panel
+        id={RESULT_ANCHOR.processChecks}
         eyebrow="Process Checks"
         title={
           run.processChecks.length > 0
@@ -159,7 +168,10 @@ export function StepsPanel({
         />
       </Panel>
       {run.watch && run.watch.observations.length > 0 ? (
-        <details className="group outline-box rounded-sm bg-paper">
+        <details
+          id={RESULT_ANCHOR.transcript}
+          className="group outline-box rounded-sm bg-paper"
+        >
           <summary
             className={`flex min-h-10 cursor-pointer list-none items-center justify-between px-4 font-mono text-xs font-bold tracking-[0.1em] uppercase ${focusRing}`}
           >
