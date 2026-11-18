@@ -208,6 +208,25 @@ export const projects: Project[] = [
       "An editable, versioned rulebook and a full audit trail with cost",
     ],
   },
+  // Appended last, like the others, so every `projects.<index>` source path keeps its entry.
+  {
+    slug: "operator",
+    icon: "agents",
+    title: "Operator",
+    sector: "Ports, banks and anyone with a green screen",
+    summary:
+      "An agent that works the system nobody can integrate with. It looks at a 1990s terminal screen and keys a cargo manifest with the keyboard and mouse while you watch, stops for your approval before a guarded key, and code checks the result.",
+    outcome: "Only code says the work was done correctly",
+    tags: ["Computer use", "Sandbox", "MCP", "Durable workflows", "Rules"],
+    status: "Live",
+    href: "/demos/operator",
+    marks: ["New"],
+    features: [
+      "A live screen with a gliding cursor, and a replay of every frame",
+      "Rules decide which keys need a person; the agent cannot approve",
+      "Take the keyboard yourself and compare your time and errors",
+    ],
+  },
 ];
 
 /**
