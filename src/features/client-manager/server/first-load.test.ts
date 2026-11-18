@@ -1,6 +1,11 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 vi.mock("server-only", () => ({}));
+vi.mock("next/navigation", () => ({
+  unstable_rethrow: (error: unknown) => {
+    if (error instanceof Error && error.message === "NEXT_SIGNAL") throw error;
+  },
+}));
 
 const mocks = vi.hoisted(() => ({
   currentOwner: vi.fn(),
@@ -91,5 +96,12 @@ describe("firstLoad", () => {
     expect(first.initialCatalog).toBeNull();
     expect(first.initialThreads).toEqual([{ id: THREAD }]);
     expect(mocks.viewableClient).not.toHaveBeenCalled();
+  });
+
+  it("lets Next's own signals through instead of returning null", async () => {
+    mocks.currentOwner.mockRejectedValue(new Error("NEXT_SIGNAL"));
+    await expect(firstLoad({ clientId: null, threadId: null })).rejects.toThrow(
+      "NEXT_SIGNAL",
+    );
   });
 });

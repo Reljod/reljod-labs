@@ -43,7 +43,14 @@ import {
   usageSince,
 } from "./repository";
 import { currentOwner, type Visitor } from "./session";
-import { removeFolder, signedUrl, signedUrls, uploadUrl } from "./storage";
+import {
+  removeFolder,
+  sampleUrl,
+  sampleUrls,
+  signedUrl,
+  signedUrls,
+  uploadUrl,
+} from "./storage";
 
 export const LIMITS = {
   files: 8,
@@ -505,9 +512,16 @@ export type CatalogCard = {
 
 export async function catalog(owner: Owner | null): Promise<CatalogCard[]> {
   const rows = await listCatalog(owner);
-  const urls = await signedUrls(
-    rows.flatMap((row) => (row.portrait_path ? [row.portrait_path] : [])),
-  );
+  const portraits = (sample: boolean) =>
+    rows.flatMap((row) =>
+      row.portrait_path && row.is_sample === sample ? [row.portrait_path] : [],
+    );
+  // Samples' links are kept and reused; an Owner's own are signed now.
+  const [shared, own] = await Promise.all([
+    sampleUrls(portraits(true)),
+    signedUrls(portraits(false)),
+  ]);
+  const urls = new Map([...own, ...shared]);
   return rows.map((row: CatalogRow) => ({
     id: row.id,
     name: row.name,
@@ -579,7 +593,7 @@ export async function clientSummary(
     factsPerSource(client.id),
     clientStats(client.id),
     client.portrait_path
-      ? signedUrl(client.portrait_path)
+      ? (client.is_sample ? sampleUrl : signedUrl)(client.portrait_path)
       : Promise.resolve(null),
   ]);
   const build = stats.build;
@@ -721,6 +735,8 @@ export type SourceFull = SourceSummary & {
 export async function clientSource(
   clientId: string,
   sourceId: string,
+  /** A Sample's file link is shared and kept; an Owner's is signed per request. */
+  isSample = false,
 ): Promise<SourceFull | null> {
   const detail = await sourceDetail(clientId, sourceId);
   if (!detail) return null;
@@ -735,7 +751,9 @@ export async function clientSource(
     createdAt: source.created_at.toISOString(),
     facts: facts.length,
     text: source.text,
-    url: source.storage_path ? await signedUrl(source.storage_path) : null,
+    url: source.storage_path
+      ? await (isSample ? sampleUrl : signedUrl)(source.storage_path)
+      : null,
     backing: facts.map((fact) => ({
       quote: fact.quote,
       key: fact.node_key,

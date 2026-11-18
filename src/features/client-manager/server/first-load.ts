@@ -1,4 +1,5 @@
 import "server-only";
+import { unstable_rethrow } from "next/navigation";
 import type {
   CatalogResponse,
   ClientResponse,
@@ -27,7 +28,7 @@ export async function firstLoad(open: {
   clientId: string | null;
   threadId: string | null;
 }): Promise<FirstLoad> {
-  const owner = await currentOwner().catch(() => null);
+  const owner = await currentOwner().catch(quietly);
   if (!owner) {
     return {
       initialCatalog: null,
@@ -36,7 +37,7 @@ export async function firstLoad(open: {
       initialThread: null,
     };
   }
-  const quiet = <T>(promise: Promise<T | null>) => promise.catch(() => null);
+  const quiet = <T>(promise: Promise<T | null>) => promise.catch(quietly);
   const [initialCatalog, initialThreads, initialClient, initialThread] =
     await Promise.all([
       quiet(catalog(owner)),
@@ -45,6 +46,16 @@ export async function firstLoad(open: {
       open.threadId ? quiet(threadOf(open.threadId, owner)) : null,
     ]);
   return { initialCatalog, initialThreads, initialClient, initialThread };
+}
+
+/**
+ * A failed read becomes null, but Next's own signals (the prerender bail-out
+ * when a request read happens at build time) go through, or the page would
+ * be prerendered with no data.
+ */
+function quietly(error: unknown): null {
+  unstable_rethrow(error);
+  return null;
 }
 
 async function clientOf(

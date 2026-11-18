@@ -20,7 +20,7 @@ export async function GET(
     const { clientId, sourceId } = await params;
     const { client } = await gatedClient(clientId);
     if (!client) return notFound();
-    const source = await clientSource(client.id, sourceId);
+    const source = await clientSource(client.id, sourceId, client.is_sample);
     // Never kept, even for a Sample: `url` is a signed link that dies in an hour.
     return source ? json<SourceResponse>(source) : notFound();
   } catch (error) {
