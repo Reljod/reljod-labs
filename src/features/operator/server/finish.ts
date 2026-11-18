@@ -2,7 +2,12 @@ import "server-only";
 import { evaluate, type Finding, type Verdict } from "../domain/checks";
 import type { RunEventInput, StopReason } from "../domain/contract";
 import { disposeCode } from "./code-sandbox";
-import { type Counters, expectedOf, metricsFrom, type RunContext } from "./context";
+import {
+  type Counters,
+  expectedOf,
+  metricsFrom,
+  type RunContext,
+} from "./context";
 import { emit } from "./emit";
 import {
   approvedFingerprints,
@@ -86,7 +91,9 @@ export async function finishRun(
     ...(outcome.status === "completed"
       ? {
           stopped_by: outcome.stoppedBy,
-          ...(outcome.summary ? { summary: outcome.summary.slice(0, 2000) } : {}),
+          ...(outcome.summary
+            ? { summary: outcome.summary.slice(0, 2000) }
+            : {}),
         }
       : {}),
     ...(checked && !failed

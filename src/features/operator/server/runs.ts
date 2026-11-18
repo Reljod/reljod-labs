@@ -79,7 +79,13 @@ export async function closeIfStale(run: RunRow): Promise<RunRow> {
   );
   await expirePending(run.id).catch(() => {});
   await Promise.all([disposeScreen(run.id), disposeCode(run.id)]);
-  return { ...run, status: "failed", error, ended_at: new Date(), pending: null };
+  return {
+    ...run,
+    status: "failed",
+    error,
+    ended_at: new Date(),
+    pending: null,
+  };
 }
 
 type Resolved = {
@@ -176,7 +182,9 @@ export async function startRun(input: {
   stubbed?: boolean;
 }): Promise<{ runId: string } | { error: string }> {
   if (!env.sandboxConfigured())
-    return { error: "The Screen sandbox is not set up here, so no Run can start." };
+    return {
+      error: "The Screen sandbox is not set up here, so no Run can start.",
+    };
   const resolved = await resolveTask(
     input.owner,
     input.task,
@@ -227,7 +235,11 @@ export async function startRun(input: {
     await emit(runId, {
       type: "start",
       driver: input.driver,
-      task: { id: resolved.taskId, title: resolved.title, brief: resolved.brief },
+      task: {
+        id: resolved.taskId,
+        title: resolved.title,
+        brief: resolved.brief,
+      },
       manifest: resolved.manifest
         ? { name: resolved.manifest.name, rows: resolved.manifest.lines.length }
         : null,
@@ -259,7 +271,11 @@ export async function stopRun(owner: Owner, runId: string) {
     return { runId: run.id, stopped: false, status: run.status };
   if (!(await endRunIfGoing(run.id, { status: "stopped" }))) {
     const latest = await getRunRow(run.id);
-    return { runId: run.id, stopped: false, status: latest?.status ?? run.status };
+    return {
+      runId: run.id,
+      stopped: false,
+      status: latest?.status ?? run.status,
+    };
   }
   const events: RunEventInput[] = [
     { type: "log", level: "warn", text: "Stopped by its Owner." },
@@ -311,18 +327,29 @@ export async function decideApproval(input: {
       error:
         "Refused: this Run is driven through the MCP server, so its Approvals are decided by a person in the app.",
     };
-  if (run.status !== "paused") return { error: "This Run is not waiting for a decision." };
-  const claimed = await decideApprovalRow(run.id, input.approvalId, input.decision);
+  if (run.status !== "paused")
+    return { error: "This Run is not waiting for a decision." };
+  const claimed = await decideApprovalRow(
+    run.id,
+    input.approvalId,
+    input.decision,
+  );
   if (!claimed) return { error: "That Approval was already decided." };
   if (run.driver === "operator") {
     try {
-      await resumeHook(claimed.hook_token as string, { decision: input.decision });
+      await resumeHook(claimed.hook_token as string, {
+        decision: input.decision,
+      });
     } catch (error) {
       console.error("[operator] resume failed", error);
       const reason = "The Run could not be resumed after the decision.";
       if (await endRunIfGoing(run.id, { status: "failed", error: reason }))
         await insertEvents(run.id, [
-          { type: "decision", approvalId: claimed.id, decision: input.decision },
+          {
+            type: "decision",
+            approvalId: claimed.id,
+            decision: input.decision,
+          },
           { type: "end", status: "failed", error: reason },
         ]).catch(() => {});
       await Promise.all([disposeScreen(run.id), disposeCode(run.id)]);
@@ -335,7 +362,9 @@ export async function decideApproval(input: {
     await settle(ctx, claimed.id, claimed.fingerprint, input.decision);
   } catch (error) {
     console.error("[operator] settle failed", error);
-    return { error: "The decision was saved, but the Screen could not be reached." };
+    return {
+      error: "The decision was saved, but the Screen could not be reached.",
+    };
   }
   return { ok: true };
 }
@@ -367,17 +396,31 @@ export async function clientCall(
   if (!found) return { error: "No such Run." };
   const run = await closeIfStale(found);
   if (run.driver !== "client")
-    return { error: "This Run is not driven through the MCP server. Start one with driver \"client\"." };
+    return {
+      error:
+        'This Run is not driven through the MCP server. Start one with driver "client".',
+    };
   if (run.status === "paused")
-    return { error: "The Run is paused: a person must approve or refuse the pending Action in the app first." };
+    return {
+      error:
+        "The Run is paused: a person must approve or refuse the pending Action in the app first.",
+    };
   if (run.status !== "running") return { error: `The Run is ${run.status}.` };
   const ctx = await loadContext(owner, run);
   let counters: Counters = countersOf(run);
   const startedAt = run.started_at.getTime();
   try {
     if (Date.now() - startedAt > (LIMITS.sandboxMinutes - 1) * 60_000) {
-      await finishRun(ctx, counters, { status: "completed", stoppedBy: "time" }, startedAt);
-      return { error: "The Run reached its time limit and was closed; the Books were checked." };
+      await finishRun(
+        ctx,
+        counters,
+        { status: "completed", stoppedBy: "time" },
+        startedAt,
+      );
+      return {
+        error:
+          "The Run reached its time limit and was closed; the Books were checked.",
+      };
     }
     const call: ToolCall = {
       toolCallId: `client-${counters.turns + 1}`,
@@ -412,14 +455,23 @@ export async function clientCall(
         { status: "completed", stoppedBy: "finish", summary: done.finished },
         startedAt,
       );
-      return { text: "Finished. Code checked the Books: call get_run for the Verdict and Findings.", frame: null, finished: true };
+      return {
+        text: "Finished. Code checked the Books: call get_run for the Verdict and Findings.",
+        frame: null,
+        finished: true,
+      };
     }
     await saveCounters(ctx, counters);
     if (done.hint) text = `${text} (${done.hint})`;
     return { text, frame: done.frame, finished: false };
   } catch (error) {
     if (error instanceof ScreenUnavailable) {
-      await finishRun(ctx, counters, { status: "failed", error: error.message }, startedAt);
+      await finishRun(
+        ctx,
+        counters,
+        { status: "failed", error: error.message },
+        startedAt,
+      );
       return { error: `${error.message} The Run was closed.` };
     }
     throw error;
@@ -466,7 +518,9 @@ export async function submitHandRun(input: {
   const checked = evaluate({
     rulebook: current.rulebook,
     expected: task.expected,
-    manifest: manifest ? { voyage: manifest.voyage, lines: manifest.lines } : null,
+    manifest: manifest
+      ? { voyage: manifest.voyage, lines: manifest.lines }
+      : null,
     changes,
     after: state.books,
     signedOn: state.signedOn,

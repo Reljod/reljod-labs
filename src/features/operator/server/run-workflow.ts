@@ -1,7 +1,8 @@
 import { createHook, sleep } from "workflow";
 import { LIMITS } from "../domain/limits";
 import type { Change } from "../legacy/types";
-import { type Counters, emptyCounters, type RunContext } from "./context";
+import type { RunContext } from "./context";
+import { type Counters, emptyCounters } from "./counters";
 import type { EndOutcome } from "./finish";
 import type { ToolCall, TranscriptItem } from "./operator";
 import {
@@ -107,7 +108,8 @@ async function endStep(
 
 export type ApprovalAnswer = { decision: "approved" | "refused" };
 
-const NOT_RUN = "Not run: an earlier call in this turn was stopped. Look at the Screen and decide again.";
+const NOT_RUN =
+  "Not run: an earlier call in this turn was stopped. Look at the Screen and decide again.";
 
 /**
  * One Run of the Operator on one Task. Each Turn is a step that calls the
@@ -186,8 +188,11 @@ export async function operatorRun(input: RunInput) {
       idle = 0;
 
       const at = { turn: number + 1, intent: result.text.split("\n")[0] ?? "" };
-      const results: { toolCallId: string; toolName: string; output: string }[] =
-        [];
+      const results: {
+        toolCallId: string;
+        toolName: string;
+        output: string;
+      }[] = [];
       let frame: number | null = null;
       let hint = "";
       let halted = false;

@@ -1,4 +1,4 @@
-import { rulebookText, type Rulebook } from "../domain/rules";
+import { type Rulebook, rulebookText } from "../domain/rules";
 import { KEY_LEGEND, MANUAL, MESSAGES } from "../legacy/manual";
 import { GEOMETRY, SCREEN_TITLES, type ScreenCode } from "../legacy/types";
 

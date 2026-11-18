@@ -1,11 +1,7 @@
 import { z } from "zod";
 import type { ScreenCode } from "../legacy/types";
 import { SCREEN_TITLES } from "../legacy/types";
-import {
-  ACTION_KINDS,
-  ACTION_TITLES,
-  FIELD_CODES,
-} from "./rule-kinds";
+import { ACTION_KINDS, ACTION_TITLES, FIELD_CODES } from "./rule-kinds";
 
 /**
  * The Rules of what the Operator may do in HARBOURMASTER. Rules are data: a

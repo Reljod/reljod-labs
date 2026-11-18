@@ -61,8 +61,10 @@ export async function createManifestUpload(input: {
     };
   if (
     !input.visitor.trusted &&
-    (await countManifestsSince(input.owner, new Date(Date.now() - 86_400_000))) >=
-      LIMITS.manifestsPerOwnerPerDay
+    (await countManifestsSince(
+      input.owner,
+      new Date(Date.now() - 86_400_000),
+    )) >= LIMITS.manifestsPerOwnerPerDay
   )
     return {
       error: `That's ${LIMITS.manifestsPerOwnerPerDay} Manifests today. Try again tomorrow.`,

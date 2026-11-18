@@ -10,9 +10,7 @@ import { build } from "esbuild";
  */
 export async function buildScreenBundle(): Promise<string> {
   const result = await build({
-    entryPoints: [
-      fileURLToPath(new URL("./screen-entry.ts", import.meta.url)),
-    ],
+    entryPoints: [fileURLToPath(new URL("./screen-entry.ts", import.meta.url))],
     bundle: true,
     write: false,
     platform: "node",

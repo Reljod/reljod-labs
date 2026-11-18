@@ -6,14 +6,14 @@
  * when the committed bundle is stale.
  */
 import { writeFileSync } from "node:fs";
+
 const buildPath = "../src/features/operator/server/sandbox/build.ts";
 const {
   buildScreenBundle,
   bundleHash,
   generatedModule,
-}: typeof import("../src/features/operator/server/sandbox/build") = await import(
-  buildPath
-);
+}: typeof import("../src/features/operator/server/sandbox/build") =
+  await import(buildPath);
 
 const code = await buildScreenBundle();
 const target = new URL(

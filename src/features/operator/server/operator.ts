@@ -58,8 +58,14 @@ const OUTPUT_TOKENS = 2500;
 
 const TOOL_SCHEMAS = {
   screen_click: z.object({
-    x: z.number().int().describe(`Pixels from the left, 0 to ${GEOMETRY.width - 1}`),
-    y: z.number().int().describe(`Pixels from the top, 0 to ${GEOMETRY.height - 1}`),
+    x: z
+      .number()
+      .int()
+      .describe(`Pixels from the left, 0 to ${GEOMETRY.width - 1}`),
+    y: z
+      .number()
+      .int()
+      .describe(`Pixels from the top, 0 to ${GEOMETRY.height - 1}`),
   }),
   screen_type: z.object({
     text: z
@@ -73,7 +79,7 @@ const TOOL_SCHEMAS = {
       .array(z.enum(ACTION_KEYS))
       .min(1)
       .max(ACTION_LIMITS.keysPerAction)
-      .describe("Keys to press one after another, such as [\"Tab\"] or [\"F10\"]"),
+      .describe('Keys to press one after another, such as ["Tab"] or ["F10"]'),
   }),
   screen_scroll: z.object({ direction: z.enum(["down", "up"]) }),
   screen_wait: z.object({
@@ -97,7 +103,9 @@ const TOOL_SCHEMAS = {
     summary: z
       .string()
       .max(1500)
-      .describe("What you did and anything you could not do. It decides nothing: code checks the Books."),
+      .describe(
+        "What you did and anything you could not do. It decides nothing: code checks the Books.",
+      ),
   }),
 };
 
@@ -106,14 +114,17 @@ export const isToolName = (name: string): name is ToolName =>
   name in TOOL_SCHEMAS;
 
 const DESCRIPTIONS: Record<ToolName, string> = {
-  screen_click: "Click a pixel of the Screen: a field to put the cursor there, a key in the bottom row, a button in a box.",
-  screen_type: "Type text at the cursor. Use screen_key for Tab, Enter and function keys.",
+  screen_click:
+    "Click a pixel of the Screen: a field to put the cursor there, a key in the bottom row, a button in a box.",
+  screen_type:
+    "Type text at the cursor. Use screen_key for Tab, Enter and function keys.",
   screen_key: "Press one or more keys in order.",
   screen_scroll: "Page a list forward (down) or back (up).",
   screen_wait: "Wait, then look again.",
   run_code: `Run Node.js in a sandbox with no network, for what a clerk would script: parse the Manifest, check container numbers, diff what was keyed. At most ${LIMITS.codeRunsPerRun} runs.`,
   load_skill: "Load a Skill's full text.",
-  update_plan: "Set your checklist for this Task; the person watching sees it. Send the whole list each time.",
+  update_plan:
+    "Set your checklist for this Task; the person watching sees it. Send the whole list each time.",
   finish_run: "Say the Task is finished. Sign off first.",
 };
 
@@ -164,11 +175,23 @@ export function actionOf(
 export function callOf(action: ScreenAction, toolCallId: string): ToolCall {
   switch (action.type) {
     case "click":
-      return { toolCallId, toolName: "screen_click", input: { x: action.x, y: action.y } };
+      return {
+        toolCallId,
+        toolName: "screen_click",
+        input: { x: action.x, y: action.y },
+      };
     case "type":
-      return { toolCallId, toolName: "screen_type", input: { text: action.text } };
+      return {
+        toolCallId,
+        toolName: "screen_type",
+        input: { text: action.text },
+      };
     case "key":
-      return { toolCallId, toolName: "screen_key", input: { keys: action.keys } };
+      return {
+        toolCallId,
+        toolName: "screen_key",
+        input: { keys: action.keys },
+      };
     case "scroll":
       return {
         toolCallId,
@@ -245,7 +268,12 @@ export async function buildMessages(
         { type: "text", text: operatorBrief(ctx) },
         ...(kept.has(0)
           ? await picture(ctx.runId, 0)
-          : [{ type: "text" as const, text: "[The first picture is no longer shown: it was the sign-on Screen HMS000.]" }]),
+          : [
+              {
+                type: "text" as const,
+                text: "[The first picture is no longer shown: it was the sign-on Screen HMS000.]",
+              },
+            ]),
       ],
     },
   ];
@@ -310,7 +338,10 @@ export function callCost(
       : undefined;
   let reported: number | null = null;
   if (typeof meta === "object" && meta !== null) {
-    const { cost, marketCost } = meta as { cost?: unknown; marketCost?: unknown };
+    const { cost, marketCost } = meta as {
+      cost?: unknown;
+      marketCost?: unknown;
+    };
     for (const value of [cost, marketCost]) {
       const number = typeof value === "string" ? Number(value) : value;
       if (typeof number === "number" && Number.isFinite(number) && number >= 0)
@@ -340,7 +371,8 @@ export type TurnResult =
 
 /** The scripted Operator: the sample Task's Script, one Turn at a time, then finish. */
 export function scriptedTurn(ctx: RunContext, turn: number): TurnResult {
-  const script = (ctx.taskId ? sampleTask(ctx.taskId)?.script : undefined) ?? [];
+  const script =
+    (ctx.taskId ? sampleTask(ctx.taskId)?.script : undefined) ?? [];
   const planned = script[turn];
   if (!planned)
     return {

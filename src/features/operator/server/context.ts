@@ -1,11 +1,11 @@
-import type { Driver, ModelId, RunMetrics } from "../domain/contract";
-import { EMPTY_METRICS } from "../domain/contract";
+import type { Driver, ModelId } from "../domain/contract";
 import type { ManifestRow } from "../domain/manifest";
 import type { Rulebook } from "../domain/rules";
 import { ownFixture } from "../domain/task-cards";
 import { sampleTask } from "../domain/tasks";
 import type { Fixture } from "../legacy/types";
-import { type RunRow, metricsOf, runRulebook } from "./repository";
+import type { Counters } from "./counters";
+import { metricsOf, type RunRow, runRulebook } from "./repository";
 
 /**
  * What a Run's steps need to know, small and plain so it crosses workflow
@@ -33,20 +33,12 @@ export type RunContext = {
   } | null;
 };
 
-/** A Run's running totals: its metrics and what it has spent. */
-export type Counters = RunMetrics & { costUsd: number };
-
-export const emptyCounters = (): Counters => ({ ...EMPTY_METRICS, costUsd: 0 });
+export { type Counters, emptyCounters, metricsFrom } from "./counters";
 
 export const countersOf = (row: RunRow): Counters => ({
   ...metricsOf(row),
   costUsd: Number(row.cost_usd),
 });
-
-export function metricsFrom(counters: Counters): RunMetrics {
-  const { costUsd: _costUsd, ...metrics } = counters;
-  return metrics;
-}
 
 /** The Fixture a Run starts from: the sample Task's, or the port's Books for an own Task. */
 export function fixtureOf(taskId: string | null): Fixture {

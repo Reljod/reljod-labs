@@ -4,8 +4,8 @@ import { headers } from "next/headers";
 import { z } from "zod";
 import { requireOwner } from "@/features/access/server/gate";
 import {
-  handInputSchema,
   type HandInput,
+  handInputSchema,
   type ManifestSummary,
   type ModelId,
   modelSchema,
@@ -23,9 +23,9 @@ import { signOperatorToken } from "./mcp-token";
 import { insertRulebook } from "./repository";
 import {
   decideApproval as decide,
+  submitHandRun as fileHandRun,
   startRun as start,
   stopRun as stop,
-  submitHandRun as fileHandRun,
 } from "./runs";
 import { visitor } from "./visitor";
 

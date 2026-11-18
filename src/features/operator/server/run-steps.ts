@@ -3,12 +3,7 @@ import type { RunEventInput } from "../domain/contract";
 import { LIMITS } from "../domain/limits";
 import type { Change } from "../legacy/types";
 import { skillById } from "../skills";
-import {
-  type ActOutcome,
-  frameHint,
-  openApproval,
-  performAction,
-} from "./act";
+import { type ActOutcome, frameHint, openApproval, performAction } from "./act";
 import { CODE_LIMITS, runCode } from "./code-sandbox";
 import {
   type Counters,
@@ -107,7 +102,10 @@ function fromAct(outcome: ActOutcome): CallResult {
     output: outcome.text,
     counters: outcome.counters,
     frame: outcome.frame,
-    hint: outcome.frame === null ? null : frameHint(outcome.screen, outcome.message),
+    hint:
+      outcome.frame === null
+        ? null
+        : frameHint(outcome.screen, outcome.message),
     diff: outcome.diff,
     outcome: outcome.blocked ? outcome : null,
   };
@@ -148,7 +146,11 @@ export async function runCall(
     case "load_skill": {
       const skill = skillById(String(input.id ?? ""));
       if (!skill) return plain("No such Skill.", counters);
-      await emit(ctx.runId, { type: "skill", id: skill.id, title: skill.title });
+      await emit(ctx.runId, {
+        type: "skill",
+        id: skill.id,
+        title: skill.title,
+      });
       return plain(skill.body(ctx.rulebook), counters);
     }
     case "run_code": {

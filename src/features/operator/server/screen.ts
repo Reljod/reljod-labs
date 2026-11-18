@@ -184,7 +184,10 @@ export async function bootScreen(input: {
       secret: input.secret,
     };
     await sandbox.writeFiles([
-      { path: `${OP_DIR}/screen-${SCREEN_BUNDLE_HASH}.cjs`, content: SCREEN_BUNDLE },
+      {
+        path: `${OP_DIR}/screen-${SCREEN_BUNDLE_HASH}.cjs`,
+        content: SCREEN_BUNDLE,
+      },
       { path: `${SCREEN_DIR}/config.json`, content: JSON.stringify(config) },
     ]);
     await sandbox.runCommand({

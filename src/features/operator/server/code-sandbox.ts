@@ -129,7 +129,10 @@ export async function runCode(input: {
       { path: `${DIR}/README.txt`, content: README },
       { path: `${DIR}/task.txt`, content: input.ctx.brief },
       { path: `${DIR}/iso6346.mjs`, content: ISO6346 },
-      { path: `${DIR}/keyed.json`, content: JSON.stringify(input.keyed, null, 1) },
+      {
+        path: `${DIR}/keyed.json`,
+        content: JSON.stringify(input.keyed, null, 1),
+      },
       ...(input.ctx.manifest
         ? [{ path: `${DIR}/manifest.txt`, content: input.ctx.manifest.text }]
         : []),
