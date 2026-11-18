@@ -1,3 +1,6 @@
+import { Peel } from "@/components/motion/peel";
+import { ScrollIn } from "@/components/motion/scroll-in";
+import { ScrollRule } from "@/components/motion/scroll-rule";
 import { Badge, type BadgeTone } from "@/components/ui/badge";
 import { Section } from "@/components/ui/section";
 import { credentials, experience } from "@/content/experience";
@@ -20,16 +23,18 @@ export function Experience() {
       title="Seven years, from finance data to digital banking"
       intro="Three years inside a leading Philippine digital bank, two at a global financial data company, and the last two shipping production AI."
     >
-      <ol className="outline-box divide-y-2 divide-ink bg-paper">
+      <ol className="outline-box relative divide-y-2 divide-ink bg-paper">
+        <ScrollRule axis="y" className="inset-y-0 -left-0.5 w-1.5" />
         {experience.map((job, index) => (
-          <li
+          <ScrollIn
+            as="li"
             key={`${job.company}-${job.period}`}
             {...source(sourcePath.job(index))}
             className={`grid gap-4 p-6 md:grid-cols-[14rem_1fr] md:gap-8 ${job.highlight ? "bg-morning-haze" : ""}`}
           >
-            <div>
+            <div className="stick-on-move">
               <p className="font-mono text-sm font-bold uppercase">
-                {job.period}
+                <Peel text={job.period} timing={{ on: "scroll" }} />
               </p>
               <p className="mt-1 text-sm text-ink-muted">{job.location}</p>
               <div className="mt-3">
@@ -67,20 +72,20 @@ export function Experience() {
                 ))}
               </ul>
             </div>
-          </li>
+          </ScrollIn>
         ))}
       </ol>
 
       <dl className="mt-8 grid gap-8 md:grid-cols-2">
         {credentials.map((credential, index) => (
-          <div
+          <ScrollIn
             key={credential.title}
             className="border-ink border-t-2 pt-4"
             {...source(sourcePath.credential(index))}
           >
             <dt className="font-semibold">{credential.title}</dt>
             <dd className="mt-1 text-sm text-ink-muted">{credential.detail}</dd>
-          </div>
+          </ScrollIn>
         ))}
       </dl>
     </Section>

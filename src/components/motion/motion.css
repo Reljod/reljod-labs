@@ -1,0 +1,44 @@
+/*
+ * Shared scroll motion. A chapter writes `--p` (0..1); a Peel writes `--q`.
+ * Everything here is transforms and opacity, so scrolling never relays out.
+ */
+.chapter-stage {
+  top: 4.125rem; /* under the sticky site header */
+  height: calc(100svh - 4.125rem);
+}
+
+/* Redaction bars that lift word by word. */
+.peel-w {
+  position: relative;
+  display: inline-block;
+}
+
+.peel-w::after {
+  content: "";
+  position: absolute;
+  inset: 0.08em -0.06em 0.04em -0.06em;
+  background: var(--peel-bar, var(--color-ink));
+  box-shadow: -0.14em 0 0 var(--peel-edge, var(--color-brass));
+  transform-origin: right center;
+  transform: scaleX(clamp(0, 1 - (var(--q, 1) - var(--at)) / var(--w), 1));
+  pointer-events: none;
+}
+
+/* Tips up into place: hinged at the bottom edge, like a card stood up. */
+.scroll-in {
+  --e: calc(1 - (1 - var(--q, 1)) * (1 - var(--q, 1)));
+  opacity: calc(0.15 + 0.85 * var(--e));
+  transform: perspective(1100px) translateY(calc((1 - var(--e)) * 3.5rem))
+    rotateX(calc((1 - var(--e)) * 24deg))
+    rotate(calc((1 - var(--e)) * var(--lean, 0deg)));
+  transform-origin: 50% 100%;
+}
+
+/* On a moving page (`data-moving`), a job's dates stay put while its story scrolls. */
+@media (min-width: 768px) {
+  [data-moving] .stick-on-move {
+    position: sticky;
+    top: 6rem;
+    align-self: start;
+  }
+}

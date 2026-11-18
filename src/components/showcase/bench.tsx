@@ -1,7 +1,6 @@
 import type { CSSProperties } from "react";
 import { IconTile } from "@/components/ui/icon";
 import { Section } from "@/components/ui/section";
-import { sceneNumber } from "@/content/landing";
 import { benchProjects } from "@/content/projects";
 
 /** Work that isn't a demo yet: small cards drifting on the lab bench, each on its own rhythm. */
@@ -9,7 +8,7 @@ export function Bench() {
   return (
     <Section
       id="bench"
-      eyebrow={`${sceneNumber("bench")} · On the bench`}
+      eyebrow="On the bench"
       title="Coming soon to the lab"
       intro="Systems from client work and side projects, being turned into demos you can run."
       ground="limestone"

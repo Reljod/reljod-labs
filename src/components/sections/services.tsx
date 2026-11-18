@@ -1,3 +1,4 @@
+import { ScrollIn } from "@/components/motion/scroll-in";
 import { IconTile } from "@/components/ui/icon";
 import { Section } from "@/components/ui/section";
 import { services } from "@/content/services";
@@ -14,7 +15,9 @@ export function Services() {
     >
       <ul className="grid gap-8 md:grid-cols-2 lg:grid-cols-3">
         {services.map((service, index) => (
-          <li
+          <ScrollIn
+            as="li"
+            lean={index % 2 === 0 ? -3 : 3}
             key={service.title}
             {...source(sourcePath.service(index))}
             className="outline-box flex flex-col bg-marble p-6"
@@ -44,7 +47,7 @@ export function Services() {
                 </li>
               ))}
             </ul>
-          </li>
+          </ScrollIn>
         ))}
       </ul>
     </Section>

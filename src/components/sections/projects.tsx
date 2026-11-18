@@ -1,5 +1,6 @@
 import Image from "next/image";
 import Link from "next/link";
+import { ScrollIn } from "@/components/motion/scroll-in";
 import { Badge } from "@/components/ui/badge";
 import { Icon, IconTile } from "@/components/ui/icon";
 import { ProjectMarks } from "@/components/ui/project-marks";
@@ -19,9 +20,14 @@ export function Projects() {
     >
       <ul className="grid gap-8 md:grid-cols-2 lg:grid-cols-3">
         {featuredProjects.map((project, index) => (
-          <li key={project.slug} {...source(sourcePath.project(index))}>
+          <ScrollIn
+            as="li"
+            lean={index % 2 === 0 ? -2 : 2}
+            key={project.slug}
+            {...source(sourcePath.project(index))}
+          >
             <ProjectCard project={project} index={index} />
-          </li>
+          </ScrollIn>
         ))}
       </ul>
     </Section>

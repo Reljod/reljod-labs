@@ -1,4 +1,5 @@
 import type { ReactNode } from "react";
+import { Peel } from "@/components/motion/peel";
 
 const grounds = {
   marble: "bg-marble",
@@ -39,7 +40,7 @@ export function Section({
             id={headingId}
             className="font-mono text-3xl leading-[1.15] font-bold uppercase sm:text-[2rem]"
           >
-            {title}
+            <Peel text={title} timing={{ on: "scroll" }} />
           </h2>
           {intro ? (
             <p className="mt-4 text-lg text-ink-muted">{intro}</p>

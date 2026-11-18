@@ -1,31 +1,91 @@
-/* The landing page's ambient motion: small loops that never block reading. */
+/* The landing chapters' pieces. Progress comes in as `--p` (see motion.css). */
+
+.sheet {
+  will-change: transform;
+}
+
+.sheet-line {
+  position: relative;
+  display: block;
+  height: 1.3cqmin;
+  background: rgb(20 33 61 / 0.18);
+}
+
+/* A line the AI picked out: brass once the page has passed the reader. */
+.sheet-lit::after {
+  content: "";
+  position: absolute;
+  inset: -0.4cqmin -0.6cqmin;
+  background: var(--color-brass);
+  opacity: var(--lit, 0);
+}
+
+.sheet-tab {
+  position: absolute;
+  top: 18%;
+  right: -4.4cqmin;
+  width: 4.4cqmin;
+  height: 6cqmin;
+  border: 2px solid var(--color-ink);
+  border-left: 0;
+  background: var(--color-seal-red);
+  transform-origin: left center;
+  transform: scaleX(var(--lit, 0));
+}
+
+.reader-beam {
+  border-inline: 2px solid var(--color-ink);
+  background: linear-gradient(
+    90deg,
+    rgb(111 160 220 / 0.15),
+    rgb(111 160 220 / 0.85) 50%,
+    rgb(111 160 220 / 0.15)
+  );
+  opacity: calc(0.35 + 0.65 * var(--glow, 0));
+  box-shadow: 0 0 calc(6cqmin * var(--glow, 0)) rgb(111 160 220 / 0.9);
+}
+
+.scroll-cue {
+  position: relative;
+  display: block;
+  width: 2px;
+  height: 1.75rem;
+  overflow: hidden;
+  background: rgb(20 33 61 / 0.2);
+}
+
+.scroll-cue::after {
+  content: "";
+  position: absolute;
+  inset-inline: 0;
+  top: 0;
+  height: 40%;
+  background: var(--color-ink);
+}
+
+/* A drawn string: set `pathLength="1"` on the path and `--draw` 0..1. */
+.drawn {
+  stroke-dasharray: 1;
+  stroke-dashoffset: calc(1 - var(--draw, 1));
+  opacity: clamp(0, var(--draw, 1) * 40, 1);
+}
+
 @media (prefers-reduced-motion: no-preference) {
-  .landing-hand-slow,
-  .landing-hand-fast {
-    transform-box: view-box;
-    transform-origin: 380px 25px;
-  }
-
-  .landing-hand-slow {
-    animation: landing-turn 60s linear infinite;
-  }
-
-  .landing-hand-fast {
-    animation: landing-turn 8s linear infinite;
+  .scroll-cue::after {
+    animation: scroll-cue 1.6s cubic-bezier(0.6, 0, 0.3, 1) infinite;
   }
 
   .landing-steam {
     animation: landing-steam 2.4s ease-in-out infinite;
   }
-
-  .landing-nudge {
-    animation: landing-nudge 1.6s ease-in-out infinite;
-  }
 }
 
-@keyframes landing-turn {
+@keyframes scroll-cue {
+  from {
+    transform: translateY(-100%);
+  }
   to {
-    transform: rotate(360deg);
+    transform: translateY(260%);
   }
 }
 
@@ -43,12 +103,86 @@
   }
 }
 
-@keyframes landing-nudge {
-  0%,
-  100% {
-    transform: translateY(0);
-  }
-  50% {
-    transform: translateY(-4px);
-  }
+/* A line on a document: brass while the AI reads it, red once it doesn't match. */
+.field::before,
+.field::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+
+.field::before {
+  background: var(--color-brass);
+  opacity: calc(var(--lit, 0) * 0.5 * (1 - var(--red, 0)));
+}
+
+.field::after {
+  border: 0.45cqw solid var(--color-seal-red);
+  background: rgb(178 58 43 / 0.14);
+  opacity: var(--red, 0);
+}
+
+/* A stop on the road lights up once the rail reaches it. */
+.road-dot::after {
+  content: "";
+  position: absolute;
+  inset: -2px;
+  border-radius: 9999px;
+  background: var(--color-brass);
+  transform: scale(var(--lit, 0));
+}
+
+.road-text {
+  opacity: calc(0.35 + 0.65 * var(--lit, 0));
+}
+
+/*
+ * The Rolodex. `--d` is the drum's position (0..6, dwelling on whole cards);
+ * each card knows its `--i`, so `--o` is how far it is from the front.
+ */
+.drum {
+  perspective: 1500px;
+  transform-style: preserve-3d;
+}
+
+.drum-card,
+.problem {
+  --o: calc(var(--d, 0) - var(--i));
+  --a: max(var(--o), calc(-1 * var(--o)));
+  /* Cards still to come (behind), and cards already flipped (fallen forward). */
+  --ahead: max(calc(-1 * var(--o)), 0);
+  --gone: max(var(--o), 0);
+}
+
+/*
+ * Hinged at the bottom like a real Rolodex: the cards to come lean back in a
+ * stack with their tabs showing, and a flipped card falls toward you.
+ */
+.drum-card {
+  transform-origin: 50% 100%;
+  transform: translate(-50%, -50%) translateY(calc(var(--ahead) * -1.5rem))
+    translateZ(calc(var(--ahead) * -4rem))
+    rotateX(calc(var(--ahead) * 4deg - var(--gone) * 105deg));
+  opacity: clamp(0, 3.4 - var(--ahead), 1);
+  backface-visibility: hidden;
+  will-change: transform;
+}
+
+.drum-shade {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: var(--color-ink);
+  opacity: clamp(0, var(--ahead) * 0.16, 0.5);
+}
+
+.problem {
+  opacity: clamp(0, 1 - var(--a) * 2.4, 1);
+  transform: translateY(calc(var(--o) * -1.4rem));
+}
+
+.stamp {
+  border-color: var(--ink);
+  color: var(--ink);
 }

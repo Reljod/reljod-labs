@@ -1,0 +1,192 @@
+"use client";
+
+import {
+  motion,
+  useMotionValueEvent,
+  useReducedMotion,
+  useTransform,
+} from "motion/react";
+import Link from "next/link";
+import { type CSSProperties, useState } from "react";
+import { Chapter, useChapterProgress } from "@/components/motion/chapter";
+import { Peel } from "@/components/motion/peel";
+import { BrowserFrame } from "@/components/showcase/browser-frame";
+import { Icon, IconTile } from "@/components/ui/icon";
+import { LiveBadge } from "@/components/ui/live-badge";
+import { demoProblems, sceneNumber } from "@/content/landing";
+import { liveDemos } from "@/content/projects";
+import { demoPreviews } from "./demo-previews";
+import "./landing.css";
+
+const COUNT = liveDemos.length;
+/** The drum turns over this part of the chapter. */
+const TURN = [0.06, 0.92] as const;
+
+const number = (index: number) => String(index + 1).padStart(2, "0");
+
+/**
+ * Card position on the drum for a chapter progress: it dwells on each card
+ * and flips quickly between them, like a Rolodex clicking over.
+ */
+export function drumPosition(progress: number): number {
+  const t = Math.min(
+    1,
+    Math.max(0, (progress - TURN[0]) / (TURN[1] - TURN[0])),
+  );
+  const x = t * (COUNT - 1);
+  const card = Math.min(COUNT - 2, Math.floor(x));
+  const r = x - card;
+  // Smootherstep: flat at both ends, so each card holds before the next flips.
+  return card + r * r * r * (r * (r * 6 - 15) + 10);
+}
+
+/** Seven problems: the live demos on a Rolodex that turns as you scroll. */
+export function RolodexChapter() {
+  return (
+    <Chapter
+      id="demos"
+      label="Seven problems I've built for"
+      length={4.3}
+      className="bg-limestone"
+      stageClassName="bg-limestone"
+    >
+      <Drum />
+    </Chapter>
+  );
+}
+
+function Drum() {
+  const progress = useChapterProgress();
+  const reduce = useReducedMotion();
+  const position = useTransform(progress, drumPosition);
+  const [active, setActive] = useState(0);
+  useMotionValueEvent(position, "change", (value) =>
+    setActive(Math.round(value)),
+  );
+
+  // Each number on the rail scrolls the page to that card.
+  function jump(index: number) {
+    const section = document.getElementById("demos");
+    if (!section) return;
+    const range = section.offsetHeight - (window.innerHeight - 66);
+    const p = TURN[0] + (index / (COUNT - 1)) * (TURN[1] - TURN[0]);
+    window.scrollTo({
+      top: section.offsetTop + p * range,
+      behavior: reduce ? "auto" : "smooth",
+    });
+  }
+
+  const demo = liveDemos[active];
+
+  return (
+    <motion.div
+      className="mx-auto flex h-full max-w-6xl flex-col gap-4 px-4 py-5 sm:px-6 lg:grid lg:grid-cols-[0.85fr_1.15fr] lg:items-center lg:gap-10 lg:py-10"
+      style={{ "--d": position } as unknown as CSSProperties}
+    >
+      <div>
+        <p className="eyebrow mb-2 text-ink-muted lg:mb-4">
+          {sceneNumber("demos")} · The projects
+        </p>
+        <h2 className="font-mono text-2xl leading-[1.1] font-bold uppercase sm:text-4xl">
+          <Peel
+            text="Seven problems I've built for."
+            timing={{ on: "scroll" }}
+          />
+        </h2>
+
+        <div
+          aria-live="polite"
+          className="relative mt-3 min-h-[3.25rem] sm:min-h-[4.5rem] lg:mt-8 lg:min-h-[9rem]"
+        >
+          {liveDemos.map((item, index) => (
+            <p
+              key={item.slug}
+              aria-hidden={index !== active}
+              className="problem absolute inset-x-0 top-0 text-base leading-snug sm:text-xl lg:text-[1.65rem] lg:leading-[1.25]"
+              style={{ "--i": index } as CSSProperties}
+            >
+              “{demoProblems[item.slug]}”
+            </p>
+          ))}
+        </div>
+
+        <nav
+          aria-label="Projects"
+          className="mt-2 flex flex-wrap items-center gap-1.5 lg:mt-6 lg:gap-2"
+        >
+          {liveDemos.map((item, index) => (
+            <button
+              key={item.slug}
+              type="button"
+              onClick={() => jump(index)}
+              aria-label={`Project ${number(index)}: ${item.title}`}
+              aria-current={index === active ? "true" : undefined}
+              className={`outline-box press flex size-9 items-center justify-center rounded-sm font-mono text-xs font-bold lg:size-10 lg:text-sm ${index === active ? "bg-ink text-paper" : "bg-paper"}`}
+            >
+              {number(index)}
+            </button>
+          ))}
+        </nav>
+        <Link
+          href={demo.href ?? "#everything"}
+          className="eyebrow mt-6 hidden items-center gap-2 font-bold text-federal-blue hover:underline lg:inline-flex"
+        >
+          Open {demo.title}
+          <Icon name="arrow" size={16} />
+        </Link>
+      </div>
+
+      <div className="drum relative min-h-0 flex-1 lg:h-[min(38rem,100%)] lg:flex-none">
+        {liveDemos.map((item, index) => (
+          <article
+            key={item.slug}
+            aria-hidden={index !== active}
+            className={`drum-card absolute top-1/2 left-1/2 w-[min(86vw,22rem)] sm:w-[min(80vw,28rem)] lg:w-[min(100%,31rem)] ${index === active ? "" : "pointer-events-none"}`}
+            style={{ "--i": index } as CSSProperties}
+          >
+            <span
+              className="absolute -top-[1.85rem] flex h-[1.85rem] items-center gap-2 border-2 border-ink border-b-0 bg-paper px-3 font-mono text-xs font-bold"
+              style={{ left: `${6 + index * 11}%` }}
+            >
+              {number(index)}
+            </span>
+            <div className="outline-box relative overflow-hidden bg-paper shadow-hard-lg">
+              <div className="flex items-center justify-between gap-3 border-ink border-b-2 px-4 py-2.5">
+                <h3 className="truncate font-mono text-sm font-bold uppercase sm:text-base">
+                  {item.title}
+                </h3>
+                <LiveBadge />
+              </div>
+              <Link
+                href={item.href ?? "#everything"}
+                tabIndex={index === active ? 0 : -1}
+                aria-label={`Open the ${item.title} demo`}
+                className="group block bg-limestone p-3 sm:p-4"
+              >
+                <BrowserFrame address={item.href ?? ""}>
+                  {Math.abs(index - active) <= 1 ? (
+                    demoPreviews[item.slug]?.(item)
+                  ) : (
+                    <div className="flex aspect-[960/726] items-center justify-center bg-marble">
+                      <IconTile name={item.icon} />
+                    </div>
+                  )}
+                </BrowserFrame>
+              </Link>
+              <p className="hidden px-4 pt-3 text-sm text-ink-muted sm:line-clamp-2">
+                {item.summary}
+              </p>
+              <p className="eyebrow flex items-center justify-between gap-2 px-4 py-3 text-ink-muted">
+                {item.sector}
+                <span className="flex items-center gap-1 font-bold text-federal-blue">
+                  Open <Icon name="arrow" size={14} />
+                </span>
+              </p>
+              <span aria-hidden="true" className="drum-shade" />
+            </div>
+          </article>
+        ))}
+      </div>
+    </motion.div>
+  );
+}

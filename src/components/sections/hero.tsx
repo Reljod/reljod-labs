@@ -1,4 +1,5 @@
 import type { ReactNode } from "react";
+import { Peel } from "@/components/motion/peel";
 import { ButtonLink } from "@/components/ui/button-link";
 import { Icon } from "@/components/ui/icon";
 import { profile } from "@/content/profile";
@@ -18,7 +19,10 @@ export function Hero({ aside }: { aside?: ReactNode }) {
             className="font-mono text-5xl leading-none font-bold tracking-[-0.02em] uppercase sm:text-6xl lg:text-display"
             {...source(sourcePath.headline)}
           >
-            {profile.headline}
+            <Peel
+              text={profile.headline}
+              timing={{ on: "mount", delay: 0.15, duration: 1.2 }}
+            />
           </h1>
           <p
             className="mt-8 max-w-xl text-xl leading-normal"

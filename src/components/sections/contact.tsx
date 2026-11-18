@@ -1,3 +1,4 @@
+import { Peel } from "@/components/motion/peel";
 import { ButtonLink } from "@/components/ui/button-link";
 import { Icon } from "@/components/ui/icon";
 import { contactPitch, profile } from "@/content/profile";
@@ -19,7 +20,7 @@ export function Contact() {
             id="contact-title"
             className="font-mono text-3xl leading-[1.15] font-bold uppercase sm:text-5xl"
           >
-            {contactPitch.heading}
+            <Peel text={contactPitch.heading} timing={{ on: "scroll" }} />
           </h2>
           <p className="mt-4 max-w-xl text-lg">{contactPitch.body}</p>
         </div>

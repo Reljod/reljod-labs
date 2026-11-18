@@ -1,10 +1,13 @@
 import { describe, expect, it } from "vitest";
+import { experience } from "./experience";
 import {
   demoProblems,
-  deskPages,
   highlightStories,
+  labFacts,
+  road,
   sceneNumber,
   scenes,
+  stamps,
 } from "./landing";
 import { highlights } from "./profile";
 import { liveDemos } from "./projects";
@@ -25,15 +28,24 @@ describe("landing copy", () => {
   it("numbers scenes in page order, with unique ids", () => {
     expect(new Set(scenes.map((scene) => scene.id)).size).toBe(scenes.length);
     expect(sceneNumber("top")).toBe("01");
-    expect(sceneNumber("contact")).toBe(String(scenes.length).padStart(2, "0"));
+    expect(sceneNumber("everything")).toBe(
+      String(scenes.length).padStart(2, "0"),
+    );
   });
-});
 
-describe("desk pages", () => {
-  it("gives every page five lines and three notes, so it fits the stage", () => {
-    for (const page of deskPages) {
-      expect(page.lines).toHaveLength(5);
-      expect(page.lines.filter((line) => line.note)).toHaveLength(3);
+  it("retells only jobs on the résumé, oldest first, with their start year", () => {
+    const companies = experience.map((job) => job.company);
+    for (const stop of road) expect(companies).toContain(stop.company);
+    expect(road).toHaveLength(experience.length);
+    for (const stop of road) {
+      const job = experience.find((entry) => entry.company === stop.company);
+      expect(job?.period).toContain(stop.year);
     }
+    const years = road.map((stop) => Number(stop.year));
+    expect([...years].sort()).toEqual(years);
+  });
+
+  it("stamps one word per lab fact", () => {
+    expect(stamps).toHaveLength(labFacts.length);
   });
 });

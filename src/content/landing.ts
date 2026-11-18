@@ -1,19 +1,17 @@
 /*
- * The landing page's words, written for someone outside tech: what the site
- * is, who made it and what each project does, in plain sentences. Every fact
- * about Reljod comes from `profile.ts`, `experience.ts` or `projects.ts`;
- * never add one that isn't there.
+ * Words for the landing page, written for a visitor who doesn't work in tech.
+ * Facts about Reljod come only from `profile.ts`, `experience.ts` and
+ * `projects.ts`; every document here is from the made-up Republic of Meridia.
  */
 
-/** The page's scenes, in order. The Index lists them and jumps to their ids. */
+/** The page's chapters, in order. The Index lists them and numbers them. */
 export const scenes = [
-  { id: "top", title: "The desk" },
-  { id: "who", title: "Who's at the desk" },
-  { id: "how", title: "What the AI does" },
-  { id: "demos", title: "The projects" },
-  { id: "bench", title: "Coming soon" },
-  { id: "lab", title: "What is reljod.com" },
-  { id: "contact", title: "Say hello" },
+  { id: "top", title: "Paperwork" },
+  { id: "how", title: "Up close" },
+  { id: "who", title: "Who's reading" },
+  { id: "demos", title: "Seven problems" },
+  { id: "lab", title: "What this site is" },
+  { id: "everything", title: "Everything, laid out" },
 ] as const;
 
 export type SceneId = (typeof scenes)[number]["id"];
@@ -26,93 +24,100 @@ export function sceneNumber(id: SceneId): string {
   );
 }
 
-export const desk = {
+export const opening = {
   eyebrow: "reljod.com · a one-person AI lab",
   lines: ["Banks run on paperwork.", "I build AI that reads it."],
   intro:
-    "I'm Reljod Oreta, a software engineer in Metro Manila. Every project on this site is a working AI helper for banks: it checks documents, finds names, answers questions, and shows you exactly where each answer came from.",
-  hint: "Tap the page and watch the AI read it.",
-  readHint: "Tap a note to see the line it came from.",
+    "I'm Reljod Oreta, a software engineer in Metro Manila. Every project here is a working AI helper for banks: it reads the documents, finds what matters, and shows a person exactly where.",
+  cue: "Scroll to watch it read",
+  pages: 500,
+  /** What a person still needs to see after the pile is read. */
+  flags: [
+    { text: "Name spelled two ways", page: 12 },
+    { text: "No signature", page: 87 },
+    { text: "Cash 40× the usual", page: 361 },
+  ],
 } as const;
 
-/** What the AI pins to the board: a plain fact, or something a person must look at. */
-export type DeskNote = { kind: "fact" | "flag"; text: string };
-export type DeskLine = { label: string; value: string; note?: DeskNote };
-/** A made-up Meridia document on the opening scene's clipboard. */
-export type DeskPage = { title: string; lines: DeskLine[] };
+/** One customer, two documents, compared by the AI. */
+export const upClose = {
+  captions: [
+    "Up close: a new customer sends an ID card and a utility bill.",
+    "The AI reads both, every line.",
+    "Then it checks them against each other.",
+    "Three things don't add up. It doesn't decide. It shows a person where to look.",
+  ],
+  idCard: {
+    name: "QUISON, AMARA T.",
+    born: "03 MAR 1991",
+    address: "12 Lantern Street",
+    expires: "14 AUG 2026",
+  },
+  bill: {
+    name: "Amara T. Quizon",
+    address: "21 Lantern Street",
+    period: "October 2026",
+    due: "MRD 1,284.50",
+  },
+  findings: {
+    name: "Name spelled two ways",
+    address: "House number differs",
+    expiry: "ID expired in August",
+  },
+  verdict: "Hold · 3 to check",
+} as const;
 
-/** Every page has five lines, three of them noted, so each fits the stage. */
-export const deskPages: DeskPage[] = [
+export const who = {
+  lines: [
+    "Hi, I'm Reljod.",
+    "Seven years building software.",
+    "Three of them inside a digital bank.",
+    "Now I build AI that does the checking, and shows its work.",
+  ],
+} as const;
+
+/**
+ * The road here, oldest first, in plain words. Each stop retells an entry in
+ * `experience.ts`; `landing.test.ts` checks every company is one of them.
+ */
+export const road = [
   {
-    title: "Account opening form",
-    lines: [
-      {
-        label: "Full name",
-        value: "Amara T. Quizon",
-        note: { kind: "fact", text: "New customer: Amara T. Quizon." },
-      },
-      { label: "Date of birth", value: "03 MAR 1991" },
-      {
-        label: "Home address",
-        value: "21 Lantern Street",
-        note: { kind: "fact", text: "Lives at 21 Lantern Street." },
-      },
-      { label: "Occupation", value: "Florist" },
-      {
-        label: "Signature",
-        value: "",
-        note: { kind: "flag", text: "Not signed. Send it back first." },
-      },
-    ],
+    year: "2019",
+    company: "Yuro Product Development and Design Solutions",
+    short: "Yuro",
+    what: "Taught a camera to call lines in tennis.",
   },
   {
-    title: "October statement",
-    lines: [
-      {
-        label: "Account holder",
-        value: "Brightwater Holdings",
-        note: { kind: "fact", text: "Account of Brightwater Holdings." },
-      },
-      { label: "Opening balance", value: "MRD 12,400" },
-      {
-        label: "12 Oct · cash in",
-        value: "MRD 480,000",
-        note: {
-          kind: "flag",
-          text: "Cash 40 times the usual. Ask where from.",
-        },
-      },
-      {
-        label: "19 Oct · sent abroad",
-        value: "MRD 470,000",
-        note: { kind: "flag", text: "Nearly all of it left a week later." },
-      },
-      { label: "Closing balance", value: "MRD 22,150" },
-    ],
+    year: "2020",
+    company: "FactSet Philippines, Inc.",
+    short: "FactSet",
+    what: "Moved a global financial data company's old pipelines onto new code.",
   },
   {
-    title: "Pension claim",
-    lines: [
-      {
-        label: "Member",
-        value: "Halvard Okonjo",
-        note: { kind: "fact", text: "Claim for Halvard Okonjo." },
-      },
-      { label: "Employer", value: "Selene Port Trust" },
-      {
-        label: "Retires on",
-        value: "01 DEC 2026",
-        note: { kind: "fact", text: "Pension starts 1 December 2026." },
-      },
-      { label: "Years of service", value: "31" },
-      {
-        label: "Employer's stamp",
-        value: "",
-        note: { kind: "flag", text: "Employer hasn't stamped it yet." },
-      },
-    ],
+    year: "2022",
+    company: "Maya Philippines, Inc.",
+    short: "Maya",
+    what: "Inside a digital bank: replaced an outside ID-check vendor with our own AI. 90% cheaper.",
   },
-];
+  {
+    year: "2025",
+    company: "Spark Intelligence, Inc.",
+    short: "Spark Intelligence",
+    what: "Built an AI product many companies share.",
+  },
+  {
+    year: "2025",
+    company: "Cloud Employee",
+    short: "Cloud Employee",
+    what: "Designed AI agents that set aside 95–97% of ineligible records before the costly step.",
+  },
+  {
+    year: "2026",
+    company: "Acquire Intelligence",
+    short: "Acquire Intelligence",
+    what: "Today: building AI for clients, from the first question to the shipped system.",
+  },
+] as const;
 
 /** Each figure in `highlights`, told as a short story, by its label. */
 export const highlightStories: Record<string, string> = {
@@ -125,31 +130,6 @@ export const highlightStories: Record<string, string> = {
   "Ineligible records screened before LLM spend":
     "A team of AI agents I designed sets aside the records that don't qualify, before a paid AI model spends time writing a report on them.",
 };
-
-export const who = {
-  lines: [
-    "Hi, I'm Reljod.",
-    "Seven years building software.",
-    "Three of them inside a digital bank.",
-    "Now I build AI that does the checking, and shows its work.",
-  ],
-  flipHint: "Tap a card to hear the story behind the number.",
-} as const;
-
-/** The lens game: the three things a careful reviewer should catch. */
-export const lensFindings = [
-  {
-    id: "name",
-    label: "Name spelled two ways: Quison on the ID, Quizon on the bill.",
-  },
-  {
-    id: "address",
-    label: "House number differs: 12 on the ID, 21 on the bill.",
-  },
-  { id: "expiry", label: "The ID card expired on 14 Aug 2026." },
-] as const;
-
-export type LensFindingId = (typeof lensFindings)[number]["id"];
 
 /**
  * Each live demo as a problem someone outside tech would recognise, by
@@ -185,3 +165,6 @@ export const labFacts = [
     body: "Every answer points at the page, the line or the second of video it came from, so a person can check it.",
   },
 ] as const;
+
+/** What reljod.com is, stamped onto a Meridia passport one fact at a time. */
+export const stamps = ["REAL AI", "SPECIMEN", "SHOWN WORK"] as const;
