@@ -1,13 +1,13 @@
 "use client";
 
 import { motion } from "motion/react";
-import { type ReactNode, useEffect, useMemo, useState } from "react";
+import { type ReactNode, useMemo, useState } from "react";
+import { apiPath } from "../domain/api";
 import type {
   DocumentOverview,
   DocumentSource,
   Replay,
 } from "../domain/contract";
-import { documentOverview } from "../server/actions";
 import { ComparisonView } from "./comparison";
 import { DocReader } from "./doc-reader";
 import { clockText, usd } from "./format";
@@ -16,10 +16,13 @@ import { replayPage } from "./marks";
 import { SOFT } from "./motion-kit";
 import { PageStack } from "./page-stack";
 import { plural } from "./plain";
+import { PREVIEW_MAX_AGE_MS } from "./read-cache";
 import { RunResult } from "./result";
 import { isOver } from "./run-view";
+import { RunSkeleton } from "./skeletons";
 import { Button, cx, ErrorNote, useWrite } from "./ui";
 import { serverLoader } from "./use-pages";
+import { useCachedRead } from "./use-read";
 import type { RunState } from "./use-run";
 
 /** A Document the page can open: a demo one or an Upload. */
@@ -74,20 +77,12 @@ function Header({
 
 /** The Document's overview (names per page, every name), or null until it loads. */
 function useOverview(source: DocumentSource) {
-  const [overview, setOverview] = useState<DocumentOverview | null>(null);
-  useEffect(() => {
-    let live = true;
-    documentOverview({ source }).then(
-      (result) => {
-        if (live && !("error" in result)) setOverview(result);
-      },
-      () => undefined,
-    );
-    return () => {
-      live = false;
-    };
-  }, [source]);
-  return overview;
+  const { data } = useCachedRead<DocumentOverview>(
+    apiPath.overview(source),
+    PREVIEW_MAX_AGE_MS,
+    "The names could not load.",
+  );
+  return data ?? null;
 }
 
 /**
@@ -198,7 +193,7 @@ export function Workspace({
           }
         />
       ) : run.loading ? (
-        <div className="h-96 animate-pulse rounded-sm bg-ink/80" />
+        <RunSkeleton label="Loading the run" />
       ) : run.missing ? (
         <ErrorNote>
           That run isn't on your account, or it can't load right now.

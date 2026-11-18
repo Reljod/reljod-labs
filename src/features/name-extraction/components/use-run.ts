@@ -1,8 +1,9 @@
 "use client";
 
 import { useEffect, useReducer } from "react";
+import { apiPath } from "../domain/api";
 import type { RunEvent } from "../domain/contract";
-import { getRun } from "../server/actions";
+import { ApiError, api } from "./api";
 import {
   emptyRunView,
   foldEvents,
@@ -80,7 +81,7 @@ export function useRun(runId: string | null): RunState {
       ) {
         try {
           const response = await fetch(
-            `/api/name-extraction/runs/${encodeURIComponent(runId ?? "")}/events?after=${Math.max(0, seen - 1)}`,
+            apiPath.runEvents(runId ?? "", Math.max(0, seen - 1)),
             { signal: controller.signal, cache: "no-store" },
           );
           if (!response.ok || !response.body)
@@ -116,7 +117,13 @@ export function useRun(runId: string | null): RunState {
 
     void (async () => {
       try {
-        const detail = await getRun(runId);
+        const detail = await api
+          .run(runId, { signal: controller.signal })
+          .catch((error: unknown) => {
+            // 404: not this Owner's Run. Anything else: follow the stream.
+            if (error instanceof ApiError && error.status === 404) return null;
+            throw error;
+          });
         if (controller.signal.aborted) return;
         if (!detail) {
           dispatch({ type: "missing" });

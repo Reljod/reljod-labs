@@ -3,6 +3,7 @@
 import { LayoutGroup } from "motion/react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { DemoBar, demoBarControlClass } from "@/components/demo/demo-bar";
+import { apiPath } from "../domain/api";
 import {
   type CorpusCard,
   DEFAULT_MODELS,
@@ -12,20 +13,17 @@ import {
   type RulebookVersion,
   type RunSummary,
 } from "../domain/contract";
-import {
-  listCorpus,
-  listRuns,
-  rulebookHistory,
-  startRun,
-  stopRun,
-} from "../server/actions";
+import { startRun, stopRun } from "../server/actions";
+import { api } from "./api";
 import { Hero } from "./hero";
+import { isRulebookPreview, PREVIEW_MAX_AGE_MS, reads } from "./read-cache";
 import { isOver } from "./run-view";
 import { Shelf, stackId } from "./shelf";
 import "./sieve.css";
 import { friendly } from "./ui";
 import { UnderTheHood } from "./under-the-hood";
 import type { Uploaded } from "./upload-zone";
+import { prefetchFirstPages } from "./use-pages";
 import { useRun } from "./use-run";
 import { type OpenDoc, ReplayComparison, Workspace } from "./workspace";
 
@@ -50,41 +48,85 @@ const docOfCard = (card: CorpusCard): OpenDoc => ({
   stack: stackId(card.id),
 });
 
+/** Starts loading what opening a demo Document shows first: its names and first pages. */
+function prefetchDocument(card: CorpusCard) {
+  const source = { kind: "corpus", corpusId: card.id } as const;
+  void reads
+    .get(apiPath.overview(source), PREVIEW_MAX_AGE_MS)
+    .catch(() => undefined);
+  prefetchFirstPages(source, card.pages);
+}
+
+/** Starts loading a finished Run's result alongside the Run itself. */
+function prefetchResult(summary: RunSummary) {
+  if (!isOver(summary.status)) return;
+  void reads
+    .get(
+      summary.source.kind === "corpus"
+        ? apiPath.comparison(summary.id)
+        : apiPath.overview(summary.source, summary.id),
+    )
+    .catch(() => undefined);
+  prefetchFirstPages(summary.source, summary.pages, summary.id);
+}
+
 /**
  * Sieve, the Name Extraction demo. Shows before it tells: a recorded run
  * plays first, then the demo documents to open, preview and run, and the
  * result checked against the answer key. Depth lives under the hood.
  */
-export function Sieve() {
+export function Sieve({
+  corpus,
+  initialRuns,
+  initialRulebooks,
+}: {
+  /** The demo Documents: seed data, rendered with the page. */
+  corpus: CorpusCard[];
+  /** The Owner's Runs, read with the page; null if they could not be. */
+  initialRuns: RunSummary[] | null;
+  /** The Owner's Rulebook versions, read with the page; null if they could not be. */
+  initialRulebooks: RulebookVersion[] | null;
+}) {
   const [tab, setTab] = useState<Tab>("demo");
   const [stage, setStage] = useState<Stage>({ kind: "home" });
   const [replay, setReplay] = useState<Replay | null>(null);
-  const [corpus, setCorpus] = useState<CorpusCard[] | null>(null);
-  const [corpusError, setCorpusError] = useState<string | null>(null);
-  const [runs, setRuns] = useState<RunSummary[] | null>(null);
-  const [runsError, setRunsError] = useState<string | null>(null);
-  const [rulebooks, setRulebooks] = useState<RulebookVersion[]>([]);
+  const [runs, setRuns] = useState<RunSummary[] | null>(initialRuns);
+  const [runsError, setRunsError] = useState<string | null>(
+    initialRuns ? null : "Past runs could not load.",
+  );
+  const [rulebooks, setRulebooks] = useState<RulebookVersion[]>(
+    initialRulebooks ?? [],
+  );
   const [models, setModels] = useState<ModelChoice>(DEFAULT_MODELS);
   const uploadInput = useRef<HTMLInputElement>(null);
   const runId = stage.kind === "doc" ? stage.runId : null;
   const run = useRun(runId);
 
+  // One list refresh at a time: a newer one aborts the older, so a slow
+  // answer never lands over a fresher one.
+  const runsRequest = useRef<AbortController | null>(null);
   const refreshRuns = useCallback(async () => {
+    runsRequest.current?.abort();
+    const controller = new AbortController();
+    runsRequest.current = controller;
     try {
-      setRuns(await listRuns());
+      const next = await api.runs({ signal: controller.signal });
+      setRuns(next);
       setRunsError(null);
     } catch (error) {
-      setRunsError(friendly(error, "Past runs could not load."));
+      if (!controller.signal.aborted)
+        setRunsError(friendly(error, "Past runs could not load."));
     }
   }, []);
 
-  useEffect(() => {
-    listCorpus().then(setCorpus, (error: unknown) =>
-      setCorpusError(friendly(error, "The demo documents could not load.")),
-    );
-    void refreshRuns();
-    rulebookHistory().then(setRulebooks, () => undefined);
-  }, [refreshRuns]);
+  // The page's read cache lives as long as Sieve does.
+  useEffect(
+    () => () => {
+      runsRequest.current?.abort();
+      reads.clear();
+    },
+    [],
+  );
 
   const over = isOver(run.view.status);
   useEffect(() => {
@@ -142,9 +184,10 @@ export function Sieve() {
   };
 
   const openRun = (summary: RunSummary) => {
+    prefetchResult(summary);
     const card =
       summary.source.kind === "corpus"
-        ? corpus?.find(
+        ? corpus.find(
             (item) =>
               item.id === (summary.source as { corpusId: string }).corpusId,
           )
@@ -235,7 +278,7 @@ export function Sieve() {
               <ReplayComparison
                 replay={replay}
                 onRunIt={() => {
-                  const card = corpus?.find(
+                  const card = corpus.find(
                     (item) => item.id === replay.corpusId,
                   );
                   if (card)
@@ -261,7 +304,7 @@ export function Sieve() {
             stage.kind === "home" ? (
               <Shelf
                 corpus={corpus}
-                error={corpusError}
+                onIntent={prefetchDocument}
                 onOpen={(card) =>
                   go({ kind: "doc", doc: docOfCard(card), runId: null })
                 }
@@ -293,8 +336,16 @@ export function Sieve() {
             onModels={setModels}
             onOpenRun={openRun}
             onRefreshRuns={() => void refreshRuns()}
-            onRulesSaved={() => {
-              rulebookHistory().then(setRulebooks, () => undefined);
+            rulebooks={rulebooks}
+            onRulesSaved={(saved) => {
+              // Previews mark names under the current Rulebook: drop the old ones.
+              reads.forget(isRulebookPreview);
+              // The saved version shows at once; the list then comes from the server.
+              setRulebooks((list) => [
+                saved,
+                ...list.filter((item) => item.version !== saved.version),
+              ]);
+              api.rulebooks().then(setRulebooks, () => undefined);
             }}
           />
         ) : null}
