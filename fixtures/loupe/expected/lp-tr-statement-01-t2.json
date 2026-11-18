@@ -1,0 +1,350 @@
+{
+ "id": "lp-tr-statement-01-t2",
+ "format": "pdf",
+ "kindGuess": "bank_statement",
+ "pages": [
+  {
+   "page": 1,
+   "width": 1131,
+   "height": 1600
+  },
+  {
+   "page": 2,
+   "width": 1131,
+   "height": 1600
+  }
+ ],
+ "measurements": [
+  {
+   "metric": "pdf.incremental_updates",
+   "value": 0.0,
+   "page": 0,
+   "box": null,
+   "detail": "The file was written in one save: nothing was appended after it.",
+   "facts": {
+    "sections": 0.0,
+    "objects": 0.0
+   },
+   "check": "pdf_structure"
+  },
+  {
+   "metric": "pdf.editor_producer",
+   "value": 0.0,
+   "page": 0,
+   "box": null,
+   "detail": "The file names 'PSSB CoreStatements 12.1' as the software that wrote it, which is not on the list of editing tools.",
+   "facts": {
+    "producer": "PSSB CoreStatements 12.1",
+    "creator": "Port Selene Savings Bank"
+   },
+   "check": "pdf_structure"
+  },
+  {
+   "metric": "pdf.modified_gap_hours",
+   "value": 0.0,
+   "page": 0,
+   "box": null,
+   "detail": "Last modified 0.0 hours after it was created (2026-04-30 08:14 to 2026-04-30 08:14).",
+   "facts": {
+    "created": "2026-04-30 08:14:00",
+    "modified": "2026-04-30 08:14:00"
+   },
+   "check": "pdf_structure"
+  },
+  {
+   "metric": "pdf.covered_text",
+   "value": 0.0,
+   "page": 0,
+   "box": null,
+   "detail": "No text is hidden under an opaque shape on 2 page(s).",
+   "check": "pdf_overpaint"
+  },
+  {
+   "metric": "glyph.font_outlier",
+   "value": 0.0,
+   "page": 1,
+   "box": [
+    0.06723,
+    0.03444,
+    0.46121,
+    0.05701
+   ],
+   "detail": "Nothing stands out among 142 runs; the largest value is 0.00 at 'Port Selene Savings Bank'.",
+   "facts": {
+    "text": "Port Selene Savings Bank",
+    "font": "LiberationSans-Bold",
+    "size": 19.0,
+    "peerFont": "LiberationSans-Bold",
+    "peerSize": 13.0
+   },
+   "check": "glyphs"
+  },
+  {
+   "metric": "glyph.size_delta_pt",
+   "value": 0.2,
+   "page": 1,
+   "box": [
+    0.6958,
+    0.16514,
+    0.77638,
+    0.1756
+   ],
+   "detail": "'30 Apr 2026' is 8.80 pt, 0.20 pt off the runs it sits with.",
+   "facts": {
+    "text": "30 Apr 2026",
+    "font": "LiberationSans",
+    "size": 8.8,
+    "peerFont": "LiberationSans",
+    "peerSize": 8.8
+   },
+   "layer": "glyphs-p1.png",
+   "layerKind": "marks",
+   "check": "glyphs"
+  },
+  {
+   "metric": "glyph.baseline_offset_pt",
+   "value": 0.0,
+   "page": 1,
+   "box": [
+    0.06723,
+    0.03444,
+    0.46121,
+    0.05701
+   ],
+   "detail": "Nothing stands out among 142 runs; the largest value is 0.00 at 'Port Selene Savings Bank'.",
+   "facts": {
+    "text": "Port Selene Savings Bank",
+    "font": "LiberationSans-Bold",
+    "size": 19.0,
+    "peerFont": "LiberationSans-Bold",
+    "peerSize": 13.0
+   },
+   "check": "glyphs"
+  },
+  {
+   "metric": "glyph.spacing_outlier",
+   "value": 0.0,
+   "page": 1,
+   "box": [
+    0.06723,
+    0.03444,
+    0.46121,
+    0.05701
+   ],
+   "detail": "Nothing stands out among 142 runs; the largest value is 0.00 at 'Port Selene Savings Bank'.",
+   "facts": {
+    "text": "Port Selene Savings Bank",
+    "font": "LiberationSans-Bold",
+    "size": 19.0,
+    "peerFont": "LiberationSans-Bold",
+    "peerSize": 13.0
+   },
+   "check": "glyphs"
+  },
+  {
+   "metric": "glyph.color_delta",
+   "value": 0.0,
+   "page": 1,
+   "box": [
+    0.06723,
+    0.03444,
+    0.46121,
+    0.05701
+   ],
+   "detail": "Nothing stands out among 142 runs; the largest value is 0.00 at 'Port Selene Savings Bank'.",
+   "facts": {
+    "text": "Port Selene Savings Bank",
+    "font": "LiberationSans-Bold",
+    "size": 19.0,
+    "peerFont": "LiberationSans-Bold",
+    "peerSize": 13.0
+   },
+   "check": "glyphs"
+  },
+  {
+   "metric": "glyph.font_outlier",
+   "value": 0.0,
+   "page": 2,
+   "box": [
+    0.06723,
+    0.05238,
+    0.54818,
+    0.06426
+   ],
+   "detail": "Nothing stands out among 35 runs; the largest value is 0.00 at 'Port Selene Savings Bank - statement of '.",
+   "facts": {
+    "text": "Port Selene Savings Bank - statement of account, continued",
+    "font": "LiberationSans-Bold",
+    "size": 10.0,
+    "peerFont": "LiberationSans",
+    "peerSize": 8.2
+   },
+   "check": "glyphs"
+  },
+  {
+   "metric": "glyph.size_delta_pt",
+   "value": 0.0,
+   "page": 2,
+   "box": [
+    0.06723,
+    0.05238,
+    0.54818,
+    0.06426
+   ],
+   "detail": "Nothing stands out among 35 runs; the largest value is 0.00 at 'Port Selene Savings Bank - statement of '.",
+   "facts": {
+    "text": "Port Selene Savings Bank - statement of account, continued",
+    "font": "LiberationSans-Bold",
+    "size": 10.0,
+    "peerFont": "LiberationSans",
+    "peerSize": 8.2
+   },
+   "check": "glyphs"
+  },
+  {
+   "metric": "glyph.baseline_offset_pt",
+   "value": 0.0,
+   "page": 2,
+   "box": [
+    0.06723,
+    0.05238,
+    0.54818,
+    0.06426
+   ],
+   "detail": "Nothing stands out among 35 runs; the largest value is 0.00 at 'Port Selene Savings Bank - statement of '.",
+   "facts": {
+    "text": "Port Selene Savings Bank - statement of account, continued",
+    "font": "LiberationSans-Bold",
+    "size": 10.0,
+    "peerFont": "LiberationSans",
+    "peerSize": 8.2
+   },
+   "check": "glyphs"
+  },
+  {
+   "metric": "glyph.spacing_outlier",
+   "value": 0.0,
+   "page": 2,
+   "box": [
+    0.06723,
+    0.05238,
+    0.54818,
+    0.06426
+   ],
+   "detail": "Nothing stands out among 35 runs; the largest value is 0.00 at 'Port Selene Savings Bank - statement of '.",
+   "facts": {
+    "text": "Port Selene Savings Bank - statement of account, continued",
+    "font": "LiberationSans-Bold",
+    "size": 10.0,
+    "peerFont": "LiberationSans",
+    "peerSize": 8.2
+   },
+   "check": "glyphs"
+  },
+  {
+   "metric": "glyph.color_delta",
+   "value": 0.0,
+   "page": 2,
+   "box": [
+    0.06723,
+    0.05238,
+    0.54818,
+    0.06426
+   ],
+   "detail": "Nothing stands out among 35 runs; the largest value is 0.00 at 'Port Selene Savings Bank - statement of '.",
+   "facts": {
+    "text": "Port Selene Savings Bank - statement of account, continued",
+    "font": "LiberationSans-Bold",
+    "size": 10.0,
+    "peerFont": "LiberationSans",
+    "peerSize": 8.2
+   },
+   "check": "glyphs"
+  },
+  {
+   "metric": "arith.balance_break",
+   "value": 0.0,
+   "page": 1,
+   "box": [
+    0.63173,
+    0.23481,
+    0.70042,
+    0.24728
+   ],
+   "detail": "38 figure(s) recomputed and all agree; the last is 6,870.78 against 6,870.78.",
+   "facts": {
+    "printed": 6870.78,
+    "computed": 6870.78,
+    "checked": 38.0
+   },
+   "check": "arithmetic"
+  },
+  {
+   "metric": "format.style_break",
+   "value": 0.0,
+   "page": 0,
+   "box": null,
+   "detail": "Dates and figures are formatted alike within their columns.",
+   "check": "dates_formats"
+  },
+  {
+   "metric": "format.date_anomaly",
+   "value": 1.0,
+   "page": 2,
+   "box": [
+    0.07731,
+    0.18809,
+    0.15894,
+    0.19806
+   ],
+   "detail": "The entry dated 2026-05-09 lies outside the document's own period, 2026-04-01 to 2026-04-30.",
+   "facts": {
+    "text": "09 May 2026"
+   },
+   "layer": "dates-p2.png",
+   "layerKind": "marks",
+   "check": "dates_formats"
+  },
+  {
+   "metric": "id.checksum_invalid",
+   "value": 0.0,
+   "page": 0,
+   "box": null,
+   "detail": "2 number(s) with check digits read; all pass.",
+   "check": "checksums"
+  }
+ ],
+ "checks": [
+  {
+   "check": "pdf_structure",
+   "ms": 2,
+   "measurements": 3
+  },
+  {
+   "check": "pdf_overpaint",
+   "ms": 3,
+   "measurements": 1
+  },
+  {
+   "check": "glyphs",
+   "ms": 134,
+   "measurements": 10
+  },
+  {
+   "check": "arithmetic",
+   "ms": 2,
+   "measurements": 1
+  },
+  {
+   "check": "dates_formats",
+   "ms": 63,
+   "measurements": 2
+  },
+  {
+   "check": "checksums",
+   "ms": 0,
+   "measurements": 1
+  }
+ ],
+ "toolkitMs": 352
+}

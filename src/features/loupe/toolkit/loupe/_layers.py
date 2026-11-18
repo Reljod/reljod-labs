@@ -12,11 +12,12 @@ from PIL import Image, ImageDraw, ImageFont
 
 from . import _ctx
 
-INK = (26, 26, 26)
-VERMILION = (217, 56, 30)
-AMBER = (232, 163, 23)
-BLUE = (31, 58, 138)
-PAPER = (251, 247, 238)
+INK = (20, 33, 61)
+VERMILION = (178, 58, 43)  # seal red
+AMBER = (217, 168, 78)  # brass
+BLUE = (29, 78, 137)
+PAPER = (255, 255, 255)
+MARBLE = (245, 241, 232)
 LAYER_WIDTH = 1000
 MAX_BYTES = 150_000
 
@@ -83,7 +84,7 @@ def heat_layer(name: str, intensity, page: int, boxes=None) -> str:
     a = np.nan_to_num(np.asarray(intensity, dtype=np.float32), nan=0.0)
     a = np.clip(a, 0, 1)
     a = cv2.resize(a, (W, H), interpolation=cv2.INTER_CUBIC if min(a.shape) > 3 else cv2.INTER_LINEAR)
-    a = np.clip(cv2.GaussianBlur(a, (0, 0), W * 0.006), 0, 1)
+    a = np.clip(cv2.GaussianBlur(a, (0, 0), W * 0.004), 0, 1)
     t = np.clip((a - 0.10) / 0.90, 0, 1)
     s = t * t * (3 - 2 * t)
     rgb = np.empty((H, W, 3), np.float32)
@@ -96,7 +97,7 @@ def heat_layer(name: str, intensity, page: int, boxes=None) -> str:
             x0, y0, x1, y1 = _px(b, W, H)
             cv2.rectangle(line, (x0 - 3, y0 - 3), (x1 + 3, y1 + 3), 255, 2, cv2.LINE_AA)
     else:
-        mask = (a > 0.5).astype(np.uint8)
+        mask = (a > 0.35).astype(np.uint8)
         contours, _ = cv2.findContours(mask, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_NONE)
         contours = [c for c in contours if cv2.contourArea(c) >= 40]
         cv2.drawContours(line, contours, -1, 255, 2, cv2.LINE_AA)
@@ -121,7 +122,7 @@ def _tag(draw: ImageDraw.ImageDraw, x: int, y: int, text: str, W: int, color=VER
 
 
 def mark_layer(name: str, page: int, boxes, labels=None, color=VERMILION) -> str:
-    """Outlines each box (0..1) in 2px vermilion with a light hatch, and an optional small tag."""
+    """Outlines each box (0..1) in 2px seal red with a light hatch, and an optional small tag."""
     W, H = layer_size(page)
     im = Image.new("RGBA", (W, H), (0, 0, 0, 0))
     hatch = Image.new("RGBA", (W, H), (0, 0, 0, 0))

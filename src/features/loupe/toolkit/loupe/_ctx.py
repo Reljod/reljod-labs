@@ -1,6 +1,6 @@
 """Where the Document and the outputs live. Everything comes from
 `configure()` (the CLI calls it) or the environment: LOUPE_WORK (default
-/work) and LOUPE_OUT (default <work>/out/run)."""
+/tmp/loupe) and LOUPE_OUT (default <work>/out/run)."""
 from __future__ import annotations
 
 import json
@@ -19,7 +19,7 @@ def configure(work: str | None = None, out: str | None = None) -> None:
 
 
 def work() -> str:
-    return _state["work"] or os.environ.get("LOUPE_WORK", "/work")
+    return _state["work"] or os.environ.get("LOUPE_WORK", "/tmp/loupe")
 
 
 def out_dir() -> str:

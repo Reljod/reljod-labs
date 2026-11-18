@@ -20,7 +20,7 @@ def _box(s):
 def main(argv=None) -> int:
     ap = argparse.ArgumentParser(prog="python -m loupe")
     sub = ap.add_subparsers(dest="cmd", required=True)
-    default_work = os.environ.get("LOUPE_WORK", "/work")
+    default_work = os.environ.get("LOUPE_WORK", "/tmp/loupe")
     p = sub.add_parser("prepare")
     p.add_argument("--doc", required=True)
     p.add_argument("--work", default=default_work)
@@ -28,7 +28,6 @@ def main(argv=None) -> int:
     p.add_argument("--work", default=default_work)
     p.add_argument("--kind", default=None)
     p.add_argument("--out", required=True)
-    p.add_argument("--editors", default=None, help="JSON list of editing-tool names")
     p = sub.add_parser("check")
     p.add_argument("check")
     p.add_argument("--work", default=default_work)
@@ -36,7 +35,6 @@ def main(argv=None) -> int:
     p.add_argument("--page", type=int, default=None)
     p.add_argument("--box", default=None)
     p.add_argument("--kind", default=None)
-    p.add_argument("--editors", default=None)
     p = sub.add_parser("crop")
     p.add_argument("--work", default=default_work)
     p.add_argument("--page", type=int, default=1)
@@ -69,14 +67,13 @@ def main(argv=None) -> int:
             print(json.dumps(crop(a.page, _box(a.box), a.out, a.max)))
             return 0
         os.makedirs(a.out, exist_ok=True)
-        editors = json.loads(a.editors) if a.editors else None
         if a.cmd == "sweep":
-            res = checks.sweep(kind=a.kind, editors=editors)
+            res = checks.sweep(kind=a.kind)
         else:
             if a.check not in checks.REGISTRY:
                 print(f"unknown check {a.check!r}; checks: {', '.join(checks.REGISTRY)}", file=sys.stderr)
                 return 2
-            res = checks.run_one(a.check, page=a.page, box=_box(a.box), kind=a.kind, editors=editors)
+            res = checks.run_one(a.check, page=a.page, box=_box(a.box), kind=a.kind)
         with open(os.path.join(a.out, "measurements.json"), "w") as f:
             json.dump(res, f)
         print(

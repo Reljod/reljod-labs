@@ -1,0 +1,455 @@
+{
+ "id": "lp-tr-invoice-01-t2",
+ "format": "pdf",
+ "kindGuess": "invoice",
+ "pages": [
+  {
+   "page": 1,
+   "width": 1131,
+   "height": 1600
+  }
+ ],
+ "measurements": [
+  {
+   "metric": "pdf.incremental_updates",
+   "value": 0.0,
+   "page": 0,
+   "box": null,
+   "detail": "The file was written in one save: nothing was appended after it.",
+   "facts": {
+    "sections": 0.0,
+    "objects": 0.0
+   },
+   "check": "pdf_structure"
+  },
+  {
+   "metric": "pdf.editor_producer",
+   "value": 0.0,
+   "page": 0,
+   "box": null,
+   "detail": "The file names 'Saltmarsh Ledger Invoicing 6.2' as the software that wrote it, which is not on the list of editing tools.",
+   "facts": {
+    "producer": "Saltmarsh Ledger Invoicing 6.2",
+    "creator": "Saltmarsh Print Works"
+   },
+   "check": "pdf_structure"
+  },
+  {
+   "metric": "pdf.modified_gap_hours",
+   "value": 0.0,
+   "page": 0,
+   "box": null,
+   "detail": "Last modified 0.0 hours after it was created (2026-05-14 09:15 to 2026-05-14 09:15).",
+   "facts": {
+    "created": "2026-05-14 09:15:00",
+    "modified": "2026-05-14 09:15:00"
+   },
+   "check": "pdf_structure"
+  },
+  {
+   "metric": "pdf.covered_text",
+   "value": 0.0,
+   "page": 0,
+   "box": null,
+   "detail": "No text is hidden under an opaque shape on 1 page(s).",
+   "check": "pdf_overpaint"
+  },
+  {
+   "metric": "glyph.font_outlier",
+   "value": 1.0,
+   "page": 1,
+   "box": [
+    0.86434,
+    0.27529,
+    0.91933,
+    0.2864
+   ],
+   "detail": "'850.00' is set in BitstreamVeraSans-Roman while the runs it sits with use LiberationSans (score 1.00; 3 on its line, 6 in its column).",
+   "facts": {
+    "text": "850.00",
+    "font": "BitstreamVeraSans-Roman",
+    "size": 9.35,
+    "peerFont": "LiberationSans",
+    "peerSize": 9.0
+   },
+   "layer": "glyphs-p1.png",
+   "layerKind": "marks",
+   "check": "glyphs"
+  },
+  {
+   "metric": "glyph.font_outlier",
+   "value": 1.0,
+   "page": 1,
+   "box": [
+    0.84785,
+    0.37962,
+    0.91933,
+    0.39097
+   ],
+   "detail": "'1,441.72' is set in BitstreamVeraSans-Roman while the runs it sits with use BitstreamVeraSans-Roman (score 1.00; 1 on its line, 6 in its column).",
+   "facts": {
+    "text": "1,441.72",
+    "font": "BitstreamVeraSans-Roman",
+    "size": 9.55,
+    "peerFont": "BitstreamVeraSans-Roman",
+    "peerSize": 9.35
+   },
+   "layer": "glyphs-p1.png",
+   "layerKind": "marks",
+   "check": "glyphs"
+  },
+  {
+   "metric": "glyph.font_outlier",
+   "value": 1.0,
+   "page": 1,
+   "box": [
+    0.86317,
+    0.40219,
+    0.91933,
+    0.41353
+   ],
+   "detail": "'173.01' is set in BitstreamVeraSans-Roman while the runs it sits with use BitstreamVeraSans-Roman (score 1.00; 1 on its line, 6 in its column).",
+   "facts": {
+    "text": "173.01",
+    "font": "BitstreamVeraSans-Roman",
+    "size": 9.55,
+    "peerFont": "BitstreamVeraSans-Roman",
+    "peerSize": 9.35
+   },
+   "layer": "glyphs-p1.png",
+   "layerKind": "marks",
+   "check": "glyphs"
+  },
+  {
+   "metric": "glyph.font_outlier",
+   "value": 1.0,
+   "page": 1,
+   "box": [
+    0.83349,
+    0.42403,
+    0.91933,
+    0.43633
+   ],
+   "detail": "'1,614.73' is set in BitstreamVeraSans-Bold while the runs it sits with use BitstreamVeraSans-Roman (score 1.00; 1 on its line, 3 in its column).",
+   "facts": {
+    "text": "1,614.73",
+    "font": "BitstreamVeraSans-Bold",
+    "size": 10.35,
+    "peerFont": "BitstreamVeraSans-Roman",
+    "peerSize": 9.35
+   },
+   "layer": "glyphs-p1.png",
+   "layerKind": "marks",
+   "check": "glyphs"
+  },
+  {
+   "metric": "glyph.size_delta_pt",
+   "value": 0.35,
+   "page": 1,
+   "box": [
+    0.84785,
+    0.37962,
+    0.91933,
+    0.39097
+   ],
+   "detail": "'1,441.72' is 9.55 pt, 0.35 pt off the runs it sits with.",
+   "facts": {
+    "text": "1,441.72",
+    "font": "BitstreamVeraSans-Roman",
+    "size": 9.55,
+    "peerFont": "BitstreamVeraSans-Roman",
+    "peerSize": 9.35
+   },
+   "layer": "glyphs-p1.png",
+   "layerKind": "marks",
+   "check": "glyphs"
+  },
+  {
+   "metric": "glyph.size_delta_pt",
+   "value": 0.35,
+   "page": 1,
+   "box": [
+    0.86317,
+    0.40219,
+    0.91933,
+    0.41353
+   ],
+   "detail": "'173.01' is 9.55 pt, 0.35 pt off the runs it sits with.",
+   "facts": {
+    "text": "173.01",
+    "font": "BitstreamVeraSans-Roman",
+    "size": 9.55,
+    "peerFont": "BitstreamVeraSans-Roman",
+    "peerSize": 9.35
+   },
+   "layer": "glyphs-p1.png",
+   "layerKind": "marks",
+   "check": "glyphs"
+  },
+  {
+   "metric": "glyph.size_delta_pt",
+   "value": 0.35,
+   "page": 1,
+   "box": [
+    0.83349,
+    0.42403,
+    0.91933,
+    0.43633
+   ],
+   "detail": "'1,614.73' is 10.35 pt, 0.35 pt off the runs it sits with.",
+   "facts": {
+    "text": "1,614.73",
+    "font": "BitstreamVeraSans-Bold",
+    "size": 10.35,
+    "peerFont": "BitstreamVeraSans-Roman",
+    "peerSize": 9.35
+   },
+   "layer": "glyphs-p1.png",
+   "layerKind": "marks",
+   "check": "glyphs"
+  },
+  {
+   "metric": "glyph.size_delta_pt",
+   "value": 0.075,
+   "page": 1,
+   "box": [
+    0.86434,
+    0.27529,
+    0.91933,
+    0.2864
+   ],
+   "detail": "'850.00' is 9.35 pt, 0.07 pt off the runs it sits with.",
+   "facts": {
+    "text": "850.00",
+    "font": "BitstreamVeraSans-Roman",
+    "size": 9.35,
+    "peerFont": "LiberationSans",
+    "peerSize": 9.0
+   },
+   "layer": "glyphs-p1.png",
+   "layerKind": "marks",
+   "check": "glyphs"
+  },
+  {
+   "metric": "glyph.baseline_offset_pt",
+   "value": 0.9,
+   "page": 1,
+   "box": [
+    0.86434,
+    0.27529,
+    0.91933,
+    0.2864
+   ],
+   "detail": "'850.00' sits 0.90 pt off the baseline of its line.",
+   "facts": {
+    "text": "850.00",
+    "font": "BitstreamVeraSans-Roman",
+    "size": 9.35,
+    "peerFont": "LiberationSans",
+    "peerSize": 9.0
+   },
+   "layer": "glyphs-p1.png",
+   "layerKind": "marks",
+   "check": "glyphs"
+  },
+  {
+   "metric": "glyph.baseline_offset_pt",
+   "value": 0.9,
+   "page": 1,
+   "box": [
+    0.84785,
+    0.37962,
+    0.91933,
+    0.39097
+   ],
+   "detail": "'1,441.72' sits 0.90 pt off the baseline of its line.",
+   "facts": {
+    "text": "1,441.72",
+    "font": "BitstreamVeraSans-Roman",
+    "size": 9.55,
+    "peerFont": "BitstreamVeraSans-Roman",
+    "peerSize": 9.35
+   },
+   "layer": "glyphs-p1.png",
+   "layerKind": "marks",
+   "check": "glyphs"
+  },
+  {
+   "metric": "glyph.baseline_offset_pt",
+   "value": 0.9,
+   "page": 1,
+   "box": [
+    0.86317,
+    0.40219,
+    0.91933,
+    0.41353
+   ],
+   "detail": "'173.01' sits 0.90 pt off the baseline of its line.",
+   "facts": {
+    "text": "173.01",
+    "font": "BitstreamVeraSans-Roman",
+    "size": 9.55,
+    "peerFont": "BitstreamVeraSans-Roman",
+    "peerSize": 9.35
+   },
+   "layer": "glyphs-p1.png",
+   "layerKind": "marks",
+   "check": "glyphs"
+  },
+  {
+   "metric": "glyph.baseline_offset_pt",
+   "value": 0.9,
+   "page": 1,
+   "box": [
+    0.83349,
+    0.42403,
+    0.91933,
+    0.43633
+   ],
+   "detail": "'1,614.73' sits 0.90 pt off the baseline of its line.",
+   "facts": {
+    "text": "1,614.73",
+    "font": "BitstreamVeraSans-Bold",
+    "size": 10.35,
+    "peerFont": "BitstreamVeraSans-Roman",
+    "peerSize": 9.35
+   },
+   "layer": "glyphs-p1.png",
+   "layerKind": "marks",
+   "check": "glyphs"
+  },
+  {
+   "metric": "glyph.spacing_outlier",
+   "value": 0.0,
+   "page": 1,
+   "box": [
+    0.08085,
+    0.05169,
+    0.09394,
+    0.06832
+   ],
+   "detail": "Nothing stands out among 58 runs; the largest value is 0.00 at 'S'.",
+   "facts": {
+    "text": "S",
+    "font": "LiberationSerif-Bold",
+    "size": 14.0,
+    "peerFont": "LiberationSans",
+    "peerSize": 14.0
+   },
+   "check": "glyphs"
+  },
+  {
+   "metric": "glyph.color_delta",
+   "value": 0.0,
+   "page": 1,
+   "box": [
+    0.08085,
+    0.05169,
+    0.09394,
+    0.06832
+   ],
+   "detail": "Nothing stands out among 58 runs; the largest value is 0.00 at 'S'.",
+   "facts": {
+    "text": "S",
+    "font": "LiberationSerif-Bold",
+    "size": 14.0,
+    "peerFont": "LiberationSans",
+    "peerSize": 14.0
+   },
+   "check": "glyphs"
+  },
+  {
+   "metric": "arith.sum_mismatch",
+   "value": 0.0,
+   "page": 1,
+   "box": [
+    0.83349,
+    0.42403,
+    0.91933,
+    0.43633
+   ],
+   "detail": "2 figure(s) recomputed and all agree; the last is 1,614.73 against 1,614.73.",
+   "facts": {
+    "printed": 1614.73,
+    "computed": 1614.73,
+    "checked": 2.0
+   },
+   "check": "arithmetic"
+  },
+  {
+   "metric": "arith.rate_mismatch",
+   "value": 0.0,
+   "page": 1,
+   "box": [
+    0.86317,
+    0.40219,
+    0.91933,
+    0.41353
+   ],
+   "detail": "1 figure(s) recomputed and all agree; the last is 173.01 against 173.01.",
+   "facts": {
+    "printed": 173.01,
+    "computed": 173.01,
+    "checked": 1.0
+   },
+   "check": "arithmetic"
+  },
+  {
+   "metric": "format.date_anomaly",
+   "value": 0.0,
+   "page": 0,
+   "box": null,
+   "detail": "2 date(s) read; none contradicts the document.",
+   "check": "dates_formats"
+  },
+  {
+   "metric": "format.style_break",
+   "value": 0.0,
+   "page": 0,
+   "box": null,
+   "detail": "Dates and figures are formatted alike within their columns.",
+   "check": "dates_formats"
+  },
+  {
+   "metric": "id.checksum_invalid",
+   "value": 0.0,
+   "page": 0,
+   "box": null,
+   "detail": "3 number(s) with check digits read; all pass.",
+   "check": "checksums"
+  }
+ ],
+ "checks": [
+  {
+   "check": "pdf_structure",
+   "ms": 3,
+   "measurements": 3
+  },
+  {
+   "check": "pdf_overpaint",
+   "ms": 1,
+   "measurements": 1
+  },
+  {
+   "check": "glyphs",
+   "ms": 94,
+   "measurements": 14
+  },
+  {
+   "check": "arithmetic",
+   "ms": 0,
+   "measurements": 2
+  },
+  {
+   "check": "dates_formats",
+   "ms": 0,
+   "measurements": 2
+  },
+  {
+   "check": "checksums",
+   "ms": 0,
+   "measurements": 1
+  }
+ ],
+ "toolkitMs": 183
+}

@@ -176,11 +176,11 @@ def measurement(metric, value, page, box=None, detail="", facts=None, layer=None
     return m
 
 
-def report(metric, value, page, box=None, detail="", facts=None, layer=None, layer_kind=None) -> dict:
+def report(metric, value, page, box=None, detail="", facts=None, layer=None, layer_kind=None, layerKind=None, check=None) -> dict:
     """Appends one Measurement to $LOUPE_OUT/reports.jsonl. `metric` must be one
     of the fixed Metrics; `page` is 1-based (0 = whole Document); `box` is
     [x0, y0, x1, y1] in 0..1, origin top-left."""
-    m = measurement(metric, value, page, box, detail, facts, layer, layer_kind)
+    m = measurement(metric, value, page, box, detail, facts, layer, layer_kind or layerKind, check)
     with open(os.path.join(_ctx.out_dir(), "reports.jsonl"), "a") as f:
         f.write(json.dumps(m) + "\n")
     return m

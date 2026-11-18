@@ -94,8 +94,7 @@ class Sheet:
         c.setFillColorRGB(*color)
         t = c.beginText(x0, self.H - (y + dy))
         t.setFont(FONTS[font][0], size)
-        if charspace:
-            t.setCharSpace(charspace)
+        t.setCharSpace(charspace)
         t.textOut(s)
         c.drawText(t)
         if field:

@@ -536,7 +536,7 @@ export const SWEEP_CODE = "python3 -m loupe sweep  # every Check that fits the D
 
 type Seed = () => Promise<DocumentFile>;
 
-async function refused(stderr: string): Promise<RunOutput> {
+function refused(stderr: string): RunOutput {
   return {
     stdout: "",
     stderr,
@@ -594,7 +594,6 @@ export function runSweep(input: {
   examinationId: string;
   document: Seed;
   kind: DocumentKind;
-  editors: string[];
 }) {
   return runAndCollect(
     input.examinationId,
