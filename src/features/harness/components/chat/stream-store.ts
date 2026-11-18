@@ -17,6 +17,17 @@ export type OpenChat = (
 
 type Listener = () => void;
 
+/** Runs a flush later: once per animation frame in a browser, at once elsewhere. */
+export type Schedule = (flush: () => void) => void;
+
+const nextFrame: Schedule = (flush) => {
+  if (typeof requestAnimationFrame === "function") {
+    requestAnimationFrame(() => flush());
+  } else {
+    flush();
+  }
+};
+
 /**
  * The streams of every Session, held above the Session view. Starting a turn
  * in Session A and switching to Session B leaves A streaming here; coming
@@ -25,7 +36,10 @@ type Listener = () => void;
  * change of tab. A Session has one turn at a time.
  *
  * It is a plain external store (`subscribe` / `getSnapshot`) for
- * `useSyncExternalStore`: every change replaces the snapshot Map.
+ * `useSyncExternalStore`: every change replaces the snapshot Map. A turn's
+ * streamed events tell the subscribers at most once per animation frame (a
+ * model streams far more deltas than a screen draws frames); a start, a stop,
+ * the end of a turn and a clear tell them at once.
  */
 export class StreamStore {
   private entries: ReadonlyMap<string, SessionStream> = new Map();
@@ -38,6 +52,10 @@ export class StreamStore {
     string,
     Set<(stream: SessionStream) => void>
   >();
+
+  private flushPending = false;
+
+  constructor(private readonly schedule: Schedule = nextFrame) {}
 
   subscribe = (listener: Listener) => {
     this.listeners.add(listener);
@@ -134,8 +152,11 @@ export class StreamStore {
     try {
       for await (const event of open(sessionId, request, controller.signal)) {
         if (controller.signal.aborted || !mine()) break;
-        this.update(sessionId, (stream) => applyChatEvent(stream, event));
-        if (event.type === "done" || event.type === "error") break;
+        const last = event.type === "done" || event.type === "error";
+        this.update(sessionId, (stream) => applyChatEvent(stream, event), {
+          soon: !last,
+        });
+        if (last) break;
       }
       if (!mine()) return this.entries.get(sessionId) as SessionStream;
       if (controller.signal.aborted) {
@@ -177,21 +198,38 @@ export class StreamStore {
   private update(
     sessionId: string,
     change: (stream: SessionStream) => SessionStream,
+    options: { soon?: boolean } = {},
   ) {
     const current = this.entries.get(sessionId);
     if (!current) return;
     const next = change(current);
-    if (next !== current) this.set(sessionId, next);
+    if (next !== current) this.set(sessionId, next, options);
   }
 
-  private set(sessionId: string, stream: SessionStream) {
+  private set(
+    sessionId: string,
+    stream: SessionStream,
+    options: { soon?: boolean } = {},
+  ) {
     const next = new Map(this.entries);
     next.set(sessionId, stream);
     this.entries = next;
-    this.emit();
+    if (options.soon) this.emitSoon();
+    else this.emit();
+  }
+
+  /** Tells the subscribers on the next frame, once however many changes land before it. */
+  private emitSoon() {
+    if (this.flushPending) return;
+    this.flushPending = true;
+    this.schedule(() => {
+      if (this.flushPending) this.emit();
+    });
   }
 
   private emit() {
+    // A change told at once also carries any that were waiting for a frame.
+    this.flushPending = false;
     for (const listener of this.listeners) listener();
   }
 }

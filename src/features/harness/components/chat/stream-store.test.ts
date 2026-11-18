@@ -170,3 +170,73 @@ describe("StreamStore", () => {
     await store.whenIdle("a");
   });
 });
+
+describe("StreamStore notifications", () => {
+  /** A scheduler the test flushes by hand, standing in for animation frames. */
+  function frames() {
+    const queue: (() => void)[] = [];
+    return {
+      schedule: (flush: () => void) => {
+        queue.push(flush);
+      },
+      flush() {
+        for (const run of queue.splice(0)) run();
+      },
+      get waiting() {
+        return queue.length;
+      },
+    };
+  }
+
+  it("tells subscribers about streamed text once per frame, with the latest state", async () => {
+    const frame = frames();
+    const store = new StreamStore(frame.schedule);
+    const a = manual();
+    let calls = 0;
+    store.subscribe(() => {
+      calls += 1;
+    });
+    store.start("a", { text: "x" }, a.open);
+    const afterStart = calls;
+    expect(afterStart).toBe(1);
+
+    a.push({ type: "text.delta", text: "one " });
+    a.push({ type: "text.delta", text: "two " });
+    a.push({ type: "text.delta", text: "three" });
+    await tick();
+    // The state is current at once; the subscribers wait for the frame.
+    expect(store.get("a")?.turn.text).toBe("one two three");
+    expect(calls).toBe(afterStart);
+    expect(frame.waiting).toBe(1);
+
+    frame.flush();
+    expect(calls).toBe(afterStart + 1);
+    expect(store.getSnapshot().get("a")?.turn.text).toBe("one two three");
+
+    a.push({ type: "done", messageId: "m" });
+    await store.whenIdle("a");
+  });
+
+  it("tells subscribers at once when a turn ends, without waiting for a frame", async () => {
+    const frame = frames();
+    const store = new StreamStore(frame.schedule);
+    const a = manual();
+    let calls = 0;
+    store.subscribe(() => {
+      calls += 1;
+    });
+    store.start("a", { text: "x" }, a.open);
+    a.push({ type: "text.delta", text: "partial" });
+    await tick();
+    const before = calls;
+    a.push({ type: "done", messageId: "m" });
+    await store.whenIdle("a");
+    expect(calls).toBeGreaterThan(before);
+    expect(store.getSnapshot().get("a")?.status).toBe("done");
+    // The frame that was pending has nothing left to tell.
+    frame.flush();
+    const settled = calls;
+    frame.flush();
+    expect(calls).toBe(settled);
+  });
+});

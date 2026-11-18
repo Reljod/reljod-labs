@@ -240,3 +240,92 @@ describe("RunStore", () => {
     expect(store.get("r9")?.run?.status).toBe("completed");
   });
 });
+
+describe("RunStore keeps ended Runs, bounded", () => {
+  const ended = (id: string) => ({
+    ...base(id, "completed"),
+    finishedAt: at(9),
+  });
+
+  it("reopens an ended Run without asking again", async () => {
+    const { source, calls } = fakeSource({ r1: ended("r1") }, {});
+    const store = new RunStore(source, { sleep: instant });
+    store.open("r1");
+    await store.whenLoaded("r1");
+    store.open("r1");
+    await store.whenLoaded("r1");
+    expect(calls.get).toEqual(["r1"]);
+  });
+
+  it("drops the least recently opened ended Run past the limit, and reads it again when reopened", async () => {
+    const { source, calls } = fakeSource(
+      { r1: ended("r1"), r2: ended("r2"), r3: ended("r3") },
+      {},
+    );
+    const store = new RunStore(source, { sleep: instant, maxEnded: 2 });
+    for (const id of ["r1", "r2"]) {
+      store.open(id);
+      await store.whenLoaded(id);
+    }
+    // r1 is opened again, so r2 is now the least recent.
+    store.open("r1");
+    store.open("r3");
+    await store.whenLoaded("r3");
+    expect([...store.getSnapshot().keys()].sort()).toEqual(["r1", "r3"]);
+
+    store.open("r2");
+    await store.whenLoaded("r2");
+    expect(calls.get).toEqual(["r1", "r2", "r3", "r2"]);
+    expect(store.get("r2")?.state).toBe("ended");
+  });
+
+  it("never drops the Run opened last, even when it is the oldest", async () => {
+    const { source } = fakeSource({ r1: ended("r1"), r2: ended("r2") }, {});
+    const store = new RunStore(source, { sleep: instant, maxEnded: 1 });
+    store.open("r1");
+    await store.whenLoaded("r1");
+    store.open("r2");
+    await store.whenLoaded("r2");
+    expect(store.get("r2")?.run?.id).toBe("r2");
+    expect(store.get("r1")).toBeUndefined();
+  });
+
+  it("keeps a Run at work however many have ended", async () => {
+    const live = base("live", "running");
+    const { source } = fakeSource(
+      { live, r1: ended("r1"), r2: ended("r2") },
+      {
+        live: () =>
+          (async function* () {
+            await new Promise(() => {});
+          })(),
+      },
+    );
+    const store = new RunStore(source, { sleep: instant, maxEnded: 1 });
+    store.open("live");
+    await store.whenLoaded("live");
+    for (const id of ["r1", "r2"]) {
+      store.open(id);
+      await store.whenLoaded(id);
+    }
+    expect(store.get("live")?.state).toBe("live");
+    expect(store.get("r1")).toBeUndefined();
+  });
+});
+
+describe("RunStore background watches", () => {
+  it("does not let a Run watched in the background push out the Run on screen", async () => {
+    const done = (id: string) => ({
+      ...base(id, "completed"),
+      finishedAt: at(9),
+    });
+    const { source } = fakeSource({ shown: done("shown"), bg: done("bg") }, {});
+    const store = new RunStore(source, { sleep: instant, maxEnded: 1 });
+    store.open("shown");
+    await store.whenLoaded("shown");
+    store.open("bg", { shown: false });
+    await store.whenLoaded("bg");
+    expect(store.get("shown")?.run?.id).toBe("shown");
+    expect(store.get("bg")).toBeUndefined();
+  });
+});

@@ -1,6 +1,12 @@
 "use client";
 
-import { type KeyboardEvent, type ReactNode, useRef } from "react";
+import {
+  type KeyboardEvent,
+  type ReactNode,
+  useCallback,
+  useEffect,
+  useRef,
+} from "react";
 import {
   type DemoBarRowFrom,
   demoTabClass,
@@ -13,7 +19,15 @@ export type DemoViewTab = {
   badge?: ReactNode;
   testId?: string;
   onSelect: () => void;
+  /**
+   * The tab is about to be opened: a pointer rested on it, or it took focus.
+   * For loading what the tab shows ahead of the click.
+   */
+  onIntent?: () => void;
 };
+
+/** How long a pointer rests on a tab before it counts as intent. */
+export const INTENT_REST_MS = 120;
 
 /**
  * Views a demo swaps itself, as a tablist: arrow keys, Home and End move
@@ -33,6 +47,12 @@ export function DemoTabs({
   rowFrom?: DemoBarRowFrom;
 }) {
   const refs = useRef<Record<string, HTMLButtonElement | null>>({});
+  const rest = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const settle = useCallback(() => {
+    if (rest.current) clearTimeout(rest.current);
+    rest.current = null;
+  }, []);
+  useEffect(() => settle, [settle]);
 
   const onKeyDown = (event: KeyboardEvent<HTMLDivElement>) => {
     const index = tabs.findIndex((tab) => tab.id === current);
@@ -86,6 +106,19 @@ export function DemoTabs({
             }
             tabIndex={tab.id === stop ? 0 : -1}
             onClick={tab.onSelect}
+            onPointerEnter={
+              tab.onIntent
+                ? () => {
+                    settle();
+                    rest.current = setTimeout(
+                      () => tab.onIntent?.(),
+                      INTENT_REST_MS,
+                    );
+                  }
+                : undefined
+            }
+            onPointerLeave={tab.onIntent ? settle : undefined}
+            onFocus={tab.onIntent}
             className={demoTabClass(active)}
           >
             {tab.label}
