@@ -1,4 +1,6 @@
 {
+  "$schema": "https://openapi.vercel.sh/vercel.json",
+  "regions": ["syd1"],
   "functions": {
     "src/app/demos/document-compliance/runs/[runId]/events/route.ts": {
       "supportsCancellation": true

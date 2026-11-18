@@ -18,6 +18,7 @@ import type { MessageView, SessionSummary } from "../../domain/session";
 import { ApiFailure, api, keys, messageOf } from "../api";
 import {
   type Attachment,
+  emptyTurn,
   liveVisibility,
   sendBlocker,
   streamIsSaved,
@@ -75,6 +76,14 @@ export default function ChatTab() {
   limitRef.current = limit;
   const textarea = useRef<HTMLTextAreaElement>(null);
   const sendingRef = useRef(false);
+  /**
+   * A first message whose Session is still being made: shown at once, as if
+   * sent, so Send answers the click before the Session exists.
+   */
+  const [starting, setStarting] = useState<{
+    text: string;
+    attachmentNames: string[];
+  } | null>(null);
 
   useEffect(() => {
     if (!limit) return;
@@ -221,13 +230,21 @@ export default function ChatTab() {
       if (blocker) throw new Error(blocker);
       if (sendingRef.current) throw new Error("Already sending.");
       sendingRef.current = true;
+      const files = attachments
+        .peek(startKey)
+        .filter((item: Attachment) => item.state === "ready");
+      // The draft leaves the composer now; it comes back if sending fails.
+      setTexts((all) => ({ ...all, [startKey]: "" }));
       try {
-        const id = activeRef.current ?? (await createSession());
-        const files = attachments
-          .peek(startKey)
-          .filter((item: Attachment) => item.state === "ready");
+        let id = activeRef.current;
+        if (id === null) {
+          setStarting({
+            text,
+            attachmentNames: files.map((file) => file.name),
+          });
+          id = await createSession();
+        }
         const ids = attachments.take(startKey);
-        setTexts((all) => ({ ...all, [startKey]: "" }));
         const baseline =
           queryClient.getQueryData<MessageView[]>(keys.messages(id))?.length ??
           0;
@@ -238,8 +255,12 @@ export default function ChatTab() {
           { baseline, attachmentNames: files.map((file) => file.name) },
         );
         void queryClient.invalidateQueries({ queryKey: keys.sessions });
+      } catch (caught) {
+        setTexts((all) => ({ ...all, [startKey]: all[startKey] || raw }));
+        throw caught;
       } finally {
         sendingRef.current = false;
+        setStarting(null);
       }
     },
     [attachments, createSession, queryClient],
@@ -361,6 +382,7 @@ export default function ChatTab() {
     stream?.turn,
     stream?.status,
     messages.isSuccess,
+    starting,
   ]);
 
   const actions: MessageActions = useMemo(
@@ -376,12 +398,14 @@ export default function ChatTab() {
   const text = texts[key] ?? "";
   const draftFiles = attachments.drafts[key] ?? [];
   const visible = stream ? liveVisibility(stream, historyCount) : null;
+  const pendingStart = sessionId === null ? starting : null;
   const showEmpty =
     (sessionId === null || (messages.isSuccess && history?.length === 0)) &&
-    !stream;
+    !stream &&
+    !pendingStart;
   const currentSession = sessions.data?.find((item) => item.id === sessionId);
   const title = currentSession?.title ?? "New session";
-  const answering = stream?.status === "streaming";
+  const answering = stream?.status === "streaming" || pendingStart !== null;
 
   return (
     <div className="relative flex min-h-0 flex-1 bg-marble">
@@ -491,6 +515,24 @@ export default function ChatTab() {
                 actions={actions}
                 onPreview={previewSource}
               />
+              {pendingStart ? (
+                <>
+                  <StaffMessage
+                    text={pendingStart.text}
+                    name={staff.name}
+                    initials={staff.initials}
+                    attachments={pendingStart.attachmentNames.map((name) => ({
+                      name,
+                    }))}
+                    pending
+                  />
+                  <AgentMessage
+                    turn={emptyTurn()}
+                    actions={actions}
+                    streaming
+                  />
+                </>
+              ) : null}
               {stream && visible?.staff ? (
                 <StaffMessage
                   text={stream.request.text}

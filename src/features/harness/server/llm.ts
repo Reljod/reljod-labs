@@ -1,5 +1,15 @@
 import "server-only";
-import { createGateway, embedMany, type LanguageModelUsage } from "ai";
+import {
+  createGateway,
+  embedMany,
+  type LanguageModelUsage,
+  type streamText,
+} from "ai";
+
+type ProviderOptions = NonNullable<
+  Parameters<typeof streamText>[0]["providerOptions"]
+>;
+
 import type { AuditUsage } from "../domain/audit";
 import { EMBEDDING_DIMENSIONS, env } from "./env";
 
@@ -14,6 +24,28 @@ export function gateway() {
 /** The Agent in a Session (`HARNESS_MODEL`). */
 export function chatModel() {
   return gateway()(env.chatModel());
+}
+
+/**
+ * Provider options that make a model's thinking visible, so the chat can
+ * stream it. Current Claude models think (adaptive, at their default effort)
+ * but return empty thinking blocks unless asked for a summary; OpenAI and
+ * Google send none unless asked. Visibility only: what the model thinks, and
+ * what it costs, is the same either way.
+ */
+export function visibleThinking(model: string): ProviderOptions | undefined {
+  if (model.startsWith("anthropic/")) {
+    return {
+      anthropic: { thinking: { type: "adaptive", display: "summarized" } },
+    };
+  }
+  if (model.startsWith("openai/")) {
+    return { openai: { reasoningSummary: "auto" } };
+  }
+  if (model.startsWith("google/")) {
+    return { google: { thinkingConfig: { includeThoughts: true } } };
+  }
+  return undefined;
 }
 
 /** Steps that read or draft, and the Conflict check (`HARNESS_STEP_MODEL`). */
