@@ -1,0 +1,294 @@
+/*
+ * The catalog: demos filed as index cards. A card's preview is a paused,
+ * faded film until the card is looked at (`data-playing`), then it warms up
+ * and plays. Pointer tilt comes in as `--rx` / `--ry`, the glare as `--mx` / `--my`.
+ */
+
+/* Paused: every animation inside holds its frame, like a film on pause.
+   Unlayered, so it outranks Tailwind's `animate-*` utilities without !important. */
+.catalog-preview:not([data-playing]) * {
+  animation-play-state: paused;
+}
+
+.catalog-preview {
+  transition: filter 0.45s ease;
+}
+
+.catalog-preview:not([data-playing]) {
+  filter: grayscale(0.9) sepia(0.18) contrast(0.92) brightness(1.03);
+}
+
+/* Paused previews carry faint scan lines, like a still on an old monitor. */
+.catalog-preview::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: repeating-linear-gradient(
+    to bottom,
+    rgb(20 33 61 / 0.07) 0 1px,
+    transparent 1px 3px
+  );
+  transition: opacity 0.45s ease;
+}
+
+.catalog-preview[data-playing]::after {
+  opacity: 0;
+}
+
+/* Starting: a line of light opens into the picture, a monitor warming up. */
+.catalog-power {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  pointer-events: none;
+  background:
+    linear-gradient(
+      to bottom,
+      transparent 44%,
+      rgb(255 255 255 / 0.95) 50%,
+      transparent 56%
+    ),
+    rgb(111 160 220 / 0.3);
+  animation: catalog-power 0.6s cubic-bezier(0.2, 0.8, 0.2, 1) both;
+}
+
+@keyframes catalog-power {
+  0% {
+    opacity: 1;
+    transform: scaleY(0.015) scaleX(0.6);
+  }
+  40% {
+    opacity: 0.9;
+    transform: scaleY(1) scaleX(1);
+  }
+  100% {
+    opacity: 0;
+    transform: scaleY(1) scaleX(1);
+  }
+}
+
+/* The card: lifts and tips toward the pointer. */
+.catalog-face {
+  transform: perspective(1100px) rotateX(var(--rx, 0deg))
+    rotateY(var(--ry, 0deg)) translate(var(--lift, 0px), var(--lift, 0px));
+  transition:
+    transform 0.3s cubic-bezier(0.2, 0.8, 0.2, 1),
+    box-shadow 0.3s ease,
+    opacity 0.35s ease,
+    outline-color 0.15s;
+  outline: 4px solid transparent;
+  outline-offset: 6px;
+}
+
+.catalog-card[data-playing] .catalog-face {
+  --lift: -4px;
+  box-shadow: var(--shadow-hard-lg);
+}
+
+.catalog-card:has(.catalog-link:focus-visible) .catalog-face {
+  outline: 2px solid var(--color-federal-blue);
+  outline-offset: 4px;
+}
+
+.catalog-tab {
+  transition:
+    background-color 0.2s,
+    color 0.2s;
+}
+
+.catalog-card[data-playing] .catalog-tab {
+  background: var(--color-brass);
+}
+
+.catalog-status {
+  background: var(--color-paper);
+  transition:
+    background-color 0.2s,
+    color 0.2s;
+}
+
+.catalog-card[data-playing] .catalog-status {
+  background: var(--color-seal-red);
+  color: var(--color-paper);
+}
+
+.catalog-arrow {
+  transition: transform 0.2s ease;
+}
+
+.catalog-card[data-playing] .catalog-arrow,
+.catalog-row:hover .catalog-arrow,
+.catalog-row:focus-visible .catalog-arrow {
+  transform: translateX(4px);
+}
+
+/* Light from the pointer across the card. */
+.catalog-glare {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  opacity: 0;
+  background: radial-gradient(
+    circle at var(--mx, 50%) var(--my, 30%),
+    rgb(255 255 255 / 0.45),
+    transparent 42%
+  );
+  mix-blend-mode: soft-light;
+  transition: opacity 0.3s ease;
+}
+
+.catalog-card[data-playing] .catalog-glare {
+  opacity: 1;
+}
+
+/* "Surprise me": the light runs over the cards, then the pick is stamped and the rest step back. */
+.catalog-card[data-spot="roll"] .catalog-face,
+.catalog-card[data-spot="picked"] .catalog-face {
+  outline-color: var(--color-brass);
+}
+
+.catalog-card[data-spot="dim"] .catalog-face {
+  opacity: 0.4;
+}
+
+.catalog-stamp {
+  transform: rotate(-8deg);
+}
+
+/* The search's words, swiped with a highlighter. */
+.catalog-mark {
+  color: inherit;
+  background:
+    linear-gradient(var(--color-brass), var(--color-brass)) no-repeat 0 88% /
+    100% 0.5em;
+  padding-inline: 0.04em;
+}
+
+.catalog-chips {
+  scrollbar-width: none;
+}
+
+.catalog-chips::-webkit-scrollbar {
+  display: none;
+}
+
+/* Where the shelves may not all fit, the row fades out at its end to say it scrolls. */
+@media (max-width: 1279px) {
+  .catalog-chips {
+    mask-image: linear-gradient(to right, #000 calc(100% - 2rem), transparent);
+  }
+}
+
+.catalog-bar-box {
+  transition: box-shadow 0.25s ease;
+}
+
+.catalog-bar[data-stuck="true"] .catalog-bar-box {
+  box-shadow: var(--shadow-hard-lg);
+}
+
+/*
+ * On a phone, a riding bar folds its shelves away until you reach for it.
+ * The spacer after it grows by the same 3rem (a 2.5rem row and its 0.5rem
+ * gap), so the page's height never changes and nothing jumps.
+ */
+@media (max-width: 639px) {
+  .catalog-bar[data-stuck="true"]:not(:focus-within) .catalog-chips {
+    display: none;
+  }
+
+  .catalog-bar[data-stuck="true"]:not(:focus-within) + .catalog-bar-spacer {
+    height: 3rem;
+  }
+}
+
+/* The drawer front by the heading: hover pulls it, and cards peek out. */
+.catalog-drawer-card {
+  transform: translateY(70%);
+  transition: transform 0.35s cubic-bezier(0.2, 0.9, 0.3, 1.2);
+}
+
+.catalog-drawer:hover .catalog-drawer-card,
+.catalog-drawer:focus-visible .catalog-drawer-card {
+  transform: translateY(var(--peek, 10%));
+}
+
+.catalog-drawer-front {
+  transition: transform 0.3s cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+
+.catalog-drawer:hover .catalog-drawer-front,
+.catalog-drawer:focus-visible .catalog-drawer-front {
+  transform: translateY(6px) scale(1.02);
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .catalog-mark {
+    animation: catalog-mark 0.4s ease-out both;
+  }
+
+  .catalog-stamp {
+    animation: catalog-stamp 0.45s cubic-bezier(0.2, 0.9, 0.3, 1.35) both;
+  }
+
+  .catalog-rec {
+    animation: catalog-rec 1s steps(2, jump-none) infinite;
+  }
+
+  .catalog-dice:hover .catalog-dice-icon {
+    animation: catalog-dice 0.6s cubic-bezier(0.3, 0.7, 0.4, 1.4);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  /* Some previews set their animation inline, past `motion-safe:`; hold them all. */
+  .catalog-preview *,
+  .catalog-float * {
+    animation-play-state: paused;
+  }
+
+  .catalog-face,
+  .catalog-drawer-card,
+  .catalog-drawer-front {
+    transition: none;
+  }
+}
+
+@keyframes catalog-mark {
+  from {
+    background-size: 0% 0.5em;
+  }
+}
+
+@keyframes catalog-stamp {
+  0% {
+    opacity: 0;
+    transform: scale(2.6) rotate(-20deg);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1) rotate(-8deg);
+  }
+}
+
+@keyframes catalog-rec {
+  from {
+    opacity: 1;
+  }
+  to {
+    opacity: 0.2;
+  }
+}
+
+@keyframes catalog-dice {
+  0% {
+    transform: rotate(0deg) scale(1);
+  }
+  50% {
+    transform: rotate(200deg) scale(1.2);
+  }
+  100% {
+    transform: rotate(360deg) scale(1);
+  }
+}

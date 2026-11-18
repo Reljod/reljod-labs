@@ -116,7 +116,8 @@
 ## Landing page
 
 - `/` plays as short scenes for a visitor outside tech (`src/components/landing/`): the desk, who, what the AI does, the projects, coming soon, what the site is, contact. Every scene has something to touch (a page the AI reads onto a case board, flip cards, the lens, the problem list, the SPECIMEN stamp) and the floating Index jumps to any scene.
-- Words live in `src/content/landing.ts`; facts about Reljod come only from `profile.ts`, `experience.ts` and `projects.ts`. A new live demo needs a plain problem in `demoProblems` and a preview in `demo-picker.tsx` (`landing.test.ts` checks the first).
+- Words live in `src/content/landing.ts`; facts about Reljod come only from `profile.ts`, `experience.ts` and `projects.ts`. A new live demo needs a plain problem in `demoProblems` and a preview in `demo-previews.tsx` (`landing.test.ts` and `demo-previews.test.ts` check them).
+- The last scene is the catalog (`src/components/landing/catalog/`): every live demo as an index card whose preview stays paused (`animation-play-state`) until the card is hovered, focused or, on touch, centred, so a preview must animate with CSS only. Search, shelves and sort are pure functions in `catalog-query.ts`; shelves are `demoShelves` in `landing.ts`, so put a new demo on any shelf that fits.
 - Motion stays short and never gates reading: text is in the HTML, reveals run once, and `LandingMotion` honours reduced motion.
 
 ## Analytics

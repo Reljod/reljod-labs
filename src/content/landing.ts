@@ -11,7 +11,7 @@ export const scenes = [
   { id: "who", title: "Who's reading" },
   { id: "demos", title: "Seven problems" },
   { id: "lab", title: "What this site is" },
-  { id: "everything", title: "Everything, laid out" },
+  { id: "everything", title: "The catalog" },
 ] as const;
 
 export type SceneId = (typeof scenes)[number]["id"];
@@ -150,6 +150,47 @@ export const demoProblems: Record<string, string> = {
     "A colleague is leaving. Turn their screen-share call into a how-to guide and slides.",
   "name-extraction": "Find every person and company named in a 500-page file.",
 };
+
+/**
+ * The catalog's shelves: what a demo does, in plain words, by project slug.
+ * A demo can sit on several. `catalog-query.test.ts` checks every slug is a live demo.
+ */
+export const demoShelves = [
+  {
+    id: "paperwork",
+    label: "Reads paperwork",
+    slugs: [
+      "document-compliance-checks",
+      "casework-desk",
+      "client-manager",
+      "bank-harness",
+      "name-extraction",
+    ],
+  },
+  {
+    id: "questions",
+    label: "Answers questions",
+    slugs: ["ledger", "client-manager", "bank-harness"],
+  },
+  {
+    id: "person",
+    label: "A person decides",
+    slugs: ["document-compliance-checks", "casework-desk", "bank-harness"],
+  },
+] as const;
+
+/** Words for the catalog at the end of the landing page. */
+export const catalog = {
+  title: "That's the tour. Here's every demo, filed.",
+  intro:
+    "Seven working demos: real AI over made-up paperwork. Hover a card to watch it work. They open with a guest code, so ask me for one.",
+  /** The search box types these as hints; each must find at least one demo. */
+  searchHints: ["MCP", "pension", "slides", "video", "cat banker", "500 pages"],
+  surprise: "Surprise me",
+  drawer: "Pull a card at random",
+  picked: "Picked for you",
+  empty: "Nothing on file under",
+} as const;
 
 export const labFacts = [
   {
