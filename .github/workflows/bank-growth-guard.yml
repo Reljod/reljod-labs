@@ -1,0 +1,44 @@
+name: bank-growth-guard
+
+# Fails a pull request labelled `bank:growth` (the Tidewater Bank demo's
+# self-improvement loop, docs/adr/0024) that touches a path outside the bank
+# demo. `pull_request_target` runs the workflow and the guard script from the
+# BASE branch, so a growth pull request cannot edit its own guard; nothing
+# from the pull request is checked out or executed.
+
+on:
+  pull_request_target:
+    types: [opened, reopened, synchronize, labeled, unlabeled, edited]
+
+permissions:
+  contents: read
+  pull-requests: read
+
+concurrency:
+  group: bank-growth-guard-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
+jobs:
+  guard:
+    name: bank:growth stays in the bank
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    # A growth pull request is one that carries the label or comes from the routine's branch prefix.
+    if: >-
+      contains(github.event.pull_request.labels.*.name, 'bank:growth') ||
+      startsWith(github.event.pull_request.head.ref, 'bank-growth/')
+    steps:
+      - name: Check out the base branch (never the pull request)
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.base.sha }}
+          sparse-checkout: scripts/bank-growth-guard.mjs
+          sparse-checkout-cone-mode: false
+          persist-credentials: false
+      - name: List the files the pull request changes
+        env:
+          GH_TOKEN: ${{ github.token }}
+          PR: ${{ github.event.pull_request.number }}
+        run: gh api --paginate "repos/${{ github.repository }}/pulls/${PR}/files?per_page=100" --jq '.[] | {filename, status, previous_filename}' | jq -s '.' > "$RUNNER_TEMP/files.json"
+      - name: Every file is inside the allowlist
+        run: node scripts/bank-growth-guard.mjs "$RUNNER_TEMP/files.json"

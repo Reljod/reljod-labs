@@ -1,0 +1,122 @@
+/*
+ * Tidewater Bank: the few things Tailwind utilities do not cover. Colours are
+ * the Colonnade tokens of src/app/globals.css (var(--color-*)); boxes, shadows
+ * and presses come from its utilities. Every looping animation stops under
+ * reduced motion.
+ *
+ * The `hx-` helpers are the ones the shared primitives in components/ui.tsx
+ * name (the same as the Harness's): this page does not load harness.css, so
+ * they are defined here too. The bank's own helpers are `tb-`.
+ */
+
+.tb-root {
+  font-feature-settings: "tnum" 1;
+}
+
+/* Loading: a slow sheen across a block shaped like what is coming. */
+.hx-shimmer,
+.tb-shimmer {
+  background: linear-gradient(
+    100deg,
+    rgb(228 220 203 / 0.55) 20%,
+    rgb(255 255 255 / 0.9) 40%,
+    rgb(228 220 203 / 0.55) 60%
+  );
+  background-size: 300% 100%;
+  animation: tb-shimmer 1.6s ease-in-out infinite;
+}
+@keyframes tb-shimmer {
+  from {
+    background-position: 100% 0;
+  }
+  to {
+    background-position: -100% 0;
+  }
+}
+
+/* Something at work: a soft pulse on a status dot. */
+.hx-pulse,
+.tb-pulse {
+  animation: tb-pulse 1.4s ease-in-out infinite;
+}
+@keyframes tb-pulse {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.35;
+  }
+}
+
+/* The step a Growth request stands on: a ring that breathes outward. */
+.tb-step-live {
+  position: relative;
+}
+.tb-step-live::after {
+  content: "";
+  position: absolute;
+  inset: -4px;
+  border: 2px solid var(--color-federal-blue);
+  border-radius: 2px;
+  animation: tb-step-live 1.6s ease-out infinite;
+  pointer-events: none;
+}
+@keyframes tb-step-live {
+  0% {
+    opacity: 0.9;
+    transform: scale(0.85);
+  }
+  100% {
+    opacity: 0;
+    transform: scale(1.25);
+  }
+}
+
+/* A sleeping Workflow: its dot drifts, slowly. */
+.tb-breathe {
+  animation: tb-pulse 2.8s ease-in-out infinite;
+}
+
+/* Strips that scroll sideways on a phone without showing a bar. */
+.hx-scroll-x,
+.tb-scroll-x {
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+.hx-scroll-x::-webkit-scrollbar,
+.tb-scroll-x::-webkit-scrollbar {
+  display: none;
+}
+
+/* Lists and panes that scroll get a thin, quiet bar. */
+.hx-scroll,
+.tb-scroll {
+  overflow-y: auto;
+  scrollbar-width: thin;
+  scrollbar-color: color-mix(in srgb, var(--color-ink) 35%, transparent)
+    transparent;
+}
+
+/* A wide table scrolls inside its own box, never the page. */
+.hx-table-wrap,
+.tb-table-wrap {
+  overflow-x: auto;
+  scrollbar-width: thin;
+}
+
+/* No blur: a flat ink wash, like the other demos' dialogs. */
+.hx-dialog::backdrop {
+  background: color-mix(in srgb, var(--color-ink) 45%, transparent);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .hx-shimmer,
+  .tb-shimmer,
+  .hx-pulse,
+  .tb-pulse,
+  .tb-breathe,
+  .tb-step-live::after {
+    animation: none;
+  }
+}
