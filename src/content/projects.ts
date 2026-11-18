@@ -208,6 +208,25 @@ export const projects: Project[] = [
       "An editable, versioned rulebook and a full audit trail with cost",
     ],
   },
+  // Appended last, like the others, so every `projects.<index>` source path keeps its entry.
+  {
+    slug: "tidewater-bank",
+    icon: "chart",
+    title: "Tidewater Bank",
+    sector: "Retail banking",
+    summary:
+      "A whole retail bank you can run: accounts, payments that clear and settle, cards, loans and fraud holds, all on a double-entry ledger the database itself keeps balanced. Do anything by clicking or by asking the Teller. Ask for a feature it lacks and the bank files the issue, builds it and merges it by itself.",
+    outcome: "Every florin posted twice, and a trial balance that always nets to zero",
+    tags: ["Double-entry ledger", "Durable workflows", "MCP", "Agents", "Self-improving"],
+    status: "Live",
+    href: "/demos/bank",
+    marks: ["New"],
+    features: [
+      "Fast-forward the clock and watch end-of-day, settlement and interest run",
+      "Everything in the app is also an MCP tool; sensitive ones wait for your click",
+      "Ask for a missing feature in chat and follow it from issue to merged pull request",
+    ],
+  },
 ];
 
 /**

@@ -1006,6 +1006,8 @@ create table bank.workflow_runs (
   started_at timestamptz not null default now(),
   ended_at timestamptz
 );
+-- One run per message: a step that is retried finds its row.
+create unique index workflow_runs_outbox_idx on bank.workflow_runs (outbox_id);
 create index workflow_runs_owner_idx on bank.workflow_runs (owner, started_at desc);
 create index workflow_runs_active_idx on bank.workflow_runs (owner)
   where status in ('running', 'sleeping', 'waiting');
