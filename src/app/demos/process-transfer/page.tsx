@@ -38,7 +38,11 @@ async function App({ searchParams }: { searchParams: SearchParams }) {
   const { tab, run } = await searchParams;
   const initialTab = parseTab(tab);
   const initialRunId = parseRunId(run);
-  const preload = await preloadHandover(initialRunId);
+  // A Run in the address is shown only on the Convert tab; elsewhere it is
+  // read when the person goes there.
+  const preload = await preloadHandover(
+    initialTab === "convert" ? initialRunId : null,
+  );
   return (
     <Handover
       initialTab={initialTab}

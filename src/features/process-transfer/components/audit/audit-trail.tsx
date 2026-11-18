@@ -66,15 +66,17 @@ export function AuditTrail({
     );
     fetchAudit(runId ? { runId } : {}, controller.signal)
       .then((events) => {
-        if (!controller.signal.aborted)
-          setLoad({
-            at: "ready",
-            runId,
-            events,
-            more: events.length >= AUDIT_PAGE,
-            refreshing: false,
-            refreshError: null,
-          });
+        if (controller.signal.aborted) return;
+        // An older page asked for before this read lands on the old list.
+        setOlder({ pending: false, error: null });
+        setLoad({
+          at: "ready",
+          runId,
+          events,
+          more: events.length >= AUDIT_PAGE,
+          refreshing: false,
+          refreshError: null,
+        });
       })
       .catch((error: unknown) => {
         if (controller.signal.aborted) return;
@@ -92,7 +94,7 @@ export function AuditTrail({
   }, [runId, reloads, active]);
 
   const loadOlder = useCallback(async () => {
-    if (busy.current || load.at !== "ready") return;
+    if (busy.current || load.at !== "ready" || load.refreshing) return;
     const last = load.events.at(-1);
     if (!last) return;
     busy.current = true;
@@ -221,7 +223,7 @@ export function AuditTrail({
               <button
                 type="button"
                 onClick={loadOlder}
-                disabled={older.pending}
+                disabled={older.pending || load.refreshing}
                 aria-busy={older.pending}
                 className={quietButtonClass}
               >

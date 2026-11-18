@@ -116,20 +116,25 @@ export function Handover({
     return cache;
   });
 
-  /** Only the newest Desk read may land; an older one is dropped. */
+  /** The Desk read in flight, if any; only the newest one may land. */
   const deskRead = useRef<AbortController | null>(null);
   const refresh = useCallback(async () => {
     deskRead.current?.abort();
     const controller = new AbortController();
     deskRead.current = controller;
+    const done = () => {
+      if (deskRead.current === controller) deskRead.current = null;
+    };
     try {
       const view = await fetchDesk(controller.signal);
       if (controller.signal.aborted) return null;
+      done();
       setDesk(view);
       setDeskError(null);
       return view;
     } catch (error) {
       if (controller.signal.aborted) return null;
+      done();
       setDeskError(
         error instanceof Error && error.message
           ? error.message
@@ -139,6 +144,20 @@ export function Handover({
     }
   }, []);
   useEffect(() => () => deskRead.current?.abort(), []);
+
+  /**
+   * A save changed the Desk. Reads no longer queue behind writes, so a read
+   * started before the save could land after it and put the old Rules back:
+   * drop it and read again.
+   */
+  const saved = useCallback(
+    (change: (current: DeskView) => DeskView) => {
+      const stale = deskRead.current !== null;
+      setDesk((current) => (current ? change(current) : current));
+      if (stale) void refresh();
+    },
+    [refresh],
+  );
 
   // Fetch the other tabs' code once the first view has painted.
   useEffect(() => {
@@ -184,8 +203,22 @@ export function Handover({
   );
 
   const closeRun = useCallback(() => setRunId(null), []);
-  const onEnded = useCallback(() => void refresh(), [refresh]);
-  const takeRun = useCallback((id: string) => prefetch.take(id), [prefetch]);
+  const onEnded = useCallback(
+    (run: RunView | null) => {
+      prefetch.remember(run);
+      void refresh();
+    },
+    [prefetch, refresh],
+  );
+  /** Opens a Run from what was read ahead or kept, else reads it; a finished one is kept. */
+  const takeRun = useCallback(
+    (id: string) => {
+      const read = prefetch.take(id) ?? fetchRun(id);
+      read.then(prefetch.remember, () => {});
+      return read;
+    },
+    [prefetch],
+  );
 
   const failed = deskError && !desk;
   const panel = (id: HandoverTab, content: ReactNode) =>
@@ -268,17 +301,13 @@ export function Handover({
               <RulesEditor
                 rules={desk.rules}
                 rulesVersion={desk.rulesVersion}
-                onSaved={(saved) =>
-                  setDesk((current) =>
-                    current
-                      ? {
-                          ...current,
-                          rules: saved.rules,
-                          ruleOverrides: saved.ruleOverrides,
-                          rulesVersion: saved.rulesVersion,
-                        }
-                      : current,
-                  )
+                onSaved={(next) =>
+                  saved((current) => ({
+                    ...current,
+                    rules: next.rules,
+                    ruleOverrides: next.ruleOverrides,
+                    rulesVersion: next.rulesVersion,
+                  }))
                 }
               />,
             )}
@@ -288,9 +317,7 @@ export function Handover({
                 models={desk.models}
                 rules={desk.rules}
                 onModelsSaved={(models) =>
-                  setDesk((current) =>
-                    current ? { ...current, models } : current,
-                  )
+                  saved((current) => ({ ...current, models }))
                 }
               />,
             )}
@@ -299,8 +326,6 @@ export function Handover({
               <AuditTrail openRunId={runId} active={tab === "audit"} />,
             )}
           </>
-        ) : tab !== "convert" ? (
-          panel(tab, <DeskSkeleton />)
         ) : null}
       </main>
     </div>

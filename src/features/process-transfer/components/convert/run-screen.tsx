@@ -73,8 +73,8 @@ export function RunScreen({
   currentRulesVersion: number;
   onClose: () => void;
   onRedone: (runId: string) => void;
-  /** The Run finished while open: refresh the spend and the Runs list. */
-  onEnded: () => void;
+  /** The Run finished while open (its last view): refresh the spend and the Runs list. */
+  onEnded: (run: RunView | null) => void;
 }) {
   const { state, feed, retry } = useRun(runId, generation, onEnded, preloaded);
 

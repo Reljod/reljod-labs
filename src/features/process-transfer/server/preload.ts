@@ -1,4 +1,5 @@
 import "server-only";
+import { unstable_rethrow } from "next/navigation";
 import { AccessDeniedError, requireOwner } from "@/features/access/server/gate";
 import type { Loaded } from "../domain/api";
 import type { DeskView, RunView } from "../domain/run";
@@ -18,6 +19,7 @@ async function settle<T>(
   try {
     return { ok: true, value: await work };
   } catch (error) {
+    unstable_rethrow(error);
     if (error instanceof AccessDeniedError) {
       return { ok: false, error: error.message };
     }
