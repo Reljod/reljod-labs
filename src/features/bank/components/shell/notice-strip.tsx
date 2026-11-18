@@ -20,7 +20,11 @@ type Counter = {
  * counts of what waits on someone, each a way to where it waits. A count of
  * zero is not shown.
  */
-export function NoticeStrip({ overview }: { overview: OverviewView | undefined }) {
+export function NoticeStrip({
+  overview,
+}: {
+  overview: OverviewView | undefined;
+}) {
   const { openTab } = useBank();
   const counters: Counter[] = overview
     ? [

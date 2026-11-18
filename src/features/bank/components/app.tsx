@@ -26,7 +26,9 @@ const PANELS_ID = "bank";
 const loading = () => <TabLoading />;
 const TAB_VIEW: Record<Tab, ComponentType> = {
   bank: BankTab,
-  chat: dynamic(() => import("./tabs/chat-tab").then((m) => m.ChatTab), { loading }),
+  chat: dynamic(() => import("./tabs/chat-tab").then((m) => m.ChatTab), {
+    loading,
+  }),
   operations: dynamic(
     () => import("./tabs/operations-tab").then((m) => m.OperationsTab),
     { loading },
@@ -77,7 +79,11 @@ const preloadTab = (tab: Tab) =>
  */
 export function BankApp() {
   const { tab, openTab } = useBank();
-  const overview = useRead<OverviewView>("get_overview", {}, { refetchMs: 5_000 });
+  const overview = useRead<OverviewView>(
+    "get_overview",
+    {},
+    { refetchMs: 5_000 },
+  );
   const [visited, setVisited] = useState<Tab[]>(() => [tab]);
   // A tab opened from anywhere (a link in another tab, a counter) is visited.
   if (!visited.includes(tab)) setVisited([...visited, tab]);

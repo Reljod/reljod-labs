@@ -24,7 +24,11 @@ const OUTCOME_MS = 7_000;
  * bank date ticks over in place; the menu moves it by whole days, and each
  * day crossed runs end-of-day (watch it in Operations).
  */
-export function BankClock({ overview }: { overview: OverviewView | undefined }) {
+export function BankClock({
+  overview,
+}: {
+  overview: OverviewView | undefined;
+}) {
   const advance = useCommand<{ from: string; to: string; days: number }>();
   const [open, setOpen] = useState(false);
   const [shown, setShown] = useState(false);
@@ -101,7 +105,9 @@ export function BankClock({ overview }: { overview: OverviewView | undefined }) 
         aria-expanded={open}
         aria-controls={menuId}
         aria-busy={advance.pending || undefined}
-        aria-label={advance.pending ? "Advancing the clock" : "Fast-forward the clock"}
+        aria-label={
+          advance.pending ? "Advancing the clock" : "Fast-forward the clock"
+        }
         disabled={advance.pending}
         onClick={() => setOpen((value) => !value)}
         data-testid="bank-clock-fast-forward"
@@ -166,8 +172,7 @@ export function BankClock({ overview }: { overview: OverviewView | undefined }) 
           </ul>
           <p className="border-ink border-t-2 bg-marble px-3 py-2 text-xs text-ink-muted">
             Each day crossed runs end-of-day: cards settle, scheduled payments
-            run, loans are collected, interest accrues. Watch it in
-            Operations.
+            run, loans are collected, interest accrues. Watch it in Operations.
             {room < 31 ? ` The clock may run ${room} more day(s) ahead.` : ""}
           </p>
         </div>

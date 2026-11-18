@@ -30,30 +30,54 @@ const VIA: Record<string, string> = {
  * keeps its outcome on screen as it moves down.
  */
 export function Approvals({ live }: { live: Live }) {
-  const read = useRead<{ approvals: ApprovalView[] }>("list_approvals", {}, live);
-  if (read.isPending) return <ListSkeleton rows={3} height="h-28" label="Reading the Approvals…" />;
-  if (!read.data) return <ReadError error={read.error} onRetry={() => void read.refetch()} />;
+  const read = useRead<{ approvals: ApprovalView[] }>(
+    "list_approvals",
+    {},
+    live,
+  );
+  if (read.isPending)
+    return (
+      <ListSkeleton rows={3} height="h-28" label="Reading the Approvals…" />
+    );
+  if (!read.data)
+    return <ReadError error={read.error} onRetry={() => void read.refetch()} />;
   const approvals = [...read.data.approvals].sort(
     (a, b) => Number(b.status === "pending") - Number(a.status === "pending"),
   );
   if (approvals.length === 0) {
     return (
       <Empty title="Nothing waits for a checker">
-        A large payment, a reversal or an overdraft limit waits here for a supervisor who did not ask for it (the Rule “Second pair of eyes” sets the threshold).
+        A large payment, a reversal or an overdraft limit waits here for a
+        supervisor who did not ask for it (the Rule “Second pair of eyes” sets
+        the threshold).
       </Empty>
     );
   }
   const firstDecided = approvals.findIndex((item) => item.status !== "pending");
   return (
-    <ul className="space-y-3" aria-busy={read.isFetching || undefined} data-testid="bank-ops-approvals">
+    <ul
+      className="space-y-3"
+      aria-busy={read.isFetching || undefined}
+      data-testid="bank-ops-approvals"
+    >
       {approvals.map((approval, index) => (
-        <ApprovalItem key={approval.id} approval={approval} divider={index === firstDecided && index > 0} />
+        <ApprovalItem
+          key={approval.id}
+          approval={approval}
+          divider={index === firstDecided && index > 0}
+        />
       ))}
     </ul>
   );
 }
 
-function ApprovalItem({ approval, divider }: { approval: ApprovalView; divider: boolean }) {
+function ApprovalItem({
+  approval,
+  divider,
+}: {
+  approval: ApprovalView;
+  divider: boolean;
+}) {
   const { activeStaff } = useBank();
   const decide = useCommand();
   const [asking, setAsking] = useState<"approve" | "reject" | null>(null);
@@ -71,16 +95,27 @@ function ApprovalItem({ approval, divider }: { approval: ApprovalView; divider: 
 
   return (
     <li>
-      {divider ? <p className="eyebrow mt-5 mb-2 text-[0.65rem] font-bold text-ink-muted">Decided</p> : null}
+      {divider ? (
+        <p className="eyebrow mt-5 mb-2 text-[0.65rem] font-bold text-ink-muted">
+          Decided
+        </p>
+      ) : null}
       <article
-        className={cx("outline-box rounded-sm bg-paper", pending ? "shadow-hard-md" : "border-ink/40 text-ink-muted")}
+        className={cx(
+          "outline-box rounded-sm bg-paper",
+          pending ? "shadow-hard-md" : "border-ink/40 text-ink-muted",
+        )}
         data-testid={`bank-approval-${approval.id}`}
       >
         <div className="grid gap-x-4 gap-y-2 px-3 py-2.5 sm:grid-cols-[minmax(0,1fr)_auto]">
           <div className="min-w-0 space-y-1">
             <div className="flex flex-wrap items-center gap-2">
-              <Badge tone={status.tone} dot={pending}>{status.label}</Badge>
-              <span className="eyebrow text-[0.6rem] font-bold text-ink-muted">{approval.commandTitle}</span>
+              <Badge tone={status.tone} dot={pending}>
+                {status.label}
+              </Badge>
+              <span className="eyebrow text-[0.6rem] font-bold text-ink-muted">
+                {approval.commandTitle}
+              </span>
             </div>
             <p className="text-sm font-semibold text-ink">{approval.summary}</p>
             <p className="text-xs">
@@ -88,21 +123,35 @@ function ApprovalItem({ approval, divider }: { approval: ApprovalView; divider: 
               {approval.reason}
             </p>
             <p className="text-xs text-ink-muted">
-              Asked by <span className="font-semibold text-ink">{approval.requestedByName}</span>{" "}
-              {VIA[approval.requestedVia] ?? `via ${approval.requestedVia}`} · {formatStamp(approval.createdAt)}
+              Asked by{" "}
+              <span className="font-semibold text-ink">
+                {approval.requestedByName}
+              </span>{" "}
+              {VIA[approval.requestedVia] ?? `via ${approval.requestedVia}`} ·{" "}
+              {formatStamp(approval.createdAt)}
             </p>
             {approval.decidedByName ? (
               <p className="text-xs text-ink-muted">
-                {status.label} by <span className="font-semibold text-ink">{approval.decidedByName}</span>
-                {approval.decidedAt ? ` · ${formatStamp(approval.decidedAt)}` : ""}
+                {status.label} by{" "}
+                <span className="font-semibold text-ink">
+                  {approval.decidedByName}
+                </span>
+                {approval.decidedAt
+                  ? ` · ${formatStamp(approval.decidedAt)}`
+                  : ""}
                 {approval.decisionNote ? ` · “${approval.decisionNote}”` : ""}
               </p>
             ) : null}
           </div>
           {approval.amount !== null ? (
             <div className="sm:text-right">
-              <p className="eyebrow text-[0.6rem] font-bold text-ink-muted">MRF</p>
-              <Amount minor={approval.amount} className="text-xl font-bold text-ink" />
+              <p className="eyebrow text-[0.6rem] font-bold text-ink-muted">
+                MRF
+              </p>
+              <Amount
+                minor={approval.amount}
+                className="text-xl font-bold text-ink"
+              />
             </div>
           ) : null}
         </div>
@@ -128,14 +177,18 @@ function ApprovalItem({ approval, divider }: { approval: ApprovalView; divider: 
             >
               Reject
             </Button>
-            {refusal ? <span className="text-xs text-ink-muted">{refusal}</span> : null}
+            {refusal ? (
+              <span className="text-xs text-ink-muted">{refusal}</span>
+            ) : null}
           </footer>
         ) : null}
         <OutcomeNote command={decide} className="m-3 mt-0" />
       </article>
       {asking ? (
         <CommandDialog
-          title={asking === "approve" ? "Give the Approval" : "Refuse the Approval"}
+          title={
+            asking === "approve" ? "Give the Approval" : "Refuse the Approval"
+          }
           confirm={asking === "approve" ? "Approve" : "Reject"}
           pendingLabel={asking === "approve" ? "Approving…" : "Rejecting…"}
           danger={asking === "reject"}
@@ -155,7 +208,10 @@ function ApprovalItem({ approval, divider }: { approval: ApprovalView; divider: 
               ? `${approval.summary}${approval.amount !== null ? ` (${formatMoney(approval.amount)})` : ""} runs now, as ${approval.requestedByName} asked. If the money is no longer there, it fails and says so.`
               : `${approval.summary} does not run. ${approval.requestedByName} sees that you refused it.`}
           </p>
-          <label htmlFor={noteId} className="eyebrow block text-[0.65rem] font-bold text-ink-muted">
+          <label
+            htmlFor={noteId}
+            className="eyebrow block text-[0.65rem] font-bold text-ink-muted"
+          >
             Note (optional)
           </label>
           <textarea

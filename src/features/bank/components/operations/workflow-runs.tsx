@@ -128,7 +128,10 @@ export function WorkflowRuns({ runs }: { runs: WorkflowRunView[] }) {
                             {step.name}
                           </span>
                           {step.note ? (
-                            <span className="text-ink-muted"> · {step.note}</span>
+                            <span className="text-ink-muted">
+                              {" "}
+                              · {step.note}
+                            </span>
                           ) : null}
                           <span className="ml-2 font-mono text-[0.65rem] text-ink-muted tabular-nums">
                             {formatStamp(step.at)}

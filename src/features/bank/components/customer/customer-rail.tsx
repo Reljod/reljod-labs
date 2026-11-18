@@ -43,7 +43,10 @@ export function CustomerRail({
   const searchId = useId();
   const [query, setQuery] = useState("");
   const [opening, setOpening] = useState(false);
-  const shown = useMemo(() => customers.filter((customer) => matches(customer, query)), [customers, query]);
+  const shown = useMemo(
+    () => customers.filter((customer) => matches(customer, query)),
+    [customers, query],
+  );
 
   return (
     <aside
@@ -53,8 +56,15 @@ export function CustomerRail({
     >
       <div className="space-y-2 border-ink border-b-2 p-3">
         <div className="flex items-center justify-between gap-2">
-          <p className="eyebrow text-[0.65rem] font-bold text-ink-muted">Customers · {customers.length}</p>
-          <Button size="sm" variant="primary" onClick={() => setOpening(true)} data-testid="bank-customer-open">
+          <p className="eyebrow text-[0.65rem] font-bold text-ink-muted">
+            Customers · {customers.length}
+          </p>
+          <Button
+            size="sm"
+            variant="primary"
+            onClick={() => setOpening(true)}
+            data-testid="bank-customer-open"
+          >
             + Open a customer
           </Button>
         </div>
@@ -83,12 +93,17 @@ export function CustomerRail({
               Loading customers
             </span>
             {["a", "b", "c", "d"].map((key) => (
-              <div key={key} className="hx-shimmer h-16 rounded-sm border-2 border-ink/20" />
+              <div
+                key={key}
+                className="hx-shimmer h-16 rounded-sm border-2 border-ink/20"
+              />
             ))}
           </div>
         ) : shown.length === 0 ? (
           <p className="p-4 text-sm text-ink-muted">
-            {customers.length === 0 ? "No customers yet. Open the first one." : `No customer matches "${query}".`}
+            {customers.length === 0
+              ? "No customers yet. Open the first one."
+              : `No customer matches "${query}".`}
           </p>
         ) : (
           <ul className="divide-y divide-ink/15">
@@ -104,18 +119,24 @@ export function CustomerRail({
                     data-customer-number={customer.number}
                     className={cx(
                       "flex w-full flex-col gap-1 px-3 py-2.5 text-left transition-colors",
-                      selected ? "bg-paper shadow-[inset_4px_0_0_var(--color-ink)]" : "hover:bg-paper/70",
+                      selected
+                        ? "bg-paper shadow-[inset_4px_0_0_var(--color-ink)]"
+                        : "hover:bg-paper/70",
                     )}
                   >
                     <span className="flex items-center justify-between gap-2">
-                      <span className="truncate font-bold">{customer.name}</span>
+                      <span className="truncate font-bold">
+                        {customer.name}
+                      </span>
                       <Money minor={customer.deposits} className="text-xs" />
                     </span>
                     <span className="flex items-center justify-between gap-2">
                       <span className="font-mono text-[0.7rem] text-ink-muted">
                         {customer.number} · {customer.accounts} acct
                       </span>
-                      <Badge tone={KYC_TONE[customer.kycStatus]}>{customer.kycStatus}</Badge>
+                      <Badge tone={KYC_TONE[customer.kycStatus]}>
+                        {customer.kycStatus}
+                      </Badge>
                     </span>
                   </button>
                 </li>
@@ -124,7 +145,12 @@ export function CustomerRail({
           </ul>
         )}
       </div>
-      {opening ? <OpenCustomerDialog onClose={() => setOpening(false)} onOpened={onOpen} /> : null}
+      {opening ? (
+        <OpenCustomerDialog
+          onClose={() => setOpening(false)}
+          onOpened={onOpen}
+        />
+      ) : null}
     </aside>
   );
 }
@@ -144,7 +170,10 @@ export function CustomerPicker({
   return (
     <div className="flex items-end gap-2 border-ink border-b-2 bg-marble p-3 lg:hidden">
       <div className="min-w-0 flex-1">
-        <label htmlFor={id} className="eyebrow text-[0.65rem] font-bold text-ink-muted">
+        <label
+          htmlFor={id}
+          className="eyebrow text-[0.65rem] font-bold text-ink-muted"
+        >
           Customer
         </label>
         <select
@@ -156,15 +185,25 @@ export function CustomerPicker({
         >
           {customers.map((customer) => (
             <option key={customer.id} value={customer.id}>
-              {customer.name} · {customer.number} · {KYC_LABEL[customer.kycStatus]} · {formatMoney(customer.deposits)}
+              {customer.name} · {customer.number} ·{" "}
+              {KYC_LABEL[customer.kycStatus]} · {formatMoney(customer.deposits)}
             </option>
           ))}
         </select>
       </div>
-      <Button variant="primary" onClick={() => setOpening(true)} aria-label="Open a customer">
+      <Button
+        variant="primary"
+        onClick={() => setOpening(true)}
+        aria-label="Open a customer"
+      >
         + Open
       </Button>
-      {opening ? <OpenCustomerDialog onClose={() => setOpening(false)} onOpened={onOpen} /> : null}
+      {opening ? (
+        <OpenCustomerDialog
+          onClose={() => setOpening(false)}
+          onOpened={onOpen}
+        />
+      ) : null}
     </div>
   );
 }

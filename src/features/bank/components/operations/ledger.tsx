@@ -27,15 +27,25 @@ const kindLabel = (kind: string) => kind.replace(/[._]/g, " ");
 export function Ledger({ live }: { live: Live }) {
   const head = useRead<LedgerPage>("list_ledger", {}, live);
   const older = useOlderPages("ledger");
-  if (head.isPending) return <ListSkeleton rows={4} height="h-28" label="Reading the journal…" />;
-  if (!head.data) return <ReadError error={head.error} onRetry={() => void head.refetch()} />;
+  if (head.isPending)
+    return <ListSkeleton rows={4} height="h-28" label="Reading the journal…" />;
+  if (!head.data)
+    return <ReadError error={head.error} onRetry={() => void head.refetch()} />;
   if (head.data.entries.length === 0) {
-    return <Empty title="No Entries yet">Every movement of money posts a balanced Entry here.</Empty>;
+    return (
+      <Empty title="No Entries yet">
+        Every movement of money posts a balanced Entry here.
+      </Empty>
+    );
   }
   const render = (entries: LedgerEntryView[]) =>
     entries.map((entry) => <EntryCard key={entry.id} entry={entry} />);
   return (
-    <ul className="space-y-2.5" aria-busy={head.isFetching || undefined} data-testid="bank-ops-ledger">
+    <ul
+      className="space-y-2.5"
+      aria-busy={head.isFetching || undefined}
+      data-testid="bank-ops-ledger"
+    >
       <AnimatePresence initial={false}>
         {head.data.entries.map((entry) => (
           <motion.li
@@ -78,13 +88,24 @@ function EntryBody({ entry }: { entry: LedgerEntryView }) {
   return (
     <article className="outline-box rounded-sm bg-paper shadow-hard-sm">
       <header className="flex flex-wrap items-center gap-x-2 gap-y-1 border-ink/20 border-b px-3 py-1.5">
-        <span className="font-mono text-xs font-bold tabular-nums">#{entry.id}</span>
-        <Badge tone={entry.reversesEntryId ? "amber" : "neutral"}>{kindLabel(entry.kind)}</Badge>
+        <span className="font-mono text-xs font-bold tabular-nums">
+          #{entry.id}
+        </span>
+        <Badge tone={entry.reversesEntryId ? "amber" : "neutral"}>
+          {kindLabel(entry.kind)}
+        </Badge>
         {entry.reversesEntryId ? (
-          <span className="font-mono text-[0.7rem] text-seal-red">reverses #{entry.reversesEntryId}</span>
+          <span className="font-mono text-[0.7rem] text-seal-red">
+            reverses #{entry.reversesEntryId}
+          </span>
         ) : null}
-        <span className="min-w-0 flex-1 truncate text-sm">{entry.description}</span>
-        <span className="font-mono text-[0.65rem] text-ink-muted tabular-nums" title={formatStamp(entry.at)}>
+        <span className="min-w-0 flex-1 truncate text-sm">
+          {entry.description}
+        </span>
+        <span
+          className="font-mono text-[0.65rem] text-ink-muted tabular-nums"
+          title={formatStamp(entry.at)}
+        >
           {formatDate(entry.date)} · via {entry.via}
         </span>
       </header>
@@ -108,13 +129,19 @@ function EntryBody({ entry }: { entry: LedgerEntryView }) {
                 <td className="w-40 px-3 py-1 font-mono whitespace-nowrap text-ink-muted">
                   {formatAccountNumber(posting.number)}
                 </td>
-                <td className={posting.direction === "C" ? "py-1 pl-6" : "py-1"}>
-                  <span className="block max-w-56 truncate">{posting.name}</span>
+                <td
+                  className={posting.direction === "C" ? "py-1 pl-6" : "py-1"}
+                >
+                  <span className="block max-w-56 truncate">
+                    {posting.name}
+                  </span>
                 </td>
                 <td className="w-28 px-3 py-1 text-right">
                   {posting.direction === "D" ? (
                     <>
-                      <span className="mr-1 text-[0.6rem] text-ink-muted">D</span>
+                      <span className="mr-1 text-[0.6rem] text-ink-muted">
+                        D
+                      </span>
                       <Amount minor={posting.amount} />
                     </>
                   ) : null}
@@ -122,7 +149,9 @@ function EntryBody({ entry }: { entry: LedgerEntryView }) {
                 <td className="w-28 px-3 py-1 text-right">
                   {posting.direction === "C" ? (
                     <>
-                      <span className="mr-1 text-[0.6rem] text-ink-muted">C</span>
+                      <span className="mr-1 text-[0.6rem] text-ink-muted">
+                        C
+                      </span>
                       <Amount minor={posting.amount} />
                     </>
                   ) : null}

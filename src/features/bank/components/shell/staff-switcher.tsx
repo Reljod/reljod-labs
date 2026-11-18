@@ -112,10 +112,9 @@ export function StaffSwitcher() {
           <div className="space-y-2 border-ink border-t-2 bg-marble px-3 py-2">
             <ErrorNote>{write.error}</ErrorNote>
             <p className="text-xs text-ink-muted">
-              A teller serves Customers and moves money. A supervisor also
-              gives Approvals, edits Rules and reverses Entries. A compliance
-              officer decides Alerts and KYC. Every change of Staff is
-              audited.
+              A teller serves Customers and moves money. A supervisor also gives
+              Approvals, edits Rules and reverses Entries. A compliance officer
+              decides Alerts and KYC. Every change of Staff is audited.
             </p>
           </div>
         </div>

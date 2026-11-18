@@ -1,6 +1,8 @@
 /** A block of the shape something will take, shimmering while it loads. */
 export const Block = ({ className }: { className: string }) => (
-  <div className={`tb-shimmer rounded-sm border-2 border-ink/20 ${className}`} />
+  <div
+    className={`tb-shimmer rounded-sm border-2 border-ink/20 ${className}`}
+  />
 );
 
 /** What a tab shows while its code loads: a heading and panels, shaped like most tabs. */

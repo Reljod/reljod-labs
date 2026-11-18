@@ -1,13 +1,13 @@
 "use client";
 
-import { type ReactNode, useId, useState } from "react";
-import type { CommandName, WriteOutcome } from "../../domain/commands";
+import type { ReactNode } from "react";
+import type { WriteOutcome } from "../../domain/commands";
 import { formatDate } from "../../domain/dates";
-import { formatMinor, formatMoney, parseMoney } from "../../domain/money";
+import { formatMinor, parseMoney } from "../../domain/money";
 import { type Action, can, rolesFor } from "../../domain/permissions";
 import { ROLE_LABEL } from "../../domain/staff";
-import { Button, cx, Dialog, DoneNote, ErrorNote, Field, inputClass } from "../ui";
-import { useBank, useCommand } from "../use-bank";
+import { cx, DoneNote, ErrorNote, Field, inputClass } from "../ui";
+import { useBank } from "../use-bank";
 
 /** Pieces every section of the Customer view shares. */
 
@@ -22,11 +22,20 @@ export function useGate(action: Action): string | null {
   const { activeStaff } = useBank();
   if (can(activeStaff, action)) return null;
   const roles = rolesFor(action).map((role) => ROLE_LABEL[role].toLowerCase());
-  const who = roles.length > 1 ? `${roles.slice(0, -1).join(", ")} or ${roles.at(-1)}` : roles[0];
+  const who =
+    roles.length > 1
+      ? `${roles.slice(0, -1).join(", ")} or ${roles.at(-1)}`
+      : roles[0];
   return `Needs a ${who}. Switch Staff.`;
 }
 
-export function GateLine({ reason, className = "" }: { reason: string | null; className?: string }) {
+export function GateLine({
+  reason,
+  className = "",
+}: {
+  reason: string | null;
+  className?: string;
+}) {
   if (!reason) return null;
   return <p className={cx("text-xs text-ink-muted", className)}>{reason}</p>;
 }
@@ -50,16 +59,26 @@ export function Money({
 }
 
 /** The headline of a write's Outcome: what happened, in a few words. */
-function headlineOf(outcome: WriteOutcome<unknown>): { text: string; tone: "done" | "wait" | "bad" } {
-  if (outcome.status === "needs_approval") return { text: "Waiting for an Approval", tone: "wait" };
-  if (outcome.status === "needs_confirmation") return { text: "Waiting for a Confirmation", tone: "wait" };
-  const result = outcome.result as { status?: string; settlesOn?: string } | null;
+function headlineOf(outcome: WriteOutcome<unknown>): {
+  text: string;
+  tone: "done" | "wait" | "bad";
+} {
+  if (outcome.status === "needs_approval")
+    return { text: "Waiting for an Approval", tone: "wait" };
+  if (outcome.status === "needs_confirmation")
+    return { text: "Waiting for a Confirmation", tone: "wait" };
+  const result = outcome.result as {
+    status?: string;
+    settlesOn?: string;
+  } | null;
   switch (result?.status) {
     case "held":
       return { text: "Held for review", tone: "wait" };
     case "clearing":
       return {
-        text: result.settlesOn ? `In clearing until ${formatDate(result.settlesOn)}` : "In clearing",
+        text: result.settlesOn
+          ? `In clearing until ${formatDate(result.settlesOn)}`
+          : "In clearing",
         tone: "wait",
       };
     case "declined":
@@ -100,7 +119,9 @@ export function OutcomeNote({
       data-testid="bank-write-outcome"
       className={cx(
         "outline-box rounded-sm px-3 py-2 text-sm",
-        tone === "bad" ? "border-seal-red bg-paper text-seal-red" : "bg-brass/20 text-ink",
+        tone === "bad"
+          ? "border-seal-red bg-paper text-seal-red"
+          : "bg-brass/20 text-ink",
         className,
       )}
     >
@@ -135,9 +156,15 @@ export function MoneyField({
   testId?: string;
 }) {
   const parsed = value.trim() ? parseMoney(value) : null;
-  const parseError = value.trim() && parsed === null ? "Type an amount like 1,250.00" : null;
+  const parseError =
+    value.trim() && parsed === null ? "Type an amount like 1,250.00" : null;
   return (
-    <Field label={`${label} (MRF)`} htmlFor={id} hint={hint} error={parseError ?? error ?? undefined}>
+    <Field
+      label={`${label} (MRF)`}
+      htmlFor={id}
+      hint={hint}
+      error={parseError ?? error ?? undefined}
+    >
       <input
         id={id}
         inputMode="decimal"
@@ -159,194 +186,6 @@ export const amountOf = (text: string) => {
   return value && value > 0 ? value : null;
 };
 
-/** What a money-moving write asks before it runs: the summary and the word to type. */
-export type StepUp = { summary: ReactNode; word: string };
-
-const matches = (typed: string, word: string) => {
-  const wanted = parseMoney(word);
-  if (wanted !== null) return parseMoney(typed) === wanted;
-  return typed.trim().toLowerCase() === word.trim().toLowerCase();
-};
-
-export type Built = { name: CommandName; input: Record<string, unknown> };
-
-/**
- * A dialog that sends one write. `build` turns the form into a command, or
- * returns the reason it cannot yet (shown inline). With `stepUp` the person
- * reads exactly what will happen and types the amount (or word) before the
- * confirm button enables. After the write it shows the Outcome where it was
- * clicked and a Done button.
- */
-export function WriteDialog<Result = unknown>({
-  title,
-  onClose,
-  children,
-  build,
-  submit,
-  pendingLabel = "Sending…",
-  danger = false,
-  stepUp,
-  gate = null,
-  wide = false,
-  onDone,
-  after,
-}: {
-  title: string;
-  onClose: () => void;
-  children?: ReactNode;
-  build: () => Built | string;
-  submit: string;
-  pendingLabel?: string;
-  danger?: boolean;
-  stepUp?: (built: Built) => StepUp;
-  gate?: string | null;
-  wide?: boolean;
-  /** Called once with the Outcome when the write was accepted. */
-  onDone?: (outcome: WriteOutcome<Result>) => void;
-  /** Shown under the Outcome: a next step. */
-  after?: (outcome: WriteOutcome<Result>) => ReactNode;
-}) {
-  const command = useCommand<Result>();
-  const formId = useId();
-  const typedId = useId();
-  const [problem, setProblem] = useState<string | null>(null);
-  const [review, setReview] = useState<{ built: Built; step: StepUp } | null>(null);
-  const [typed, setTyped] = useState("");
-
-  const send = async (built: Built) => {
-    const outcome = await command.run(built.name, built.input);
-    if (outcome) onDone?.(outcome);
-  };
-
-  const onSubmit = () => {
-    if (command.pending || command.outcome) return;
-    const built = build();
-    if (typeof built === "string") {
-      setProblem(built);
-      return;
-    }
-    setProblem(null);
-    if (stepUp) {
-      setReview({ built, step: stepUp(built) });
-      setTyped("");
-      return;
-    }
-    void send(built);
-  };
-
-  const finished = command.outcome;
-  const ready = review ? matches(typed, review.step.word) : true;
-
-  return (
-    <Dialog
-      title={title}
-      onClose={onClose}
-      busy={command.pending}
-      wide={wide}
-      footer={
-        finished ? (
-          <Button variant="primary" onClick={onClose} data-testid="bank-write-done">
-            Done
-          </Button>
-        ) : (
-          <>
-            {review ? (
-              <Button variant="ghost" onClick={() => setReview(null)} disabled={command.pending}>
-                Back
-              </Button>
-            ) : (
-              <Button variant="ghost" onClick={onClose} disabled={command.pending}>
-                Cancel
-              </Button>
-            )}
-            {review ? (
-              <Button
-                variant={danger ? "danger" : "primary"}
-                pending={command.pending}
-                pendingLabel={pendingLabel}
-                disabled={!ready || Boolean(gate)}
-                onClick={() => void send(review.built)}
-                data-testid="bank-stepup-confirm"
-              >
-                Confirm
-              </Button>
-            ) : (
-              <Button
-                type="submit"
-                form={formId}
-                variant={danger ? "danger" : "primary"}
-                pending={command.pending}
-                pendingLabel={pendingLabel}
-                disabled={Boolean(gate)}
-                data-testid="bank-write-submit"
-              >
-                {stepUp ? "Review" : submit}
-              </Button>
-            )}
-          </>
-        )
-      }
-    >
-      {finished ? (
-        <div className="space-y-3">
-          <OutcomeNote outcome={finished} error={null} />
-          {after?.(finished)}
-        </div>
-      ) : review ? (
-        <div className="space-y-3">
-          <div className="outline-box rounded-sm bg-marble px-3 py-2">
-            <p className="eyebrow text-[0.65rem] font-bold text-ink-muted">{submit}</p>
-            <div className="mt-1">{review.step.summary}</div>
-          </div>
-          <Field
-            label={`Type ${review.step.word} to confirm`}
-            htmlFor={typedId}
-            hint="Money moves only when what you type matches."
-          >
-            <input
-              id={typedId}
-              className={cx(inputClass, "font-mono")}
-              autoComplete="off"
-              value={typed}
-              onChange={(event) => setTyped(event.target.value)}
-              onKeyDown={(event) => {
-                if (event.key === "Enter" && ready && !gate) void send(review.built);
-              }}
-              data-testid="bank-stepup-input"
-            />
-          </Field>
-          <OutcomeNote outcome={null} error={command.error} />
-        </div>
-      ) : (
-        <form
-          id={formId}
-          className="space-y-3"
-          onSubmit={(event) => {
-            event.preventDefault();
-            onSubmit();
-          }}
-        >
-          {children}
-          <GateLine reason={gate} />
-          {problem ? <ErrorNote>{problem}</ErrorNote> : null}
-          <OutcomeNote outcome={null} error={command.error} />
-        </form>
-      )}
-    </Dialog>
-  );
-}
-
-/** The step-up for a plain amount: names the move and asks for the amount typed. */
-export const amountStepUp = (amount: number, sentence: ReactNode): StepUp => ({
-  summary: (
-    <div className="space-y-1">
-      <p className="font-mono text-lg font-bold tabular-nums">{formatMoney(amount)}</p>
-      <p>{sentence}</p>
-    </div>
-  ),
-  word: formatMinor(amount),
-});
-
 /** Saves bytes or text as a file through a temporary object URL. */
 export function saveFile(data: BlobPart, fileName: string, type: string) {
   const url = URL.createObjectURL(new Blob([data], { type }));
@@ -360,15 +199,26 @@ export function saveFile(data: BlobPart, fileName: string, type: string) {
 }
 
 /** A skeleton shaped like a row of cards, with a status for screen readers. */
-export function CardsSkeleton({ count = 3, label }: { count?: number; label: string }) {
+export function CardsSkeleton({
+  count = 3,
+  label,
+}: {
+  count?: number;
+  label: string;
+}) {
   return (
     <div aria-busy="true" className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
       <span className="sr-only" aria-live="polite">
         {label}
       </span>
-      {Array.from({ length: count }, (_, index) => `card-${index}`).map((key) => (
-        <div key={key} className="hx-shimmer h-36 rounded-sm border-2 border-ink/20" />
-      ))}
+      {Array.from({ length: count }, (_, index) => `card-${index}`).map(
+        (key) => (
+          <div
+            key={key}
+            className="hx-shimmer h-36 rounded-sm border-2 border-ink/20"
+          />
+        ),
+      )}
     </div>
   );
 }

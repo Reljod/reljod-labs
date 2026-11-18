@@ -133,7 +133,7 @@ describe("Rules", () => {
     const edited = resolveRulebook([
       { ruleId: "fees.payments", version: 3, enabled: false, params: { external: 2_00, bill: 0, returned: 5_00 } },
       { ruleId: "limits.payments", version: 2, enabled: false, params: { perPayment: 1_000_00, perDay: 2_000_00 } },
-      { ruleId: "fraud.amount", version: 1, enabled: true, params: { holdFrom: "nonsense" } },
+      { ruleId: "fraud.amount", version: 1, enabled: true, params: { holdFrom: ["nonsense"] } },
     ]);
     expect(edited["fees.payments"].enabled).toBe(false);
     expect(edited["fees.payments"].version).toBe(3);

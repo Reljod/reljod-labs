@@ -30,17 +30,37 @@ const OUTBOX_TONE: Record<string, Tone> = {
  */
 export function Queues({ live }: { live: Live }) {
   const ops = useRead<OperationsView>("get_operations", {}, live);
-  if (ops.isPending) return <ListSkeleton rows={6} label="Reading the queues…" />;
-  if (!ops.data) return <ReadError error={ops.error} onRetry={() => void ops.refetch()} />;
+  if (ops.isPending)
+    return <ListSkeleton rows={6} label="Reading the queues…" />;
+  if (!ops.data)
+    return <ReadError error={ops.error} onRetry={() => void ops.refetch()} />;
   const { outbox, workflows, holds, clearing } = ops.data;
-  const widest = Math.max(1, ...outbox.byTopic.map((row) => row.waiting + row.done));
+  const widest = Math.max(
+    1,
+    ...outbox.byTopic.map((row) => row.waiting + row.done),
+  );
 
   return (
     <div className="space-y-3" aria-busy={ops.isFetching || undefined}>
       <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
-        <Figure label="Pending" value={outbox.pending} tone="text-brass" testId="bank-ops-outbox-pending" />
-        <Figure label="Dispatched" value={outbox.dispatched} tone="text-federal-blue" testId="bank-ops-outbox-dispatched" />
-        <Figure label="Done" value={outbox.done} tone="text-ivy" testId="bank-ops-outbox-done" />
+        <Figure
+          label="Pending"
+          value={outbox.pending}
+          tone="text-brass"
+          testId="bank-ops-outbox-pending"
+        />
+        <Figure
+          label="Dispatched"
+          value={outbox.dispatched}
+          tone="text-federal-blue"
+          testId="bank-ops-outbox-dispatched"
+        />
+        <Figure
+          label="Done"
+          value={outbox.done}
+          tone="text-ivy"
+          testId="bank-ops-outbox-done"
+        />
         <Figure
           label="Failed"
           value={outbox.failed}
@@ -50,17 +70,25 @@ export function Queues({ live }: { live: Live }) {
       </div>
 
       <div className="grid gap-3 lg:grid-cols-[minmax(0,1fr)_minmax(0,1.6fr)]">
-        <Panel title="Outbox by topic" eyebrow="Written with the write, delivered once">
+        <Panel
+          title="Outbox by topic"
+          eyebrow="Written with the write, delivered once"
+        >
           {outbox.byTopic.length === 0 ? (
-            <p className="text-sm text-ink-muted">Nothing has been written to the Outbox yet.</p>
+            <p className="text-sm text-ink-muted">
+              Nothing has been written to the Outbox yet.
+            </p>
           ) : (
             <ul className="space-y-2.5">
               {outbox.byTopic.map((row) => (
                 <li key={row.topic}>
                   <div className="flex items-baseline justify-between gap-2 text-xs">
-                    <span className="truncate font-mono font-bold">{row.topic}</span>
+                    <span className="truncate font-mono font-bold">
+                      {row.topic}
+                    </span>
                     <span className="shrink-0 font-mono text-ink-muted tabular-nums">
-                      <LiveNumber value={row.waiting} /> waiting · <LiveNumber value={row.done} /> done
+                      <LiveNumber value={row.waiting} /> waiting ·{" "}
+                      <LiveNumber value={row.done} /> done
                     </span>
                   </div>
                   <div className="mt-1 flex h-3 overflow-hidden rounded-sm border border-ink bg-marble">
@@ -79,16 +107,26 @@ export function Queues({ live }: { live: Live }) {
           )}
           {outbox.recent.length > 0 ? (
             <>
-              <p className="eyebrow mt-4 mb-1 text-[0.6rem] font-bold text-ink-muted">Latest messages</p>
+              <p className="eyebrow mt-4 mb-1 text-[0.6rem] font-bold text-ink-muted">
+                Latest messages
+              </p>
               <ul className="divide-y divide-ink/10 text-xs">
                 {outbox.recent.map((message) => (
                   <li key={message.id} className="flex items-center gap-2 py-1">
-                    <span className="w-10 shrink-0 font-mono text-ink-muted tabular-nums">#{message.id}</span>
-                    <span className="min-w-0 flex-1 truncate font-mono">{message.topic}</span>
+                    <span className="w-10 shrink-0 font-mono text-ink-muted tabular-nums">
+                      #{message.id}
+                    </span>
+                    <span className="min-w-0 flex-1 truncate font-mono">
+                      {message.topic}
+                    </span>
                     {message.attempts > 1 ? (
-                      <span className="font-mono text-[0.65rem] text-ink-muted">×{message.attempts}</span>
+                      <span className="font-mono text-[0.65rem] text-ink-muted">
+                        ×{message.attempts}
+                      </span>
                     ) : null}
-                    <Badge tone={OUTBOX_TONE[message.status] ?? "neutral"}>{message.status}</Badge>
+                    <Badge tone={OUTBOX_TONE[message.status] ?? "neutral"}>
+                      {message.status}
+                    </Badge>
                   </li>
                 ))}
               </ul>
@@ -96,13 +134,21 @@ export function Queues({ live }: { live: Live }) {
           ) : null}
         </Panel>
 
-        <Panel title="Workflow runs" eyebrow="Durable, one per Outbox message" bodyClassName="p-0">
+        <Panel
+          title="Workflow runs"
+          eyebrow="Durable, one per Outbox message"
+          bodyClassName="p-0"
+        >
           <WorkflowRuns runs={workflows} />
         </Panel>
       </div>
 
       <div className="grid gap-3 lg:grid-cols-2">
-        <Panel title="Active Holds" eyebrow="Money set aside, not yet posted" bodyClassName="p-0">
+        <Panel
+          title="Active Holds"
+          eyebrow="Money set aside, not yet posted"
+          bodyClassName="p-0"
+        >
           {holds.length === 0 ? (
             <Empty title="No active Holds" />
           ) : (
@@ -119,12 +165,28 @@ export function Queues({ live }: { live: Live }) {
                 <tbody className="divide-y divide-ink/10">
                   {holds.map((hold) => (
                     <tr key={hold.id}>
-                      <td className="px-3 py-1.5 font-mono text-xs whitespace-nowrap">{formatAccountNumber(hold.accountNumber)}</td>
-                      <td className="px-3 py-1.5">
-                        <Badge tone={hold.kind === "review" ? "red" : hold.kind === "approval" ? "amber" : "neutral"}>{hold.kind}</Badge>
+                      <td className="px-3 py-1.5 font-mono text-xs whitespace-nowrap">
+                        {formatAccountNumber(hold.accountNumber)}
                       </td>
-                      <td className="px-3 py-1.5 text-xs whitespace-nowrap text-ink-muted">{formatDate(hold.placedOn)}</td>
-                      <td className="px-3 py-1.5 text-right"><Amount minor={hold.amount} /></td>
+                      <td className="px-3 py-1.5">
+                        <Badge
+                          tone={
+                            hold.kind === "review"
+                              ? "red"
+                              : hold.kind === "approval"
+                                ? "amber"
+                                : "neutral"
+                          }
+                        >
+                          {hold.kind}
+                        </Badge>
+                      </td>
+                      <td className="px-3 py-1.5 text-xs whitespace-nowrap text-ink-muted">
+                        {formatDate(hold.placedOn)}
+                      </td>
+                      <td className="px-3 py-1.5 text-right">
+                        <Amount minor={hold.amount} />
+                      </td>
                     </tr>
                   ))}
                 </tbody>
@@ -133,12 +195,21 @@ export function Queues({ live }: { live: Live }) {
           )}
         </Panel>
 
-        <Panel title="On the rail" eyebrow="Payments clearing or held for review" bodyClassName="p-0">
+        <Panel
+          title="On the rail"
+          eyebrow="Payments clearing or held for review"
+          bodyClassName="p-0"
+        >
           {clearing.length === 0 ? (
-            <Empty title="Nothing clearing">Payments to other banks wait here for their settlement date.</Empty>
+            <Empty title="Nothing clearing">
+              Payments to other banks wait here for their settlement date.
+            </Empty>
           ) : (
             <div className="tb-table-wrap">
-              <table className="w-full min-w-[30rem] text-sm" data-testid="bank-ops-clearing">
+              <table
+                className="w-full min-w-[30rem] text-sm"
+                data-testid="bank-ops-clearing"
+              >
                 <thead>
                   <tr className="eyebrow border-ink border-b-2 text-left text-[0.6rem] text-ink-muted">
                     <th className="px-3 py-1.5 font-bold">To</th>
@@ -151,20 +222,32 @@ export function Queues({ live }: { live: Live }) {
                   {clearing.map((payment) => (
                     <tr key={payment.id}>
                       <td className="max-w-48 px-3 py-1.5">
-                        <span className="block truncate">{payment.counterparty}</span>
+                        <span className="block truncate">
+                          {payment.counterparty}
+                        </span>
                         <span className="block font-mono text-[0.65rem] text-ink-muted">
-                          {payment.fromNumber ? formatAccountNumber(payment.fromNumber) : payment.kind} · {formatStamp(payment.createdAt)}
+                          {payment.fromNumber
+                            ? formatAccountNumber(payment.fromNumber)
+                            : payment.kind}{" "}
+                          · {formatStamp(payment.createdAt)}
                         </span>
                       </td>
                       <td className="px-3 py-1.5">
-                        <Badge tone={payment.status === "held" ? "red" : "blue"} dot={payment.status === "clearing"}>
+                        <Badge
+                          tone={payment.status === "held" ? "red" : "blue"}
+                          dot={payment.status === "clearing"}
+                        >
                           {payment.status}
                         </Badge>
                       </td>
                       <td className="px-3 py-1.5 text-xs whitespace-nowrap text-ink-muted">
-                        {payment.settlesOn ? formatDate(payment.settlesOn) : "under review"}
+                        {payment.settlesOn
+                          ? formatDate(payment.settlesOn)
+                          : "under review"}
                       </td>
-                      <td className="px-3 py-1.5 text-right"><Amount minor={payment.amount} /></td>
+                      <td className="px-3 py-1.5 text-right">
+                        <Amount minor={payment.amount} />
+                      </td>
                     </tr>
                   ))}
                 </tbody>

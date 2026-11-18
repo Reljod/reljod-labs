@@ -1,7 +1,7 @@
 import { DemoBar } from "@/components/demo/demo-bar";
 import { DEMO_PATH, TABS } from "../domain/api";
-import { Block } from "./shell/tab-loading";
 import { tabLabel } from "./shell/tab-label";
+import { Block } from "./shell/tab-loading";
 
 /**
  * What Tidewater Bank shows while its first view is read on the server: the

@@ -35,15 +35,21 @@ export function AccountCard({
       )}
     >
       <span className="flex items-center justify-between gap-2">
-        <span className="eyebrow text-[0.6rem] font-bold text-ink-muted">{ACCOUNT_KIND_LABEL[account.kind]}</span>
+        <span className="eyebrow text-[0.6rem] font-bold text-ink-muted">
+          {ACCOUNT_KIND_LABEL[account.kind]}
+        </span>
         <Badge tone={ACCOUNT_TONE[account.status]}>{account.status}</Badge>
       </span>
       <span className="min-w-0">
         <span className="block truncate font-bold">{account.name}</span>
-        <span className="block font-mono text-xs text-ink-muted">{formatAccountNumber(account.number)}</span>
+        <span className="block font-mono text-xs text-ink-muted">
+          {formatAccountNumber(account.number)}
+        </span>
       </span>
       <span className="flex items-baseline justify-between gap-2">
-        <span className="eyebrow text-[0.6rem] font-bold text-ink-muted">Balance</span>
+        <span className="eyebrow text-[0.6rem] font-bold text-ink-muted">
+          Balance
+        </span>
         <motion.span
           key={account.balance}
           initial={reduce ? false : { opacity: 0.3, y: -4 }}
@@ -58,37 +64,49 @@ export function AccountCard({
       {differs ? (
         <span className="grid grid-cols-2 gap-2 border-ink/15 border-t pt-2 text-xs">
           <span>
-            <span className="eyebrow block text-[0.55rem] font-bold text-ink-muted">Available</span>
+            <span className="eyebrow block text-[0.55rem] font-bold text-ink-muted">
+              Available
+            </span>
             <Money minor={account.available} />
           </span>
           <span
             className="text-right"
             title="Money set aside by a Hold: a card purchase waiting to settle or a payment under review. It counts in the balance but cannot be spent."
           >
-            <span className="eyebrow block text-[0.55rem] font-bold text-ink-muted">Held</span>
+            <span className="eyebrow block text-[0.55rem] font-bold text-ink-muted">
+              Held
+            </span>
             <Money minor={account.held} />
           </span>
         </span>
       ) : null}
       {account.held > 0 ? (
         <span className="text-[0.7rem] text-ink-muted">
-          {formatMoney(account.held)} held until card purchases settle or a review ends.
+          {formatMoney(account.held)} held until card purchases settle or a
+          review ends.
         </span>
       ) : null}
       <span className="flex flex-wrap gap-x-3 gap-y-0.5 text-[0.7rem] text-ink-muted">
-        {account.overdraftLimit > 0 ? <span>Overdraft {formatMoney(account.overdraftLimit)}</span> : null}
+        {account.overdraftLimit > 0 ? (
+          <span>Overdraft {formatMoney(account.overdraftLimit)}</span>
+        ) : null}
         {account.kind === "savings" ? (
           <span>
-            {rate(account.rateBps)} a year · accrued {formatMoney(account.interestAccrued)}
+            {rate(account.rateBps)} a year · accrued{" "}
+            {formatMoney(account.interestAccrued)}
           </span>
         ) : null}
         {account.kind === "term" ? (
           <span>
             {rate(account.rateBps)} for {account.termMonths} months
-            {account.maturesOn ? ` · matures ${formatDate(account.maturesOn)}` : ""}
+            {account.maturesOn
+              ? ` · matures ${formatDate(account.maturesOn)}`
+              : ""}
           </span>
         ) : null}
-        {account.closedOn ? <span>Closed {formatDate(account.closedOn)}</span> : null}
+        {account.closedOn ? (
+          <span>Closed {formatDate(account.closedOn)}</span>
+        ) : null}
       </span>
     </button>
   );

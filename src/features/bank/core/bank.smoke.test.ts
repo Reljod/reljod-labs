@@ -48,7 +48,7 @@ it.skipIf(!base)("the running bank: MCP, outbox, Workflows and the clock", async
   const mcp = await createMCPClient({
     transport: { type: "http", url: `${base}/api/bank/mcp`, headers: { authorization: `Bearer ${token}` } },
   });
-  const tools = (await mcp.tools()) as Record<string, { execute: (args: unknown, options: unknown) => Promise<{ structuredContent?: Record<string, unknown>; isError?: boolean; content?: { text?: string }[] }> }>;
+  const tools = (await mcp.tools()) as unknown as Record<string, { execute: (args: unknown, options: unknown) => Promise<{ structuredContent?: Record<string, unknown>; isError?: boolean; content?: { text?: string }[] }> }>;
   const call = (name: string, args: unknown) => tools[name].execute(args, { toolCallId: crypto.randomUUID(), messages: [] });
   check("MCP lists one tool per command", Object.keys(tools).length === MCP_COMMANDS.length, `${Object.keys(tools).length} tools`);
   check("no tool gives an Approval or confirms a request", !("decide_approval" in tools) && !("confirm_request" in tools));
@@ -103,3 +103,54 @@ it.skipIf(!base)("the running bank: MCP, outbox, Workflows and the clock", async
   await mcp.close();
   await pool.end();
 }, 240_000);
+
+type TurnEvent = {
+  type: string;
+  name?: string;
+  ok?: boolean;
+  summary?: string;
+  text?: string;
+  model?: string;
+  costUsd?: number;
+  message?: string;
+};
+
+/** One Teller turn against the running app: stubbed (no model), and with BANK_SMOKE_LIVE=1 one real, cheap turn. */
+it.skipIf(!base)("the running bank: a Teller turn", async () => {
+  const owner = "e2e" as const;
+  const pool = makePool(process.env.BANK_DATABASE_URL ?? (process.env.CLIENT_MANAGER_DATABASE_URL as string), 1);
+  const headers = { "x-e2e-token": process.env.E2E_BYPASS_TOKEN ?? "", "content-type": "application/json" };
+  const [staff] = await pool<{ id: string }[]>`select id from bank.staff where owner = ${owner} and role = 'teller'`;
+  const turn = async (text: string, extra: Record<string, string>): Promise<TurnEvent[]> => {
+    const [session] = await pool<{ id: string }[]>`
+      insert into bank.sessions (owner, staff_id) values (${owner}, ${staff?.id ?? ""}) returning id`;
+    const response = await fetch(`${base}/api/bank/sessions/${session?.id}/chat`, {
+      method: "POST",
+      headers: { ...headers, ...extra },
+      body: JSON.stringify({ text }),
+    });
+    expect(response.status).toBe(200);
+    return (await response.text())
+      .split("\n")
+      .filter(Boolean)
+      .map((line) => JSON.parse(line) as TurnEvent);
+  };
+  const stubbed = await turn("Please transfer some money", { "x-bank-stub": "1" });
+  const tool = stubbed.find((event) => event.type === "tool.finished");
+  expect(tool?.name).toBe("transfer");
+  expect(tool?.summary).toMatch(/confirmation/i);
+  expect(stubbed.at(-1)?.type).toBe("done");
+
+  if (process.env.BANK_SMOKE_LIVE === "1") {
+    const live = await turn("What is Mara Voss's current account balance? One short sentence.", {});
+    const text = live.filter((event) => event.type === "text.delta").map((event) => event.text).join("");
+    const usage = live.find((event) => event.type === "usage");
+    console.log(
+      `live Teller: ${live.filter((event) => event.type === "tool.started").map((event) => event.name).join(", ")} -> "${text.slice(0, 200)}" (${usage?.model}, $${usage?.costUsd})`,
+    );
+    expect(live.at(-1)?.type, live.find((event) => event.type === "error")?.message).toBe("done");
+    expect(live.some((event) => event.type === "tool.finished" && event.ok)).toBe(true);
+    expect(text).toMatch(/MRF/);
+  }
+  await pool.end();
+}, 180_000);

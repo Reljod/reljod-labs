@@ -229,12 +229,7 @@ const day = (date: BankDate) => formatDate(date);
 function header(page: Page, body: StatementBody) {
   page.text(LEFT, 790, body.bankName, 18, true);
   page.right(RIGHT, 790, "Statement", 18, true);
-  page.text(
-    LEFT,
-    774,
-    "Fictional bank, play money (Meridian florin, MRF).",
-    8,
-  );
+  page.text(LEFT, 774, "Fictional bank, play money (Meridian florin, MRF).", 8);
   page.text(LEFT, 746, body.customerName, 10, true);
   page.fitted(LEFT, 732, body.customerAddress, 240, 9);
   page.text(320, 746, "Account", 8, true);
@@ -257,7 +252,8 @@ function header(page: Page, body: StatementBody) {
 
 function row(page: Page, y: number, line: Row) {
   page.text(COLUMNS.date, y, line.date, SIZE, line.bold);
-  if (line.bold) page.text(COLUMNS.description, y, line.description, SIZE, true);
+  if (line.bold)
+    page.text(COLUMNS.description, y, line.description, SIZE, true);
   else
     page.fitted(
       COLUMNS.description,

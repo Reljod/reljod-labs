@@ -1,4 +1,3 @@
-import type { Tone } from "../ui";
 import type {
   AccountStatus,
   AccountView,
@@ -11,6 +10,7 @@ import type {
   PaymentStatus,
   StandingOrderView,
 } from "../../domain/views";
+import type { Tone } from "../ui";
 
 /** Words and tones the Customer view shows for each state. */
 
@@ -42,7 +42,11 @@ export const KYC_LABEL: Record<KycStatus, string> = {
   rejected: "KYC rejected",
 };
 
-export const RISK_TONE = { low: "neutral", standard: "neutral", high: "red" } as const;
+export const RISK_TONE = {
+  low: "neutral",
+  standard: "neutral",
+  high: "red",
+} as const;
 
 export const PAYMENT_TONE: Record<PaymentStatus, Tone> = {
   held: "amber",
@@ -113,7 +117,8 @@ export const DISPUTE_REASONS = [
 export type DisputeReason = (typeof DISPUTE_REASONS)[number]["id"];
 
 export const disputeReasonLabel = (id: string) =>
-  DISPUTE_REASONS.find((reason) => reason.id === id)?.label ?? id.replace(/_/g, " ");
+  DISPUTE_REASONS.find((reason) => reason.id === id)?.label ??
+  id.replace(/_/g, " ");
 
 export const CARD_CATEGORIES = [
   "groceries",
@@ -130,13 +135,17 @@ export const CARD_CATEGORIES = [
 export type CardCategory = (typeof CARD_CATEGORIES)[number];
 
 /** "MM/YY" for a card's expiry date. */
-export const cardExpiry = (date: string) => `${date.slice(5, 7)}/${date.slice(2, 4)}`;
+export const cardExpiry = (date: string) =>
+  `${date.slice(5, 7)}/${date.slice(2, 4)}`;
 
 /** "19 Nov 2026, 14:05" for a bank time instant. */
 export function formatBankTime(iso: string): string {
   const value = new Date(iso);
   if (Number.isNaN(value.getTime())) return iso;
-  const month = value.toLocaleString("en-GB", { month: "short", timeZone: "UTC" });
+  const month = value.toLocaleString("en-GB", {
+    month: "short",
+    timeZone: "UTC",
+  });
   const time = value.toISOString().slice(11, 16);
   return `${value.getUTCDate()} ${month} ${value.getUTCFullYear()}, ${time}`;
 }
@@ -144,5 +153,7 @@ export function formatBankTime(iso: string): string {
 /** Deposit accounts money may leave: open current and savings accounts. */
 export const spendable = (accounts: AccountView[]) =>
   accounts.filter(
-    (account) => account.status === "open" && (account.kind === "current" || account.kind === "savings"),
+    (account) =>
+      account.status === "open" &&
+      (account.kind === "current" || account.kind === "savings"),
   );

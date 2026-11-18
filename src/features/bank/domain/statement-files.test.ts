@@ -1,8 +1,8 @@
 import { describe, expect, it } from "vitest";
 import {
   csvCell,
-  plainDecimal,
   pdfEscape,
+  plainDecimal,
   statementCsv,
   statementPageCount,
   statementPdf,

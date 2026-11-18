@@ -13,9 +13,7 @@ export function tabLabel(tab: Tab) {
   return (
     <>
       <span className="xl:hidden 2xl:inline">{TAB_LABEL[tab]}</span>
-      <span className="hidden xl:inline 2xl:hidden">
-        {short}
-      </span>
+      <span className="hidden xl:inline 2xl:hidden">{short}</span>
     </>
   );
 }

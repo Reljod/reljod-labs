@@ -6,7 +6,8 @@ import { formatMinor, parseMoney } from "../../domain/money";
 import type { CustomerDetail, OverviewView } from "../../domain/views";
 import { cx, Field, inputClass } from "../ui";
 import { useRead } from "../use-bank";
-import { MoneyField, useGate, WriteDialog } from "./shared";
+import { MoneyField, useGate } from "./shared";
+import { WriteDialog } from "./write-dialog";
 
 /** Onboarding a Customer, and changing their details. */
 
@@ -32,14 +33,31 @@ function ContactFields({
     <>
       <div className="grid gap-3 sm:grid-cols-2">
         <Field label="Email" htmlFor={`${id}-email`}>
-          <input id={`${id}-email`} type="email" className={inputClass} value={value.email} onChange={set("email")} />
+          <input
+            id={`${id}-email`}
+            type="email"
+            className={inputClass}
+            value={value.email}
+            onChange={set("email")}
+          />
         </Field>
         <Field label="Phone" htmlFor={`${id}-phone`}>
-          <input id={`${id}-phone`} type="tel" className={inputClass} value={value.phone} onChange={set("phone")} />
+          <input
+            id={`${id}-phone`}
+            type="tel"
+            className={inputClass}
+            value={value.phone}
+            onChange={set("phone")}
+          />
         </Field>
       </div>
       <Field label="Address" htmlFor={`${id}-address`}>
-        <input id={`${id}-address`} className={inputClass} value={value.address} onChange={set("address")} />
+        <input
+          id={`${id}-address`}
+          className={inputClass}
+          value={value.address}
+          onChange={set("address")}
+        />
       </Field>
       <div className="grid gap-3 sm:grid-cols-2">
         <Field label="Occupation" htmlFor={`${id}-occupation`}>
@@ -64,11 +82,13 @@ function ContactFields({
 const EMAIL = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 function contactProblem(value: Contact): string | null {
-  if (!EMAIL.test(value.email.trim())) return "Give an email address like name@example.mr.";
+  if (!EMAIL.test(value.email.trim()))
+    return "Give an email address like name@example.mr.";
   if (!value.phone.trim()) return "Give a phone number.";
   if (!value.address.trim()) return "Give an address.";
   if (!value.occupation.trim()) return "Give an occupation.";
-  if (parseMoney(value.income || "0") === null) return "Monthly income is an amount like 3,200.00.";
+  if (parseMoney(value.income || "0") === null)
+    return "Monthly income is an amount like 3,200.00.";
   return null;
 }
 
@@ -82,7 +102,8 @@ export function OpenCustomerDialog({
   const id = useId();
   const gate = useGate("customer.manage");
   const overview = useRead<OverviewView>("get_overview");
-  const bankDate = overview.data?.bankDate ?? new Date().toISOString().slice(0, 10);
+  const bankDate =
+    overview.data?.bankDate ?? new Date().toISOString().slice(0, 10);
   const latestBirth = addMonths(bankDate, -18 * 12);
   const [name, setName] = useState("");
   const [birth, setBirth] = useState("");
@@ -108,7 +129,8 @@ export function OpenCustomerDialog({
       }}
       after={() => (
         <p className="text-sm text-ink-muted">
-          Next: open an account for them under Accounts. Their identity stays pending until compliance verifies it.
+          Next: open an account for them under Accounts. Their identity stays
+          pending until compliance verifies it.
         </p>
       )}
       build={() => {
@@ -193,10 +215,14 @@ export function EditCustomerDialog({
         const problem = contactProblem(contact);
         if (problem) return problem;
         const input: Record<string, unknown> = { customerId: customer.id };
-        if (contact.email.trim() !== before.email) input.email = contact.email.trim();
-        if (contact.phone.trim() !== before.phone) input.phone = contact.phone.trim();
-        if (contact.address.trim() !== before.address) input.address = contact.address.trim();
-        if (contact.occupation.trim() !== before.occupation) input.occupation = contact.occupation.trim();
+        if (contact.email.trim() !== before.email)
+          input.email = contact.email.trim();
+        if (contact.phone.trim() !== before.phone)
+          input.phone = contact.phone.trim();
+        if (contact.address.trim() !== before.address)
+          input.address = contact.address.trim();
+        if (contact.occupation.trim() !== before.occupation)
+          input.occupation = contact.occupation.trim();
         const income = parseMoney(contact.income || "0") ?? 0;
         if (income !== customer.monthlyIncome) input.monthlyIncome = income;
         if (Object.keys(input).length === 1) return "Nothing has changed yet.";
@@ -204,8 +230,11 @@ export function EditCustomerDialog({
       }}
     >
       <p className="text-ink-muted">
-        {customer.name}{customer.dateOfBirth ? `, born ${formatDate(customer.dateOfBirth)}` : ""}. A name and date of birth are fixed once the customer
-        is open.
+        {customer.name}
+        {customer.dateOfBirth
+          ? `, born ${formatDate(customer.dateOfBirth)}`
+          : ""}
+        . A name and date of birth are fixed once the customer is open.
       </p>
       <ContactFields value={contact} onChange={setContact} />
     </WriteDialog>

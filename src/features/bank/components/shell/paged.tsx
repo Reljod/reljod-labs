@@ -34,7 +34,10 @@ export function useOlderPages(listKey: string) {
       }),
     [listKey],
   );
-  const reset = useCallback(() => setState({ key: listKey, cursors: [] }), [listKey]);
+  const reset = useCallback(
+    () => setState({ key: listKey, cursors: [] }),
+    [listKey],
+  );
   return { cursors, more, reset };
 }
 
@@ -85,7 +88,12 @@ export function OlderPages<V, T extends { id: number }>({
         />
       ))}
       {cursors.length === 0 ? (
-        <More next={head.next} onMore={onMore} endLabel={endLabel} testId={testId} />
+        <More
+          next={head.next}
+          onMore={onMore}
+          endLabel={endLabel}
+          testId={testId}
+        />
       ) : null}
     </>
   );
@@ -136,7 +144,12 @@ function OlderPage<V, T extends { id: number }>({
     <>
       {render(items)}
       {last && onMore ? (
-        <More next={page.next} onMore={onMore} endLabel={endLabel} testId={testId} />
+        <More
+          next={page.next}
+          onMore={onMore}
+          endLabel={endLabel}
+          testId={testId}
+        />
       ) : null}
     </>
   );

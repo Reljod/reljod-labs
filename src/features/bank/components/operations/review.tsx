@@ -35,8 +35,12 @@ const waiting = (alert: AlertView) => alert.status === "open" && alert.holding;
  */
 export function Review({ live }: { live: Live }) {
   const read = useRead<{ alerts: AlertView[] }>("list_alerts", {}, live);
-  if (read.isPending) return <ListSkeleton rows={3} height="h-32" label="Reading the review queue…" />;
-  if (!read.data) return <ReadError error={read.error} onRetry={() => void read.refetch()} />;
+  if (read.isPending)
+    return (
+      <ListSkeleton rows={3} height="h-32" label="Reading the review queue…" />
+    );
+  if (!read.data)
+    return <ReadError error={read.error} onRetry={() => void read.refetch()} />;
   const alerts = [...read.data.alerts].sort(
     (a, b) => Number(waiting(b)) - Number(waiting(a)),
   );
@@ -49,9 +53,17 @@ export function Review({ live }: { live: Live }) {
     );
   }
   return (
-    <ul className="space-y-3" aria-busy={read.isFetching || undefined} data-testid="bank-ops-alerts">
+    <ul
+      className="space-y-3"
+      aria-busy={read.isFetching || undefined}
+      data-testid="bank-ops-alerts"
+    >
       {alerts.map((alert, index) => (
-        <AlertItem key={alert.id} alert={alert} divider={index === firstQuiet && index > 0} />
+        <AlertItem
+          key={alert.id}
+          alert={alert}
+          divider={index === firstQuiet && index > 0}
+        />
       ))}
     </ul>
   );
@@ -71,7 +83,9 @@ function AlertItem({ alert, divider }: { alert: AlertView; divider: boolean }) {
   return (
     <li>
       {divider ? (
-        <p className="eyebrow mt-5 mb-2 text-[0.65rem] font-bold text-ink-muted">Decided and noted</p>
+        <p className="eyebrow mt-5 mb-2 text-[0.65rem] font-bold text-ink-muted">
+          Decided and noted
+        </p>
       ) : null}
       <article
         className={cx(
@@ -82,10 +96,16 @@ function AlertItem({ alert, divider }: { alert: AlertView; divider: boolean }) {
       >
         <header className="flex flex-wrap items-center gap-2 border-ink/20 border-b px-3 py-2">
           <Badge tone={SEVERITY[alert.severity]}>{alert.severity}</Badge>
-          <Badge tone={status.tone} dot={open}>{status.label}</Badge>
+          <Badge tone={status.tone} dot={open}>
+            {status.label}
+          </Badge>
           {alert.holding ? <Badge tone="ink">Holding</Badge> : null}
-          <p className="min-w-0 flex-1 text-sm font-semibold text-ink">{alert.summary}</p>
-          <span className="font-mono text-[0.65rem] text-ink-muted tabular-nums">{formatStamp(alert.raisedAt)}</span>
+          <p className="min-w-0 flex-1 text-sm font-semibold text-ink">
+            {alert.summary}
+          </p>
+          <span className="font-mono text-[0.65rem] text-ink-muted tabular-nums">
+            {formatStamp(alert.raisedAt)}
+          </span>
         </header>
         <div className="grid gap-3 px-3 py-2 md:grid-cols-[minmax(0,1fr)_16rem]">
           <ul className="space-y-1.5">
@@ -101,9 +121,13 @@ function AlertItem({ alert, divider }: { alert: AlertView; divider: boolean }) {
             {alert.payment ? (
               <>
                 <dt className="text-ink-muted">Payment</dt>
-                <dd className="text-right font-mono font-bold text-ink tabular-nums">{formatMoney(alert.payment.amount)}</dd>
+                <dd className="text-right font-mono font-bold text-ink tabular-nums">
+                  {formatMoney(alert.payment.amount)}
+                </dd>
                 <dt className="text-ink-muted">To</dt>
-                <dd className="truncate text-right">{alert.payment.counterparty}</dd>
+                <dd className="truncate text-right">
+                  {alert.payment.counterparty}
+                </dd>
                 <dt className="text-ink-muted">Status</dt>
                 <dd className="text-right">{alert.payment.status}</dd>
               </>
@@ -117,13 +141,17 @@ function AlertItem({ alert, divider }: { alert: AlertView; divider: boolean }) {
             {alert.accountNumber ? (
               <>
                 <dt className="text-ink-muted">Account</dt>
-                <dd className="text-right font-mono">{formatAccountNumber(alert.accountNumber)}</dd>
+                <dd className="text-right font-mono">
+                  {formatAccountNumber(alert.accountNumber)}
+                </dd>
               </>
             ) : null}
             {open && alert.reviewBy ? (
               <>
                 <dt className="text-ink-muted">Review by</dt>
-                <dd className="text-right font-semibold text-seal-red">{relativeTime(alert.reviewBy, now)}</dd>
+                <dd className="text-right font-semibold text-seal-red">
+                  {relativeTime(alert.reviewBy, now)}
+                </dd>
               </>
             ) : null}
             {alert.decidedByName ? (
@@ -168,7 +196,9 @@ function AlertItem({ alert, divider }: { alert: AlertView; divider: boolean }) {
               Reject
             </Button>
             {!allowed ? (
-              <span className="text-xs text-ink-muted">Needs a compliance officer. Switch Staff.</span>
+              <span className="text-xs text-ink-muted">
+                Needs a compliance officer. Switch Staff.
+              </span>
             ) : null}
           </footer>
         ) : null}
@@ -176,7 +206,11 @@ function AlertItem({ alert, divider }: { alert: AlertView; divider: boolean }) {
       </article>
       {asking ? (
         <CommandDialog
-          title={asking === "release" ? "Release the held payment" : "Reject the held payment"}
+          title={
+            asking === "release"
+              ? "Release the held payment"
+              : "Reject the held payment"
+          }
           confirm={asking === "release" ? "Release it" : "Reject it"}
           pendingLabel={asking === "release" ? "Releasing…" : "Rejecting…"}
           danger={asking === "reject"}
@@ -198,7 +232,10 @@ function AlertItem({ alert, divider }: { alert: AlertView; divider: boolean }) {
               : `The payment${alert.payment ? ` of ${formatMoney(alert.payment.amount)}` : ""} is rejected and the money returns to the account.`}{" "}
             This is recorded in the Audit trail with your note.
           </p>
-          <label htmlFor={noteId} className="eyebrow block text-[0.65rem] font-bold text-ink-muted">
+          <label
+            htmlFor={noteId}
+            className="eyebrow block text-[0.65rem] font-bold text-ink-muted"
+          >
             Your note (at least 3 characters)
           </label>
           <textarea
@@ -220,11 +257,15 @@ function AlertItem({ alert, divider }: { alert: AlertView; divider: boolean }) {
 export function FindingLine({ finding }: { finding: Finding }) {
   return (
     <li className="flex flex-wrap items-baseline gap-x-2 gap-y-0.5 text-sm">
-      <span className="font-mono text-[0.7rem] font-bold text-ink">{finding.ruleId}</span>
+      <span className="font-mono text-[0.7rem] font-bold text-ink">
+        {finding.ruleId}
+      </span>
       <span className="font-mono text-[0.65rem] text-ink-muted">
         {finding.version === 0 ? "Default" : `Version ${finding.version}`}
       </span>
-      <span className="min-w-0 basis-full text-ink sm:basis-auto sm:flex-1">{finding.message}</span>
+      <span className="min-w-0 basis-full text-ink sm:basis-auto sm:flex-1">
+        {finding.message}
+      </span>
     </li>
   );
 }
