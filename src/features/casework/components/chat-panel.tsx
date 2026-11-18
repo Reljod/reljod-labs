@@ -278,10 +278,7 @@ export function ChatPanel(props: ChatPanelProps) {
         <Working {...working} onStop={props.onStop} stopping={props.stopping} />
       ) : null}
 
-      <form
-        onSubmit={submit}
-        className="border-ink border-t-2 bg-marble/50 lg:pr-28"
-      >
+      <form onSubmit={submit} className="border-ink border-t-2 bg-marble/50">
         {tray.length > 0 ? (
           <ul className="flex flex-wrap gap-1.5 px-3 pt-2.5">
             {tray.map((doc) => (
@@ -403,7 +400,7 @@ function UserMessage({ item }: { item: ChatItem }) {
         <span className="font-bold text-federal-blue" aria-hidden="true">
           ❯
         </span>
-        <span className="min-w-0 break-words whitespace-pre-wrap">
+        <span className="min-w-0 wrap-anywhere whitespace-pre-wrap">
           {item.text || (
             <span className="text-ink-muted">(documents, no note)</span>
           )}
@@ -422,7 +419,7 @@ function SpecialistMessage({
   const run = item.runId ? props.runs.get(item.runId) : undefined;
   const thinking = item.pending && !item.text && item.tools.length === 0;
   return (
-    <div className="cw-reveal grid gap-2">
+    <div className="cw-reveal grid min-w-0 grid-cols-1 gap-2">
       {item.reasoning ? (
         <div>
           <button
@@ -455,7 +452,7 @@ function SpecialistMessage({
           <span className="font-mono text-ink" aria-hidden="true">
             ●
           </span>
-          <span className="min-w-0 break-words whitespace-pre-wrap">
+          <span className="min-w-0 wrap-anywhere whitespace-pre-wrap">
             {rich(item.text)}
             {item.pending ? <span className="cw-caret ml-0.5">▍</span> : null}
           </span>
@@ -488,7 +485,7 @@ function ToolLine({ tool, running }: { tool: ChatTool; running: boolean }) {
         <span className={tone} aria-hidden="true">
           ●
         </span>
-        <span className="min-w-0">
+        <span className="min-w-0 wrap-anywhere">
           <span className="font-bold">{toolTitle(tool.name)}</span>
           {args ? <span className="text-ink-muted">({args})</span> : null}
         </span>
@@ -497,7 +494,7 @@ function ToolLine({ tool, running }: { tool: ChatTool; running: boolean }) {
         <p className="flex gap-2 pl-[3px] text-ink-muted">
           <span aria-hidden="true">⎿</span>
           <span
-            className={`min-w-0 break-words ${tool.ok === false ? "text-seal-red" : ""}`}
+            className={`min-w-0 wrap-anywhere ${tool.ok === false ? "text-seal-red" : ""}`}
           >
             {running ? "Running…" : tool.summary?.split(/[.:] /)[0]}
           </span>
@@ -671,7 +668,7 @@ function Working({
     return () => clearInterval(timer);
   }, []);
   return (
-    <div className="flex items-center gap-2 border-ink/15 border-t bg-paper px-4 py-2 font-mono text-xs lg:pr-32">
+    <div className="flex items-center gap-2 border-ink/15 border-t bg-paper px-4 py-2 font-mono text-xs">
       <span className="cw-spin text-brass" aria-hidden="true">
         ✻
       </span>
