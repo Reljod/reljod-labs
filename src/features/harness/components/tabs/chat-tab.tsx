@@ -2,6 +2,7 @@
 
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import {
+  memo,
   useCallback,
   useEffect,
   useLayoutEffect,
@@ -36,6 +37,7 @@ import { SkillsPopover } from "../chat/skills-popover";
 import { chatStreams } from "../chat/stream-store";
 import { useAttachments } from "../chat/use-attachments";
 import { useController, useHarness } from "../harness-context";
+import { listQuery } from "../list-queries";
 import { Badge, Button, cx, ErrorNote, Loading, useWrite } from "../ui";
 
 const NEW_DRAFT = "new";
@@ -86,19 +88,20 @@ export default function ChatTab() {
   });
 
   // Queries -------------------------------------------------------------------
-  const sessionsKey = useMemo(() => [...keys.sessions, staff.id], [staff.id]);
-  const sessions = useQuery({
-    queryKey: sessionsKey,
-    queryFn: api.sessions.list,
-  });
+  const sessionsQuery = useMemo(
+    () => listQuery("sessions", staff.id),
+    [staff.id],
+  );
+  const sessionsKey = sessionsQuery.queryKey;
+  const sessions = useQuery(sessionsQuery);
   const messages = useQuery({
     queryKey: keys.messages(sessionId ?? ""),
-    queryFn: () => api.sessions.messages(sessionId as string),
+    queryFn: ({ signal }) =>
+      api.sessions.messages(sessionId as string, { signal }),
     enabled: sessionId !== null,
   });
   const runs = useQuery({
-    queryKey: keys.runs(),
-    queryFn: () => api.runs.list(),
+    ...listQuery("runs", staff.id),
     refetchInterval: (query) =>
       query.state.data?.some((run) => isRunActive(run.status)) ? 4000 : false,
   });
@@ -161,6 +164,8 @@ export default function ChatTab() {
     try {
       const session = await api.sessions.create();
       activeRef.current = session.id;
+      // A list read that started before the write must not land after it.
+      await queryClient.cancelQueries({ queryKey: sessionsKey });
       queryClient.setQueryData<SessionSummary[]>(sessionsKey, (old) => [
         session,
         ...(old ?? []).filter((item) => item.id !== session.id),
@@ -362,6 +367,10 @@ export default function ChatTab() {
     () => ({ openRun, openTab, hrefFor }),
     [openRun, openTab, hrefFor],
   );
+  const previewSource = useCallback(
+    (id: string) => openTab("knowledge", { source: id, preview: "original" }),
+    [openTab],
+  );
 
   const key = draftKey(sessionId);
   const text = texts[key] ?? "";
@@ -478,25 +487,11 @@ export default function ChatTab() {
             </div>
           ) : (
             <div className="mx-auto w-full max-w-3xl space-y-5 px-3 py-5 sm:px-5">
-              {(history ?? []).map((message) =>
-                message.role === "staff" ? (
-                  <StaffMessage
-                    key={message.id}
-                    message={message}
-                    onPreview={(id) =>
-                      openTab("knowledge", { source: id, preview: "original" })
-                    }
-                    name={message.staff?.name ?? "Staff"}
-                    initials={message.staff?.initials ?? "–"}
-                  />
-                ) : (
-                  <AgentMessage
-                    key={message.id}
-                    turn={turnFromMessage(message)}
-                    actions={actions}
-                  />
-                ),
-              )}
+              <ChatHistory
+                messages={history}
+                actions={actions}
+                onPreview={previewSource}
+              />
               {stream && visible?.staff ? (
                 <StaffMessage
                   text={stream.request.text}
@@ -545,3 +540,36 @@ export default function ChatTab() {
     </div>
   );
 }
+
+/**
+ * The saved messages of the open Session. Memoised: while an answer streams
+ * (or the composer is typed in) the tab re-renders every frame, and only the
+ * live answer below this list changes.
+ */
+const ChatHistory = memo(function ChatHistory({
+  messages,
+  actions,
+  onPreview,
+}: {
+  messages: MessageView[] | undefined;
+  actions: MessageActions;
+  onPreview: (sourceId: string) => void;
+}) {
+  return (messages ?? []).map((message) =>
+    message.role === "staff" ? (
+      <StaffMessage
+        key={message.id}
+        message={message}
+        onPreview={onPreview}
+        name={message.staff?.name ?? "Staff"}
+        initials={message.staff?.initials ?? "–"}
+      />
+    ) : (
+      <AgentMessage
+        key={message.id}
+        turn={turnFromMessage(message)}
+        actions={actions}
+      />
+    ),
+  );
+});
