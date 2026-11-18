@@ -31,7 +31,7 @@ import type { StaffContext } from "./context";
 import { env } from "./env";
 import { InvalidError } from "./errors";
 import { listSources } from "./knowledge";
-import { addUsage, chatModel, gateway, usageOf } from "./llm";
+import { addUsage, chatModel, gateway, usageOf, visibleThinking } from "./llm";
 import { mcpHandler } from "./mcp";
 import { chatToken } from "./mcp-auth";
 import { appendMessage, listMessages, writableSession } from "./sessions";
@@ -277,12 +277,30 @@ export async function* streamTurn(
   const { owner, staff } = context;
   const sessionId = turn.session.id;
   const model = env.chatModel();
-  const [skills, attached] = await Promise.all([
-    skillIndex(context),
-    // Everything attached in this Session, from the database, so a later
-    // turn still knows each paper's id (list_sources never shows unfiled ones).
-    sessionAttachments(owner, sessionId),
-  ]);
+  // The MCP client and its tool list are fetched alongside the reads below:
+  // each is a round trip, and the model call waits for all of them.
+  const opening = turnMcpClient(turn);
+  const listing = opening.then((client) => client.tools());
+  let ready: [
+    SkillIndexEntry[],
+    Awaited<ReturnType<typeof sessionAttachments>>,
+    Awaited<typeof opening>,
+    Awaited<typeof listing>,
+  ];
+  try {
+    ready = await Promise.all([
+      skillIndex(context),
+      // Everything attached in this Session, from the database, so a later
+      // turn still knows each paper's id (list_sources never shows unfiled ones).
+      sessionAttachments(owner, sessionId),
+      opening,
+      listing,
+    ]);
+  } catch (error) {
+    void opening.then((client) => client.close()).catch(() => {});
+    throw error;
+  }
+  const [skills, attached, mcp, mcpTools] = ready;
   const note = attachedNote(
     turn.attached.map((source) => ({
       type: "attachment",
@@ -291,8 +309,6 @@ export async function* streamTurn(
       kind: source.kind,
     })),
   );
-
-  const mcp = await turnMcpClient(turn);
 
   const events: ChatEvent[] = [];
   const emit = (event: ChatEvent) => {
@@ -307,7 +323,7 @@ export async function* streamTurn(
   try {
     // @ai-sdk/mcp pins a newer provider-utils patch than ai; the tool shape is the same.
     const tools: ToolSet = {
-      ...((await mcp.tools()) as unknown as ToolSet),
+      ...(mcpTools as unknown as ToolSet),
       [WEB_SEARCH]: gateway().tools.perplexitySearch({
         maxResults: 6,
         maxTokensPerPage: 1024,
@@ -347,6 +363,8 @@ export async function* streamTurn(
         attachments: attached,
       }),
       tools,
+      // Show the model's thinking as it happens (`reasoning.delta`).
+      providerOptions: visibleThinking(model),
       stopWhen: isStepCount(LIMITS.stepsPerChatTurn),
       abortSignal: signal,
       messages: [

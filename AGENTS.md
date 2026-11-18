@@ -3,7 +3,7 @@
 ## Testing
 
 - Verify changes with `pnpm test` (unit tests), `pnpm lint`, `pnpm typecheck` and `pnpm build`. The `ci` workflow runs the first three on every pull request.
-- Conventions learned in review (read before adding a paid model call, a user-facing limit or a demo read): `docs/engineering/conventions.md`.
+- Conventions learned in review (read before adding a paid model call, a user-facing limit, a demo read, or a section to this file: new sections go above the `BEGIN:nextjs-agent-rules` marker): `docs/engineering/conventions.md`.
 - Run the Playwright end-to-end suite (`pnpm test:e2e`) only when the user explicitly asks for it in the current conversation. It calls the paid model through Vercel AI Gateway, writes to the live Supabase project and takes several minutes per run. In CI it runs against a production build (`next start`); locally against `next dev` unless `E2E_SERVER=prod`.
 
 ## Document compliance
@@ -126,6 +126,10 @@
 - Vercel Web Analytics and Speed Insights load in `src/app/layout.tsx`. Turn both on in the Vercel project (Analytics and Speed Insights tabs); they collect only on Vercel deployments.
 - Every pageview carries the flag `audience` (`host`, `guest` or `visitor`), read from the `labs_profile` hint cookie by `features/access/components/site-analytics.tsx`. Filter by it under Flags in the Analytics dashboard. The hint carries no authority, so the flag groups traffic and decides nothing.
 - Sign-ins are custom events from `features/access/server/analytics.ts`: `Host signed in` and `Guest code redeemed`. Never put an email, a name or a Guest pass label in an event.
+
+## Hosting
+
+- Vercel Functions run in `syd1` (`regions` in `vercel.json`), beside the Supabase project (ap-southeast-2). A demo request makes several database round trips (the Access gate in the proxy and again in the route, then the Workspace), so the two must stay in one region; move them together.
 
 <!-- BEGIN:nextjs-agent-rules -->
 

@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { useLayoutEffect, useRef } from "react";
 import type { MessageView } from "../../domain/session";
 import { formatCost } from "../api";
 import type { LinkParams, TabId } from "../harness-context";
@@ -257,14 +258,7 @@ export function AgentMessage({
       <div className="min-w-0 flex-1 space-y-2">
         <p className="eyebrow text-[0.65rem] font-bold text-ink-muted">Agent</p>
         {turn.reasoning ? (
-          <details className="outline-box rounded-sm bg-paper text-xs">
-            <summary className="cursor-pointer px-2.5 py-1.5 text-ink-muted focus-visible:outline-2 focus-visible:outline-federal-blue">
-              Thinking
-            </summary>
-            <p className="border-ink border-t-2 px-2.5 py-2 whitespace-pre-wrap text-ink-muted [overflow-wrap:anywhere]">
-              {turn.reasoning}
-            </p>
-          </details>
+          <Reasoning text={turn.reasoning} live={streaming && !hasContent} />
         ) : null}
         {turn.activity.length > 0 ? (
           <div className="space-y-1.5">
@@ -288,7 +282,10 @@ export function AgentMessage({
           </div>
         ) : null}
         {hasContent ? <Markdown text={turn.text} /> : null}
-        {streaming && !hasContent && turn.activity.length === 0 ? (
+        {streaming &&
+        !hasContent &&
+        !turn.reasoning &&
+        turn.activity.length === 0 ? (
           <p className="inline-flex items-center gap-2 text-sm text-ink-muted">
             <Spinner /> Thinking…
           </p>
@@ -314,5 +311,45 @@ export function AgentMessage({
         ) : null}
       </div>
     </article>
+  );
+}
+
+/**
+ * The Agent's thinking. While it thinks (before its first words) it is shown
+ * open, streaming, its newest lines in view; once it answers it folds into a
+ * "Thinking" disclosure, so the answer leads.
+ */
+function Reasoning({ text, live }: { text: string; live: boolean }) {
+  const box = useRef<HTMLParagraphElement>(null);
+  // biome-ignore lint/correctness/useExhaustiveDependencies: new thinking is what scrolls
+  useLayoutEffect(() => {
+    const element = box.current;
+    if (live && element) element.scrollTop = element.scrollHeight;
+  }, [text, live]);
+
+  if (live) {
+    return (
+      <div className="outline-box rounded-sm bg-paper text-xs">
+        <p className="flex items-center gap-2 px-2.5 py-1.5 font-semibold text-ink-muted">
+          <Spinner /> Thinking…
+        </p>
+        <p
+          ref={box}
+          className="hx-scroll max-h-40 border-ink border-t-2 px-2.5 py-2 whitespace-pre-wrap text-ink-muted [overflow-wrap:anywhere]"
+        >
+          {text}
+        </p>
+      </div>
+    );
+  }
+  return (
+    <details className="outline-box rounded-sm bg-paper text-xs">
+      <summary className="cursor-pointer px-2.5 py-1.5 text-ink-muted focus-visible:outline-2 focus-visible:outline-federal-blue">
+        Thinking
+      </summary>
+      <p className="border-ink border-t-2 px-2.5 py-2 whitespace-pre-wrap text-ink-muted [overflow-wrap:anywhere]">
+        {text}
+      </p>
+    </details>
   );
 }

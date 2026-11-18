@@ -22,24 +22,25 @@ function fail(what: string, error: { message: string }): never {
   throw new Error(`${what}: ${error.message}`);
 }
 
-/** The Guest pass an anonymous Auth user is on, whatever state it is in. */
+/**
+ * The Guest pass an anonymous Auth user is on, whatever state it is in. One
+ * request (the pass embedded through `guest_sessions.guest_pass_id`): the
+ * proxy and every demo entry point ask this on every request.
+ */
 export async function guestPassOf(
   userId: string,
 ): Promise<GuestPassRow | null> {
   const { data: session, error } = await supabase()
     .from("guest_sessions")
-    .select("guest_pass_id")
+    .select(`guest_passes(${PASS_COLUMNS})`)
     .eq("user_id", userId)
     .maybeSingle();
-  if (error) fail("Could not load the Guest session", error);
-  if (!session) return null;
-  const { data: pass, error: passError } = await supabase()
-    .from("guest_passes")
-    .select(PASS_COLUMNS)
-    .eq("id", session.guest_pass_id)
-    .maybeSingle();
-  if (passError) fail("Could not load the Guest pass", passError);
-  return pass as GuestPassRow | null;
+  if (error) fail("Could not load the Guest pass", error);
+  // A many-to-one embed is one row or null; untyped, the client calls it an array.
+  const pass = (session as { guest_passes: unknown } | null)?.guest_passes;
+  return (
+    Array.isArray(pass) ? (pass[0] ?? null) : (pass ?? null)
+  ) as GuestPassRow | null;
 }
 
 /**

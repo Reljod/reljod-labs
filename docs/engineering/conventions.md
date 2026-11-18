@@ -19,7 +19,7 @@ A stop, cancel or cleanup path exists for when something went wrong, so it must 
 
 ## Keep your text out of generated blocks
 
-A tool that writes a block between markers owns everything between them and rewrites it. `next dev` replaces the whole `<!-- BEGIN:nextjs-agent-rules -->` … `<!-- END:nextjs-agent-rules -->` block of `AGENTS.md`, so a section added inside it disappears the next time someone runs the dev server. The Access section first landed there.
+A tool that writes a block between markers owns everything between them and rewrites it. `next dev` replaces the whole `<!-- BEGIN:nextjs-agent-rules -->` … `<!-- END:nextjs-agent-rules -->` block of `AGENTS.md`, so a section added inside it disappears the next time someone runs the dev server. The Access section first landed there, and the Hosting section (PR #45) did again.
 
 - Add project notes above the `BEGIN:` marker, never between the markers.
 - Before editing a file another tool writes to, look for its markers or "generated" header and keep to the parts it leaves alone.
