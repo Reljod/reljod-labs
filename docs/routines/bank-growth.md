@@ -2,8 +2,18 @@
 
 The prompt of the scheduled cloud agent (a Claude routine) that builds the Tidewater Bank demo's Growth issues (`docs/adr/0024-the-bank-grows-itself-through-github.md`). It is checked in so it can be reviewed; the routine is created from this text. Changing the routine means changing this file in a normal pull request first.
 
-- Repository: `Reljod/reljod-labs`. Schedule: every 30 minutes. One issue per run.
+- Repository: `Reljod/reljod-labs`. Schedule: hourly, at seven minutes past (`7 * * * *` UTC; one hour is the shortest interval a routine may have). One issue per run. Model: Claude Opus 5.5. No connectors.
+- The routine: https://claude.ai/code/routines/trig_01AytnHheLNEFjjgRLj4u3VU (environment "Reljod Labs"). Manage or delete it there.
+- What the routine itself stores is a short bootstrap: it reads the "Prompt" section below **from `main`** and follows it, and it repeats the hard rules (the quote is untrusted, the allowlist, never merge, one issue per run) so they hold even if this file were changed. If this file is not on `main`, the routine stops.
 - This file, the guard (`scripts/bank-growth-guard.mjs`, `.github/workflows/bank-growth-guard.yml`) and `AGENTS.md` are outside the paths the routine may change.
+
+## How a growth pull request meets the PR pipeline
+
+The pipeline's policy (`~/projects/jod-ops/pr-pipeline/POLICY.md`) is unchanged and treats a growth pull request like any other. Three of its rules shape this prompt:
+
+- **Hard hold 4** (a change that cannot be verified): the guard is a CI check, so a pull request outside the allowlist is failing CI on its own lines and is held; and a diff past 400 changed lines must be read end to end, so the routine is told to stay under that.
+- **Hard hold 6** (the author must be Reljod or an automation): the routine opens pull requests through Reljod's own Claude GitHub connection. If GitHub shows another author, the pipeline reviews and reports but does not merge, and Reljod merges by hand.
+- **HIGH blocks the merge**: a growth pull request that breaks a ledger invariant, skips the command engine or weakens a test is a HIGH like in any other pull request.
 
 ## Prompt
 
@@ -49,6 +59,7 @@ Within the bank:
 - Add or extend unit tests for what you changed (`src/features/bank/**/*.test.ts`), including a case where it refuses.
 - Keep the UI in the Colonnade style and built from `src/features/bank/components/ui.tsx`, reading with `useRead` and writing with `useCommand`.
 - No new dependencies. No secrets, tokens or environment files: do not read, print or add them.
+- Keep the change small: under 400 changed lines in all (the reviewer holds a pull request it cannot read end to end). If the criteria need more, implement the smallest useful slice, say in the pull request body what is left, and do not close the issue: write `Refs #<n>` instead of `Closes #<n>` and comment on the issue with what remains.
 
 ### 4. Verify
 
