@@ -4,9 +4,13 @@
  * and plays. Pointer tilt comes in as `--rx` / `--ry`, the glare as `--mx` / `--my`.
  */
 
-/* Paused: every animation inside holds its frame, like a film on pause.
-   Unlayered, so it outranks Tailwind's `animate-*` utilities without !important. */
-.catalog-preview:not([data-playing]) * {
+/*
+ * Paused: every animation inside holds its frame, like a film on pause.
+ * A preview's own `animation` shorthand resets the play state, so this must
+ * outrank any rule in it (Ledger's cat uses three classes): the never-matching
+ * `:not(#…)` lends it an id's weight, without !important.
+ */
+.catalog-preview:not([data-playing]):not(#catalog-pause) * {
   animation-play-state: paused;
 }
 
@@ -16,6 +20,11 @@
 
 .catalog-preview:not([data-playing]) {
   filter: grayscale(0.9) sepia(0.18) contrast(0.92) brightness(1.03);
+}
+
+/* A card at rest doesn't pulse its Live light either: nothing on it moves until it's looked at. */
+.catalog-card:not([data-playing]) [class*="animate-live-pulse"] {
+  animation-play-state: paused;
 }
 
 /* Paused previews carry faint scan lines, like a still on an old monitor. */
@@ -243,8 +252,8 @@
 
 @media (prefers-reduced-motion: reduce) {
   /* Some previews set their animation inline, past `motion-safe:`; hold them all. */
-  .catalog-preview *,
-  .catalog-float * {
+  .catalog-preview:not(#catalog-pause) *,
+  .catalog-float:not(#catalog-pause) * {
     animation-play-state: paused;
   }
 

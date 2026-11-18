@@ -85,7 +85,8 @@ export function CatalogCard({
     element.style.removeProperty("--ry");
   }
 
-  const side = `${wide.md ? "md:grid-cols-[1.15fr_1fr]" : ""} ${wide.lg ? "lg:grid-cols-[1.15fr_1fr]" : "lg:grid-cols-1"}`;
+  // minmax(0, …) so a column never grows past its share for wide content inside a preview.
+  const side = `${wide.md ? "md:grid-cols-[minmax(0,1.15fr)_minmax(0,1fr)]" : ""} ${wide.lg ? "lg:grid-cols-[minmax(0,1.15fr)_minmax(0,1fr)]" : "lg:grid-cols-1"}`;
   const stageEdge = `${wide.md ? "md:border-r-2 md:border-b-0" : ""} ${wide.lg ? "lg:border-r-2 lg:border-b-0" : "lg:border-r-0 lg:border-b-2"}`;
 
   return (
@@ -113,7 +114,7 @@ export function CatalogCard({
           <span className="text-ink-muted">No.</span> {entry.number}
         </span>
 
-        <div className={`grid flex-1 ${side}`}>
+        <div className={`grid min-w-0 flex-1 grid-cols-1 ${side}`}>
           <div
             className={`flex flex-col justify-center border-ink border-b-2 bg-limestone p-4 lg:p-5 ${stageEdge}`}
           >
