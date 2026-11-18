@@ -170,7 +170,6 @@
  */
 .drum {
   perspective: 1500px;
-  transform-style: preserve-3d;
 }
 
 .drum-card,
@@ -185,20 +184,21 @@
 }
 
 /*
- * Hinged at the bottom like a real Rolodex: the cards to come lean back in a
- * stack with their tabs showing, and a flipped card falls toward you.
+ * The cards to come wait behind in a stack, leaning back with their tabs
+ * showing; the front card, once flipped, drops away and fades. Cards are
+ * painted in reverse order (front card last), so no 3D sorting is needed.
  */
 .drum-card {
   transform-origin: 50% 100%;
-  transform: translate(-50%, -50%) translateY(calc(var(--ahead) * -1.5rem))
-    translateZ(calc(var(--ahead) * -4rem)) translateY(calc(var(--gone) * 2rem))
-    rotateX(calc(var(--ahead) * 4deg - var(--gone) * 105deg));
+  transform: translate(-50%, -50%)
+    translateY(calc(var(--ahead) * -1.5rem + var(--gone) * 55%))
+    scale(calc(1 - var(--ahead) * 0.04))
+    rotateX(calc(var(--ahead) * 6deg - var(--gone) * 28deg));
   opacity: calc(
     clamp(0, 3.4 - var(--ahead), 1) *
-    clamp(0, (0.85 - var(--o)) * 6, 1)
+    clamp(0, 1 - var(--gone) * 1.8, 1)
   );
-  backface-visibility: hidden;
-  will-change: transform;
+  will-change: transform, opacity;
 }
 
 .drum-shade {

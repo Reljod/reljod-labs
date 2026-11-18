@@ -24,6 +24,17 @@ const TURN = [0.06, 0.92] as const;
 
 const number = (index: number) => String(index + 1).padStart(2, "0");
 
+/**
+ * The cards worth drawing around the front one (the one just flipped, and up
+ * to three waiting), back to front, so the front card paints on top.
+ */
+function near(active: number) {
+  return liveDemos
+    .map((item, index) => ({ item, index }))
+    .filter(({ index }) => index >= active - 1 && index <= active + 3)
+    .reverse();
+}
+
 /** Seven problems: the live demos on a Rolodex that turns as you scroll. */
 export function RolodexChapter() {
   return (
@@ -77,16 +88,18 @@ function Drum() {
         </h2>
 
         <div className="relative mt-3 min-h-[3.25rem] sm:min-h-[4.5rem] lg:mt-8 lg:min-h-[9rem]">
-          {liveDemos.map((item, index) => (
-            <motion.p
-              key={item.slug}
-              aria-hidden={index !== active}
-              className="problem absolute inset-x-0 top-0 text-base leading-snug sm:text-xl lg:text-[1.65rem] lg:leading-[1.25]"
-              style={at(position, index)}
-            >
-              “{demoProblems[item.slug]}”
-            </motion.p>
-          ))}
+          {liveDemos.map((item, index) =>
+            Math.abs(index - active) > 1 ? null : (
+              <motion.p
+                key={item.slug}
+                aria-hidden={index !== active}
+                className="problem absolute inset-x-0 top-0 text-base leading-snug sm:text-xl lg:text-[1.65rem] lg:leading-[1.25]"
+                style={at(position, index)}
+              >
+                “{demoProblems[item.slug]}”
+              </motion.p>
+            ),
+          )}
         </div>
 
         <nav
@@ -116,7 +129,8 @@ function Drum() {
       </div>
 
       <div className="drum relative min-h-0 flex-1 lg:h-[min(38rem,100%)] lg:flex-none">
-        {liveDemos.map((item, index) => (
+        {/* Front card painted last; only the cards near the front are drawn. */}
+        {near(active).map(({ item, index }) => (
           <motion.article
             key={item.slug}
             aria-hidden={index !== active}

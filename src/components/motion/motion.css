@@ -46,6 +46,8 @@
 .chapter-stage {
   top: 4.125rem; /* under the sticky site header */
   height: calc(100svh - 4.125rem);
+  /* Nothing inside a stage can change the page's layout or paint outside it. */
+  contain: layout paint;
 }
 
 /* Redaction bars that lift word by word. */

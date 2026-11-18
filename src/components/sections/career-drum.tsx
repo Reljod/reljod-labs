@@ -42,47 +42,51 @@ function Cards() {
     <div className="flex h-full flex-col items-center justify-center gap-6">
       <p className="eyebrow text-ink-muted">Seven years, card by card</p>
       <div className="drum relative h-[min(26rem,70%)] w-full">
-        {experience.map((job, index) => (
-          <motion.article
-            key={`${job.company}-${job.period}`}
-            className="drum-card absolute top-1/2 left-1/2 w-[min(88vw,34rem)]"
-            style={at(position, index)}
-          >
-            <span
-              className="absolute -top-[1.85rem] flex h-[1.85rem] items-center border-2 border-ink border-b-0 bg-paper px-3 font-mono text-xs font-bold"
-              style={{ left: `${6 + index * 14}%` }}
+        {/* Back to front, so the front card paints on top (no 3D sorting). */}
+        {experience
+          .map((job, index) => ({ job, index }))
+          .reverse()
+          .map(({ job, index }) => (
+            <motion.article
+              key={`${job.company}-${job.period}`}
+              className="drum-card absolute top-1/2 left-1/2 w-[min(88vw,34rem)]"
+              style={at(position, index)}
             >
-              {/\d{4}/.exec(job.period)?.[0]}
-            </span>
-            <div
-              className={`outline-box relative overflow-hidden p-6 shadow-hard-lg ${job.highlight ? "bg-morning-haze" : "bg-paper"}`}
-            >
-              <motion.p
-                style={at(position, index)}
-                className="career-date inline-block border-[3px] border-federal-blue px-2 py-1 font-mono text-sm font-bold tracking-[0.08em] text-federal-blue uppercase"
+              <span
+                className="absolute -top-[1.85rem] flex h-[1.85rem] items-center border-2 border-ink border-b-0 bg-paper px-3 font-mono text-xs font-bold"
+                style={{ left: `${6 + index * 14}%` }}
               >
-                {job.period}
-              </motion.p>
-              <h3 className="mt-4 text-2xl leading-snug font-semibold">
-                {job.role}
-              </h3>
-              <p className="mt-1 font-mono text-sm font-bold uppercase">
-                {job.company}
-              </p>
-              <p className="mt-4 line-clamp-3 text-ink-muted">
-                {job.points[0]}
-              </p>
-              <p className="eyebrow mt-4 text-ink-muted">
-                {job.location} · {job.sector}
-              </p>
-              <motion.span
-                aria-hidden="true"
-                className="drum-shade"
-                style={at(position, index)}
-              />
-            </div>
-          </motion.article>
-        ))}
+                {/\d{4}/.exec(job.period)?.[0]}
+              </span>
+              <div
+                className={`outline-box relative overflow-hidden p-6 shadow-hard-lg ${job.highlight ? "bg-morning-haze" : "bg-paper"}`}
+              >
+                <motion.p
+                  style={at(position, index)}
+                  className="career-date inline-block border-[3px] border-federal-blue px-2 py-1 font-mono text-sm font-bold tracking-[0.08em] text-federal-blue uppercase"
+                >
+                  {job.period}
+                </motion.p>
+                <h3 className="mt-4 text-2xl leading-snug font-semibold">
+                  {job.role}
+                </h3>
+                <p className="mt-1 font-mono text-sm font-bold uppercase">
+                  {job.company}
+                </p>
+                <p className="mt-4 line-clamp-3 text-ink-muted">
+                  {job.points[0]}
+                </p>
+                <p className="eyebrow mt-4 text-ink-muted">
+                  {job.location} · {job.sector}
+                </p>
+                <motion.span
+                  aria-hidden="true"
+                  className="drum-shade"
+                  style={at(position, index)}
+                />
+              </div>
+            </motion.article>
+          ))}
       </div>
     </div>
   );

@@ -20,7 +20,7 @@ import { opening } from "@/content/landing";
 import "./landing.css";
 
 /** Sheets drawn for the pile; they stand for all `opening.pages`. */
-const SHEETS = 14;
+const SHEETS = 10;
 /** The first few are on the desk before you scroll. */
 const ON_DESK = 3;
 /** Pages fly onto the pile over this part of the chapter… */
@@ -30,7 +30,7 @@ const READ = [0.32, 0.7] as const;
 /** The answer lands, then holds until the chapter hands over. */
 const ANSWER = [0.73, 0.83] as const;
 /** Sheets that come out with a red tab: the pages a person must see. */
-const FLAGGED = new Set([3, 8, 11]);
+const FLAGGED = new Set([2, 6, 8]);
 
 /**
  * Stable pseudo-random in [-1, 1], rounded, so the server and the browser
