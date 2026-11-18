@@ -184,7 +184,17 @@ test("a refused Approval leaves the change undone, and the checks say Incorrect"
   await startOperator(page, /Correct a manifest/);
   await expect(guardCard(page)).toBeVisible({ timeout: 4 * 60_000 });
   await expect(guardCard(page)).toContainText("Delete a manifest line");
-  await guardCard(page).getByRole("button", { name: "Refuse" }).click();
+  // The scripted Operator cannot see the refusal, so it presses the same key
+  // again; the Guard stops it every time, and every time a person refuses.
+  const refuse = guardCard(page).getByRole("button", { name: "Refuse" });
+  for (let pauses = 0; pauses < 6; pauses++) {
+    await expect(refuse.or(verdict(page)).first()).toBeVisible({
+      timeout: 5 * 60_000,
+    });
+    if (await verdict(page).isVisible()) break;
+    await refuse.click();
+    await expect(refuse).toBeHidden({ timeout: 60_000 });
+  }
 
   await expect(verdict(page)).toHaveText("Incorrect", { timeout: 5 * 60_000 });
   // The line the Task wanted gone is still in the Books: only code noticed.
