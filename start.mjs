@@ -1,0 +1,13 @@
+import { chromium } from "@playwright/test";
+const [,, task, model] = process.argv;
+const token = process.env.E2E_BYPASS_TOKEN ?? "";
+const browser = await chromium.launch({ channel: "chrome" });
+const ctx = await browser.newContext({ viewport: { width: 1440, height: 1000 }, extraHTTPHeaders: { "x-e2e-token": token, ...(process.env.LIVE ? {} : { "x-operator-stub": token }) } });
+const page = await ctx.newPage();
+await page.goto("http://localhost:3112/demos/operator", { waitUntil: "domcontentloaded" });
+await page.getByRole("button", { name: new RegExp(task) }).first().click();
+if (model) await page.getByRole("combobox").first().selectOption({ label: model });
+await page.getByRole("button", { name: "Let the Operator do it" }).click();
+await page.waitForURL(/run=/, { timeout: 60000 }).catch(() => {});
+console.log(page.url());
+await browser.close();

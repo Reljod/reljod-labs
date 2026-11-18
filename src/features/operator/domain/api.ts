@@ -35,7 +35,7 @@ export const REPLAY_ROOT = "/operator/replays";
 export const replayPath = {
   run: (taskId: string) => `${REPLAY_ROOT}/${id(taskId)}/run.json`,
   frame: (taskId: string, n: number) =>
-    `${REPLAY_ROOT}/${id(taskId)}/frames/${n}.png`,
+    `${REPLAY_ROOT}/${id(taskId)}/frames/${n}.webp`,
 };
 
 /** Where a Frame's picture is: a recorded Run's is a static file. */

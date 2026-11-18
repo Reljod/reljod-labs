@@ -7,7 +7,7 @@ export const LIMITS = {
   /** Model calls the Operator may make in one Run. */
   turnsPerRun: 40,
   /** Actions (clicks, typing, key presses, scrolls, waits) in one Run, whoever drives. */
-  actionsPerRun: 160,
+  actionsPerRun: 240,
   /** Actions the Operator may ask for in one turn. */
   actionsPerTurn: 12,
   /** What one Run may spend on the model, in USD. */

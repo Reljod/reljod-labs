@@ -50,8 +50,20 @@ export type TranscriptItem =
     }
   | { role: "note"; text: string };
 
-/** How many of the latest pictures the Operator still sees. Older ones become one line each. */
-const PICTURES_KEPT = 2;
+/**
+ * Pictures are dropped from the Operator's context in blocks of this many,
+ * not one a Turn: the Operator always sees the latest one to four, and the
+ * messages before them stay byte-for-byte the same between drops, so the
+ * provider's prompt cache holds for most Turns. Older ones become one line each.
+ */
+const PICTURE_BLOCK = 4;
+
+/** The Frames still shown as pictures, given every Frame the conversation holds, in order. */
+export function keptPictures(frames: number[]): Set<number> {
+  const from =
+    Math.floor(Math.max(0, frames.length - 1) / PICTURE_BLOCK) * PICTURE_BLOCK;
+  return new Set(frames.slice(from));
+}
 const OUTPUT_TOKENS = 2500;
 
 // The tools, as the model sees them -------------------------------------------------------
@@ -260,7 +272,7 @@ export async function buildMessages(
       item.role === "results" && item.frame !== null ? [item.frame] : [],
     ),
   ];
-  const kept = new Set(frames.slice(-PICTURES_KEPT));
+  const kept = keptPictures(frames);
   const messages: ModelMessage[] = [
     {
       role: "user",
