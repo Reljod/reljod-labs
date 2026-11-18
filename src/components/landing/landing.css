@@ -192,8 +192,7 @@
   transform-origin: 50% 100%;
   transform: translate(-50%, -50%)
     translateY(calc(var(--ahead) * -1.5rem + var(--gone) * 135%))
-    scale(calc(1 - var(--ahead) * 0.04))
-    rotateX(calc(var(--ahead) * 6deg))
+    scale(calc(1 - var(--ahead) * 0.04)) rotateX(calc(var(--ahead) * 6deg))
     rotate(calc(var(--gone) * 7deg));
   /* A flipped card stays solid while it slides out: no cross-fading text. */
   opacity: calc(
