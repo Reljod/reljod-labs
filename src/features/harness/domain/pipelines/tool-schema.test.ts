@@ -74,7 +74,6 @@ describe("sandboxNote", () => {
   it("tells the Agent when earlier files are gone", () => {
     expect(sandboxNote({})).toBe("");
     expect(sandboxNote({ sandboxCreated: true })).toContain("gone");
-    expect(sandboxNote({ sandboxReset: true })).toContain("reset");
   });
 });
 

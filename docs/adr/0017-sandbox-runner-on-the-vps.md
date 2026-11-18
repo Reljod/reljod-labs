@@ -1,5 +1,7 @@
 # The Agent codes in a Sandbox on the VPS, reached through a Runner
 
+Superseded by ADR 0022: the Sandbox is now Vercel Sandbox, and the Runner is gone.
+
 ADR 0002 recorded that Vercel is the only compute. The Harness needs a place for the Agent to write and run code, and the decision was to use a container on the VPS rather than a managed sandbox. This ADR makes that one exception.
 
 A Runner (`sandbox-runner/`, a dependency-free Node service) runs on the VPS and listens on localhost. Caddy, already on the VPS, serves it on a subdomain with TLS. The app calls it with a short-lived HMAC token (`HARNESS_SANDBOX_SECRET`) that names the Session, the action and an Owner tag (an HMAC of the Owner, so the Runner never learns who the Owner is); the Runner refuses anything else. `HARNESS_SANDBOX_URL` must be `https:` (or `http:` on a loopback host, for local development), or the app treats the Sandbox as off.

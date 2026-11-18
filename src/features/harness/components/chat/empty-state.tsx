@@ -6,12 +6,10 @@ import { SUGGESTED_PROMPTS, type SuggestedPrompt } from "./prompts";
 
 /** Who the Agent is and what to try, shown in a Session with no messages. */
 export function ChatEmptyState({
-  isAdmin,
   staffName,
   busy,
   onPrompt,
 }: {
-  isAdmin: boolean;
   staffName: string;
   busy: boolean;
   onPrompt: (prompt: SuggestedPrompt) => void;
@@ -26,25 +24,24 @@ export function ChatEmptyState({
         Trust. I read the desk's Skills, search its Knowledge base and call
         tools on the Harness MCP server. I can run the three Pipelines (member
         requests, contribution Schedules and the delinquency report), and show
-        you every Step. I never give an Approval and I never decide a case: a
-        person does. Everything here is fictional and marked SPECIMEN.
+        you every Step. When a question needs counting, totalling or checking a
+        file, I write and run code in a Sandbox with no network. I never give an
+        Approval and I never decide a case: a person does. Everything here is
+        fictional and marked SPECIMEN.
       </p>
       <p className="mt-5 font-mono text-[0.65rem] font-bold tracking-[0.08em] text-ink-muted uppercase">
         Try one
       </p>
       <ul className="mt-2 grid gap-2 sm:grid-cols-2">
         {SUGGESTED_PROMPTS.map((prompt) => {
-          const locked = prompt.admin === true && !isAdmin;
           const sample = prompt.sampleGroup
             ? SAMPLES.find((item) => item.group === prompt.sampleGroup)
             : undefined;
-          const reasonId = `prompt-${prompt.id}-reason`;
           return (
             <li key={prompt.id}>
               <button
                 type="button"
-                disabled={locked || busy}
-                aria-describedby={locked ? reasonId : undefined}
+                disabled={busy}
                 onClick={() => onPrompt(prompt)}
                 className={cx(
                   "outline-box press h-full w-full rounded-sm bg-paper px-3 py-2.5 text-left hover:bg-morning-haze",
@@ -60,12 +57,6 @@ export function ChatEmptyState({
                 {sample ? (
                   <span className="mt-1 block text-xs text-federal-blue">
                     Attaches {sample.title}
-                  </span>
-                ) : null}
-                {locked ? (
-                  <span id={reasonId} className="mt-1 block text-xs text-oak">
-                    Only an admin may use the Sandbox. Switch Staff to the
-                    Operations Manager to try it.
                   </span>
                 ) : null}
               </button>

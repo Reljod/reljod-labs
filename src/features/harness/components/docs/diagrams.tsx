@@ -151,7 +151,7 @@ const BACKENDS: { label: string; sub: string }[] = [
   { label: "Records", sub: "Employers, Members, Schedules" },
   { label: "Skills and Rules", sub: "SKILL.md, Versions" },
   { label: "Audit trail", sub: "Append-only" },
-  { label: "Sandbox", sub: "Runner, container on the VPS" },
+  { label: "Sandbox", sub: "Vercel Sandbox, no network" },
 ];
 
 function Architecture() {
@@ -498,8 +498,8 @@ function SandboxPath() {
   return (
     <Frame
       id="sandbox-path"
-      title="The Sandbox path: Vercel, Caddy, the Runner, then a container"
-      description="The app on Vercel signs a short-lived token and calls the Runner's address over HTTPS. Caddy on the VPS ends TLS and proxies to the Runner on the loopback address. The Runner drives Docker, and the code runs in a container with no network."
+      title="The Sandbox path: the app on Vercel, then a Vercel Sandbox microVM"
+      description="A server function checks the Session, takes a command from the hourly cap and writes the Audit event, then calls Vercel Sandbox with the deployment's OIDC token. A Session's Sandbox is found again by its name and keeps its files; a model Step's Sandbox holds the papers and is removed when the Step ends. Neither has a network."
       width={720}
       height={230}
     >
@@ -508,61 +508,46 @@ function SandboxPath() {
           <Node
             x={10}
             y={70}
-            w={120}
+            w={150}
             h={70}
-            label="Vercel"
-            sub="the app signs a token"
+            label="The app"
+            sub="audits, then calls"
           />
-          <Arrow d="M130 105 H175" marker={marker} />
-          <Note x={152} y={90}>
-            HTTPS
+          <Arrow d="M160 105 H215" marker={marker} />
+          <Note x={187} y={90}>
+            OIDC
           </Note>
           <rect
-            x={175}
+            x={215}
             y={20}
-            width={535}
+            width={495}
             height={190}
             rx={5}
             className="hx-dg-lane"
           />
-          <Note x={190} y={36} anchor="start">
-            The VPS
-          </Note>
-          <Node x={190} y={70} w={110} h={70} label="Caddy" sub="ends TLS" />
-          <Arrow d="M300 105 H335" marker={marker} />
-          <Node
-            x={335}
-            y={70}
-            w={130}
-            h={70}
-            label="Runner"
-            sub="127.0.0.1 only"
-            tone="accent"
-          />
-          <Arrow d="M465 105 H500" marker={marker} />
-          <Note x={482} y={90}>
-            docker
+          <Note x={230} y={36} anchor="start">
+            Vercel Sandbox
           </Note>
           <Node
-            x={500}
+            x={230}
             y={50}
-            w={195}
+            w={465}
             h={44}
-            label="Container for Session A"
-            sub="no network"
+            label="harness-session-<id>"
+            sub="a Session's microVM, keeps its files 24 hours"
             tone="stop"
           />
           <Node
-            x={500}
+            x={230}
             y={114}
-            w={195}
+            w={465}
             h={44}
-            label="Container for Session B"
-            sub="no network"
+            label="harness-step-<uuid>"
+            sub="a model Step's microVM, with the papers, removed after the Step"
             tone="stop"
           />
-          <Note x={597} y={185}>
-            Limits on CPU, memory, processes and time
+          <Note x={462} y={185}>
+            No network; caps on time, file size and output
           </Note>
         </>
       )}

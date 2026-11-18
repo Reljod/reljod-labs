@@ -1,20 +1,26 @@
-import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 
-const URL_ = "https://runner.example.test";
-const SECRET = "0123456789abcdef0123456789abcdef";
 const SID = "123e4567-e89b-42d3-a456-426614174000";
 
 const state = vi.hoisted(() => ({
-  url: "https://runner.example.test" as string | null,
-  secret: "0123456789abcdef0123456789abcdef" as string | null,
+  configured: true,
   audits: [] as { action: string; detail?: Record<string, unknown> }[],
   strictFails: false,
   queries: [] as { text: string; values: unknown[] }[],
+  rateTaken: 0,
+}));
+
+const sdk = vi.hoisted(() => ({
+  getOrCreate: vi.fn(),
+  get: vi.fn(),
 }));
 
 vi.mock("server-only", () => ({}));
+vi.mock("@vercel/sandbox", () => ({
+  Sandbox: { getOrCreate: sdk.getOrCreate, get: sdk.get },
+}));
 vi.mock("./env", () => ({
-  env: { sandboxUrl: () => state.url, sandboxSecret: () => state.secret },
+  env: { sandboxConfigured: () => state.configured },
 }));
 vi.mock("./db", () => ({
   isUuid: (v: unknown) => typeof v === "string" && /^[0-9a-f-]{36}$/.test(v),
@@ -41,25 +47,60 @@ vi.mock("./audit", () => ({
     state.audits.push(input);
   },
 }));
-vi.mock("./rate", () => ({ takeRate: async () => {} }));
-vi.mock("./sessions", () => ({
-  writableSession: async () => ({ id: "x" }),
-  readableSession: async () => ({ id: "x" }),
+vi.mock("./rate", () => ({
+  takeRate: async () => {
+    state.rateTaken += 1;
+  },
 }));
-vi.mock("./context", () => ({ assertCan: () => {} }));
+vi.mock("./sessions", () => ({
+  writableSession: async () => ({ id: SID }),
+  readableSession: async () => ({ id: SID }),
+}));
 
-import { sandboxOwnerTag } from "../domain/sandbox-token";
-import { InvalidError, LimitError, StateError } from "./errors";
-import { sandboxRun, sandboxStatus, sandboxWriteFile } from "./sandbox";
+import { sessionSandboxName } from "../domain/sandbox";
+import { InvalidError, NotFoundError, StateError } from "./errors";
+import {
+  sandboxListFiles,
+  sandboxReadFile,
+  sandboxRun,
+  sandboxWriteFile,
+  sdkReason,
+} from "./sandbox";
 
+/** A user, not an admin: every Role may use the Sandbox. */
 const actor = {
-  owner: "host:1",
-  staff: { id: "s1", name: "Ada", role: "admin" },
+  owner: "guest:1",
+  staff: { id: "s1", name: "Keisha", role: "user" },
   visitor: { hash: "h", trusted: false },
 } as never;
 
-const reply = (status: number, body: unknown) =>
-  new Response(JSON.stringify(body), { status });
+function fakeSandbox(overrides: Record<string, unknown> = {}) {
+  return {
+    expiresAt: new Date(Date.now() + 9 * 60_000),
+    update: vi.fn(async () => {}),
+    extendTimeout: vi.fn(async () => {}),
+    writeFiles: vi.fn(async () => {}),
+    readFileToBuffer: vi.fn(async () => Buffer.from("a,b\n1,2\n")),
+    runCommand: vi.fn(async () => ({
+      exitCode: 0,
+      stdout: async () => "42\n",
+      stderr: async () => "",
+    })),
+    stop: vi.fn(async () => {}),
+    delete: vi.fn(async () => {}),
+    ...overrides,
+  };
+}
+
+/** `getOrCreate` that makes a new Sandbox (calls `onCreate`) or finds one. */
+function opens(sandbox: ReturnType<typeof fakeSandbox>, made: boolean) {
+  sdk.getOrCreate.mockImplementation(
+    async (params: { onCreate?: (s: unknown) => Promise<void> }) => {
+      if (made) await params.onCreate?.(sandbox);
+      return sandbox;
+    },
+  );
+}
 
 async function failureOf(promise: Promise<unknown>): Promise<Error> {
   try {
@@ -71,31 +112,17 @@ async function failureOf(promise: Promise<unknown>): Promise<Error> {
 }
 
 beforeEach(() => {
-  state.url = URL_;
-  state.secret = SECRET;
+  vi.clearAllMocks();
+  state.configured = true;
   state.audits = [];
   state.strictFails = false;
   state.queries = [];
+  state.rateTaken = 0;
 });
 
-const claimsOf = (init: RequestInit) => {
-  const bearer = (init.headers as Record<string, string>).authorization;
-  const payload = bearer.replace(/^Bearer /, "").split(".")[0] ?? "";
-  return JSON.parse(Buffer.from(payload, "base64url").toString("utf8"));
-};
-afterEach(() => vi.unstubAllGlobals());
-
-describe("sandbox client", () => {
-  it("is off when the URL or secret is unset", async () => {
-    const fetchMock = vi.fn();
-    vi.stubGlobal("fetch", fetchMock);
-    state.url = null;
-    const status = await sandboxStatus();
-    expect(status.configured).toBe(false);
-    expect(status.message).toMatch(/^Sandbox offline/);
-    state.url = URL_;
-    state.secret = null;
-    expect((await sandboxStatus()).configured).toBe(false);
+describe("the Session's Sandbox", () => {
+  it("is unavailable, and calls nothing, when Vercel Sandbox is not set up", async () => {
+    state.configured = false;
     const error = await failureOf(
       sandboxRun({
         ...(actor as object),
@@ -104,112 +131,101 @@ describe("sandbox client", () => {
       } as never),
     );
     expect(error).toBeInstanceOf(StateError);
-    expect(error.message).toMatch(/^Sandbox offline/);
-    expect(fetchMock).not.toHaveBeenCalled();
+    expect(error.message).toMatch(/^Sandbox unavailable/);
+    expect(sdk.getOrCreate).not.toHaveBeenCalled();
+    expect(state.rateTaken).toBe(0);
   });
 
-  it("runs a command, sends a bearer token, audits and reports sandboxCreated", async () => {
-    const fetchMock = vi.fn(async () =>
-      reply(200, {
-        exitCode: 0,
-        stdout: "1\n",
-        stderr: "",
-        truncated: false,
-        timedOut: false,
-        durationMs: 12,
-        sandboxCreated: true,
-        sandboxReset: false,
-      }),
-    );
-    vi.stubGlobal("fetch", fetchMock);
+  it("runs a user's command in a named Sandbox with no network, audited before and after", async () => {
+    const sandbox = fakeSandbox();
+    opens(sandbox, true);
     const run = await sandboxRun({
       ...(actor as object),
       sessionId: SID,
-      command: "echo 1",
+      command: "node -e 'console.log(42)'",
       via: "agent",
     } as never);
-    expect(run).toMatchObject({ exitCode: 0, sandboxCreated: true, ms: 12 });
-    const [url, init] = fetchMock.mock.calls[0] as unknown as [
-      string,
-      RequestInit,
+    expect(run).toMatchObject({
+      exitCode: 0,
+      stdout: "42\n",
+      timedOut: false,
+      truncated: false,
+      sandboxCreated: true,
+    });
+    const params = sdk.getOrCreate.mock.calls[0]?.[0];
+    expect(params).toMatchObject({
+      name: sessionSandboxName(SID),
+      networkPolicy: "deny-all",
+      persistent: true,
+    });
+    // getOrCreate may find one made with another policy: it is set again.
+    expect(sandbox.update).toHaveBeenCalledWith({ networkPolicy: "deny-all" });
+    const [[command]] = sandbox.runCommand.mock.calls as unknown as [
+      [{ cmd: string; args: string[] }],
     ];
-    expect(url).toBe(`${URL_}/sessions/${SID}/run`);
-    expect((init.headers as Record<string, string>).authorization).toMatch(
-      /^Bearer .+\..+$/,
-    );
-    expect(state.audits.map((a) => a.action)).toEqual([
+    expect(command.cmd).toBe("sh");
+    expect(command.args.at(-1)).toBe("node -e 'console.log(42)'");
+    expect(state.audits.map((event) => event.action)).toEqual([
       "sandbox.command",
       "sandbox.started",
       "sandbox.command_finished",
     ]);
-    expect(state.audits[0]?.detail).toMatchObject({
-      via: "agent",
-      command: "echo 1",
-    });
-    expect(state.audits[2]?.detail).toMatchObject({
-      via: "agent",
-      exitCode: 0,
-    });
-    // The token carries an opaque Owner tag, never the Owner.
-    const claims = claimsOf(init);
-    expect(claims).toMatchObject({
-      sid: SID,
-      act: "run",
-      own: sandboxOwnerTag(SECRET, "host:1"),
-    });
-    expect(JSON.stringify(claims)).not.toContain("host:1");
-    // The real container name is kept.
-    const insert = state.queries.find((q) =>
-      q.text.includes("insert into harness.sandboxes"),
-    );
-    expect(insert?.values).toContain(`harness-sbx-${SID}`);
+    expect(state.rateTaken).toBe(1);
   });
 
   it("does not run a command whose Audit event cannot be written", async () => {
-    const fetchMock = vi.fn();
-    vi.stubGlobal("fetch", fetchMock);
     state.strictFails = true;
+    const sandbox = fakeSandbox();
+    opens(sandbox, false);
     const error = await failureOf(
       sandboxRun({
         ...(actor as object),
         sessionId: SID,
-        command: "rm -rf data",
+        command: "ls",
       } as never),
     );
     expect(error).toBeInstanceOf(StateError);
-    expect(error.message).toMatch(/not run/);
-    expect(fetchMock).not.toHaveBeenCalled();
+    expect(sandbox.runCommand).not.toHaveBeenCalled();
   });
 
-  it("audits every file written, with its path and size and never its content", async () => {
-    vi.stubGlobal("fetch", async () =>
-      reply(200, { path: "src/a.py", bytes: 9, sandboxCreated: false }),
-    );
-    await sandboxWriteFile({
+  it("reports a timeout from `timeout(1)`'s exit code, not as a failure", async () => {
+    const sandbox = fakeSandbox({
+      runCommand: vi.fn(async () => ({
+        exitCode: 124,
+        stdout: async () => "",
+        stderr: async () => "\nTimed out after 58 s.",
+      })),
+    });
+    opens(sandbox, false);
+    const run = await sandboxRun({
       ...(actor as object),
       sessionId: SID,
-      path: "./src/a.py",
-      content: "TOP-SECRET",
-      via: "agent",
+      command: "sleep 999",
     } as never);
-    expect(state.audits.map((a) => a.action)).toEqual(["sandbox.file_written"]);
-    expect(state.audits[0]?.detail).toEqual({
-      via: "agent",
-      path: "src/a.py",
-      bytes: 9,
-    });
-    expect(JSON.stringify(state.audits)).not.toContain("TOP-SECRET");
+    expect(run.timedOut).toBe(true);
+    expect(run.sandboxCreated).toBe(false);
   });
 
-  it("maps the Runner's per-Owner cap to a plain message", async () => {
-    vi.stubGlobal("fetch", async () =>
-      reply(429, {
-        error: {
-          code: "owner_at_capacity",
-          message: "You already have 2 Sandboxes running; ...",
-        },
-      }),
-    );
+  it("cuts long output and says so", async () => {
+    const sandbox = fakeSandbox({
+      runCommand: vi.fn(async () => ({
+        exitCode: 0,
+        stdout: async () => "x".repeat(30_000),
+        stderr: async () => "",
+      })),
+    });
+    opens(sandbox, false);
+    const run = await sandboxRun({
+      ...(actor as object),
+      sessionId: SID,
+      command: "yes",
+    } as never);
+    expect(run.stdout).toHaveLength(20_000);
+    expect(run.truncated).toBe(true);
+  });
+
+  it("hides the SDK's own error and records that the command did not run", async () => {
+    sdk.getOrCreate.mockRejectedValue(new Error("401 from api.vercel.com"));
     const error = await failureOf(
       sandboxRun({
         ...(actor as object),
@@ -217,179 +233,130 @@ describe("sandbox client", () => {
         command: "ls",
       } as never),
     );
-    expect(error).toBeInstanceOf(LimitError);
-    // No numbers: the Runner reads the cap and the idle time from its config.
-    expect(error.message).not.toMatch(/\d|two/);
-    expect(error.message).toMatch(/already have as many Sandboxes/);
+    expect(error.message).toMatch(/^Sandbox unavailable/);
+    expect(error.message).not.toContain("vercel.com");
+    const finished = state.audits.at(-1);
+    expect(finished?.action).toBe("sandbox.command_finished");
+    expect(String(finished?.detail?.error)).not.toContain("vercel.com");
   });
 
-  it.each([
-    [
-      "the Runner is offline",
-      async () => {
-        throw new TypeError("connect ECONNREFUSED");
-      },
-      /^Sandbox offline/,
-    ],
-    [
-      "the Owner is at the cap",
-      async () =>
-        reply(429, { error: { code: "owner_at_capacity", message: "x" } }),
-      /as many Sandboxes/,
-    ],
-    [
-      "the Runner refuses the body",
-      async () =>
-        reply(400, { error: { code: "invalid_body", message: "bad input" } }),
-      /bad input/,
-    ],
-  ])("records that a command did not run when %s", async (_, fetchImpl, message) => {
-    vi.stubGlobal("fetch", fetchImpl);
-    const error = await failureOf(
-      sandboxRun({
-        ...(actor as object),
-        sessionId: SID,
-        command: "python main.py",
-        via: "agent",
-      } as never),
-    );
-    expect(error.message).toMatch(message);
-    expect(state.audits.map((a) => a.action)).toEqual([
-      "sandbox.command",
-      "sandbox.command_finished",
-    ]);
-    const asked = state.audits[0] as { summary?: string };
-    expect(asked.summary).toBe("Asked to run: python main.py");
-    expect(asked.summary).not.toMatch(/^Ran:/);
-    expect(state.audits[1]?.detail).toMatchObject({ via: "agent" });
-    expect(String(state.audits[1]?.detail?.error)).toMatch(message);
-    expect(JSON.stringify(state.audits)).not.toContain("runner.example");
-  });
-
-  it("records no file written when the write fails", async () => {
-    vi.stubGlobal("fetch", async () => {
-      throw new TypeError("connect ECONNREFUSED");
+  it("writes a file under the workdir and audits its path and size, never its content", async () => {
+    const sandbox = fakeSandbox();
+    opens(sandbox, false);
+    const file = await sandboxWriteFile({
+      ...(actor as object),
+      sessionId: SID,
+      path: "./data/schedule.csv",
+      content: "secret-ish,row\n",
+    } as never);
+    expect(file).toEqual({
+      path: "data/schedule.csv",
+      bytes: 15,
+      directory: false,
+      sandboxCreated: false,
     });
-    const error = await failureOf(
-      sandboxWriteFile({
-        ...(actor as object),
-        sessionId: SID,
-        path: "a.py",
-        content: "x",
-      } as never),
+    expect(sandbox.writeFiles).toHaveBeenCalledWith([
+      {
+        path: "/vercel/sandbox/data/schedule.csv",
+        content: "secret-ish,row\n",
+      },
+    ]);
+    const written = state.audits.find(
+      (event) => event.action === "sandbox.file_written",
     );
-    expect(error.message).toMatch(/^Sandbox offline/);
-    expect(state.audits.map((a) => a.action)).not.toContain(
-      "sandbox.file_written",
-    );
+    expect(written?.detail).toMatchObject({
+      path: "data/schedule.csv",
+      bytes: 15,
+    });
+    expect(JSON.stringify(written)).not.toContain("secret-ish");
   });
 
-  it.each([
-    ["http://runner.example.test", false],
-    ["ftp://runner.example.test", false],
-    ["not a url", false],
-    ["https://user:pw@runner.example.test", false],
-    ["https://runner.example.test", true],
-    ["http://127.0.0.1:8787", true],
-    ["http://localhost:8787", true],
-    ["http://[::1]:8787", true],
-  ])("treats %s as usable: %s", async (url, usable) => {
-    const fetchMock = vi.fn(async () => reply(200, { ok: true }));
-    vi.stubGlobal("fetch", fetchMock);
-    state.url = url;
-    const status = await sandboxStatus();
-    expect(status.configured).toBe(usable);
-    if (!usable) {
-      expect(status.message).toMatch(/^Sandbox offline: its address/);
-      expect(status.message).not.toContain("runner.example");
-      expect(fetchMock).not.toHaveBeenCalled();
+  it("refuses a path out of the workdir and a file over the cap, before starting anything", async () => {
+    for (const [path, content] of [
+      ["../etc/passwd", "x"],
+      ["/etc/passwd", "x"],
+      ["big.txt", "x".repeat(256 * 1024 + 1)],
+    ] as const) {
       const error = await failureOf(
-        sandboxRun({
+        sandboxWriteFile({
           ...(actor as object),
           sessionId: SID,
-          command: "ls",
+          path,
+          content,
         } as never),
       );
-      expect(error.message).toMatch(/^Sandbox offline: its address/);
+      expect(error, path).toBeInstanceOf(InvalidError);
     }
+    expect(sdk.getOrCreate).not.toHaveBeenCalled();
   });
 
-  it.each([
-    [
-      503,
-      { error: { code: "at_capacity", message: "full" } },
-      StateError,
-      /full, try again in a minute/,
-    ],
-    [
-      429,
-      { error: { code: "rate_limited", message: "Too many requests" } },
-      LimitError,
-      /Too many/,
-    ],
-    [
-      400,
-      { error: { code: "invalid_path", message: "Path has .." } },
-      InvalidError,
-      /Path has/,
-    ],
-    [
-      500,
-      { error: { code: "internal", message: "boom" } },
-      StateError,
-      /^Sandbox offline/,
-    ],
-    [
-      401,
-      { error: { code: "unauthorized", message: "no" } },
-      StateError,
-      /^Sandbox offline/,
-    ],
-  ])("maps a %i answer", async (status, body, cls, message) => {
-    vi.stubGlobal("fetch", async () => reply(status, body));
-    const error = await failureOf(
-      sandboxWriteFile({
-        ...(actor as object),
-        sessionId: SID,
-        path: "a.py",
-        content: "x",
-      } as never),
-    );
-    expect(error).toBeInstanceOf(cls);
-    expect(error.message).toMatch(message);
-  });
+  it("reads and lists files only in a Sandbox that exists", async () => {
+    sdk.get.mockRejectedValueOnce(new Error("not found"));
+    expect(
+      await failureOf(
+        sandboxReadFile({
+          ...(actor as object),
+          sessionId: SID,
+          path: "a.csv",
+        } as never),
+      ),
+    ).toBeInstanceOf(NotFoundError);
+    expect(sdk.getOrCreate).not.toHaveBeenCalled();
 
-  it("says offline on a network failure and never leaks the URL or secret", async () => {
-    vi.stubGlobal("fetch", async () => {
-      throw new TypeError(`connect ECONNREFUSED ${URL_} with ${SECRET}`);
+    const sandbox = fakeSandbox({
+      runCommand: vi.fn(async () => ({
+        exitCode: 0,
+        stdout: async () => "a.csv\t8\ndata/b.csv\t3\n",
+        stderr: async () => "",
+      })),
     });
-    const error = await failureOf(
-      sandboxRun({
-        ...(actor as object),
-        sessionId: SID,
-        command: "ls",
-      } as never),
+    sdk.get.mockResolvedValue(sandbox);
+    const read = await sandboxReadFile({
+      ...(actor as object),
+      sessionId: SID,
+      path: "a.csv",
+    } as never);
+    expect(read).toEqual({
+      path: "a.csv",
+      content: "a,b\n1,2\n",
+      bytes: 8,
+      truncated: false,
+    });
+    const listed = await sandboxListFiles({
+      ...(actor as object),
+      sessionId: SID,
+      path: "data",
+    } as never);
+    expect(listed).toEqual([
+      { path: "data/b.csv", bytes: 3, directory: false },
+    ]);
+  });
+});
+
+describe("sdkReason", () => {
+  it("shows Vercel's status, code and message, with anything token-shaped cut", () => {
+    const apiError = Object.assign(new Error("Bad Request"), {
+      response: { status: 400 },
+      json: {
+        error: {
+          code: "bad_request",
+          message: `Invalid cwd for token ${"a".repeat(40)}`,
+        },
+      },
+    });
+    expect(sdkReason(apiError)).toBe(
+      "HTTP 400 bad_request: Invalid cwd for token [hidden]",
     );
-    expect(error.message).toMatch(/^Sandbox offline/);
-    expect(error.message).not.toContain("runner.example");
-    expect(error.message).not.toContain(SECRET);
   });
 
-  it("scrubs the URL and secret out of a Runner message", async () => {
-    vi.stubGlobal("fetch", async () =>
-      reply(400, {
-        error: { code: "invalid_body", message: `bad ${URL_} ${SECRET}` },
-      }),
+  it("shows a stream error's code, and only the name of an unknown error", () => {
+    const stream = Object.assign(new Error("sandbox stopped"), {
+      name: "StreamError",
+      code: "sandbox_stopped",
+    });
+    expect(sdkReason(stream)).toBe("sandbox_stopped: sandbox stopped");
+    expect(sdkReason(new TypeError("Bearer abc at api.vercel.com"))).toBe(
+      "TypeError",
     );
-    const error = await failureOf(
-      sandboxWriteFile({
-        ...(actor as object),
-        sessionId: SID,
-        path: "a",
-        content: "x",
-      } as never),
-    );
-    expect(error.message).not.toContain("runner.example");
-    expect(error.message).not.toContain(SECRET);
   });
 });

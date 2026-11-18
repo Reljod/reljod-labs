@@ -345,7 +345,6 @@ export async function* streamTurn(
         today: today(),
         skills,
         attachments: attached,
-        sandbox: can(staff, "sandbox.use"),
       }),
       tools,
       stopWhen: isStepCount(LIMITS.stepsPerChatTurn),

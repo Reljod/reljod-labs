@@ -43,7 +43,7 @@ Besides a Skill and a Rulebook for each Pipeline, the Harness ships Skills for t
 - §member-service-answer§: answering a Member's question with citations. See [Member service answers](#doc:member-service-answers).
 - §knowledge-filing§: deciding whether an attachment is a case paper (kept with its case) or knowledge (filed in the Knowledge base).
 - §desk-conventions§: tone, how to write amounts and dates, how to cite, and the guardrails every other Skill assumes.
-- §sandbox-analysis§: one-off data work in the Sandbox, in an admin's Session.
+- §sandbox-analysis§: data work in the Sandbox (counting, totalling, comparing, parsing), which the Agent does on its own judgement in any Session.
 
 ## Rulebooks
 

@@ -40,7 +40,7 @@ All model calls go through Vercel AI Gateway:
 
 ## The Sandbox
 
-A Runner on a VPS drives Docker containers. The app calls it over HTTPS with a short-lived signed token. See [Sandbox and Runner](#doc:arch-sandbox).
+Code runs on Vercel Sandbox: one microVM with no network per Session, found again by name, and one per model Step that codes, removed when the Step ends. The app reaches it with the deployment's OIDC token. See [Sandbox design](#doc:arch-sandbox).
 
 ## The rules that hold it together
 

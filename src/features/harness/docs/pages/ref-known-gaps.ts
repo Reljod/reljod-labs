@@ -25,7 +25,7 @@ Authorization codes, access tokens and refresh tokens are signed and keep no sta
 
 ## Other limits to know
 
-The Sandbox runs code from any visitor (see [Sandbox and Runner](#doc:arch-sandbox)), and the Rules illustrate the Act and are not legal advice (see [The rules reference and its limits](#doc:rules-reference)).
+The Sandbox runs code from any visitor (see [Sandbox design](#doc:arch-sandbox)), and the Rules illustrate the Act and are not legal advice (see [The rules reference and its limits](#doc:rules-reference)).
 `,
   ],
 };

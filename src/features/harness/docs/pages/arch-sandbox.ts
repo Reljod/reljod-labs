@@ -4,61 +4,52 @@ import type { DocPage } from "../types";
 export const page: DocPage = {
   id: "arch-sandbox",
   section: "architecture",
-  title: "Sandbox and Runner",
+  title: "Sandbox design",
   summary:
-    "How code from the Agent runs on the VPS, what limits it, and the risks that are accepted.",
+    "How code from the Agent and from Pipeline Steps runs on Vercel Sandbox, what limits it, and the risks that are accepted.",
   body: [
     md`
-Earlier decisions made Vercel the only compute. The Harness needs a place for the Agent to write and run code. ADR 0017 makes one exception: a container on a VPS, reached through a Runner, instead of a managed sandbox.
+The Harness needs a place for the Agent to write and run code. ADR 0022 puts it on Vercel Sandbox, the way Sieve does it, so Vercel stays the only compute. It supersedes ADR 0017, which ran containers on a VPS.
 
 ## The path
 `,
     { diagram: "sandbox-path" },
     md`
-1. The Agent calls a Sandbox tool on the MCP server (§code_write_file§, §code_run§, §code_read_file§, §code_list_files§). It needs the admin Role.
-2. The app signs a token for that Session and action, with about a minute to live, using §HARNESS_SANDBOX_SECRET§.
-3. It calls §HARNESS_SANDBOX_URL§, which must be https (or http on a loopback host for local development; anything else leaves the Sandbox off). **Caddy** on the VPS ends TLS and proxies to the Runner.
-4. The **Runner** listens on §127.0.0.1§ only. It checks the token, the Session and the action, then drives Docker.
-5. Each Session has one **container**. The Runner runs the command in it and returns the result. A visitor may hold at most §RUNNER_MAX_PER_OWNER§ (default 2) containers, so one person cannot take every slot.
+1. The Agent calls a Sandbox tool on the MCP server (§code_write_file§, §code_run§, §code_read_file§, §code_list_files§). Any Role may.
+2. The server function checks that the Session belongs to the Owner, takes one of the visitor's hourly Sandbox commands, and for a command writes §sandbox.command§ to the Audit trail first.
+3. It finds the Session's Sandbox by name (§harness-session-<session id>§) or makes it, with the network set to deny all. Auth is the deployment's OIDC token. Any function instance finds the same Sandbox by its name.
+4. The command runs under §sh -c§ in the work directory, with a §timeout§, and its output is cut inside the Sandbox before it is read back.
+5. §sandbox.command_finished§ records the exit code and the time taken.
 
-## What the container has
+A model Step that codes takes the same path with its own Sandbox, named §harness-step-<uuid>§. It is made on the Step's first §run_code§ with the papers written in, keeps nothing when it stops, and is removed when the model call ends.
 
-- No network: only a loopback interface.
-- No volumes, no host paths, no Docker socket. The root file system is read-only. Writable space is a small in-memory work directory (§/work§) and a smaller in-memory temp directory, both mounted noexec: a file there cannot be run directly, only read by an interpreter, so a script runs as §python3 file.py§.
-- A non-root user, every capability dropped, and no-new-privileges, under Docker's default seccomp and AppArmor profiles.
-- Caps on CPU, memory (no swap), processes, open files, file size, command time and output.
-- A clean-up after every command that ends every process in the container.
-- Removal by the Runner after 15 idle minutes, after 2 hours at the latest, and when the Runner stops. A Session is never deleted in the app, so nothing else ends a container; the app's destroy call exists for when Sessions can be removed.
-- A cap on how many containers live at once, and on how many one visitor may hold (§RUNNER_MAX_PER_OWNER§, default 2). With §RUNNER_CGROUP_PARENT§ set, all containers share one capped slice (two CPUs, 2 GB).
+## What a Sandbox has
 
-The numbers the app shows are in [Sandbox](#doc:sandbox). The Runner holds the same numbers and the rest, in §sandbox-runner/README.md§.
+- Its own microVM, so code from one Session never shares a kernel with another's, or with the app.
+- No network. The policy is set to deny all when the Sandbox is made, and again each time it is opened.
+- Node.js and Python, in the work directory §/vercel/sandbox§.
+- Caps on command time, file size and output, and a lifetime: 10 minutes, extended by each command. A Session's Sandbox keeps its files 24 hours after it stops; a Step's keeps nothing.
 
-## What stands between a stranger and the Runner
+The numbers are in [Sandbox](#doc:sandbox) and come from §SANDBOX_LIMITS§ in §domain/sandbox.ts§.
 
-- It listens on the loopback address only. Caddy adds TLS.
-- The health check answers only §{ "ok": true }§; the counts are behind a signed status call.
-- Every request except the health check needs a signed token naming one Session and one action, valid for at most five minutes.
-- Request input never becomes part of a command line. Session ids must be UUIDs, paths are checked and passed as one argument to a fixed script, and a command string is interpreted only by a shell inside the container.
+## What stands between a visitor and the code
 
-## The runtime, and the risks that remain
+- The Access gate and the Owner: a Sandbox tool works only on a Session of the caller's own Workspace.
+- The hourly cap on Sandbox commands per visitor (§LIMITS.sandboxCommandsPerHour§), taken in the server function at every entry point.
+- The Audit trail: a command whose §sandbox.command§ event cannot be written does not run.
+- Paths are kept inside the work directory, and a command string is interpreted only by a shell inside the Sandbox.
 
-This is the honest part. From ADR 0017:
+## The risks that remain
 
-- **The Runner refuses to start without a hardened runtime.** Set §RUNNER_RUNTIME=runsc§ (gVisor, a user-space kernel between the code and the host): the recommended way, and what the install script sets when Docker lists it. Or set §RUNNER_ALLOW_RUNC=1§ to run on plain runc and accept the risk explicitly. The script never sets it, and the owner writes it by hand.
-- **Shared kernel on runc.** runc containers share the host's kernel, and the code in them comes from any visitor. A kernel bug that lets code break out would put it on the VPS, as an unprivileged user or as root if the bug grants it, able to read what the machine holds. The limits make this hard to reach and nothing more. Allow runc only on a machine that holds nothing you would mind a stranger reading. gVisor narrows the risk and does not remove it.
-- **Docker group.** The Runner's user is in the §docker§ group, which is root on the host in all but name. The service's hardening contains a bug in the Runner process. It does not contain someone who can make the Runner send arbitrary Docker commands. The input checks prevent that.
-- **No user-namespace remapping.** It is a daemon-wide Docker setting and would affect other containers on the machine. So the container user's id is the same number on the host. No such user exists there.
-- **A token authorises an action, not a body.** Whoever holds a valid §run§ token can run any command in that Session until it expires. Tokens are short-lived and never logged.
-- **Any Guest can reach it.** The admin Role does not protect it, because anyone can switch to the admin. So the container limits are the boundary.
-- **Capacity.** Several containers at full tilt use several CPU cores and a large share of memory. The cap on containers is adjustable.
+This is the honest part. From ADR 0022:
 
-## When it is off or down
+- **Any visitor can run code.** The Sandbox is open to every Role, so to any Host or Guest. The Role is not the boundary. The microVM, the missing network, the caps and the Audit trail are.
+- **Cost.** Each Sandbox and each command uses Vercel Sandbox time, paid by the project. The hourly cap per visitor and the short lifetime bound it.
+- **The model decides when to code.** The Agent and the reading Steps code on their own judgement. A Step's code is a reading aid; only the Pipeline's checks return a Finding (ADR 0015).
 
-§HARNESS_SANDBOX_URL§ unset means the Sandbox is off. If the VPS or the Runner is unreachable, or answers a 5xx, the tools say "Sandbox offline". The rest of the Harness works.
+## When it is not set up
 
-## Installing it
-
-Setting up the Runner changes the VPS (a systemd unit, a Caddy site, a DNS record). It is done by §sandbox-runner/install.sh§, run by the owner, not by a deploy. See [Installing the Runner on the VPS](#doc:ops-runner).
+On a Vercel deployment it needs no setup. Locally it needs §VERCEL_OIDC_TOKEN§ (from §vercel env pull§) or §VERCEL_TOKEN§. Without one, §env.sandboxConfigured()§ is false and the tools answer "Sandbox unavailable: it is not set up here". If a Sandbox cannot be started, they answer "Sandbox unavailable" with a short reason. The rest of the Harness works.
 `,
   ],
 };

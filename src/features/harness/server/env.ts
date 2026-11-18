@@ -31,10 +31,17 @@ export const env = {
     process.env.HARNESS_STEP_MODEL ?? "anthropic/claude-haiku-5.5",
   embeddingModel: () =>
     process.env.HARNESS_EMBEDDING_MODEL ?? "openai/text-embedding-3-small",
-  /** The Runner's address on the VPS. Unset means the Sandbox is off (ADR 0017). */
-  sandboxUrl: () => process.env.HARNESS_SANDBOX_URL || null,
-  /** Signs the short-lived tokens the Runner accepts. */
-  sandboxSecret: () => process.env.HARNESS_SANDBOX_SECRET || null,
+  /**
+   * Whether Vercel Sandbox can be reached (ADR 0022): on a Vercel deployment
+   * (OIDC), or locally with `VERCEL_OIDC_TOKEN` from `vercel env pull` or an
+   * access token. Off, the code tools answer "Sandbox unavailable".
+   */
+  sandboxConfigured: () =>
+    Boolean(
+      process.env.VERCEL ||
+        process.env.VERCEL_OIDC_TOKEN ||
+        process.env.VERCEL_TOKEN,
+    ),
 };
 
 /** The width of every Passage embedding; matches `vector(768)` in the migration. */

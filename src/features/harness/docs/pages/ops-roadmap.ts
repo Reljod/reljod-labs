@@ -18,7 +18,7 @@ This is a list of directions, not a schedule.
 
 ## Open questions
 
-- **A stronger Sandbox.** The Sandbox uses container isolation only. Before anything else of value shares the machine, it should move to a stronger boundary. See [Sandbox and Runner](#doc:arch-sandbox).
+- **Who may code.** The Sandbox is open to every visitor and held in by its caps and the Audit trail. A real deployment would decide which Staff may code and keep the Role as a boundary. See [Sandbox design](#doc:arch-sandbox).
 - **Separate people.** In a real deployment, Staff would be separate Auth users and Roles would be a boundary. The demo keeps them together on purpose.
 - **A tamper-proof Audit trail.** Today the trail is append-only for the application. A real deployment would also ship events to storage the database owner cannot change.
 - **Verified Rules.** The research note lists what could not be verified. A real deployment would have a pensions specialist confirm each Rule.

@@ -23,7 +23,7 @@ A named person who works in a Workspace, such as a pensions officer. The visitor
 Words not to use for it: User account, persona, profile, member (a Member is a pension plan member)
 
 ### Role
-What a Staff member may do: §user§ or §admin§. A user works cases: chats, uploads, starts Runs, approves low-risk Approvals. An admin also edits Skills and Rules, settles Conflicts, approves high-risk Approvals, uses the Sandbox and reads the whole Workspace's Audit trail.
+What a Staff member may do: §user§ or §admin§. A user works cases: chats, uploads, starts Runs, approves low-risk Approvals. An admin also edits Skills and Rules, settles Conflicts, approves high-risk Approvals and reads the whole Workspace's Audit trail. Every Role may use the Sandbox.
 
 Words not to use for it: Permission level, group
 
@@ -170,14 +170,9 @@ The Audit events of a Session, or of the whole Workspace for an admin.
 Words not to use for it: Log, activity feed
 
 ### Sandbox
-A container on the VPS where the Agent can write and run code for one Session. No network, capped CPU, memory and time, removed by the Runner when idle. Only an admin Staff member's Session may use it.
+A Vercel Sandbox (a microVM with Node.js and Python and no network) where code runs: the Agent's, for one Session, and a reading Step's, for one model call. The Agent codes in it on its own judgement whenever an answer needs counting, totalling or comparing; nobody has to ask. A Session's Sandbox stops after 10 idle minutes and keeps its files for 24 hours; a Step's is removed when the call ends. What its code prints is analysis, never a Finding.
 
-Words not to use for it: VM, terminal, workspace
-
-### Runner
-The small service on the VPS that starts and drives Sandboxes for the Harness.
-
-Words not to use for it: Agent, worker, daemon
+Words not to use for it: VM, container, terminal, workspace, Runner (the VPS service it replaced, ADR 0022)
 
 ## Showing it
 

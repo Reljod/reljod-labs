@@ -260,8 +260,6 @@ export function instructionsFor(input: {
   skills: SkillIndexEntry[];
   /** Every Source attached in this Session, filed or not, newest first. */
   attachments: Attachment[];
-  /** False when the Session's Staff member's Role may not use the Sandbox. */
-  sandbox: boolean;
 }): string {
   const skills = input.skills
     .slice(0, SKILL_INDEX_ITEMS)
@@ -292,7 +290,7 @@ Records: Members, Employers, Schedules and Member requests come from the record 
 
 Web search: only for public facts outside the bank (a published circular, an exchange rate). Never search the web for a Member, and never paste Member data into a query.
 
-${input.sandbox ? "Sandbox: you may write and run code in this Session's Sandbox (code_ tools) for calculations or to check a file. It has no network." : "Sandbox: this Staff member's Role may not use the Sandbox; do not call the code_ tools."}
+You can code: this Session has a Sandbox (the code_ tools), a machine with Node.js and Python and no network. When an answer needs counting, totalling, comparing or parsing data (a Schedule, a CSV, a list of records), write the data and a short script there and run it, rather than working the numbers out yourself; show the result, and say it is analysis, not a decision. Use it on your own judgement; nobody needs to ask for it. A Pipeline's work stays the Pipeline's: never use code to decide what its Rules decide.
 
 Skills: these are the desk's Skills. Before a task one of them describes, call load_skill with its id and follow it.
 ${skills || "(No Skills are available right now.)"}

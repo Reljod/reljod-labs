@@ -39,7 +39,6 @@ import { page as opsAddSkill } from "./pages/ops-add-skill";
 import { page as opsAddTool } from "./pages/ops-add-tool";
 import { page as opsDeploy } from "./pages/ops-deploy";
 import { page as opsRoadmap } from "./pages/ops-roadmap";
-import { page as opsRunner } from "./pages/ops-runner";
 import { page as pipelinesRuns } from "./pages/pipelines-runs";
 import { page as quickstart } from "./pages/quickstart";
 import { page as refApi } from "./pages/ref-api";
@@ -113,7 +112,6 @@ export const PAGES: DocPage[] = [
   refGlossary,
   refDecisions,
   opsDeploy,
-  opsRunner,
   opsAddPipeline,
   opsAddRule,
   opsAddSkill,
@@ -220,7 +218,6 @@ export const SECTIONS: DocSection[] = [
     title: "Operations",
     pages: [
       "ops-deploy",
-      "ops-runner",
       "ops-add-pipeline",
       "ops-add-rule",
       "ops-add-skill",

@@ -51,7 +51,7 @@ const LIMIT_PAUSE_MS = 30_000;
  * keeps streaming while another is open (or another tab is).
  */
 export default function ChatTab() {
-  const { staff, sessionId, openSession, openRun, openTab, hrefFor, can } =
+  const { staff, sessionId, openSession, openRun, openTab, hrefFor } =
     useHarness();
   const queryClient = useQueryClient();
   const streams = useSyncExternalStore(
@@ -472,7 +472,6 @@ export default function ChatTab() {
         >
           {showEmpty ? (
             <ChatEmptyState
-              isAdmin={can("sandbox.use")}
               staffName={staff.name}
               busy={sendingRef.current || sampleBusy !== null}
               onPrompt={onPrompt}

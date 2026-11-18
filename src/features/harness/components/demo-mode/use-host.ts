@@ -53,23 +53,6 @@ export function useHost(): Host {
           }
         },
       },
-      sandbox: {
-        status: async (sessionId) => {
-          const status = await api.sandbox.status(sessionId);
-          const usable =
-            status.configured && status.online && status.canUse !== false;
-          const message =
-            status.message ??
-            (status.canUse === false
-              ? "Only an admin may use the Sandbox."
-              : !status.configured
-                ? "The Sandbox is switched off on this deployment."
-                : !status.online
-                  ? "Sandbox offline: the Runner is not answering."
-                  : null);
-          return { usable, message };
-        },
-      },
       today: () => new Date().toISOString().slice(0, 10),
     }),
     [queryClient],

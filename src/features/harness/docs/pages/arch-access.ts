@@ -38,7 +38,7 @@ Staff are rows, not Auth users. That means nothing here touches the clean-up job
 
 A Role separates duties inside a Workspace so that you can see four-eyes and RBAC at work. It is **not** a security boundary between visitors. Anyone in a Workspace can switch to its admin, by design. What protects one visitor from another is Access and the Owner.
 
-The consequence for risky features is plain: "admin only" does not protect the Sandbox from a Guest. The Sandbox's own limits do. See [Sandbox and Runner](#doc:arch-sandbox).
+The consequence for risky features is plain: "admin only" would not protect them from a Guest. So the Sandbox is open to every Role, and its own limits hold it in. See [Sandbox design](#doc:arch-sandbox).
 
 ## MCP tokens
 

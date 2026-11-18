@@ -23,7 +23,7 @@ The schema is §harness§, in §supabase/migrations/20261117120000_harness.sql§
 | --- | --- |
 | §sessions§ | A Session: its Staff member, title and status. |
 | §messages§ | Messages. §role§ is §staff§ or §agent§. A staff message names its Staff member. §parts§ holds tool calls, attachments and cards. Agent messages carry model, tokens and cost. |
-| §sandboxes§ | One row per Session that has a Sandbox: the container, its status and when it was last used. |
+| §sandboxes§ | One row per Session that has a Sandbox: the Vercel Sandbox's name, its status and when it was last used. |
 
 ## Skills and Rules
 

@@ -16,7 +16,7 @@ Choose another Staff member. The app reloads what is on screen as them. Your cho
 
 ## Why you may switch to the admin
 
-So that every visitor can try both Roles. A user works cases. An admin edits Skills and Rules, settles Conflicts, approves high-risk Approvals, uses the Sandbox and reads the whole Audit trail. See [Workspace, Staff and Roles](#doc:workspace-staff-roles).
+So that every visitor can try both Roles. A user works cases. An admin edits Skills and Rules, settles Conflicts, approves high-risk Approvals and reads the whole Audit trail. See [Workspace, Staff and Roles](#doc:workspace-staff-roles).
 
 ## What switching does not change
 

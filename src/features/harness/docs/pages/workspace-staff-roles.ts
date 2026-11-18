@@ -31,7 +31,7 @@ Staff are fictional. They are rows in your Workspace, not Auth users. A Staff me
 A **Role** is what a Staff member may do: §user§ or §admin§.
 
 - A **user** works cases: chats, uploads, starts Runs and approves low-risk Approvals.
-- An **admin** also edits Skills and Rules, settles Conflicts, approves high-risk Approvals, uses the Sandbox and reads the whole Workspace's Audit trail.
+- An **admin** also edits Skills and Rules, settles Conflicts, approves high-risk Approvals and reads the whole Workspace's Audit trail.
 
 An admin may do everything a user may do.
 
@@ -44,7 +44,7 @@ This table is read from the code that decides Roles. A server function that writ
     md`
 ## What a Role is not
 
-A Role separates duties **inside** a Workspace. It is not a security boundary between visitors. Anyone in a Workspace can switch to its admin, on purpose, so that every visitor can try both Roles. What keeps visitors apart is Access and the Owner. So "admin only" does not protect the Sandbox from a Guest. The Sandbox's own limits do. See [Sandbox](#doc:sandbox).
+A Role separates duties **inside** a Workspace. It is not a security boundary between visitors. Anyone in a Workspace can switch to its admin, on purpose, so that every visitor can try both Roles. What keeps visitors apart is Access and the Owner. So "admin only" could not protect a risky feature from a Guest. That is why the Sandbox is open to every Role and held in by its own limits. See [Sandbox](#doc:sandbox).
 
 The Agent has no Role. It can approve nothing.
 `,

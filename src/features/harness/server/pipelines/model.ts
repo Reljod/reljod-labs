@@ -1,5 +1,5 @@
 import "server-only";
-import { generateText, Output } from "ai";
+import { generateText, isStepCount, Output } from "ai";
 import { z } from "zod";
 import type { AuditUsage } from "../../domain/audit";
 import { LIMITS } from "../../domain/limits";
@@ -23,8 +23,15 @@ import {
   MEMBER_REQUEST_LABEL,
   type MemberRequestKind,
 } from "../../domain/records";
+import { SANDBOX_LIMITS } from "../../domain/sandbox";
 import { env } from "../env";
-import { stepModel, usageOf } from "../llm";
+import { addUsage, stepModel, usageOf } from "../llm";
+import {
+  RUN_CODE_HINT,
+  type StepPaper,
+  type StepScope,
+  stepCode,
+} from "./code";
 
 /*
  * The model Steps: they read papers and write Drafts, never a Finding (ADR
@@ -73,6 +80,62 @@ async function withFallback<T>(
 
 const cut = (text: string) => text.slice(0, LIMITS.sourceCharsPerStep);
 
+/** Every step of a call that may have coded, added up (each step has its own gateway cost). */
+function callUsage(result: {
+  steps: {
+    usage: Parameters<typeof usageOf>[0]["usage"];
+    providerMetadata?: unknown;
+  }[];
+}): AuditUsage {
+  const model = env.stepModel();
+  return (
+    addUsage(
+      result.steps.map((step) =>
+        usageOf({
+          model,
+          usage: step.usage,
+          providerMetadata: step.providerMetadata,
+        }),
+      ),
+    ) ?? usageOf({ model, usage: undefined })
+  );
+}
+
+/**
+ * A reading call that may code (ADR 0022): `run_code` for up to
+ * `SANDBOX_LIMITS.stepCodeCalls` runs, then one last step with no tools, so
+ * the structured answer always comes. Without a scope it is a plain call.
+ * The Step's Sandbox is removed when the call ends, however it ends.
+ */
+async function withCode<T>(
+  scope: StepScope | undefined,
+  papers: StepPaper[],
+  call: (options: {
+    tools?: ReturnType<typeof stepCode>["tools"];
+    stopWhen?: ReturnType<typeof isStepCount>;
+    prepareStep?: (step: {
+      stepNumber: number;
+    }) => { toolChoice: "none" } | undefined;
+    hint: string;
+  }) => Promise<T>,
+): Promise<T> {
+  if (!scope) return call({ hint: "" });
+  const code = stepCode(scope, papers);
+  try {
+    return await call({
+      tools: code.tools,
+      stopWhen: isStepCount(SANDBOX_LIMITS.stepCodeCalls + 1),
+      prepareStep: ({ stepNumber }) =>
+        stepNumber >= SANDBOX_LIMITS.stepCodeCalls
+          ? { toolChoice: "none" }
+          : undefined,
+      hint: `\n\n${RUN_CODE_HINT}`,
+    });
+  } finally {
+    await code.dispose();
+  }
+}
+
 // classify ---------------------------------------------------------------------------------
 
 const KIND_LIST = MEMBER_REQUEST_KINDS.map(
@@ -94,6 +157,8 @@ export type Classification = {
 export async function classifyRequest(input: {
   texts: { title: string; text: string }[];
   stubbed: boolean;
+  /** Lets the call code in a Sandbox; absent, it only reads. */
+  code?: StepScope;
 }): Promise<ModelResult<Classification>> {
   const joined = input.texts
     .map((item) => `## ${item.title}\n${item.text}`)
@@ -101,17 +166,22 @@ export async function classifyRequest(input: {
   return withFallback(
     input.stubbed,
     async () => {
-      const result = await generateText({
-        model: stepModel(),
-        instructions: `You sort Member requests arriving at the Pensions Operations Desk of a Cayman Islands bank. Say which kind of request the papers make.
+      const result = await withCode(input.code, input.texts, (coding) =>
+        generateText({
+          model: stepModel(),
+          tools: coding.tools,
+          stopWhen: coding.stopWhen,
+          prepareStep: coding.prepareStep,
+          instructions: `You sort Member requests arriving at the Pensions Operations Desk of a Cayman Islands bank. Say which kind of request the papers make.
 
 Kinds:
 ${KIND_LIST}
 
-transfer_out is a transfer to another registered plan on changing employer. cessation_of_residence is a Member who has left the Islands and wants the money moved to a plan abroad, or asks for a cash refund (refunds on leaving ended in 2019). Answer "unknown" when the papers do not say. reason: one short sentence quoting the words that decided it. confidence: 0 to 1.`,
-        output: Output.object({ schema: classifySchema }),
-        prompt: cut(joined),
-      });
+transfer_out is a transfer to another registered plan on changing employer. cessation_of_residence is a Member who has left the Islands and wants the money moved to a plan abroad, or asks for a cash refund (refunds on leaving ended in 2019). Answer "unknown" when the papers do not say. reason: one short sentence quoting the words that decided it. confidence: 0 to 1.${coding.hint}`,
+          output: Output.object({ schema: classifySchema }),
+          prompt: cut(joined),
+        }),
+      );
       const kind = (MEMBER_REQUEST_KINDS as readonly string[]).includes(
         result.output.kind,
       )
@@ -123,11 +193,7 @@ transfer_out is a transfer to another registered plan on changing employer. cess
           confidence: Math.max(0, Math.min(1, result.output.confidence)),
           reason: result.output.reason.slice(0, 300),
         },
-        usage: usageOf({
-          model: env.stepModel(),
-          usage: result.usage,
-          providerMetadata: result.providerMetadata,
-        }),
+        usage: callUsage(result),
       };
     },
     () => {
@@ -172,22 +238,29 @@ const readSchema = z.object({
 export async function readPapers(input: {
   source: { id: string; title: string; text: string };
   stubbed: boolean;
+  /** Lets the call code in a Sandbox; absent, it only reads. */
+  code?: StepScope;
 }): Promise<ModelResult<DocumentReading>> {
   const { source } = input;
   return withFallback(
     input.stubbed,
     async () => {
-      const result = await generateText({
-        model: stepModel(),
-        instructions: `You read the papers of one Member request for a pension plan desk. Report only what the text says; never guess, never decide eligibility.
+      const result = await withCode(input.code, [source], (coding) =>
+        generateText({
+          model: stepModel(),
+          tools: coding.tools,
+          stopWhen: coding.stopWhen,
+          prepareStep: coding.prepareStep,
+          instructions: `You read the papers of one Member request for a pension plan desk. Report only what the text says; never guess, never decide eligibility.
 
 papers: every separate paper the text contains (a form, a letter, an ID copy, a certificate), each with its type from this list, its title as written, and whether it says it is signed (null if it does not say). A paper that is only promised ("will follow") is not there.
 ${PAPER_LIST}
 
-memberNo: the plan's member number (like HB-10001) or null. fullName, dateOfBirth (YYYY-MM-DD), dateOfDeath (YYYY-MM-DD): as written, or null. requestKind: the kind the papers ask for, or "unknown". requestedAmountKyd: the amount asked for in Cayman Islands dollars, or null when it is "the full balance" or not stated. propertyPurpose: deposit, reduction or payoff for a property withdrawal, else "none". asksCashRefund: true only if the Member asks to be paid cash. receivingPlan: the plan the money would go to, or null.`,
-        output: Output.object({ schema: readSchema }),
-        prompt: `Source: ${source.title}\n\n${cut(source.text)}`,
-      });
+memberNo: the plan's member number (like HB-10001) or null. fullName, dateOfBirth (YYYY-MM-DD), dateOfDeath (YYYY-MM-DD): as written, or null. requestKind: the kind the papers ask for, or "unknown". requestedAmountKyd: the amount asked for in Cayman Islands dollars, or null when it is "the full balance" or not stated. propertyPurpose: deposit, reduction or payoff for a property withdrawal, else "none". asksCashRefund: true only if the Member asks to be paid cash. receivingPlan: the plan the money would go to, or null.${coding.hint}`,
+          output: Output.object({ schema: readSchema }),
+          prompt: `Source: ${source.title}\n\n${cut(source.text)}`,
+        }),
+      );
       const out = result.output;
       const memberNo =
         out.memberNo && MEMBER_NO.test(out.memberNo)
@@ -232,11 +305,7 @@ memberNo: the plan's member number (like HB-10001) or null. fullName, dateOfBirt
       };
       return {
         value: reading,
-        usage: usageOf({
-          model: env.stepModel(),
-          usage: result.usage,
-          providerMetadata: result.providerMetadata,
-        }),
+        usage: callUsage(result),
       };
     },
     () => readByRules(source),
