@@ -1,0 +1,13 @@
+import { chromium } from "@playwright/test";
+const [,, url, out, width = "1440", height = "1000", full = "1"] = process.argv;
+const browser = await chromium.launch({ channel: "chrome" });
+const ctx = await browser.newContext({ viewport: { width: +width, height: +height }, extraHTTPHeaders: { "x-e2e-token": process.env.E2E_BYPASS_TOKEN ?? "" } });
+const page = await ctx.newPage();
+const errors = [];
+page.on("console", (m) => m.type() === "error" && errors.push(m.text().slice(0, 300)));
+page.on("pageerror", (e) => errors.push(String(e).slice(0, 300)));
+await page.goto(url, { waitUntil: "networkidle", timeout: 120000 }).catch((e) => errors.push(String(e)));
+await page.waitForTimeout(2500);
+await page.screenshot({ path: out, fullPage: full === "1" });
+console.log("errors:", errors.slice(0, 8));
+await browser.close();

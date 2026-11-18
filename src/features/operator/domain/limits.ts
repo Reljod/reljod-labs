@@ -37,3 +37,9 @@ export const LIMITS = {
 
 /** A Run older than this that still says it is going has lost its workflow. */
 export const STALE_RUN_MS = (LIMITS.sandboxMinutes + 5) * 60_000;
+
+/**
+ * The request header that asks for the scripted Operator (a sample Task's
+ * Script, no model call). Honoured only when it carries the e2e bypass token.
+ */
+export const STUB_HEADER = "x-operator-stub";

@@ -172,8 +172,11 @@ export async function runCode(input: {
 export async function disposeCode(runId: string) {
   try {
     const sandbox = await Sandbox.get({ name: codeSandboxName(runId) });
-    await sandbox.stop().catch(() => {});
-    await sandbox.delete();
+    // Deleting a running sandbox ends it; waiting for a clean stop first takes far longer.
+    await sandbox.delete().catch(async () => {
+      await sandbox.stop().catch(() => {});
+      await sandbox.delete();
+    });
   } catch {
     // None was made, or it is already gone.
   }

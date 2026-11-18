@@ -67,7 +67,6 @@ export async function performAction(
   }
   const result = await screenAct(ctx.runId, ctx.secret, { action, skip });
   const n = counters.frames;
-  await putFrame(ctx.runId, n, Buffer.from(result.png, "base64"));
 
   const label = action
     ? actionLabel(action)
@@ -104,7 +103,11 @@ export async function performAction(
   const expected = expectedOf(ctx.taskId);
   if (result.diff && expected)
     events.push({ type: "progress", met: progressOf(expected, result.diff) });
-  await emit(ctx.runId, ...events);
+  // The picture and its event go up together; the event names the Frame.
+  await Promise.all([
+    putFrame(ctx.runId, n, Buffer.from(result.png, "base64")),
+    emit(ctx.runId, ...events),
+  ]);
 
   const next: Counters = {
     ...counters,

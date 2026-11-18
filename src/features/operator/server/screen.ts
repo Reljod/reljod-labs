@@ -262,8 +262,11 @@ export const screenBooks = (runId: string, secret: string) =>
 export async function disposeScreen(runId: string) {
   try {
     const sandbox = await Sandbox.get({ name: screenName(runId) });
-    await sandbox.stop().catch(() => {});
-    await sandbox.delete();
+    // Deleting a running sandbox ends it; waiting for a clean stop first takes far longer.
+    await sandbox.delete().catch(async () => {
+      await sandbox.stop().catch(() => {});
+      await sandbox.delete();
+    });
   } catch {
     // None was made, or it is already gone.
   }

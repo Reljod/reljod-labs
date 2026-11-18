@@ -12,7 +12,7 @@ import {
   type TaskRef,
   taskRefSchema,
 } from "../domain/contract";
-import { LIMITS } from "../domain/limits";
+import { LIMITS, STUB_HEADER } from "../domain/limits";
 import { type Rulebook, rulebookSchema } from "../domain/rules";
 import { env } from "./env";
 import {
@@ -35,9 +35,6 @@ import { visitor } from "./visitor";
  * any page, so the check lives here, not only in the proxy. Reads are GET
  * routes under /api/operator (server/reads.ts).
  */
-
-/** The header that asks for the scripted Operator. Honoured only with the e2e bypass. */
-export const STUB_HEADER = "x-operator-stub";
 
 async function wantsStub() {
   const bypass = env.e2eBypassToken();

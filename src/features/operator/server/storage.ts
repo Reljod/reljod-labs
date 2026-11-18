@@ -20,6 +20,23 @@ export function bucket() {
 export const framePath = (runId: string, n: number) =>
   `frames/${runId}/${Math.trunc(n)}.png`;
 
+/**
+ * The last few Frames this instance stored, so the one that was just taken
+ * is not downloaded again to show it to the driver.
+ */
+const recent = new Map<string, Buffer>();
+const RECENT = 12;
+
+function remember(path: string, png: Buffer) {
+  recent.delete(path);
+  recent.set(path, png);
+  while (recent.size > RECENT) {
+    const oldest = recent.keys().next().value;
+    if (oldest === undefined) break;
+    recent.delete(oldest);
+  }
+}
+
 export async function putFrame(runId: string, n: number, png: Buffer) {
   const { error } = await bucket().upload(framePath(runId, n), png, {
     contentType: "image/png",
@@ -30,6 +47,8 @@ export async function putFrame(runId: string, n: number, png: Buffer) {
 }
 
 export async function getFrame(runId: string, n: number) {
+  const kept = recent.get(framePath(runId, n));
+  if (kept) return kept;
   const { data, error } = await bucket().download(framePath(runId, n));
   if (error || !data) return null;
   return Buffer.from(await data.arrayBuffer());
