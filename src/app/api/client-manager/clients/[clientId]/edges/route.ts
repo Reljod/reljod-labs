@@ -1,10 +1,17 @@
+import { z } from "zod";
+import type { EdgesResponse } from "@/features/client-manager/domain/api";
 import type { EdgeScope } from "@/features/client-manager/server/repository";
 import {
+  failure,
+  json,
+  NO_STORE,
+  notFound,
+  SEED,
+} from "@/features/client-manager/server/respond";
+import {
   clientEdges,
-  viewableClient,
+  gatedClient,
 } from "@/features/client-manager/server/service";
-import { currentOwner } from "@/features/client-manager/server/session";
-import { failure, notFound } from "../../../respond";
 
 /** `root`, `branch:wealth`, `leaf:wealth.accounts` or `node:person:ivy-marsh`. */
 function scopeOf(value: string | null): EdgeScope | null {
@@ -18,6 +25,18 @@ function scopeOf(value: string | null): EdgeScope | null {
   return null;
 }
 
+const querySchema = z.object({
+  scope: z
+    .string()
+    .max(160)
+    .nullable()
+    .transform((value, context) => {
+      const scope = scopeOf(value);
+      if (!scope) context.addIssue({ code: "custom", message: "Bad scope" });
+      return scope as EdgeScope;
+    }),
+});
+
 /** The relations one part of the map needs; the map asks for more as you open things. */
 export async function GET(
   request: Request,
@@ -25,11 +44,15 @@ export async function GET(
 ) {
   try {
     const { clientId } = await params;
-    const client = await viewableClient(clientId, await currentOwner());
+    const { scope } = querySchema.parse({
+      scope: new URL(request.url).searchParams.get("scope"),
+    });
+    const { client } = await gatedClient(clientId);
     if (!client) return notFound();
-    const scope = scopeOf(new URL(request.url).searchParams.get("scope"));
-    if (!scope) return Response.json({ error: "Bad scope" }, { status: 400 });
-    return Response.json({ edges: await clientEdges(client.id, scope) });
+    return json<EdgesResponse>(
+      { edges: await clientEdges(client.id, scope) },
+      { cache: client.is_sample ? SEED : NO_STORE },
+    );
   } catch (error) {
     return failure(error);
   }

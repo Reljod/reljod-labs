@@ -1,9 +1,9 @@
+import { failure, notFound } from "@/features/client-manager/server/respond";
 import {
   currentOwner,
   visitor,
 } from "@/features/client-manager/server/session";
 import { decide, ownedThread } from "@/features/client-manager/server/threads";
-import { failure, notFound } from "../../../../respond";
 
 /** The person's pick from a research card: add the chosen findings, or dismiss them. */
 export async function POST(

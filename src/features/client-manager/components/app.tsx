@@ -7,7 +7,8 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { DemoBar, demoBarControlClass } from "@/components/demo/demo-bar";
 import type { ThreadSummary, Walk } from "../domain/chat";
 import { EMPTY_HIGHLIGHT, highlightFrom } from "../domain/traversal";
-import { fetchCatalog, fetchThreads, keys, send } from "./api";
+import type { FirstLoad } from "../server/first-load";
+import { FRESH_MS, fetchCatalog, fetchThreads, keys, send } from "./api";
 import { Chat } from "./chat";
 import { ClientDashboard, type DashboardView } from "./client-dashboard";
 import { ClientsPanel } from "./clients-panel";
@@ -49,14 +50,25 @@ const TABS: { id: Tab; label: string; icon: IconName }[] = [
 export function ClientManagerApp({
   initialThreadId = null,
   initialClientId = null,
+  initialCatalog = null,
+  initialThreads = null,
+  initialClient = null,
+  initialThread = null,
 }: {
   initialThreadId?: string | null;
   initialClientId?: string | null;
-}) {
+} & Partial<FirstLoad>) {
   const queryClient = useQueryClient();
+  // The page read the first screen on the server: seed the queries with it,
+  // so nothing is fetched again on mount, and refresh only once it is stale.
+  const [loadedAt] = useState(() => Date.now());
+  const seeded = <T,>(data: T | null) =>
+    data === null ? {} : { initialData: data, initialDataUpdatedAt: loadedAt };
   const catalog = useQuery({
     queryKey: keys.catalog,
-    queryFn: fetchCatalog,
+    queryFn: ({ signal }) => fetchCatalog({ signal }),
+    staleTime: FRESH_MS,
+    ...seeded(initialCatalog),
     refetchInterval: (current) =>
       current.state.data?.some(
         (card) => card.building || card.status === "building",
@@ -64,7 +76,12 @@ export function ClientManagerApp({
         ? 4000
         : false,
   });
-  const threads = useQuery({ queryKey: keys.threads, queryFn: fetchThreads });
+  const threads = useQuery({
+    queryKey: keys.threads,
+    queryFn: ({ signal }) => fetchThreads({ signal }),
+    staleTime: FRESH_MS,
+    ...seeded(initialThreads),
+  });
   const cards = catalog.data ?? [];
 
   const [tab, setTab] = useState<Tab>(initialClientId ? "clients" : "chat");
@@ -255,6 +272,10 @@ export function ClientManagerApp({
           >
             <Chat
               threadId={threadId}
+              initialThread={
+                threadId && threadId === initialThreadId ? initialThread : null
+              }
+              loadedAt={loadedAt}
               scope={scope}
               cards={cards}
               seed={seed}
@@ -302,6 +323,10 @@ export function ClientManagerApp({
               <ClientDashboard
                 key={open.clientId}
                 clientId={open.clientId}
+                initialClient={
+                  open.clientId === initialClientId ? initialClient : null
+                }
+                loadedAt={loadedAt}
                 card={cards.find((card) => card.id === open.clientId)}
                 view={open.view}
                 focusKey={open.focusKey}

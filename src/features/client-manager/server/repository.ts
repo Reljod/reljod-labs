@@ -713,12 +713,30 @@ export async function usageSince(visitorHash: string | null, since: Date) {
   return row ?? { builds: 0, messages: 0, cost: 0 };
 }
 
-export async function clientSpend(clientId: string) {
-  const [row] = await sql()<{ cost: number; tokens: number }[]>`
-    select coalesce(sum(cost_usd), 0)::float8 as cost,
-      coalesce(sum(input_tokens + output_tokens), 0)::int as tokens
-    from client_manager.model_calls where client_id = ${clientId}`;
-  return row ?? { cost: 0, tokens: 0 };
+export type ClientStats = {
+  cost: number;
+  tokens: number;
+  edges: number;
+  build: Pick<BuildRow, "id" | "status" | "trigger" | "stats" | "error"> | null;
+};
+
+/**
+ * What the Client file's header needs besides its Nodes and Sources: spend,
+ * the Edge total and the latest Build, in one round trip instead of three.
+ */
+export async function clientStats(clientId: string): Promise<ClientStats> {
+  const [row] = await sql()<ClientStats[]>`
+    select
+      (select coalesce(sum(cost_usd), 0)::float8 from client_manager.model_calls
+        where client_id = ${clientId}) as cost,
+      (select coalesce(sum(input_tokens + output_tokens), 0)::int from client_manager.model_calls
+        where client_id = ${clientId}) as tokens,
+      (select count(*)::int from client_manager.edges where client_id = ${clientId}) as edges,
+      (select jsonb_build_object('id', b.id, 'status', b.status, 'trigger', b.trigger,
+          'stats', b.stats, 'error', b.error)
+        from client_manager.builds b where b.client_id = ${clientId}
+        order by b.created_at desc limit 1) as build`;
+  return row ?? { cost: 0, tokens: 0, edges: 0, build: null };
 }
 
 export async function buildSpend(buildId: string) {
@@ -1045,12 +1063,6 @@ export async function researchSince(visitorHash: string, since: Date) {
     select count(*)::int as total from client_manager.messages
     where role = 'user' and mode = 'research' and visitor_hash = ${visitorHash}
       and created_at >= ${since}`;
-  return row?.total ?? 0;
-}
-
-export async function edgeTotal(clientId: string) {
-  const [row] = await sql()<{ total: number }[]>`
-    select count(*)::int as total from client_manager.edges where client_id = ${clientId}`;
   return row?.total ?? 0;
 }
 

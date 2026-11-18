@@ -1,5 +1,5 @@
 import { mintMcpToken } from "@/features/client-manager/server/mcp-auth";
-import { failure } from "../respond";
+import { failure } from "@/features/client-manager/server/respond";
 
 /** Mints this visitor's MCP token: a Guest's lasts as long as their pass. */
 export async function POST() {

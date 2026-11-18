@@ -1,3 +1,5 @@
+import type { CatalogResponse } from "@/features/client-manager/domain/api";
+import { failure, json } from "@/features/client-manager/server/respond";
 import {
   catalog,
   createIntake,
@@ -6,12 +8,13 @@ import {
   currentOwner,
   visitor,
 } from "@/features/client-manager/server/session";
-import { failure } from "../respond";
 
 /** The Catalog: every Sample plus this browser's own clients. */
 export async function GET() {
   try {
-    return Response.json({ clients: await catalog(await currentOwner()) });
+    return json<CatalogResponse>({
+      clients: await catalog(await currentOwner()),
+    });
   } catch (error) {
     return failure(error);
   }
@@ -24,7 +27,7 @@ export async function GET() {
 export async function POST(request: Request) {
   try {
     const owner = await currentOwner();
-    return Response.json(
+    return json(
       await createIntake(await request.json(), await visitor(), owner),
     );
   } catch (error) {

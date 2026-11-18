@@ -36,7 +36,7 @@ export function FactSheet({
 }) {
   const query = useQuery({
     queryKey: keys.node(clientId, nodeKey),
-    queryFn: () => fetchNode(clientId, nodeKey),
+    queryFn: ({ signal }) => fetchNode(clientId, nodeKey, { signal }),
     staleTime: 30_000,
   });
   const lite = nodes.find((node) => node.key === nodeKey);

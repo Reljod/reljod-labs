@@ -1,12 +1,9 @@
 import type { Owner } from "@/features/access/domain/owner";
 import type { AssistantEvent } from "@/features/client-manager/domain/chat";
+import { failure, notFound } from "@/features/client-manager/server/respond";
 import { LimitError } from "@/features/client-manager/server/service";
-import {
-  currentOwner,
-  visitor,
-} from "@/features/client-manager/server/session";
-import { ask, ownedThread } from "@/features/client-manager/server/threads";
-import { failure, notFound } from "../../../respond";
+import { visitor } from "@/features/client-manager/server/session";
+import { ask, gatedThread } from "@/features/client-manager/server/threads";
 
 export const maxDuration = 180;
 
@@ -15,17 +12,21 @@ export async function POST(
   request: Request,
   { params }: RouteContext<"/api/client-manager/threads/[threadId]/messages">,
 ) {
+  const { threadId } = await params;
   let owner: Owner;
+  let thread: Awaited<ReturnType<typeof gatedThread>>["thread"];
+  let body: unknown;
   try {
-    // Passes the Access gate before anything is read or asked.
-    owner = await currentOwner();
+    // The Access gate, the Thread's row and the question start together;
+    // nothing is answered or asked unless the gate passed.
+    [{ owner, thread }, body] = await Promise.all([
+      gatedThread(threadId),
+      request.json().catch(() => null),
+    ]);
   } catch (error) {
     return failure(error);
   }
-  const { threadId } = await params;
-  const thread = await ownedThread(threadId, owner);
   if (!thread) return notFound();
-  const body = await request.json().catch(() => null);
   const who = await visitor();
   const origin = new URL(request.url).origin;
 

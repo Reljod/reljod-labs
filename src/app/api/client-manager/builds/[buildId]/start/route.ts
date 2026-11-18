@@ -1,3 +1,4 @@
+import { failure, notFound } from "@/features/client-manager/server/respond";
 import {
   ownedClient,
   startBuild,
@@ -7,7 +8,6 @@ import {
   currentOwner,
   visitor,
 } from "@/features/client-manager/server/session";
-import { failure, notFound } from "../../../respond";
 
 /** Starts a Build's workflow, once its files are uploaded. */
 export async function POST(

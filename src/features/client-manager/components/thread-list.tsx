@@ -1,10 +1,12 @@
 "use client";
 
+import { useQueryClient } from "@tanstack/react-query";
 import { motion } from "motion/react";
 import Link from "next/link";
 import { useMemo, useState } from "react";
 import type { ThreadSummary } from "../domain/chat";
 import type { CatalogCard } from "../server/service";
+import { threadQuery } from "./api";
 import { Icon } from "./icons";
 import { Portrait } from "./portrait";
 
@@ -43,6 +45,10 @@ export function ThreadList({
   /** Why the last delete did not go through, shown above the list. */
   notice?: string | null;
 }) {
+  const queryClient = useQueryClient();
+  // A Thread starts loading when the pointer or focus reaches it.
+  const prefetch = (threadId: string) =>
+    void queryClient.prefetchQuery(threadQuery(threadId));
   const [filter, setFilter] = useState("");
   const [grouping, setGrouping] = useState<Grouping>("recent");
   const visible = useMemo(() => {
@@ -179,6 +185,8 @@ export function ThreadList({
                     <button
                       type="button"
                       onClick={() => onOpen(thread)}
+                      onPointerEnter={() => prefetch(thread.id)}
+                      onFocus={() => prefetch(thread.id)}
                       aria-current={activeId === thread.id}
                       title={thread.preview || thread.title}
                       className={`block w-full truncate rounded-sm border-2 py-1.5 pr-7 pl-2 text-left text-sm ${activeId === thread.id ? "border-ink bg-paper font-medium shadow-hard-sm" : "border-transparent text-ink-muted hover:border-ink/20 hover:bg-paper/70 hover:text-ink"}`}

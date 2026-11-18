@@ -21,14 +21,13 @@ import {
   type ClientRow,
   canView,
   claimBuild,
-  clientSpend,
+  clientStats,
   createBuild,
   createClientRow,
   createSources,
   deleteClient,
   type EdgeScope,
   edgesInScope,
-  edgeTotal,
   factsPerSource,
   getBuild,
   getClient,
@@ -43,7 +42,7 @@ import {
   updateBuild,
   usageSince,
 } from "./repository";
-import type { Visitor } from "./session";
+import { currentOwner, type Visitor } from "./session";
 import { removeFolder, signedUrl, signedUrls, uploadUrl } from "./storage";
 
 export const LIMITS = {
@@ -462,6 +461,20 @@ export async function viewableClient(clientId: string, owner: Owner | null) {
   return client && canView(client, owner) ? client : null;
 }
 
+/**
+ * For a read route: the Access gate and the client's row, started together
+ * so the gate's auth call and the lookup overlap. The row is only returned
+ * once the gate has passed and only if this Owner may see it; if the gate
+ * refuses, this throws its AccessDeniedError and the row is dropped.
+ */
+export async function gatedClient(clientId: string) {
+  const [owner, client] = await Promise.all([
+    currentOwner(),
+    getClient(clientId),
+  ]);
+  return { owner, client: client && canView(client, owner) ? client : null };
+}
+
 export async function ownedClient(
   clientId: string,
   owner: Owner | null,
@@ -559,18 +572,17 @@ export async function clientSummary(
   owner: Owner | null,
   visitor: Visitor | null,
 ): Promise<ClientSummary> {
-  const [nodes, sources, counts, build, spend, portraitUrl, edgeCount] =
-    await Promise.all([
-      nodesLite(client.id),
-      sourcesOfClient(client.id),
-      factsPerSource(client.id),
-      latestBuild(client.id),
-      clientSpend(client.id),
-      client.portrait_path
-        ? signedUrl(client.portrait_path)
-        : Promise.resolve(null),
-      edgeTotal(client.id),
-    ]);
+  // Four database queries, so they fit the pool (max 4) in one round.
+  const [nodes, sources, counts, stats, portraitUrl] = await Promise.all([
+    nodesLite(client.id),
+    sourcesOfClient(client.id),
+    factsPerSource(client.id),
+    clientStats(client.id),
+    client.portrait_path
+      ? signedUrl(client.portrait_path)
+      : Promise.resolve(null),
+  ]);
+  const build = stats.build;
   const backed = new Map(counts.map((row) => [row.source_id, row.total]));
   return {
     id: client.id,
@@ -591,7 +603,7 @@ export async function clientSummary(
       sourceIds: node.source_ids,
       quotes: node.quotes,
     })),
-    edgeCount,
+    edgeCount: stats.edges,
     sources: sources.map((source) => ({
       id: source.id,
       name: source.name,
@@ -611,7 +623,7 @@ export async function clientSummary(
           error: build.error,
         }
       : null,
-    spend: { costUsd: spend.cost, tokens: spend.tokens },
+    spend: { costUsd: stats.cost, tokens: stats.tokens },
     canAdd: canAdd(client, owner, visitor),
   };
 }

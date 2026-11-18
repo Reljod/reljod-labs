@@ -5,6 +5,7 @@ import {
   getClient,
   setPortrait,
 } from "@/features/client-manager/server/repository";
+import { failure, notFound } from "@/features/client-manager/server/respond";
 import {
   checkLimits,
   LimitError,
@@ -19,7 +20,6 @@ import {
   upload,
   uploadUrl,
 } from "@/features/client-manager/server/storage";
-import { failure, notFound } from "../../../respond";
 
 export const maxDuration = 60;
 

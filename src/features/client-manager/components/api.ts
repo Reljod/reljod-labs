@@ -1,13 +1,18 @@
 "use client";
 
-import type { ThreadMessage, ThreadSummary } from "../domain/chat";
-import type {
-  CatalogCard,
-  ClientSummary,
-  EdgeLite,
-  NodeFull,
-  SourceFull,
-} from "../server/service";
+import {
+  apiPath,
+  type CatalogResponse,
+  type ClientResponse,
+  type EdgesResponse,
+  type NodeResponse,
+  type SourceResponse,
+  type ThreadResponse,
+  type ThreadsResponse,
+} from "../domain/api";
+
+/** How long a read counts as fresh: a remount within it shows the cache and asks nothing. */
+export const FRESH_MS = 30_000;
 
 /** The browser's reads of the Client Manager API, keyed for React Query. */
 
@@ -24,48 +29,70 @@ export const keys = {
     ["client-manager", "source", id, sourceId] as const,
 };
 
-async function json<T>(url: string): Promise<T> {
-  const response = await fetch(url, { cache: "no-store" });
+/**
+ * One read. Throws `Error("not-found")` on a 404 (the views say "gone" for
+ * it) and `Error(body.error ?? status text)` on any other failure. The HTTP
+ * cache is left on: Owner data comes back `no-store`, Sample data may be kept.
+ */
+export async function getJson<T>(
+  path: string,
+  init?: { signal?: AbortSignal },
+): Promise<T> {
+  const response = await fetch(path, { signal: init?.signal });
   if (response.status === 404) throw new Error("not-found");
   if (!response.ok) {
     const body = (await response.json().catch(() => null)) as {
       error?: string;
     } | null;
-    throw new Error(body?.error ?? "Could not load that.");
+    throw new Error(
+      body?.error ?? (response.statusText || "Could not load that."),
+    );
   }
   return response.json() as Promise<T>;
 }
 
-export const fetchCatalog = async () =>
-  (await json<{ clients: CatalogCard[] }>("/api/client-manager/clients"))
-    .clients;
+type Signal = { signal?: AbortSignal };
 
-export const fetchThreads = async () =>
-  (await json<{ threads: ThreadSummary[] }>("/api/client-manager/threads"))
-    .threads;
+export const fetchCatalog = async (init?: Signal) =>
+  (await getJson<CatalogResponse>(apiPath.catalog(), init)).clients;
 
-export const fetchThread = (id: string) =>
-  json<{ thread: ThreadSummary; messages: ThreadMessage[] }>(
-    `/api/client-manager/threads/${id}`,
-  );
+export const fetchThreads = async (init?: Signal) =>
+  (await getJson<ThreadsResponse>(apiPath.threads(), init)).threads;
 
-export const fetchClient = (id: string) =>
-  json<ClientSummary>(`/api/client-manager/clients/${id}`);
+export const fetchThread = (id: string, init?: Signal) =>
+  getJson<ThreadResponse>(apiPath.thread(id), init);
 
-export const fetchEdges = async (id: string, scope: string) =>
-  (
-    await json<{ edges: EdgeLite[] }>(
-      `/api/client-manager/clients/${id}/edges?scope=${encodeURIComponent(scope)}`,
-    )
-  ).edges;
+export const fetchClient = (id: string, init?: Signal) =>
+  getJson<ClientResponse>(apiPath.client(id), init);
 
-export const fetchNode = (id: string, key: string) =>
-  json<NodeFull>(
-    `/api/client-manager/clients/${id}/node?key=${encodeURIComponent(key)}`,
-  );
+export const fetchEdges = async (id: string, scope: string, init?: Signal) =>
+  (await getJson<EdgesResponse>(apiPath.edges(id, scope), init)).edges;
 
-export const fetchSource = (id: string, sourceId: string) =>
-  json<SourceFull>(`/api/client-manager/clients/${id}/sources/${sourceId}`);
+export const fetchNode = (id: string, key: string, init?: Signal) =>
+  getJson<NodeResponse>(apiPath.node(id, key), init);
+
+export const fetchSource = (id: string, sourceId: string, init?: Signal) =>
+  getJson<SourceResponse>(apiPath.source(id, sourceId), init);
+
+/** Retries a failed read twice, but never one that came back 404. */
+const retryUnlessGone = (count: number, error: Error) =>
+  error.message !== "not-found" && count < 2;
+
+/** A client's file: shared by its view and the Catalog's prefetch on hover. */
+export const clientQuery = (id: string) => ({
+  queryKey: keys.client(id),
+  queryFn: ({ signal }: { signal: AbortSignal }) => fetchClient(id, { signal }),
+  staleTime: FRESH_MS,
+  retry: retryUnlessGone,
+});
+
+/** A Thread: shared by the Desk and the Thread list's prefetch on hover. */
+export const threadQuery = (id: string) => ({
+  queryKey: keys.thread(id),
+  queryFn: ({ signal }: { signal: AbortSignal }) => fetchThread(id, { signal }),
+  staleTime: FRESH_MS,
+  retry: retryUnlessGone,
+});
 
 export async function send<T>(
   url: string,

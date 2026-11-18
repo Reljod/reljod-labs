@@ -1,9 +1,11 @@
 "use client";
 
+import { useQueryClient } from "@tanstack/react-query";
 import { motion } from "motion/react";
 import { useMemo, useState } from "react";
 import { BRANCHES, TONE_HEX } from "../domain/categories";
 import type { CatalogCard } from "../server/service";
+import { clientQuery } from "./api";
 import { Icon } from "./icons";
 import { Portrait } from "./portrait";
 
@@ -118,6 +120,10 @@ function Group({
   onOpen: (clientId: string) => void;
   onAsk: (clientId: string) => void;
 }) {
+  const queryClient = useQueryClient();
+  // A client's file starts loading when the pointer or focus reaches it.
+  const prefetch = (clientId: string) =>
+    void queryClient.prefetchQuery(clientQuery(clientId));
   return (
     <section className="mb-3">
       <h3 className="eyebrow px-2 pt-1 pb-1.5 text-[0.6rem] text-stone">
@@ -141,6 +147,8 @@ function Group({
               <button
                 type="button"
                 onClick={() => onOpen(card.id)}
+                onPointerEnter={() => prefetch(card.id)}
+                onFocus={() => prefetch(card.id)}
                 aria-current={activeId === card.id}
                 className={`flex w-full items-center gap-3 rounded-sm border-2 p-2 text-left ${activeId === card.id ? "border-ink bg-paper shadow-hard-sm" : "border-transparent hover:border-ink/20 hover:bg-paper/80"}`}
               >

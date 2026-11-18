@@ -1,6 +1,8 @@
 import type { Metadata } from "next";
 import { Suspense } from "react";
 import { ClientManagerApp } from "@/features/client-manager/components/app";
+import { AppSkeleton } from "@/features/client-manager/components/app-skeleton";
+import { firstLoad } from "@/features/client-manager/server/first-load";
 import { QueryProvider } from "@/features/document-compliance/components/query-provider";
 
 export const metadata: Metadata = {
@@ -15,7 +17,7 @@ type Props = PageProps<"/demos/client-manager/[clientId]">;
 export default function ClientPage({ params, searchParams }: Props) {
   return (
     <QueryProvider>
-      <Suspense fallback={<div className="cm-shimmer h-dvh" />}>
+      <Suspense fallback={<AppSkeleton view="client" />}>
         <App params={params} searchParams={searchParams} />
       </Suspense>
     </QueryProvider>
@@ -26,6 +28,10 @@ async function App({ params, searchParams }: Props) {
   const [{ clientId }, { t }] = await Promise.all([params, searchParams]);
   const threadId = typeof t === "string" && UUID.test(t) ? t : null;
   return (
-    <ClientManagerApp initialClientId={clientId} initialThreadId={threadId} />
+    <ClientManagerApp
+      initialClientId={clientId}
+      initialThreadId={threadId}
+      {...(await firstLoad({ clientId, threadId }))}
+    />
   );
 }

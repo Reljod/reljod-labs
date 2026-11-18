@@ -61,7 +61,7 @@ export function ProfileView({
   // The client's own relations name each person: "married to", "accountant".
   const rootEdges = useQuery({
     queryKey: keys.edges(client.id, "root"),
-    queryFn: () => fetchEdges(client.id, "root"),
+    queryFn: ({ signal }) => fetchEdges(client.id, "root", { signal }),
     staleTime: 60_000,
   });
   const relationOf = useMemo(() => {

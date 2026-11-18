@@ -5,6 +5,7 @@ import { AnimatePresence, motion } from "motion/react";
 import {
   type FormEvent,
   Fragment,
+  memo,
   type ReactNode,
   useCallback,
   useEffect,
@@ -25,11 +26,12 @@ import { handleOf, splitCitations } from "../domain/citations";
 import { ROOT_KEY } from "../domain/graph";
 import { describeStep } from "../domain/traversal";
 import type { CatalogCard } from "../server/service";
-import { fetchThread, keys, send } from "./api";
+import { keys, send, threadQuery } from "./api";
 import { CertaintyDot } from "./certainty";
 import { Icon, type IconName } from "./icons";
 import { readNdjson } from "./ndjson";
 import { Portrait } from "./portrait";
+import { MessagesSkeleton } from "./skeletons";
 
 /**
  * The desk: a chat over the whole book, or one client. Answers walk the
@@ -80,6 +82,8 @@ const GENERAL = [
 
 export function Chat({
   threadId,
+  initialThread = null,
+  loadedAt = 0,
   scope,
   cards,
   seed,
@@ -90,6 +94,12 @@ export function Chat({
   onShowWalk,
 }: {
   threadId: string | null;
+  /** The page's server read of this Thread, when it opened on it. */
+  initialThread?: {
+    thread: ThreadSummary;
+    messages: ThreadMessage[];
+  } | null;
+  loadedAt?: number;
   scope: string | null;
   cards: CatalogCard[];
   /** A question handed in from elsewhere (a client's "Ask"), asked once. */
@@ -102,9 +112,11 @@ export function Chat({
 }) {
   const queryClient = useQueryClient();
   const thread = useQuery({
-    queryKey: keys.thread(threadId ?? "none"),
-    queryFn: () => fetchThread(threadId as string),
+    ...threadQuery(threadId ?? "none"),
     enabled: !!threadId,
+    ...(initialThread
+      ? { initialData: initialThread, initialDataUpdatedAt: loadedAt }
+      : {}),
   });
   const messages = threadId ? (thread.data?.messages ?? []) : [];
   const [pending, setPending] = useState<Pending | null>(null);
@@ -372,7 +384,10 @@ export function Chat({
     return () => window.removeEventListener("keydown", onKey);
   }, [busy, stop]);
 
-  const empty = messages.length === 0 && !showPending;
+  // Opening a Thread whose messages are not here yet: its shape, not the
+  // empty "ask about your book" screen.
+  const opening = !!threadId && thread.isPending && !showPending;
+  const empty = messages.length === 0 && !showPending && !opening;
   const suggestions = scoped?.persona?.questions?.length
     ? scoped.persona.questions.slice(0, 4)
     : GENERAL;
@@ -405,7 +420,9 @@ export function Chat({
         }}
         className="cm-scroll min-h-0 flex-1 overflow-y-auto"
       >
-        {empty ? (
+        {opening ? (
+          <MessagesSkeleton />
+        ) : empty ? (
           <div className="mx-auto flex h-full max-w-2xl flex-col items-center justify-center gap-6 px-6 py-10 text-center">
             {scoped ? (
               <Portrait name={scoped.name} url={scoped.portraitUrl} size="md" />
@@ -631,7 +648,7 @@ function ScopePicker({
   );
 }
 
-function UserBubble({
+const UserBubble = memo(function UserBubble({
   text,
   research,
   live = false,
@@ -658,14 +675,15 @@ function UserBubble({
       </p>
     </motion.div>
   );
-}
+});
 
 type FactProps = {
   handleClient: (handle: string | null) => CatalogCard | undefined;
   onOpenFact: (clientId: string, key: string) => void;
 };
 
-function AnswerBlock({
+/** Memoized: while an answer streams, the finished ones above it do not re-render. */
+const AnswerBlock = memo(function AnswerBlock({
   text,
   trail,
   cited,
@@ -759,7 +777,7 @@ function AnswerBlock({
       {error ? <p className="text-sm text-seal-red">{error}</p> : null}
     </motion.div>
   );
-}
+});
 
 function Thinking({ since }: { since: number }) {
   const [now, setNow] = useState(() => Date.now());
