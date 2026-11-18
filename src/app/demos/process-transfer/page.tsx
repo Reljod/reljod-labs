@@ -1,7 +1,10 @@
 import type { Metadata } from "next";
 import { Suspense } from "react";
+import { HandoverSkeleton } from "@/features/process-transfer/components/desk-skeleton";
 import { Handover } from "@/features/process-transfer/components/handover";
 import { parseTab } from "@/features/process-transfer/components/tabs";
+import { parseRunId } from "@/features/process-transfer/domain/api";
+import { preloadHandover } from "@/features/process-transfer/server/preload";
 
 export const metadata: Metadata = {
   title: "Handover · Demo",
@@ -9,14 +12,15 @@ export const metadata: Metadata = {
     "A recorded handover call becomes a written process with every step linked to the recording, a workflow document and a slide deck that is only approved once its checks pass.",
 };
 
-const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
-
 type SearchParams = Promise<Record<string, string | string[] | undefined>>;
 
 /*
  * The shell is static; the tab and the open Run come from the address, which
  * is request data, so they are read behind Suspense (`cacheComponents` is on).
- * The Access gate runs in `src/proxy.ts` and again in every server action.
+ * The Desk and the Run in the address are read here too, in parallel, so the
+ * first view needs no request from the browser; until they land the
+ * fallback shows the Desk's shape.
+ * The Access gate runs in `src/proxy.ts` and again in every read and action.
  */
 export default function ProcessTransferPage({
   searchParams,
@@ -24,7 +28,7 @@ export default function ProcessTransferPage({
   searchParams: SearchParams;
 }) {
   return (
-    <Suspense fallback={<div className="h-dvh bg-marble" />}>
+    <Suspense fallback={<HandoverSkeleton />}>
       <App searchParams={searchParams} />
     </Suspense>
   );
@@ -33,6 +37,14 @@ export default function ProcessTransferPage({
 async function App({ searchParams }: { searchParams: SearchParams }) {
   const { tab, run } = await searchParams;
   const initialTab = parseTab(tab);
-  const initialRunId = typeof run === "string" && UUID.test(run) ? run : null;
-  return <Handover initialTab={initialTab} initialRunId={initialRunId} />;
+  const initialRunId = parseRunId(run);
+  const preload = await preloadHandover(initialRunId);
+  return (
+    <Handover
+      initialTab={initialTab}
+      initialRunId={initialRunId}
+      initialDesk={preload.desk}
+      initialRun={preload.run}
+    />
+  );
 }

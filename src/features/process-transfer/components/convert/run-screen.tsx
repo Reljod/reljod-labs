@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { isOver, type RunStatus, type RunView } from "../../domain/run";
 import { ago, usd } from "../format";
 import {
@@ -57,6 +57,8 @@ export function RunStatusBadge({ status }: { status: RunStatus }) {
 export function RunScreen({
   runId,
   generation,
+  visible = true,
+  preloaded,
   currentRulesVersion,
   onClose,
   onRedone,
@@ -64,13 +66,17 @@ export function RunScreen({
 }: {
   runId: string;
   generation: number;
+  /** False while another tab is shown: the Run stays loaded and live, its Recording pauses. */
+  visible?: boolean;
+  /** A read of the Run already under way (the page's own, or a hover prefetch). */
+  preloaded?: (runId: string) => Promise<RunView | null> | undefined;
   currentRulesVersion: number;
   onClose: () => void;
   onRedone: (runId: string) => void;
   /** The Run finished while open: refresh the spend and the Runs list. */
   onEnded: () => void;
 }) {
-  const { state, feed, retry } = useRun(runId, generation, onEnded);
+  const { state, feed, retry } = useRun(runId, generation, onEnded, preloaded);
 
   if (state.phase === "loading" || state.phase === "idle") {
     return (
@@ -123,6 +129,7 @@ export function RunScreen({
   return (
     <OpenRun
       run={state.run}
+      visible={visible}
       feed={feed}
       onRetryFeed={retry}
       currentRulesVersion={currentRulesVersion}
@@ -134,6 +141,7 @@ export function RunScreen({
 
 function OpenRun({
   run,
+  visible,
   feed,
   onRetryFeed,
   currentRulesVersion,
@@ -141,6 +149,7 @@ function OpenRun({
   onRedone,
 }: {
   run: RunView;
+  visible: boolean;
   feed: ReturnType<typeof useRun>["feed"];
   onRetryFeed: () => void;
   currentRulesVersion: number;
@@ -151,6 +160,11 @@ function OpenRun({
   const video = useRef<HTMLVideoElement>(null);
   const [videoBroken, setVideoBroken] = useState(false);
   const { urls, capture, progress } = useFrames(run.id, run.videoUrl);
+
+  // A hidden tab keeps the Run, not its sound.
+  useEffect(() => {
+    if (!visible) video.current?.pause();
+  }, [visible]);
 
   const seek = useCallback((seconds: number) => {
     const element = video.current;

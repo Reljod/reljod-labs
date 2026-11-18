@@ -1,8 +1,9 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
+import { AUDIT_PAGE } from "../../domain/api";
 import { AUDIT_ACTIONS, type AuditEvent } from "../../domain/run";
-import { listAudit } from "../../server/actions";
+import { fetchAudit } from "../api";
 import { when } from "../format";
 import {
   Empty,
@@ -13,19 +14,33 @@ import {
   Skeleton,
 } from "../ui";
 
-/** Shown one page at a time; a page shorter than this is the last. */
-const PAGE = 100;
-
 type Load =
   | { at: "loading" }
-  | { at: "ready"; events: AuditEvent[]; more: boolean }
+  | {
+      at: "ready";
+      /** The Run the lines are narrowed to, if any. */
+      runId: string | undefined;
+      events: AuditEvent[];
+      more: boolean;
+      /** A newer read is under way; the lines stay until it lands. */
+      refreshing: boolean;
+      /** Why the last newer read failed; the lines shown are older. */
+      refreshError: string | null;
+    }
   | { at: "failed"; error: string };
 
 /**
  * The append-only Audit trail: what a person and the pipeline did, newest
  * first, with each line's detail on demand. Can be narrowed to the open Run.
  */
-export function AuditTrail({ openRunId }: { openRunId: string | null }) {
+export function AuditTrail({
+  openRunId,
+  active = true,
+}: {
+  openRunId: string | null;
+  /** The tab is shown. It stays mounted while hidden and reads again when shown. */
+  active?: boolean;
+}) {
   const [onlyRun, setOnlyRun] = useState(false);
   /** Shown actors; the filter narrows what is loaded, it does not reload. */
   const [actor, setActor] = useState<"all" | AuditEvent["actor"]>("all");
@@ -38,28 +53,43 @@ export function AuditTrail({ openRunId }: { openRunId: string | null }) {
   const [reloads, setReloads] = useState(0);
   const busy = useRef(false);
 
+  // Lines already shown stay while a newer read runs (another visit of the
+  // tab, Refresh); only a different filter clears them.
   // biome-ignore lint/correctness/useExhaustiveDependencies: `reloads` is a trigger to load again
   useEffect(() => {
-    let live = true;
-    setLoad({ at: "loading" });
-    listAudit(runId ? { runId } : undefined)
+    if (!active) return;
+    const controller = new AbortController();
+    setLoad((current) =>
+      current.at === "ready" && current.runId === runId
+        ? { ...current, refreshing: true, refreshError: null }
+        : { at: "loading" },
+    );
+    fetchAudit(runId ? { runId } : {}, controller.signal)
       .then((events) => {
-        if (live) setLoad({ at: "ready", events, more: events.length >= PAGE });
+        if (!controller.signal.aborted)
+          setLoad({
+            at: "ready",
+            runId,
+            events,
+            more: events.length >= AUDIT_PAGE,
+            refreshing: false,
+            refreshError: null,
+          });
       })
       .catch((error: unknown) => {
-        if (live)
-          setLoad({
-            at: "failed",
-            error:
-              error instanceof Error && error.message
-                ? error.message
-                : "The Audit trail could not be loaded.",
-          });
+        if (controller.signal.aborted) return;
+        const message =
+          error instanceof Error && error.message
+            ? error.message
+            : "The Audit trail could not be loaded.";
+        setLoad((current) =>
+          current.at === "ready" && current.runId === runId
+            ? { ...current, refreshing: false, refreshError: message }
+            : { at: "failed", error: message },
+        );
       });
-    return () => {
-      live = false;
-    };
-  }, [runId, reloads]);
+    return () => controller.abort();
+  }, [runId, reloads, active]);
 
   const loadOlder = useCallback(async () => {
     if (busy.current || load.at !== "ready") return;
@@ -68,16 +98,16 @@ export function AuditTrail({ openRunId }: { openRunId: string | null }) {
     busy.current = true;
     setOlder({ pending: true, error: null });
     try {
-      const events = await listAudit({
+      const events = await fetchAudit({
         before: last.id,
         ...(runId ? { runId } : {}),
       });
       setLoad((current) =>
         current.at === "ready"
           ? {
-              at: "ready",
+              ...current,
               events: [...current.events, ...events],
-              more: events.length >= PAGE,
+              more: events.length >= AUDIT_PAGE,
             }
           : current,
       );
@@ -132,16 +162,26 @@ export function AuditTrail({ openRunId }: { openRunId: string | null }) {
           <button
             type="button"
             onClick={() => setReloads((count) => count + 1)}
-            disabled={load.at === "loading"}
+            disabled={
+              load.at === "loading" || (load.at === "ready" && load.refreshing)
+            }
+            aria-busy={
+              load.at === "loading" || (load.at === "ready" && load.refreshing)
+            }
             className={quietButtonClass}
           >
-            {load.at === "loading" ? "Loading…" : "Refresh"}
+            {load.at === "loading" || (load.at === "ready" && load.refreshing)
+              ? "Loading…"
+              : "Refresh"}
           </button>
         </div>
       </div>
 
       {load.at === "loading" ? (
         <div className="outline-box rounded-sm bg-paper p-4" aria-busy="true">
+          <span className="sr-only" aria-live="polite">
+            Loading the Audit trail…
+          </span>
           <Skeleton lines={8} />
         </div>
       ) : null}
@@ -156,6 +196,9 @@ export function AuditTrail({ openRunId }: { openRunId: string | null }) {
             Try again
           </button>
         </div>
+      ) : null}
+      {load.at === "ready" && load.refreshError ? (
+        <InlineError>{`${load.refreshError} These lines may be out of date.`}</InlineError>
       ) : null}
       {load.at === "ready" && load.events.length === 0 ? (
         <Empty title="Nothing yet">

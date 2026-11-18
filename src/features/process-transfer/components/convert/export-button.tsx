@@ -29,6 +29,7 @@ export function ExportButton({
   capture,
   progress,
   build,
+  prepare,
   disabledReason = null,
   primary = true,
 }: {
@@ -41,7 +42,10 @@ export function ExportButton({
   capture: (times: number[]) => Promise<Frames>;
   /** Live capture progress from `useFrames`. */
   progress: { done: number; total: number };
-  build: (frames: Frames) => Uint8Array;
+  /** Builds the file; may load the builder's code first. */
+  build: (frames: Frames) => Uint8Array | Promise<Uint8Array>;
+  /** Starts loading what `build` needs, on hover or focus. */
+  prepare?: () => void;
   /** Why the button is off, shown beside it. */
   disabledReason?: string | null;
   primary?: boolean;
@@ -62,7 +66,7 @@ export function ExportButton({
       setPhase({ at: "building" });
       // Let the label paint before the synchronous build holds the thread.
       await new Promise((resolve) => setTimeout(resolve, 30));
-      const bytes = build(frames);
+      const bytes = await build(frames);
       setPhase({ at: "recording" });
       const result = await recordExport(runId, kind);
       if (!result.ok) {
@@ -103,6 +107,8 @@ export function ExportButton({
       <button
         type="button"
         onClick={onClick}
+        onPointerEnter={prepare}
+        onFocus={prepare}
         disabled={working || Boolean(disabledReason)}
         aria-busy={working}
         aria-describedby={disabledReason ? `${runId}-${kind}-why` : undefined}

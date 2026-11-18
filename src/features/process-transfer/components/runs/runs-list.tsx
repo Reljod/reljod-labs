@@ -23,16 +23,21 @@ function ApprovalMark({ approval }: { approval: RunSummary["approval"] }) {
   );
 }
 
-/** This Owner's Runs, newest first. Opening one loads it through `getRun`. */
+/**
+ * This Owner's Runs, newest first. Pointing at one starts reading it
+ * (`onIntent`), so the click opens it without a wait.
+ */
 export function RunsList({
   runs,
   openId,
   onOpen,
+  onIntent,
   onNew,
 }: {
   runs: RunSummary[];
   openId: string | null;
   onOpen: (runId: string) => void;
+  onIntent?: (runId: string) => void;
   onNew: () => void;
 }) {
   if (runs.length === 0) {
@@ -61,6 +66,8 @@ export function RunsList({
             <button
               type="button"
               onClick={() => onOpen(run.id)}
+              onPointerEnter={() => onIntent?.(run.id)}
+              onFocus={() => onIntent?.(run.id)}
               aria-current={run.id === openId ? "true" : undefined}
               className={`outline-box press grid w-full gap-x-4 gap-y-2 rounded-sm p-3 text-left sm:grid-cols-[minmax(0,1fr)_auto] ${run.id === openId ? "bg-morning-haze" : "bg-paper"} ${focusRing}`}
             >

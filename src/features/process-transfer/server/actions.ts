@@ -2,54 +2,37 @@
 
 import { AccessDeniedError, requireOwner } from "@/features/access/server/gate";
 import { exportRefusal } from "../domain/approval";
-import { spendView } from "../domain/caps";
-import { LIMITS } from "../domain/limits";
 import type { ModelChoice } from "../domain/models";
 import type { Rule, RuleOverride, RuleOverrides } from "../domain/rules";
 import type {
-  AuditEvent,
-  DeskView,
   ExportKind,
   Result,
-  RunView,
   StartInput,
   UploadTicket,
 } from "../domain/run";
-import { sampleBySlug } from "../domain/samples";
 import { auditPerson } from "./audit";
-import {
-  listAuditEvents,
-  listRuns,
-  modelCalls,
-  ownedRun,
-  toRunView,
-} from "./repository";
+import { ownedRun } from "./repository";
 import {
   LimitError,
   prepareUpload,
   redoDeck as redo,
-  activeRun as runningRun,
   startRun as start,
   stopRun as stop,
   visitorOf,
-  workCounts,
 } from "./runs";
 import {
-  ownerSettings,
   resetRules as reset,
   SettingsError,
   saveModels as storeModels,
   saveRule as storeRule,
 } from "./settings";
-import { signedUrl } from "./storage";
 
 /*
- * What the page calls. Every function passes the Access gate and works only
+ * The page's writes. Every function passes the Access gate and works only
  * on the calling Owner's data: ids from the browser are looked up together
- * with the Owner, never on their own.
+ * with the Owner, never on their own. Reads are GET routes (`./reads.ts`):
+ * Next sends server actions one at a time, so a read here would queue.
  */
-
-const AUDIT_PAGE = 100;
 
 /** Turns a refusal into a Result; anything unexpected is logged and told plainly. */
 async function attempt<T extends object>(
@@ -68,43 +51,6 @@ async function attempt<T extends object>(
     console.error("[process-transfer]", error);
     return { ok: false, error: "Something went wrong. Try again." };
   }
-}
-
-export async function loadDesk(): Promise<DeskView> {
-  const { access, owner } = await requireOwner();
-  const visitor = await visitorOf(access);
-  const [runs, settings, counts, running] = await Promise.all([
-    listRuns(owner),
-    ownerSettings(owner),
-    workCounts(owner, visitor),
-    runningRun(owner),
-  ]);
-  return {
-    runs,
-    rules: settings.rules,
-    ruleOverrides: settings.ruleOverrides,
-    rulesVersion: settings.rulesVersion,
-    models: settings.models,
-    spend: spendView(counts),
-    activeRunId: running?.id ?? null,
-    limits: {
-      uploadBytes: LIMITS.uploadBytes,
-      uploadSeconds: LIMITS.uploadSeconds,
-    },
-  };
-}
-
-export async function getRun(runId: string): Promise<RunView | null> {
-  const { owner } = await requireOwner();
-  const row = await ownedRun(owner, runId);
-  if (!row) return null;
-  const video =
-    row.source_kind === "sample"
-      ? (sampleBySlug(row.sample_slug ?? "")?.video ?? null)
-      : row.recording_path
-        ? await signedUrl(row.recording_path).catch(() => null)
-        : null;
-  return toRunView(row, await modelCalls(row.id), video);
 }
 
 export async function createUpload(input: {
@@ -190,24 +136,6 @@ export async function saveModels(
     const saved = await storeModels(owner, models);
     return { models: saved.models };
   });
-}
-
-export async function listAudit(input?: {
-  before?: number;
-  runId?: string;
-}): Promise<AuditEvent[]> {
-  const { owner } = await requireOwner();
-  const before =
-    typeof input?.before === "number" && Number.isSafeInteger(input.before)
-      ? input.before
-      : undefined;
-  let runId: string | undefined;
-  if (typeof input?.runId === "string") {
-    const run = await ownedRun(owner, input.runId);
-    if (!run) return [];
-    runId = run.id;
-  }
-  return listAuditEvents(owner, { before, runId, limit: AUDIT_PAGE });
 }
 
 export async function recordExport(

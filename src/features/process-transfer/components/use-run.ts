@@ -1,9 +1,9 @@
 "use client";
 
 import { useCallback, useEffect, useReducer, useRef, useState } from "react";
-import { API_PATH } from "../domain/limits";
+import { apiPath } from "../domain/api";
 import { isOver, type RunEvent, type RunView } from "../domain/run";
-import { getRun } from "../server/actions";
+import { fetchRun } from "./api";
 import {
   failuresAfter,
   finished,
@@ -28,7 +28,7 @@ type Action =
   | { type: "loaded"; run: RunView }
   | { type: "missing" }
   | { type: "failed"; error: string }
-  | { type: "event"; event: RunEvent };
+  | { type: "events"; events: RunEvent[] };
 
 function reducer(state: RunState, action: Action): RunState {
   switch (action.type) {
@@ -40,9 +40,9 @@ function reducer(state: RunState, action: Action): RunState {
       return { phase: "missing" };
     case "failed":
       return { phase: "error", error: action.error };
-    case "event":
+    case "events":
       return state.phase === "ready"
-        ? { phase: "ready", run: foldEvent(state.run, action.event) }
+        ? { phase: "ready", run: action.events.reduce(foldEvent, state.run) }
         : state;
   }
 }
@@ -51,7 +51,8 @@ function reducer(state: RunState, action: Action): RunState {
 const MAX_FAILURES = 6;
 
 /**
- * Loads a Run through `getRun` (the server scopes it to the Owner) and, while
+ * Loads a Run (`fetchRun`, a GET the server scopes to the Owner; or a read
+ * already under way from `preloaded`, such as a hover prefetch) and, while
  * it is going, follows its event stream from the first event, folding each
  * one in (`foldEvent`). A dropped stream reconnects with `from` = events
  * already received. Bump `generation` to load the same Run again (after a
@@ -61,14 +62,17 @@ export function useRun(
   runId: string | null,
   generation: number,
   onEnd?: (run: RunView | null) => void,
+  preloaded?: (runId: string) => Promise<RunView | null> | undefined,
 ): { state: RunState; feed: Feed; retry: () => void } {
   const [state, dispatch] = useReducer(reducer, { phase: "idle" });
   const [feed, setFeed] = useState<Feed>("closed");
   const [attempt, setAttempt] = useState(0);
   const endRef = useRef(onEnd);
+  const preloadedRef = useRef(preloaded);
   const latest = useRef<RunView | null>(null);
   useEffect(() => {
     endRef.current = onEnd;
+    preloadedRef.current = preloaded;
     latest.current = state.phase === "ready" ? state.run : null;
   });
 
@@ -79,6 +83,22 @@ export function useRun(
     if (!runId) return;
     const controller = new AbortController();
     const { signal } = controller;
+    // Events land in one render per frame, not one each: a replay from the
+    // first event can be hundreds of lines in one read.
+    let queued: RunEvent[] = [];
+    let frame: number | null = null;
+    const flush = () => {
+      if (frame !== null) cancelAnimationFrame(frame);
+      frame = null;
+      if (queued.length === 0 || signal.aborted) return;
+      const events = queued;
+      queued = [];
+      dispatch({ type: "events", events });
+    };
+    const queue = (event: RunEvent) => {
+      queued.push(event);
+      frame ??= requestAnimationFrame(flush);
+    };
 
     async function follow(id: string) {
       let seen = 0;
@@ -89,10 +109,10 @@ export function useRun(
         const seenBefore = seen;
         let threw = false;
         try {
-          const response = await fetch(
-            `${API_PATH}/runs/${encodeURIComponent(id)}/events?from=${seen}`,
-            { signal, cache: "no-store" },
-          );
+          const response = await fetch(apiPath.runEvents(id, seen), {
+            signal,
+            cache: "no-store",
+          });
           if (!response.ok || !response.body) {
             throw new Error(`The live feed answered ${response.status}.`);
           }
@@ -111,9 +131,10 @@ export function useRun(
               const event = parseEvent(line);
               if (!event) continue;
               last = event;
-              dispatch({ type: "event", event });
+              queue(event);
             }
           }
+          flush();
           if (finished(last)) {
             setFeed("closed");
             // Let the last events render before the caller refreshes around them.
@@ -142,7 +163,8 @@ export function useRun(
 
     void (async () => {
       try {
-        const run = await getRun(runId);
+        const run = await (preloadedRef.current?.(runId) ??
+          fetchRun(runId, signal));
         if (signal.aborted) return;
         if (!run) {
           dispatch({ type: "missing" });
@@ -166,7 +188,10 @@ export function useRun(
       }
     })();
 
-    return () => controller.abort();
+    return () => {
+      controller.abort();
+      if (frame !== null) cancelAnimationFrame(frame);
+    };
   }, [runId, generation, attempt]);
 
   const retry = useCallback(() => setAttempt((value) => value + 1), []);
