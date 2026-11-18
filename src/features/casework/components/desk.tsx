@@ -6,9 +6,8 @@ import {
   DemoBarBadge,
   demoBarControlClass,
 } from "@/components/demo/demo-bar";
-import type { CatPose } from "@/features/ledger/components/cat";
 import type { ChatEvent } from "../domain/chat-events";
-import { JOBS, type JobId } from "../domain/jobs";
+import { JOBS } from "../domain/jobs";
 import type { ModelSettingsByPurpose } from "../domain/model-config";
 import { PIPELINE_IDS, PIPELINES } from "../domain/pipelines";
 import type { Answer } from "../domain/run-events";
@@ -23,7 +22,6 @@ import {
 import type { DeskView, DocView, RunSummary, SpendView } from "../view";
 import { Cabinet, SCENARIO_TONE } from "./cabinet";
 import "./casework.css";
-import { type CatCue, CatLayer } from "./cat-layer";
 import {
   type ChatItem,
   ChatPanel,
@@ -31,7 +29,7 @@ import {
   toolTitle,
 } from "./chat-panel";
 import { DocViewer } from "./doc-viewer";
-import { JobGlyph, RECOMMENDATION_STYLE, ScenarioGlyph } from "./glyphs";
+import { JobGlyph, ScenarioGlyph } from "./glyphs";
 import { modelSummary } from "./model-form";
 import { PipelineFlow } from "./pipeline-flow";
 import { isOver } from "./run-reducer";
@@ -41,40 +39,6 @@ import { Terminal, type TerminalLine } from "./terminal";
 import { filesFromDrop, hasFiles, uploadFiles } from "./upload";
 import { useRun } from "./use-run";
 
-const JOB_POSE: Record<JobId, CatPose> = {
-  sort: "search",
-  read: "search",
-  match_identity: "think",
-  check_eligibility: "think",
-  verify_payee: "search",
-  screen: "search",
-  adjudicate: "think",
-  verify_entity: "search",
-  check_census: "search",
-  reconcile: "conduct",
-  map_ownership: "unstitch",
-  rate_risk: "think",
-  decide: "stamp",
-};
-
-const JOB_LINE: Record<JobId, string> = {
-  sort: "Sorting the pile",
-  read: "Reading every page",
-  match_identity: "Is it really them?",
-  check_eligibility: "Checking the Act",
-  verify_payee: "Following the money",
-  screen: "Checking the lists",
-  adjudicate: "Weighing the hits",
-  verify_entity: "Company papers",
-  check_census: "Counting heads",
-  reconcile: "Balancing the books",
-  map_ownership: "Unwinding it",
-  rate_risk: "Rating the risk",
-  decide: "Writing it up",
-};
-
-const TERMINAL_BAR = 36;
-const TERMINAL_BODY = 220;
 const TRAY_LIMIT = 12;
 
 /** Tools that start a Run; their message carries the Run's card. */
@@ -119,7 +83,6 @@ export function Desk() {
   const [busy, setBusy] = useState<{ label: string; since: number } | null>(
     null,
   );
-  const [talking, setTalking] = useState(false);
   /** The Run on the stage. `instant`: it was over when opened, so it lands finished. */
   const [shown, setShown] = useState<{ id: string; instant: boolean } | null>(
     null,
@@ -140,7 +103,6 @@ export function Desk() {
   const [chatLines, setChatLines] = useState<TerminalLine[]>([]);
   const [uploading, setUploading] = useState<string | null>(null);
   const [answering, setAnswering] = useState(false);
-  const [greeted, setGreeted] = useState(false);
   const chatAbort = useRef<AbortController | null>(null);
   // Each write runs once at a time. State flags (busy, answering…) only show
   // on the next render, so a fast double click would get past them; these
@@ -201,8 +163,6 @@ export function Desk() {
 
   useEffect(() => {
     void load();
-    const timer = setTimeout(() => setGreeted(true), 4000);
-    return () => clearTimeout(timer);
   }, [load]);
 
   const docs = useMemo(() => {
@@ -350,7 +310,6 @@ export function Desk() {
           if (!line.trim()) continue;
           const event = JSON.parse(line) as ChatEvent;
           if (event.type === "delta") {
-            setTalking(true);
             patch((item) => ({ ...item, text: item.text + event.text }));
           } else if (event.type === "reasoning") {
             patch((item) => ({
@@ -445,7 +404,6 @@ export function Desk() {
       chatAbort.current = null;
       sendingRef.current = false;
       setBusy(null);
-      setTalking(false);
       void getSpend().then(setSpend);
     }
   }
@@ -655,35 +613,10 @@ export function Desk() {
     await load();
   }
 
-  // Ledger's cues: he stays at his post; only his pose and words change. -----------
   const questionRef = useRef<HTMLDivElement>(null);
   const focusRef = useRef<HTMLElement | null>(null);
   const stageOn = shown !== null && run.jobs.length > 0;
   const currentJob = run.jobs[run.current];
-  const cue: CatCue =
-    going && run.question
-      ? { pose: "confused", line: "Need this from you" }
-      : live && run.status === "stopped"
-        ? { pose: "idle", line: "Stopped" }
-        : live && run.decision
-          ? {
-              pose: RECOMMENDATION_STYLE[run.decision.recommendation].pose,
-              line: RECOMMENDATION_STYLE[run.decision.recommendation].stamp,
-            }
-          : going && currentJob
-            ? {
-                pose: JOB_POSE[currentJob.job],
-                line: JOB_LINE[currentJob.job],
-              }
-            : busy
-              ? { pose: talking ? "talk" : "think" }
-              : dragging || dropping
-                ? { pose: "carry", line: "Drop it on the chat" }
-                : uploading
-                  ? { pose: "carry", line: "Filing it" }
-                  : !greeted && desk
-                    ? { pose: "wave", line: "Hi! Hand me a case" }
-                    : { pose: "idle" };
 
   // The Cabinet steps aside while a Run has the stage, and comes back when
   // the Run asks for a Document that is on file.
@@ -974,11 +907,6 @@ export function Desk() {
           </div>
         </div>
       ) : null}
-
-      <CatLayer
-        cue={cue}
-        floor={TERMINAL_BAR + (terminalOpen ? TERMINAL_BODY : 0)}
-      />
 
       <DocViewer
         doc={viewing ? (docs.get(viewing) ?? null) : null}

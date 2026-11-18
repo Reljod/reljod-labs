@@ -210,21 +210,17 @@ export const RECOMMENDATION_STYLE = {
   approve: {
     stamp: "Approve",
     tone: "text-ivy border-ivy",
-    pose: "found" as const,
   },
   refer: {
     stamp: "Refer",
     tone: "text-federal-blue border-federal-blue",
-    pose: "think" as const,
   },
   decline: {
     stamp: "Decline",
     tone: "text-seal-red border-seal-red",
-    pose: "stamp" as const,
   },
   request_info: {
     stamp: "Need info",
     tone: "text-oak border-oak",
-    pose: "confused" as const,
   },
 };
