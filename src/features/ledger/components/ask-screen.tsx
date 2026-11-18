@@ -171,15 +171,28 @@ export function AskScreen({
       const frame = { title: "", layout: "mixed" as Layout };
       let stored: StoredBuild | null = null;
 
+      // The chat answer streams in small deltas: gather them and render once
+      // per animation frame, not once per delta.
+      let pending = "";
+      let painting = 0;
+      const paint = () => {
+        painting = 0;
+        const delta = pending;
+        pending = "";
+        if (!delta) return;
+        setLive(
+          (current) =>
+            current && { ...current, answer: current.answer + delta },
+        );
+      };
+
       const streaming = requestBuild(session.id, question, (event) => {
         if (event.type === "frame") {
           frame.title = event.title;
           frame.layout = event.layout;
         } else if (event.type === "answer") {
-          setLive(
-            (current) =>
-              current && { ...current, answer: current.answer + event.delta },
-          );
+          pending += event.delta;
+          painting ||= requestAnimationFrame(paint);
         } else if (event.type === "step") {
           queue.push(event.step);
         } else if (event.type === "done") {
@@ -202,6 +215,8 @@ export function AskScreen({
         frame: () => frame,
       });
       await Promise.all([streaming, playing]);
+      cancelAnimationFrame(painting);
+      paint();
       const build = stored as StoredBuild | null;
       if (build) setBuilds((list) => [...list, build]);
       setLive(null);

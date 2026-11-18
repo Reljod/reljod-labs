@@ -1,7 +1,7 @@
 "use client";
 
 import { motion } from "motion/react";
-import { Fragment, type ReactNode } from "react";
+import { Fragment, memo, type ReactNode } from "react";
 import { type Layout, sentenceJoins } from "../domain/build-plan";
 import { contentTree } from "../domain/content-tree";
 import { BlockPhrase, BlockView, phraseText } from "./block-view";
@@ -32,7 +32,8 @@ const endsWithPunctuation = (item: PlacedBlock) =>
  * Ledger's Joins so they read as one sentence; underneath, each piece in full
  * with the section of the site it was cut from.
  */
-export function AnswerPage({
+/* Memoised: the chat answer streams into the screen around it, a re-render per delta. */
+export const AnswerPage = memo(function AnswerPage({
   question,
   title,
   layout,
@@ -186,7 +187,7 @@ export function AnswerPage({
       </motion.section>
     </article>
   );
-}
+});
 
 function Grid({
   items,

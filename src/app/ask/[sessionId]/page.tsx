@@ -6,6 +6,7 @@ import { ACCESS_PATH } from "@/features/access/constants";
 import { ownerOf } from "@/features/access/domain/owner";
 import { currentAccess } from "@/features/access/server/gate";
 import { AskScreen } from "@/features/ledger/components/ask-screen";
+import { AskScreenSkeleton } from "@/features/ledger/components/ask-screen-skeleton";
 import { loadAskSession } from "@/features/ledger/server/repository";
 
 export const metadata: Metadata = {
@@ -19,11 +20,9 @@ export default function AskSessionPage({
   searchParams,
 }: PageProps<"/ask/[sessionId]">) {
   return (
-    <Suspense
-      fallback={
-        <p className="eyebrow p-6 text-ink-muted">Opening the books…</p>
-      }
-    >
+    // The fallback is the static shell: the bar, the About copy and Ledger's
+    // desk paint before the session (access, Owner, Builds) is read.
+    <Suspense fallback={<AskScreenSkeleton pageCopy={<AboutSections />} />}>
       <Session params={params} searchParams={searchParams} />
     </Suspense>
   );
