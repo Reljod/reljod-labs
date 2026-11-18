@@ -115,7 +115,7 @@
 
 ## Landing page
 
-- `/` plays as short scenes for a visitor outside tech (`src/components/landing/`): the desk, who, what the AI does, the projects, coming soon, what the site is, contact. Every scene has something to touch (the paper pile, flip cards, the lens, the problem list, the SPECIMEN stamp) and the floating Index jumps to any scene.
+- `/` plays as short scenes for a visitor outside tech (`src/components/landing/`): the desk, who, what the AI does, the projects, coming soon, what the site is, contact. Every scene has something to touch (a page the AI reads onto a case board, flip cards, the lens, the problem list, the SPECIMEN stamp) and the floating Index jumps to any scene.
 - Words live in `src/content/landing.ts`; facts about Reljod come only from `profile.ts`, `experience.ts` and `projects.ts`. A new live demo needs a plain problem in `demoProblems` and a preview in `demo-picker.tsx` (`landing.test.ts` checks the first).
 - Motion stays short and never gates reading: text is in the HTML, reveals run once, and `LandingMotion` honours reduced motion.
 

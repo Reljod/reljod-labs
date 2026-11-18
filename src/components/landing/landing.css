@@ -1,13 +1,9 @@
 /* The landing page's ambient motion: small loops that never block reading. */
 @media (prefers-reduced-motion: no-preference) {
-  .landing-cloud {
-    animation: landing-cloud 18s linear infinite;
-  }
-
   .landing-hand-slow,
   .landing-hand-fast {
     transform-box: view-box;
-    transform-origin: 420px 98px;
+    transform-origin: 380px 25px;
   }
 
   .landing-hand-slow {
@@ -16,10 +12,6 @@
 
   .landing-hand-fast {
     animation: landing-turn 8s linear infinite;
-  }
-
-  .landing-lamp {
-    animation: landing-lamp 4s ease-in-out infinite;
   }
 
   .landing-steam {
@@ -31,32 +23,9 @@
   }
 }
 
-.landing-lamp {
-  opacity: 0.18;
-}
-
-@keyframes landing-cloud {
-  from {
-    transform: translateX(-60px);
-  }
-  to {
-    transform: translateX(220px);
-  }
-}
-
 @keyframes landing-turn {
   to {
     transform: rotate(360deg);
-  }
-}
-
-@keyframes landing-lamp {
-  0%,
-  100% {
-    opacity: 0.18;
-  }
-  50% {
-    opacity: 0.26;
   }
 }
 

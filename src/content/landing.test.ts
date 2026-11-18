@@ -1,5 +1,11 @@
 import { describe, expect, it } from "vitest";
-import { demoProblems, highlightStories, sceneNumber, scenes } from "./landing";
+import {
+  demoProblems,
+  deskPages,
+  highlightStories,
+  sceneNumber,
+  scenes,
+} from "./landing";
 import { highlights } from "./profile";
 import { liveDemos } from "./projects";
 
@@ -20,5 +26,14 @@ describe("landing copy", () => {
     expect(new Set(scenes.map((scene) => scene.id)).size).toBe(scenes.length);
     expect(sceneNumber("top")).toBe("01");
     expect(sceneNumber("contact")).toBe(String(scenes.length).padStart(2, "0"));
+  });
+});
+
+describe("desk pages", () => {
+  it("gives every page five lines and three notes, so it fits the stage", () => {
+    for (const page of deskPages) {
+      expect(page.lines).toHaveLength(5);
+      expect(page.lines.filter((line) => line.note)).toHaveLength(3);
+    }
   });
 });

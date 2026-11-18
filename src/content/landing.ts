@@ -31,16 +31,88 @@ export const desk = {
   lines: ["Banks run on paperwork.", "I build AI that reads it."],
   intro:
     "I'm Reljod Oreta, a software engineer in Metro Manila. Every project on this site is a working AI helper for banks: it checks documents, finds names, answers questions, and shows you exactly where each answer came from.",
-  hint: "Tap the pile of paper and Ledger, the cat, will check it.",
-  /** Ledger's lines when someone taps him. */
-  catLines: [
-    "Meow. I mean: hello.",
-    "I'm Ledger. I check paperwork.",
-    "Every page gets a stamp.",
-    "Try the pile on the left.",
-  ],
-  doneLine: "All checked. Now picture 500 pages.",
+  hint: "Tap the page and watch the AI read it.",
+  readHint: "Tap a note to see the line it came from.",
 } as const;
+
+/** What the AI pins to the board: a plain fact, or something a person must look at. */
+export type DeskNote = { kind: "fact" | "flag"; text: string };
+export type DeskLine = { label: string; value: string; note?: DeskNote };
+/** A made-up Meridia document on the opening scene's clipboard. */
+export type DeskPage = { title: string; lines: DeskLine[] };
+
+/** Every page has five lines, three of them noted, so each fits the stage. */
+export const deskPages: DeskPage[] = [
+  {
+    title: "Account opening form",
+    lines: [
+      {
+        label: "Full name",
+        value: "Amara T. Quizon",
+        note: { kind: "fact", text: "New customer: Amara T. Quizon." },
+      },
+      { label: "Date of birth", value: "03 MAR 1991" },
+      {
+        label: "Home address",
+        value: "21 Lantern Street",
+        note: { kind: "fact", text: "Lives at 21 Lantern Street." },
+      },
+      { label: "Occupation", value: "Florist" },
+      {
+        label: "Signature",
+        value: "",
+        note: { kind: "flag", text: "Not signed. Send it back first." },
+      },
+    ],
+  },
+  {
+    title: "October statement",
+    lines: [
+      {
+        label: "Account holder",
+        value: "Brightwater Holdings",
+        note: { kind: "fact", text: "Account of Brightwater Holdings." },
+      },
+      { label: "Opening balance", value: "MRD 12,400" },
+      {
+        label: "12 Oct · cash in",
+        value: "MRD 480,000",
+        note: {
+          kind: "flag",
+          text: "Cash 40 times the usual. Ask where from.",
+        },
+      },
+      {
+        label: "19 Oct · sent abroad",
+        value: "MRD 470,000",
+        note: { kind: "flag", text: "Nearly all of it left a week later." },
+      },
+      { label: "Closing balance", value: "MRD 22,150" },
+    ],
+  },
+  {
+    title: "Pension claim",
+    lines: [
+      {
+        label: "Member",
+        value: "Halvard Okonjo",
+        note: { kind: "fact", text: "Claim for Halvard Okonjo." },
+      },
+      { label: "Employer", value: "Selene Port Trust" },
+      {
+        label: "Retires on",
+        value: "01 DEC 2026",
+        note: { kind: "fact", text: "Pension starts 1 December 2026." },
+      },
+      { label: "Years of service", value: "31" },
+      {
+        label: "Employer's stamp",
+        value: "",
+        note: { kind: "flag", text: "Employer hasn't stamped it yet." },
+      },
+    ],
+  },
+];
 
 /** Each figure in `highlights`, told as a short story, by its label. */
 export const highlightStories: Record<string, string> = {
