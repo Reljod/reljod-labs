@@ -78,7 +78,7 @@ Every demo first painted an empty shell, hydrated, and only then asked for its d
 
 - The page's server component reads the first view with `Promise.all`, behind `<Suspense>` (the reads use cookies and `cacheComponents` is on). The Suspense fallback is a skeleton shaped like the screen. The data is passed down as `initial…` props. The client seeds its state from them (React Query: `initialData` plus a `staleTime`) and does not fetch again on mount.
 - Data that needs no Owner (corpus cards, samples) goes into the static shell outside Suspense, or is imported. Sieve's cards cost about 92 ms of server time per visit before; now they cost nothing.
-- A try/catch around a request read in that server component calls `unstable_rethrow(error)` first. Otherwise it swallows Next's prerender bail-out, and `pnpm build` prerenders the page with no data in it. Document compliance hit this.
+- A try/catch around a request read (in that server component or any server helper it calls) calls `unstable_rethrow(error)` from `next/navigation` first. Otherwise it swallows Next's prerender bail-out, `notFound()` or `redirect()`, and `pnpm build` prerenders the page with no data in it. Document compliance's `initialFor` first shipped without it; only `pnpm build` caught it.
 
 ## One gate call per request, and independent work starts together
 
