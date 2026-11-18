@@ -29,7 +29,7 @@ The §kind§ input is optional. A kind given when a person starts the Run in the
     md`
 The Rule **Old enough to retire** also knows the age-60 option: a Member born on or before 31 December of a cut-off year (1969 by default) may retire from age 60. Age, cut-off year and early age are Parameters. The cut-off comes from secondary sources, and the Rule's citation says so.
 
-Model Steps classify the request, read the papers and write the Draft. They never return a Finding. Only code does, and the Decide Step combines the Findings in code: any Rule with the Outcome block rejects, any refer asks for papers or a look, and otherwise the request proceeds.
+Model Steps classify the request, read the papers and write the Draft. The Steps that classify and read may run code on the papers in a Sandbox of their own, at most 3 times, to count, total or compare (see [Sandbox](#doc:sandbox)); the drafting Step does not. They never return a Finding. Only code does, and the Decide Step combines the Findings in code: any Rule with the Outcome block rejects, any refer asks for papers or a look, and otherwise the request proceeds.
 
 ## Rules
 

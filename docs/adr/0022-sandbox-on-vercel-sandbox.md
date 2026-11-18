@@ -1,0 +1,19 @@
+# The Harness codes in Vercel Sandbox, and so do its reading Steps
+
+Supersedes ADR 0017.
+
+ADR 0017 put the Harness's Sandbox in Docker containers on the VPS, driven by a Runner, and kept it to admins in name. Sieve (ADR 0021) then ran its Analyst's code in Vercel Sandbox: a managed microVM with a deny-all network policy, reached with the deployment's OIDC token and no service of our own. The Harness now does the same, and the Runner, its token, its install script and the VPS changes it needed are gone. ADR 0002 (Vercel is the only compute) holds again with no exception.
+
+- **A Session has one Sandbox**, named `harness-session-<sessionId>` so any function instance finds it again. It is made on the first `code_write_file` or `code_run`, with no network, lives 10 minutes and is extended by each command. It is persistent: a stopped one keeps its files as a snapshot for 24 hours, then starts empty, and the tool says a new Sandbox was started. Limits are `SANDBOX_LIMITS` in `domain/sandbox.ts`: 60 seconds a command (a `timeout` inside the microVM kills the command itself), 256 KB a file, 20,000 characters of output (cut inside the microVM, so a flood of output is never read back).
+- **Every Role may use it.** The `sandbox.use` permission is gone. ADR 0017 already said "admin only" was not a boundary, since any visitor can switch to the admin (ADR 0014). What holds the Sandbox in is the microVM, no network, the caps above, the hourly `LIMITS.sandboxCommandsPerHour` per visitor, and the Audit trail.
+- **The Agent codes on its own judgement.** Its instructions and the `sandbox-analysis` Skill say: when an answer needs counting, totalling, comparing or parsing data, write the data and a short script and run it, rather than doing the arithmetic in the model. Nobody needs to ask for the Sandbox, so the app no longer shows it off with a suggested prompt or a Demo mode Beat.
+- **A Pipeline's reading Steps code too.** The Member request Pipeline's `classify` and `read_documents` calls get a `run_code` tool (`server/pipelines/code.ts`): Node.js in a Sandbox of their own (`harness-step-<uuid>`, not persistent), with the papers on disk under `papers/`. It is made on the first call only, allows 3 runs, and is removed when the call ends, however it ends. The last model step has no tools, so the structured answer always comes; a call that still fails falls back to the deterministic reading as before. Drafting Steps do not code.
+- **Code never decides.** What a Step's code prints helps the model read; the reading then goes through the Pipeline's checks, which alone return Findings (ADR 0015). In chat, Sandbox numbers are analysis, and the Agent says so.
+
+## Consequences
+
+- Every command is written to the Audit trail before it runs and refused if that write fails (ADR 0018), in a Session (`sandbox.command`, actor the Staff member) and in a Step (`sandbox.command`, actor the Agent, with the Run id and the Step). The SDK's own error text is logged, never shown or audited: the person and the model read "Sandbox unavailable".
+- Without Vercel credentials (no `VERCEL`, `VERCEL_OIDC_TOKEN` or `VERCEL_TOKEN`), the code tools answer "Sandbox unavailable: it is not set up here", a Step's `run_code` says so to the model, and the rest of the Harness works. Locally, `vercel env pull` gives the OIDC token, as for Sieve.
+- Sandbox time is billed to the Vercel team. A Session's Sandbox stops 10 idle minutes after its last command; a Step's lasts one model call. The hourly cap bounds what one visitor can start.
+- There is no live status route any more: a Sandbox exists only when used, and the tools say when it cannot be.
+- `harness.sandboxes` still records a Session's Sandbox (its `container` column now holds the Sandbox's name); Step Sandboxes are not recorded there, only in the Audit trail.

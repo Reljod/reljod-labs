@@ -30,13 +30,12 @@ describe("can", () => {
     }
   });
 
-  it("keeps Skills, Rules, Conflicts, the Sandbox and the Workspace trail for an admin", () => {
+  it("keeps Skills, Rules, Conflicts and the Workspace trail for an admin", () => {
     for (const action of [
       "skill.edit",
       "rule.edit",
       "conflict.resolve",
       "source.remove",
-      "sandbox.use",
       "approval.decide.high",
       "audit.read.workspace",
     ] as const) {

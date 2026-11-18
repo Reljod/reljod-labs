@@ -40,6 +40,7 @@ import {
 import type { Draft } from "../../domain/run";
 import { jsonb, sql } from "../db";
 import { findMembers, memberByIdOrNo } from "../records";
+import type { StepScope } from "./code";
 import type { Classification } from "./model";
 import { classifyRequest, readPapers, writeDraftBody } from "./model";
 import { sourcesOf, sourceText } from "./source-file";
@@ -168,6 +169,14 @@ const intake: Executor = async (ctx) => {
   };
 };
 
+/** Lets a reading Step code in a Sandbox of its own (ADR 0022). */
+const codeScope = (ctx: RunContext, stepId: string): StepScope => ({
+  owner: ctx.owner,
+  runId: ctx.runId,
+  sessionId: ctx.sessionId,
+  stepId,
+});
+
 const classify: Executor = async (ctx, deps) => {
   const { sources } = outputOf<IntakeOutput>(deps, "intake");
   const keywords = classifyByKeywords(
@@ -203,6 +212,7 @@ const classify: Executor = async (ctx, deps) => {
       text: source.text,
     })),
     stubbed: ctx.stubbed,
+    code: codeScope(ctx, "classify"),
   });
   const kindReading: KindReading = {
     given: null,
@@ -232,6 +242,7 @@ const readDocuments: FanOut<IntakeSource, DocumentReading> = {
     const result = await readPapers({
       source: { id: source.id, title: source.title, text: source.text },
       stubbed: ctx.stubbed,
+      code: codeScope(ctx, "read_documents"),
     });
     return {
       value: result.value,

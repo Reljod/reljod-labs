@@ -19,7 +19,7 @@ The tools are grouped by what they work on. A Pipeline is one tool, named §pipe
 ## Notes
 
 - Tools that read records and lists are open to any Staff member. Tools that change the Workspace need the Role in the last column.
-- The Sandbox tools need an admin. Any visitor can switch to the admin, so the container's limits, not the Role, are the real boundary. See [Sandbox](#doc:sandbox).
+- The Sandbox tools are open to every Role. The Sandbox's own limits hold them in: a microVM with no network, time and size caps, an hourly command cap and the Audit trail. See [Sandbox](#doc:sandbox).
 - Search and ingest tools work on the same Knowledge base as the app. Ingest costs model calls and is limited.
 - Every call is an Audit event, with its arguments cut to a safe length.
 - There is no tool that gives an Approval or settles a Conflict, on purpose. See [What Claude cannot do](#doc:claude-limits).

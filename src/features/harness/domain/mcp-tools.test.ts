@@ -107,10 +107,10 @@ describe("the permission matrix", () => {
     get_skill: { user: true, admin: true },
     list_rules: { user: true, admin: true },
     list_audit: { user: true, admin: true },
-    code_write_file: { user: false, admin: true },
-    code_run: { user: false, admin: true },
-    code_read_file: { user: false, admin: true },
-    code_list_files: { user: false, admin: true },
+    code_write_file: { user: true, admin: true },
+    code_run: { user: true, admin: true },
+    code_read_file: { user: true, admin: true },
+    code_list_files: { user: true, admin: true },
     pipeline_member_request: { user: true, admin: true },
   };
 

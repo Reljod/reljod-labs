@@ -29,7 +29,6 @@ import {
   type RunListResponse,
   type RunResponse,
   type RunStartRequest,
-  type SandboxStatusResponse,
   type ScheduleListQuery,
   type ScheduleListResponse,
   type SearchQuery,
@@ -106,8 +105,6 @@ export const keys = {
       filter.action ?? "",
       filter.mine ? "mine" : "",
     ] as const,
-  sandbox: (sessionId?: string | null) =>
-    ["harness", "sandbox", sessionId ?? ""] as const,
 };
 
 /** What a route answered when it refused: the message to show, and why. */
@@ -400,11 +397,6 @@ export const api = {
   audit: {
     list: (filter: AuditQuery = {}, init?: ReadInit) =>
       get<AuditListResponse>(apiPath.audit(filter), init),
-  },
-
-  sandbox: {
-    status: async (sessionId?: string | null) =>
-      (await get<SandboxStatusResponse>(apiPath.sandbox(sessionId))).sandbox,
   },
 
   plugin: {

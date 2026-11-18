@@ -13,7 +13,6 @@ const PHRASE: Record<Action, string> = {
   "conflict.resolve": "settle a Conflict",
   "source.add": "add a Source",
   "source.remove": "remove a Source",
-  "sandbox.use": "use the Sandbox",
   "audit.read.own": "read an Audit trail",
   "audit.read.workspace": "read the whole Workspace's Audit trail",
   "plugin.download": "download the Plugin",

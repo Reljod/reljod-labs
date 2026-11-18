@@ -40,11 +40,11 @@ Then open the link Claude gives you and give the Approval yourself, as the right
 
 > Show the Audit trail for the Run you just started.
 
-## As an admin
+## Data work
 
-> In the Sandbox, write a script that adds up the contribution lines in this Schedule and run it.
+> Add up the contribution lines in this Schedule and show me the total by Member.
 
-The Sandbox has no network and limited time and memory. See [Sandbox](#doc:sandbox).
+You do not need to mention the Sandbox. The Agent writes and runs code there when a number needs working out. It has no network and limited time. See [Sandbox](#doc:sandbox).
 
 ## Prompts Claude should refuse
 

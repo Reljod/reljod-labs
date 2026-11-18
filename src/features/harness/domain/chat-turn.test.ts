@@ -228,7 +228,6 @@ describe("instructions", () => {
       },
     ],
     attachments: [],
-    sandbox: false,
   };
 
   it("names the Staff member, the Role, the date and the Skill index", () => {
@@ -260,10 +259,9 @@ describe("instructions", () => {
     );
   });
 
-  it("says what was attached, and whether the Sandbox may be used", () => {
+  it("says what was attached, and that the Agent may code in the Sandbox", () => {
     const text = instructionsFor({
       ...base,
-      sandbox: true,
       attachments: [
         {
           sourceId: "s1",
@@ -279,8 +277,8 @@ describe("instructions", () => {
     expect(text).toContain("Attached in this Session");
     expect(text).toContain("list_attachments");
     expect(text).toContain("file_source");
-    expect(text).toMatch(/may write and run code/);
-    expect(instructionsFor(base)).toMatch(/may not use the Sandbox/);
+    expect(text).toMatch(/You can code/);
+    expect(text).toMatch(/nobody needs to ask for it/);
   });
 
   it("works with no Skills", () => {

@@ -30,7 +30,7 @@ The records are in §docs/adr/§. Each states the problem, the choice and the co
 
 **Consequences.**
 - RBAC separates duties inside a Workspace. It is not a boundary between visitors. Access and the Owner are.
-- "Admin only" does not protect the Sandbox from a Guest. The Sandbox's own limits do.
+- A Role cannot protect a risky feature from a Guest. That is why the Sandbox is open to every Role and held in by its own limits (ADR 0022).
 - Staff are rows, not Auth users, so the anonymous-user clean-up is untouched.
 
 ## ADR 0015: Rules are data an admin edits; the checks that use them are code
@@ -52,15 +52,9 @@ The records are in §docs/adr/§. Each states the problem, the choice and the co
 - Ingest costs model calls, so it is capped per Source and per hour.
 - Search and ingest are MCP tools, so Claude uses the same Knowledge base. Later sources arrive as Connectors.
 
-## ADR 0017: The Agent codes in a Sandbox on the VPS, reached through a Runner
+## ADR 0017: The Agent codes in a Sandbox on the VPS (superseded)
 
-**Decision.** A dependency-free Runner on a VPS drives one Docker container per Session, behind Caddy and a short-lived signed token. No network, capped resources. The Sandbox tools need an admin.
-
-**Consequences.**
-- Code from any Guest runs on the VPS behind container isolation only (runc, no gVisor). A kernel escape would reach the host. That is accepted for the demo and revisited before anything else of value shares the machine.
-- When the VPS is down, the tools say "Sandbox offline" and the rest works.
-- Installing the Runner changes the VPS, and is done by the owner with §install.sh§, not by a deploy.
-- §HARNESS_SANDBOX_URL§ unset means the Sandbox is off.
+**Superseded by ADR 0022.** It ran one Docker container per Session on a VPS, driven by a Runner behind Caddy and a short-lived signed token, and only an admin's Session could use it. The Runner, its token and the VPS are gone.
 
 ## ADR 0018: Every action is an Audit event, and events are only added
 
@@ -71,6 +65,19 @@ The records are in §docs/adr/§. Each states the problem, the choice and the co
 - Details never hold a secret or a whole document.
 - Events are purged only with the Workspace, through the Owner purge.
 - Demo mode's Beats are audited like anything else.
+
+## ADR 0022: The Sandbox runs on Vercel Sandbox
+
+**Decision.** A Session's Sandbox is a Vercel Sandbox microVM named after the Session, with no network, Node.js and Python, found again by name from any function instance. It lives 10 minutes, each command extends it, and a stopped one keeps its files for 24 hours. Every Role may use it. The reading model Steps of the Member request Pipeline get a §run_code§ tool in a Sandbox of their own, removed when the call ends. Auth is the deployment's OIDC token. It supersedes ADR 0017.
+
+**Why.** It keeps Vercel the only compute, as Sieve already does, and removes a machine to install, patch and keep up. A microVM is a stronger boundary than a container on a shared kernel.
+
+**Consequences.**
+- Any visitor can run code. The microVM, the missing network, the time and size caps, the hourly command cap per visitor and the Audit trail hold it in, not the Role.
+- Every command is audited, and a command whose event cannot be written does not run.
+- Code in a Step is a reading aid. It never returns a Finding (ADR 0015).
+- Sandbox time is paid by the project, and bounded by the caps.
+- Without credentials (locally, no §VERCEL_OIDC_TOKEN§) the tools say "Sandbox unavailable" and the rest works.
 
 ## Earlier records that matter here
 

@@ -34,16 +34,8 @@ export type Host = {
   };
   sources: { list(): Promise<SourceView[]> };
   rules: { restore(ruleId: string): Promise<void> };
-  sandbox: { status(sessionId: string | null): Promise<SandboxReading> };
   /** Today, `YYYY-MM-DD`, in UTC. */
   today(): string;
-};
-
-/** What a Beat needs to know about the Sandbox. */
-export type SandboxReading = {
-  usable: boolean;
-  /** What to tell the visitor when it is not. */
-  message: string | null;
 };
 
 /** What a Beat carries from one Beat to the next. Small, and saved so a reload can resume. */
@@ -74,7 +66,6 @@ export type Feature =
   | "Knowledge base"
   | "Conflict"
   | "Audit"
-  | "Sandbox"
   | "Claude";
 
 /** A part of the app a Beat acts on: it gets the ring, and its tab opens. */

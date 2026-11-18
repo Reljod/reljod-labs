@@ -17,7 +17,7 @@ A named person who works in a Workspace, such as a pensions officer. The visitor
 _Avoid_: User account, persona, profile, member (a Member is a pension plan member)
 
 **Role**:
-What a Staff member may do: `user` or `admin`. A user works cases: chats, uploads, starts Runs, approves low-risk Approvals. An admin also edits Skills and Rules, settles Conflicts, approves high-risk Approvals, uses the Sandbox and reads the whole Workspace's Audit trail.
+What a Staff member may do: `user` or `admin`. A user works cases: chats, uploads, starts Runs, approves low-risk Approvals. An admin also edits Skills and Rules, settles Conflicts, approves high-risk Approvals and reads the whole Workspace's Audit trail. Every Role may use the Sandbox.
 _Avoid_: Permission level, group
 
 **Agent**:
@@ -140,12 +140,8 @@ The Audit events of a Session, or of the whole Workspace for an admin.
 _Avoid_: Log, activity feed
 
 **Sandbox**:
-A container on the VPS where the Agent can write and run code for one Session. No network, capped CPU, memory and time, removed by the Runner when idle (15 minutes) or after 2 hours. Only an admin Staff member's Session may use it.
-_Avoid_: VM, terminal, workspace
-
-**Runner**:
-The small service on the VPS that starts and drives Sandboxes for the Harness.
-_Avoid_: Agent, worker, daemon
+A Vercel Sandbox (a microVM with Node.js and Python and no network) where code runs: the Agent's, for one Session, and a reading Step's, for one model call. The Agent codes in it on its own judgement whenever an answer needs counting, totalling or comparing; nobody has to ask. A Session's Sandbox stops after 10 idle minutes and keeps its files for 24 hours; a Step's is removed when the call ends. What its code prints is analysis, never a Finding.
+_Avoid_: VM, container, terminal, workspace, Runner (the VPS service it replaced, ADR 0022)
 
 ### Showing it
 

@@ -104,34 +104,6 @@ export const say =
     ctx.log("The Agent finished answering.");
   };
 
-/**
- * Like `say`, but a refusal or an outage does not stop the Scenario: it is
- * shown and logged, and the Beat is done. For the Sandbox, which may be off.
- */
-export const sayIfAble =
-  (text: string, whenOff: string): Action =>
-  async (ctx) => {
-    const status = await ctx.host.sandbox
-      .status(ctx.state.sessionId)
-      .catch(() => null);
-    if (status && !status.usable) {
-      const why = status.message ?? "The Sandbox is not available.";
-      ctx.notice(`${why.replace(/\.?$/, ".")} ${whenOff}`);
-      ctx.log(`Skipped the Sandbox: ${why}`);
-      return;
-    }
-    try {
-      await say(text)(ctx);
-    } catch (caught) {
-      if (ctx.signal.aborted) throw caught;
-      const why = messageOf(caught);
-      ctx.notice(
-        `The Agent could not finish that: ${why.replace(/\.?$/, ".")} ${whenOff}`,
-      );
-      ctx.log(`The Sandbox step did not finish: ${why}`);
-    }
-  };
-
 // Runs ---------------------------------------------------------------------------
 
 /** The Source id of a sample attached in this Scenario's Session. */

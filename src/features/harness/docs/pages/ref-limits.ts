@@ -20,7 +20,7 @@ The demo calls paid models, so every path that can add paid work is capped. The 
 `,
     { live: "sandbox-limits" },
     md`
-The Runner also has its own limits, listed in [Sandbox and Runner](#doc:arch-sandbox).
+How they are applied is in [Sandbox design](#doc:arch-sandbox).
 
 ## Skills
 

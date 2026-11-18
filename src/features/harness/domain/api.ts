@@ -16,7 +16,6 @@ import type {
 } from "./records";
 import type { RuleEdit, RuleEditError, RuleVersion, RuleView } from "./rules";
 import type { ApprovalDecision, RunSummary, RunView } from "./run";
-import type { SandboxStatus } from "./sandbox";
 import type { MessageView, SessionSummary } from "./session";
 import type { SkillText, SkillVersion, SkillView } from "./skills";
 import type { Staff } from "./staff";
@@ -115,8 +114,6 @@ export const apiPath = {
       limit: filter.limit,
     })}`,
 
-  sandbox: (sessionId?: string | null) =>
-    `${API_ROOT}/sandbox${query({ session: sessionId })}`,
   plugin: () => `${API_ROOT}/plugin`,
   mcpToken: () => `${API_ROOT}/mcp-token`,
   /** The Harness MCP server and its OAuth endpoints check their own bearer. */
@@ -283,9 +280,7 @@ export type AuditListResponse = {
   scope: "workspace" | "own";
 };
 
-// Sandbox, Plugin, MCP -----------------------------------------------------------
-
-export type SandboxStatusResponse = { sandbox: SandboxStatus };
+// Plugin, MCP --------------------------------------------------------------------
 
 export type McpTokenResponse = {
   token: string;
@@ -304,8 +299,7 @@ export type Slice =
   | "pipelines"
   | "skills"
   | "knowledge"
-  | "audit"
-  | "sandbox";
+  | "audit";
 
 export type RouteSpec = {
   method: "GET" | "POST" | "PUT" | "PATCH" | "DELETE";
@@ -626,14 +620,6 @@ export const ROUTES: RouteSpec[] = [
     response: "AuditListResponse",
     slice: "foundation",
     summary: "The Audit trail: a user's own Sessions, an admin's Workspace.",
-  },
-  {
-    method: "GET",
-    path: "/sandbox",
-    request: "?session=<id>",
-    response: "SandboxStatusResponse",
-    slice: "sandbox",
-    summary: "Whether the Sandbox can be used, and this Session's container.",
   },
   {
     method: "GET",

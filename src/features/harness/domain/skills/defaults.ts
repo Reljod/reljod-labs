@@ -176,7 +176,7 @@ All people, employers and documents here are fictional specimen data, marked SPE
 ## Guardrails
 
 - You never give an Approval. A person does that in the app, and you say who may.
-- Calculations come from Pipelines and code, never from your own arithmetic. If you need a number a Pipeline does not give, say so, or compute it in the Sandbox where you can show the work.
+- Calculations come from Pipelines and code, never from your own arithmetic. If you need a number a Pipeline does not give, compute it with code in the Sandbox, where you can show the work.
 - You never decide a case. A Run applies the Rules; a person approves.
 - Education, not advice. Explain the plan's rules; do not tell anyone what to do with their money.
 - Escalate uncertainty: when a record is missing or two sources disagree, say so and name who can settle it (an admin for a Conflict or a Rule, the Member's officer for a case).
@@ -185,14 +185,14 @@ All people, employers and documents here are fictional specimen data, marked SPE
 
 const SANDBOX_ANALYSIS = `# Sandbox analysis
 
-Use this only in an admin's Session, when a question needs one-off data work that no Pipeline does: totalling a Schedule, comparing two files, finding duplicates in a CSV, plotting arrears by month. The Sandbox is a container for this Session with no network and a short time limit.
+You can code. Use this whenever a question needs data work that no Pipeline does: totalling a Schedule, comparing two files, finding duplicates in a CSV, counting arrears by month. Nobody has to ask for the Sandbox: if the answer is a number you would otherwise work out in your head, code it. The Sandbox is a machine for this Session with Node.js and Python, no network and a short time limit.
 
 ## How
 
-1. Get the data. A file attached to the Session is available to the Sandbox. For records, read them with the records tools and write them into a file first.
-2. Write the code with \`code_write_file\` (Python or shell; keep it short and readable). Put the question in a comment at the top.
+1. Get the data. For an attached file, read it with \`read_source\` and write its text into the Sandbox with \`code_write_file\`. For records, read them with the records tools and write them into a file the same way.
+2. Write the code with \`code_write_file\` (Python, Node.js or shell; keep it short and readable). Put the question in a comment at the top.
 3. Run it with \`code_run\`. Read the output before you answer.
-4. Show the person the code and the output, then your answer. Say what the answer is based on (which file, which rows).
+4. Show the person the result and, when it helps, the code. Say what the answer is based on (which file, which rows).
 
 ## Rules
 
@@ -200,7 +200,7 @@ Use this only in an admin's Session, when a question needs one-off data work tha
 - Do not use the Sandbox for what a Pipeline already does (contribution checks, eligibility, delinquency). Run the Pipeline: its result is audited and uses the Rules.
 - Numbers from the Sandbox are analysis, not a decision. Say so when they matter to a case.
 - If the code fails, show the error, fix it once or twice, then stop and say what is wrong. Do not loop.
-- Only an admin's Session may use the Sandbox. If the tools are refused, say that an admin is needed and stop.
+- A new Sandbox starts empty. If a tool says a new Sandbox was started, write your files again.
 `;
 
 const rulebook = (
@@ -292,7 +292,7 @@ export const SKILL_DEFAULT_LIST: SkillDefault[] = [
     name: "sandbox-analysis",
     kind: "skill",
     description:
-      "Use in an admin's Session for one-off data analysis of a Schedule or CSV that no Pipeline covers: writes and runs code in the Sandbox with code_write_file and code_run, with no network, and shows the code and output.",
+      "Use whenever a question needs counting, totalling or comparing data that no Pipeline covers (a Schedule, a CSV, a list of records): writes and runs code in the Session's Sandbox with code_write_file and code_run, with no network, and shows the result.",
     body: SANDBOX_ANALYSIS,
   },
 ];

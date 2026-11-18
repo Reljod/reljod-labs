@@ -32,7 +32,7 @@ The base migration creates the private bucket §harness§. Open Storage and chec
 
 ## 3. Set the environment
 
-Set the variables in [Environment variables](#doc:ref-env). The minimum is a database address, a gateway key, §SUPABASE_URL§, §SUPABASE_SERVICE_ROLE_KEY§ and §RATE_LIMIT_SALT§, using the fallbacks the other demos already have for the first two. Leave the two Sandbox variables unset to leave the Sandbox off. If you set them, §HARNESS_SANDBOX_URL§ must be https (or http on a loopback host, for local development); anything else leaves the Sandbox off.
+Set the variables in [Environment variables](#doc:ref-env). The minimum is a database address, a gateway key, §SUPABASE_URL§, §SUPABASE_SERVICE_ROLE_KEY§ and §RATE_LIMIT_SALT§, using the fallbacks the other demos already have for the first two. The Sandbox needs nothing: on Vercel it uses the deployment's OIDC token. Locally it needs §VERCEL_OIDC_TOKEN§ from §vercel env pull§, or it stays off.
 
 ## 4. Check the Access gate
 
@@ -54,7 +54,7 @@ The end-to-end spec for this demo is §e2e/harness.spec.ts§. It is skipped unle
 - Open §/demos/harness§ as a Host. The first visit seeds your Workspace, which takes a few seconds.
 - Send a message and check the Audit tab.
 - Open the Connect page and check the connector URL shows your origin.
-- If you set the Sandbox, see [Installing the Runner on the VPS](#doc:ops-runner) and try a Sandbox command as the admin.
+- Ask the Agent to total something, and check the Audit tab for §sandbox.command§ and §sandbox.command_finished§. See [Sandbox](#doc:sandbox).
 
 ## Rolling back
 

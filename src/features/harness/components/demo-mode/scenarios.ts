@@ -15,7 +15,6 @@ import {
   restoreRule,
   saveRule,
   say,
-  sayIfAble,
   seq,
   setParameter,
   sourceIdOf,
@@ -436,17 +435,15 @@ const guidanceConflict: Scenario = {
 
 const MEMBER_SERVICE_ASK =
   "A Member phoned to ask what happens to her pension if she leaves Cayman, and when she can take it out. Please answer from our guidance and cite the Sources.";
-const SANDBOX_ASK =
-  "In the Sandbox, write and run a short script that totals the employer and employee contributions in the attached CSV, and show me the totals.";
 
 const memberService: Scenario = {
-  id: "ask-code-connect",
-  title: "Ask a question, run code, connect Claude",
+  id: "ask-connect",
+  title: "Ask a question, connect Claude",
   summary:
-    "A member-service question answered from the Knowledge base with citations, a small analysis of a contributions CSV in the Sandbox, and the way to give Claude the same Skills and tools.",
-  features: ["Knowledge base", "Sandbox", "Claude"],
-  minutes: 4,
-  asRole: "Pensions Officer, then Operations Manager",
+    "A member-service question answered from the Knowledge base with citations, and the way to give Claude the same Skills and tools.",
+  features: ["Knowledge base", "Claude"],
+  minutes: 3,
+  asRole: "Pensions Officer",
   beats: [
     {
       id: "session",
@@ -460,28 +457,6 @@ const memberService: Scenario = {
       focus: "chat",
       pendingLabel: "Waiting for the Agent…",
       run: say(MEMBER_SERVICE_ASK),
-    },
-    {
-      id: "admin",
-      say: "The Sandbox is for admins only, so switch to Marva Lindo-Tibbett, the Operations Manager, in a new Session.",
-      focus: "chat",
-      run: seq(asStaff(MANAGER), newSession()),
-    },
-    {
-      id: "csv",
-      say: "Attach a contributions Schedule as a CSV: Pelican Shoal Marine Services' last month.",
-      focus: "chat",
-      run: attach("schedule-clean"),
-    },
-    {
-      id: "sandbox",
-      say: "Ask the Agent to total it in the Sandbox: a container with no network and capped CPU, memory and time, removed by the Runner when it is idle. If the Runner is offline, the guide says so and moves on.",
-      focus: "chat",
-      pendingLabel: "Waiting for the Agent…",
-      run: sayIfAble(
-        SANDBOX_ASK,
-        "The rest of this Scenario does not need it.",
-      ),
     },
     {
       id: "docs",

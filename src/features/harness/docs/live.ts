@@ -66,7 +66,6 @@ const ACTION_TEXT: Record<Action, string> = {
   "conflict.resolve": "Settle a Conflict in the Knowledge base.",
   "source.add": "Add a Source to the Knowledge base.",
   "source.remove": "Remove a Source you or someone else added.",
-  "sandbox.use": "Write and run code in the Sandbox.",
   "audit.read.own": "Read the Audit trail of your own Sessions.",
   "audit.read.workspace": "Read the Audit trail of the whole Workspace.",
   "plugin.download": "Download the Claude Plugin.",
@@ -340,20 +339,29 @@ function sandboxLimits(): string {
         "A command that runs longer is cut off and reported as timed out.",
       ],
       [
-        "Memory",
-        `${SANDBOX_LIMITS.memoryMb} MB`,
-        "The container's memory, with no swap.",
+        "Idle life",
+        `${SANDBOX_LIMITS.sandboxMinutes} minutes`,
+        "A Session's Sandbox stops this long after it was made or last extended; each command extends it.",
       ],
-      ["CPU", `${SANDBOX_LIMITS.cpus}`, "CPUs the container may use."],
+      [
+        "Kept files",
+        `${SANDBOX_LIMITS.keepFilesHours} hours`,
+        "A stopped Session Sandbox keeps its files this long, then starts empty.",
+      ],
+      [
+        "Code runs per Step",
+        `${SANDBOX_LIMITS.stepCodeCalls}`,
+        "How many times one model Step of a Pipeline may run code; its Sandbox is removed after the Step.",
+      ],
       [
         "File size",
         `${SANDBOX_LIMITS.fileBytes / 1024} KB`,
-        "The most one file the Agent writes or reads may hold.",
+        "The most one file the Agent writes, or reads back, may hold.",
       ],
       [
         "Output",
         `${SANDBOX_LIMITS.outputChars.toLocaleString("en-US")} characters`,
-        "What the app keeps of a command's output.",
+        "What the app keeps of a command's stdout, and of its stderr.",
       ],
     ],
   );

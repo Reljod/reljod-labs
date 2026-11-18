@@ -25,7 +25,7 @@ A token acts as the Staff member chosen at sign-in. Claude cannot switch Staff, 
 
 ## It cannot go beyond its Role
 
-A user's token cannot edit Skills or Rules, use the Sandbox, remove a Source or read the whole Workspace's Audit trail. The server checks on every call, not only at sign-in.
+A user's token cannot edit Skills or Rules, remove a Source or read the whole Workspace's Audit trail. The server checks on every call, not only at sign-in.
 
 ## It cannot see other Workspaces
 
@@ -37,7 +37,7 @@ Every call is an Audit event. An admin can read what Claude did, as which Staff 
 
 ## What it can do
 
-Start Pipelines, read Runs, search the Knowledge base, add and file Sources, read records, read Skills and Rules, read the Audit trail the Role allows, and use the Sandbox if the Role is admin. See [MCP tool reference](#doc:claude-tools).
+Start Pipelines, read Runs, search the Knowledge base, add and file Sources, read records, read Skills and Rules, read the Audit trail the Role allows, and use the Sandbox. See [MCP tool reference](#doc:claude-tools).
 `,
   ],
 };

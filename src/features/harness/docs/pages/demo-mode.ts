@@ -24,7 +24,7 @@ It opens only when you press the **Demo mode** button in the top bar (**Demo** o
 | Monthly contributions with mistakes | 7 | Pensions Officer |
 | Who is late this month | 7 | Pensions Officer, then Operations Manager |
 | New guidance contradicts the handbook | 6 | Pensions Officer, then Operations Manager |
-| Ask a question, run code, connect Claude | 6 | Pensions Officer, then Operations Manager |
+| Ask a question, connect Claude | 3 | Pensions Officer |
 
 A Scenario is made of **Beats**. Each press of **Next** is one Beat: a line that says what is about to happen and why, and the action that does it. A Beat might attach a sample, send a message to the Agent, open the Pipeline view, change Staff, edit a Rule or add a Source.
 
@@ -45,10 +45,6 @@ While a Beat waits, **Skip waiting** appears after a few seconds.
 ## Refusals are part of the show
 
 Two Beats make an attempt that the server refuses, and show you the refusal: a user trying to approve a high-risk Approval for a Run they started, and a user trying to settle a Conflict. Only an admin can do either.
-
-## The Sandbox Beat
-
-The last Scenario asks the Agent to run code in the Sandbox. If no Runner is set up, or it is unreachable, the guide shows "Sandbox offline" and moves on. The rest of the Scenario does not need it.
 
 ## Things to know
 

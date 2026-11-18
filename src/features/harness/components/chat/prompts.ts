@@ -9,8 +9,6 @@ export type SuggestedPrompt = {
   text: string;
   /** Attach the first sample file of this group with it, when there is one. */
   sampleGroup?: SampleFile["group"];
-  /** Only an admin may use it. */
-  admin?: boolean;
 };
 
 export const SUGGESTED_PROMPTS: SuggestedPrompt[] = [
@@ -45,12 +43,5 @@ export const SUGGESTED_PROMPTS: SuggestedPrompt[] = [
     title: "Search the web",
     hint: "Looks outside the Workspace through the web search Connector.",
     text: "Search the web for the latest news on pension contribution rules in the Cayman Islands and summarise it in five lines.",
-  },
-  {
-    id: "sandbox",
-    title: "Run code in the Sandbox",
-    hint: "Writes and runs a small script in a container with no network.",
-    text: "In the Sandbox, write and run a small script that totals the contribution lines of a Schedule given as CSV text, and show me the result.",
-    admin: true,
   },
 ];
