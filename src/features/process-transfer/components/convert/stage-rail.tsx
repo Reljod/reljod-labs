@@ -20,7 +20,8 @@ import {
 } from "../cost";
 import { maxRounds } from "../deck-rounds";
 import { clockTime, elapsed, plural, usd } from "../format";
-import { InlineError, quietButtonClass, StatusMark } from "../ui";
+import { focusRing, InlineError, quietButtonClass, StatusMark } from "../ui";
+import { hasResults } from "./stage-results";
 
 const TONE: Record<
   StageStatus,
@@ -54,9 +55,15 @@ function currentRound(run: RunView, stage: StageId): number | null {
 /**
  * The seven Stages in order, each with its status, what it found, how long
  * it took, the model it used and what it cost. Design and Check show the
- * Round they are on.
+ * Round they are on. A Stage that has started opens its results on click.
  */
-export function StageRail({ run }: { run: RunView }) {
+export function StageRail({
+  run,
+  onOpen,
+}: {
+  run: RunView;
+  onOpen?: (stage: StageId) => void;
+}) {
   const costs = useMemo(() => costByStage(run.calls), [run.calls]);
   const total = useMemo(() => totalOf(run.calls), [run.calls]);
   const earlier = useMemo(() => totalOf(earlierCalls(run.calls)), [run.calls]);
@@ -85,6 +92,18 @@ export function StageRail({ run }: { run: RunView }) {
           const cost = costs[stage.id];
           const round = currentRound(run, stage.id);
           const last = index === STAGES.length - 1;
+          const openable = onOpen !== undefined && hasResults(status);
+          const name = (
+            <>
+              {stage.label}
+              {round ? (
+                <span className="ml-2 font-medium text-federal-blue normal-case tracking-normal">
+                  Round {round}
+                  {limit ? ` of ${limit}` : ""}
+                </span>
+              ) : null}
+            </>
+          );
           const models =
             cost.models.length > 0
               ? cost.models.map(modelLabel).join(", ")
@@ -107,17 +126,22 @@ export function StageRail({ run }: { run: RunView }) {
               />
               <div className="min-w-0 flex-1">
                 <div className="flex flex-wrap items-baseline justify-between gap-x-3">
-                  <p
-                    className={`font-mono text-sm font-bold tracking-[0.06em] uppercase ${status === "pending" ? "text-ink-muted" : ""}`}
-                  >
-                    {stage.label}
-                    {round ? (
-                      <span className="ml-2 font-medium text-federal-blue normal-case tracking-normal">
-                        Round {round}
-                        {limit ? ` of ${limit}` : ""}
-                      </span>
-                    ) : null}
-                  </p>
+                  {openable ? (
+                    <button
+                      type="button"
+                      onClick={() => onOpen(stage.id)}
+                      title={`Show what ${stage.label} made`}
+                      className={`rounded-sm text-left font-mono text-sm font-bold tracking-[0.06em] uppercase underline decoration-ink/30 decoration-2 underline-offset-4 hover:text-federal-blue hover:decoration-federal-blue ${focusRing}`}
+                    >
+                      {name}
+                    </button>
+                  ) : (
+                    <p
+                      className={`font-mono text-sm font-bold tracking-[0.06em] uppercase ${status === "pending" ? "text-ink-muted" : ""}`}
+                    >
+                      {name}
+                    </p>
+                  )}
                   <p className="font-mono text-[11px] text-ink-muted">
                     {state?.ms ? elapsed(state.ms) : null}
                     {cost.costUsd > 0 ? (
