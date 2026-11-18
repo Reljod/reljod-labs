@@ -3,8 +3,9 @@
 import { useQuery } from "@tanstack/react-query";
 import { useCallback, useMemo, useRef } from "react";
 import type { ParameterValue } from "../../domain/rules";
-import { api, keys, messageOf } from "../api";
+import { api, failureOf, messageOf } from "../api";
 import { useController, useHarness } from "../harness-context";
+import { listQuery } from "../list-queries";
 import type { RuleCardHandle } from "../skills/rule-card";
 import { RulebookEditor } from "../skills/rulebook-editor";
 import { SkillEditor } from "../skills/skill-editor";
@@ -24,12 +25,7 @@ const MCP_PAGE = "/demos/harness/mcp";
 /** Fetches the Plugin zip and hands it to the browser. Rejects with the server's message. */
 async function downloadPlugin(): Promise<string> {
   const response = await fetch(api.plugin.href(), { cache: "no-store" });
-  if (!response.ok) {
-    const body = (await response.json().catch(() => null)) as {
-      error?: string;
-    } | null;
-    throw new Error(body?.error ?? "The plugin could not be built. Try again.");
-  }
+  if (!response.ok) throw await failureOf(response);
   const blob = await response.blob();
   const url = URL.createObjectURL(blob);
   const link = document.createElement("a");
@@ -49,15 +45,9 @@ async function downloadPlugin(): Promise<string> {
  * Rule's own card). A Staff member who may not edit sees everything read-only.
  */
 export default function SkillsTab() {
-  const { can, place, openTab } = useHarness();
-  const skills = useQuery({
-    queryKey: keys.skills,
-    queryFn: () => api.skills.list(),
-  });
-  const rules = useQuery({
-    queryKey: keys.rules(),
-    queryFn: () => api.rules.list(),
-  });
+  const { can, place, openTab, staff } = useHarness();
+  const skills = useQuery(listQuery("skills", staff.id));
+  const rules = useQuery(listQuery("rules", staff.id));
 
   const paramSkill = place.params.skill ?? null;
   const paramRule = place.params.rule ?? null;

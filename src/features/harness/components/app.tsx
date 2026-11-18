@@ -1,6 +1,7 @@
 "use client";
 
 import { useQueryClient } from "@tanstack/react-query";
+import dynamic from "next/dynamic";
 import Link from "next/link";
 import {
   useCallback,
@@ -30,26 +31,49 @@ import {
   useController,
   useHarness,
 } from "./harness-context";
-import AuditTab from "./tabs/audit-tab";
+import { prefetchTabData } from "./list-queries";
 import ChatTab from "./tabs/chat-tab";
-import DocsTab from "./tabs/docs-tab";
-import KnowledgeTab from "./tabs/knowledge-tab";
-import PipelinesTab from "./tabs/pipelines-tab";
-import SkillsTab from "./tabs/skills-tab";
+import { TabLoading } from "./tabs/tab-loading";
 import { cx, ErrorNote, Initials, RoleBadge, Spinner, useWrite } from "./ui";
 import "../harness.css";
 
 /** The Connect page (`HARNESS_CONNECT_PATH`), named here to keep the MCP tool list out of the browser bundle. */
 const CONNECT_PATH = "/demos/harness/mcp";
 
-const TAB_VIEW: Record<TabId, () => React.ReactNode> = {
+/*
+ * Chat is always mounted, so it ships with the shell. Every other tab is its
+ * own chunk (Pipelines carries React Flow), loaded the first time it opens
+ * and prefetched when its tab is hovered or focused (`TAB_CHUNK`). Each
+ * `import()` sits inside its `dynamic()` call, as Next needs, so a tab the
+ * address opens is rendered on the server and preloaded.
+ */
+const loading = () => <TabLoading />;
+const TAB_VIEW: Record<TabId, React.ComponentType> = {
   chat: ChatTab,
-  pipelines: PipelinesTab,
-  knowledge: KnowledgeTab,
-  skills: SkillsTab,
-  audit: AuditTab,
-  docs: DocsTab,
+  pipelines: dynamic(() => import("./tabs/pipelines-tab"), { loading }),
+  knowledge: dynamic(() => import("./tabs/knowledge-tab"), { loading }),
+  skills: dynamic(() => import("./tabs/skills-tab"), { loading }),
+  audit: dynamic(() => import("./tabs/audit-tab"), { loading }),
+  docs: dynamic(() => import("./tabs/docs-tab"), { loading }),
 };
+
+/** The same chunks as `TAB_VIEW`'s, to fetch ahead of a click. */
+const TAB_CHUNK: Record<TabId, () => Promise<unknown>> = {
+  chat: () => Promise.resolve(),
+  pipelines: () => import("./tabs/pipelines-tab"),
+  knowledge: () => import("./tabs/knowledge-tab"),
+  skills: () => import("./tabs/skills-tab"),
+  audit: () => import("./tabs/audit-tab"),
+  docs: () => import("./tabs/docs-tab"),
+};
+
+/** Loads a tab's code ahead of time. A failure is left for the tab's own load to show. */
+function preloadTab(tab: TabId): Promise<void> {
+  return TAB_CHUNK[tab]().then(
+    () => undefined,
+    () => undefined,
+  );
+}
 
 /** Lays link params over a place: a value opens, null closes, a name left out stays. */
 function withParams(place: Place, tab: TabId, params: LinkParams = {}): Place {
@@ -102,6 +126,20 @@ export function HarnessApp({
     setVisited((tabs) =>
       tabs.includes(next.tab) ? tabs : [...tabs, next.tab],
     );
+  }, []);
+
+  // Once the first view is up and the browser is idle, fetch the other tabs'
+  // code, so a first click on one rarely waits for it.
+  useEffect(() => {
+    const load = () => {
+      for (const tab of TAB_IDS) void preloadTab(tab);
+    };
+    if (typeof window.requestIdleCallback === "function") {
+      const handle = window.requestIdleCallback(load, { timeout: 4000 });
+      return () => window.cancelIdleCallback(handle);
+    }
+    const timer = setTimeout(load, 2000);
+    return () => clearTimeout(timer);
   }, []);
 
   useEffect(() => {
@@ -220,6 +258,10 @@ export function HarnessApp({
               id: tab,
               label: TAB_LABEL[tab],
               onSelect: () => openTab(tab),
+              onIntent: () => {
+                void preloadTab(tab);
+                prefetchTabData(queryClient, tab, staff.id);
+              },
             }))}
           >
             <Link
@@ -284,6 +326,8 @@ function ShellControllers() {
   });
   useController("tabs", {
     async open(tab, params) {
+      // The tab's code first, so it mounts and registers its controller now.
+      await preloadTab(tab);
       openTab(tab, params);
       // Let the tab mount and register its own controller before the next Beat.
       await new Promise<void>((resolve) =>

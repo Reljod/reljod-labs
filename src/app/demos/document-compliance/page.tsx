@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { Suspense } from "react";
 import { Caveats } from "@/features/document-compliance/components/caveats";
 import {
   ComplianceBar,
@@ -8,6 +9,8 @@ import { PackPicker } from "@/features/document-compliance/components/pack-picke
 import { QueryProvider } from "@/features/document-compliance/components/query-provider";
 import { SessionRuns } from "@/features/document-compliance/components/session-runs";
 import { packs } from "@/features/document-compliance/packs";
+import { initialFor } from "@/features/document-compliance/server/initial";
+import { listOwnerRuns } from "@/features/document-compliance/server/repository";
 
 export const metadata: Metadata = {
   title: "Document compliance checks · Demo",
@@ -32,8 +35,16 @@ export default function DocumentComplianceDemoPage() {
       </main>
       {/* Below the fold: the runs this browser started, once there are any. */}
       <div className="mx-auto max-w-6xl px-4 pb-12 empty:hidden sm:px-6">
-        <SessionRuns />
+        <Suspense fallback={null}>
+          <Runs />
+        </Suspense>
       </div>
     </QueryProvider>
   );
+}
+
+/** Streams in after the pack picker, which is static and paints first. */
+async function Runs() {
+  const runs = await initialFor("the Session's runs", listOwnerRuns);
+  return <SessionRuns initialRuns={runs} />;
 }

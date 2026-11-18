@@ -12,13 +12,15 @@ export async function GET(
   { params }: RouteContext<"/api/harness/sessions/[id]/messages">,
 ) {
   try {
-    const context = await requireStaff();
-    const { id } = await params;
-    const session = await readableSession(context, id);
+    const [context, { id }] = await Promise.all([requireStaff(), params]);
+    // Both are scoped to the Owner; the messages are returned only if the
+    // Staff member may read the Session.
+    const [session, messages] = await Promise.all([
+      readableSession(context, id),
+      listMessages(context.owner, id),
+    ]);
     if (!session) return notFound();
-    return json<MessageListResponse>({
-      messages: await listMessages(context.owner, session.id),
-    });
+    return json<MessageListResponse>({ messages });
   } catch (error) {
     return failure(error);
   }

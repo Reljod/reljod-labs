@@ -4,7 +4,11 @@ import type { Owner } from "@/features/access/domain/owner";
 import type { PipelineSpec } from "../domain/pipeline";
 import { pipelineOf } from "../domain/pipelines";
 import { PLUGIN_FILENAME, pluginFiles } from "../domain/plugin";
-import { defaultRuleState, renderRulebookMd } from "../domain/rules";
+import {
+  defaultRuleState,
+  type RuleView,
+  renderRulebookMd,
+} from "../domain/rules";
 import {
   SKILL_DEFAULTS,
   type SkillDefault,
@@ -88,13 +92,16 @@ function pipelineFor(
   };
 }
 
-/** A Rulebook as the Workspace has it: its body rendered from the current Rules. */
-async function rulebookView(
-  owner: Owner,
-  base: SkillDefault,
-): Promise<SkillView> {
+/** A Rulebook's Rules out of every Rule: its Pipeline's, or all of them when it names none. */
+function rulesOf(base: SkillDefault, rules: RuleView[]): RuleView[] {
+  return base.pipelineId
+    ? rules.filter((rule) => rule.spec.pipelineId === base.pipelineId)
+    : rules;
+}
+
+/** A Rulebook as the Workspace has it: its body rendered from its current Rules. */
+function rulebookView(base: SkillDefault, rules: RuleView[]): SkillView {
   const pipeline = pipelineFor(base);
-  const rules = await listRules(owner, base.pipelineId ?? null);
   const defaults = rules.map((rule) => ({
     spec: rule.spec,
     state: defaultRuleState(rule.spec),
@@ -116,23 +123,29 @@ async function rulebookView(
   };
 }
 
-/** Every Skill as the Workspace has it now, Rulebooks included, in Default order. */
+/**
+ * Every Skill as the Workspace has it now, Rulebooks included, in Default
+ * order. The Skills' Versions and every Rule are two queries that start
+ * together, rather than one for the Skills and then one per Rulebook.
+ */
 export async function listSkills(owner: Owner): Promise<SkillView[]> {
   const db = sql();
-  const rows = await db<SkillRow[]>`
-    select distinct on (sv.skill_id) ${COLUMNS(db)}
-    from harness.skill_versions sv
-    join harness.staff st on st.id = sv.saved_by
-    where sv.owner = ${owner}
-    order by sv.skill_id, sv.version desc`;
+  const [rows, rules] = await Promise.all([
+    db<SkillRow[]>`
+      select distinct on (sv.skill_id) ${COLUMNS(db)}
+      from harness.skill_versions sv
+      join harness.staff st on st.id = sv.saved_by
+      where sv.owner = ${owner}
+      order by sv.skill_id, sv.version desc`,
+    listRules(owner),
+  ]);
   const latest = new Map(rows.map((row) => [row.skill_id, row]));
-  return Promise.all(
-    Object.values(SKILL_DEFAULTS).map((base) => {
-      if (base.kind === "rulebook") return rulebookView(owner, base);
-      const row = latest.get(base.id);
-      return Promise.resolve(skillView(base, row ? latestOfRow(row) : null));
-    }),
-  );
+  return Object.values(SKILL_DEFAULTS).map((base) => {
+    if (base.kind === "rulebook")
+      return rulebookView(base, rulesOf(base, rules));
+    const row = latest.get(base.id);
+    return skillView(base, row ? latestOfRow(row) : null);
+  });
 }
 
 /** One Skill by id, or null when there is no such Skill. The chat's `load_skill` and the MCP server read it here. */
@@ -142,7 +155,9 @@ export async function getSkill(
 ): Promise<SkillView | null> {
   const base = SKILL_DEFAULTS[skillId];
   if (!base) return null;
-  if (base.kind === "rulebook") return rulebookView(owner, base);
+  if (base.kind === "rulebook") {
+    return rulebookView(base, await listRules(owner, base.pipelineId ?? null));
+  }
   const db = sql();
   const [row] = await db<SkillRow[]>`
     select ${COLUMNS(db)}

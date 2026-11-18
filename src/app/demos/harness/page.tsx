@@ -4,11 +4,12 @@ import { Suspense } from "react";
 import { projects } from "@/content/projects";
 import { ACCESS_PATH } from "@/features/access/constants";
 import { AccessDeniedError } from "@/features/access/server/gate";
-import { QueryProvider } from "@/features/document-compliance/components/query-provider";
 import { HarnessApp } from "@/features/harness/components/app";
+import { HarnessSkeleton } from "@/features/harness/components/harness-skeleton";
+import { HarnessQueryProvider } from "@/features/harness/components/query-provider";
 import { placeOf } from "@/features/harness/domain/place";
-import { requireStaff } from "@/features/harness/server/context";
-import { listStaff } from "@/features/harness/server/staff";
+import { resolveStaff } from "@/features/harness/server/context";
+import { preloadFirstView } from "@/features/harness/server/preload";
 import "@/features/harness/harness.css";
 
 const project = projects.find((item) => item.slug === "bank-harness");
@@ -22,18 +23,18 @@ type Props = PageProps<"/demos/harness">;
 
 export default function HarnessPage({ searchParams }: Props) {
   return (
-    <QueryProvider>
-      <Suspense fallback={<div className="hx-shimmer h-dvh" />}>
-        <App searchParams={searchParams} />
-      </Suspense>
-    </QueryProvider>
+    <Suspense fallback={<HarnessSkeleton />}>
+      <App searchParams={searchParams} />
+    </Suspense>
   );
 }
 
 /**
- * Passes the Access gate and resolves the Staff member (`requireStaff`
- * creates the Owner's Workspace with its seed on first use), then hands the
- * client shell who is signed in and where the address points.
+ * Passes the Access gate once and resolves the Staff member (creating the
+ * Owner's Workspace with its seed on first use), reads the first view of the
+ * tabs that open (Chat's, and the address's tab's) in parallel, and hands
+ * the client shell who is signed in, where the address points, and that
+ * data, so nothing is asked for again after hydration.
  */
 async function App({ searchParams }: { searchParams: Props["searchParams"] }) {
   const query = await searchParams;
@@ -41,21 +42,25 @@ async function App({ searchParams }: { searchParams: Props["searchParams"] }) {
   for (const [name, value] of Object.entries(query)) {
     if (typeof value === "string") search.set(name, value);
   }
-  const context = await requireStaff().catch((error: unknown) => {
+  const resolved = await resolveStaff().catch((error: unknown) => {
     // The proxy sends visitors to the door first; this is the second gate.
     if (error instanceof AccessDeniedError) return null;
     throw error;
   });
-  if (!context) {
+  if (!resolved) {
     const here = `/demos/harness${search.size > 0 ? `?${search}` : ""}`;
     redirect(`${ACCESS_PATH}?next=${encodeURIComponent(here)}`);
   }
-  const { owner, staff } = context;
+  const { context, everyone } = resolved;
+  const place = placeOf(search);
+  const firstView = await preloadFirstView(context, place);
   return (
-    <HarnessApp
-      initialStaff={staff}
-      allStaff={await listStaff(owner)}
-      initialPlace={placeOf(search)}
-    />
+    <HarnessQueryProvider firstView={firstView} staffId={context.staff.id}>
+      <HarnessApp
+        initialStaff={context.staff}
+        allStaff={everyone}
+        initialPlace={place}
+      />
+    </HarnessQueryProvider>
   );
 }

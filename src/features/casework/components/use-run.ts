@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useReducer, useRef } from "react";
+import { apiPath } from "../domain/api";
 import type { RunEvent } from "../domain/run-events";
 import { emptyRun, type RunView, reduceRun } from "./run-reducer";
 
@@ -8,6 +9,23 @@ type Action = { type: "event"; event: RunEvent } | { type: "reset" };
 
 /** Rule jobs finish in milliseconds; each holds the stage at least this long. */
 const DWELL_MS = 1500;
+
+/**
+ * Events of Runs this tab has followed to their end. A finished Run never
+ * changes, so going back to it shows it at once with no request.
+ */
+const finished = new Map<string, RunEvent[]>();
+const FINISHED_KEEP = 30;
+
+function remember(runId: string, events: RunEvent[]) {
+  finished.delete(runId);
+  finished.set(runId, events);
+  while (finished.size > FINISHED_KEEP) {
+    const oldest = finished.keys().next().value;
+    if (oldest === undefined) break;
+    finished.delete(oldest);
+  }
+}
 
 function reducer(view: RunView, action: Action): RunView {
   return action.type === "reset" ? emptyRun : reduceRun(view, action.event);
@@ -26,7 +44,16 @@ export function useRun(runId: string | null, instant = false): RunView {
     dispatch({ type: "reset" });
     seen.current = 0;
     if (!runId) return;
+    const id = runId;
+    const kept = finished.get(id);
+    if (kept) {
+      // Over and seen before: land on its final state in one render.
+      seen.current = kept.length;
+      for (const event of kept) dispatch({ type: "event", event });
+      return;
+    }
     const controller = new AbortController();
+    const received: RunEvent[] = [];
     let ended = false;
     const queue: RunEvent[] = [];
     let pumping = false;
@@ -58,13 +85,10 @@ export function useRun(runId: string | null, instant = false): RunView {
         attempt++
       ) {
         try {
-          const response = await fetch(
-            `/api/casework/runs/${runId}/events?from=${seen.current}`,
-            {
-              signal: controller.signal,
-              cache: "no-store",
-            },
-          );
+          const response = await fetch(apiPath.runEvents(id, seen.current), {
+            signal: controller.signal,
+            cache: "no-store",
+          });
           if (!response.ok || !response.body)
             throw new Error(String(response.status));
           const reader = response.body
@@ -81,9 +105,13 @@ export function useRun(runId: string | null, instant = false): RunView {
               if (!line.trim()) continue;
               const event = JSON.parse(line) as RunEvent;
               seen.current += 1;
+              received.push(event);
               queue.push(event);
               void pump();
-              if (event.type === "end") ended = true;
+              if (event.type === "end") {
+                ended = true;
+                remember(id, [...received]);
+              }
             }
           }
         } catch {

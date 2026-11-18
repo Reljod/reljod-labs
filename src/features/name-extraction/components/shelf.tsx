@@ -15,10 +15,12 @@ function DocumentCard({
   card,
   index,
   onOpen,
+  onIntent,
 }: {
   card: CorpusCard;
   index: number;
   onOpen: (card: CorpusCard) => void;
+  onIntent: (card: CorpusCard) => void;
 }) {
   return (
     <motion.li
@@ -35,6 +37,8 @@ function DocumentCard({
         whileHover="hover"
         whileFocus="hover"
         onClick={() => onOpen(card)}
+        onPointerEnter={() => onIntent(card)}
+        onFocus={() => onIntent(card)}
         aria-label={`Open ${card.title}, ${card.pages} pages, ${card.expectedNames} names inside`}
         className="group outline-box press flex h-full w-full flex-col overflow-hidden rounded-sm bg-paper text-left focus-visible:outline-2 focus-visible:outline-offset-3 focus-visible:outline-federal-blue"
       >
@@ -83,19 +87,20 @@ function DocumentCard({
  */
 export function Shelf({
   corpus,
-  error,
+  onIntent,
   onOpen,
   onUploaded,
   uploadRef,
 }: {
-  corpus: CorpusCard[] | null;
-  error: string | null;
+  corpus: CorpusCard[];
+  /** The visitor is about to open a card (hover, focus): start loading it. */
+  onIntent: (card: CorpusCard) => void;
   onOpen: (card: CorpusCard) => void;
   onUploaded: (upload: Uploaded) => void;
   uploadRef?: Ref<HTMLInputElement>;
 }) {
   const [all, setAll] = useState(false);
-  const cards = corpus ?? [];
+  const cards = corpus;
   const featured = cards.filter((card) => card.featured);
   const lead = featured.length > 0 ? featured : cards.slice(0, 6);
   const rest = cards.filter((card) => !lead.includes(card));
@@ -122,22 +127,7 @@ export function Shelf({
         </div>
       </div>
 
-      {error ? (
-        <p role="alert" className="text-sm text-seal-red">
-          {error}
-        </p>
-      ) : null}
-
       <ul className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-        {corpus === null && !error
-          ? Array.from({ length: 6 }, (_, index) => (
-              <li
-                // biome-ignore lint/suspicious/noArrayIndexKey: placeholders
-                key={index}
-                className="h-[19rem] animate-pulse rounded-sm border-2 border-ink/20 bg-paper/60"
-              />
-            ))
-          : null}
         <AnimatePresence initial={false}>
           {shown.map((card, index) => (
             <DocumentCard
@@ -145,6 +135,7 @@ export function Shelf({
               card={card}
               index={index}
               onOpen={onOpen}
+              onIntent={onIntent}
             />
           ))}
         </AnimatePresence>

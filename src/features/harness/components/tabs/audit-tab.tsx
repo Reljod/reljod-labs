@@ -22,6 +22,7 @@ import {
   sessionChoices,
 } from "../audit/model";
 import { useHarness } from "../harness-context";
+import { listQuery } from "../list-queries";
 import {
   Button,
   cx,
@@ -101,9 +102,9 @@ export default function AuditTab() {
   const effectiveScope: Scope =
     !admin && chosenScope === "workspace" ? "mine" : chosenScope;
 
+  // The same list (and key) as Chat's: the signed-in Staff member's Sessions.
   const sessions = useQuery({
-    queryKey: keys.sessions,
-    queryFn: () => api.sessions.list(),
+    ...listQuery("sessions", staff.id),
     enabled: visible,
   });
   const sessionId_ =
@@ -124,15 +125,18 @@ export default function AuditTab() {
       }),
       effectiveScope,
     ],
-    queryFn: ({ pageParam }) =>
-      api.audit.list({
-        sessionId: sessionId_,
-        actorKind: actor || null,
-        action: action || null,
-        mine,
-        before: pageParam,
-        limit: LIMITS.auditPageSize,
-      }),
+    queryFn: ({ pageParam, signal }) =>
+      api.audit.list(
+        {
+          sessionId: sessionId_,
+          actorKind: actor || null,
+          action: action || null,
+          mine,
+          before: pageParam,
+          limit: LIMITS.auditPageSize,
+        },
+        { signal },
+      ),
     initialPageParam: null as number | null,
     getNextPageParam: (last) => last.nextBefore,
     enabled: visible && !waitingForSession,

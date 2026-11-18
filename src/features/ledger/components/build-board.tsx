@@ -1,7 +1,7 @@
 "use client";
 
 import { motion } from "motion/react";
-import type { Ref } from "react";
+import { memo, type Ref } from "react";
 import { BlockView } from "./block-view";
 import type { PlacedBlock } from "./placed-block";
 
@@ -14,7 +14,8 @@ type BuildBoardProps = {
 };
 
 /** Where Ledger places each Content block, in answer order, before Reform. */
-export function BuildBoard({
+/* Memoised: the chat answer streams into the screen around it, a re-render per delta. */
+export const BuildBoard = memo(function BuildBoard({
   placed,
   reformed,
   building,
@@ -77,4 +78,4 @@ export function BuildBoard({
       </ol>
     </section>
   );
-}
+});

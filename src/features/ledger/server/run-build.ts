@@ -14,7 +14,6 @@ import {
   planStepSchema,
 } from "../domain/build-plan";
 import { streamPlan } from "./planner";
-import { rateLimitMessage } from "./rate-limit";
 import { insertBuild, latestAnsweredSessionId } from "./repository";
 import type { Visitor } from "./visitor";
 
@@ -34,6 +33,8 @@ export function runBuild(input: {
   owner: Owner;
   question: string;
   visitor: Visitor;
+  /** The visitor's rate-limit message (`rateLimitMessage`), already on its way. */
+  limit: Promise<string | null>;
 }): ReadableStream<Uint8Array> {
   const encoder = new TextEncoder();
 
@@ -42,7 +43,7 @@ export function runBuild(input: {
       const send = (event: BuildEvent) =>
         controller.enqueue(encoder.encode(encodeEvent(event)));
       try {
-        const limit = await rateLimitMessage(input.visitor);
+        const limit = await input.limit;
         if (limit) {
           send({
             type: "limited",

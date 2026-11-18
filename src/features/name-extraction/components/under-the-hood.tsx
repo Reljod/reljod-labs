@@ -17,14 +17,21 @@ import { cx } from "./ui";
 const loading = () => (
   <div className="h-64 animate-pulse rounded-sm border border-ink/10 bg-paper/60" />
 );
+const loadRulesEditor = () => import("./rules-editor");
+const loadAuditLog = () => import("./audit-log");
 const RulesEditor = dynamic(
-  () => import("./rules-editor").then((module) => module.RulesEditor),
+  () => loadRulesEditor().then((module) => module.RulesEditor),
   { loading },
 );
 const AuditLog = dynamic(
-  () => import("./audit-log").then((module) => module.AuditLog),
+  () => loadAuditLog().then((module) => module.AuditLog),
   { loading },
 );
+/** Fetches a lazy tab's code on hover or focus, so the click shows it at once. */
+const PRELOAD: Partial<Record<TabId, () => Promise<unknown>>> = {
+  rules: loadRulesEditor,
+  audit: loadAuditLog,
+};
 
 export const MCP_PATH = "/api/name-extraction/mcp";
 
@@ -86,6 +93,7 @@ export function UnderTheHood({
   onModels,
   onOpenRun,
   onRefreshRuns,
+  rulebooks,
   onRulesSaved,
 }: {
   view: RunView | null;
@@ -97,6 +105,8 @@ export function UnderTheHood({
   onModels: (models: ModelChoice) => void;
   onOpenRun: (run: RunSummary) => void;
   onRefreshRuns: () => void;
+  /** The Owner's Rulebook versions the page already has, newest first. */
+  rulebooks: RulebookVersion[];
   onRulesSaved: (version: RulebookVersion) => void;
 }) {
   const [tab, setTab] = useState<TabId>("how");
@@ -132,6 +142,8 @@ export function UnderTheHood({
               aria-selected={tab === item.id}
               aria-controls={`sv-hood-panel-${item.id}`}
               onClick={() => setTab(item.id)}
+              onPointerEnter={() => PRELOAD[item.id]?.().catch(() => undefined)}
+              onFocus={() => PRELOAD[item.id]?.().catch(() => undefined)}
               className={cx(
                 "outline-box press eyebrow flex h-9 shrink-0 items-center rounded-sm px-3 font-bold",
                 tab === item.id ? "bg-ink text-paper" : "bg-paper",
@@ -148,7 +160,9 @@ export function UnderTheHood({
         aria-labelledby={`sv-hood-tab-${tab}`}
       >
         {tab === "how" ? <HowItWorks loaded={view?.skills ?? []} /> : null}
-        {tab === "rules" ? <RulesEditor onSaved={onRulesSaved} /> : null}
+        {tab === "rules" ? (
+          <RulesEditor initial={rulebooks} onSaved={onRulesSaved} />
+        ) : null}
         {tab === "audit" ? (
           runId && view ? (
             <AuditLog events={view.events} runId={runId} title={title} />

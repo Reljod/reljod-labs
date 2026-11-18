@@ -58,24 +58,30 @@ function ownedBy(session: SessionRow | null, owner: Owner) {
  * so no server action or route of the desk can reach the model without it.
  */
 
-/** The Owner's Desks, newest activity first. */
-export async function ownedDesks() {
-  const { owner } = await requireOwner();
+/**
+ * The Owner's Desks, newest activity first. Takes the Owner a caller already
+ * got from `requireOwner`, so one request asks the Auth server once.
+ */
+export async function ownedDesks(owner: Owner) {
   return sessionsOf(owner, MAX_DESKS);
 }
 
 /** Opens a fresh Desk and keeps the old ones on the list. */
 export async function startSession() {
   const { owner } = await requireOwner();
-  return openSession(owner);
+  const id = await openSession(owner);
+  const session = await getSession(id);
+  if (!session) throw new Error("Session was not created");
+  return { owner, session };
 }
 
 /** Goes back to an earlier Desk, if the Owner owns it. */
 export async function switchSession(id: string) {
   const { owner } = await requireOwner();
-  if (!ownedBy(await getSession(id), owner)) return false;
+  const session = ownedBy(await getSession(id), owner);
+  if (!session) return null;
   await rememberDesk(id);
-  return true;
+  return { owner, session };
 }
 
 /** A bearer token that lets the MCP server act for one session. */
@@ -115,23 +121,38 @@ export async function visitorHash() {
  * other browsers pick up where they left off.
  */
 export async function currentSession(): Promise<SessionRow | null> {
+  return (await currentDesk()).session;
+}
+
+/** `currentSession`, with the Owner it was checked against. */
+export async function currentDesk(): Promise<{
+  owner: Owner;
+  session: SessionRow | null;
+}> {
   const { owner } = await requireOwner();
   const id = (await cookies()).get(SESSION_COOKIE)?.value;
   const open = id ? ownedBy(await getSession(id), owner) : null;
-  if (open) return open;
+  if (open) return { owner, session: open };
   const [latest] = await sessionsOf(owner, 1);
-  return latest ?? null;
+  return { owner, session: latest ?? null };
 }
 
 /** The Desk this request works in, created on first use (from a server action or route). */
 export async function ensureSession(): Promise<SessionRow> {
-  const existing = await currentSession();
-  if (existing) return existing;
-  const { owner } = await requireOwner();
+  return (await ensureDesk()).session;
+}
+
+/** `ensureSession`, with the Owner it was checked against. */
+export async function ensureDesk(): Promise<{
+  owner: Owner;
+  session: SessionRow;
+}> {
+  const { owner, session } = await currentDesk();
+  if (session) return { owner, session };
   const id = await openSession(owner);
-  const session = await getSession(id);
-  if (!session) throw new Error("Session was not created");
-  return session;
+  const created = await getSession(id);
+  if (!created) throw new Error("Session was not created");
+  return { owner, session: created };
 }
 
 export { E2E_VISITOR };

@@ -1,5 +1,6 @@
 "use client";
 
+import dynamic from "next/dynamic";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   DemoBar,
@@ -13,13 +14,13 @@ import { PIPELINE_IDS, PIPELINES } from "../domain/pipelines";
 import type { Answer } from "../domain/run-events";
 import {
   answer,
-  getSpend,
   newDesk,
   openDesk,
   openEarlierDesk,
   stop,
 } from "../server/actions";
 import type { DeskView, DocView, RunSummary, SpendView } from "../view";
+import { getDeskStatus } from "./api";
 import { Cabinet, SCENARIO_TONE } from "./cabinet";
 import "./casework.css";
 import {
@@ -31,13 +32,35 @@ import {
 import { DocViewer } from "./doc-viewer";
 import { JobGlyph, ScenarioGlyph } from "./glyphs";
 import { modelSummary } from "./model-form";
-import { PipelineFlow } from "./pipeline-flow";
 import { isOver } from "./run-reducer";
 import { SettingsDrawer } from "./settings-drawer";
+import { CabinetSkeleton } from "./skeletons";
 import { Stage } from "./stage";
 import { Terminal, type TerminalLine } from "./terminal";
 import { filesFromDrop, hasFiles, uploadFiles } from "./upload";
 import { useRun } from "./use-run";
+
+/** The pipeline graphs (React Flow), loaded the first time they are wanted. */
+const loadPipelineFlow = () => import("./pipeline-flow");
+const PipelineFlow = dynamic(
+  () => loadPipelineFlow().then((module) => module.PipelineFlow),
+  {
+    ssr: false,
+    loading: () => (
+      <div
+        aria-busy="true"
+        className="flex h-full items-center justify-center rounded-sm border-2 border-ink bg-paper shadow-hard-md"
+      >
+        <p
+          aria-live="polite"
+          className="cw-shimmer font-mono text-xs uppercase"
+        >
+          Drawing the pipelines…
+        </p>
+      </div>
+    ),
+  },
+);
 
 const TRAY_LIMIT = 12;
 
@@ -66,6 +89,21 @@ function toItems(desk: DeskView, docs: Map<string, DocView>): ChatItem[] {
   }));
 }
 
+/** The Run a desk opens on: its latest, landing finished if it is over. */
+function latestRun(view: DeskView) {
+  const latest = view.runs[0];
+  return latest ? { id: latest.id, instant: isOver(latest) } : null;
+}
+
+function docsOf(view: DeskView) {
+  return new Map(
+    [
+      ...view.folders.flatMap((folder) => folder.documents),
+      ...view.uploads,
+    ].map((doc) => [doc.id, doc]),
+  );
+}
+
 function ago(iso: string) {
   const minutes = Math.round((Date.now() - new Date(iso).getTime()) / 60_000);
   if (minutes < 1) return "just now";
@@ -75,17 +113,20 @@ function ago(iso: string) {
 }
 
 /** Teller, the Casework desk: the Cabinet, the stage where Runs play out, and the Specialist's chat. */
-export function Desk() {
-  const [desk, setDesk] = useState<DeskView | null>(null);
+export function Desk({ initial }: { initial: DeskView | null }) {
+  // The page's server render hands over the first view, so nothing is fetched on load.
+  const [desk, setDesk] = useState<DeskView | null>(initial);
   const [failed, setFailed] = useState<string | null>(null);
-  const [items, setItems] = useState<ChatItem[]>([]);
+  const [items, setItems] = useState<ChatItem[]>(() =>
+    initial ? toItems(initial, docsOf(initial)) : [],
+  );
   const [tray, setTray] = useState<string[]>([]);
   const [busy, setBusy] = useState<{ label: string; since: number } | null>(
     null,
   );
   /** The Run on the stage. `instant`: it was over when opened, so it lands finished. */
   const [shown, setShown] = useState<{ id: string; instant: boolean } | null>(
-    null,
+    () => (initial ? latestRun(initial) : null),
   );
   const [localRuns, setLocalRuns] = useState<RunSummary[]>([]);
   const [dragging, setDragging] = useState(false);
@@ -97,8 +138,12 @@ export function Desk() {
   const [viewing, setViewing] = useState<string | null>(null);
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [desksOpen, setDesksOpen] = useState(false);
-  const [settings, setSettings] = useState<ModelSettingsByPurpose | null>(null);
-  const [spend, setSpend] = useState<SpendView>({ totalUsd: 0, rows: [] });
+  const [settings, setSettings] = useState<ModelSettingsByPurpose | null>(
+    initial?.settings ?? null,
+  );
+  const [spend, setSpend] = useState<SpendView>(
+    initial?.spend ?? { totalUsd: 0, rows: [] },
+  );
   const [terminalOpen, setTerminalOpen] = useState(false);
   const [chatLines, setChatLines] = useState<TerminalLine[]>([]);
   const [uploading, setUploading] = useState<string | null>(null);
@@ -115,65 +160,64 @@ export function Desk() {
   const [switching, setSwitching] = useState(false);
   const run = useRun(shown?.id ?? null, shown?.instant ?? false);
 
+  /** Which Desk is on screen, for dropping a refresh that answers for another. */
+  const openSessionId = useRef(initial?.sessionId ?? null);
+
+  /** Puts a whole Desk on screen: its Cabinet, transcript, Runs and settings. */
+  const show = useCallback((view: DeskView) => {
+    openSessionId.current = view.sessionId;
+    setDesk(view);
+    setSettings(view.settings);
+    setSpend(view.spend);
+    setItems(toItems(view, docsOf(view)));
+    setLocalRuns([]);
+    setShown(latestRun(view));
+  }, []);
+
   const load = useCallback(async () => {
     try {
-      const view = await openDesk();
-      const map = new Map(
-        [
-          ...view.folders.flatMap((folder) => folder.documents),
-          ...view.uploads,
-        ].map((doc) => [doc.id, doc]),
-      );
-      setDesk(view);
-      setSettings(view.settings);
-      setSpend(view.spend);
-      setItems(toItems(view, map));
-      setLocalRuns([]);
-      const latest = view.runs[0];
-      setShown(
-        latest
-          ? {
-              id: latest.id,
-              instant:
-                latest.status === "completed" ||
-                latest.status === "failed" ||
-                latest.status === "stopped",
-            }
-          : null,
-      );
+      show(await openDesk());
     } catch (error) {
       setFailed(
         error instanceof Error ? error.message : "The desk could not open.",
       );
     }
-  }, []);
+  }, [show]);
 
-  /** Runs and spend again, without touching the transcript. */
+  /**
+   * Runs, Desks and Spend again, without touching the transcript. A GET, so
+   * it never queues behind (or holds up) a write; a newer refresh aborts an
+   * older one, and an answer for a Desk no longer open is dropped.
+   */
+  const refreshing = useRef<AbortController | null>(null);
   const refresh = useCallback(async () => {
+    refreshing.current?.abort();
+    const controller = new AbortController();
+    refreshing.current = controller;
     try {
-      const view = await openDesk();
+      const status = await getDeskStatus({ signal: controller.signal });
+      if (status.sessionId !== openSessionId.current) return;
       setDesk((current) =>
-        current ? { ...current, runs: view.runs, desks: view.desks } : view,
+        current && current.sessionId === status.sessionId
+          ? { ...current, runs: status.runs, desks: status.desks }
+          : current,
       );
-      setSpend(view.spend);
+      setSpend(status.spend);
     } catch {
       // The next refresh will catch up.
     }
   }, []);
-
   useEffect(() => {
-    void load();
-  }, [load]);
+    if (!initial) void load();
+    // The graphs are the other place on the desk; fetch their code once idle.
+    const idle = setTimeout(() => void loadPipelineFlow(), 2500);
+    return () => clearTimeout(idle);
+  }, [initial, load]);
 
-  const docs = useMemo(() => {
-    if (!desk) return new Map<string, DocView>();
-    return new Map(
-      [
-        ...desk.folders.flatMap((folder) => folder.documents),
-        ...desk.uploads,
-      ].map((doc) => [doc.id, doc]),
-    );
-  }, [desk]);
+  const docs = useMemo(
+    () => (desk ? docsOf(desk) : new Map<string, DocView>()),
+    [desk],
+  );
   const trayDocs = tray.flatMap((id) => docs.get(id) ?? []);
 
   const live = Boolean(shown) && !shown?.instant && run.seen > 0;
@@ -183,8 +227,7 @@ export function Desk() {
   // biome-ignore lint/correctness/useExhaustiveDependencies: refresh on status changes only
   useEffect(() => {
     if (!shown || shown.instant || run.seen === 0) return;
-    if (isOver(run)) void refresh();
-    else if (run.status === "waiting") void getSpend().then(setSpend);
+    if (isOver(run) || run.status === "waiting") void refresh();
   }, [run.status]);
 
   /** Every Run of this desk as its card in the chat shows it. */
@@ -404,7 +447,7 @@ export function Desk() {
       chatAbort.current = null;
       sendingRef.current = false;
       setBusy(null);
-      void getSpend().then(setSpend);
+      void refresh();
     }
   }
 
@@ -600,17 +643,18 @@ export function Desk() {
     }
   }
 
+  /**
+   * Opens another Desk in one call. The one on screen stays until the new
+   * one arrives (the chat waits, marked busy), so nothing blanks out.
+   */
   async function changeDesk(id: string | null) {
     chatAbort.current?.abort();
     setDesksOpen(false);
-    setShown(null);
+    const view = id ? await openEarlierDesk(id) : await newDesk();
+    if (!view) throw new Error("That desk is not yours to open.");
     setTray([]);
     setChatLines([]);
-    setItems([]);
-    setDesk(null);
-    if (id) await openEarlierDesk(id);
-    else await newDesk();
-    await load();
+    show(view);
   }
 
   const questionRef = useRef<HTMLDivElement>(null);
@@ -670,9 +714,7 @@ export function Desk() {
       highlight={suggested}
     />
   ) : (
-    <div className="cw-shimmer p-4 font-mono text-xs uppercase">
-      Opening the cabinet…
-    </div>
+    <CabinetSkeleton />
   );
 
   return (
@@ -688,7 +730,19 @@ export function Desk() {
             ["desk", "Desk"],
             ["pipelines", "Pipelines"],
           ] as const
-        ).map(([id, label]) => ({ id, label, onSelect: () => setPage(id) }))}
+        ).map(([id, label]) => ({
+          id,
+          label:
+            id === "pipelines" ? (
+              // Hovering the tab starts fetching the graph code.
+              <span onPointerEnter={() => void loadPipelineFlow()}>
+                {label}
+              </span>
+            ) : (
+              label
+            ),
+          onSelect: () => setPage(id),
+        }))}
       >
         <div className="relative">
           <button
@@ -860,7 +914,8 @@ export function Desk() {
                 onAddToTray={addToTray}
                 onSend={send}
                 busy={Boolean(busy)}
-                disabled={!desk}
+                disabled={!desk || switching}
+                loading={!desk || switching}
                 dragging={dragging}
                 question={going ? run.question : null}
                 onAnswer={reply}

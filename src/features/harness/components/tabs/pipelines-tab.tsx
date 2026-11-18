@@ -18,6 +18,7 @@ import {
 } from "../../domain/run";
 import { api, keys, messageOf } from "../api";
 import { useController, useHarness } from "../harness-context";
+import { listQuery } from "../list-queries";
 import { approvalGate, pendingApproval } from "../pipelines/approval-gating";
 import { humanize } from "../pipelines/format";
 import { PipelinePreview } from "../pipelines/pipeline-preview";
@@ -80,14 +81,11 @@ export default function PipelinesTab() {
   const sessionFilter = filter === "session" && sessionId ? { sessionId } : {};
   const runs = useQuery({
     queryKey: keys.runs(sessionFilter),
-    queryFn: () => api.runs.list(sessionFilter),
+    queryFn: ({ signal }) => api.runs.list(sessionFilter, { signal }),
     refetchInterval: (query) =>
       query.state.data?.some((run) => isRunActive(run.status)) ? 3000 : 15_000,
   });
-  const rules = useQuery({
-    queryKey: keys.rules(),
-    queryFn: () => api.rules.list(),
-  });
+  const rules = useQuery(listQuery("rules", staff.id));
   const ruleTitles = useMemo(
     () =>
       new Map(
@@ -99,7 +97,7 @@ export default function PipelinesTab() {
   // Runs at work are watched even when not open, so a status in the list is never stale.
   useEffect(() => {
     for (const run of runs.data ?? []) {
-      if (isRunActive(run.status)) runStore.open(run.id);
+      if (isRunActive(run.status)) runStore.open(run.id, { shown: false });
     }
   }, [runs.data]);
 

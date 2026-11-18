@@ -3,7 +3,7 @@ import { audit } from "@/features/harness/server/audit";
 import { staffOrDenied } from "@/features/harness/server/context";
 import { InvalidError } from "@/features/harness/server/errors";
 import { originOf } from "@/features/harness/server/oauth-http";
-import { failure } from "@/features/harness/server/respond";
+import { failure, NO_STORE } from "@/features/harness/server/respond";
 import { buildPluginZip } from "@/features/harness/server/skills";
 
 /** The Claude Plugin: a zip of the Workspace's current Skills and the MCP server's address. */
@@ -32,7 +32,7 @@ export async function GET(request: Request) {
       headers: {
         "content-type": "application/zip",
         "content-disposition": `attachment; filename="${built.filename}"`,
-        "cache-control": "no-store",
+        "cache-control": NO_STORE,
       },
     });
   } catch (error) {

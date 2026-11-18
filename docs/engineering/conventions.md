@@ -62,3 +62,53 @@ The Workflow SDK identifies a workflow and each step by file path and function n
 
 - Treat a rename or move of a workflow or step function as a breaking change: say so in the PR and ship it when no run is waiting, or let the stale sweep close the old runs.
 - Pick trace-friendly names when you first add a workflow, so you do not have to rename it later.
+
+## A demo reads through GET routes, never through server actions
+
+Next sends a browser's server actions one at a time (`node_modules/next/dist/docs/01-app/02-guides/server-actions.md`, "Sequential dispatch on the client"). Five demos read their data through actions called from `useEffect`, so every load, page chunk, poll and comparison waited in one line behind the others and behind any write. In Sieve, scrolling a 500-page Document fetched each 12-page chunk only after the rulebook history, the runs list and any Start or Stop in flight. Each action also ran its own access check.
+
+- Read through GET Route Handlers under the demo's `/api/<demo>/` prefix, which must be in the `src/proxy.ts` matcher. Keep server actions for writes.
+- Use the three-file shape Harness started and the five read layers (Casework, Sieve, Document compliance, Handover, Client Manager) now share: `domain/api.ts` (`API_ROOT`, `apiPath`, one response type per route), `server/respond.ts` (`json`, `failure`, `NO_STORE`, `SEED`) and `components/api.ts` (`getJson` with an `AbortSignal`, and a typed wrapper per route). Harness has `NO_STORE` but no `SEED` (each Workspace gets its own copy of the seed, so nothing is shared) and reads through a private `get`, so copy `SEED` and `getJson` from one of the five. Components never call `fetch` for a read directly.
+- A handler passes the gate first, validates its query with zod and scopes every read to the Owner. `failure()` calls `unstable_rethrow` first, answers a refusal with the gate's `denied()`, and never returns a stack trace or the cause in its body.
+- The gate's 401 answer is plain text, not JSON. `getJson` must read the body as text and parse JSON only if it can, or a Guest whose pass just ended sees "Request failed (401)" instead of the reason.
+
+## A demo page arrives with its first view
+
+Every demo first painted an empty shell, hydrated, and only then asked for its data. With the action queue on top, Handover with `?run=` in the address made two requests in a row before anything showed.
+
+- The page's server component reads the first view with `Promise.all`, behind `<Suspense>` (the reads use cookies and `cacheComponents` is on). The Suspense fallback is a skeleton shaped like the screen. The data is passed down as `initial…` props. The client seeds its state from them (React Query: `initialData` plus a `staleTime`) and does not fetch again on mount.
+- Data that needs no Owner (corpus cards, samples) goes into the static shell outside Suspense, or is imported. Sieve's cards cost about 92 ms of server time per visit before; now they cost nothing.
+- A try/catch around a request read (in that server component or any server helper it calls) calls `unstable_rethrow(error)` from `next/navigation` first. Otherwise it swallows Next's prerender bail-out, `notFound()` or `redirect()`, and `pnpm build` prerenders the page with no data in it. Document compliance's `initialFor` first shipped without it; only `pnpm build` caught it.
+
+## One gate call per request, and independent work starts together
+
+For a Host, `requireOwner()` is a call to the Supabase auth server. Casework's desk load called it twice, once in each helper. Client Manager's client file ran the gate, then the lookup, then seven queries on a 4-connection pool, so it took two database rounds.
+
+- Resolve the Owner once at the entry point (page, handler, action) and pass `owner` down. Never call the gate again inside the helpers of the same request.
+- Start independent work in one `Promise.all`: the gate with the row lookup, a rate-limit count with the session load, the signed URL with the model-call query. Return no data unless the gate passed, and never leave a rejected promise unhandled.
+- Fold small scalar reads into one query, so that a view's queries fit the pool in one round. Index the columns a view filters by (Client Manager, `20261118130000_client_manager_read_indexes.sql`).
+
+## Cache by who can change the data
+
+- `NO_STORE` (`private, no-store`) for anything an Owner saved or that can still change. `SEED` (`private, max-age=300, stale-while-revalidate=3600`) only for deterministic shared data. Never `public`: every demo route is behind the gate.
+- If a response contains a signed URL, it gets `NO_STORE`, even for seed data, because the stale window could hand out an expired link.
+- Signed URLs for shared seed files are cached on the server and reused while they have plenty of time left (signed for 2 hours, reused while more than 1 hour remains). The URL then stays the same, so the browser's image cache works. Document compliance re-signed every page image on every load, so the browser downloaded each one again. Files an Owner uploaded are signed per request.
+- Data derived from an Owner's settings (Sieve's pre-run preview depends on the current rulebook) is not seed data. Cache it for a short time and drop it when the setting is saved.
+- A finished Run that cannot change any more is kept in component state for the visit: bounded (Handover keeps 20), expiring before any signed URL in it does, and cleared by Redo. Reopening it makes no request and replays nothing. Keep it in component state rather than a module-level Map, so it does not outlive the visit or the person. A Run that can still change after it finishes (Document compliance: re-evaluate, review) is not cached.
+
+## Clicks react in the same frame; waits look like what is coming
+
+- Keep the previous view on screen, marked `aria-busy`, while the next one loads. Never blank a list for a refetch, and never let a tab remount throw away what it showed. Handover keeps a tab mounted once it has been visited.
+- Start loading on intent: on hover or focus, and in Handover after a pointer rests for 120 ms. Use that read once, only while it is fresh (Handover: 10 s), and discard it after a write. Anything already loaded paints on the first render, not after an effect.
+- Start the work and the animation together. Ledger's cat used to finish its 1.16 s run-off before the ask started. Client Manager's Map used to wait for its reveal before fetching. Prefetch the destination as soon as its id is known.
+- Heavy client-only code (React Flow, the DOCX/PPTX builders, the Map renderer, rarely visited tabs) loads with `next/dynamic` or `import()`, and is prefetched on hover, on focus or when the browser is idle. Handover's first download went from 111 KB to 87 KB gzipped.
+- A loading state is a skeleton in the demo's own style and shaped like the content, with `aria-busy` and an sr-only `aria-live="polite"` status. It reserves the space so nothing shifts when the data lands, and it has an error state, never an endless shimmer. A wait over about a second says what is happening.
+- Apply streamed events at most once per animation frame, and memoise finished items so the live one is the only one that re-renders. Do not poll where a stream already exists.
+
+## A read in flight never undoes a write
+
+Moving reads off the action queue lets them overlap with writes. In Handover, a Desk read that started before a Rule save could land after it and put the old Rules back on screen.
+
+- A write discards every read of the same data that is still in flight, then reads again (or applies the write's own answer).
+- A newer refresh aborts the older one (`AbortController`), and an answer for a view that is no longer open is dropped.
+- A page appended to a list ("Load older") attaches only to the version of the list it was requested for.

@@ -1,12 +1,10 @@
 "use client";
 
-import { useMutation } from "@tanstack/react-query";
 import { animate, useReducedMotion } from "motion/react";
 import { useRouter } from "next/navigation";
 import { type FormEvent, useEffect, useRef, useState } from "react";
-import { QueryProvider } from "@/features/document-compliance/components/query-provider";
 import { cleanQuestion, MAX_QUESTION_LENGTH } from "../domain/presets";
-import { startAskSession } from "../server/actions";
+import { type StartAskResult, startAskSession } from "../server/actions";
 import { Cat, type CatPose } from "./cat";
 import { PresetChips } from "./preset-chips";
 
@@ -15,14 +13,6 @@ const TYPING_DEBOUNCE_MS = 400;
 
 /** The hero's chat box: Ask Ledger anything, and he rebuilds the site to answer. */
 export function AskBox() {
-  return (
-    <QueryProvider>
-      <AskForm />
-    </QueryProvider>
-  );
-}
-
-function AskForm() {
   const router = useRouter();
   const reduceMotion = useReducedMotion();
   const catRef = useRef<HTMLDivElement>(null);
@@ -58,6 +48,12 @@ function AskForm() {
     );
   }
 
+  /** Puts him back on the box at once, in `next`. */
+  function comeBack(next: CatPose) {
+    if (catRef.current) void animate(catRef.current, { x: 0 }, { duration: 0 });
+    setPose(next);
+  }
+
   // The box stays busy from the first click until the session page takes
   // over (or the ask fails), so a second click cannot open a second session.
   const sending = useRef(false);
@@ -67,40 +63,56 @@ function AskForm() {
     setBusy(false);
   }
 
-  const ask = useMutation({
-    mutationFn: startAskSession,
-    onSuccess: async (result, asked) => {
-      if (result.status === "started") {
-        await runOff();
-        router.push(
-          `/ask/${result.sessionId}?ask=${encodeURIComponent(asked)}`,
-        );
-        // Next keeps this page mounted, hidden, for the Back button: be back on the box by then.
-        setTimeout(() => {
-          if (catRef.current)
-            void animate(catRef.current, { x: 0 }, { duration: 0 });
-          setQuestion("");
-          setPose("idle");
-          ask.reset();
-          release();
-        }, 1200);
-      } else if (result.status === "limited" && result.sessionId) {
-        router.push(`/ask/${result.sessionId}?notice=limited`);
-        setTimeout(release, 1200);
-      } else if (result.status === "limited") {
-        setPose("sleep");
-        setNotice(result.message);
-        release();
-      } else {
-        release();
-      }
-    },
-    onError: () => {
+  /**
+   * He sets off the moment the question is sent: the gallop and opening the
+   * Ask session run side by side, and the session page is prefetched while he
+   * runs, so neither waits on the other.
+   */
+  async function send(asked: string) {
+    const sessionHref = (id: string) =>
+      `/ask/${id}?ask=${encodeURIComponent(asked)}`;
+    const opening = startAskSession(asked).then(
+      (started): StartAskResult | null => {
+        if (started.status === "started") {
+          router.prefetch(sessionHref(started.sessionId));
+        }
+        return started;
+      },
+      () => null,
+    );
+    // Both settle before he is called back, so a fast failure cannot send
+    // him galloping off after he is back on the box.
+    const [result] = await Promise.all([opening, runOff()]);
+    if (!result) {
       release();
-      setPose("confused");
+      comeBack("confused");
       setNotice("Ledger couldn't open his books just now. Please try again.");
-    },
-  });
+      return;
+    }
+
+    if (result.status === "started") {
+      router.push(sessionHref(result.sessionId));
+      // Next keeps this page mounted, hidden, for the Back button: be back on the box by then.
+      setTimeout(() => {
+        comeBack("idle");
+        setQuestion("");
+        release();
+      }, 1200);
+    } else if (result.status === "limited" && result.sessionId) {
+      router.push(`/ask/${result.sessionId}?notice=limited`);
+      setTimeout(() => {
+        comeBack("idle");
+        release();
+      }, 1200);
+    } else if (result.status === "limited") {
+      comeBack("sleep");
+      setNotice(result.message);
+      release();
+    } else {
+      comeBack("idle");
+      release();
+    }
+  }
 
   function submit(text: string) {
     const clean = cleanQuestion(text);
@@ -109,7 +121,7 @@ function AskForm() {
     setBusy(true);
     setNotice(null);
     setPose("search");
-    ask.mutate(clean);
+    void send(clean);
   }
 
   function onSubmit(event: FormEvent) {
@@ -117,8 +129,7 @@ function AskForm() {
     submit(question);
   }
 
-  const shownPose: CatPose =
-    ask.isPending || ask.isSuccess ? pose : typing ? "think" : pose;
+  const shownPose: CatPose = busy ? pose : typing ? "think" : pose;
 
   return (
     <aside

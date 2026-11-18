@@ -4,22 +4,15 @@ import { headers } from "next/headers";
 import { start } from "workflow/api";
 import { DENIED_MESSAGE } from "@/features/access/constants";
 import { type Owner, ownerOf } from "@/features/access/domain/owner";
-import {
-  type Access,
-  currentAccess,
-  requireOwner,
-} from "@/features/access/server/gate";
+import { type Access, currentAccess } from "@/features/access/server/gate";
 import { E2E_HEADER } from "../constants";
-import {
-  type AuditActor,
-  type AuditPage,
-  isAuditAction,
-} from "../domain/audit";
+import { isRunId } from "../domain/api";
+import type { AuditActor } from "../domain/audit";
 import type { ReviewInput } from "../domain/review";
 import { resolveRulebook } from "../domain/rules";
 import { findPack } from "../packs";
-import type { RunView, SessionRunView, StartResult } from "../view";
-import { actorOf, audit, listAuditEvents } from "./audit";
+import type { StartResult } from "../view";
+import { actorOf, audit } from "./audit";
 import { env } from "./env";
 import {
   type ReevaluateResult,
@@ -33,8 +26,6 @@ import {
   createRun,
   failRun,
   latestCompletedRunId,
-  listOwnerRuns,
-  loadRun,
   setWorkflowRunId,
 } from "./repository";
 import { ownerRuleStates } from "./rules";
@@ -140,23 +131,6 @@ async function startRun(
   return { status: "started", runId };
 }
 
-/** One of the Owner's runs; null for a run someone else started. */
-export async function getRun(runId: string): Promise<RunView | null> {
-  const { owner } = await requireOwner();
-  return loadRun(runId, owner);
-}
-
-/**
- * The runs this Owner started, newest first, on any device: a Host's
- * browsers, or every device on a Guest pass. Empty before the first run.
- */
-export async function getSessionRuns(): Promise<SessionRunView[]> {
-  const { owner } = await requireOwner();
-  return listOwnerRuns(owner);
-}
-
-const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
-
 /** Runs a write for the signed-in Owner, turning a server error into a message. */
 async function asOwner<T extends { ok: boolean }>(
   what: string,
@@ -179,7 +153,7 @@ async function asOwner<T extends { ok: boolean }>(
 export async function reevaluateRun(
   runId: string,
 ): Promise<ReevaluateResult | { ok: false; message: string }> {
-  if (!UUID.test(runId)) return { ok: false, message: "No such run." };
+  if (!isRunId(runId)) return { ok: false, message: "No such run." };
   return asOwner("re-evaluate the run", (owner, actor) =>
     reevaluate(owner, actor, runId),
   );
@@ -192,33 +166,11 @@ export async function reviewFinding(
   evaluation: number,
   input: ReviewInput,
 ): Promise<ReviewResult> {
-  if (!UUID.test(runId)) return { ok: false, message: "No such run." };
+  if (!isRunId(runId)) return { ok: false, message: "No such run." };
   if (!Number.isInteger(evaluation) || evaluation < 1) {
     return { ok: false, message: "No such Evaluation." };
   }
   return asOwner("save the decision", (owner, actor) =>
     review(owner, actor, runId, requirementId, evaluation, input),
   );
-}
-
-/** The Owner's Audit trail, newest first, optionally for one run or one action. */
-export async function getAuditTrail(
-  input: {
-    runId?: string | null;
-    action?: string | null;
-    before?: number | null;
-  } | null = {},
-): Promise<AuditPage> {
-  const { owner } = await requireOwner();
-  const filter = input ?? {};
-  const runId = filter.runId && UUID.test(filter.runId) ? filter.runId : null;
-  if (filter.runId && !runId) return { events: [], before: null };
-  return listAuditEvents(owner, {
-    runId,
-    action: isAuditAction(filter.action) ? filter.action : null,
-    before:
-      typeof filter.before === "number" && Number.isInteger(filter.before)
-        ? filter.before
-        : null,
-  });
 }

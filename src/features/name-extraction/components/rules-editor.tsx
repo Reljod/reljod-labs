@@ -8,7 +8,8 @@ import {
   type RulebookVersion,
   rulebookSchema,
 } from "../domain/contract";
-import { getRulebook, rulebookHistory, saveRulebook } from "../server/actions";
+import { saveRulebook } from "../server/actions";
+import { api } from "./api";
 import { percent } from "./format";
 import {
   Button,
@@ -113,14 +114,22 @@ function Slider({
  * version after asking. Every Run records the version it ran under.
  */
 export function RulesEditor({
+  initial,
   onSaved,
 }: {
+  /** The versions the page already has (newest first); the editor loads them itself without. */
+  initial?: RulebookVersion[];
   /** Another part of the page shows the Rulebook (the Register's threshold). */
   onSaved: (version: RulebookVersion) => void;
 }) {
-  const [current, setCurrent] = useState<RulebookVersion | null>(null);
-  const [history, setHistory] = useState<RulebookVersion[]>([]);
-  const [draft, setDraft] = useState<Rulebook>(DEFAULT_RULEBOOK);
+  const seeded = initial && initial.length > 0 ? initial : null;
+  const [current, setCurrent] = useState<RulebookVersion | null>(
+    seeded?.[0] ?? null,
+  );
+  const [history, setHistory] = useState<RulebookVersion[]>(seeded ?? []);
+  const [draft, setDraft] = useState<Rulebook>(
+    seeded?.[0]?.rulebook ?? DEFAULT_RULEBOOK,
+  );
   const [note, setNote] = useState("");
   const [loadError, setLoadError] = useState<string | null>(null);
   const [result, setResult] = useState<{ ok: boolean; text: string } | null>(
@@ -134,10 +143,9 @@ export function RulesEditor({
 
   const load = useCallback(async () => {
     try {
-      const [rulebook, versions] = await Promise.all([
-        getRulebook(),
-        rulebookHistory(),
-      ]);
+      // Newest first, then the default: the first is the current one.
+      const versions = await api.rulebooks();
+      const rulebook = versions[0];
       setCurrent(rulebook);
       setDraft(rulebook.rulebook);
       setHistory(versions);
@@ -151,9 +159,11 @@ export function RulesEditor({
     }
   }, []);
 
+  // Seeded from the page: no second read (a late one would overwrite edits).
+  const loadOnMount = seeded === null;
   useEffect(() => {
-    void load();
-  }, [load]);
+    if (loadOnMount) void load();
+  }, [load, loadOnMount]);
 
   const base = current?.rulebook ?? DEFAULT_RULEBOOK;
   const dirty = !same(base, draft);

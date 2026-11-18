@@ -20,6 +20,7 @@ import {
 } from "../knowledge/sources-list";
 import { UploadPanel } from "../knowledge/upload-panel";
 import { useUploads } from "../knowledge/use-uploads";
+import { listQuery } from "../list-queries";
 import { Badge, cx, Empty, ErrorNote, Loading, Tabs } from "../ui";
 
 type View = "sources" | "search" | "conflicts";
@@ -51,7 +52,7 @@ async function sampleFile(idOrPath: string): Promise<File> {
  * Conflict or removes a Source, and the buttons say so when they are off.
  */
 export default function KnowledgeTab() {
-  const { can, place, openTab } = useHarness();
+  const { can, place, openTab, staff } = useHarness();
   const queryClient = useQueryClient();
   const sourceParam = place.params.source ?? null;
   const conflictParam = place.params.conflict ?? null;
@@ -73,8 +74,7 @@ export default function KnowledgeTab() {
   }, [conflictParam, sourceParam]);
 
   const sources = useQuery({
-    queryKey: keys.sources,
-    queryFn: api.sources.list,
+    ...listQuery("sources", staff.id),
     refetchInterval: (query) => {
       const list = query.state.data ?? [];
       const reading = list.some((source) => source.status === "reading");
@@ -83,10 +83,7 @@ export default function KnowledgeTab() {
       return reading || waiting ? POLL_MS : false;
     },
   });
-  const conflicts = useQuery({
-    queryKey: keys.conflicts(),
-    queryFn: () => api.knowledge.conflicts(),
-  });
+  const conflicts = useQuery(listQuery("conflicts", staff.id));
 
   const refresh = useCallback(() => {
     for (const root of ["sources", "source", "conflicts", "search"]) {

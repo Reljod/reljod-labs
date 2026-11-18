@@ -26,4 +26,3 @@ export type UploadType = keyof typeof UPLOAD_TYPES;
 
 export const BUCKET = "process-transfer";
 export const DEMO_PATH = "/demos/process-transfer";
-export const API_PATH = "/api/process-transfer";

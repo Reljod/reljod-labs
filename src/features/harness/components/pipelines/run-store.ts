@@ -94,13 +94,23 @@ const sleepFor = (ms: number, signal: AbortSignal) =>
 type Options = {
   /** Waits between reconnects; tests pass an instant one. */
   sleep?: (ms: number, signal: AbortSignal) => Promise<void>;
+  /** How many ended Runs to keep; `MAX_ENDED_RUNS` unless a test says otherwise. */
+  maxEnded?: number;
 };
+
+/**
+ * Ended Runs kept for the visit. An ended Run cannot change, so reopening
+ * one makes no request; past this many, the least recently opened goes (and
+ * is read again if it is opened again).
+ */
+export const MAX_ENDED_RUNS = 20;
 
 /**
  * Every Run the Pipelines tab has opened, each kept live by its own stream.
  * Switching Runs does not close anything: a Run that is at work keeps
  * streaming in the background, and coming back shows where it got to. A Run
- * that had ended when opened is read once, from `get`.
+ * that had ended when opened is read once, from `get`, and kept: up to
+ * `MAX_ENDED_RUNS` of them, never the one opened last.
  *
  * An external store for `useSyncExternalStore`: every change replaces the
  * snapshot Map.
@@ -111,12 +121,18 @@ export class RunStore {
   private readonly controllers = new Map<string, AbortController>();
   private readonly loaded = new Map<string, Set<() => void>>();
   private readonly sleep: NonNullable<Options["sleep"]>;
+  private readonly maxEnded: number;
+  /** When each Run was last opened, to drop the least recent ended ones first. */
+  private readonly opened = new Map<string, number>();
+  private openCount = 0;
+  private lastOpened: string | null = null;
 
   constructor(
     private readonly source: RunSource,
     options: Options = {},
   ) {
     this.sleep = options.sleep ?? sleepFor;
+    this.maxEnded = Math.max(1, options.maxEnded ?? MAX_ENDED_RUNS);
   }
 
   subscribe = (listener: () => void) => {
@@ -132,8 +148,18 @@ export class RunStore {
     return this.entries.get(runId);
   }
 
-  /** Starts watching a Run, once. Calling it again for a Run already watched does nothing. */
-  open(runId: string) {
+  /**
+   * Starts watching a Run, once. Calling it again for a Run already watched
+   * does nothing. `shown: false` is for a Run watched in the background (a
+   * list keeping its statuses live): it does not count as opened, so it
+   * never pushes the Run on screen out of the ended Runs kept.
+   */
+  open(runId: string, { shown = true }: { shown?: boolean } = {}) {
+    if (shown) {
+      this.openCount += 1;
+      this.opened.set(runId, this.openCount);
+      this.lastOpened = runId;
+    }
     const known = this.entries.get(runId);
     if (known && (this.controllers.has(runId) || known.state === "ended")) {
       return;
@@ -302,6 +328,31 @@ export class RunStore {
     this.controllers.delete(runId);
     this.patch(runId, { state: "ended" });
     this.wake(runId);
+    this.trim();
+  }
+
+  /** Drops the least recently opened ended Runs past `maxEnded`, never the one opened last. */
+  private trim() {
+    const ended = [...this.entries.values()]
+      .filter(
+        (watch) =>
+          watch.state === "ended" && !this.controllers.has(watch.runId),
+      )
+      .map((watch) => watch.runId);
+    const extra = ended.length - this.maxEnded;
+    if (extra <= 0) return;
+    const drop = ended
+      .filter((runId) => runId !== this.lastOpened)
+      .sort((a, b) => (this.opened.get(a) ?? 0) - (this.opened.get(b) ?? 0))
+      .slice(0, extra);
+    if (drop.length === 0) return;
+    const next = new Map(this.entries);
+    for (const runId of drop) {
+      next.delete(runId);
+      this.opened.delete(runId);
+    }
+    this.entries = next;
+    for (const listener of this.listeners) listener();
   }
 
   private wake(runId: string) {

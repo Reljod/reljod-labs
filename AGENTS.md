@@ -3,7 +3,7 @@
 ## Testing
 
 - Verify changes with `pnpm test` (unit tests), `pnpm lint`, `pnpm typecheck` and `pnpm build`. The `ci` workflow runs the first three on every pull request.
-- Conventions learned in review (read before adding a paid model call or a user-facing limit): `docs/engineering/conventions.md`.
+- Conventions learned in review (read before adding a paid model call, a user-facing limit or a demo read): `docs/engineering/conventions.md`.
 - Run the Playwright end-to-end suite (`pnpm test:e2e`) only when the user explicitly asks for it in the current conversation. It calls the paid model through Vercel AI Gateway, writes to the live Supabase project and takes several minutes per run. In CI it runs against a production build (`next start`); locally against `next dev` unless `E2E_SERVER=prod`.
 
 ## Document compliance
@@ -80,7 +80,7 @@
 
 ## Access (the gate in front of the demos)
 
-- The demos call a paid model, so `/demos/*`, `/ask/*`, `/api/casework/*`, `/api/client-manager/*`, `/api/process-transfer/*`, `/api/harness/*` and `/api/name-extraction/*` open only to a Host (a Supabase Auth account) or a Guest on a live Guest pass. `/` and `/about` stay public. Domain language: `src/features/access/GLOSSARY.md`.
+- The demos call a paid model, so `/demos/*`, `/ask/*`, `/api/casework/*`, `/api/client-manager/*`, `/api/document-compliance/*`, `/api/process-transfer/*`, `/api/harness/*` and `/api/name-extraction/*` open only to a Host (a Supabase Auth account) or a Guest on a live Guest pass. `/` and `/about` stay public. Domain language: `src/features/access/GLOSSARY.md`.
 - Two gates, both required. `src/proxy.ts` turns visitors away before a demo page or route runs. Every server action and route handler of a demo also calls `requireAccess()` (or `accessOrDenied()`) from `src/features/access/server/gate.ts`, because a server action can be posted to any page. A new demo entry point must do the same, and a new demo path must be added to the proxy matcher.
 - A Guest is an anonymous Supabase Auth user. Anyone can become one, so an Auth session alone grants nothing: Access comes from a row binding the user to a live Guest pass, written only by `access.redeem_guest_pass`.
 - Env: `SUPABASE_PUBLISHABLE_KEY` (or the legacy `SUPABASE_ANON_KEY`; server only, never `NEXT_PUBLIC_`), `ACCESS_HOST_EMAILS` (comma-separated; empty means nobody is a Host); shares `RATE_LIMIT_SALT`. A request carrying `E2E_BYPASS_TOKEN` passes the gate. Data lives in the Supabase `access` schema (listed under Data API > Exposed schemas). Anonymous sign-ins must be enabled in Supabase Auth.
@@ -103,6 +103,11 @@
 
 - Every demo page opens with `DemoBar` (`src/components/demo/demo-bar.tsx`): the "All demos" back button (always `/`, the top of the landing page, never a history back), the demo's number from `liveDemos` order, its name linking to the demo's first page, its places as tabs, and the demo's own controls on the right. A demo whose places and controls do not fit one row at 1024px passes `rowFrom="xl"`. Don't add a second back link inside a demo; a sub-page is reached and left through the tabs or the name.
 - Demos are drawn in the Colonnade language of Document compliance: 2px ink outlines (`outline-box`), `rounded-sm`, hard offset shadows, `press` on everything clickable, `eyebrow` labels. No soft shadows or pill shapes.
+
+## Demo speed
+
+- Reads go through gated GET routes in the Harness shape (`domain/api.ts`, `server/respond.ts`, `components/api.ts`), never through server actions: Next sends a browser's actions one at a time. Writes stay server actions.
+- A demo page reads its first view in its server component behind `<Suspense>` with a skeleton shaped like the screen, and passes it down as `initial…` props. Call the gate once per request and run independent reads together. Details, caching rules and loading UI: the sections from "A demo reads through GET routes" onward in `docs/engineering/conventions.md`.
 
 ## Buttons that write
 

@@ -85,3 +85,20 @@ export type DeskView = {
   spend: SpendView;
   settings: ModelSettingsByPurpose;
 };
+
+/** What changes while a desk is open, for refreshing it without reloading the rest. */
+export type DeskStatus = {
+  sessionId: string;
+  desks: DeskSummary[];
+  runs: RunSummary[];
+  spend: SpendView;
+};
+
+/** One Document's page images (signed URLs), or a CSV's text. */
+export type DocumentPages = {
+  id: string;
+  name: string;
+  sourceFormat: SourceFormat;
+  pages: string[];
+  csv: string | null;
+};

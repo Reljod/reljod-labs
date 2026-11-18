@@ -1,21 +1,23 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useMemo } from "react";
+import { apiPath } from "../domain/api";
 import type {
   Comparison,
   DocumentOverview,
   DocumentSource,
 } from "../domain/contract";
-import { compareRun, documentOverview } from "../server/actions";
 import { ComparisonView } from "./comparison";
 import { DocReader } from "./doc-reader";
 import { clockText, usd } from "./format";
 import { plural } from "./plain";
 import { RegisterTable } from "./register-table";
 import type { RunView } from "./run-view";
+import { ComparisonSkeleton } from "./skeletons";
 import { Timeline } from "./timeline";
-import { ErrorNote, friendly } from "./ui";
+import { ErrorNote } from "./ui";
 import { serverLoader } from "./use-pages";
+import { useCachedRead } from "./use-read";
 
 /** "100 pages · $0.11 · 3m 11s": what a finished Run took. */
 export function factsOf(view: RunView, pages: number) {
@@ -70,33 +72,22 @@ export function RunResult({
   total: number;
   title: string;
 }) {
-  const [comparison, setComparison] = useState<Comparison | null>(null);
-  const [overview, setOverview] = useState<DocumentOverview | null>(null);
-  const [error, setError] = useState<string | null>(null);
   const loader = useMemo(() => serverLoader(source, runId), [source, runId]);
-
-  useEffect(() => {
-    let live = true;
-    setError(null);
-    const fail = (caught: unknown) => {
-      if (live) setError(friendly(caught, "The result could not load."));
-    };
-    if (source.kind === "corpus")
-      compareRun(runId).then((result) => {
-        if (!live) return;
-        if ("error" in result) setError(result.error);
-        else setComparison(result);
-      }, fail);
-    else
-      documentOverview({ source, runId }).then((result) => {
-        if (!live) return;
-        if ("error" in result) setError(result.error);
-        else setOverview(result);
-      }, fail);
-    return () => {
-      live = false;
-    };
-  }, [runId, source]);
+  // A finished Run's comparison and overview never change: kept for the visit.
+  const forever = Number.POSITIVE_INFINITY;
+  const compared = useCachedRead<Comparison>(
+    source.kind === "corpus" ? apiPath.comparison(runId) : null,
+    forever,
+    "The result could not load.",
+  );
+  const overviewRead = useCachedRead<DocumentOverview>(
+    source.kind === "corpus" ? null : apiPath.overview(source, runId),
+    forever,
+    "The result could not load.",
+  );
+  const comparison = compared.data ?? null;
+  const overview = overviewRead.data ?? null;
+  const error = compared.error ?? overviewRead.error ?? null;
 
   return (
     <div className="flex flex-col gap-5">
@@ -112,7 +103,7 @@ export function RunResult({
             summary={factsOf(view, total)}
           />
         ) : error ? null : (
-          <div className="h-48 animate-pulse rounded-sm border-2 border-ink/10 bg-paper/60" />
+          <ComparisonSkeleton />
         )
       ) : (
         <>

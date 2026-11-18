@@ -1,5 +1,6 @@
 "use client";
 
+import { useCallback, useEffect, useRef } from "react";
 import type { RunSummary } from "../../domain/run";
 import { sampleBySlug } from "../../domain/samples";
 import { RunStatusBadge } from "../convert/run-screen";
@@ -23,18 +24,24 @@ function ApprovalMark({ approval }: { approval: RunSummary["approval"] }) {
   );
 }
 
-/** This Owner's Runs, newest first. Opening one loads it through `getRun`. */
+/**
+ * This Owner's Runs, newest first. Pointing at one starts reading it
+ * (`onIntent`), so the click opens it without a wait.
+ */
 export function RunsList({
   runs,
   openId,
   onOpen,
+  onIntent,
   onNew,
 }: {
   runs: RunSummary[];
   openId: string | null;
   onOpen: (runId: string) => void;
+  onIntent?: (runId: string) => void;
   onNew: () => void;
 }) {
+  const intent = useIntent(onIntent);
   if (runs.length === 0) {
     return (
       <Empty
@@ -61,6 +68,9 @@ export function RunsList({
             <button
               type="button"
               onClick={() => onOpen(run.id)}
+              onPointerEnter={() => intent.start(run.id)}
+              onPointerLeave={intent.cancel}
+              onFocus={() => onIntent?.(run.id)}
               aria-current={run.id === openId ? "true" : undefined}
               className={`outline-box press grid w-full gap-x-4 gap-y-2 rounded-sm p-3 text-left sm:grid-cols-[minmax(0,1fr)_auto] ${run.id === openId ? "bg-morning-haze" : "bg-paper"} ${focusRing}`}
             >
@@ -93,4 +103,26 @@ export function RunsList({
       </ul>
     </div>
   );
+}
+
+/** How long the pointer rests on a Run before it is read ahead. */
+const INTENT_MS = 120;
+
+/** Reads a Run ahead only when the pointer rests on it, not as it passes. */
+function useIntent(onIntent?: (runId: string) => void) {
+  const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const cancel = useCallback(() => {
+    if (timer.current) clearTimeout(timer.current);
+    timer.current = null;
+  }, []);
+  const start = useCallback(
+    (runId: string) => {
+      cancel();
+      if (onIntent)
+        timer.current = setTimeout(() => onIntent(runId), INTENT_MS);
+    },
+    [cancel, onIntent],
+  );
+  useEffect(() => cancel, [cancel]);
+  return { start, cancel };
 }

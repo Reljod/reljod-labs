@@ -28,14 +28,14 @@ const saveSchema = z.object({
 /** A Skill and its saved Versions, newest first. */
 export async function GET(_request: Request, { params }: Context) {
   try {
-    const context = await requireStaff();
-    const { id } = await params;
-    const skill = await getSkill(context.owner, id);
+    const [context, { id }] = await Promise.all([requireStaff(), params]);
+    // Both are the Owner's; the history is answered only with its Skill.
+    const [skill, history] = await Promise.all([
+      getSkill(context.owner, id),
+      skillHistory(context.owner, id),
+    ]);
     if (!skill) return notFound("There is no such Skill.");
-    return json<SkillResponse>({
-      skill,
-      history: await skillHistory(context.owner, id),
-    });
+    return json<SkillResponse>({ skill, history });
   } catch (error) {
     return failure(error);
   }

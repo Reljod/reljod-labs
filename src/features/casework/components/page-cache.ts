@@ -1,11 +1,15 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { type DocumentPages, documentsPages } from "../server/actions";
+import { MAX_PAGE_IDS } from "../domain/api";
+import type { DocumentPages } from "../view";
+import { getDocumentPages } from "./api";
 
 /** Signed URLs last an hour; refetch a little before they lapse. */
 const FRESH_MS = 50 * 60 * 1000;
 const RETRY_MS = 1500;
+const DOCUMENT_ID =
+  /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
 type Entry = {
   at: number;
@@ -23,14 +27,23 @@ function fresh(id: string) {
 }
 
 /**
- * Fetches the pages of any Documents not already on hand, in one call, and
- * has the browser download the images so they show the moment they're needed.
+ * Fetches the pages of any Documents not already on hand, one request per
+ * 60, and has the browser download the images so they show the moment
+ * they're needed.
  * A failed fetch is forgotten, so the next ask tries again.
  */
 export function preloadPages(documentIds: string[]) {
-  const missing = [...new Set(documentIds)].filter((id) => !fresh(id));
-  if (missing.length === 0) return;
-  const batch = documentsPages(missing).then((found) => {
+  const missing = [...new Set(documentIds)].filter(
+    (id) => DOCUMENT_ID.test(id) && !fresh(id),
+  );
+  for (let start = 0; start < missing.length; start += MAX_PAGE_IDS)
+    preloadBatch(missing.slice(start, start + MAX_PAGE_IDS));
+}
+
+function preloadBatch(missing: string[]) {
+  // A GET, not a server action: Next sends actions one at a time, so pages
+  // would wait behind any write the desk has in flight.
+  const batch = getDocumentPages(missing).then((found) => {
     for (const pages of Object.values(found))
       for (const src of pages.pages) if (src) new Image().src = src;
     return found;

@@ -195,9 +195,12 @@ export async function readSource(
 ): Promise<SourceResponse | null> {
   if (!isUuid(sourceId)) return null;
   await clearStale(owner);
-  const source = await loadSource(sql(), owner, sourceId);
-  if (!source) return null;
-  return { source, passages: await loadPassages(sql(), owner, sourceId) };
+  // Both are scoped to the Owner; the Passages are answered only with their Source.
+  const [source, passages] = await Promise.all([
+    loadSource(sql(), owner, sourceId),
+    loadPassages(sql(), owner, sourceId),
+  ]);
+  return source ? { source, passages } : null;
 }
 
 type TextRow = {

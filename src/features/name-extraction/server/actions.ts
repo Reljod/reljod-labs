@@ -4,41 +4,15 @@ import { createHash, randomUUID } from "node:crypto";
 import { z } from "zod";
 import { requireOwner } from "@/features/access/server/gate";
 import {
-  type Comparison,
-  type CorpusCard,
-  type DocumentOverview,
   type DocumentSource,
-  type ExtractedName,
   type ModelChoice,
   modelChoiceSchema,
-  type PreviewPage,
   type Rulebook,
-  type RulebookVersion,
-  type RunDetail,
-  type RunSummary,
   rulebookSchema,
 } from "../domain/contract";
-import { corpusCards } from "../domain/corpus";
 import { env } from "./env";
-import { comparison, overview, pages } from "./preview";
-import {
-  allEvents,
-  countUploadsSince,
-  currentRulebook,
-  insertRulebook,
-  insertUpload,
-  isOver,
-  ownedRun,
-  rulebookVersions,
-  runsOf,
-  toSummary,
-} from "./repository";
-import {
-  closeIfStale,
-  LIMITS,
-  startRun as start,
-  stopRun as stop,
-} from "./runs";
+import { countUploadsSince, insertRulebook, insertUpload } from "./repository";
+import { LIMITS, startRun as start, stopRun as stop } from "./runs";
 import { BUCKET, supabase } from "./supabase";
 import { signSieveToken } from "./toolkit/mcp-token";
 import { UPLOAD_LIMITS } from "./toolkit/upload";
@@ -46,20 +20,16 @@ import { visitor } from "./visitor";
 
 /*
  * Every action passes the Access gate through `requireOwner()` and scopes
- * what it reads or writes to the Owner (ADR 0011). A server action can be
- * posted to any page, so the check lives here, not only in the proxy.
+ * what it writes to the Owner (ADR 0011). A server action can be posted to
+ * any page, so the check lives here, not only in the proxy. Reads are GET
+ * routes under /api/name-extraction (server/reads.ts): Next sends a client's
+ * actions one at a time, so a read made as an action waits behind the rest.
  */
 
 const sourceSchema = z.discriminatedUnion("kind", [
   z.object({ kind: z.literal("corpus"), corpusId: z.string().min(1).max(40) }),
   z.object({ kind: z.literal("upload"), uploadId: z.string().uuid() }),
 ]);
-
-/** The Corpus Documents as cards for the picker. */
-export async function listCorpus(): Promise<CorpusCard[]> {
-  await requireOwner();
-  return corpusCards();
-}
 
 /** Starts a Run over a Corpus Document or one of the Owner's Uploads. */
 export async function startRun(input: {
@@ -90,95 +60,6 @@ export async function stopRun(
   return "error" in result
     ? result
     : { runId: result.runId, stopped: result.stopped };
-}
-
-/** The Owner's Runs, newest first. */
-export async function listRuns(): Promise<RunSummary[]> {
-  const { owner } = await requireOwner();
-  const rows = await runsOf(owner, 50);
-  return (await Promise.all(rows.map(closeIfStale))).map(toSummary);
-}
-
-/** One of the Owner's Runs with its Audit trail and its Register. */
-export async function getRun(runId: string): Promise<RunDetail | null> {
-  const { owner } = await requireOwner();
-  const found = await ownedRun(owner, String(runId));
-  if (!found) return null;
-  const run = await closeIfStale(found);
-  const events = await allEvents(run.id);
-  let names: ExtractedName[] = Array.isArray(run.names) ? run.names : [];
-  if (!isOver(run.status) || names.length === 0) {
-    // While a Run goes, the Register is its latest `names` event.
-    for (let index = events.length - 1; index >= 0; index--) {
-      const event = events[index];
-      if (event.type === "names") {
-        names = event.names;
-        break;
-      }
-    }
-  }
-  // The detail carries the list in place of the summary's count.
-  const { names: _count, ...summary } = toSummary(run);
-  return { ...summary, events, names };
-}
-
-/** A Run id from the browser: absent, or a string (the repository checks its shape). */
-function runIdOf(value: unknown): string | undefined | null {
-  if (value === undefined || value === null || value === "") return undefined;
-  return typeof value === "string" ? value : null;
-}
-
-/**
- * What the page shows about a Document before opening a page: title, genre,
- * page count and names per page. With a Run, the Run's own Document and
- * Names (the `source` argument is ignored).
- */
-export async function documentOverview(input: {
-  source: DocumentSource;
-  runId?: string;
-}): Promise<DocumentOverview | { error: string }> {
-  const { owner } = await requireOwner();
-  const runId = runIdOf(input?.runId);
-  if (runId === null) return { error: "No such Run." };
-  const source = sourceSchema.safeParse(input?.source);
-  return overview(owner, source.success ? source.data : null, runId);
-}
-
-/**
- * Pages `from` to `to` (1-based, inclusive, at most 12) with their marks:
- * the answer key's on a demo Document, the Run's with a Run.
- */
-export async function previewPages(input: {
-  source: DocumentSource;
-  runId?: string;
-  from: number;
-  to: number;
-}): Promise<{ total: number; pages: PreviewPage[] } | { error: string }> {
-  const { owner } = await requireOwner();
-  const runId = runIdOf(input?.runId);
-  if (runId === null) return { error: "No such Run." };
-  const source = sourceSchema.safeParse(input?.source);
-  return pages(
-    owner,
-    source.success ? source.data : null,
-    { from: Number(input?.from), to: Number(input?.to) },
-    runId,
-  );
-}
-
-/** One of the Owner's Runs set against the answer key, row by row (an Upload's: all found, no score). */
-export async function compareRun(
-  runId: string,
-): Promise<Comparison | { error: string }> {
-  const { owner } = await requireOwner();
-  if (typeof runId !== "string") return { error: "No such Run." };
-  return comparison(owner, runId);
-}
-
-/** The Owner's current Rulebook (version 0 is the built-in default). */
-export async function getRulebook(): Promise<RulebookVersion> {
-  const { owner } = await requireOwner();
-  return currentRulebook(owner);
 }
 
 /** Saves the Rulebook as the Owner's next version. */
@@ -212,12 +93,6 @@ export async function saveRulebook(input: {
     who.trusted ? null : LIMITS.rulebooksPerOwnerPerDay,
   );
   return "refusal" in saved ? { error: saved.refusal } : saved;
-}
-
-/** Every Rulebook version the Owner saved, newest first, then the default. */
-export async function rulebookHistory(): Promise<RulebookVersion[]> {
-  const { owner } = await requireOwner();
-  return rulebookVersions(owner);
 }
 
 /** A stable, non-reversible folder per Owner: no raw input reaches a storage key. */

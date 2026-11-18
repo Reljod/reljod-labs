@@ -1,20 +1,60 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import dynamic from "next/dynamic";
+import {
+  type ReactNode,
+  useCallback,
+  useEffect,
+  useRef,
+  useState,
+} from "react";
 import { DemoBar, DemoBarBadge } from "@/components/demo/demo-bar";
+import type { Loaded } from "../domain/api";
 import { DEMO_PATH } from "../domain/limits";
-import type { DeskView } from "../domain/run";
-import { loadDesk } from "../server/actions";
-import { AuditTrail } from "./audit/audit-trail";
+import type { DeskView, RunView } from "../domain/run";
+import { fetchDesk, fetchRun } from "./api";
 import { RunScreen } from "./convert/run-screen";
 import { StartScreen } from "./convert/start";
 import { usdCents } from "./format";
 import { HANDOVER_TABS, type HandoverTab } from "./tabs";
 import "./handover.css";
-import { PipelineView } from "./pipeline/pipeline-view";
-import { RulesEditor } from "./rules/rules-editor";
+import { DeskSkeleton } from "./desk-skeleton";
+import { runPrefetch } from "./run-prefetch";
 import { RunsList } from "./runs/runs-list";
 import { buttonClass, InlineError, Skeleton, tabPanelProps } from "./ui";
+
+/*
+ * The tabs a visitor opens less often load on demand; `warmTabs` fetches
+ * their code once the page is idle, so a switch rarely waits for it.
+ */
+const loadRules = () => import("./rules/rules-editor");
+const loadPipeline = () => import("./pipeline/pipeline-view");
+const loadAudit = () => import("./audit/audit-trail");
+const TabLoading = () => (
+  <div className="outline-box rounded-sm bg-paper p-4" aria-busy="true">
+    <span className="sr-only" aria-live="polite">
+      Loading…
+    </span>
+    <Skeleton lines={8} />
+  </div>
+);
+const RulesEditor = dynamic(() => loadRules().then((m) => m.RulesEditor), {
+  loading: TabLoading,
+});
+const PipelineView = dynamic(() => loadPipeline().then((m) => m.PipelineView), {
+  loading: TabLoading,
+});
+const AuditTrail = dynamic(() => loadAudit().then((m) => m.AuditTrail), {
+  loading: TabLoading,
+});
+const TAB_CODE: Partial<Record<HandoverTab, () => Promise<unknown>>> = {
+  rules: loadRules,
+  pipeline: loadPipeline,
+  audit: loadAudit,
+};
+function warmTabs() {
+  for (const load of Object.values(TAB_CODE)) void load?.().catch(() => {});
+}
 
 const TAB_LABEL: Record<HandoverTab, string> = {
   convert: "Convert",
@@ -32,24 +72,69 @@ const TAB_LABEL: Record<HandoverTab, string> = {
 export function Handover({
   initialTab,
   initialRunId,
+  initialDesk,
+  initialRun,
 }: {
   initialTab: HandoverTab;
   initialRunId: string | null;
+  /** Read by the page on the server; the browser does not read it again on open. */
+  initialDesk: Loaded<DeskView>;
+  /** The Run in the address, read alongside the Desk. */
+  initialRun: Loaded<RunView | null> | null;
 }) {
-  const [desk, setDesk] = useState<DeskView | null>(null);
-  const [deskError, setDeskError] = useState<string | null>(null);
+  const [desk, setDesk] = useState<DeskView | null>(
+    initialDesk.ok ? initialDesk.value : null,
+  );
+  const [deskError, setDeskError] = useState<string | null>(
+    initialDesk.ok ? null : initialDesk.error,
+  );
   const [tab, setTab] = useState<HandoverTab>(initialTab);
-  const [runId, setRunId] = useState<string | null>(initialRunId);
+  // Reattach to a Run still going if none is in the address.
+  const [runId, setRunId] = useState<string | null>(
+    initialRunId ??
+      (initialDesk.ok ? initialDesk.value.activeRunId : null) ??
+      null,
+  );
   /** Bumped to load the open Run again (after a Redo of the same Run). */
   const [generation, setGeneration] = useState(0);
+  /** Tabs opened so far stay mounted (hidden), so going back is instant. */
+  const [visited, setVisited] = useState<ReadonlySet<HandoverTab>>(
+    () => new Set([initialTab]),
+  );
 
+  /** Reads of Runs started early: the page's own, and on hover in Runs. */
+  const [prefetch] = useState(() => {
+    const cache = runPrefetch((id) => fetchRun(id));
+    if (initialRunId && initialRun) {
+      cache.seed(
+        initialRunId,
+        initialRun.ok
+          ? Promise.resolve(initialRun.value)
+          : Promise.reject(new Error(initialRun.error)),
+      );
+    }
+    return cache;
+  });
+
+  /** The Desk read in flight, if any; only the newest one may land. */
+  const deskRead = useRef<AbortController | null>(null);
   const refresh = useCallback(async () => {
+    deskRead.current?.abort();
+    const controller = new AbortController();
+    deskRead.current = controller;
+    const done = () => {
+      if (deskRead.current === controller) deskRead.current = null;
+    };
     try {
-      const view = await loadDesk();
+      const view = await fetchDesk(controller.signal);
+      if (controller.signal.aborted) return null;
+      done();
       setDesk(view);
       setDeskError(null);
       return view;
     } catch (error) {
+      if (controller.signal.aborted) return null;
+      done();
       setDeskError(
         error instanceof Error && error.message
           ? error.message
@@ -58,13 +143,33 @@ export function Handover({
       return null;
     }
   }, []);
+  useEffect(() => () => deskRead.current?.abort(), []);
 
-  // First load: reattach to a Run still going if none is in the address.
-  // biome-ignore lint/correctness/useExhaustiveDependencies: runs once on open
+  /**
+   * A save changed the Desk. Reads no longer queue behind writes, so a read
+   * started before the save could land after it and put the old Rules back:
+   * drop it and read again.
+   */
+  const saved = useCallback(
+    (change: (current: DeskView) => DeskView) => {
+      const stale = deskRead.current !== null;
+      setDesk((current) => (current ? change(current) : current));
+      if (stale) void refresh();
+    },
+    [refresh],
+  );
+
+  // Fetch the other tabs' code once the first view has painted.
   useEffect(() => {
-    void refresh().then((view) => {
-      if (view?.activeRunId && !initialRunId) setRunId(view.activeRunId);
-    });
+    const idle = window.requestIdleCallback ?? ((run) => setTimeout(run, 1500));
+    const cancel = window.cancelIdleCallback ?? clearTimeout;
+    const handle = idle(warmTabs);
+    return () => cancel(handle as number);
+  }, []);
+
+  const select = useCallback((next: HandoverTab) => {
+    setTab(next);
+    setVisited((seen) => (seen.has(next) ? seen : new Set(seen).add(next)));
   }, []);
 
   // The address follows the tab and the open Run.
@@ -79,12 +184,15 @@ export function Handover({
     }
   }, [tab, runId]);
 
-  const openRun = useCallback((id: string) => {
-    setRunId(id);
-    setGeneration((value) => value + 1);
-    setTab("convert");
-    window.scrollTo({ top: 0 });
-  }, []);
+  const openRun = useCallback(
+    (id: string) => {
+      setRunId(id);
+      setGeneration((value) => value + 1);
+      select("convert");
+      window.scrollTo({ top: 0 });
+    },
+    [select],
+  );
 
   const started = useCallback(
     (id: string) => {
@@ -95,7 +203,30 @@ export function Handover({
   );
 
   const closeRun = useCallback(() => setRunId(null), []);
-  const onEnded = useCallback(() => void refresh(), [refresh]);
+  const onEnded = useCallback(
+    (run: RunView | null) => {
+      prefetch.remember(run);
+      void refresh();
+    },
+    [prefetch, refresh],
+  );
+  /** Opens a Run from what was read ahead or kept, else reads it; a finished one is kept. */
+  const takeRun = useCallback(
+    (id: string) => {
+      const read = prefetch.take(id) ?? fetchRun(id);
+      read.then(prefetch.remember, () => {});
+      return read;
+    },
+    [prefetch],
+  );
+
+  const failed = deskError && !desk;
+  const panel = (id: HandoverTab, content: ReactNode) =>
+    visited.has(id) || id === tab ? (
+      <div key={id} {...tabPanelProps("ho", id)} hidden={id !== tab}>
+        {content}
+      </div>
+    ) : null;
 
   return (
     <div className="ho-ground flex min-h-dvh flex-col text-ink">
@@ -113,77 +244,89 @@ export function Handover({
             id === "runs" && desk && desk.runs.length > 0
               ? desk.runs.length
               : undefined,
-          onSelect: () => setTab(id),
+          onSelect: () => select(id),
         }))}
       >
         <SpendMeter spend={desk?.spend ?? null} />
       </DemoBar>
 
       <main className="mx-auto w-full max-w-[1400px] flex-1 px-4 py-6 sm:px-6">
-        <div {...tabPanelProps("ho", tab)}>
-          {deskError && !desk && !(tab === "convert" && runId) ? (
-            <DeskFailed error={deskError} onRetry={() => void refresh()} />
-          ) : tab === "convert" ? (
-            runId ? (
-              <RunScreen
-                runId={runId}
-                generation={generation}
-                currentRulesVersion={desk?.rulesVersion ?? 0}
-                onClose={closeRun}
-                onRedone={(id) => {
-                  openRun(id);
-                  void refresh();
-                }}
-                onEnded={onEnded}
-              />
-            ) : desk ? (
-              <StartScreen desk={desk} onStarted={started} />
-            ) : (
-              <DeskLoading />
-            )
-          ) : !desk ? (
-            <DeskLoading />
-          ) : tab === "runs" ? (
-            <RunsList
-              runs={desk.runs}
-              openId={runId}
-              onOpen={openRun}
-              onNew={() => {
-                closeRun();
-                setTab("convert");
+        {panel(
+          "convert",
+          runId ? (
+            <RunScreen
+              runId={runId}
+              generation={generation}
+              visible={tab === "convert"}
+              preloaded={takeRun}
+              currentRulesVersion={desk?.rulesVersion ?? 0}
+              onClose={closeRun}
+              onRedone={(id) => {
+                prefetch.drop(id);
+                openRun(id);
+                void refresh();
               }}
+              onEnded={onEnded}
             />
-          ) : tab === "rules" ? (
-            <RulesEditor
-              rules={desk.rules}
-              rulesVersion={desk.rulesVersion}
-              onSaved={(saved) =>
-                setDesk((current) =>
-                  current
-                    ? {
-                        ...current,
-                        rules: saved.rules,
-                        ruleOverrides: saved.ruleOverrides,
-                        rulesVersion: saved.rulesVersion,
-                      }
-                    : current,
-                )
-              }
-            />
-          ) : tab === "pipeline" ? (
-            <PipelineView
-              models={desk.models}
-              rules={desk.rules}
-              onModelsSaved={(models) =>
-                setDesk((current) =>
-                  current ? { ...current, models } : current,
-                )
-              }
-            />
+          ) : failed ? (
+            <DeskFailed error={deskError} onRetry={() => void refresh()} />
+          ) : desk ? (
+            <StartScreen desk={desk} onStarted={started} />
           ) : (
-            <AuditTrail openRunId={runId} />
-          )}
-        </div>
+            <DeskSkeleton />
+          ),
+        )}
+        {failed && tab !== "convert" ? (
+          panel(
+            tab,
+            <DeskFailed error={deskError} onRetry={() => void refresh()} />,
+          )
+        ) : desk ? (
+          <>
+            {panel(
+              "runs",
+              <RunsList
+                runs={desk.runs}
+                openId={runId}
+                onOpen={openRun}
+                onIntent={prefetch.prefetch}
+                onNew={() => {
+                  closeRun();
+                  select("convert");
+                }}
+              />,
+            )}
+            {panel(
+              "rules",
+              <RulesEditor
+                rules={desk.rules}
+                rulesVersion={desk.rulesVersion}
+                onSaved={(next) =>
+                  saved((current) => ({
+                    ...current,
+                    rules: next.rules,
+                    ruleOverrides: next.ruleOverrides,
+                    rulesVersion: next.rulesVersion,
+                  }))
+                }
+              />,
+            )}
+            {panel(
+              "pipeline",
+              <PipelineView
+                models={desk.models}
+                rules={desk.rules}
+                onModelsSaved={(models) =>
+                  saved((current) => ({ ...current, models }))
+                }
+              />,
+            )}
+            {panel(
+              "audit",
+              <AuditTrail openRunId={runId} active={tab === "audit"} />,
+            )}
+          </>
+        ) : null}
       </main>
     </div>
   );
@@ -229,22 +372,6 @@ function SpendMeter({ spend }: { spend: DeskView["spend"] | null }) {
           className={`h-full ${share >= 1 ? "bg-seal-red" : share >= 0.8 ? "bg-brass" : "bg-federal-blue"}`}
           style={{ width: `${share * 100}%` }}
         />
-      </div>
-    </div>
-  );
-}
-
-function DeskLoading() {
-  return (
-    <div className="flex flex-col gap-6" aria-busy="true">
-      <span className="sr-only" aria-live="polite">
-        Loading…
-      </span>
-      <Skeleton lines={2} className="max-w-xl" />
-      <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
-        {[0, 1, 2].map((key) => (
-          <div key={key} className="ho-shimmer aspect-video rounded-sm" />
-        ))}
       </div>
     </div>
   );

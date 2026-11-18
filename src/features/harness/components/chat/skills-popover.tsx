@@ -2,7 +2,8 @@
 
 import { useQuery } from "@tanstack/react-query";
 import Link from "next/link";
-import { api, keys } from "../api";
+import { useHarness } from "../harness-context";
+import { listQuery } from "../list-queries";
 import { Loading } from "../ui";
 import { Popover } from "./popover";
 
@@ -26,7 +27,8 @@ function Body({
   onOpenSkill: (skillId: string) => void;
   close: () => void;
 }) {
-  const skills = useQuery({ queryKey: keys.skills, queryFn: api.skills.list });
+  const { staff } = useHarness();
+  const skills = useQuery(listQuery("skills", staff.id));
   return (
     <div className="space-y-3">
       <div>

@@ -2,7 +2,6 @@
 
 import { Fragment, useEffect, useMemo, useRef, useState } from "react";
 import type { Frames, FrameUrls } from "../../domain/frames";
-import { buildPptx } from "../../domain/pptx";
 import {
   type Approval,
   type DeckRound,
@@ -37,6 +36,10 @@ import {
 } from "../ui";
 import { ChecksList, checksLine, FindingsList } from "./checks-list";
 import { ExportButton } from "./export-button";
+
+/** The PPTX builder (and fflate) load only when a download is near. */
+const loadPptx = () => import("../../domain/pptx");
+const preparePptx = () => void loadPptx().catch(() => {});
 
 /**
  * The Deck and the loop that made it: a strip of Rounds (what failed in each
@@ -455,9 +458,10 @@ function ApprovalBox({
                 ? "Only an approved Deck downloads. Adjust the Rules that held it, or loosen their Parameters, then redo the Deck."
                 : "The Deck downloads once it is approved."
           }
-          build={(frames) =>
+          prepare={preparePptx}
+          build={async (frames) =>
             approvedRound
-              ? buildPptx(approvedRound.deck, {
+              ? (await loadPptx()).buildPptx(approvedRound.deck, {
                   frames,
                   approved: true,
                   createdAt: run.completedAt ?? run.createdAt,

@@ -136,20 +136,44 @@ const FALLBACK: Record<number, string> = {
   429: "That's the limit for now. Try again soon.",
 };
 
-async function failureOf(response: Response): Promise<ApiFailure> {
-  const body = (await response.json().catch(() => null)) as {
-    error?: string;
-    errors?: RuleEditError[];
-  } | null;
+/**
+ * The refusal a response carries. Routes answer `{ error }` JSON, but the
+ * Access gate in front of them answers its 401 in plain text: read the body
+ * as text and parse it only if it is JSON, so a Guest whose pass just ended
+ * reads the gate's reason, not a parse error or a bare status.
+ */
+export async function failureOf(response: Response): Promise<ApiFailure> {
+  const text = await response.text().catch(() => "");
+  type Body = { error?: unknown; errors?: RuleEditError[] };
+  let body: Body | null = null;
+  try {
+    body = JSON.parse(text) as Body | null;
+  } catch {
+    // Plain text: the gate's own answer.
+  }
+  const plain = body ? "" : text.trim();
+  const message =
+    typeof body?.error === "string" && body.error
+      ? body.error
+      : plain && plain.length < 300 && !plain.startsWith("<")
+        ? plain
+        : (FALLBACK[response.status] ?? "That didn't work. Try again.");
   return new ApiFailure(
-    body?.error ?? FALLBACK[response.status] ?? "That didn't work. Try again.",
+    message,
     response.status,
-    body?.errors ?? [],
+    Array.isArray(body?.errors) ? body.errors : [],
   );
 }
 
-async function get<T>(url: string, signal?: AbortSignal): Promise<T> {
-  const response = await fetch(url, { cache: "no-store", signal });
+/** What a read takes besides its own arguments: the signal that cancels it. */
+export type ReadInit = { signal?: AbortSignal };
+
+async function get<T>(url: string, init: ReadInit = {}): Promise<T> {
+  const response = await fetch(url, {
+    cache: "no-store",
+    headers: { accept: "application/json" },
+    signal: init.signal,
+  });
   if (!response.ok) throw await failureOf(response);
   return response.json() as Promise<T>;
 }
@@ -221,22 +245,22 @@ export function putFile(
 
 export const api = {
   staff: {
-    list: () => get<StaffListResponse>(apiPath.staff()),
+    list: (init?: ReadInit) => get<StaffListResponse>(apiPath.staff(), init),
     switch: (body: StaffSwitchRequest) =>
       send<StaffSwitchResponse>(apiPath.staffSwitch(), "POST", body),
   },
 
   sessions: {
-    list: async () =>
-      (await get<SessionListResponse>(apiPath.sessions())).sessions,
+    list: async (init?: ReadInit) =>
+      (await get<SessionListResponse>(apiPath.sessions(), init)).sessions,
     create: async (body: SessionCreateRequest = {}) =>
       (await send<SessionResponse>(apiPath.sessions(), "POST", body)).session,
     get: async (id: string) =>
       (await get<SessionResponse>(apiPath.session(id))).session,
     rename: async (id: string, body: SessionPatchRequest) =>
       (await send<SessionResponse>(apiPath.session(id), "PATCH", body)).session,
-    messages: async (id: string) =>
-      (await get<MessageListResponse>(apiPath.messages(id))).messages,
+    messages: async (id: string, init?: ReadInit) =>
+      (await get<MessageListResponse>(apiPath.messages(id), init)).messages,
     /**
      * Sends a message and yields the Agent's turn as it streams. Ends with a
      * `done` or an `error` event; throws an ApiFailure when the route refuses
@@ -259,11 +283,12 @@ export const api = {
   },
 
   runs: {
-    list: async (filter: RunListQuery = {}) =>
-      (await get<RunListResponse>(apiPath.runs(filter))).runs,
+    list: async (filter: RunListQuery = {}, init?: ReadInit) =>
+      (await get<RunListResponse>(apiPath.runs(filter), init)).runs,
     start: async (body: RunStartRequest) =>
       (await send<RunResponse>(apiPath.runs(), "POST", body)).run,
-    get: async (id: string) => (await get<RunResponse>(apiPath.run(id))).run,
+    get: async (id: string, init?: ReadInit) =>
+      (await get<RunResponse>(apiPath.run(id), init)).run,
     stop: async (id: string) =>
       (await send<RunResponse>(apiPath.runStop(id), "POST")).run,
     /**
@@ -304,7 +329,8 @@ export const api = {
   },
 
   skills: {
-    list: async () => (await get<SkillListResponse>(apiPath.skills())).skills,
+    list: async (init?: ReadInit) =>
+      (await get<SkillListResponse>(apiPath.skills(), init)).skills,
     get: (id: string) => get<SkillResponse>(apiPath.skill(id)),
     save: (id: string, body: SkillSaveRequest) =>
       send<SkillResponse>(apiPath.skill(id), "PUT", body),
@@ -313,8 +339,8 @@ export const api = {
   },
 
   rules: {
-    list: async (filter: RuleListQuery = {}) =>
-      (await get<RuleListResponse>(apiPath.rules(filter))).rules,
+    list: async (filter: RuleListQuery = {}, init?: ReadInit) =>
+      (await get<RuleListResponse>(apiPath.rules(filter), init)).rules,
     /** Throws an ApiFailure whose `errors` name each field at fault when the edit is refused. */
     save: async (id: string, body: RuleSaveRequest) =>
       (await send<RuleResponse>(apiPath.rule(id), "PUT", body)).rule,
@@ -325,8 +351,8 @@ export const api = {
   },
 
   sources: {
-    list: async () =>
-      (await get<SourceListResponse>(apiPath.sources())).sources,
+    list: async (init?: ReadInit) =>
+      (await get<SourceListResponse>(apiPath.sources(), init)).sources,
     get: (id: string) => get<SourceResponse>(apiPath.source(id)),
     preview: (id: string) =>
       get<SourcePreviewResponse>(apiPath.sourcePreview(id)),
@@ -363,16 +389,17 @@ export const api = {
   knowledge: {
     search: async (filter: SearchQuery) =>
       (await get<SearchResponse>(apiPath.search(filter))).hits,
-    conflicts: async (filter: ConflictListQuery = {}) =>
-      (await get<ConflictListResponse>(apiPath.conflicts(filter))).conflicts,
+    conflicts: async (filter: ConflictListQuery = {}, init?: ReadInit) =>
+      (await get<ConflictListResponse>(apiPath.conflicts(filter), init))
+        .conflicts,
     resolve: async (id: string, body: ConflictResolveRequest) =>
       (await send<ConflictResponse>(apiPath.conflictResolve(id), "POST", body))
         .conflict,
   },
 
   audit: {
-    list: (filter: AuditQuery = {}) =>
-      get<AuditListResponse>(apiPath.audit(filter)),
+    list: (filter: AuditQuery = {}, init?: ReadInit) =>
+      get<AuditListResponse>(apiPath.audit(filter), init),
   },
 
   sandbox: {

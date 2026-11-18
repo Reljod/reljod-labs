@@ -2,7 +2,6 @@
 
 import { useEffect, useMemo } from "react";
 import type { DocumentMeta } from "../../domain/document";
-import { buildDocx } from "../../domain/docx";
 import type { Frames, FrameUrls } from "../../domain/frames";
 import type { RunView } from "../../domain/run";
 import { sampleBySlug } from "../../domain/samples";
@@ -12,6 +11,10 @@ import { frameTimes } from "../frame-times";
 import { Skeleton } from "../ui";
 import { checksLine } from "./checks-list";
 import { ExportButton } from "./export-button";
+
+/** The DOCX builder (and fflate) load only when a download is near. */
+const loadDocx = () => import("../../domain/docx");
+const prepareDocx = () => void loadDocx().catch(() => {});
 
 /** The Recording's name as the person knows it. */
 export function recordingName(run: Pick<RunView, "source" | "title">): string {
@@ -84,7 +87,10 @@ export function DocumentPanel({
           times={times}
           capture={capture}
           progress={progress}
-          build={(captured) => buildDocx(process, { frames: captured, meta })}
+          prepare={prepareDocx}
+          build={async (captured) =>
+            (await loadDocx()).buildDocx(process, { frames: captured, meta })
+          }
         />
       </div>
       <div className="min-w-0 overflow-x-auto">
