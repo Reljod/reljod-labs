@@ -421,8 +421,10 @@ test("one real Teller turn, with the model", async ({ page }) => {
     process.env.E2E_BANK_LIVE !== "1",
     "Set E2E_BANK_LIVE=1 for one real, cheap model turn.",
   );
+  // The context's stub header is overridden: this turn reaches the model.
   await page.setExtraHTTPHeaders({
     "x-e2e-token": process.env.E2E_BYPASS_TOKEN ?? "",
+    "x-bank-stub": "0",
   });
   await openBank(page, "chat");
   await page.getByTestId("bank-chat-new").click();
