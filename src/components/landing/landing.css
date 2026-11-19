@@ -174,8 +174,7 @@
 
 .drum-card,
 .drum-shade,
-.problem,
-.career-date {
+.problem {
   --o: calc(var(--d, 0) - var(--i));
   --a: max(var(--o), calc(-1 * var(--o)));
   /* Cards still to come (behind), and the card being flipped (0..1, then gone). */
@@ -218,13 +217,6 @@
 .stamp {
   border-color: var(--ink);
   color: var(--ink);
-}
-
-/* A job's dates stamp onto its card as the card settles at the front. */
-.career-date {
-  transform-origin: left center;
-  transform: rotate(-3deg) scale(calc(1 + 1.2 * min(1, var(--a, 0) * 4)));
-  opacity: clamp(0, 1 - var(--a, 0) * 4, 1);
 }
 
 .pulled {

@@ -4,12 +4,14 @@
  * `projects.ts`; every document here is from the made-up Republic of Meridia.
  */
 
+import { demoCount } from "./projects";
+
 /** The page's chapters, in order. The Index lists them and numbers them. */
 export const scenes = [
   { id: "top", title: "Paperwork" },
   { id: "how", title: "Up close" },
   { id: "who", title: "Who's reading" },
-  { id: "demos", title: "Seven problems" },
+  { id: "demos", title: `${demoCount.Word} problems` },
   { id: "lab", title: "What this site is" },
   { id: "finale", title: "That's the tour" },
 ] as const;
@@ -226,8 +228,7 @@ export const demoShelves = [
 /** Words for the catalog page (`/demos`). */
 export const catalog = {
   title: "Every demo, filed.",
-  intro:
-    "Seven working demos: real AI over made-up paperwork. Hover a card to watch it work. They open with a guest code, so ask me for one.",
+  intro: `${demoCount.Word} working demos: real AI over made-up paperwork. Hover a card to watch it work. They open with a guest code, so ask me for one.`,
   /** The search box types these as hints; each must find at least one demo. */
   searchHints: ["MCP", "pension", "slides", "video", "cat banker", "500 pages"],
   surprise: "Surprise me",
@@ -243,7 +244,7 @@ export const finale = {
     {
       href: "/demos",
       label: "Browse every demo",
-      body: "All seven, filed in one catalog: search them, shuffle them, watch each one work.",
+      body: `All ${demoCount.word}, filed in one catalog: search them, shuffle them, watch each one work.`,
     },
     {
       href: "/about",

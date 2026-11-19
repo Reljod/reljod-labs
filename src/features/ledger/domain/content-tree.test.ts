@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { experience } from "@/content/experience";
-import { featuredProjects } from "@/content/projects";
+import { demosPitch } from "@/content/projects";
 import { blockText, contentTree, describeContentTree } from "./content-tree";
 import { sourcePath } from "./source-paths";
 
@@ -18,13 +18,14 @@ describe("contentTree", () => {
     expect(contentTree.get(sourcePath.contact)?.block.kind).toBe("contact");
   });
 
-  it("only offers the projects the page shows", () => {
+  it("offers the demos as one card, not a card per project", () => {
+    expect(contentTree.get(sourcePath.demos)?.block).toMatchObject({
+      kind: "card",
+      body: demosPitch.body,
+    });
     expect(
-      contentTree.has(sourcePath.project(featuredProjects.length - 1)),
-    ).toBe(true);
-    expect(contentTree.has(sourcePath.project(featuredProjects.length))).toBe(
-      false,
-    );
+      [...contentTree.keys()].some((path) => path.startsWith("projects.")),
+    ).toBe(false);
   });
 
   it("lets only quotes be cut down to an excerpt", () => {

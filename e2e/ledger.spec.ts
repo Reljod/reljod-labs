@@ -135,12 +135,7 @@ test.describe("Ledger", () => {
     const fromMaya = page.locator(
       '[data-testid="answer-block"][data-source^="experience.3"]',
     );
-    const kycProject = page.locator(
-      '[data-testid="answer-block"][data-source="projects.1"]',
-    );
-    expect(
-      (await fromMaya.count()) + (await kycProject.count()),
-    ).toBeGreaterThan(0);
+    expect(await fromMaya.count()).toBeGreaterThan(0);
     if (!live) {
       const cost = page.locator(
         '[data-testid="answer-block"][data-source="experience.3.points.0"][data-excerpt="90% lower KYC operating cost"]',

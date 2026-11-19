@@ -1,83 +1,37 @@
+import { cacheLife } from "next/cache";
 import { ScrollIn } from "@/components/motion/scroll-in";
-import { ScrollRule } from "@/components/motion/scroll-rule";
-import { Badge, type BadgeTone } from "@/components/ui/badge";
 import { Section } from "@/components/ui/section";
 import { credentials, experience } from "@/content/experience";
-import type { ExperienceSector } from "@/content/types";
 import { source, sourcePath } from "@/features/ledger/domain/source-paths";
-import { CareerDrum } from "./career-drum";
+import { CareerFile } from "./career-file";
+import { careerRuler } from "./career-span";
 
-const sectorTone: Record<ExperienceSector, BadgeTone> = {
-  Banking: "ink",
-  "Financial data": "haze",
-  "AI SaaS": "paper",
-  Consulting: "paper",
-  Hardware: "limestone",
-};
+/**
+ * Where each job sits on the career ruler. A "Present" job runs to this
+ * month, so the ruler is worked out once a day, on the server, and the
+ * browser gets the same numbers as the HTML.
+ */
+async function currentRuler() {
+  "use cache";
+  cacheLife("days");
+  return careerRuler(
+    experience.map((job) => job.period),
+    new Date(),
+  );
+}
 
-export function Experience() {
+export async function Experience() {
+  const ruler = await currentRuler();
   return (
     <Section
       id="experience"
       eyebrow="Experience"
       title="Seven years, from finance data to digital banking"
-      intro="Three years inside a leading Philippine digital bank, two at a global financial data company, and the last two shipping production AI."
+      intro="Two years at a global financial data company, three inside a leading Philippine digital bank, and the last two shipping production AI."
     >
-      <CareerDrum />
-      <ol className="outline-box relative divide-y-2 divide-ink bg-paper">
-        <ScrollRule axis="y" className="inset-y-0 -left-0.5 w-1.5" />
-        {experience.map((job, index) => (
-          <ScrollIn
-            as="li"
-            key={`${job.company}-${job.period}`}
-            {...source(sourcePath.job(index))}
-            className={`grid gap-4 p-6 md:grid-cols-[14rem_1fr] md:gap-8 ${job.highlight ? "bg-morning-haze" : ""}`}
-          >
-            <div className="stick-on-move">
-              <p className="font-mono text-sm font-bold uppercase">
-                {job.period}
-              </p>
-              <p className="mt-1 text-sm text-ink-muted">{job.location}</p>
-              <div className="mt-3">
-                <Badge tone={sectorTone[job.sector]}>{job.sector}</Badge>
-              </div>
-            </div>
-            <div>
-              <h3 className="text-[1.375rem] leading-snug font-semibold">
-                {job.role}{" "}
-                <span className="text-ink-muted">· {job.company}</span>
-              </h3>
-              <ul className="mt-3 space-y-2">
-                {job.points.map((point, pointIndex) => (
-                  <li
-                    key={point}
-                    className="flex gap-3"
-                    {...source(sourcePath.jobPoint(index, pointIndex))}
-                  >
-                    <span
-                      aria-hidden="true"
-                      className="mt-2.5 h-0.5 w-3 shrink-0 bg-ink"
-                    />
-                    {point}
-                  </li>
-                ))}
-              </ul>
-              <ul aria-label="Stack" className="mt-4 flex flex-wrap gap-2">
-                {job.stack.map((item) => (
-                  <li
-                    key={item}
-                    className="eyebrow outline-box rounded-sm bg-paper px-2 py-0.5"
-                  >
-                    {item}
-                  </li>
-                ))}
-              </ul>
-            </div>
-          </ScrollIn>
-        ))}
-      </ol>
+      <CareerFile ruler={ruler} />
 
-      <dl className="mt-8 grid gap-8 md:grid-cols-2">
+      <dl className="mt-12 grid gap-8 md:grid-cols-2">
         {credentials.map((credential, index) => (
           <ScrollIn
             key={credential.title}

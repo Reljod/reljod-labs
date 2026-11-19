@@ -1,6 +1,6 @@
 import { credentials, experience } from "@/content/experience";
 import { contactPitch, highlights, profile } from "@/content/profile";
-import { featuredProjects } from "@/content/projects";
+import { demosPitch } from "@/content/projects";
 import { approach, services } from "@/content/services";
 import type { Link } from "@/content/types";
 import { sourcePath } from "./source-paths";
@@ -154,24 +154,11 @@ export function buildContentTree(): ContentTree {
     });
   });
 
-  featuredProjects.forEach((project, index) => {
-    add(sourcePath.project(index), "projects", {
-      kind: "card",
-      eyebrow: project.sector,
-      title: project.title,
-      body: project.summary,
-      note: project.outcome,
-    });
-    add(sourcePath.projectSummary(index), "projects", {
-      kind: "quote",
-      text: project.summary,
-      context: project.title,
-    });
-    add(sourcePath.projectOutcome(index), "projects", {
-      kind: "quote",
-      text: project.outcome,
-      context: project.title,
-    });
+  add(sourcePath.demos, "demos", {
+    kind: "card",
+    eyebrow: "Demos",
+    title: `${demosPitch.figure} ${demosPitch.label}`,
+    body: demosPitch.body,
   });
 
   add(sourcePath.contact, "contact", {

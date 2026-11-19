@@ -1,10 +1,10 @@
 import type { ReactNode } from "react";
 import { Approach } from "./approach";
 import { Contact } from "./contact";
+import { Demos } from "./demos";
 import { Experience } from "./experience";
 import { Hero } from "./hero";
 import { ImpactBand } from "./impact-band";
-import { Projects } from "./projects";
 import { Services } from "./services";
 
 /**
@@ -19,7 +19,7 @@ export function AboutSections({ heroAside }: { heroAside?: ReactNode }) {
       <Services />
       <Approach />
       <Experience />
-      <Projects />
+      <Demos />
       <Contact />
     </>
   );

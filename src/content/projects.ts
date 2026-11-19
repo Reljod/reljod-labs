@@ -1,11 +1,5 @@
+import { capitalCountWord, countWord } from "./count-words";
 import type { Project } from "./types";
-
-/**
- * How many case studies the About page shows. Live demos always show too, after
- * them; the rest stay in the list for a future projects page.
- */
-export const FEATURED_PROJECT_LIMIT = 6;
-
 /*
  * Template entries. Replace `outcome` placeholders with real, approved figures
  * before publishing. Never invent client names or numbers.
@@ -98,7 +92,6 @@ export const projects: Project[] = [
     tags: ["OpenCV", "YOLO"],
     status: "Case study soon",
   },
-  // Kept last so Ledger's `projects.<index>` source paths keep naming the same entries.
   {
     slug: "ledger",
     icon: "chat",
@@ -133,7 +126,6 @@ export const projects: Project[] = [
       "Model, temperature and spend per job, live",
     ],
   },
-  // Appended after Ledger so Ledger's `projects.<index>` source paths keep naming the same entries.
   {
     slug: "client-manager",
     icon: "agents",
@@ -151,7 +143,6 @@ export const projects: Project[] = [
       "Ask across your whole book, or research a client on the web",
     ],
   },
-  // Appended last, like the others, so every `projects.<index>` source path keeps its entry.
   {
     slug: "process-transfer",
     icon: "compass",
@@ -170,7 +161,6 @@ export const projects: Project[] = [
       "Editable rules, the cost of every model call and an audit trail",
     ],
   },
-  // Appended last for the same reason; `LEAD_DEMOS` below puts it first on the landing page.
   {
     slug: "bank-harness",
     icon: "agents",
@@ -189,7 +179,6 @@ export const projects: Project[] = [
       "Upload a circular and settle the conflicts it raises with older guidance",
     ],
   },
-  // Appended last, like the others, so every `projects.<index>` source path keeps its entry.
   {
     slug: "name-extraction",
     icon: "scan",
@@ -208,7 +197,6 @@ export const projects: Project[] = [
       "An editable, versioned rulebook and a full audit trail with cost",
     ],
   },
-  // Appended last, like the others, so every `projects.<index>` source path keeps its entry.
   {
     slug: "operator",
     icon: "agents",
@@ -324,9 +312,28 @@ export const liveDemos = [
   ),
   ...liveInListOrder.filter((project) => !LEAD_DEMOS.includes(project.slug)),
 ];
+
+/**
+ * How many live demos there are, in words ("twelve"). Every line of copy
+ * that counts the demos reads this, so a new demo updates them all.
+ */
+export const demoCount = {
+  value: liveDemos.length,
+  word: countWord(liveDemos.length),
+  Word: capitalCountWord(liveDemos.length),
+} as const;
+
+/** The About page's pointer to the demos, which Ledger may also cut out. */
+export const demosPitch = {
+  figure: String(demoCount.value),
+  label: "live demos",
+  body: `${demoCount.Word} working demos: real AI over made-up paperwork, from a bank you can run to a voice agent you can interrupt. Each opens with a guest code.`,
+  cta: "Open the catalog",
+} as const;
+
 /**
  * What the landing page's "Coming soon" shows, in this order. The other
- * projects that aren't live stay on the About page only.
+ * projects that aren't live wait for their case studies.
  */
 const BENCH = ["marketing-intelligence", "tennis-line-calling"];
 
@@ -335,18 +342,3 @@ export const benchProjects = BENCH.flatMap((slug) =>
     (project) => project.slug === slug && project.status !== "Live",
   ),
 );
-
-const leadingProjects = projects.slice(0, FEATURED_PROJECT_LIMIT);
-
-/**
- * The About page's Projects: the first entries, then every live demo not
- * already among them, in list order (not the landing page's order). The first
- * entries keep their `projects.<index>` source paths; the appended demos are
- * numbered by their order among live demos in the list, so add a new live demo
- * at the end of `projects` to keep the others' paths stable, and name it in
- * `LEAD_DEMOS` if it should lead the landing page.
- */
-export const featuredProjects = [
-  ...leadingProjects,
-  ...liveInListOrder.filter((project) => !leadingProjects.includes(project)),
-];
