@@ -382,7 +382,8 @@ function cleanParam(
         .filter(Boolean);
       if (lines.length !== value.length)
         return fail(`${spec.label} has an empty line.`);
-      if (lines.length < 1) return fail(`${spec.label} needs at least one line.`);
+      if (lines.length < 1)
+        return fail(`${spec.label} needs at least one line.`);
       if (lines.length > spec.maxItems)
         return fail(`${spec.label} takes at most ${spec.maxItems} lines.`);
       if (lines.some((line) => line.length > 200))
@@ -493,7 +494,9 @@ function showParam(spec: ParamSpec, value: ParamValue): string {
     return labels.length ? labels.join("; ") : "nothing";
   }
   if (spec.kind === "phrases" && Array.isArray(value))
-    return value.map((line) => line.split("|")[0].replace(/\*$/, "")).join(", ");
+    return value
+      .map((line) => line.split("|")[0].replace(/\*$/, ""))
+      .join(", ");
   return String(value);
 }
 

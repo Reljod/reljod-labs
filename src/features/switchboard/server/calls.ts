@@ -33,9 +33,15 @@ import {
   disruptionForIssue,
   normalizeReference,
 } from "../domain/world";
-import { callLifecycle, callHookToken } from "./call-workflow";
+import { callHookToken, callLifecycle } from "./call-workflow";
 import { type Db, isUuid, jsonb, sql } from "./db";
-import { InvalidError, LimitError, messageOf, NotFoundError, StateError } from "./errors";
+import {
+  InvalidError,
+  LimitError,
+  messageOf,
+  NotFoundError,
+  StateError,
+} from "./errors";
 import { takeRate, type Visitor } from "./rate";
 import {
   type CallRow,
@@ -73,8 +79,16 @@ async function finish(
     set status = ${status}, end_reason = ${reason.slice(0, 200)}, ended_at = now()
     where id = ${row.id} and status = 'live'`;
   if (status === "cut_off")
-    await emit(tx, row.owner, row.id, "system", "call.cut_off", { reason, seconds });
-  else await emit(tx, row.owner, row.id, "system", "call.ended", { by, reason, seconds });
+    await emit(tx, row.owner, row.id, "system", "call.cut_off", {
+      reason,
+      seconds,
+    });
+  else
+    await emit(tx, row.owner, row.id, "system", "call.ended", {
+      by,
+      reason,
+      seconds,
+    });
 }
 
 /** Tells the Call's Workflow the Call is over, so the Wrap-up starts now. */
@@ -100,8 +114,18 @@ async function liveCall(tx: Db, owner: Owner, callId: string) {
   if (!row) throw new NotFoundError("No such Call.");
   if (row.status !== "live") return { row, live: false as const };
   if (pastGrace(row)) {
-    await finish(tx, row, "cut_off", "server", "The Call passed its longest length.");
-    return { row: { ...row, status: "cut_off" as const }, live: false as const, cut: true };
+    await finish(
+      tx,
+      row,
+      "cut_off",
+      "server",
+      "The Call passed its longest length.",
+    );
+    return {
+      row: { ...row, status: "cut_off" as const },
+      live: false as const,
+      cut: true,
+    };
   }
   return { row, live: true as const };
 }
@@ -126,7 +150,10 @@ export async function startCall(input: StartInput): Promise<CallView> {
       : input.stub
         ? STUB_MODEL
         : TEXT_MODELS.line;
-  if (input.scenario.kind === "sample" && !sampleCaller(input.scenario.sampleId))
+  if (
+    input.scenario.kind === "sample" &&
+    !sampleCaller(input.scenario.sampleId)
+  )
     throw new InvalidError("No such Sample caller.");
   await takeRate(input.who, input.owner, "call");
   const replaced: string[] = [];
@@ -149,14 +176,20 @@ export async function startCall(input: StartInput): Promise<CallView> {
       const booking = records.find(
         (record) => record.kind === "booking" && record.ref === reference,
       );
-      if (!booking) throw new InvalidError("No such Booking in the Back office.");
+      if (!booking)
+        throw new InvalidError("No such Booking in the Back office.");
       const disruption = disruptionForIssue(
         input.scenario.issue,
         (booking.data as Booking).serviceId,
       );
       if (disruption)
         await writeRecords(tx, input.owner, null, [
-          { op: "create", kind: "disruption", ref: disruption.ref, data: disruption.data },
+          {
+            op: "create",
+            kind: "disruption",
+            ref: disruption.ref,
+            data: disruption.data,
+          },
         ]);
       await emit(tx, input.owner, null, "owner", "scenario.set", {
         bookingRef: reference,
@@ -210,7 +243,13 @@ export async function startCall(input: StartInput): Promise<CallView> {
     await sql().begin(async (tx) => {
       const locked = await callRow(input.owner, row.id, tx, true);
       if (locked?.status === "live")
-        await finish(tx, locked, "failed", "server", "The Call's Workflow could not start.");
+        await finish(
+          tx,
+          locked,
+          "failed",
+          "server",
+          "The Call's Workflow could not start.",
+        );
     });
     console.error("[switchboard] workflow start failed", messageOf(error));
     throw new StateError("The Call could not start. Try again in a moment.");
@@ -233,7 +272,8 @@ export async function endCall(input: {
         found.row,
         "ended",
         input.by,
-        input.reason ?? (input.by === "caller" ? "The Caller hung up." : "The Call ended."),
+        input.reason ??
+          (input.by === "caller" ? "The Caller hung up." : "The Call ended."),
       );
     return callRow(input.owner, input.callId, tx);
   });
@@ -298,7 +338,10 @@ export async function callTool(input: {
       await tx<{ ref_seq: number }[]>`
         select ref_seq from switchboard.workspaces where owner = ${input.owner} for update`,
     ];
-    const heard = heardIn(events, (input.saying ?? "").slice(0, LIMITS.transcriptChars));
+    const heard = heardIn(
+      events,
+      (input.saying ?? "").slice(0, LIMITS.transcriptChars),
+    );
     if (input.hearing)
       heard.caller += `\n${input.hearing.slice(0, LIMITS.transcriptChars)}`;
     const state: CallState = { ...NEW_CALL_STATE, ...row.state };
@@ -381,7 +424,12 @@ export async function reportEvents(input: {
       row.ended_at !== null &&
       Date.now() - row.ended_at.getTime() < 20_000;
     if (!found.live && !late && !("cut" in found))
-      return { accepted: 0, status: row.status, costUsd: Number(row.cost_usd), cut: false };
+      return {
+        accepted: 0,
+        status: row.status,
+        costUsd: Number(row.cost_usd),
+        cut: false,
+      };
     const [{ count }] = await tx<{ count: number }[]>`
       select count(*)::int as count from switchboard.events
       where owner = ${input.owner} and call_id = ${row.id}`;
@@ -472,7 +520,11 @@ export async function reportEvents(input: {
     return { accepted, status, costUsd: cost, cut };
   });
   if (result.cut) await wake(input.callId);
-  return { accepted: result.accepted, status: result.status, costUsd: result.costUsd };
+  return {
+    accepted: result.accepted,
+    status: result.status,
+    costUsd: result.costUsd,
+  };
 }
 
 /** The Workflow's timer: cuts the Call off if it is still live at its deadline. */
@@ -480,7 +532,13 @@ export async function cutOffIfLive(owner: Owner, callId: string) {
   return sql().begin(async (tx) => {
     const row = await callRow(owner, callId, tx, true);
     if (!row || row.status !== "live") return false;
-    await finish(tx, row, "cut_off", "server", "The Call passed its longest length.");
+    await finish(
+      tx,
+      row,
+      "cut_off",
+      "server",
+      "The Call passed its longest length.",
+    );
     return true;
   });
 }
@@ -490,7 +548,10 @@ export async function loadCall(owner: Owner, callId: string, afterId = 0) {
   if (!isUuid(callId)) throw new NotFoundError("No such Call.");
   const row = await callRow(owner, callId);
   if (!row) throw new NotFoundError("No such Call.");
-  return { call: toCall(row), events: await callEvents(owner, callId, sql(), afterId) };
+  return {
+    call: toCall(row),
+    events: await callEvents(owner, callId, sql(), afterId),
+  };
 }
 
 /** What a tool call is called while it runs. */

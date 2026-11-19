@@ -2,7 +2,12 @@ import { createGateway, generateText, isStepCount, tool } from "ai";
 import { z } from "zod";
 import type { Owner } from "@/features/access/domain/owner";
 import { WRAPUP_INSTRUCTIONS } from "../domain/agent";
-import { type CallEvent, type FollowUp, seconds, type Wrapup } from "../domain/contract";
+import {
+  type CallEvent,
+  type FollowUp,
+  seconds,
+  type Wrapup,
+} from "../domain/contract";
 import { LIMITS } from "../domain/limits";
 import { STUB_MODEL, TEXT_MODELS } from "../domain/models";
 import { callStats, scoreCall } from "../domain/scorecard";
@@ -13,14 +18,24 @@ import { env } from "./env";
 import { messageOf } from "./errors";
 import { gatewayCost } from "./llm";
 import { runCode } from "./sandbox";
-import { callEvents, callRow, emit, listRecords, toCall, writeRecords } from "./store";
+import {
+  callEvents,
+  callRow,
+  emit,
+  listRecords,
+  toCall,
+  writeRecords,
+} from "./store";
 
 /**
  * The steps of a Call's Workflow. Each is retried by the Workflow SDK when it
  * throws, so each is safe to run twice.
  */
 
-type Note = Pick<Wrapup, "summary" | "actions" | "promises" | "sentiment" | "analysis"> & {
+type Note = Pick<
+  Wrapup,
+  "summary" | "actions" | "promises" | "sentiment" | "analysis"
+> & {
   model: string;
   costUsd: number;
 };
@@ -48,7 +63,12 @@ export async function openWrapup(owner: Owner, callId: string) {
 const noteSchema = z.object({
   summary: z.string().max(1200),
   actions: z
-    .array(z.object({ what: z.string().max(300), ref: z.string().max(40).nullable() }))
+    .array(
+      z.object({
+        what: z.string().max(300),
+        ref: z.string().max(40).nullable(),
+      }),
+    )
     .max(20),
   promises: z.array(z.string().max(300)).max(10),
   sentiment: z
@@ -114,7 +134,9 @@ export async function writeNote(owner: Owner, callId: string): Promise<Note> {
   let runs = 0;
   try {
     const result = await generateText({
-      model: createGateway({ apiKey: env.aiGatewayApiKey() })(TEXT_MODELS.wrapup),
+      model: createGateway({ apiKey: env.aiGatewayApiKey() })(
+        TEXT_MODELS.wrapup,
+      ),
       instructions: `${WRAPUP_INSTRUCTIONS}
 
 You have one tool, run_code: Node.js in a Sandbox with no network, with this Call in ./call.json (the same object you are given). Use it once, before you write, for anything you would otherwise count by hand: words said by each side, the Agent's longest Turn, the share of tool calls refused. Print a few short lines. If it fails, carry on without it. Your final message is the JSON only.`,
@@ -196,7 +218,9 @@ export async function saveWrapup(owner: Owner, callId: string, note: Note) {
         where owner = ${owner} returning ref_seq`;
       const ref = formatRef(REF_PREFIX.confirmation, workspace.ref_seq);
       const booking = call.state.verified[0];
-      const to = booking ? `the contact on booking ${booking}` : "the Caller's contact";
+      const to = booking
+        ? `the contact on booking ${booking}`
+        : "the Caller's contact";
       await writeRecords(tx, owner, callId, [
         {
           op: "create",
@@ -208,7 +232,9 @@ export async function saveWrapup(owner: Owner, callId: string, note: Note) {
             body: [
               note.summary,
               "",
-              ...changed.map((item) => `- ${item.kind.replace("_", " ")} ${item.ref}`),
+              ...changed.map(
+                (item) => `- ${item.kind.replace("_", " ")} ${item.ref}`,
+              ),
               "",
               "SPECIMEN. Meridia Rail is fictional; nothing was sent.",
             ]
@@ -229,7 +255,8 @@ export async function saveWrapup(owner: Owner, callId: string, note: Note) {
         kind: "confirmation",
         status: "none",
         ref: null,
-        detail: "Nothing changed in the Back office, so there is nothing to confirm.",
+        detail:
+          "Nothing changed in the Back office, so there is nothing to confirm.",
       });
     }
 
@@ -241,12 +268,20 @@ export async function saveWrapup(owner: Owner, callId: string, note: Note) {
     );
     if (callbackRef && record) {
       const data = record.data as Callback;
-      const minutes = Math.min(LIMITS.callbackMaxMinutes, Math.max(1, data.inMinutes));
+      const minutes = Math.min(
+        LIMITS.callbackMaxMinutes,
+        Math.max(1, data.inMinutes),
+      );
       const dueAt = new Date(
         Date.parse(call.endedAt ?? new Date().toISOString()) + minutes * 60_000,
       ).toISOString();
       await writeRecords(tx, owner, callId, [
-        { op: "update", kind: "callback", ref: callbackRef, data: { ...data, dueAt } },
+        {
+          op: "update",
+          kind: "callback",
+          ref: callbackRef,
+          data: { ...data, dueAt },
+        },
       ]);
       await emit(tx, owner, callId, "system", "callback.waiting", {
         ref: callbackRef,
@@ -286,7 +321,9 @@ export async function saveWrapup(owner: Owner, callId: string, note: Note) {
       update switchboard.calls
       set wrapup = ${jsonb(tx, wrapup)}, wrapup_status = 'done'
       where id = ${callId}`;
-    await emit(tx, owner, callId, "system", "wrapup.done", { costUsd: note.costUsd });
+    await emit(tx, owner, callId, "system", "wrapup.done", {
+      costUsd: note.costUsd,
+    });
     return callback;
   });
 }
@@ -313,7 +350,9 @@ export async function callbackDue(
     const row = await callRow(owner, callId, tx, true);
     if (!row?.wrapup) return;
     const records = await listRecords(owner, tx);
-    const record = records.find((item) => item.kind === "callback" && item.ref === ref);
+    const record = records.find(
+      (item) => item.kind === "callback" && item.ref === ref,
+    );
     if (!record || (record.data as Callback).status !== "scheduled") return;
     await writeRecords(tx, owner, callId, [
       {

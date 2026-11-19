@@ -1,6 +1,10 @@
 import "server-only";
 import type { Owner } from "@/features/access/domain/owner";
-import { type CallState, NEW_CALL_STATE, type RecordWrite } from "../domain/backoffice";
+import {
+  type CallState,
+  NEW_CALL_STATE,
+  type RecordWrite,
+} from "../domain/backoffice";
 import type {
   Actor,
   CallEvent,
@@ -17,8 +21,8 @@ import { LIMITS } from "../domain/limits";
 import type { RealtimeUsage } from "../domain/models";
 import {
   type Rulebook,
-  resolveRulebook,
   type RuleVersionRow,
+  resolveRulebook,
 } from "../domain/rules";
 import {
   type BackOfficeRecord,
@@ -157,7 +161,10 @@ export async function ruleRows(owner: Owner, db: Db = sql()) {
   );
 }
 
-export async function rulebookOf(owner: Owner, db: Db = sql()): Promise<Rulebook> {
+export async function rulebookOf(
+  owner: Owner,
+  db: Db = sql(),
+): Promise<Rulebook> {
   return resolveRulebook(await ruleRows(owner, db));
 }
 
@@ -214,7 +221,10 @@ export async function callEvents(
 }
 
 /** The Workspace's trail, newest first. */
-export async function trail(owner: Owner, input: { before?: number; limit?: number }) {
+export async function trail(
+  owner: Owner,
+  input: { before?: number; limit?: number },
+) {
   const limit = Math.min(200, Math.max(1, input.limit ?? 100));
   const rows = await sql()<EventRow[]>`
     select id, call_id, actor, type, data, at
@@ -294,7 +304,10 @@ export async function liveCallRows(owner: Owner, db: Db = sql()) {
     order by started_at desc`;
 }
 
-export async function listCalls(owner: Owner, limit: number = LIMITS.historyCalls) {
+export async function listCalls(
+  owner: Owner,
+  limit: number = LIMITS.historyCalls,
+) {
   const rows = await sql()<(CallRow & { refusals: number })[]>`
     select c.*,
       (select count(*)::int from switchboard.events e

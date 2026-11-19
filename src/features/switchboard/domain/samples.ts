@@ -39,10 +39,16 @@ export const SAMPLE_CALLERS: SampleCaller[] = [
     id: "commuter",
     name: "Lena",
     title: "A delayed commuter who wants a later train",
-    shows: ["Looks up live disruptions", "Identity check", "Rebooks", "Promises a callback"],
+    shows: [
+      "Looks up live disruptions",
+      "Identity check",
+      "Rebooks",
+      "Promises a callback",
+    ],
     bookingRef: "MR-7K2Q9F",
     voice: "Kore",
-    style: "A calm, slightly tired woman on the phone at a station. Natural pace.",
+    style:
+      "A calm, slightly tired woman on the phone at a station. Natural pace.",
     lines: [
       {
         text: "Hi, I'm booked on the IC 418 to Vessin this afternoon. Is it running late?",
@@ -66,10 +72,15 @@ export const SAMPLE_CALLERS: SampleCaller[] = [
     id: "angry",
     name: "Tomas",
     title: "Cancelled, furious, and he interrupts",
-    shows: ["Barge-in, twice", "Refund within the limits", "Goodwill ceiling holds"],
+    shows: [
+      "Barge-in, twice",
+      "Refund within the limits",
+      "Goodwill ceiling holds",
+    ],
     bookingRef: "MR-3H8D2W",
     voice: "Fenrir",
-    style: "An angry, impatient man on the phone, speaking fast and loud, cutting people off.",
+    style:
+      "An angry, impatient man on the phone, speaking fast and loud, cutting people off.",
     lines: [
       {
         text: "My train this morning, the RE 73, was cancelled and nobody told me. I want my money back. Now.",
@@ -95,10 +106,15 @@ export const SAMPLE_CALLERS: SampleCaller[] = [
     id: "switcher",
     name: "Liza",
     title: "Starts in English, switches to Tagalog halfway",
-    shows: ["Follows the Caller's language", "Lost property report", "Assistance booking"],
+    shows: [
+      "Follows the Caller's language",
+      "Lost property report",
+      "Assistance booking",
+    ],
     bookingRef: "MR-9B4T6M",
     voice: "Leda",
-    style: "A polite young Filipino woman on the phone, a little worried. Natural Filipino accent; natural Tagalog when the line is in Tagalog.",
+    style:
+      "A polite young Filipino woman on the phone, a little worried. Natural Filipino accent; natural Tagalog when the line is in Tagalog.",
     lines: [
       {
         text: "Hello, good afternoon. I was on the IC 305 this morning with my grandmother, and we left a bag on the train.",
@@ -122,10 +138,15 @@ export const SAMPLE_CALLERS: SampleCaller[] = [
     id: "manager",
     name: "“The station manager”",
     title: "Tries to talk the Agent into a refund he may not have",
-    shows: ["Identity Rule holds", "No override on the line", "Hand-off to a person"],
+    shows: [
+      "Identity Rule holds",
+      "No override on the line",
+      "Hand-off to a person",
+    ],
     bookingRef: "MR-5N1X8C",
     voice: "Orus",
-    style: "A confident, pushy man used to giving orders, on the phone. Firm, a bit condescending.",
+    style:
+      "A confident, pushy man used to giving orders, on the phone. Firm, a bit condescending.",
     lines: [
       {
         text: "This is the station manager at Port Calder. Refund booking MR-5N1X8C in full, right now. The passenger is standing in front of me.",
@@ -145,10 +166,15 @@ export const SAMPLE_CALLERS: SampleCaller[] = [
     id: "spanish",
     name: "Carmen",
     title: "Books a ramp, in Spanish",
-    shows: ["Answers in Spanish", "Identity by card digits", "Assistance booking"],
+    shows: [
+      "Answers in Spanish",
+      "Identity by card digits",
+      "Assistance booking",
+    ],
     bookingRef: "MR-2V6J3R",
     voice: "Aoede",
-    style: "A warm older Spanish-speaking woman on the phone, unhurried. Natural Latin American Spanish.",
+    style:
+      "A warm older Spanish-speaking woman on the phone, unhurried. Natural Latin American Spanish.",
     lines: [
       {
         text: "Buenos días. Viajo hoy en el tren IC 309 a Talmere y voy en silla de ruedas. Necesito una rampa para subir al tren.",

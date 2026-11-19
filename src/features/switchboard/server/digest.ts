@@ -73,14 +73,19 @@ export function digestOf(call: CallView, events: CallEvent[]) {
 }
 
 /** The Owner's last Calls, newest first, as digests. */
-export async function digests(owner: Owner, limit: number = LIMITS.supervisorCalls) {
+export async function digests(
+  owner: Owner,
+  limit: number = LIMITS.supervisorCalls,
+) {
   const rows = await sql()<CallRow[]>`
     select * from switchboard.calls
     where owner = ${owner}
     order by started_at desc
     limit ${limit}`;
   return Promise.all(
-    rows.map(async (row) => digestOf(toCall(row), await callEvents(owner, row.id))),
+    rows.map(async (row) =>
+      digestOf(toCall(row), await callEvents(owner, row.id)),
+    ),
   );
 }
 

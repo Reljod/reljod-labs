@@ -28,7 +28,8 @@ export async function visitor(): Promise<Visitor> {
 const RATES = {
   call: {
     perHour: LIMITS.callsPerHour,
-    refusal: (limit: number) => `That's ${limit} Calls this hour. Try again soon.`,
+    refusal: (limit: number) =>
+      `That's ${limit} Calls this hour. Try again soon.`,
   },
   turn: {
     perHour: LIMITS.turnsPerHour,

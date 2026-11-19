@@ -28,13 +28,22 @@ export const callHookToken = (callId: string) => `switchboard:call:${callId}`;
 export const callbackHookToken = (callId: string) =>
   `switchboard:callback:${callId}`;
 
-export type LifecycleInput = { callId: string; owner: Owner; deadlineAt: string };
+export type LifecycleInput = {
+  callId: string;
+  owner: Owner;
+  deadlineAt: string;
+};
 
 export async function callLifecycle(input: LifecycleInput) {
   "use workflow";
-  const ended = createHook<{ ended: true }>({ token: callHookToken(input.callId) });
+  const ended = createHook<{ ended: true }>({
+    token: callHookToken(input.callId),
+  });
   await ended.getConflict();
-  const waitMs = Math.max(1_000, Date.parse(input.deadlineAt) - Date.now() + 20_000);
+  const waitMs = Math.max(
+    1_000,
+    Date.parse(input.deadlineAt) - Date.now() + 20_000,
+  );
   const byHook = await Promise.race([
     ended.then(() => true),
     sleep(`${Math.ceil(waitMs / 1000)}s`).then(() => false),

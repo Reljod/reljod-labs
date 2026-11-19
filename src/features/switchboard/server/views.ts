@@ -7,7 +7,10 @@ import { rulesView } from "./rules";
 import { listCalls, listRecords } from "./store";
 
 /** The page's first view, read together. */
-export async function firstView(owner: Owner, who: Visitor): Promise<FirstView> {
+export async function firstView(
+  owner: Owner,
+  who: Visitor,
+): Promise<FirstView> {
   const [records, rules, calls, rates] = await Promise.all([
     listRecords(owner),
     rulesView(owner),

@@ -88,11 +88,14 @@ export function realtimeCost(modelId: string, usage: RealtimeUsage): number {
   const pricing = realtimeModel(modelId)?.pricing;
   if (!pricing) return 0;
   const n = (value: number | undefined) =>
-    typeof value === "number" && Number.isFinite(value) && value > 0 ? value : 0;
+    typeof value === "number" && Number.isFinite(value) && value > 0
+      ? value
+      : 0;
   const inAudio = n(usage.inputAudioTokens);
   const outAudio = n(usage.outputAudioTokens);
   // A provider that reports only totals: everything not audio is text.
-  const inText = usage.inputTextTokens ?? Math.max(0, n(usage.inputTokens) - inAudio);
+  const inText =
+    usage.inputTextTokens ?? Math.max(0, n(usage.inputTokens) - inAudio);
   const outText =
     usage.outputTextTokens ?? Math.max(0, n(usage.outputTokens) - outAudio);
   const cachedAudio = Math.min(inAudio, n(usage.cachedInputAudioTokens));
@@ -111,7 +114,10 @@ export function realtimeCost(modelId: string, usage: RealtimeUsage): number {
 }
 
 /** Adds one response's usage to a Call's running total. */
-export function addUsage(total: RealtimeUsage, more: RealtimeUsage): RealtimeUsage {
+export function addUsage(
+  total: RealtimeUsage,
+  more: RealtimeUsage,
+): RealtimeUsage {
   const out: RealtimeUsage = { ...total };
   for (const key of Object.keys(more) as (keyof RealtimeUsage)[]) {
     const value = more[key];

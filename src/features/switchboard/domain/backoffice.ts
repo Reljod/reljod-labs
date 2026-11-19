@@ -162,7 +162,8 @@ const fail = (error: string): Draft => ({
 
 const bookings = (ctx: ToolContext) =>
   ctx.records.filter(
-    (record): record is BackOfficeRecord<"booking"> => record.kind === "booking",
+    (record): record is BackOfficeRecord<"booking"> =>
+      record.kind === "booking",
   );
 
 function bookingOf(ctx: ToolContext, reference: string): Booking | undefined {
@@ -349,7 +350,8 @@ const HANDLERS: {
           record.kind === "disruption",
       )
       .filter(
-        (record) => !wanted || serviceOf(record.data.serviceId)?.id === wanted.id,
+        (record) =>
+          !wanted || serviceOf(record.data.serviceId)?.id === wanted.id,
       )
       .map((record) => ({
         train: record.data.serviceId,
@@ -396,9 +398,7 @@ const HANDLERS: {
     const undisclosed = disclosureRefusal(ctx, "disclosure.recording");
     if (undisclosed) return undisclosed;
     if (ctx.state.locked)
-      return (
-        identityRefusal(ctx, reference) ?? fail("The line is locked.")
-      );
+      return identityRefusal(ctx, reference) ?? fail("The line is locked.");
     if (isVerified(ctx, reference))
       return {
         ok: true,
@@ -440,7 +440,9 @@ const HANDLERS: {
       };
     }
     const attempts = ctx.state.attempts + 1;
-    const max = rule.enabled ? num(rule, "maxAttempts") : Number.POSITIVE_INFINITY;
+    const max = rule.enabled
+      ? num(rule, "maxAttempts")
+      : Number.POSITIVE_INFINITY;
     const locked = attempts >= max;
     const refused = refuse(
       [
@@ -615,7 +617,8 @@ const HANDLERS: {
           data: {
             ...booking,
             refunded,
-            status: refunded >= booking.fare - 0.001 ? "refunded" : booking.status,
+            status:
+              refunded >= booking.fare - 0.001 ? "refunded" : booking.status,
             notes: [
               ...booking.notes,
               `Refund ${ref} of ${money(amount)} issued by phone.`,

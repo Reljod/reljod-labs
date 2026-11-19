@@ -186,7 +186,12 @@ export type Assistance = z.infer<typeof assistanceSchema>;
 export const handoffSchema = z.object({
   reason: text(200),
   summary: text(600),
-  queue: z.enum(["customer_relations", "safety", "accessibility", "duty_manager"]),
+  queue: z.enum([
+    "customer_relations",
+    "safety",
+    "accessibility",
+    "duty_manager",
+  ]),
   status: z.literal("waiting"),
 });
 export type Handoff = z.infer<typeof handoffSchema>;
@@ -352,7 +357,11 @@ export const SEED_DISRUPTIONS: { ref: string; data: Disruption }[] = [
 ];
 
 /** What a Workspace's Back office holds on first use, and after a reset. */
-export function seedRecords(): { kind: RecordKind; ref: string; data: unknown }[] {
+export function seedRecords(): {
+  kind: RecordKind;
+  ref: string;
+  data: unknown;
+}[] {
   return [
     ...SEED_BOOKINGS.map((data) => ({
       kind: "booking" as const,

@@ -102,7 +102,11 @@ export type ToolResponse = {
   over: CallStatus | null;
 };
 
-export type ReportResponse = { accepted: number; status: CallStatus; costUsd: number };
+export type ReportResponse = {
+  accepted: number;
+  status: CallStatus;
+  costUsd: number;
+};
 
 export type TrailResponse = { events: CallEvent[] };
 export type RecordsResponse = { records: BackOfficeRecord[] };

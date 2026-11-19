@@ -100,7 +100,10 @@ export async function runCode(input: {
       ["-c", RUNNER_SCRIPT, "switchboard", file],
       { timeoutMs: SANDBOX_LIMITS.commandMs + 5_000 },
     );
-    const [stdout, stderr] = await Promise.all([result.stdout(), result.stderr()]);
+    const [stdout, stderr] = await Promise.all([
+      result.stdout(),
+      result.stderr(),
+    ]);
     return {
       stdout: cap(stdout),
       stderr: cap(stderr),

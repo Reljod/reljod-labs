@@ -24,7 +24,13 @@ export const scenarioSchema = z.discriminatedUnion("kind", [
   z.object({
     kind: z.literal("own"),
     bookingRef: z.string().max(20),
-    issue: z.enum(["delay", "cancellation", "lost_property", "assistance", "none"]),
+    issue: z.enum([
+      "delay",
+      "cancellation",
+      "lost_property",
+      "assistance",
+      "none",
+    ]),
   }),
   z.object({ kind: z.literal("open") }),
 ]);
@@ -105,7 +111,11 @@ export type EventData = {
     costUsd: number;
     ms: number;
   };
-  "call.ended": { by: "caller" | "agent" | "server" | "client"; reason: string; seconds: number };
+  "call.ended": {
+    by: "caller" | "agent" | "server" | "client";
+    reason: string;
+    seconds: number;
+  };
   "call.cut_off": { reason: string; seconds: number };
   "audio.saved": { bytes: number };
   "wrapup.started": Record<string, never>;
@@ -113,11 +123,21 @@ export type EventData = {
   "wrapup.done": { costUsd: number };
   "wrapup.failed": { error: string };
   "code.run": { purpose: "wrapup" | "supervisor"; code: string };
-  "code.result": { exitCode: number; stdout: string; stderr: string; ms: number };
+  "code.result": {
+    exitCode: number;
+    stdout: string;
+    stderr: string;
+    ms: number;
+  };
   "confirmation.sent": { ref: string; to: string };
   "callback.waiting": { ref: string; dueAt: string };
   "callback.due": { ref: string; early: boolean };
-  "rule.saved": { ruleId: string; version: number; enabled: boolean; note: string | null };
+  "rule.saved": {
+    ruleId: string;
+    version: number;
+    enabled: boolean;
+    note: string | null;
+  };
   "world.reset": Record<string, never>;
   "scenario.set": { bookingRef: string; issue: string };
   "mcp.token": { expiresAt: string };
@@ -233,11 +253,21 @@ export type CallStats = {
   refusals: number;
   languages: Language[];
   /** Time to first audio over the Call's Agent Turns. */
-  firstAudio: { turns: number; medianMs: number | null; p95Ms: number | null; worstMs: number | null };
+  firstAudio: {
+    turns: number;
+    medianMs: number | null;
+    p95Ms: number | null;
+    worstMs: number | null;
+  };
 };
 
 export type FollowUp =
-  | { kind: "confirmation"; status: "sent" | "none"; ref: string | null; detail: string }
+  | {
+      kind: "confirmation";
+      status: "sent" | "none";
+      ref: string | null;
+      detail: string;
+    }
   | {
       kind: "callback";
       status: "none" | "waiting" | "due";
@@ -323,4 +353,7 @@ export type SupervisorStreamPart =
   | { kind: "done"; costUsd: number; steps: number };
 
 export const seconds = (from: string, to: string | null, now = Date.now()) =>
-  Math.max(0, Math.round(((to ? Date.parse(to) : now) - Date.parse(from)) / 1000));
+  Math.max(
+    0,
+    Math.round(((to ? Date.parse(to) : now) - Date.parse(from)) / 1000),
+  );

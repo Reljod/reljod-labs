@@ -169,6 +169,8 @@ export const demoProblems: Record<string, string> = {
   "process-transfer":
     "A colleague is leaving. Turn their screen-share call into a how-to guide and slides.",
   "name-extraction": "Find every person and company named in a 500-page file.",
+  switchboard:
+    "Answer my phone line at 2am, in the caller's language, without breaking our rules.",
 };
 
 /**
@@ -190,7 +192,7 @@ export const demoShelves = [
   {
     id: "questions",
     label: "Answers questions",
-    slugs: ["ledger", "client-manager", "bank-harness"],
+    slugs: ["ledger", "client-manager", "bank-harness", "switchboard"],
   },
   {
     id: "person",

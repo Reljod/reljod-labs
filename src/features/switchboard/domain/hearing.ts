@@ -38,7 +38,9 @@ function saysAlternative(words: string[], alternative: string): boolean {
 /** Whether a line (`a|b|c`: any of these ways) was said. */
 export function saysLine(text: string, line: string): boolean {
   const words = tokens(text.replace(/\*/g, " "));
-  return line.split("|").some((alternative) => saysAlternative(words, alternative));
+  return line
+    .split("|")
+    .some((alternative) => saysAlternative(words, alternative));
 }
 
 /** Every line was said: a Disclosure. Returns the lines still missing. */
@@ -92,14 +94,16 @@ export function detectLanguage(text: string): Language {
       if (WORDS[language].has(word)) count[language]++;
     }
   }
-  const share = (language: "en" | "tl" | "es") => count[language] / words.length;
+  const share = (language: "en" | "tl" | "es") =>
+    count[language] / words.length;
   if (count.tl >= 2 && share("tl") >= 0.15) {
     return count.en >= 2 && share("en") >= 0.15 && count.es <= count.en
       ? "tl-en"
       : "tl";
   }
   if (count.es >= 2 && share("es") >= 0.2 && count.es > count.en) return "es";
-  if (count.en >= 1 && count.en >= count.es && count.en >= count.tl) return "en";
+  if (count.en >= 1 && count.en >= count.es && count.en >= count.tl)
+    return "en";
   if (count.es >= 1 && count.es > count.tl) return "es";
   if (count.tl >= 1) return "tl";
   return "und";

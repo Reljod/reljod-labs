@@ -6,6 +6,7 @@ import { HarnessPreview } from "@/components/showcase/previews/harness-preview";
 import { LedgerPreview } from "@/components/showcase/previews/ledger-preview";
 import { ProcessTransferPreview } from "@/components/showcase/previews/process-transfer-preview";
 import { SievePreview } from "@/components/showcase/previews/sieve-preview";
+import { SwitchboardPreview } from "@/components/showcase/previews/switchboard-preview";
 import type { Project } from "@/content/types";
 
 /** Each live demo's moving preview, by project slug. `landing.test.ts` checks every live demo has one. */
@@ -19,4 +20,5 @@ export const demoPreviews: Record<string, (project: Project) => ReactNode> = {
   "process-transfer": () => <ProcessTransferPreview />,
   "bank-harness": () => <HarnessPreview />,
   "name-extraction": () => <SievePreview />,
+  switchboard: () => <SwitchboardPreview />,
 };

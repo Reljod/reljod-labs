@@ -208,6 +208,24 @@ export const projects: Project[] = [
       "An editable, versioned rulebook and a full audit trail with cost",
     ],
   },
+  {
+    slug: "switchboard",
+    icon: "chat",
+    title: "Switchboard",
+    sector: "Voice agents",
+    summary:
+      "The phone line of a fictional railway, answered by a voice agent you can interrupt. Press one button and talk: it answers in under a second, follows you into Tagalog or Spanish, uses the back office while it speaks, and keeps to Rules it cannot be talked out of.",
+    outcome: "Speech to speech, with Rules checked at every tool call",
+    tags: ["Voice", "Realtime", "MCP", "Rules", "Durable workflows"],
+    status: "Live",
+    href: "/demos/switchboard",
+    marks: ["New"],
+    features: [
+      "Talk, type, or play a sample caller who interrupts or switches language",
+      "Watch the back office change, and a Rule refuse a pushy caller",
+      "A wrap-up after every call: summary, scorecard, follow-ups",
+    ],
+  },
 ];
 
 /**

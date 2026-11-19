@@ -7,10 +7,15 @@ import type {
   CallEvent,
   CallStats,
   CallStatus,
-  ScoreItem,
   Scorecard,
+  ScoreItem,
 } from "./contract";
-import { detectLanguage, type Language, mentionedLine, missingLines } from "./hearing";
+import {
+  detectLanguage,
+  type Language,
+  mentionedLine,
+  missingLines,
+} from "./hearing";
 import {
   list,
   type ResolvedRule,
@@ -73,7 +78,8 @@ export function callStats(events: CallEvent[], seconds: number): CallStats {
 }
 
 const tag = (rule: ResolvedRule) => ({ id: rule.id, version: rule.version });
-const titleOf = (rule: ResolvedRule) => ruleDefinition(rule.id)?.title ?? rule.id;
+const titleOf = (rule: ResolvedRule) =>
+  ruleDefinition(rule.id)?.title ?? rule.id;
 
 /** Two languages a Caller would call the same: Taglish answers Tagalog. */
 const sameTongue = (a: Language, b: Language) =>
@@ -113,7 +119,8 @@ export function scoreCall(
 
   const recording = ruleOf(rulebook, "disclosure.recording");
   if (recording.enabled) {
-    const said = missingLines(agentText, list(recording, "listenFor")).length === 0;
+    const said =
+      missingLines(agentText, list(recording, "listenFor")).length === 0;
     const held = heldBy(recording.id);
     const verified = succeeded("verify_identity").length > 0;
     if (said)
@@ -125,7 +132,11 @@ export function scoreCall(
           : "Said before any identity detail was taken.",
       );
     else if (verified)
-      add(recording, "fail", "Identity was verified but the Disclosure is not in the transcript.");
+      add(
+        recording,
+        "fail",
+        "Identity was verified but the Disclosure is not in the transcript.",
+      );
     else
       add(
         recording,
@@ -169,14 +180,20 @@ export function scoreCall(
     );
   }
 
-  for (const id of ["refund.limits", "goodwill.limits", "topics.refused"] as const) {
+  for (const id of [
+    "refund.limits",
+    "goodwill.limits",
+    "topics.refused",
+  ] as const) {
     const rule = ruleOf(rulebook, id);
     if (!rule.enabled) continue;
     const held = heldBy(id);
     add(
       rule,
       held ? "pass" : "na",
-      held ? `Held ${times(held)}; nothing went through above it.` : "Not tested in this Call.",
+      held
+        ? `Held ${times(held)}; nothing went through above it.`
+        : "Not tested in this Call.",
     );
   }
 
@@ -247,7 +264,14 @@ export function scoreCall(
     id: "language.followed",
     rule: null,
     title: "Answered in the Caller's language",
-    verdict: checked === 0 ? "na" : wrong === 0 ? "pass" : wrong <= 1 ? "pass" : "fail",
+    verdict:
+      checked === 0
+        ? "na"
+        : wrong === 0
+          ? "pass"
+          : wrong <= 1
+            ? "pass"
+            : "fail",
     detail:
       checked === 0
         ? "Too little was said to tell."

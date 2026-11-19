@@ -46,7 +46,9 @@ export const BACK_OFFICE_TOOLS = {
     input: z.object({
       reference,
       factor: z
-        .enum(IDENTITY_FACTORS.map((item) => item.value) as [string, ...string[]])
+        .enum(
+          IDENTITY_FACTORS.map((item) => item.value) as [string, ...string[]],
+        )
         .describe("Which second factor the Caller gave"),
       value: z.string().trim().min(1).max(120).describe("What the Caller said"),
     }),

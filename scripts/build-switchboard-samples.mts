@@ -15,6 +15,7 @@ import { mkdir, readFile, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import path from "node:path";
 import { createGateway, generateSpeech, transcribe } from "ai";
+// @ts-expect-error TS5097: Node runs this file as is, so the import names the `.ts` file.
 import { SAMPLE_CALLERS } from "../src/features/switchboard/domain/samples.ts";
 
 const SPEECH_MODEL = "google/gemini-3.8-flash-tts";
@@ -33,7 +34,13 @@ const root = path.resolve(import.meta.dirname, "..");
 const outDir = path.join(root, "public/switchboard/samples");
 const manifestPath = path.join(root, "fixtures/switchboard/samples.json");
 
-type Entry = { caller: string; line: number; text: string; heard: string; seconds: number };
+type Entry = {
+  caller: string;
+  line: number;
+  text: string;
+  heard: string;
+  seconds: number;
+};
 const manifest: Entry[] = existsSync(manifestPath)
   ? JSON.parse(await readFile(manifestPath, "utf8"))
   : [];
@@ -50,7 +57,9 @@ async function speak(text: string, voice: string, style: string) {
       return result.audio.uint8Array;
     } catch (error) {
       if (candidate === undefined) throw error;
-      console.warn(`  voice ${voice} failed, using the default: ${String(error).slice(0, 120)}`);
+      console.warn(
+        `  voice ${voice} failed, using the default: ${String(error).slice(0, 120)}`,
+      );
     }
   }
   throw new Error("unreachable");
@@ -61,25 +70,63 @@ for (const caller of SAMPLE_CALLERS) {
   await mkdir(path.join(outDir, caller.id), { recursive: true });
   for (const [index, line] of caller.lines.entries()) {
     const file = path.join(outDir, caller.id, `${index + 1}.mp3`);
-    const known = manifest.find((entry) => entry.caller === caller.id && entry.line === index + 1);
-    if (!force && existsSync(file) && known?.text === (line.say ?? line.text)) continue;
+    const known = manifest.find(
+      (entry) => entry.caller === caller.id && entry.line === index + 1,
+    );
+    if (!force && existsSync(file) && known?.text === (line.say ?? line.text))
+      continue;
     const wav = await speak(line.say ?? line.text, caller.voice, caller.style);
-    const raw = path.join(tmpdir(), `switchboard-${caller.id}-${index + 1}.wav`);
+    const raw = path.join(
+      tmpdir(),
+      `switchboard-${caller.id}-${index + 1}.wav`,
+    );
     await writeFile(raw, wav);
     // 24 kHz mono, the Session's own rate; a touch of silence trimmed at both ends.
     execFileSync("ffmpeg", [
-      "-y", "-loglevel", "error", "-i", raw,
-      "-af", "silenceremove=start_periods=1:start_threshold=-50dB,areverse,silenceremove=start_periods=1:start_threshold=-50dB,areverse,loudnorm=I=-18:TP=-2",
-      "-ar", "24000", "-ac", "1", "-b:a", "48k", file,
+      "-y",
+      "-loglevel",
+      "error",
+      "-i",
+      raw,
+      "-af",
+      "silenceremove=start_periods=1:start_threshold=-50dB,areverse,silenceremove=start_periods=1:start_threshold=-50dB,areverse,loudnorm=I=-18:TP=-2",
+      "-ar",
+      "24000",
+      "-ac",
+      "1",
+      "-b:a",
+      "48k",
+      file,
     ]);
     const seconds = Number(
-      execFileSync("ffprobe", ["-v", "error", "-show_entries", "format=duration", "-of", "csv=p=0", file]).toString().trim(),
+      execFileSync("ffprobe", [
+        "-v",
+        "error",
+        "-show_entries",
+        "format=duration",
+        "-of",
+        "csv=p=0",
+        file,
+      ])
+        .toString()
+        .trim(),
     );
     const heard = (
-      await transcribe({ model: gateway.transcription(CHECK_MODEL), audio: await readFile(file) })
+      await transcribe({
+        model: gateway.transcription(CHECK_MODEL),
+        audio: await readFile(file),
+      })
     ).text;
-    const entry: Entry = { caller: caller.id, line: index + 1, text: line.say ?? line.text, heard, seconds: Math.round(seconds * 10) / 10 };
-    const at = manifest.findIndex((item) => item.caller === entry.caller && item.line === entry.line);
+    const entry: Entry = {
+      caller: caller.id,
+      line: index + 1,
+      text: line.say ?? line.text,
+      heard,
+      seconds: Math.round(seconds * 10) / 10,
+    };
+    const at = manifest.findIndex(
+      (item) => item.caller === entry.caller && item.line === entry.line,
+    );
     if (at >= 0) manifest[at] = entry;
     else manifest.push(entry);
     console.log(`${caller.id}/${index + 1} ${entry.seconds}s  heard: ${heard}`);

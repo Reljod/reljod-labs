@@ -9,7 +9,10 @@ import { ensureWorkspace } from "./store";
  * its Back office on first use, and names who is spending.
  */
 export async function requireWorkspace() {
-  const [{ access, owner }, who] = await Promise.all([requireOwner(), visitor()]);
+  const [{ access, owner }, who] = await Promise.all([
+    requireOwner(),
+    visitor(),
+  ]);
   await ensureWorkspace(owner);
   return { access, owner, who };
 }

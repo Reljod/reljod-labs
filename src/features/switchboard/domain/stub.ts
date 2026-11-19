@@ -5,7 +5,7 @@
  * trail, which is what the test is there to check.
  */
 import type { CallState } from "./backoffice";
-import { str, type Rulebook, ruleOf } from "./rules";
+import { type Rulebook, ruleOf, str } from "./rules";
 import { normalizeReference } from "./world";
 
 export type StubStep = {
@@ -30,7 +30,9 @@ export function stubTurn(
     ? normalizeReference(`MR-${found[1]}`)
     : (state.verified[0] ?? "");
   const service = text.match(SERVICE);
-  const serviceId = service ? `${service[1].toUpperCase()} ${service[2]}` : undefined;
+  const serviceId = service
+    ? `${service[1].toUpperCase()} ${service[2]}`
+    : undefined;
   const rest = found ? text.replace(found[0], " ") : text;
   const digits = rest.match(DIGITS)?.[1];
 
@@ -40,7 +42,11 @@ export function stubTurn(
         say: "One moment, I'm checking that.",
         tool: {
           name: "issue_refund",
-          args: { reference, amount: 550.4, reason: "Asked for by the Caller on the line" },
+          args: {
+            reference,
+            amount: 550.4,
+            reason: "Asked for by the Caller on the line",
+          },
         },
       },
     ];
@@ -101,7 +107,11 @@ export function stubTurn(
       },
     ];
   if (/late|delay|running|cancel/.test(lower))
-    return [{ tool: { name: "get_disruptions", args: serviceId ? { serviceId } : {} } }];
+    return [
+      {
+        tool: { name: "get_disruptions", args: serviceId ? { serviceId } : {} },
+      },
+    ];
   if (/person|human|agent/.test(lower))
     return [
       {
@@ -120,11 +130,17 @@ export function stubTurn(
 
 /** What the stub says after a tool answered. */
 export function stubReply(
-  result: { ok: boolean; summary: string; output: Record<string, unknown> } | null,
+  result: {
+    ok: boolean;
+    summary: string;
+    output: Record<string, unknown>;
+  } | null,
 ): string {
   if (!result) return "";
   if (result.ok) return `${result.summary}.`;
   const reason =
-    typeof result.output.reason === "string" ? result.output.reason : result.summary;
+    typeof result.output.reason === "string"
+      ? result.output.reason
+      : result.summary;
   return `I can't do that: ${reason}`;
 }

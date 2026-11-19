@@ -1,7 +1,6 @@
 "use server";
 
 import { resumeHook } from "workflow/api";
-import { LIMITS } from "../domain/limits";
 import type { RuleEditError } from "../domain/rules";
 import { signMcpToken } from "../domain/token";
 import { callbackHookToken } from "./call-workflow";
@@ -10,7 +9,6 @@ import { isUuid, sql } from "./db";
 import { env } from "./env";
 import { messageOf, RuleRefusedError } from "./errors";
 import { restoreRule, saveRule } from "./rules";
-import { objectSize, uploadUrl } from "./storage";
 import { callRow, emit, resetRecords } from "./store";
 
 /**
@@ -124,52 +122,6 @@ export async function callbackNowAction(
       return { ok: false, error: "That Callback is no longer waiting." };
     }
     return { ok: true };
-  } catch (error) {
-    return failed(error);
-  }
-}
-
-const audioPath = (owner: string, callId: string) =>
-  `${owner.replace(/[^a-zA-Z0-9-]/g, "_")}/${callId}.webm`;
-
-/**
- * Where the browser may put a Call's recording. Only a Call started with the
- * consent box ticked gets one.
- */
-export async function audioUploadAction(
-  callId: string,
-): Promise<{ ok: true; url: string } | Failed> {
-  try {
-    const { owner } = await requireWorkspace();
-    const row = isUuid(callId) ? await callRow(owner, callId) : null;
-    if (!row) return { ok: false, error: "No such Call." };
-    if (!row.consent_audio)
-      return { ok: false, error: "This Call was started without consent to keep audio." };
-    return { ok: true, url: await uploadUrl(audioPath(owner, callId)) };
-  } catch (error) {
-    return failed(error);
-  }
-}
-
-/** Records that the recording is in the bucket, after checking it is. */
-export async function audioSavedAction(
-  callId: string,
-): Promise<{ ok: true; bytes: number } | Failed> {
-  try {
-    const { owner } = await requireWorkspace();
-    const row = isUuid(callId) ? await callRow(owner, callId) : null;
-    if (!row?.consent_audio) return { ok: false, error: "No such recording." };
-    const path = audioPath(owner, callId);
-    const bytes = await objectSize(path);
-    if (bytes === null) return { ok: false, error: "The recording did not arrive." };
-    if (bytes > LIMITS.audioBytes) return { ok: false, error: "The recording is too large." };
-    await sql().begin(async (tx) => {
-      await tx`
-        update switchboard.calls set audio_path = ${path}
-        where id = ${callId} and owner = ${owner}`;
-      await emit(tx, owner, callId, "system", "audio.saved", { bytes });
-    });
-    return { ok: true, bytes };
   } catch (error) {
     return failed(error);
   }

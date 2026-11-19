@@ -6,12 +6,12 @@ import { guestPassStatus } from "@/features/access/domain/guest-pass";
 import type { Owner } from "@/features/access/domain/owner";
 import { env as accessEnv } from "@/features/access/server/env";
 import { guestPassOf } from "@/features/access/server/repository";
-import { scenarioSchema, type SupervisorStreamPart } from "../domain/contract";
+import { scenarioSchema } from "../domain/contract";
 import { detectLanguage } from "../domain/hearing";
 import { LIMITS } from "../domain/limits";
-import { ruleDefinition, renderRule } from "../domain/rules";
-import { BACK_OFFICE_TOOLS } from "../domain/tools";
+import { renderRule, ruleDefinition } from "../domain/rules";
 import { readMcpToken, type SwitchboardClaims } from "../domain/token";
+import { BACK_OFFICE_TOOLS } from "../domain/tools";
 import { RECORD_KINDS } from "../domain/world";
 import { callTool, endCall, loadCall, startCall } from "./calls";
 import { sql } from "./db";
@@ -29,7 +29,6 @@ import {
   liveCallRows,
   resetRecords,
 } from "./store";
-import { askSupervisor } from "./supervisor";
 
 /**
  * The Switchboard MCP server: the railway's Back office and the line itself.
@@ -79,7 +78,8 @@ async function guarded(run: () => Promise<unknown>) {
 async function callIdFor(owner: Owner, callId?: string) {
   if (callId) return callId;
   const [live] = await liveCallRows(owner);
-  if (!live) throw new StateError("No Call is live. Start one with start_call.");
+  if (!live)
+    throw new StateError("No Call is live. Start one with start_call.");
   return live.id;
 }
 
@@ -124,7 +124,11 @@ export function registerSwitchboardTools(server: McpServer) {
             args: rest,
             saying: typeof saying === "string" ? saying : undefined,
           });
-          return { ok: outcome.ok, summary: outcome.summary, ...outcome.output };
+          return {
+            ok: outcome.ok,
+            summary: outcome.summary,
+            ...outcome.output,
+          };
         }),
     );
   }
@@ -140,7 +144,9 @@ export function registerSwitchboardTools(server: McpServer) {
         stub: z
           .boolean()
           .optional()
-          .describe("Tests only: canned Agent Turns, honoured for the e2e Owner alone"),
+          .describe(
+            "Tests only: canned Agent Turns, honoured for the e2e Owner alone",
+          ),
       }),
     },
     async (args, ctx) =>
@@ -273,7 +279,10 @@ export function registerSwitchboardTools(server: McpServer) {
     },
     async (args, ctx) =>
       guarded(async () => {
-        const { call, events } = await loadCall(callerOf(ctx).owner, args.callId);
+        const { call, events } = await loadCall(
+          callerOf(ctx).owner,
+          args.callId,
+        );
         return {
           ...digestOf(call, events),
           wrapupStatus: call.wrapupStatus,
@@ -307,7 +316,9 @@ export function registerSwitchboardTools(server: McpServer) {
       guarded(async () => {
         const records = await listRecords(callerOf(ctx).owner);
         return {
-          records: records.filter((record) => !args.kind || record.kind === args.kind),
+          records: records.filter(
+            (record) => !args.kind || record.kind === args.kind,
+          ),
         };
       }),
   );
@@ -379,28 +390,6 @@ export function registerSwitchboardTools(server: McpServer) {
         });
       }),
   );
-
-  server.registerTool(
-    "ask_supervisor",
-    {
-      title: "Ask in Supervisor mode",
-      description:
-        "Asks the Agent about past Calls. It answers numbers by running code in a Sandbox with no network over the last Calls.",
-      inputSchema: z.object({ question: z.string().min(1).max(LIMITS.turnChars) }),
-    },
-    async (args, ctx) =>
-      guarded(async () => {
-        const caller = callerOf(ctx);
-        let answer = "";
-        const code: SupervisorStreamPart[] = [];
-        for await (const part of askSupervisor({ ...caller, question: args.question })) {
-          if (part.kind === "delta") answer += part.text;
-          else if (part.kind === "code" || part.kind === "code_result") code.push(part);
-          else if (part.kind === "error") throw new Error(part.message);
-        }
-        return { answer, code };
-      }),
-  );
 }
 
 const handler = createMcpHandler(registerSwitchboardTools, {
@@ -413,7 +402,9 @@ async function stillAllowed(claims: SwitchboardClaims) {
     case "e2e":
       return Boolean(env.e2eBypassToken());
     case "host":
-      return Boolean(claims.email && accessEnv.hostEmails().includes(claims.email));
+      return Boolean(
+        claims.email && accessEnv.hostEmails().includes(claims.email),
+      );
     case "guest": {
       if (!claims.user || !claims.pass) return false;
       const pass = await guestPassOf(claims.user);

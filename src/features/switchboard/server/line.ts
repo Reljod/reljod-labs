@@ -1,5 +1,6 @@
 import "server-only";
 import { isStepCount, streamText, type ToolSet, tool } from "ai";
+import type { z } from "zod";
 import type { Owner } from "@/features/access/domain/owner";
 import { callInstructions, textGreeting } from "../domain/agent";
 import { NEW_CALL_STATE } from "../domain/backoffice";
@@ -43,7 +44,8 @@ function historyOf(events: CallEvent[]): Message[] {
       );
   }
   // A model's conversation starts with the Caller.
-  if (out[0]?.role === "assistant") out.unshift({ role: "user", content: "(the line connects)" });
+  if (out[0]?.role === "assistant")
+    out.unshift({ role: "user", content: "(the line connects)" });
   return out;
 }
 
@@ -79,9 +81,12 @@ export async function* takeTurn(input: {
   await takeRate(input.who, input.owner, "turn");
   const row = await callRow(input.owner, input.callId);
   if (!row) throw new NotFoundError("No such Call.");
-  if (row.status !== "live") throw new StateError("That Call is over. Start a new one.");
+  if (row.status !== "live")
+    throw new StateError("That Call is over. Start a new one.");
   if (row.line !== "text")
-    throw new StateError("That Call is on the voice Line: type into its Session instead.");
+    throw new StateError(
+      "That Call is on the voice Line: type into its Session instead.",
+    );
   const started = Date.now();
   const atMs = () => Date.now() - row.started_at.getTime();
 
@@ -101,7 +106,7 @@ export async function* takeTurn(input: {
   let said = "";
   let firstWordMs: number | null = null;
   let toolSeq = 0;
-  const useTool = async (name: string, args: unknown, id?: string) => {
+  const runTool = async (name: string, args: unknown, id?: string) => {
     const before = Date.now();
     const outcome = await callTool({
       owner: input.owner,
@@ -129,7 +134,7 @@ export async function* takeTurn(input: {
           yield { kind: "delta", text: `${step.say} ` };
         }
         if (step.tool) {
-          const outcome = await useTool(step.tool.name, step.tool.args);
+          const outcome = await runTool(step.tool.name, step.tool.args);
           for (const event of pending.splice(0)) yield { kind: "event", event };
           const reply = stubReply(outcome);
           firstWordMs ??= Date.now() - started;
@@ -142,9 +147,9 @@ export async function* takeTurn(input: {
       for (const [name, spec] of Object.entries(BACK_OFFICE_TOOLS))
         tools[name] = tool({
           description: spec.description,
-          inputSchema: spec.input,
-          execute: async (args: unknown, { toolCallId }) =>
-            (await useTool(name, args, toolCallId)).output,
+          inputSchema: spec.input as z.ZodType<Record<string, unknown>>,
+          execute: async (args, { toolCallId }: { toolCallId: string }) =>
+            (await runTool(name, args, toolCallId)).output,
         });
       const events = await callEvents(input.owner, row.id);
       const result = streamText({
@@ -168,7 +173,9 @@ export async function* takeTurn(input: {
             yield { kind: "delta", text: " " };
           }
         } else if (part.type === "error") {
-          throw part.error instanceof Error ? part.error : new Error(String(part.error));
+          throw part.error instanceof Error
+            ? part.error
+            : new Error(String(part.error));
         }
       }
       const usage = await result.totalUsage;
@@ -201,7 +208,10 @@ export async function* takeTurn(input: {
     for (const event of pending.splice(0)) yield { kind: "event", event };
     if (!said.trim()) {
       console.error("[switchboard] text Turn failed", messageOf(error));
-      yield { kind: "error", message: "The Agent could not answer. Try that again." };
+      yield {
+        kind: "error",
+        message: "The Agent could not answer. Try that again.",
+      };
       yield { kind: "done" };
       return;
     }
