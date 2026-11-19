@@ -43,7 +43,17 @@ test.describe("stubbed Analyst", () => {
       if (path === "/api/canvas/app/call") appCalls.push(path);
     });
 
+    // An empty canvas explains itself.
+    await page.goto("/demos/canvas");
+    await expect(page.getByTestId("canvas-explainer")).toBeVisible();
+
     await askStarter(page, "Show daily peak load in Kestrel Coast");
+
+    // While the Analyst works, the canvas says so, step by step.
+    await expect(page.getByTestId("canvas-working")).toBeVisible({
+      timeout: 15_000,
+    });
+    await expect(page.getByTestId("canvas-explainer")).toBeHidden();
 
     // The View is the MCP App's own document, sandboxed to scripts only.
     const frameElement = page.getByTestId("view-frame").first();
@@ -58,8 +68,19 @@ test.describe("stubbed Analyst", () => {
     // Drawn by the App from rows: a chart, not model HTML.
     await expect(frame.locator("svg").first()).toBeVisible();
 
-    // The thread shows the tools that ran, and the turn is saved.
+    // Done: the working state goes, and the thread stays inside its panel.
+    await expect(page.getByTestId("canvas-working")).toBeHidden({
+      timeout: 60_000,
+    });
     const thread = page.getByTestId("thread");
+    const contained = await thread.evaluate((element) => {
+      const panel = element.closest("section")?.getBoundingClientRect();
+      const box = element.getBoundingClientRect();
+      return !!panel && box.bottom <= panel.bottom + 1;
+    });
+    expect(contained).toBe(true);
+
+    // The thread shows the tools that ran, and the turn is saved.
     await expect(thread.getByText("create_view")).toBeVisible();
     await expect(thread.getByText("run_query")).toBeVisible();
     expect(chatCalls).toHaveLength(1);

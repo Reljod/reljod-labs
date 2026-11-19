@@ -1,0 +1,357 @@
+/*
+ * Canvas's own motion: the explainer on an empty canvas and the drafting
+ * table while the Analyst works. Colonnade only: ink outlines, hard shadows,
+ * flat fills. Transforms and opacity only. Looping motion stops under
+ * prefers-reduced-motion; the explainer then shows its last frame.
+ */
+
+/* The explainer ------------------------------------------------------------- */
+
+.cv-explain {
+  --cv-loop: 9s;
+  position: relative;
+  overflow: hidden;
+  background: var(--color-paper);
+}
+
+.cv-explain::before {
+  /* Graph paper, drawn over the paper fill. */
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background:
+    repeating-linear-gradient(
+      0deg,
+      transparent 0 23px,
+      rgb(20 33 61 / 0.06) 23px 24px
+    ),
+    repeating-linear-gradient(
+      90deg,
+      transparent 0 23px,
+      rgb(20 33 61 / 0.06) 23px 24px
+    );
+}
+
+.cv-explain > * {
+  position: relative;
+}
+
+/* The three panes enter one after another, then hold. */
+.cv-step {
+  animation: cv-rise 0.7s cubic-bezier(0.2, 0.7, 0.2, 1) both;
+}
+.cv-step:nth-child(1) {
+  animation-delay: 0.15s;
+}
+.cv-step:nth-child(2) {
+  animation-delay: 0.45s;
+}
+.cv-step:nth-child(3) {
+  animation-delay: 0.75s;
+}
+
+@keyframes cv-rise {
+  from {
+    opacity: 0;
+    transform: translateY(14px) rotate(-1deg);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+/* 1. A Question is typed, letter by letter (a mask slides off). */
+.cv-type {
+  position: relative;
+  display: inline-block;
+  white-space: nowrap;
+  overflow: hidden;
+  max-width: 100%;
+  vertical-align: bottom;
+}
+.cv-type::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: var(--color-paper);
+  transform-origin: right;
+  animation: cv-type var(--cv-loop) steps(28) infinite;
+}
+@keyframes cv-type {
+  0% {
+    transform: scaleX(1);
+  }
+  16%,
+  100% {
+    transform: scaleX(0);
+  }
+}
+.cv-caret {
+  display: inline-block;
+  width: 2px;
+  height: 1em;
+  margin-left: 2px;
+  vertical-align: -2px;
+  background: var(--color-federal-blue);
+  animation: cv-blink 0.9s steps(1) infinite;
+}
+@keyframes cv-blink {
+  50% {
+    opacity: 0;
+  }
+}
+
+/* 2. Rows stream through the Sandbox and are cut down to a few. */
+.cv-rows i {
+  display: block;
+  height: 5px;
+  margin-top: 4px;
+  background: rgb(20 33 61 / 0.18);
+  transform-origin: left;
+  animation: cv-row var(--cv-loop) ease-in-out infinite;
+}
+.cv-rows i:nth-child(odd) {
+  background: rgb(29 78 137 / 0.35);
+}
+.cv-rows i:nth-child(1) {
+  animation-delay: 0s;
+}
+.cv-rows i:nth-child(2) {
+  animation-delay: 0.08s;
+}
+.cv-rows i:nth-child(3) {
+  animation-delay: 0.16s;
+}
+.cv-rows i:nth-child(4) {
+  animation-delay: 0.24s;
+}
+.cv-rows i:nth-child(5) {
+  animation-delay: 0.32s;
+}
+.cv-rows i:nth-child(6) {
+  animation-delay: 0.4s;
+}
+@keyframes cv-row {
+  0%,
+  4% {
+    transform: scaleX(0);
+    opacity: 0;
+  }
+  16% {
+    transform: scaleX(1);
+    opacity: 1;
+  }
+  30% {
+    transform: scaleX(1);
+    opacity: 1;
+  }
+  38%,
+  100% {
+    transform: scaleX(0.28);
+    opacity: 1;
+  }
+}
+.cv-sweep {
+  /* Full width, so translateX(100%) crosses the pane; the line is its left edge. */
+  position: absolute;
+  inset: 0;
+  animation: cv-sweep var(--cv-loop) linear infinite;
+}
+.cv-sweep::before {
+  content: "";
+  position: absolute;
+  inset: 0 auto 0 0;
+  width: 2px;
+  background: var(--color-brass);
+}
+@keyframes cv-sweep {
+  0%,
+  5% {
+    transform: translateX(0);
+    opacity: 0;
+  }
+  7% {
+    opacity: 1;
+  }
+  30% {
+    transform: translateX(100%);
+    opacity: 1;
+  }
+  32%,
+  100% {
+    opacity: 0;
+  }
+}
+
+/* 3. A View draws itself, a Control moves, the bars answer, the stamp lands. */
+.cv-bars {
+  display: flex;
+  align-items: flex-end;
+  gap: 6%;
+  height: 100%;
+}
+.cv-bars i {
+  flex: 1;
+  border-radius: 2px 2px 0 0;
+  background: var(--color-federal-blue);
+  transform-origin: bottom;
+  animation: cv-bar var(--cv-loop) cubic-bezier(0.3, 0.8, 0.2, 1) infinite;
+}
+.cv-bars i.hot {
+  background: var(--color-brass);
+}
+.cv-bars i:nth-child(2) {
+  animation-delay: 0.05s;
+}
+.cv-bars i:nth-child(3) {
+  animation-delay: 0.1s;
+}
+.cv-bars i:nth-child(4) {
+  animation-delay: 0.15s;
+}
+.cv-bars i:nth-child(5) {
+  animation-delay: 0.2s;
+}
+.cv-bars i:nth-child(6) {
+  animation-delay: 0.25s;
+}
+.cv-bars i:nth-child(7) {
+  animation-delay: 0.3s;
+}
+@keyframes cv-bar {
+  0%,
+  30% {
+    transform: scaleY(0);
+  }
+  42% {
+    transform: scaleY(1);
+  }
+  68% {
+    transform: scaleY(1);
+  }
+  74% {
+    transform: scaleY(0.55);
+  }
+  100% {
+    transform: scaleY(0.55);
+  }
+}
+.cv-bars i.hot {
+  animation-name: cv-bar-hot;
+}
+@keyframes cv-bar-hot {
+  0%,
+  30% {
+    transform: scaleY(0);
+  }
+  42% {
+    transform: scaleY(1);
+  }
+  100% {
+    transform: scaleY(1);
+  }
+}
+.cv-knob {
+  animation: cv-knob var(--cv-loop) cubic-bezier(0.5, 0, 0.2, 1) infinite;
+}
+@keyframes cv-knob {
+  0%,
+  60% {
+    transform: translateX(0);
+  }
+  68%,
+  100% {
+    transform: translateX(60%);
+  }
+}
+.cv-stamp {
+  animation: cv-stamp var(--cv-loop) cubic-bezier(0.3, 1.6, 0.4, 1) infinite;
+}
+@keyframes cv-stamp {
+  0%,
+  42% {
+    opacity: 0;
+    transform: scale(1.8) rotate(-12deg);
+  }
+  46%,
+  100% {
+    opacity: 1;
+    transform: rotate(-4deg);
+  }
+}
+
+/* The drafting table, while the Analyst works --------------------------------- */
+
+.cv-work-scan {
+  position: absolute;
+  inset: 0 auto 0 0;
+  width: 30%;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    rgb(111 160 220 / 0.18),
+    transparent
+  );
+  animation: cv-scan 1.8s linear infinite;
+}
+@keyframes cv-scan {
+  from {
+    transform: translateX(-100%);
+  }
+  to {
+    transform: translateX(340%);
+  }
+}
+.cv-work-bars i {
+  flex: 1;
+  background: rgb(20 33 61 / 0.12);
+  transform-origin: bottom;
+  animation: cv-breathe 1.6s ease-in-out infinite alternate;
+}
+@keyframes cv-breathe {
+  from {
+    transform: scaleY(0.35);
+  }
+  to {
+    transform: scaleY(1);
+  }
+}
+.cv-step-in {
+  animation: cv-step-in 0.35s ease-out both;
+}
+@keyframes cv-step-in {
+  from {
+    opacity: 0;
+    transform: translateX(-8px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .cv-step,
+  .cv-step-in,
+  .cv-type::after,
+  .cv-caret,
+  .cv-rows i,
+  .cv-sweep,
+  .cv-bars i,
+  .cv-knob,
+  .cv-stamp,
+  .cv-work-scan,
+  .cv-work-bars i {
+    animation: none;
+  }
+  .cv-type::after,
+  .cv-sweep,
+  .cv-work-scan {
+    display: none;
+  }
+  .cv-rows i:nth-child(n + 3) {
+    transform: scaleX(0.28);
+  }
+}

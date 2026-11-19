@@ -7,6 +7,7 @@ import {
   imageBuildOptions,
   imageIsFresh,
   imageSnapshotOptions,
+  lostCreateRace,
   ownerSandboxOptions,
   ownerSandboxUpdate,
   SANDBOX_REGION,
@@ -84,5 +85,45 @@ describe("Canvas Sandboxes leave no snapshots behind", () => {
       expect(source).not.toMatch(/snapshotExpiration/);
     }
     expect(session).toContain("sandbox.delete(disposeOptions())");
+  });
+
+  it("knows the refusal a parallel start gets, and nothing else", () => {
+    // What Vercel answered the losers when four Queries started one Sandbox at once.
+    const raced = {
+      response: { status: 400 },
+      json: {
+        error: {
+          code: "bad_request",
+          message:
+            "A sandbox with the name 'canvas-x' already exists for this project.",
+        },
+      },
+    };
+    expect(lostCreateRace(raced)).toBe(true);
+    expect(
+      lostCreateRace({
+        response: { status: 400 },
+        json: { error: { code: "snapshot_region_mismatch", message: "x" } },
+      }),
+    ).toBe(false);
+    expect(
+      lostCreateRace({ response: { status: 402 }, json: raced.json }),
+    ).toBe(false);
+    expect(lostCreateRace(new Error("network down"))).toBe(false);
+    expect(lostCreateRace(undefined)).toBe(false);
+  });
+
+  it("a start shares one Sandbox between callers at the same moment", () => {
+    const session = readFileSync(
+      join(import.meta.dirname, "session.ts"),
+      "utf8",
+    );
+    // One start per name in flight, and a lost race falls back to the Sandbox that won.
+    expect(session).toMatch(
+      /const running = starting\.get\(name\);\s*if \(running\) return running;/,
+    );
+    expect(session).toMatch(
+      /if \(!lostCreateRace\(error\)\) throw error;[\s\S]{0,80}Sandbox\.get\(\{ name \}\)/,
+    );
   });
 });

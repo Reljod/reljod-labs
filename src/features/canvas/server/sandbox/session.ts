@@ -11,6 +11,7 @@ import { ensureImage, forgetImage, IMAGE_KEY } from "./image";
 import { localPython, runLocal } from "./local";
 import {
   disposeOptions,
+  lostCreateRace,
   ownerSandboxOptions,
   ownerSandboxUpdate,
 } from "./options";
@@ -58,7 +59,27 @@ function reasonOf(error: unknown) {
 
 const held = new Map<string, Sandbox>();
 
-async function open(
+/** Starts in flight, by Sandbox name: callers at the same moment share one. */
+const starting = new Map<
+  string,
+  Promise<{ sandbox: Sandbox; created: boolean }>
+>();
+
+/**
+ * The Owner's Sandbox, started at most once at a time. The Analyst often
+ * calls several tools at once; each would otherwise race to create the same
+ * name, and every loser was refused ("already exists").
+ */
+function open(owner: Owner): Promise<{ sandbox: Sandbox; created: boolean }> {
+  const name = sandboxName(owner);
+  const running = starting.get(name);
+  if (running) return running;
+  const start = openOnce(owner).finally(() => starting.delete(name));
+  starting.set(name, start);
+  return start;
+}
+
+async function openOnce(
   owner: Owner,
 ): Promise<{ sandbox: Sandbox; created: boolean }> {
   if (!env.sandboxConfigured())
@@ -87,7 +108,14 @@ async function open(
     } as Parameters<typeof Sandbox.getOrCreate>[0]);
   let sandbox: Sandbox;
   try {
-    sandbox = await make();
+    try {
+      sandbox = await make();
+    } catch (error) {
+      // Another function instance created it a moment ago: use that one.
+      if (!lostCreateRace(error)) throw error;
+      created = false;
+      sandbox = await Sandbox.get({ name });
+    }
     // One found by name keeps the settings it was made with: say them again,
     // so none stays persistent (a snapshot of its disk on every stop).
     if (!created)

@@ -78,3 +78,14 @@ export function ownerSandboxUpdate() {
 export function disposeOptions() {
   return { deleteOrphanSnapshots: true } as const;
 }
+
+/** The API's answer when two requests created the same name at once. */
+export function lostCreateRace(error: unknown) {
+  const e = error as {
+    response?: { status?: number };
+    json?: { error?: { message?: unknown } };
+    message?: unknown;
+  };
+  const said = String(e?.json?.error?.message ?? e?.message ?? "");
+  return e?.response?.status === 400 && /already exists/i.test(said);
+}

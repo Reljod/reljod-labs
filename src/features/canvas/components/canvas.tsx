@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { DemoBar, demoBarControlClass } from "@/components/demo/demo-bar";
+import "./canvas.css";
 import {
   API,
   type CatalogTableInfo,
@@ -24,6 +25,7 @@ import { ask, getJson } from "./api";
 import { ConnectPanel } from "./connect-panel";
 import { DataPanel } from "./data-panel";
 import { RulesPanel } from "./rules-panel";
+import { Explainer, Working } from "./stage";
 import { Badge, Button, cx, inputClass, Panel } from "./ui";
 import { UnderTheHood } from "./under-the-hood";
 import { type BridgeLog, ViewFrame } from "./view-frame";
@@ -176,6 +178,7 @@ export function Canvas({
   const [deleting, setDeleting] = useState(false);
   const abort = useRef<AbortController | null>(null);
   const canvasEnd = useRef<HTMLDivElement>(null);
+  const threadEnd = useRef<HTMLDivElement>(null);
 
   const upsertViews = useCallback((incoming: ViewPayload[]) => {
     setViews((current) => {
@@ -326,6 +329,14 @@ export function Canvas({
   };
 
   const liveParts = useMemo(() => (turn ? partsOf(turn.events) : []), [turn]);
+  // Follow the newest event, unless the person scrolled up to read.
+  useEffect(() => {
+    const thread = threadEnd.current;
+    if (!thread || !turn) return;
+    const fromBottom =
+      thread.scrollHeight - thread.scrollTop - thread.clientHeight;
+    if (fromBottom < 160) thread.scrollTop = thread.scrollHeight;
+  }, [turn]);
   const empty = messages.length === 0 && !turn;
   const lastUsage =
     turn?.usage ??
@@ -366,8 +377,8 @@ export function Canvas({
               conversations.find((item) => item.id === conversationId)?.title ??
               "New Conversation"
             }
-            bodyClassName=""
-            className="flex min-h-[24rem] flex-col xl:sticky xl:top-4 xl:max-h-[calc(100dvh-7rem)]"
+            bodyClassName="flex min-h-0 flex-1 flex-col"
+            className="flex min-h-[24rem] min-w-0 flex-col overflow-hidden xl:sticky xl:top-4 xl:h-[calc(100dvh-7rem)]"
             actions={
               conversationId ? (
                 <Button
@@ -401,7 +412,8 @@ export function Canvas({
                 </label>
               ) : null}
               <div
-                className="flex-1 space-y-4 overflow-y-auto px-4 py-4"
+                ref={threadEnd}
+                className="min-h-0 flex-1 space-y-4 overflow-y-auto overscroll-contain px-4 py-4 [overflow-wrap:anywhere]"
                 data-testid="thread"
               >
                 {empty ? (
@@ -534,16 +546,10 @@ export function Canvas({
             className="flex min-w-0 flex-col gap-5"
             data-testid="views"
           >
-            {views.length === 0 && !building ? (
-              <div className="outline-box flex min-h-[24rem] flex-col items-center justify-center gap-2 rounded-sm border-dashed bg-paper/60 p-8 text-center">
-                <p className="eyebrow text-ink-muted">The canvas</p>
-                <p className="max-w-md text-sm text-ink-muted">
-                  Views land here. Each one is an MCP App in a sandboxed frame:
-                  the same interface Claude shows when it is connected to this
-                  server. Its Controls run the saved query again in the Sandbox,
-                  with no model call.
-                </p>
-              </div>
+            {views.length === 0 && !turn?.running ? (
+              <Explainer
+                onTry={empty ? () => void send(STARTERS[0].text) : undefined}
+              />
             ) : null}
             {views.map((payload) => (
               <ViewFrame
@@ -553,29 +559,12 @@ export function Canvas({
                 onLog={onLog}
               />
             ))}
-            {building ? (
-              <div
-                className="outline-box rounded-sm bg-paper p-4 shadow-hard-sm"
-                aria-live="polite"
-              >
-                <p className="eyebrow text-ink-muted">Building View</p>
-                <p className="mt-1 font-semibold">{building}</p>
-                <div className="mt-4 flex h-32 items-end gap-2">
-                  {[40, 62, 35, 78, 55, 90, 66, 48, 72, 58].map(
-                    (bar, index) => (
-                      <span
-                        // biome-ignore lint/suspicious/noArrayIndexKey: decorative bars.
-                        key={index}
-                        className="flex-1 animate-pulse bg-ink/10"
-                        style={{
-                          height: `${bar}%`,
-                          animationDelay: `${index * 80}ms`,
-                        }}
-                      />
-                    ),
-                  )}
-                </div>
-              </div>
+            {turn?.running ? (
+              <Working
+                parts={liveParts}
+                building={building}
+                compact={views.length > 0 && !building}
+              />
             ) : null}
             <div ref={canvasEnd} />
           </section>
