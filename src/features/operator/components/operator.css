@@ -1,0 +1,132 @@
+/* Operator: what utilities and the motion library can't express. Everything
+   that moves by itself is switched off under prefers-reduced-motion below. */
+
+/* The glass of the terminal: the one dark surface. Scanlines and a faint
+   phosphor glow sit over the picture and never take a click. */
+.op-glass {
+  background-color: #03110a;
+}
+.op-glass::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background-image: repeating-linear-gradient(
+    180deg,
+    rgb(0 0 0 / 0.16) 0,
+    rgb(0 0 0 / 0.16) 1px,
+    transparent 1px,
+    transparent 3px
+  );
+  box-shadow:
+    inset 0 0 0 1px rgb(120 255 170 / 0.08),
+    inset 0 0 48px rgb(60 220 130 / 0.1);
+}
+
+/* A click lands: a ring grows out of the pointer. */
+@keyframes op-ripple {
+  0% {
+    opacity: 0.95;
+    transform: translate(-50%, -50%) scale(0.2);
+  }
+  100% {
+    opacity: 0;
+    transform: translate(-50%, -50%) scale(1);
+  }
+}
+.op-ripple {
+  transform: translate(-50%, -50%);
+  animation: op-ripple 0.7s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+/* A key-press chip pops in, holds, and fades. `--hold` is how long it stays. */
+@keyframes op-chip {
+  0% {
+    opacity: 0;
+    transform: translateY(8px) scale(0.92);
+  }
+  6%,
+  82% {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+  100% {
+    opacity: 0;
+    transform: translateY(-4px) scale(1);
+  }
+}
+.op-chip {
+  animation: op-chip var(--hold, 2s) ease-out both;
+}
+
+/* The Approval card stamps down over the dimmed glass. */
+@keyframes op-stamp {
+  0% {
+    opacity: 0;
+    transform: scale(1.06);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+.op-stamp {
+  animation: op-stamp 0.22s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+/* The scrubber: a square thumb on an ink rule. */
+.op-range {
+  appearance: none;
+  height: 1.5rem;
+  background: transparent;
+  cursor: pointer;
+}
+.op-range::-webkit-slider-runnable-track {
+  height: 6px;
+  border: 2px solid var(--color-ink);
+  border-radius: 2px;
+  background: var(--color-paper);
+}
+.op-range::-moz-range-track {
+  height: 2px;
+  border: 2px solid var(--color-ink);
+  border-radius: 2px;
+  background: var(--color-paper);
+}
+.op-range::-webkit-slider-thumb {
+  appearance: none;
+  width: 14px;
+  height: 20px;
+  margin-top: -9px;
+  border: 2px solid var(--color-ink);
+  border-radius: 2px;
+  background: var(--color-brass);
+}
+.op-range::-moz-range-thumb {
+  width: 10px;
+  height: 16px;
+  border: 2px solid var(--color-ink);
+  border-radius: 2px;
+  background: var(--color-brass);
+}
+.op-range:focus-visible {
+  outline: 2px solid var(--color-federal-blue);
+  outline-offset: 3px;
+}
+.op-range:disabled {
+  cursor: not-allowed;
+  opacity: 0.5;
+}
+
+.op-scroll {
+  scrollbar-width: thin;
+  scrollbar-color: rgb(20 33 61 / 0.35) transparent;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .op-ripple,
+  .op-chip,
+  .op-stamp {
+    animation: none;
+  }
+}

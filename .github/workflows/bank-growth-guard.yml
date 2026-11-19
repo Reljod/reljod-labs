@@ -1,0 +1,78 @@
+name: bank-growth-guard
+
+# Fails a growth pull request (the Tidewater Bank demo's self-improvement
+# loop, docs/adr/0024) that touches a path outside the bank demo.
+#
+# `pull_request_target` runs this workflow and the guard script from the BASE
+# branch, so a growth pull request cannot edit its own guard; nothing from
+# the pull request is checked out or executed.
+#
+# It runs on EVERY pull request and decides by itself whether one is a growth
+# pull request, from facts its author cannot take back: the `bank:growth`
+# label, the routine's branch prefix, or a reference in the title or body to
+# an issue that carries `bank:growth`. A routine talked into dropping the
+# label and the branch name is still guarded, because the issue it is
+# building is labelled by the bank, not by the routine.
+
+on:
+  pull_request_target:
+    types: [opened, reopened, synchronize, labeled, unlabeled, edited]
+
+permissions:
+  contents: read
+  pull-requests: read
+  issues: read
+
+concurrency:
+  group: bank-growth-guard-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
+jobs:
+  guard:
+    name: bank:growth stays in the bank
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Is this a growth pull request?
+        id: growth
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPO: ${{ github.repository }}
+          PR: ${{ github.event.pull_request.number }}
+          HEAD_REF: ${{ github.event.pull_request.head.ref }}
+          HAS_LABEL: ${{ contains(github.event.pull_request.labels.*.name, 'bank:growth') }}
+        run: |
+          set -euo pipefail
+          growth=false
+          why=""
+          if [ "$HAS_LABEL" = "true" ]; then growth=true; why="it carries the bank:growth label"; fi
+          case "$HEAD_REF" in bank-growth/*) growth=true; why="its branch starts with bank-growth/";; esac
+          if [ "$growth" = "false" ]; then
+            # Every issue number the title or body mentions (#12, or a full issue URL).
+            numbers=$(gh api "repos/$REPO/pulls/$PR" --jq '(.title // "") + "\n" + (.body // "")' \
+              | grep -oE "(#|/issues/)[0-9]{1,7}" | grep -oE "[0-9]+" | sort -un | head -20 || true)
+            for number in $numbers; do
+              labels=$(gh api "repos/$REPO/issues/$number" --jq '[.labels[].name] | join(",")' 2>/dev/null || true)
+              case ",$labels," in *,bank:growth,*) growth=true; why="it refers to #$number, a bank:growth issue";; esac
+            done
+          fi
+          echo "growth=$growth" >> "$GITHUB_OUTPUT"
+          if [ "$growth" = "true" ]; then echo "A growth pull request: $why."; else echo "Not a growth pull request: nothing to guard."; fi
+      - name: Check out the base branch (never the pull request)
+        if: steps.growth.outputs.growth == 'true'
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.base.sha }}
+          sparse-checkout: scripts/bank-growth-guard.mjs
+          sparse-checkout-cone-mode: false
+          persist-credentials: false
+      - name: List the files the pull request changes
+        if: steps.growth.outputs.growth == 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPO: ${{ github.repository }}
+          PR: ${{ github.event.pull_request.number }}
+        run: gh api --paginate "repos/$REPO/pulls/$PR/files?per_page=100" --jq '.[] | {filename, status, previous_filename}' | jq -s '.' > "$RUNNER_TEMP/files.json"
+      - name: Every file is inside the allowlist
+        if: steps.growth.outputs.growth == 'true'
+        run: node scripts/bank-growth-guard.mjs "$RUNNER_TEMP/files.json"
