@@ -46,6 +46,13 @@ export const SANDBOX_LIMITS = {
   layerBytes: 1_500_000,
   /** Measurements taken from one run. */
   measurementsPerRun: 60,
+  /**
+   * How long the snapshot with the Python packages is kept. Storage is
+   * billed while it exists, so it expires and the next Examination after
+   * that rebuilds it (`open` forgets a snapshot that is gone). Never 0,
+   * which means never expire.
+   */
+  snapshotMs: 24 * 60 * 60_000,
 } as const;
 
 const IMAGE = "vercel/sandbox/python:3.14";
@@ -117,7 +124,9 @@ async function buildSnapshot(): Promise<string> {
         "Sandbox unavailable: the Toolkit could not be installed.",
       );
     }
-    const snapshot = await builder.snapshot({ expiration: 0 });
+    const snapshot = await builder.snapshot({
+      expiration: SANDBOX_LIMITS.snapshotMs,
+    });
     await saveSnapshot(bundle.requirementsHash, snapshot.snapshotId);
     return snapshot.snapshotId;
   } catch (error) {
@@ -221,7 +230,9 @@ async function open(
     }
   }
   // getOrCreate may hand back a Sandbox made with another policy: enforce it.
-  await sandbox.update({ networkPolicy: "deny-all" });
+  // The same for persistence: a persistent Sandbox snapshots its whole disk
+  // on every stop, and nothing here ever resumes one.
+  await sandbox.update({ networkPolicy: "deny-all", persistent: false });
   const expires = sandbox.expiresAt?.getTime();
   if (
     expires !== undefined &&
@@ -246,7 +257,8 @@ export async function disposeSandbox(examinationId: string) {
     } catch {
       // Already stopped.
     }
-    await sandbox.delete();
+    // `delete` keeps a Sandbox's snapshots unless asked.
+    await sandbox.delete({ deleteOrphanSnapshots: true });
   } catch {
     // No Sandbox was made for this Examination, or it is already gone.
   }
