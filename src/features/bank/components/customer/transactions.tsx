@@ -1,10 +1,11 @@
 "use client";
 
 import { AnimatePresence, motion, useReducedMotion } from "motion/react";
-import { useState } from "react";
+import { type FormEvent, useId, useState } from "react";
 import { formatDate } from "../../domain/dates";
+import { SEARCH_CHARS } from "../../domain/search";
 import type { AccountView, TransactionView } from "../../domain/views";
-import { Badge, Button, ErrorNote } from "../ui";
+import { Badge, Button, ErrorNote, inputClass } from "../ui";
 import { useRead } from "../use-bank";
 import { DisputeDialog } from "./account-controls";
 import { Money } from "./shared";
@@ -13,7 +14,8 @@ import { Money } from "./shared";
  * An account's transactions from the ledger, newest first, with the running
  * balance. "Load older" pages back by the posting id; an older page belongs
  * to the first page it was asked from, so when new postings arrive on top
- * the older pages are dropped rather than left with a gap.
+ * the older pages are dropped rather than left with a gap. A search keeps
+ * only the rows whose description contains the text, paged the same way.
  */
 
 const PAGE = 25;
@@ -21,6 +23,80 @@ const PAGE = 25;
 type Older = { accountId: string; top: number | undefined; cursors: number[] };
 
 export function TransactionsTable({
+  account,
+  first,
+  busy,
+}: {
+  account: AccountView;
+  first: TransactionView[];
+  busy: boolean;
+}) {
+  // Keyed by the account at the call site, so a search never follows you to another account.
+  const [query, setQuery] = useState("");
+  const [draft, setDraft] = useState("");
+  const inputId = useId();
+  if (first.length === 0) {
+    return (
+      <p className="px-4 py-6 text-sm text-ink-muted">
+        No transactions yet. A credit or a transfer in starts the ledger.
+      </p>
+    );
+  }
+  const submit = (event: FormEvent) => {
+    event.preventDefault();
+    setQuery(draft.trim());
+  };
+  return (
+    <div>
+      <form
+        aria-label="Search this account's transactions"
+        onSubmit={submit}
+        className="flex items-center gap-2 px-3 pt-2 pb-3"
+      >
+        <label htmlFor={inputId} className="sr-only">
+          Search descriptions
+        </label>
+        <input
+          id={inputId}
+          type="search"
+          value={draft}
+          maxLength={SEARCH_CHARS}
+          onChange={(event) => setDraft(event.target.value)}
+          placeholder="Search descriptions, e.g. Greenmarket"
+          className={inputClass}
+          data-testid="bank-transactions-search"
+        />
+        <Button size="sm" variant="secondary" type="submit">
+          Search
+        </Button>
+        {query ? (
+          <Button
+            size="sm"
+            variant="ghost"
+            onClick={() => {
+              setDraft("");
+              setQuery("");
+            }}
+          >
+            Clear
+          </Button>
+        ) : null}
+      </form>
+      {query ? (
+        <SearchResults
+          key={query}
+          account={account}
+          query={query}
+          busy={busy}
+        />
+      ) : (
+        <LedgerTable account={account} first={first} busy={busy} />
+      )}
+    </div>
+  );
+}
+
+function LedgerTable({
   account,
   first,
   busy,
@@ -50,15 +126,11 @@ export function TransactionsTable({
     lastCursor === undefined
       ? first.length >= PAGE
       : (last.data?.transactions.length ?? 0) >= PAGE;
-  const nextCursor = tail.at(-1)?.id;
-
-  if (first.length === 0) {
-    return (
-      <p className="px-4 py-6 text-sm text-ink-muted">
-        No transactions yet. A credit or a transfer in starts the ledger.
-      </p>
-    );
-  }
+  // While a page loads, `last` still holds the one before it (placeholder
+  // data), whose cursor is stale: the button waits for the new page.
+  const loading =
+    lastCursor !== undefined && (last.isPlaceholderData || !last.data);
+  const nextCursor = loading ? undefined : tail.at(-1)?.id;
 
   return (
     <div>
@@ -67,19 +139,7 @@ export function TransactionsTable({
           className="w-full min-w-[40rem] text-sm"
           data-testid="bank-transactions"
         >
-          <thead>
-            <tr className="eyebrow border-ink border-b-2 text-left text-[0.6rem] text-ink-muted">
-              <th className="px-3 py-2 font-bold">Date</th>
-              <th className="px-3 py-2 font-bold">Description</th>
-              <th className="px-3 py-2 font-bold">Kind</th>
-              <th className="px-3 py-2 text-right font-bold">Money in</th>
-              <th className="px-3 py-2 text-right font-bold">Money out</th>
-              <th className="px-3 py-2 text-right font-bold">Balance</th>
-              <th className="px-3 py-2">
-                <span className="sr-only">Actions</span>
-              </th>
-            </tr>
-          </thead>
+          <TableHead />
           <Rows
             rows={first}
             account={account}
@@ -87,7 +147,7 @@ export function TransactionsTable({
             animate
           />
           {cursors.map((cursor) => (
-            <OlderRows
+            <PageRows
               key={cursor}
               account={account}
               beforeId={cursor}
@@ -105,17 +165,20 @@ export function TransactionsTable({
         <p className="text-xs text-ink-muted">
           Every row is a Posting on a balanced journal entry.
         </p>
-        {hasMore && nextCursor !== undefined ? (
+        {loading || (hasMore && nextCursor !== undefined) ? (
           <Button
             size="sm"
             variant="ghost"
-            pending={lastCursor !== undefined && last.isFetching && !last.data}
+            pending={loading}
             pendingLabel="Loading…"
             onClick={() =>
+              nextCursor !== undefined &&
               setOlder({
                 accountId: account.id,
                 top,
-                cursors: [...cursors, nextCursor],
+                cursors: cursors.includes(nextCursor)
+                  ? cursors
+                  : [...cursors, nextCursor],
               })
             }
             data-testid="bank-load-older"
@@ -139,19 +202,133 @@ export function TransactionsTable({
   );
 }
 
-function OlderRows({
+/** The rows whose description contains `query`, newest first, paged like the ledger. */
+function SearchResults({
+  account,
+  query,
+  busy,
+}: {
+  account: AccountView;
+  query: string;
+  busy: boolean;
+}) {
+  const [cursors, setCursors] = useState<number[]>([]);
+  const [disputing, setDisputing] = useState<TransactionView | null>(null);
+  const lastCursor = cursors.at(-1);
+  const last = useRead<{ transactions: TransactionView[] }>(
+    "list_transactions",
+    { accountId: account.id, query, beforeId: lastCursor, limit: PAGE },
+  );
+  const rows = last.data?.transactions;
+  // While the next page loads, `rows` is still the page before it (placeholder
+  // data), whose cursor is stale: the button waits for the new page.
+  const loading = last.isPlaceholderData || !rows;
+  const nextCursor = loading ? undefined : rows?.at(-1)?.id;
+  if (last.error) {
+    return (
+      <ErrorNote className="m-3" onRetry={() => void last.refetch()}>
+        {last.error.message}
+      </ErrorNote>
+    );
+  }
+  if (cursors.length === 0 && rows?.length === 0) {
+    return (
+      <p
+        className="px-4 py-6 text-sm text-ink-muted"
+        data-testid="bank-transactions-no-match"
+      >
+        No transactions on this account mention “{query}”.
+      </p>
+    );
+  }
+  return (
+    <div>
+      <div className="relative overflow-x-auto" aria-busy={busy || undefined}>
+        <table
+          className="w-full min-w-[40rem] text-sm"
+          data-testid="bank-transactions"
+        >
+          <TableHead />
+          {[undefined, ...cursors].map((cursor) => (
+            <PageRows
+              key={cursor ?? "first"}
+              account={account}
+              beforeId={cursor}
+              query={query}
+              onDispute={setDisputing}
+            />
+          ))}
+        </table>
+      </div>
+      <div className="flex items-center justify-between gap-2 border-ink/15 border-t px-3 py-2">
+        <p className="text-xs text-ink-muted">
+          Only transactions whose description contains “{query}”.
+        </p>
+        {(loading && cursors.length > 0) ||
+        (rows && rows.length >= PAGE && nextCursor !== undefined) ? (
+          <Button
+            size="sm"
+            variant="ghost"
+            pending={loading}
+            pendingLabel="Loading…"
+            onClick={() =>
+              nextCursor !== undefined &&
+              setCursors((now) =>
+                now.includes(nextCursor) ? now : [...now, nextCursor],
+              )
+            }
+          >
+            Load older matches
+          </Button>
+        ) : !loading ? (
+          <span className="text-xs text-ink-muted">No older matches.</span>
+        ) : null}
+      </div>
+      {disputing ? (
+        <DisputeDialog
+          account={account}
+          transaction={disputing}
+          onClose={() => setDisputing(null)}
+        />
+      ) : null}
+    </div>
+  );
+}
+
+function TableHead() {
+  return (
+    <thead>
+      <tr className="eyebrow border-ink border-b-2 text-left text-[0.6rem] text-ink-muted">
+        <th className="px-3 py-2 font-bold">Date</th>
+        <th className="px-3 py-2 font-bold">Description</th>
+        <th className="px-3 py-2 font-bold">Kind</th>
+        <th className="px-3 py-2 text-right font-bold">Money in</th>
+        <th className="px-3 py-2 text-right font-bold">Money out</th>
+        <th className="px-3 py-2 text-right font-bold">Balance</th>
+        <th className="px-3 py-2">
+          <span className="sr-only">Actions</span>
+        </th>
+      </tr>
+    </thead>
+  );
+}
+
+function PageRows({
   account,
   beforeId,
+  query,
   onDispute,
 }: {
   account: AccountView;
-  beforeId: number;
+  beforeId: number | undefined;
+  query?: string;
   onDispute: (row: TransactionView) => void;
 }) {
   const page = useRead<{ transactions: TransactionView[] }>(
     "list_transactions",
     {
       accountId: account.id,
+      query,
       beforeId,
       limit: PAGE,
     },
@@ -162,7 +339,7 @@ function OlderRows({
         <tr>
           <td colSpan={7} className="px-3 py-2">
             <span className="sr-only" aria-live="polite">
-              Loading older transactions
+              Loading transactions
             </span>
             <div className="hx-shimmer h-8 rounded-sm border-2 border-ink/20" />
           </td>

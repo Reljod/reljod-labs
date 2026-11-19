@@ -28,7 +28,7 @@ export const SKILLS: Skill[] = [
     "Handling a dispute",
     "Use when a customer does not recognise a transaction, was charged twice, or wants money back.",
     `
-1. Find the transaction first. Call \`list_transactions\` for the account and identify the one they mean by date, amount and description. Read back what you found and ask if it is unclear which.
+1. Find the transaction first. Call \`list_transactions\` for the account (give \`query\` with a word from the description, such as the merchant, to search instead of paging) and identify the one they mean by date, amount and description. Read back what you found and ask if it is unclear which.
 2. Only money that left the account can be disputed. A dispute is opened on the journal entry id (\`entryId\`) of that transaction, with \`open_dispute\`. Pick the reason that fits: \`not_recognised\`, \`duplicate\`, \`wrong_amount\`, \`not_received\`, \`other\`.
 3. A card purchase that is still only authorised (a hold, not yet settled) is not a transaction yet. Say so: the merchant may still cancel it, and \`reverse_card_purchase\` releases the hold if the merchant has.
 4. If they do not recognise a card purchase at all, offer to freeze the card (\`set_card_status\` with \`frozen\`), which they can undo.
