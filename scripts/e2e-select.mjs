@@ -12,10 +12,16 @@
  *
  *   node scripts/e2e-select.mjs <base sha> <head sha>
  *
- * A test is selected when the diff touches a line between its `test(` and the
- * next test. A change outside every test (imports, helpers, `test.use`,
- * e2e/global-setup.ts, playwright.config.ts) selects nothing on its own: the
+ * A test's range runs from its `test(` line to the line before the next
+ * `test(` (the last test's to the end of the file), so a change in that range
+ * selects it, even one in a helper or a `test.describe` header that sits
+ * there. A change above the first test (imports, helpers, `test.use`), and a
+ * change to e2e/global-setup.ts or playwright.config.ts, selects nothing: the
  * full run after the merge covers it.
+ *
+ * A spec that runs serially (`test.describe.configure({ mode: "serial" })`)
+ * is selected whole: its tests build on each other's state, so one alone
+ * would fail for want of the ones before it.
  */
 import { execFileSync } from "node:child_process";
 
@@ -60,16 +66,39 @@ export function selectTests(spec, diff) {
   });
 }
 
-/** Splits `git diff` output into one diff per new-side file path. */
+/** A spec whose tests run in order, each on the state the last one left. */
+const SERIAL = /describe\.configure\(\s*\{[^}]*mode:\s*["'`]serial["'`]/;
+
+/** The Playwright locations to run in one spec: [], [path] (whole file) or `path:line` each. */
+export function locationsFor(path, spec, diff) {
+  const starts = selectTests(spec, diff);
+  if (starts.length === 0) return [];
+  if (SERIAL.test(spec)) return [path];
+  return starts.map((line) => `${path}:${line}`);
+}
+
+/**
+ * Splits `git diff` output into one diff per new-side file path. A `+++ `
+ * row is a header only between `diff --git` and the first hunk, so an added
+ * line that starts with `++` stays part of its hunk.
+ */
 export function diffsByFile(diff) {
   const files = new Map();
   let current = null;
+  let inHeader = false;
   for (const row of diff.split("\n")) {
-    if (row.startsWith("diff --git ")) current = null;
-    else if (row.startsWith("+++ ")) {
+    if (row.startsWith("diff --git ")) {
+      current = null;
+      inHeader = true;
+    } else if (inHeader && row.startsWith("+++ ")) {
       current = row.startsWith("+++ b/") ? row.slice(6) : null;
       if (current) files.set(current, "");
-    } else if (current) files.set(current, `${files.get(current)}${row}\n`);
+    } else {
+      if (row.startsWith("@@")) inHeader = false;
+      if (current && !inHeader) {
+        files.set(current, `${files.get(current)}${row}\n`);
+      }
+    }
   }
   return files;
 }
@@ -95,8 +124,8 @@ if (process.argv[1]?.endsWith("e2e-select.mjs")) {
   for (const [path, fileDiff] of diffsByFile(diff)) {
     if (!SPEC_PATH.test(path)) continue;
     const spec = git("show", `${head}:${path}`);
-    for (const line of selectTests(spec, fileDiff)) {
-      console.log(`${path}:${line}`);
+    for (const location of locationsFor(path, spec, fileDiff)) {
+      console.log(location);
     }
   }
 }

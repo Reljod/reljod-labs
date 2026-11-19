@@ -4,10 +4,15 @@ name: e2e
 # Vercel production deployment, never in front of it: a failure here means
 # fix forward, and nothing waits for it. Only the newest commit on main is
 # tested (an older run in progress is cancelled). Each run calls the paid
-# model and writes to the live Supabase project; the *_LIVE switches stay off.
+# model for several suites and writes to the live Supabase project; the
+# *_LIVE switches stay off.
 #
 # Pull requests run only the tests they change (e2e-changed.yml). Run this
 # by hand from the Actions tab (workflow_dispatch) to test another branch.
+#
+# No dependency cache (a pull_request_target run could poison a cache this
+# job would restore with the secrets loaded) and no uploaded report (on a
+# public repository an artifact is readable by anyone and never masked).
 
 on:
   push:
@@ -25,6 +30,10 @@ jobs:
   e2e:
     runs-on: ubuntu-latest
     timeout-minutes: 60
+    # Shared with e2e-changed.yml: one e2e run at a time against the live project.
+    concurrency:
+      group: e2e-live
+      cancel-in-progress: false
     env:
       E2E_BANK: "1"
       E2E_CANVAS: "1"
@@ -35,7 +44,10 @@ jobs:
       - uses: actions/checkout@v4
         with:
           persist-credentials: false
-      - name: Write .env.local from the E2E_ENV secret (every value masked)
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+      - name: Write .env.local from the E2E_ENV secret and mask every value
         env:
           E2E_ENV: ${{ secrets.E2E_ENV }}
         run: |
@@ -45,22 +57,14 @@ jobs:
             exit 1
           fi
           printf '%s\n' "$E2E_ENV" > .env.local
-          while IFS= read -r line || [ -n "$line" ]; do
-            case "$line" in ''|\#*) continue ;; esac
-            value="${line#*=}"; value="${value%\"}"; value="${value#\"}"
-            if [ -n "$value" ]; then echo "::add-mask::$value"; fi
-          done < .env.local
+          node -e '
+            const { parseEnv } = require("node:util");
+            const values = parseEnv(require("node:fs").readFileSync(".env.local", "utf8"));
+            for (const value of Object.values(values))
+              for (const line of value.split("\n"))
+                if (line.trim().length >= 6) process.stdout.write(`::add-mask::${line}\n`);
+          '
       - uses: pnpm/action-setup@v4
-      - uses: actions/setup-node@v4
-        with:
-          node-version: 24
-          cache: pnpm
       - run: pnpm install --frozen-lockfile
       - run: pnpm exec playwright install --with-deps chromium
       - run: pnpm test:e2e
-      - if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: playwright-report
-          path: playwright-report
-          retention-days: 14

@@ -1,11 +1,18 @@
+import { execFileSync } from "node:child_process";
+import { mkdtempSync, renameSync, rmSync, writeFileSync } from "node:fs";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 import {
   changedLines,
   diffsByFile,
+  locationsFor,
   SPEC_PATH,
   selectTests,
   testStarts,
 } from "./e2e-select.mjs";
+
+const SCRIPT = join(import.meta.dirname, "e2e-select.mjs");
 
 const spec = [
   'import { test } from "@playwright/test";', // 1
@@ -68,10 +75,92 @@ describe("e2e-select", () => {
     expect(files.get("e2e/a.spec.ts")).toContain("@@ -1 +1 @@");
   });
 
+  it("charges a change between tests to the test before it, and the tail to the last test", () => {
+    // Line 8 is the `test.describe(` header, inside the first test's range.
+    expect(selectTests(spec, "@@ -8 +8 @@")).toEqual([4]);
+    expect(selectTests(spec, "@@ -14 +14 @@")).toEqual([13]);
+    expect(selectTests(spec, "@@ -14,0 +15,3 @@")).toEqual([13]);
+  });
+
+  it("runs a serial spec whole, and a parallel one by line", () => {
+    const serial = `test.describe.configure({ mode: "serial" });\n${spec}`;
+    expect(locationsFor("e2e/a.spec.ts", serial, "@@ -6 +6 @@")).toEqual([
+      "e2e/a.spec.ts",
+    ]);
+    expect(locationsFor("e2e/a.spec.ts", spec, "@@ -5 +5 @@")).toEqual([
+      "e2e/a.spec.ts:4",
+    ]);
+    expect(locationsFor("e2e/a.spec.ts", serial, "@@ -1 +1 @@")).toEqual([]);
+  });
+
+  it("keeps an added line that starts with ++ inside its hunk", () => {
+    const diff = [
+      "diff --git a/e2e/a.spec.ts b/e2e/a.spec.ts",
+      "--- a/e2e/a.spec.ts",
+      "+++ b/e2e/a.spec.ts",
+      "@@ -1 +1,2 @@",
+      "+++counter;",
+      "@@ -9 +10 @@",
+    ].join("\n");
+    const files = diffsByFile(diff);
+    expect([...files.keys()]).toEqual(["e2e/a.spec.ts"]);
+    expect([...changedLines(files.get("e2e/a.spec.ts") ?? "")]).toEqual([
+      1, 2, 10,
+    ]);
+  });
+
   it("names only plain spec files", () => {
     expect(SPEC_PATH.test("e2e/bank.spec.ts")).toBe(true);
     expect(SPEC_PATH.test("e2e/nested/x.spec.ts")).toBe(false);
     expect(SPEC_PATH.test("e2e/$(touch x).spec.ts")).toBe(false);
     expect(SPEC_PATH.test("src/x.spec.ts")).toBe(false);
+  });
+});
+
+describe("e2e-select, through git", () => {
+  it("picks added and changed tests, and nothing for a pure rename or a helper", () => {
+    const repo = mkdtempSync(join(tmpdir(), "e2e-select-"));
+    try {
+      const git = (...args: string[]) =>
+        execFileSync("git", args, { cwd: repo, encoding: "utf8" }).trim();
+      git("init", "-q", "-b", "main");
+      git("config", "user.email", "test@example.invalid");
+      git("config", "user.name", "test");
+      execFileSync("mkdir", ["e2e"], { cwd: repo });
+      writeFileSync(join(repo, "e2e/kept.spec.ts"), spec);
+      writeFileSync(join(repo, "e2e/moved.spec.ts"), spec);
+      writeFileSync(join(repo, "e2e/helper.ts"), "export const x = 1;\n");
+      git("add", ".");
+      git("commit", "-q", "-m", "base");
+      const base = git("rev-parse", "HEAD");
+
+      writeFileSync(
+        join(repo, "e2e/kept.spec.ts"),
+        spec.replace("  helper();\n});", "  helper();\n  helper();\n});"),
+      );
+      renameSync(
+        join(repo, "e2e/moved.spec.ts"),
+        join(repo, "e2e/renamed.spec.ts"),
+      );
+      writeFileSync(
+        join(repo, "e2e/added.spec.ts"),
+        'import { test } from "@playwright/test";\ntest("new", async () => {});\n',
+      );
+      writeFileSync(join(repo, "e2e/helper.ts"), "export const x = 2;\n");
+      git("add", "-A");
+      git("commit", "-q", "-m", "head");
+      const head = git("rev-parse", "HEAD");
+
+      const out = execFileSync("node", [SCRIPT, base, head], {
+        cwd: repo,
+        encoding: "utf8",
+      });
+      expect(out.trim().split("\n").sort()).toEqual([
+        "e2e/added.spec.ts:2",
+        "e2e/kept.spec.ts:4",
+      ]);
+    } finally {
+      rmSync(repo, { recursive: true, force: true });
+    }
   });
 });
