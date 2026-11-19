@@ -312,7 +312,7 @@ async function withImages(
     const image = index >= 0 ? bytes[index] : null;
     const content = out[mark.message].content as unknown[];
     content[mark.part] = image
-      ? { type: "image", image, mediaType: "image/jpeg" }
+      ? { type: "file", data: image, mediaType: "image/jpeg" }
       : {
           type: "text",
           text: "(An image you looked at earlier. Look again if you need it.)",

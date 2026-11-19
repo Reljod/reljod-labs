@@ -27,7 +27,9 @@ async function examine(page: Page, sampleId: string) {
   await page.goto("/demos/loupe");
   await page.getByTestId(`loupe-sample-${sampleId}`).click();
   await page.getByTestId("loupe-start").click();
-  await expect(page.getByTestId("loupe-stage")).toBeVisible({ timeout: 60_000 });
+  await expect(page.getByTestId("loupe-stage")).toBeVisible({
+    timeout: 60_000,
+  });
   // The Examination is over when Re-evaluate is offered.
   await expect(page.getByTestId("loupe-reevaluate")).toBeVisible({
     timeout: 180_000,
@@ -89,8 +91,15 @@ test("a tampered document is caught, boxed on the page, and a Rule edit changes 
   );
 
   // Open a Finding: its measured value, its Rule and the code behind it.
-  await page.getByTestId("loupe-finding").first().getByRole("button").first().click();
-  await expect(page.getByText("The code that measured it").first()).toBeVisible();
+  await page
+    .getByTestId("loupe-finding")
+    .first()
+    .getByRole("button")
+    .first()
+    .click();
+  await expect(
+    page.getByText("The code that measured it").first(),
+  ).toBeVisible();
 
   // Under the hood shows what ran.
   await page.getByTestId("loupe-tab-hood").click();
@@ -123,7 +132,9 @@ test("a tampered document is caught, boxed on the page, and a Rule edit changes 
     "Saved Rulebook",
   );
   await page.getByTestId("loupe-save-rules").click();
-  await expect(page.getByTestId("loupe-saved")).toBeVisible({ timeout: 30_000 });
+  await expect(page.getByTestId("loupe-saved")).toBeVisible({
+    timeout: 30_000,
+  });
 
   await page.getByTestId("loupe-tab-examine").click();
   await page.getByTestId("loupe-reevaluate").click();
@@ -250,7 +261,10 @@ test("an outside client examines a document through the MCP server, with the Swe
   expect((examination.findingList as unknown[]).length).toBeGreaterThan(0);
 
   const trail = await tool(api, token, "read_trail", { examinationId });
-  const events = trail.structuredContent?.events as { type: string; mode?: string }[];
+  const events = trail.structuredContent?.events as {
+    type: string;
+    mode?: string;
+  }[];
   expect(events.some((event) => event.type === "sweep")).toBe(true);
 
   const rules = await tool(api, token, "list_rules");
@@ -341,7 +355,8 @@ test.describe("with the real model", () => {
     expect(
       detail.events.some(
         (e) =>
-          e.type === "tool" && (e.tool === "run_check" || e.tool === "run_code"),
+          e.type === "tool" &&
+          (e.tool === "run_check" || e.tool === "run_code"),
       ),
     ).toBe(true);
     console.log(
