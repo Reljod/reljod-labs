@@ -32,8 +32,8 @@ export const LIMITS = {
   /** How long a pending confirmation from the Teller waits for the person. */
   confirmationMinutes: 15,
   /** Growth requests one Owner may raise in a day, and in all while open. */
-  growthPerDay: 3,
-  growthOpenPerOwner: 5,
+  growthPerDay: 10,
+  growthOpenPerOwner: 10,
   /** Growth requests filed as GitHub issues per day, across every Owner. */
   growthIssuesPerDay: 6,
   growthTitleChars: 100,
