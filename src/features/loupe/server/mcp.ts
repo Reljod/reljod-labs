@@ -42,7 +42,7 @@ import {
 } from "./repository";
 import { saveRulebookFor } from "./rulebooks";
 import { assetPath, download, isAssetKey } from "./storage";
-import { toolDescription, withExamination } from "./tool-schemas";
+import { MCP_INPUTS, toolDescription } from "./tool-schemas";
 import {
   type Caller,
   conclude,
@@ -126,12 +126,13 @@ function answer(caller: Caller, outcome: ToolOutcome & { finished?: boolean }) {
 }
 
 /** Registers one of the Examiner's tools: the same function for the Examiner and a client. */
-function examinerTool<T extends ToolId>(
+function examinerTool<S extends z.ZodObject>(
   server: McpServer,
-  id: T,
+  id: ToolId,
+  schema: S,
   work: (
     caller: Caller,
-    input: z.infer<ReturnType<typeof withExamination<T>>>,
+    input: z.infer<S>,
   ) => Promise<ToolOutcome & { finished?: boolean }>,
 ) {
   server.registerTool(
@@ -139,12 +140,12 @@ function examinerTool<T extends ToolId>(
     {
       title: id,
       description: toolDescription(id),
-      inputSchema: withExamination(id),
+      inputSchema: schema as z.ZodObject,
     },
-    async (args, ctx) => {
+    async (args: unknown, ctx: unknown) => {
       try {
         const caller = callerOf(ctx);
-        return answer(caller, await work(caller, args as never));
+        return answer(caller, await work(caller, args as z.infer<S>));
       } catch (error) {
         console.error(`[loupe] mcp ${id}`, error);
         return failure(`${id} failed on our side. Try again.`);
@@ -157,17 +158,17 @@ const metricSchema = z.enum(METRIC_IDS as [MetricId, ...MetricId[]]);
 
 export function registerLoupeTools(server: McpServer) {
   // The Examiner's tools ---------------------------------------------------------
-  examinerTool(server, "look", (caller, input) => look(caller, input));
-  examinerTool(server, "run_check", (caller, input) => runCheck(caller, input));
-  examinerTool(server, "run_code", (caller, input) => runCode(caller, input));
-  examinerTool(server, "hypothesize", (caller, input) =>
+  examinerTool(server, "look", MCP_INPUTS.look, (caller, input) => look(caller, input));
+  examinerTool(server, "run_check", MCP_INPUTS.run_check, (caller, input) => runCheck(caller, input));
+  examinerTool(server, "run_code", MCP_INPUTS.run_code, (caller, input) => runCode(caller, input));
+  examinerTool(server, "hypothesize", MCP_INPUTS.hypothesize, (caller, input) =>
     hypothesize(caller, input),
   );
-  examinerTool(server, "conclude", (caller, input) => conclude(caller, input));
-  examinerTool(server, "review_finding", (caller, input) =>
+  examinerTool(server, "conclude", MCP_INPUTS.conclude, (caller, input) => conclude(caller, input));
+  examinerTool(server, "review_finding", MCP_INPUTS.review_finding, (caller, input) =>
     reviewFinding(caller, input),
   );
-  examinerTool(server, "finish", async (caller, input) => {
+  examinerTool(server, "finish", MCP_INPUTS.finish, async (caller, input) => {
     const outcome = await finish(caller, input);
     // A client's own Examination has no workflow waiting to end it.
     if (outcome.finished && caller.role.kind === "client")
@@ -285,7 +286,9 @@ export function registerLoupeTools(server: McpServer) {
         whoOf(callerOf(ctx)),
         args.examinationId,
       );
-      return "error" in stopped ? failure(stopped.error) : result(stopped);
+      return "error" in stopped
+        ? failure(stopped.error ?? "It could not be stopped.")
+        : result(stopped);
     },
   );
 

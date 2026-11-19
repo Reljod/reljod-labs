@@ -111,7 +111,7 @@ export async function corpusBundle() {
 const write = (path: string, value: unknown) =>
   writeFile(join(ROOT, path), `${JSON.stringify(value)}\n`);
 
-if (import.meta.main) {
+if ((import.meta as { main?: boolean }).main) {
   const toolkit = await toolkitBundle();
   await write("src/features/loupe/server/toolkit.generated.json", toolkit);
   console.log(

@@ -92,10 +92,16 @@ export const TOOL_INPUTS = {
   }),
 } as const satisfies Record<ToolId, z.ZodObject>;
 
-/** A tool's input with the Examination it acts on, as the MCP server takes it. */
-export function withExamination<T extends ToolId>(id: T) {
-  return TOOL_INPUTS[id].extend({ examinationId });
-}
+/** Each tool's input with the Examination it acts on, as the MCP server takes it. */
+export const MCP_INPUTS = {
+  look: TOOL_INPUTS.look.extend({ examinationId }),
+  run_check: TOOL_INPUTS.run_check.extend({ examinationId }),
+  run_code: TOOL_INPUTS.run_code.extend({ examinationId }),
+  hypothesize: TOOL_INPUTS.hypothesize.extend({ examinationId }),
+  conclude: TOOL_INPUTS.conclude.extend({ examinationId }),
+  review_finding: TOOL_INPUTS.review_finding.extend({ examinationId }),
+  finish: TOOL_INPUTS.finish.extend({ examinationId }),
+} as const;
 
 const DESCRIPTIONS: Record<ToolId, string> = {
   look: "See a page, or a region of it zoomed in. The image comes back with the result. Every page must be looked at before finish.",
@@ -123,7 +129,10 @@ export function examinerTools() {
   return Object.fromEntries(
     (Object.keys(TOOL_INPUTS) as ToolId[]).map((id) => [
       id,
-      tool({ description: DESCRIPTIONS[id], inputSchema: TOOL_INPUTS[id] }),
+      tool({
+        description: DESCRIPTIONS[id],
+        inputSchema: TOOL_INPUTS[id] as z.ZodObject,
+      }),
     ]),
   );
 }

@@ -443,9 +443,10 @@ export async function runCheck(
   if (row.pages.length === 0)
     return refusal("The Document is still being prepared. Try again shortly.");
   const spec = CHECKS[input.check];
-  if (!(spec.formats as readonly string[]).includes(row.format) && row.format !== "pdf")
+  // A PDF page that is one scan takes the image Checks too; an image has no file structure.
+  if (row.format === "image" && !(spec.formats as readonly string[]).includes("image"))
     return refusal(
-      `${input.check} is for ${spec.formats.join(" and ")} Documents; this one is ${row.format === "pdf" ? "a PDF" : "an image"}.`,
+      `${input.check} is for ${spec.formats.join(" and ")} Documents; this one is an image.`,
     );
   if (input.page) {
     const bad = pageRefusal(row, input.page);
@@ -694,7 +695,7 @@ export async function hypothesize(
     async () => {
       const bad = pageRefusal(row, input.page);
       if (bad) return refusal(bad);
-      const changed = await mutateState(row.id, (current) => {
+      const changed = await mutateState<{ hypothesis: Hypothesis; standing: Standing }>(row.id, (current) => {
         if (current.state.hypotheses.length >= RUN_LIMITS.hypotheses)
           return {
             refusal: `hypothesize refused: this Examination has its ${RUN_LIMITS.hypotheses} Hypotheses. Settle the open ones.`,
@@ -760,7 +761,7 @@ export async function conclude(
     `${input.hypothesisId} ${input.outcome}`,
     input,
     async () => {
-      const changed = await mutateState(row.id, (current) => {
+      const changed = await mutateState<{ hypothesis: Hypothesis; standing: Standing; tripping: number }>(row.id, (current) => {
         const hypothesis = current.state.hypotheses.find(
           (item) => item.id === input.hypothesisId,
         );
@@ -853,7 +854,7 @@ export async function reviewFinding(
     `${input.findingId}: ${input.stance}`,
     input,
     async () => {
-      const changed = await mutateState(row.id, (current) => {
+      const changed = await mutateState<Standing>(row.id, (current) => {
         const before = standingOf(current, current.state);
         const finding = before.findings.find(
           (item) =>
@@ -943,7 +944,7 @@ export async function finish(
     input.summary.slice(0, 140),
     input,
     async () => {
-      const changed = await mutateState(row.id, (current) => {
+      const changed = await mutateState<Standing>(row.id, (current) => {
         const standing = standingOf(current, current.state);
         if (!standing.gate.passed)
           return { refusal: gateRefusal(standing, current.state) };
