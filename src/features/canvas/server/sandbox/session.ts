@@ -98,7 +98,9 @@ async function open(
     const reason = reasonOf(error);
     console.error("[canvas] sandbox start failed", reason);
     // The image's snapshot may be gone: forget it so the next call builds a new one.
-    if (/HTTP 404|not_found|snapshot/i.test(reason))
+    if (
+      /HTTP 404|not_found|snapshot_(?:not_found|expired|deleted)/i.test(reason)
+    )
       await forgetImage(snapshotId).catch(() => {});
     throw new SandboxUnavailable(
       `Sandbox unavailable: it could not be started (${reason}). Try again in a minute.`,

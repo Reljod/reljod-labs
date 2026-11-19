@@ -9,23 +9,27 @@ import {
   imageSnapshotOptions,
   ownerSandboxOptions,
   ownerSandboxUpdate,
+  SANDBOX_REGION,
 } from "./options";
 
 const DAY = 24 * 60 * 60_000;
 
 describe("Canvas Sandboxes leave no snapshots behind", () => {
-  it("an Owner's Sandbox is created not persistent, with no network", () => {
+  it("an Owner's Sandbox is created not persistent, in the image's region, with no network", () => {
     const options = ownerSandboxOptions("canvas-abc", "snap_1");
     expect(options.persistent).toBe(false);
+    expect(options.region).toBe(imageBuildOptions().region);
+    expect(options.region).toBe(SANDBOX_REGION);
     expect(options.networkPolicy).toBe("deny-all");
     expect(options.source).toEqual({ type: "snapshot", snapshotId: "snap_1" });
     expect("snapshotExpiration" in options).toBe(false);
   });
 
-  it("an existing Sandbox is switched to not persistent after getOrCreate", () => {
+  it("an existing Sandbox is switched to not persistent and the image's region after getOrCreate", () => {
     expect(ownerSandboxUpdate()).toEqual({
       persistent: false,
       networkPolicy: "deny-all",
+      region: SANDBOX_REGION,
     });
   });
 

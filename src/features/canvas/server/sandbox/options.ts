@@ -54,6 +54,7 @@ export function ownerSandboxOptions(name: string, snapshotId: string) {
   return {
     name,
     source: { type: "snapshot", snapshotId },
+    region: SANDBOX_REGION,
     networkPolicy: "deny-all",
     timeout: SANDBOX_MINUTES * MINUTE,
     persistent: false,
@@ -66,7 +67,11 @@ export function ownerSandboxOptions(name: string, snapshotId: string) {
  * the settings it was made with (it may predate this rule).
  */
 export function ownerSandboxUpdate() {
-  return { persistent: false, networkPolicy: "deny-all" } as const;
+  return {
+    persistent: false,
+    networkPolicy: "deny-all",
+    region: SANDBOX_REGION,
+  } as const;
 }
 
 /** Disposing of a Sandbox takes every snapshot it left with it. */
