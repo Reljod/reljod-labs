@@ -1,0 +1,3940 @@
+date,stall,category,units,revenue_mdc,rain_mm
+2025-01-01,Orchard Row Fruit,fruit and veg,186,791.66,0
+2025-01-01,Greenleaf Greens,fruit and veg,131,469.6,0
+2025-01-01,Halden Smokehouse,fish,57,946.16,0
+2025-01-01,Tide Line Oysters,fish,47,1035.16,0
+2025-01-01,Velmora Cheese Cave,dairy,67,821.91,0
+2025-01-01,Brennick Bakehouse,bakery,220,1176.82,0
+2025-01-01,Sugar & Salt,bakery,134,632.49,0
+2025-01-01,Lantern Noodles,hot food,193,2013.44,0
+2025-01-01,Corranth Grill,hot food,149,2017.29,0
+2025-01-01,Frost Cart Ices,ice cream,299,1359.85,0
+2025-01-01,Kestrel Coffee,coffee,278,1108.78,0
+2025-01-01,Arvena Flowers,flowers,49,878.53,0
+2025-01-02,Orchard Row Fruit,fruit and veg,128,530.38,0
+2025-01-02,Greenleaf Greens,fruit and veg,118,414.67,0
+2025-01-02,Halden Smokehouse,fish,54,851.65,0
+2025-01-02,Tide Line Oysters,fish,37,788.87,0
+2025-01-02,Velmora Cheese Cave,dairy,45,558.25,0
+2025-01-02,Brennick Bakehouse,bakery,173,970.79,0
+2025-01-02,Sugar & Salt,bakery,101,493.32,0
+2025-01-02,Lantern Noodles,hot food,140,1659.17,0
+2025-01-02,Corranth Grill,hot food,126,1678.62,0
+2025-01-02,Frost Cart Ices,ice cream,222,988.44,0
+2025-01-02,Kestrel Coffee,coffee,248,985.95,0
+2025-01-02,Arvena Flowers,flowers,38,665.41,0
+2025-01-03,Orchard Row Fruit,fruit and veg,183,749.77,0
+2025-01-03,Greenleaf Greens,fruit and veg,136,495.16,0
+2025-01-03,Halden Smokehouse,fish,58,931.56,0
+2025-01-03,Tide Line Oysters,fish,42,922.19,0
+2025-01-03,Velmora Cheese Cave,dairy,63,760.08,0
+2025-01-03,Brennick Bakehouse,bakery,249,1364.97,0
+2025-01-03,Sugar & Salt,bakery,135,651.63,0
+2025-01-03,Lantern Noodles,hot food,196,2147.42,0
+2025-01-03,Corranth Grill,hot food,190,2572.14,0
+2025-01-03,Frost Cart Ices,ice cream,325,1467.67,0
+2025-01-03,Kestrel Coffee,coffee,282,1163.3,0
+2025-01-03,Arvena Flowers,flowers,41,745.45,0
+2025-01-04,Orchard Row Fruit,fruit and veg,157,667,8.5
+2025-01-04,Greenleaf Greens,fruit and veg,142,503.45,8.5
+2025-01-04,Halden Smokehouse,fish,48,841.51,8.5
+2025-01-04,Tide Line Oysters,fish,42,885.07,8.5
+2025-01-04,Velmora Cheese Cave,dairy,72,933.65,8.5
+2025-01-04,Brennick Bakehouse,bakery,247,1387.45,8.5
+2025-01-04,Sugar & Salt,bakery,133,621.76,8.5
+2025-01-04,Lantern Noodles,hot food,156,1697.72,8.5
+2025-01-04,Corranth Grill,hot food,137,1854.67,8.5
+2025-01-04,Frost Cart Ices,ice cream,314,1419.17,8.5
+2025-01-04,Kestrel Coffee,coffee,249,963.26,8.5
+2025-01-04,Arvena Flowers,flowers,46,809.69,8.5
+2025-01-05,Orchard Row Fruit,fruit and veg,236,998.55,0
+2025-01-05,Greenleaf Greens,fruit and veg,165,584.32,0
+2025-01-05,Halden Smokehouse,fish,76,1117.92,0
+2025-01-05,Tide Line Oysters,fish,52,1065.79,0
+2025-01-05,Velmora Cheese Cave,dairy,52,669.38,0
+2025-01-05,Brennick Bakehouse,bakery,260,1447.18,0
+2025-01-05,Sugar & Salt,bakery,159,762.53,0
+2025-01-05,Lantern Noodles,hot food,198,2207.82,0
+2025-01-05,Corranth Grill,hot food,162,2248.77,0
+2025-01-05,Frost Cart Ices,ice cream,371,1755.89,0
+2025-01-05,Kestrel Coffee,coffee,327,1366.57,0
+2025-01-05,Arvena Flowers,flowers,60,1067.88,0
+2025-01-07,Orchard Row Fruit,fruit and veg,150,621.69,0
+2025-01-07,Greenleaf Greens,fruit and veg,96,325.3,0
+2025-01-07,Halden Smokehouse,fish,45,709.37,0
+2025-01-07,Tide Line Oysters,fish,37,793.08,0
+2025-01-07,Velmora Cheese Cave,dairy,49,610.2,0
+2025-01-07,Brennick Bakehouse,bakery,168,931.33,0
+2025-01-07,Sugar & Salt,bakery,105,503.08,0
+2025-01-07,Lantern Noodles,hot food,124,1323,0
+2025-01-07,Corranth Grill,hot food,127,1681.5,0
+2025-01-07,Frost Cart Ices,ice cream,233,1083.5,0
+2025-01-07,Kestrel Coffee,coffee,208,836.03,0
+2025-01-07,Arvena Flowers,flowers,37,699.21,0
+2025-01-08,Orchard Row Fruit,fruit and veg,121,517.43,0
+2025-01-08,Greenleaf Greens,fruit and veg,94,332.28,0
+2025-01-08,Halden Smokehouse,fish,44,759.05,0
+2025-01-08,Tide Line Oysters,fish,31,652.14,0
+2025-01-08,Velmora Cheese Cave,dairy,56,715.28,0
+2025-01-08,Brennick Bakehouse,bakery,198,1067.76,0
+2025-01-08,Sugar & Salt,bakery,92,418.09,0
+2025-01-08,Lantern Noodles,hot food,139,1545.71,0
+2025-01-08,Corranth Grill,hot food,144,1922.78,0
+2025-01-08,Frost Cart Ices,ice cream,276,1250.65,0
+2025-01-08,Kestrel Coffee,coffee,245,970.39,0
+2025-01-08,Arvena Flowers,flowers,45,821.38,0
+2025-01-09,Orchard Row Fruit,fruit and veg,123,518.67,0
+2025-01-09,Greenleaf Greens,fruit and veg,116,418.36,0
+2025-01-09,Halden Smokehouse,fish,48,818.69,0
+2025-01-09,Tide Line Oysters,fish,38,843,0
+2025-01-09,Velmora Cheese Cave,dairy,53,661.34,0
+2025-01-09,Brennick Bakehouse,bakery,177,950.68,0
+2025-01-09,Sugar & Salt,bakery,110,527.47,0
+2025-01-09,Lantern Noodles,hot food,155,1713.54,0
+2025-01-09,Corranth Grill,hot food,113,1562.84,0
+2025-01-09,Frost Cart Ices,ice cream,244,1105.98,0
+2025-01-09,Kestrel Coffee,coffee,236,968.92,0
+2025-01-09,Arvena Flowers,flowers,48,878.32,0
+2025-01-10,Orchard Row Fruit,fruit and veg,173,692.48,0
+2025-01-10,Greenleaf Greens,fruit and veg,138,516.29,0
+2025-01-10,Halden Smokehouse,fish,66,1167.99,0
+2025-01-10,Tide Line Oysters,fish,51,1085.66,0
+2025-01-10,Velmora Cheese Cave,dairy,62,767.64,0
+2025-01-10,Brennick Bakehouse,bakery,237,1304.91,0
+2025-01-10,Sugar & Salt,bakery,116,560.35,0
+2025-01-10,Lantern Noodles,hot food,181,2053.06,0
+2025-01-10,Corranth Grill,hot food,180,2452,0
+2025-01-10,Frost Cart Ices,ice cream,300,1363.36,0
+2025-01-10,Kestrel Coffee,coffee,235,973.95,0
+2025-01-10,Arvena Flowers,flowers,50,861.6,0
+2025-01-11,Orchard Row Fruit,fruit and veg,248,1025.76,0
+2025-01-11,Greenleaf Greens,fruit and veg,173,639.24,0
+2025-01-11,Halden Smokehouse,fish,83,1362.57,0
+2025-01-11,Tide Line Oysters,fish,54,1217.74,0
+2025-01-11,Velmora Cheese Cave,dairy,112,1513.43,0
+2025-01-11,Brennick Bakehouse,bakery,246,1357.73,0
+2025-01-11,Sugar & Salt,bakery,170,815.73,0
+2025-01-11,Lantern Noodles,hot food,215,2308.37,0
+2025-01-11,Corranth Grill,hot food,184,2554.69,0
+2025-01-11,Frost Cart Ices,ice cream,438,1954.71,0
+2025-01-11,Kestrel Coffee,coffee,362,1425.13,0
+2025-01-11,Arvena Flowers,flowers,64,1121.61,0
+2025-01-12,Orchard Row Fruit,fruit and veg,199,840.06,0
+2025-01-12,Greenleaf Greens,fruit and veg,177,638.37,0
+2025-01-12,Halden Smokehouse,fish,78,1270.5,0
+2025-01-12,Tide Line Oysters,fish,47,996.95,0
+2025-01-12,Velmora Cheese Cave,dairy,59,743.48,0
+2025-01-12,Brennick Bakehouse,bakery,222,1260.69,0
+2025-01-12,Sugar & Salt,bakery,164,808.83,0
+2025-01-12,Lantern Noodles,hot food,172,2047,0
+2025-01-12,Corranth Grill,hot food,173,2347.59,0
+2025-01-12,Frost Cart Ices,ice cream,365,1719.2,0
+2025-01-12,Kestrel Coffee,coffee,296,1252.84,0
+2025-01-12,Arvena Flowers,flowers,61,1138.9,0
+2025-01-14,Orchard Row Fruit,fruit and veg,118,498.84,0
+2025-01-14,Greenleaf Greens,fruit and veg,120,432.88,0
+2025-01-14,Halden Smokehouse,fish,55,903.48,0
+2025-01-14,Tide Line Oysters,fish,38,823.78,0
+2025-01-14,Velmora Cheese Cave,dairy,45,609.96,0
+2025-01-14,Brennick Bakehouse,bakery,174,950.04,0
+2025-01-14,Sugar & Salt,bakery,97,470.13,0
+2025-01-14,Lantern Noodles,hot food,130,1456.23,0
+2025-01-14,Corranth Grill,hot food,108,1472,0
+2025-01-14,Frost Cart Ices,ice cream,233,1040.74,0
+2025-01-14,Kestrel Coffee,coffee,188,738.72,0
+2025-01-14,Arvena Flowers,flowers,38,686.37,0
+2025-01-15,Orchard Row Fruit,fruit and veg,132,557.06,0
+2025-01-15,Greenleaf Greens,fruit and veg,99,341.55,0
+2025-01-15,Halden Smokehouse,fish,44,718.99,0
+2025-01-15,Tide Line Oysters,fish,32,661.7,0
+2025-01-15,Velmora Cheese Cave,dairy,52,658.45,0
+2025-01-15,Brennick Bakehouse,bakery,154,855.2,0
+2025-01-15,Sugar & Salt,bakery,99,491.53,0
+2025-01-15,Lantern Noodles,hot food,125,1373.51,0
+2025-01-15,Corranth Grill,hot food,120,1643.25,0
+2025-01-15,Frost Cart Ices,ice cream,248,1126.81,0
+2025-01-15,Kestrel Coffee,coffee,203,775.3,0
+2025-01-15,Arvena Flowers,flowers,43,774.84,0
+2025-01-16,Orchard Row Fruit,fruit and veg,143,588.44,0
+2025-01-16,Greenleaf Greens,fruit and veg,115,420.58,0
+2025-01-16,Halden Smokehouse,fish,48,831.21,0
+2025-01-16,Tide Line Oysters,fish,32,705.63,0
+2025-01-16,Velmora Cheese Cave,dairy,54,712.47,0
+2025-01-16,Brennick Bakehouse,bakery,173,1008.4,0
+2025-01-16,Sugar & Salt,bakery,111,549.15,0
+2025-01-16,Lantern Noodles,hot food,133,1521.58,0
+2025-01-16,Corranth Grill,hot food,130,1752.18,0
+2025-01-16,Frost Cart Ices,ice cream,261,1158.54,0
+2025-01-16,Kestrel Coffee,coffee,213,849.65,0
+2025-01-16,Arvena Flowers,flowers,36,658.8,0
+2025-01-17,Orchard Row Fruit,fruit and veg,151,610.64,9.9
+2025-01-17,Greenleaf Greens,fruit and veg,95,341.76,9.9
+2025-01-17,Halden Smokehouse,fish,48,780.89,9.9
+2025-01-17,Tide Line Oysters,fish,33,719.07,9.9
+2025-01-17,Velmora Cheese Cave,dairy,44,552.55,9.9
+2025-01-17,Brennick Bakehouse,bakery,147,768.24,9.9
+2025-01-17,Sugar & Salt,bakery,92,460.29,9.9
+2025-01-17,Lantern Noodles,hot food,117,1239.21,9.9
+2025-01-17,Corranth Grill,hot food,104,1467.4,9.9
+2025-01-17,Frost Cart Ices,ice cream,217,968.82,9.9
+2025-01-17,Kestrel Coffee,coffee,182,713.41,9.9
+2025-01-17,Arvena Flowers,flowers,35,619.72,9.9
+2025-01-18,Orchard Row Fruit,fruit and veg,235,958.51,0
+2025-01-18,Greenleaf Greens,fruit and veg,217,808.86,0
+2025-01-18,Halden Smokehouse,fish,76,1230.24,0
+2025-01-18,Tide Line Oysters,fish,65,1421.08,0
+2025-01-18,Velmora Cheese Cave,dairy,71,907.85,0
+2025-01-18,Brennick Bakehouse,bakery,287,1618.24,0
+2025-01-18,Sugar & Salt,bakery,134,621.61,0
+2025-01-18,Lantern Noodles,hot food,181,1999.75,0
+2025-01-18,Corranth Grill,hot food,189,2412.05,0
+2025-01-18,Frost Cart Ices,ice cream,363,1572.65,0
+2025-01-18,Kestrel Coffee,coffee,328,1354.15,0
+2025-01-18,Arvena Flowers,flowers,65,1237.52,0
+2025-01-19,Orchard Row Fruit,fruit and veg,219,910.22,0
+2025-01-19,Greenleaf Greens,fruit and veg,145,527.76,0
+2025-01-19,Halden Smokehouse,fish,72,1229.14,0
+2025-01-19,Tide Line Oysters,fish,53,1166.15,0
+2025-01-19,Velmora Cheese Cave,dairy,76,985.13,0
+2025-01-19,Brennick Bakehouse,bakery,299,1689.74,0
+2025-01-19,Sugar & Salt,bakery,160,806.16,0
+2025-01-19,Lantern Noodles,hot food,187,1978.97,0
+2025-01-19,Corranth Grill,hot food,149,2019.66,0
+2025-01-19,Frost Cart Ices,ice cream,429,2100.91,0
+2025-01-19,Kestrel Coffee,coffee,332,1311.87,0
+2025-01-19,Arvena Flowers,flowers,61,1105.65,0
+2025-01-21,Orchard Row Fruit,fruit and veg,137,549.56,0
+2025-01-21,Greenleaf Greens,fruit and veg,119,413.4,0
+2025-01-21,Halden Smokehouse,fish,44,717.07,0
+2025-01-21,Tide Line Oysters,fish,35,763.03,0
+2025-01-21,Velmora Cheese Cave,dairy,56,734.43,0
+2025-01-21,Brennick Bakehouse,bakery,221,1248.1,0
+2025-01-21,Sugar & Salt,bakery,95,456.2,0
+2025-01-21,Lantern Noodles,hot food,148,1658.14,0
+2025-01-21,Corranth Grill,hot food,101,1379.61,0
+2025-01-21,Frost Cart Ices,ice cream,266,1231.97,0
+2025-01-21,Kestrel Coffee,coffee,251,1007.8,0
+2025-01-21,Arvena Flowers,flowers,37,666.39,0
+2025-01-22,Orchard Row Fruit,fruit and veg,136,553.19,0
+2025-01-22,Greenleaf Greens,fruit and veg,114,379.35,0
+2025-01-22,Halden Smokehouse,fish,56,965.55,0
+2025-01-22,Tide Line Oysters,fish,31,696.13,0
+2025-01-22,Velmora Cheese Cave,dairy,53,666.1,0
+2025-01-22,Brennick Bakehouse,bakery,187,1059.18,0
+2025-01-22,Sugar & Salt,bakery,111,554.11,0
+2025-01-22,Lantern Noodles,hot food,136,1413.23,0
+2025-01-22,Corranth Grill,hot food,94,1300.04,0
+2025-01-22,Frost Cart Ices,ice cream,232,1088.11,0
+2025-01-22,Kestrel Coffee,coffee,214,902.38,0
+2025-01-22,Arvena Flowers,flowers,48,843.81,0
+2025-01-23,Orchard Row Fruit,fruit and veg,121,519.9,0
+2025-01-23,Greenleaf Greens,fruit and veg,111,404.59,0
+2025-01-23,Halden Smokehouse,fish,44,734.51,0
+2025-01-23,Tide Line Oysters,fish,31,672.88,0
+2025-01-23,Velmora Cheese Cave,dairy,45,607.53,0
+2025-01-23,Brennick Bakehouse,bakery,167,917.79,0
+2025-01-23,Sugar & Salt,bakery,86,407.91,0
+2025-01-23,Lantern Noodles,hot food,141,1539.22,0
+2025-01-23,Corranth Grill,hot food,129,1743.86,0
+2025-01-23,Frost Cart Ices,ice cream,247,1105.81,0
+2025-01-23,Kestrel Coffee,coffee,250,1020.58,0
+2025-01-23,Arvena Flowers,flowers,43,793.6,0
+2025-01-24,Orchard Row Fruit,fruit and veg,169,697.42,0
+2025-01-24,Greenleaf Greens,fruit and veg,147,554.51,0
+2025-01-24,Halden Smokehouse,fish,70,1158.58,0
+2025-01-24,Tide Line Oysters,fish,39,819.38,0
+2025-01-24,Velmora Cheese Cave,dairy,68,878.48,0
+2025-01-24,Brennick Bakehouse,bakery,250,1363.56,0
+2025-01-24,Sugar & Salt,bakery,134,632.71,0
+2025-01-24,Lantern Noodles,hot food,188,2146.58,0
+2025-01-24,Corranth Grill,hot food,154,2137.3,0
+2025-01-24,Frost Cart Ices,ice cream,314,1458.22,0
+2025-01-24,Kestrel Coffee,coffee,315,1271.07,0
+2025-01-24,Arvena Flowers,flowers,55,1012.67,0
+2025-01-25,Orchard Row Fruit,fruit and veg,251,1034.12,0
+2025-01-25,Greenleaf Greens,fruit and veg,205,728.93,0
+2025-01-25,Halden Smokehouse,fish,78,1277.32,0
+2025-01-25,Tide Line Oysters,fish,50,1124.27,0
+2025-01-25,Velmora Cheese Cave,dairy,79,1054.61,0
+2025-01-25,Brennick Bakehouse,bakery,290,1516.7,0
+2025-01-25,Sugar & Salt,bakery,143,670.34,0
+2025-01-25,Lantern Noodles,hot food,197,2137.07,0
+2025-01-25,Corranth Grill,hot food,155,2132.38,0
+2025-01-25,Frost Cart Ices,ice cream,342,1545.76,0
+2025-01-25,Kestrel Coffee,coffee,354,1359.7,0
+2025-01-25,Arvena Flowers,flowers,70,1194.39,0
+2025-01-26,Orchard Row Fruit,fruit and veg,210,881.69,0
+2025-01-26,Greenleaf Greens,fruit and veg,139,509.24,0
+2025-01-26,Halden Smokehouse,fish,68,1113.02,0
+2025-01-26,Tide Line Oysters,fish,53,1126.92,0
+2025-01-26,Velmora Cheese Cave,dairy,79,960.92,0
+2025-01-26,Brennick Bakehouse,bakery,239,1316.7,0
+2025-01-26,Sugar & Salt,bakery,192,913.71,0
+2025-01-26,Lantern Noodles,hot food,224,2432.75,0
+2025-01-26,Corranth Grill,hot food,182,2555.7,0
+2025-01-26,Frost Cart Ices,ice cream,369,1607.53,0
+2025-01-26,Kestrel Coffee,coffee,377,1502.73,0
+2025-01-26,Arvena Flowers,flowers,58,1012.57,0
+2025-01-28,Orchard Row Fruit,fruit and veg,130,555.39,0
+2025-01-28,Greenleaf Greens,fruit and veg,102,373.31,0
+2025-01-28,Halden Smokehouse,fish,56,931.52,0
+2025-01-28,Tide Line Oysters,fish,30,683.16,0
+2025-01-28,Velmora Cheese Cave,dairy,55,729.09,0
+2025-01-28,Brennick Bakehouse,bakery,188,1042.59,0
+2025-01-28,Sugar & Salt,bakery,117,559.1,0
+2025-01-28,Lantern Noodles,hot food,153,1613.94,0
+2025-01-28,Corranth Grill,hot food,102,1437.62,0
+2025-01-28,Frost Cart Ices,ice cream,199,871.66,0
+2025-01-28,Kestrel Coffee,coffee,232,903.74,0
+2025-01-28,Arvena Flowers,flowers,34,573.01,0
+2025-01-29,Orchard Row Fruit,fruit and veg,134,586.01,0
+2025-01-29,Greenleaf Greens,fruit and veg,95,346.68,0
+2025-01-29,Halden Smokehouse,fish,45,729.57,0
+2025-01-29,Tide Line Oysters,fish,31,676.42,0
+2025-01-29,Velmora Cheese Cave,dairy,51,646.8,0
+2025-01-29,Brennick Bakehouse,bakery,148,795.68,0
+2025-01-29,Sugar & Salt,bakery,94,437.54,0
+2025-01-29,Lantern Noodles,hot food,129,1443.38,0
+2025-01-29,Corranth Grill,hot food,134,1846.82,0
+2025-01-29,Frost Cart Ices,ice cream,252,1085.75,0
+2025-01-29,Kestrel Coffee,coffee,234,877.72,0
+2025-01-29,Arvena Flowers,flowers,40,710.08,0
+2025-01-30,Orchard Row Fruit,fruit and veg,133,563.19,0
+2025-01-30,Greenleaf Greens,fruit and veg,116,422.98,0
+2025-01-30,Halden Smokehouse,fish,38,571.33,0
+2025-01-30,Tide Line Oysters,fish,34,762.68,0
+2025-01-30,Velmora Cheese Cave,dairy,53,704.31,0
+2025-01-30,Brennick Bakehouse,bakery,182,1071.24,0
+2025-01-30,Sugar & Salt,bakery,99,490.65,0
+2025-01-30,Lantern Noodles,hot food,134,1466.09,0
+2025-01-30,Corranth Grill,hot food,117,1568.99,0
+2025-01-30,Frost Cart Ices,ice cream,243,1048,0
+2025-01-30,Kestrel Coffee,coffee,239,975.65,0
+2025-01-30,Arvena Flowers,flowers,37,664.41,0
+2025-01-31,Orchard Row Fruit,fruit and veg,151,618.72,0
+2025-01-31,Greenleaf Greens,fruit and veg,135,480.82,0
+2025-01-31,Halden Smokehouse,fish,66,1066.1,0
+2025-01-31,Tide Line Oysters,fish,41,874.57,0
+2025-01-31,Velmora Cheese Cave,dairy,57,747.72,0
+2025-01-31,Brennick Bakehouse,bakery,247,1414.87,0
+2025-01-31,Sugar & Salt,bakery,135,656.4,0
+2025-01-31,Lantern Noodles,hot food,173,1945.51,0
+2025-01-31,Corranth Grill,hot food,177,2472.46,0
+2025-01-31,Frost Cart Ices,ice cream,266,1206.94,0
+2025-01-31,Kestrel Coffee,coffee,293,1185.13,0
+2025-01-31,Arvena Flowers,flowers,53,934.61,0
+2025-02-01,Orchard Row Fruit,fruit and veg,214,888.89,0
+2025-02-01,Greenleaf Greens,fruit and veg,186,648.39,0
+2025-02-01,Halden Smokehouse,fish,78,1277.22,0
+2025-02-01,Tide Line Oysters,fish,63,1390.07,0
+2025-02-01,Velmora Cheese Cave,dairy,73,945.28,0
+2025-02-01,Brennick Bakehouse,bakery,306,1531.87,0
+2025-02-01,Sugar & Salt,bakery,179,860.38,0
+2025-02-01,Lantern Noodles,hot food,187,2069.98,0
+2025-02-01,Corranth Grill,hot food,237,3137.55,0
+2025-02-01,Frost Cart Ices,ice cream,357,1626.19,0
+2025-02-01,Kestrel Coffee,coffee,400,1620.73,0
+2025-02-01,Arvena Flowers,flowers,73,1355.42,0
+2025-02-02,Orchard Row Fruit,fruit and veg,243,1013.39,0
+2025-02-02,Greenleaf Greens,fruit and veg,176,585.2,0
+2025-02-02,Halden Smokehouse,fish,80,1297.48,0
+2025-02-02,Tide Line Oysters,fish,62,1328.11,0
+2025-02-02,Velmora Cheese Cave,dairy,83,1075.99,0
+2025-02-02,Brennick Bakehouse,bakery,279,1506.32,0
+2025-02-02,Sugar & Salt,bakery,160,739.64,0
+2025-02-02,Lantern Noodles,hot food,203,2205.65,0
+2025-02-02,Corranth Grill,hot food,193,2687.92,0
+2025-02-02,Frost Cart Ices,ice cream,371,1602.96,0
+2025-02-02,Kestrel Coffee,coffee,307,1141.09,0
+2025-02-02,Arvena Flowers,flowers,48,834.15,0
+2025-02-04,Orchard Row Fruit,fruit and veg,135,577.63,0
+2025-02-04,Greenleaf Greens,fruit and veg,91,336.63,0
+2025-02-04,Halden Smokehouse,fish,55,907.23,0
+2025-02-04,Tide Line Oysters,fish,35,752.99,0
+2025-02-04,Velmora Cheese Cave,dairy,50,623.13,0
+2025-02-04,Brennick Bakehouse,bakery,179,971.78,0
+2025-02-04,Sugar & Salt,bakery,99,481.24,0
+2025-02-04,Lantern Noodles,hot food,159,1800.62,0
+2025-02-04,Corranth Grill,hot food,118,1615.61,0
+2025-02-04,Frost Cart Ices,ice cream,228,1001.83,0
+2025-02-04,Kestrel Coffee,coffee,240,924.14,0
+2025-02-04,Arvena Flowers,flowers,37,617.45,0
+2025-02-05,Orchard Row Fruit,fruit and veg,112,483.47,0.6
+2025-02-05,Greenleaf Greens,fruit and veg,101,375.75,0.6
+2025-02-05,Halden Smokehouse,fish,38,637.54,0.6
+2025-02-05,Tide Line Oysters,fish,37,774.1,0.6
+2025-02-05,Velmora Cheese Cave,dairy,55,704.59,0.6
+2025-02-05,Brennick Bakehouse,bakery,175,936.48,0.6
+2025-02-05,Sugar & Salt,bakery,83,411.86,0.6
+2025-02-05,Lantern Noodles,hot food,127,1352.88,0.6
+2025-02-05,Corranth Grill,hot food,110,1449.16,0.6
+2025-02-05,Frost Cart Ices,ice cream,215,973.89,0.6
+2025-02-05,Kestrel Coffee,coffee,195,763.02,0.6
+2025-02-05,Arvena Flowers,flowers,39,729.3,0.6
+2025-02-06,Orchard Row Fruit,fruit and veg,140,573.34,0
+2025-02-06,Greenleaf Greens,fruit and veg,132,480,0
+2025-02-06,Halden Smokehouse,fish,53,860.94,0
+2025-02-06,Tide Line Oysters,fish,31,670.79,0
+2025-02-06,Velmora Cheese Cave,dairy,48,618.34,0
+2025-02-06,Brennick Bakehouse,bakery,179,964.79,0
+2025-02-06,Sugar & Salt,bakery,106,481.91,0
+2025-02-06,Lantern Noodles,hot food,134,1434.58,0
+2025-02-06,Corranth Grill,hot food,114,1559.86,0
+2025-02-06,Frost Cart Ices,ice cream,257,1127.25,0
+2025-02-06,Kestrel Coffee,coffee,218,895.9,0
+2025-02-06,Arvena Flowers,flowers,43,762.82,0
+2025-02-07,Orchard Row Fruit,fruit and veg,182,754.93,0
+2025-02-07,Greenleaf Greens,fruit and veg,149,541.99,0
+2025-02-07,Halden Smokehouse,fish,60,965.87,0
+2025-02-07,Tide Line Oysters,fish,43,972.35,0
+2025-02-07,Velmora Cheese Cave,dairy,51,687.35,0
+2025-02-07,Brennick Bakehouse,bakery,195,1087.62,0
+2025-02-07,Sugar & Salt,bakery,126,625.9,0
+2025-02-07,Lantern Noodles,hot food,157,1723.07,0
+2025-02-07,Corranth Grill,hot food,167,2213.96,0
+2025-02-07,Frost Cart Ices,ice cream,259,1243,0
+2025-02-07,Kestrel Coffee,coffee,302,1182.66,0
+2025-02-07,Arvena Flowers,flowers,54,993.49,0
+2025-02-08,Orchard Row Fruit,fruit and veg,198,790.95,0
+2025-02-08,Greenleaf Greens,fruit and veg,193,698.93,0
+2025-02-08,Halden Smokehouse,fish,79,1426.99,0
+2025-02-08,Tide Line Oysters,fish,59,1292.97,0
+2025-02-08,Velmora Cheese Cave,dairy,85,1031.05,0
+2025-02-08,Brennick Bakehouse,bakery,262,1421.47,0
+2025-02-08,Sugar & Salt,bakery,162,770.02,0
+2025-02-08,Lantern Noodles,hot food,217,2372.67,0
+2025-02-08,Corranth Grill,hot food,227,2962.39,0
+2025-02-08,Frost Cart Ices,ice cream,384,1634.52,0
+2025-02-08,Kestrel Coffee,coffee,377,1476.19,0
+2025-02-08,Arvena Flowers,flowers,67,1191.69,0
+2025-02-09,Orchard Row Fruit,fruit and veg,173,732.31,0
+2025-02-09,Greenleaf Greens,fruit and veg,127,477.82,0
+2025-02-09,Halden Smokehouse,fish,77,1262.52,0
+2025-02-09,Tide Line Oysters,fish,42,934.85,0
+2025-02-09,Velmora Cheese Cave,dairy,75,996.67,0
+2025-02-09,Brennick Bakehouse,bakery,279,1527.04,0
+2025-02-09,Sugar & Salt,bakery,151,713.97,0
+2025-02-09,Lantern Noodles,hot food,226,2562.82,0
+2025-02-09,Corranth Grill,hot food,176,2356.72,0
+2025-02-09,Frost Cart Ices,ice cream,374,1698.13,0
+2025-02-09,Kestrel Coffee,coffee,332,1323.7,0
+2025-02-09,Arvena Flowers,flowers,49,926.89,0
+2025-02-11,Orchard Row Fruit,fruit and veg,144,600.28,0
+2025-02-11,Greenleaf Greens,fruit and veg,110,404.61,0
+2025-02-11,Halden Smokehouse,fish,45,717.85,0
+2025-02-11,Tide Line Oysters,fish,39,865.16,0
+2025-02-11,Velmora Cheese Cave,dairy,58,707.86,0
+2025-02-11,Brennick Bakehouse,bakery,188,1048.67,0
+2025-02-11,Sugar & Salt,bakery,88,437.98,0
+2025-02-11,Lantern Noodles,hot food,138,1596.91,0
+2025-02-11,Corranth Grill,hot food,124,1720.62,0
+2025-02-11,Frost Cart Ices,ice cream,218,964.39,0
+2025-02-11,Kestrel Coffee,coffee,226,871.06,0
+2025-02-11,Arvena Flowers,flowers,34,618.45,0
+2025-02-12,Orchard Row Fruit,fruit and veg,144,606.66,0
+2025-02-12,Greenleaf Greens,fruit and veg,110,401.24,0
+2025-02-12,Halden Smokehouse,fish,53,912.56,0
+2025-02-12,Tide Line Oysters,fish,35,772.71,0
+2025-02-12,Velmora Cheese Cave,dairy,60,784.6,0
+2025-02-12,Brennick Bakehouse,bakery,141,750.16,0
+2025-02-12,Sugar & Salt,bakery,112,528.34,0
+2025-02-12,Lantern Noodles,hot food,112,1240.82,0
+2025-02-12,Corranth Grill,hot food,126,1666.62,0
+2025-02-12,Frost Cart Ices,ice cream,227,1008.69,0
+2025-02-12,Kestrel Coffee,coffee,228,889.44,0
+2025-02-12,Arvena Flowers,flowers,45,781.14,0
+2025-02-13,Orchard Row Fruit,fruit and veg,134,585.1,0
+2025-02-13,Greenleaf Greens,fruit and veg,104,381.99,0
+2025-02-13,Halden Smokehouse,fish,42,698.75,0
+2025-02-13,Tide Line Oysters,fish,35,815.89,0
+2025-02-13,Velmora Cheese Cave,dairy,49,626.87,0
+2025-02-13,Brennick Bakehouse,bakery,172,957.77,0
+2025-02-13,Sugar & Salt,bakery,87,424.66,0
+2025-02-13,Lantern Noodles,hot food,140,1511.84,0
+2025-02-13,Corranth Grill,hot food,107,1494.44,0
+2025-02-13,Frost Cart Ices,ice cream,217,950.82,0
+2025-02-13,Kestrel Coffee,coffee,224,899.26,0
+2025-02-13,Arvena Flowers,flowers,42,734.35,0
+2025-02-14,Orchard Row Fruit,fruit and veg,182,756.58,0
+2025-02-14,Greenleaf Greens,fruit and veg,161,599.85,0
+2025-02-14,Halden Smokehouse,fish,56,920.38,0
+2025-02-14,Tide Line Oysters,fish,43,966.96,0
+2025-02-14,Velmora Cheese Cave,dairy,63,787.3,0
+2025-02-14,Brennick Bakehouse,bakery,219,1157.67,0
+2025-02-14,Sugar & Salt,bakery,107,523.02,0
+2025-02-14,Lantern Noodles,hot food,154,1714.05,0
+2025-02-14,Corranth Grill,hot food,127,1738.29,0
+2025-02-14,Frost Cart Ices,ice cream,270,1296.19,0
+2025-02-14,Kestrel Coffee,coffee,275,1099.39,0
+2025-02-14,Arvena Flowers,flowers,41,730.72,0
+2025-02-15,Orchard Row Fruit,fruit and veg,192,778.85,4.5
+2025-02-15,Greenleaf Greens,fruit and veg,134,492.1,4.5
+2025-02-15,Halden Smokehouse,fish,61,1005.22,4.5
+2025-02-15,Tide Line Oysters,fish,53,1153.64,4.5
+2025-02-15,Velmora Cheese Cave,dairy,67,898.02,4.5
+2025-02-15,Brennick Bakehouse,bakery,233,1262.54,4.5
+2025-02-15,Sugar & Salt,bakery,144,683.03,4.5
+2025-02-15,Lantern Noodles,hot food,202,2215.96,4.5
+2025-02-15,Corranth Grill,hot food,165,2310.71,4.5
+2025-02-15,Frost Cart Ices,ice cream,379,1705.88,4.5
+2025-02-15,Kestrel Coffee,coffee,287,1154.21,4.5
+2025-02-15,Arvena Flowers,flowers,49,884.49,4.5
+2025-02-16,Orchard Row Fruit,fruit and veg,194,805.77,0
+2025-02-16,Greenleaf Greens,fruit and veg,144,534.6,0
+2025-02-16,Halden Smokehouse,fish,67,1115.63,0
+2025-02-16,Tide Line Oysters,fish,55,1312.16,0
+2025-02-16,Velmora Cheese Cave,dairy,85,1116.69,0
+2025-02-16,Brennick Bakehouse,bakery,267,1442.96,0
+2025-02-16,Sugar & Salt,bakery,163,789.22,0
+2025-02-16,Lantern Noodles,hot food,202,2144.66,0
+2025-02-16,Corranth Grill,hot food,218,2860.32,0
+2025-02-16,Frost Cart Ices,ice cream,304,1363.78,0
+2025-02-16,Kestrel Coffee,coffee,346,1341.71,0
+2025-02-16,Arvena Flowers,flowers,60,1107.71,0
+2025-02-18,Orchard Row Fruit,fruit and veg,133,557.11,0
+2025-02-18,Greenleaf Greens,fruit and veg,108,392.01,0
+2025-02-18,Halden Smokehouse,fish,43,709.38,0
+2025-02-18,Tide Line Oysters,fish,29,650.92,0
+2025-02-18,Velmora Cheese Cave,dairy,47,638.91,0
+2025-02-18,Brennick Bakehouse,bakery,183,997.66,0
+2025-02-18,Sugar & Salt,bakery,80,398.35,0
+2025-02-18,Lantern Noodles,hot food,129,1487.01,0
+2025-02-18,Corranth Grill,hot food,104,1389.76,0
+2025-02-18,Frost Cart Ices,ice cream,254,1125.45,0
+2025-02-18,Kestrel Coffee,coffee,239,934.23,0
+2025-02-18,Arvena Flowers,flowers,41,709.93,0
+2025-02-19,Orchard Row Fruit,fruit and veg,67,290.57,33
+2025-02-19,Greenleaf Greens,fruit and veg,47,169.57,33
+2025-02-19,Halden Smokehouse,fish,19,315.24,33
+2025-02-19,Tide Line Oysters,fish,15,323.58,33
+2025-02-19,Velmora Cheese Cave,dairy,21,277.16,33
+2025-02-19,Brennick Bakehouse,bakery,85,487.89,33
+2025-02-19,Sugar & Salt,bakery,51,236.25,33
+2025-02-19,Lantern Noodles,hot food,54,601.01,33
+2025-02-19,Corranth Grill,hot food,59,820.11,33
+2025-02-19,Frost Cart Ices,ice cream,115,515.26,33
+2025-02-19,Kestrel Coffee,coffee,110,445.1,33
+2025-02-19,Arvena Flowers,flowers,17,320.53,33
+2025-02-20,Orchard Row Fruit,fruit and veg,132,560.73,0
+2025-02-20,Greenleaf Greens,fruit and veg,106,375.14,0
+2025-02-20,Halden Smokehouse,fish,45,759.66,0
+2025-02-20,Tide Line Oysters,fish,26,560.71,0
+2025-02-20,Velmora Cheese Cave,dairy,50,645.03,0
+2025-02-20,Brennick Bakehouse,bakery,173,926.83,0
+2025-02-20,Sugar & Salt,bakery,100,485.18,0
+2025-02-20,Lantern Noodles,hot food,126,1384.45,0
+2025-02-20,Corranth Grill,hot food,99,1375.13,0
+2025-02-20,Frost Cart Ices,ice cream,224,1027.29,0
+2025-02-20,Kestrel Coffee,coffee,242,950.93,0
+2025-02-20,Arvena Flowers,flowers,36,631.33,0
+2025-02-21,Orchard Row Fruit,fruit and veg,198,789.13,0
+2025-02-21,Greenleaf Greens,fruit and veg,134,474.74,0
+2025-02-21,Halden Smokehouse,fish,64,1043.48,0
+2025-02-21,Tide Line Oysters,fish,46,987.14,0
+2025-02-21,Velmora Cheese Cave,dairy,67,888.92,0
+2025-02-21,Brennick Bakehouse,bakery,206,1139.82,0
+2025-02-21,Sugar & Salt,bakery,136,658.08,0
+2025-02-21,Lantern Noodles,hot food,178,1992.7,0
+2025-02-21,Corranth Grill,hot food,161,2229.8,0
+2025-02-21,Frost Cart Ices,ice cream,274,1260.81,0
+2025-02-21,Kestrel Coffee,coffee,285,1171.46,0
+2025-02-21,Arvena Flowers,flowers,47,840.02,0
+2025-02-22,Orchard Row Fruit,fruit and veg,176,740.16,0
+2025-02-22,Greenleaf Greens,fruit and veg,188,690.49,0
+2025-02-22,Halden Smokehouse,fish,70,1161.42,0
+2025-02-22,Tide Line Oysters,fish,56,1277.07,0
+2025-02-22,Velmora Cheese Cave,dairy,96,1136.06,0
+2025-02-22,Brennick Bakehouse,bakery,276,1515.14,0
+2025-02-22,Sugar & Salt,bakery,192,900.69,0
+2025-02-22,Lantern Noodles,hot food,187,1999.01,0
+2025-02-22,Corranth Grill,hot food,224,3111.69,0
+2025-02-22,Frost Cart Ices,ice cream,374,1613.66,0
+2025-02-22,Kestrel Coffee,coffee,377,1462.67,0
+2025-02-22,Arvena Flowers,flowers,74,1396.47,0
+2025-02-23,Orchard Row Fruit,fruit and veg,166,688.57,0
+2025-02-23,Greenleaf Greens,fruit and veg,166,604.79,0
+2025-02-23,Halden Smokehouse,fish,59,937.8,0
+2025-02-23,Tide Line Oysters,fish,52,1135.7,0
+2025-02-23,Velmora Cheese Cave,dairy,89,1124.44,0
+2025-02-23,Brennick Bakehouse,bakery,209,1128.77,0
+2025-02-23,Sugar & Salt,bakery,145,678.67,0
+2025-02-23,Lantern Noodles,hot food,205,2186.57,0
+2025-02-23,Corranth Grill,hot food,183,2574.68,0
+2025-02-23,Frost Cart Ices,ice cream,358,1545.36,0
+2025-02-23,Kestrel Coffee,coffee,297,1179.62,0
+2025-02-23,Arvena Flowers,flowers,62,1073.85,0
+2025-02-25,Orchard Row Fruit,fruit and veg,137,599.48,0
+2025-02-25,Greenleaf Greens,fruit and veg,107,387.92,0
+2025-02-25,Halden Smokehouse,fish,49,811.21,0
+2025-02-25,Tide Line Oysters,fish,40,894.16,0
+2025-02-25,Velmora Cheese Cave,dairy,52,677.84,0
+2025-02-25,Brennick Bakehouse,bakery,177,996.07,0
+2025-02-25,Sugar & Salt,bakery,109,521.27,0
+2025-02-25,Lantern Noodles,hot food,141,1548.85,0
+2025-02-25,Corranth Grill,hot food,123,1672,0
+2025-02-25,Frost Cart Ices,ice cream,209,982.25,0
+2025-02-25,Kestrel Coffee,coffee,205,839.8,0
+2025-02-25,Arvena Flowers,flowers,46,860.56,0
+2025-02-26,Orchard Row Fruit,fruit and veg,129,574.17,0
+2025-02-26,Greenleaf Greens,fruit and veg,109,392.48,0
+2025-02-26,Halden Smokehouse,fish,54,901.79,0
+2025-02-26,Tide Line Oysters,fish,34,798.37,0
+2025-02-26,Velmora Cheese Cave,dairy,57,716.15,0
+2025-02-26,Brennick Bakehouse,bakery,189,1033.62,0
+2025-02-26,Sugar & Salt,bakery,88,398.08,0
+2025-02-26,Lantern Noodles,hot food,157,1726.65,0
+2025-02-26,Corranth Grill,hot food,103,1369.01,0
+2025-02-26,Frost Cart Ices,ice cream,190,806.98,0
+2025-02-26,Kestrel Coffee,coffee,245,960.27,0
+2025-02-26,Arvena Flowers,flowers,38,683.93,0
+2025-02-27,Orchard Row Fruit,fruit and veg,121,507.04,0
+2025-02-27,Greenleaf Greens,fruit and veg,121,453.78,0
+2025-02-27,Halden Smokehouse,fish,45,757.69,0
+2025-02-27,Tide Line Oysters,fish,33,745.19,0
+2025-02-27,Velmora Cheese Cave,dairy,41,495.51,0
+2025-02-27,Brennick Bakehouse,bakery,211,1152.2,0
+2025-02-27,Sugar & Salt,bakery,118,587.45,0
+2025-02-27,Lantern Noodles,hot food,146,1587.31,0
+2025-02-27,Corranth Grill,hot food,121,1527.55,0
+2025-02-27,Frost Cart Ices,ice cream,247,1089.7,0
+2025-02-27,Kestrel Coffee,coffee,260,1027.03,0
+2025-02-27,Arvena Flowers,flowers,38,685.7,0
+2025-02-28,Orchard Row Fruit,fruit and veg,166,693.12,0
+2025-02-28,Greenleaf Greens,fruit and veg,153,577.24,0
+2025-02-28,Halden Smokehouse,fish,55,888.65,0
+2025-02-28,Tide Line Oysters,fish,42,917.77,0
+2025-02-28,Velmora Cheese Cave,dairy,75,964.61,0
+2025-02-28,Brennick Bakehouse,bakery,235,1352.78,0
+2025-02-28,Sugar & Salt,bakery,150,709.67,0
+2025-02-28,Lantern Noodles,hot food,183,2059.14,0
+2025-02-28,Corranth Grill,hot food,135,1858.05,0
+2025-02-28,Frost Cart Ices,ice cream,249,1096.15,0
+2025-02-28,Kestrel Coffee,coffee,324,1293.82,0
+2025-02-28,Arvena Flowers,flowers,55,945.91,0
+2025-03-01,Orchard Row Fruit,fruit and veg,221,895.08,0
+2025-03-01,Greenleaf Greens,fruit and veg,165,585.61,0
+2025-03-01,Halden Smokehouse,fish,85,1383.85,0
+2025-03-01,Tide Line Oysters,fish,58,1297,0
+2025-03-01,Velmora Cheese Cave,dairy,96,1194.59,0
+2025-03-01,Brennick Bakehouse,bakery,274,1539.61,0
+2025-03-01,Sugar & Salt,bakery,141,688.03,0
+2025-03-01,Lantern Noodles,hot food,268,3005.2,0
+2025-03-01,Corranth Grill,hot food,246,3194.12,0
+2025-03-01,Frost Cart Ices,ice cream,342,1565.13,0
+2025-03-01,Kestrel Coffee,coffee,388,1603.17,0
+2025-03-01,Arvena Flowers,flowers,69,1294.32,0
+2025-03-02,Orchard Row Fruit,fruit and veg,95,386.46,18
+2025-03-02,Greenleaf Greens,fruit and veg,73,264.14,18
+2025-03-02,Halden Smokehouse,fish,30,526.17,18
+2025-03-02,Tide Line Oysters,fish,27,584.82,18
+2025-03-02,Velmora Cheese Cave,dairy,32,417.37,18
+2025-03-02,Brennick Bakehouse,bakery,113,615.08,18
+2025-03-02,Sugar & Salt,bakery,76,355.7,18
+2025-03-02,Lantern Noodles,hot food,100,1070.17,18
+2025-03-02,Corranth Grill,hot food,91,1150.95,18
+2025-03-02,Frost Cart Ices,ice cream,160,715.63,18
+2025-03-02,Kestrel Coffee,coffee,162,651.66,18
+2025-03-02,Arvena Flowers,flowers,26,443.53,18
+2025-03-04,Orchard Row Fruit,fruit and veg,135,541.98,0
+2025-03-04,Greenleaf Greens,fruit and veg,105,364.24,0
+2025-03-04,Halden Smokehouse,fish,40,682.07,0
+2025-03-04,Tide Line Oysters,fish,41,901.97,0
+2025-03-04,Velmora Cheese Cave,dairy,56,696.24,0
+2025-03-04,Brennick Bakehouse,bakery,170,966.46,0
+2025-03-04,Sugar & Salt,bakery,90,427.07,0
+2025-03-04,Lantern Noodles,hot food,141,1562.8,0
+2025-03-04,Corranth Grill,hot food,132,1706.12,0
+2025-03-04,Frost Cart Ices,ice cream,215,958.56,0
+2025-03-04,Kestrel Coffee,coffee,251,1020.42,0
+2025-03-04,Arvena Flowers,flowers,34,614.89,0
+2025-03-05,Orchard Row Fruit,fruit and veg,107,456.13,0.5
+2025-03-05,Greenleaf Greens,fruit and veg,107,384.31,0.5
+2025-03-05,Halden Smokehouse,fish,41,668.34,0.5
+2025-03-05,Tide Line Oysters,fish,31,652.97,0.5
+2025-03-05,Velmora Cheese Cave,dairy,49,614.53,0.5
+2025-03-05,Brennick Bakehouse,bakery,158,897.39,0.5
+2025-03-05,Sugar & Salt,bakery,88,425.53,0.5
+2025-03-05,Lantern Noodles,hot food,143,1634.89,0.5
+2025-03-05,Corranth Grill,hot food,102,1427.53,0.5
+2025-03-05,Frost Cart Ices,ice cream,225,984.51,0.5
+2025-03-05,Kestrel Coffee,coffee,231,892.95,0.5
+2025-03-05,Arvena Flowers,flowers,34,627.11,0.5
+2025-03-06,Orchard Row Fruit,fruit and veg,132,563.45,1
+2025-03-06,Greenleaf Greens,fruit and veg,100,345.02,1
+2025-03-06,Halden Smokehouse,fish,46,765.75,1
+2025-03-06,Tide Line Oysters,fish,32,714.07,1
+2025-03-06,Velmora Cheese Cave,dairy,53,659.46,1
+2025-03-06,Brennick Bakehouse,bakery,162,849.72,1
+2025-03-06,Sugar & Salt,bakery,110,532.78,1
+2025-03-06,Lantern Noodles,hot food,163,1754.71,1
+2025-03-06,Corranth Grill,hot food,131,1855.56,1
+2025-03-06,Frost Cart Ices,ice cream,195,862.02,1
+2025-03-06,Kestrel Coffee,coffee,251,1023.26,1
+2025-03-06,Arvena Flowers,flowers,45,803.03,1
+2025-03-07,Orchard Row Fruit,fruit and veg,81,328.86,18.1
+2025-03-07,Greenleaf Greens,fruit and veg,59,215.04,18.1
+2025-03-07,Halden Smokehouse,fish,24,379.76,18.1
+2025-03-07,Tide Line Oysters,fish,22,503.32,18.1
+2025-03-07,Velmora Cheese Cave,dairy,29,350.73,18.1
+2025-03-07,Brennick Bakehouse,bakery,82,448.8,18.1
+2025-03-07,Sugar & Salt,bakery,50,261.81,18.1
+2025-03-07,Lantern Noodles,hot food,70,748.08,18.1
+2025-03-07,Corranth Grill,hot food,66,821.9,18.1
+2025-03-07,Frost Cart Ices,ice cream,133,627.79,18.1
+2025-03-07,Kestrel Coffee,coffee,141,554.53,18.1
+2025-03-07,Arvena Flowers,flowers,22,410.4,18.1
+2025-03-08,Orchard Row Fruit,fruit and veg,230,986.9,0
+2025-03-08,Greenleaf Greens,fruit and veg,183,664.5,0
+2025-03-08,Halden Smokehouse,fish,86,1422.11,0
+2025-03-08,Tide Line Oysters,fish,56,1210.27,0
+2025-03-08,Velmora Cheese Cave,dairy,90,1118.14,0
+2025-03-08,Brennick Bakehouse,bakery,325,1842.69,0
+2025-03-08,Sugar & Salt,bakery,180,868.99,0
+2025-03-08,Lantern Noodles,hot food,286,3039.77,0
+2025-03-08,Corranth Grill,hot food,186,2522.73,0
+2025-03-08,Frost Cart Ices,ice cream,346,1588.82,0
+2025-03-08,Kestrel Coffee,coffee,411,1668.77,0
+2025-03-08,Arvena Flowers,flowers,55,986.51,0
+2025-03-09,Orchard Row Fruit,fruit and veg,216,881.33,0
+2025-03-09,Greenleaf Greens,fruit and veg,155,575.64,0
+2025-03-09,Halden Smokehouse,fish,66,1069.93,0
+2025-03-09,Tide Line Oysters,fish,55,1228.08,0
+2025-03-09,Velmora Cheese Cave,dairy,72,922.77,0
+2025-03-09,Brennick Bakehouse,bakery,270,1495.35,0
+2025-03-09,Sugar & Salt,bakery,140,676.57,0
+2025-03-09,Lantern Noodles,hot food,270,2963.94,0
+2025-03-09,Corranth Grill,hot food,185,2339.94,0
+2025-03-09,Frost Cart Ices,ice cream,243,1117.09,0
+2025-03-09,Kestrel Coffee,coffee,340,1363.01,0
+2025-03-09,Arvena Flowers,flowers,58,1005.15,0
+2025-03-11,Orchard Row Fruit,fruit and veg,124,499.28,0
+2025-03-11,Greenleaf Greens,fruit and veg,109,398.42,0
+2025-03-11,Halden Smokehouse,fish,45,705.06,0
+2025-03-11,Tide Line Oysters,fish,34,737.78,0
+2025-03-11,Velmora Cheese Cave,dairy,52,645.59,0
+2025-03-11,Brennick Bakehouse,bakery,182,975.56,0
+2025-03-11,Sugar & Salt,bakery,90,427.22,0
+2025-03-11,Lantern Noodles,hot food,133,1406.11,0
+2025-03-11,Corranth Grill,hot food,108,1535.92,0
+2025-03-11,Frost Cart Ices,ice cream,195,894.09,0
+2025-03-11,Kestrel Coffee,coffee,230,971.39,0
+2025-03-11,Arvena Flowers,flowers,40,709.25,0
+2025-03-12,Orchard Row Fruit,fruit and veg,122,499.54,0
+2025-03-12,Greenleaf Greens,fruit and veg,102,366.32,0
+2025-03-12,Halden Smokehouse,fish,48,769.69,0
+2025-03-12,Tide Line Oysters,fish,39,859.64,0
+2025-03-12,Velmora Cheese Cave,dairy,55,683.5,0
+2025-03-12,Brennick Bakehouse,bakery,172,946.53,0
+2025-03-12,Sugar & Salt,bakery,102,497.75,0
+2025-03-12,Lantern Noodles,hot food,152,1561.76,0
+2025-03-12,Corranth Grill,hot food,117,1600.99,0
+2025-03-12,Frost Cart Ices,ice cream,205,951.82,0
+2025-03-12,Kestrel Coffee,coffee,253,1011.07,0
+2025-03-12,Arvena Flowers,flowers,34,652.47,0
+2025-03-13,Orchard Row Fruit,fruit and veg,112,467.8,0
+2025-03-13,Greenleaf Greens,fruit and veg,127,464.45,0
+2025-03-13,Halden Smokehouse,fish,44,757.41,0
+2025-03-13,Tide Line Oysters,fish,32,716.45,0
+2025-03-13,Velmora Cheese Cave,dairy,51,648.98,0
+2025-03-13,Brennick Bakehouse,bakery,179,999.33,0
+2025-03-13,Sugar & Salt,bakery,117,574.7,0
+2025-03-13,Lantern Noodles,hot food,123,1367.45,0
+2025-03-13,Corranth Grill,hot food,100,1296.68,0
+2025-03-13,Frost Cart Ices,ice cream,215,949.19,0
+2025-03-13,Kestrel Coffee,coffee,251,973.19,0
+2025-03-13,Arvena Flowers,flowers,36,637.97,0
+2025-03-14,Orchard Row Fruit,fruit and veg,167,690.48,0
+2025-03-14,Greenleaf Greens,fruit and veg,108,377.66,0
+2025-03-14,Halden Smokehouse,fish,62,1009.9,0
+2025-03-14,Tide Line Oysters,fish,42,916.39,0
+2025-03-14,Velmora Cheese Cave,dairy,67,890.13,0
+2025-03-14,Brennick Bakehouse,bakery,202,1150.83,0
+2025-03-14,Sugar & Salt,bakery,114,541.37,0
+2025-03-14,Lantern Noodles,hot food,186,1963.15,0
+2025-03-14,Corranth Grill,hot food,158,2145.13,0
+2025-03-14,Frost Cart Ices,ice cream,245,1120.22,0
+2025-03-14,Kestrel Coffee,coffee,277,1143.16,0
+2025-03-14,Arvena Flowers,flowers,48,890.69,0
+2025-03-15,Orchard Row Fruit,fruit and veg,194,773.53,0
+2025-03-15,Greenleaf Greens,fruit and veg,170,619.21,0
+2025-03-15,Halden Smokehouse,fish,85,1366.37,0
+2025-03-15,Tide Line Oysters,fish,58,1287.69,0
+2025-03-15,Velmora Cheese Cave,dairy,88,1146.72,0
+2025-03-15,Brennick Bakehouse,bakery,354,1936.49,0
+2025-03-15,Sugar & Salt,bakery,152,726.68,0
+2025-03-15,Lantern Noodles,hot food,250,2549.53,0
+2025-03-15,Corranth Grill,hot food,189,2439.14,0
+2025-03-15,Frost Cart Ices,ice cream,339,1481.68,0
+2025-03-15,Kestrel Coffee,coffee,428,1690.9,0
+2025-03-15,Arvena Flowers,flowers,59,1102.96,0
+2025-03-16,Orchard Row Fruit,fruit and veg,203,862.86,0
+2025-03-16,Greenleaf Greens,fruit and veg,145,530.45,0
+2025-03-16,Halden Smokehouse,fish,74,1204.73,0
+2025-03-16,Tide Line Oysters,fish,48,1038.28,0
+2025-03-16,Velmora Cheese Cave,dairy,76,953.02,0
+2025-03-16,Brennick Bakehouse,bakery,277,1492.2,0
+2025-03-16,Sugar & Salt,bakery,164,804.77,0
+2025-03-16,Lantern Noodles,hot food,220,2376.88,0
+2025-03-16,Corranth Grill,hot food,202,2763.73,0
+2025-03-16,Frost Cart Ices,ice cream,355,1648.79,0
+2025-03-16,Kestrel Coffee,coffee,369,1570.07,0
+2025-03-16,Arvena Flowers,flowers,63,1156.86,0
+2025-03-18,Orchard Row Fruit,fruit and veg,119,493.43,0
+2025-03-18,Greenleaf Greens,fruit and veg,99,359.45,0
+2025-03-18,Halden Smokehouse,fish,45,778.55,0
+2025-03-18,Tide Line Oysters,fish,33,714.25,0
+2025-03-18,Velmora Cheese Cave,dairy,42,531.7,0
+2025-03-18,Brennick Bakehouse,bakery,187,995.96,0
+2025-03-18,Sugar & Salt,bakery,100,462.41,0
+2025-03-18,Lantern Noodles,hot food,159,1798.61,0
+2025-03-18,Corranth Grill,hot food,136,1876.87,0
+2025-03-18,Frost Cart Ices,ice cream,187,806.8,0
+2025-03-18,Kestrel Coffee,coffee,223,879.71,0
+2025-03-18,Arvena Flowers,flowers,36,623.64,0
+2025-03-19,Orchard Row Fruit,fruit and veg,121,515.94,2.3
+2025-03-19,Greenleaf Greens,fruit and veg,92,316.88,2.3
+2025-03-19,Halden Smokehouse,fish,42,669.8,2.3
+2025-03-19,Tide Line Oysters,fish,38,822.81,2.3
+2025-03-19,Velmora Cheese Cave,dairy,44,565.61,2.3
+2025-03-19,Brennick Bakehouse,bakery,145,776.79,2.3
+2025-03-19,Sugar & Salt,bakery,75,354.78,2.3
+2025-03-19,Lantern Noodles,hot food,124,1324.07,2.3
+2025-03-19,Corranth Grill,hot food,113,1523.75,2.3
+2025-03-19,Frost Cart Ices,ice cream,181,792.19,2.3
+2025-03-19,Kestrel Coffee,coffee,217,871.25,2.3
+2025-03-19,Arvena Flowers,flowers,37,694.35,2.3
+2025-03-20,Orchard Row Fruit,fruit and veg,118,496.44,0
+2025-03-20,Greenleaf Greens,fruit and veg,91,330.59,0
+2025-03-20,Halden Smokehouse,fish,35,549.32,0
+2025-03-20,Tide Line Oysters,fish,37,793.84,0
+2025-03-20,Velmora Cheese Cave,dairy,53,657.83,0
+2025-03-20,Brennick Bakehouse,bakery,208,1142.15,0
+2025-03-20,Sugar & Salt,bakery,107,504.75,0
+2025-03-20,Lantern Noodles,hot food,128,1376.04,0
+2025-03-20,Corranth Grill,hot food,139,1829.65,0
+2025-03-20,Frost Cart Ices,ice cream,195,842.63,0
+2025-03-20,Kestrel Coffee,coffee,219,953.52,0
+2025-03-20,Arvena Flowers,flowers,32,582.48,0
+2025-03-21,Orchard Row Fruit,fruit and veg,174,737.26,0
+2025-03-21,Greenleaf Greens,fruit and veg,131,485.44,0
+2025-03-21,Halden Smokehouse,fish,54,899.79,0
+2025-03-21,Tide Line Oysters,fish,42,906.89,0
+2025-03-21,Velmora Cheese Cave,dairy,67,869.61,0
+2025-03-21,Brennick Bakehouse,bakery,212,1168.16,0
+2025-03-21,Sugar & Salt,bakery,127,590.44,0
+2025-03-21,Lantern Noodles,hot food,190,2200.46,0
+2025-03-21,Corranth Grill,hot food,169,2408.12,0
+2025-03-21,Frost Cart Ices,ice cream,237,1086.12,0
+2025-03-21,Kestrel Coffee,coffee,292,1154.8,0
+2025-03-21,Arvena Flowers,flowers,47,865.77,0
+2025-03-22,Orchard Row Fruit,fruit and veg,270,1110.52,0
+2025-03-22,Greenleaf Greens,fruit and veg,189,660.93,0
+2025-03-22,Halden Smokehouse,fish,87,1469.16,0
+2025-03-22,Tide Line Oysters,fish,45,951.1,0
+2025-03-22,Velmora Cheese Cave,dairy,81,1014.62,0
+2025-03-22,Brennick Bakehouse,bakery,361,2054.43,0
+2025-03-22,Sugar & Salt,bakery,138,660.15,0
+2025-03-22,Lantern Noodles,hot food,214,2443.28,0
+2025-03-22,Corranth Grill,hot food,208,2813.41,0
+2025-03-22,Frost Cart Ices,ice cream,330,1420.45,0
+2025-03-22,Kestrel Coffee,coffee,434,1673.71,0
+2025-03-22,Arvena Flowers,flowers,56,1055.61,0
+2025-03-23,Orchard Row Fruit,fruit and veg,190,801.01,0
+2025-03-23,Greenleaf Greens,fruit and veg,161,569.45,0
+2025-03-23,Halden Smokehouse,fish,71,1171.3,0
+2025-03-23,Tide Line Oysters,fish,55,1211.19,0
+2025-03-23,Velmora Cheese Cave,dairy,77,1000.53,0
+2025-03-23,Brennick Bakehouse,bakery,249,1444.41,0
+2025-03-23,Sugar & Salt,bakery,123,599.7,0
+2025-03-23,Lantern Noodles,hot food,207,2319.26,0
+2025-03-23,Corranth Grill,hot food,176,2321.76,0
+2025-03-23,Frost Cart Ices,ice cream,298,1349.44,0
+2025-03-23,Kestrel Coffee,coffee,315,1282.1,0
+2025-03-23,Arvena Flowers,flowers,54,926.89,0
+2025-03-25,Orchard Row Fruit,fruit and veg,113,486.46,3.2
+2025-03-25,Greenleaf Greens,fruit and veg,77,273.88,3.2
+2025-03-25,Halden Smokehouse,fish,38,594.31,3.2
+2025-03-25,Tide Line Oysters,fish,27,578.74,3.2
+2025-03-25,Velmora Cheese Cave,dairy,55,714.77,3.2
+2025-03-25,Brennick Bakehouse,bakery,140,791.31,3.2
+2025-03-25,Sugar & Salt,bakery,91,447.8,3.2
+2025-03-25,Lantern Noodles,hot food,134,1541.07,3.2
+2025-03-25,Corranth Grill,hot food,133,1843.93,3.2
+2025-03-25,Frost Cart Ices,ice cream,174,754.06,3.2
+2025-03-25,Kestrel Coffee,coffee,207,855.16,3.2
+2025-03-25,Arvena Flowers,flowers,33,616.91,3.2
+2025-03-26,Orchard Row Fruit,fruit and veg,104,440.18,0.7
+2025-03-26,Greenleaf Greens,fruit and veg,104,386.17,0.7
+2025-03-26,Halden Smokehouse,fish,46,767.74,0.7
+2025-03-26,Tide Line Oysters,fish,37,789.51,0.7
+2025-03-26,Velmora Cheese Cave,dairy,47,605.14,0.7
+2025-03-26,Brennick Bakehouse,bakery,185,1041.6,0.7
+2025-03-26,Sugar & Salt,bakery,95,477.4,0.7
+2025-03-26,Lantern Noodles,hot food,127,1339.04,0.7
+2025-03-26,Corranth Grill,hot food,119,1607.79,0.7
+2025-03-26,Frost Cart Ices,ice cream,172,774.35,0.7
+2025-03-26,Kestrel Coffee,coffee,272,1112.35,0.7
+2025-03-26,Arvena Flowers,flowers,36,601.22,0.7
+2025-03-27,Orchard Row Fruit,fruit and veg,118,461.47,0.7
+2025-03-27,Greenleaf Greens,fruit and veg,77,268.84,0.7
+2025-03-27,Halden Smokehouse,fish,47,785.57,0.7
+2025-03-27,Tide Line Oysters,fish,33,737.28,0.7
+2025-03-27,Velmora Cheese Cave,dairy,46,594.73,0.7
+2025-03-27,Brennick Bakehouse,bakery,158,879.72,0.7
+2025-03-27,Sugar & Salt,bakery,99,490.66,0.7
+2025-03-27,Lantern Noodles,hot food,121,1404.12,0.7
+2025-03-27,Corranth Grill,hot food,116,1556.25,0.7
+2025-03-27,Frost Cart Ices,ice cream,180,822.86,0.7
+2025-03-27,Kestrel Coffee,coffee,220,862.04,0.7
+2025-03-27,Arvena Flowers,flowers,38,676.72,0.7
+2025-03-28,Orchard Row Fruit,fruit and veg,138,588.45,5.7
+2025-03-28,Greenleaf Greens,fruit and veg,114,399.41,5.7
+2025-03-28,Halden Smokehouse,fish,45,712.23,5.7
+2025-03-28,Tide Line Oysters,fish,37,828.86,5.7
+2025-03-28,Velmora Cheese Cave,dairy,51,643.92,5.7
+2025-03-28,Brennick Bakehouse,bakery,197,1067.63,5.7
+2025-03-28,Sugar & Salt,bakery,92,464.16,5.7
+2025-03-28,Lantern Noodles,hot food,188,2113.22,5.7
+2025-03-28,Corranth Grill,hot food,125,1667.29,5.7
+2025-03-28,Frost Cart Ices,ice cream,175,819.32,5.7
+2025-03-28,Kestrel Coffee,coffee,252,1001.04,5.7
+2025-03-28,Arvena Flowers,flowers,44,786.97,5.7
+2025-03-29,Orchard Row Fruit,fruit and veg,229,964.15,0
+2025-03-29,Greenleaf Greens,fruit and veg,182,608.28,0
+2025-03-29,Halden Smokehouse,fish,74,1227.9,0
+2025-03-29,Tide Line Oysters,fish,54,1122.69,0
+2025-03-29,Velmora Cheese Cave,dairy,74,985.98,0
+2025-03-29,Brennick Bakehouse,bakery,336,1842.63,0
+2025-03-29,Sugar & Salt,bakery,171,828.26,0
+2025-03-29,Lantern Noodles,hot food,257,2825.26,0
+2025-03-29,Corranth Grill,hot food,239,3223.79,0
+2025-03-29,Frost Cart Ices,ice cream,243,1140.12,0
+2025-03-29,Kestrel Coffee,coffee,392,1689.41,0
+2025-03-29,Arvena Flowers,flowers,64,1097.57,0
+2025-03-30,Orchard Row Fruit,fruit and veg,198,839.25,0
+2025-03-30,Greenleaf Greens,fruit and veg,155,551.68,0
+2025-03-30,Halden Smokehouse,fish,62,1024.26,0
+2025-03-30,Tide Line Oysters,fish,52,1167.21,0
+2025-03-30,Velmora Cheese Cave,dairy,99,1275.69,0
+2025-03-30,Brennick Bakehouse,bakery,223,1189.31,0
+2025-03-30,Sugar & Salt,bakery,173,821.84,0
+2025-03-30,Lantern Noodles,hot food,216,2521.91,0
+2025-03-30,Corranth Grill,hot food,210,2840.89,0
+2025-03-30,Frost Cart Ices,ice cream,286,1279.83,0
+2025-03-30,Kestrel Coffee,coffee,334,1335.47,0
+2025-03-30,Arvena Flowers,flowers,51,925.84,0
+2025-04-01,Orchard Row Fruit,fruit and veg,74,302.47,11
+2025-04-01,Greenleaf Greens,fruit and veg,62,224.96,11
+2025-04-01,Halden Smokehouse,fish,37,592.82,11
+2025-04-01,Tide Line Oysters,fish,21,449.17,11
+2025-04-01,Velmora Cheese Cave,dairy,35,432.93,11
+2025-04-01,Brennick Bakehouse,bakery,121,672.97,11
+2025-04-01,Sugar & Salt,bakery,79,361.24,11
+2025-04-01,Lantern Noodles,hot food,96,1044.69,11
+2025-04-01,Corranth Grill,hot food,85,1145.27,11
+2025-04-01,Frost Cart Ices,ice cream,95,407.33,11
+2025-04-01,Kestrel Coffee,coffee,107,420.82,11
+2025-04-01,Arvena Flowers,flowers,25,432.97,11
+2025-04-02,Orchard Row Fruit,fruit and veg,141,578.99,0
+2025-04-02,Greenleaf Greens,fruit and veg,89,324.91,0
+2025-04-02,Halden Smokehouse,fish,46,754.07,0
+2025-04-02,Tide Line Oysters,fish,37,822.69,0
+2025-04-02,Velmora Cheese Cave,dairy,51,657.87,0
+2025-04-02,Brennick Bakehouse,bakery,215,1115.55,0
+2025-04-02,Sugar & Salt,bakery,97,464.76,0
+2025-04-02,Lantern Noodles,hot food,155,1714.82,0
+2025-04-02,Corranth Grill,hot food,106,1422.29,0
+2025-04-02,Frost Cart Ices,ice cream,138,619.32,0
+2025-04-02,Kestrel Coffee,coffee,265,1051.6,0
+2025-04-02,Arvena Flowers,flowers,29,532.71,0
+2025-04-03,Orchard Row Fruit,fruit and veg,109,459.68,0
+2025-04-03,Greenleaf Greens,fruit and veg,98,356.2,0
+2025-04-03,Halden Smokehouse,fish,56,896.93,0
+2025-04-03,Tide Line Oysters,fish,29,652.83,0
+2025-04-03,Velmora Cheese Cave,dairy,51,644.18,0
+2025-04-03,Brennick Bakehouse,bakery,168,895.98,0
+2025-04-03,Sugar & Salt,bakery,101,478.12,0
+2025-04-03,Lantern Noodles,hot food,130,1390.47,0
+2025-04-03,Corranth Grill,hot food,133,1673.94,0
+2025-04-03,Frost Cart Ices,ice cream,141,636.14,0
+2025-04-03,Kestrel Coffee,coffee,233,920.16,0
+2025-04-03,Arvena Flowers,flowers,40,702.15,0
+2025-04-04,Orchard Row Fruit,fruit and veg,167,734.13,0
+2025-04-04,Greenleaf Greens,fruit and veg,130,466.31,0
+2025-04-04,Halden Smokehouse,fish,62,1028.22,0
+2025-04-04,Tide Line Oysters,fish,41,939.39,0
+2025-04-04,Velmora Cheese Cave,dairy,63,802.28,0
+2025-04-04,Brennick Bakehouse,bakery,273,1540.52,0
+2025-04-04,Sugar & Salt,bakery,153,720.68,0
+2025-04-04,Lantern Noodles,hot food,231,2352.62,0
+2025-04-04,Corranth Grill,hot food,192,2751.06,0
+2025-04-04,Frost Cart Ices,ice cream,218,1014.16,0
+2025-04-04,Kestrel Coffee,coffee,339,1327.35,0
+2025-04-04,Arvena Flowers,flowers,52,898.72,0
+2025-04-05,Orchard Row Fruit,fruit and veg,212,907.76,0
+2025-04-05,Greenleaf Greens,fruit and veg,180,650.29,0
+2025-04-05,Halden Smokehouse,fish,82,1390.36,0
+2025-04-05,Tide Line Oysters,fish,63,1313.7,0
+2025-04-05,Velmora Cheese Cave,dairy,73,936.71,0
+2025-04-05,Brennick Bakehouse,bakery,315,1727.6,0
+2025-04-05,Sugar & Salt,bakery,185,886.89,0
+2025-04-05,Lantern Noodles,hot food,242,2806.83,0
+2025-04-05,Corranth Grill,hot food,178,2350.36,0
+2025-04-05,Frost Cart Ices,ice cream,307,1392.65,0
+2025-04-05,Kestrel Coffee,coffee,421,1656.01,0
+2025-04-05,Arvena Flowers,flowers,76,1314.42,0
+2025-04-06,Orchard Row Fruit,fruit and veg,206,865.63,0
+2025-04-06,Greenleaf Greens,fruit and veg,154,595.81,0
+2025-04-06,Halden Smokehouse,fish,80,1291.25,0
+2025-04-06,Tide Line Oysters,fish,57,1271.04,0
+2025-04-06,Velmora Cheese Cave,dairy,68,890.44,0
+2025-04-06,Brennick Bakehouse,bakery,306,1761.23,0
+2025-04-06,Sugar & Salt,bakery,151,727.12,0
+2025-04-06,Lantern Noodles,hot food,221,2364.65,0
+2025-04-06,Corranth Grill,hot food,196,2615.55,0
+2025-04-06,Frost Cart Ices,ice cream,238,1057.76,0
+2025-04-06,Kestrel Coffee,coffee,339,1298.28,0
+2025-04-06,Arvena Flowers,flowers,66,1144.93,0
+2025-04-08,Orchard Row Fruit,fruit and veg,119,484.99,0
+2025-04-08,Greenleaf Greens,fruit and veg,98,351.73,0
+2025-04-08,Halden Smokehouse,fish,43,703.44,0
+2025-04-08,Tide Line Oysters,fish,30,687.3,0
+2025-04-08,Velmora Cheese Cave,dairy,54,677.3,0
+2025-04-08,Brennick Bakehouse,bakery,186,1030.97,0
+2025-04-08,Sugar & Salt,bakery,102,514.05,0
+2025-04-08,Lantern Noodles,hot food,129,1414.07,0
+2025-04-08,Corranth Grill,hot food,142,1914.81,0
+2025-04-08,Frost Cart Ices,ice cream,147,643.49,0
+2025-04-08,Kestrel Coffee,coffee,265,1065.22,0
+2025-04-08,Arvena Flowers,flowers,41,722.4,0
+2025-04-09,Orchard Row Fruit,fruit and veg,146,616.59,0
+2025-04-09,Greenleaf Greens,fruit and veg,94,330.26,0
+2025-04-09,Halden Smokehouse,fish,43,689.57,0
+2025-04-09,Tide Line Oysters,fish,33,739.79,0
+2025-04-09,Velmora Cheese Cave,dairy,49,614.73,0
+2025-04-09,Brennick Bakehouse,bakery,147,840.38,0
+2025-04-09,Sugar & Salt,bakery,121,555.67,0
+2025-04-09,Lantern Noodles,hot food,135,1488.58,0
+2025-04-09,Corranth Grill,hot food,142,1905.06,0
+2025-04-09,Frost Cart Ices,ice cream,147,708.41,0
+2025-04-09,Kestrel Coffee,coffee,277,1084.74,0
+2025-04-09,Arvena Flowers,flowers,36,659.33,0
+2025-04-10,Orchard Row Fruit,fruit and veg,55,237.78,18.6
+2025-04-10,Greenleaf Greens,fruit and veg,48,166.61,18.6
+2025-04-10,Halden Smokehouse,fish,24,405.96,18.6
+2025-04-10,Tide Line Oysters,fish,16,347.14,18.6
+2025-04-10,Velmora Cheese Cave,dairy,19,257.29,18.6
+2025-04-10,Brennick Bakehouse,bakery,79,444.9,18.6
+2025-04-10,Sugar & Salt,bakery,43,225.46,18.6
+2025-04-10,Lantern Noodles,hot food,71,790.91,18.6
+2025-04-10,Corranth Grill,hot food,53,700.84,18.6
+2025-04-10,Frost Cart Ices,ice cream,70,309.06,18.6
+2025-04-10,Kestrel Coffee,coffee,106,421.12,18.6
+2025-04-10,Arvena Flowers,flowers,18,342.44,18.6
+2025-04-11,Orchard Row Fruit,fruit and veg,151,638.84,0
+2025-04-11,Greenleaf Greens,fruit and veg,143,501.95,0
+2025-04-11,Halden Smokehouse,fish,61,981.07,0
+2025-04-11,Tide Line Oysters,fish,45,1012.98,0
+2025-04-11,Velmora Cheese Cave,dairy,69,859.24,0
+2025-04-11,Brennick Bakehouse,bakery,248,1336.75,0
+2025-04-11,Sugar & Salt,bakery,128,624.92,0
+2025-04-11,Lantern Noodles,hot food,201,2138.88,0
+2025-04-11,Corranth Grill,hot food,151,2005.93,0
+2025-04-11,Frost Cart Ices,ice cream,160,759.75,0
+2025-04-11,Kestrel Coffee,coffee,294,1178.23,0
+2025-04-11,Arvena Flowers,flowers,51,893.2,0
+2025-04-12,Orchard Row Fruit,fruit and veg,197,855.96,0.3
+2025-04-12,Greenleaf Greens,fruit and veg,150,533.69,0.3
+2025-04-12,Halden Smokehouse,fish,105,1566.63,0.3
+2025-04-12,Tide Line Oysters,fish,50,1136.28,0.3
+2025-04-12,Velmora Cheese Cave,dairy,80,1009.23,0.3
+2025-04-12,Brennick Bakehouse,bakery,307,1776.2,0.3
+2025-04-12,Sugar & Salt,bakery,188,892.44,0.3
+2025-04-12,Lantern Noodles,hot food,260,2941.96,0.3
+2025-04-12,Corranth Grill,hot food,243,3391.93,0.3
+2025-04-12,Frost Cart Ices,ice cream,223,1023.38,0.3
+2025-04-12,Kestrel Coffee,coffee,440,1710.42,0.3
+2025-04-12,Arvena Flowers,flowers,63,1095.66,0.3
+2025-04-13,Orchard Row Fruit,fruit and veg,125,521.03,7.2
+2025-04-13,Greenleaf Greens,fruit and veg,125,458.41,7.2
+2025-04-13,Halden Smokehouse,fish,56,960.04,7.2
+2025-04-13,Tide Line Oysters,fish,49,1096.52,7.2
+2025-04-13,Velmora Cheese Cave,dairy,61,755.67,7.2
+2025-04-13,Brennick Bakehouse,bakery,257,1383.15,7.2
+2025-04-13,Sugar & Salt,bakery,117,564.58,7.2
+2025-04-13,Lantern Noodles,hot food,157,1731.9,7.2
+2025-04-13,Corranth Grill,hot food,150,2036.04,7.2
+2025-04-13,Frost Cart Ices,ice cream,134,644.82,7.2
+2025-04-13,Kestrel Coffee,coffee,309,1226.23,7.2
+2025-04-13,Arvena Flowers,flowers,48,793.36,7.2
+2025-04-15,Orchard Row Fruit,fruit and veg,107,439.12,3.6
+2025-04-15,Greenleaf Greens,fruit and veg,73,259.8,3.6
+2025-04-15,Halden Smokehouse,fish,45,766.89,3.6
+2025-04-15,Tide Line Oysters,fish,31,661.57,3.6
+2025-04-15,Velmora Cheese Cave,dairy,42,509.87,3.6
+2025-04-15,Brennick Bakehouse,bakery,184,1009.88,3.6
+2025-04-15,Sugar & Salt,bakery,87,410.41,3.6
+2025-04-15,Lantern Noodles,hot food,134,1462.45,3.6
+2025-04-15,Corranth Grill,hot food,97,1321.28,3.6
+2025-04-15,Frost Cart Ices,ice cream,132,590.1,3.6
+2025-04-15,Kestrel Coffee,coffee,227,856.5,3.6
+2025-04-15,Arvena Flowers,flowers,28,522.25,3.6
+2025-04-16,Orchard Row Fruit,fruit and veg,125,523.88,0
+2025-04-16,Greenleaf Greens,fruit and veg,100,331.81,0
+2025-04-16,Halden Smokehouse,fish,45,764.5,0
+2025-04-16,Tide Line Oysters,fish,29,623.46,0
+2025-04-16,Velmora Cheese Cave,dairy,53,650.83,0
+2025-04-16,Brennick Bakehouse,bakery,162,894.93,0
+2025-04-16,Sugar & Salt,bakery,111,544.6,0
+2025-04-16,Lantern Noodles,hot food,167,1858.4,0
+2025-04-16,Corranth Grill,hot food,131,1739.67,0
+2025-04-16,Frost Cart Ices,ice cream,143,646.76,0
+2025-04-16,Kestrel Coffee,coffee,230,890.91,0
+2025-04-16,Arvena Flowers,flowers,39,681.35,0
+2025-04-17,Orchard Row Fruit,fruit and veg,123,536.27,0
+2025-04-17,Greenleaf Greens,fruit and veg,101,346.04,0
+2025-04-17,Halden Smokehouse,fish,50,872.81,0
+2025-04-17,Tide Line Oysters,fish,30,661.7,0
+2025-04-17,Velmora Cheese Cave,dairy,51,653.76,0
+2025-04-17,Brennick Bakehouse,bakery,157,869.37,0
+2025-04-17,Sugar & Salt,bakery,100,471.01,0
+2025-04-17,Lantern Noodles,hot food,164,1859.98,0
+2025-04-17,Corranth Grill,hot food,141,1935.36,0
+2025-04-17,Frost Cart Ices,ice cream,141,614.17,0
+2025-04-17,Kestrel Coffee,coffee,233,919.59,0
+2025-04-17,Arvena Flowers,flowers,34,602.86,0
+2025-04-18,Orchard Row Fruit,fruit and veg,176,718.77,0
+2025-04-18,Greenleaf Greens,fruit and veg,137,514.68,0
+2025-04-18,Halden Smokehouse,fish,79,1302.81,0
+2025-04-18,Tide Line Oysters,fish,55,1139.42,0
+2025-04-18,Velmora Cheese Cave,dairy,80,1067.07,0
+2025-04-18,Brennick Bakehouse,bakery,309,1695.99,0
+2025-04-18,Sugar & Salt,bakery,184,876.5,0
+2025-04-18,Lantern Noodles,hot food,212,2400.27,0
+2025-04-18,Corranth Grill,hot food,225,2842.58,0
+2025-04-18,Frost Cart Ices,ice cream,194,846.3,0
+2025-04-18,Kestrel Coffee,coffee,447,1829.67,0
+2025-04-18,Arvena Flowers,flowers,65,1147.69,0
+2025-04-19,Orchard Row Fruit,fruit and veg,159,644.82,5.3
+2025-04-19,Greenleaf Greens,fruit and veg,135,472.45,5.3
+2025-04-19,Halden Smokehouse,fish,66,1085.25,5.3
+2025-04-19,Tide Line Oysters,fish,45,1033.48,5.3
+2025-04-19,Velmora Cheese Cave,dairy,78,1003.87,5.3
+2025-04-19,Brennick Bakehouse,bakery,280,1584.39,5.3
+2025-04-19,Sugar & Salt,bakery,129,657.7,5.3
+2025-04-19,Lantern Noodles,hot food,193,2202.72,5.3
+2025-04-19,Corranth Grill,hot food,186,2631.66,5.3
+2025-04-19,Frost Cart Ices,ice cream,193,871.98,5.3
+2025-04-19,Kestrel Coffee,coffee,331,1310.87,5.3
+2025-04-19,Arvena Flowers,flowers,57,1027.46,5.3
+2025-04-20,Orchard Row Fruit,fruit and veg,190,794.88,0
+2025-04-20,Greenleaf Greens,fruit and veg,141,490.78,0
+2025-04-20,Halden Smokehouse,fish,77,1295.78,0
+2025-04-20,Tide Line Oysters,fish,41,931.78,0
+2025-04-20,Velmora Cheese Cave,dairy,84,1101.32,0
+2025-04-20,Brennick Bakehouse,bakery,256,1412.26,0
+2025-04-20,Sugar & Salt,bakery,149,729.43,0
+2025-04-20,Lantern Noodles,hot food,255,2846.89,0
+2025-04-20,Corranth Grill,hot food,185,2496.26,0
+2025-04-20,Frost Cart Ices,ice cream,209,972.67,0
+2025-04-20,Kestrel Coffee,coffee,332,1264.58,0
+2025-04-20,Arvena Flowers,flowers,64,1143.79,0
+2025-04-22,Orchard Row Fruit,fruit and veg,120,507.27,0
+2025-04-22,Greenleaf Greens,fruit and veg,103,388.44,0
+2025-04-22,Halden Smokehouse,fish,43,699.91,0
+2025-04-22,Tide Line Oysters,fish,38,881.41,0
+2025-04-22,Velmora Cheese Cave,dairy,53,647.53,0
+2025-04-22,Brennick Bakehouse,bakery,197,1054.25,0
+2025-04-22,Sugar & Salt,bakery,91,437.49,0
+2025-04-22,Lantern Noodles,hot food,139,1539.21,0
+2025-04-22,Corranth Grill,hot food,146,1997.12,0
+2025-04-22,Frost Cart Ices,ice cream,127,589.59,0
+2025-04-22,Kestrel Coffee,coffee,228,914.1,0
+2025-04-22,Arvena Flowers,flowers,33,577.38,0
+2025-04-23,Orchard Row Fruit,fruit and veg,114,493.73,0
+2025-04-23,Greenleaf Greens,fruit and veg,104,380.61,0
+2025-04-23,Halden Smokehouse,fish,47,798.91,0
+2025-04-23,Tide Line Oysters,fish,32,698.99,0
+2025-04-23,Velmora Cheese Cave,dairy,58,732.88,0
+2025-04-23,Brennick Bakehouse,bakery,187,1033.67,0
+2025-04-23,Sugar & Salt,bakery,99,482.26,0
+2025-04-23,Lantern Noodles,hot food,140,1637.69,0
+2025-04-23,Corranth Grill,hot food,144,1960.31,0
+2025-04-23,Frost Cart Ices,ice cream,122,575.13,0
+2025-04-23,Kestrel Coffee,coffee,208,913.92,0
+2025-04-23,Arvena Flowers,flowers,43,794.98,0
+2025-04-24,Orchard Row Fruit,fruit and veg,109,475.25,0
+2025-04-24,Greenleaf Greens,fruit and veg,88,318.24,0
+2025-04-24,Halden Smokehouse,fish,44,729.24,0
+2025-04-24,Tide Line Oysters,fish,36,771.48,0
+2025-04-24,Velmora Cheese Cave,dairy,54,625,0
+2025-04-24,Brennick Bakehouse,bakery,183,966.18,0
+2025-04-24,Sugar & Salt,bakery,106,508.8,0
+2025-04-24,Lantern Noodles,hot food,178,2004.4,0
+2025-04-24,Corranth Grill,hot food,121,1629.91,0
+2025-04-24,Frost Cart Ices,ice cream,126,553.15,0
+2025-04-24,Kestrel Coffee,coffee,237,953.19,0
+2025-04-24,Arvena Flowers,flowers,38,693.91,0
+2025-04-25,Orchard Row Fruit,fruit and veg,136,557.32,0
+2025-04-25,Greenleaf Greens,fruit and veg,118,424.01,0
+2025-04-25,Halden Smokehouse,fish,72,1220.09,0
+2025-04-25,Tide Line Oysters,fish,44,983.05,0
+2025-04-25,Velmora Cheese Cave,dairy,72,939.8,0
+2025-04-25,Brennick Bakehouse,bakery,221,1195.54,0
+2025-04-25,Sugar & Salt,bakery,114,568.07,0
+2025-04-25,Lantern Noodles,hot food,153,1646.09,0
+2025-04-25,Corranth Grill,hot food,138,1797.34,0
+2025-04-25,Frost Cart Ices,ice cream,144,647.17,0
+2025-04-25,Kestrel Coffee,coffee,370,1443.97,0
+2025-04-25,Arvena Flowers,flowers,50,936.25,0
+2025-04-26,Orchard Row Fruit,fruit and veg,195,809.48,0
+2025-04-26,Greenleaf Greens,fruit and veg,155,528.35,0
+2025-04-26,Halden Smokehouse,fish,84,1368.16,0
+2025-04-26,Tide Line Oysters,fish,60,1254.09,0
+2025-04-26,Velmora Cheese Cave,dairy,91,1111.52,0
+2025-04-26,Brennick Bakehouse,bakery,274,1521.7,0
+2025-04-26,Sugar & Salt,bakery,161,793.29,0
+2025-04-26,Lantern Noodles,hot food,245,2646.32,0
+2025-04-26,Corranth Grill,hot food,223,2980.9,0
+2025-04-26,Frost Cart Ices,ice cream,211,932.29,0
+2025-04-26,Kestrel Coffee,coffee,453,1802.32,0
+2025-04-26,Arvena Flowers,flowers,75,1268.31,0
+2025-04-27,Orchard Row Fruit,fruit and veg,190,753.98,0
+2025-04-27,Greenleaf Greens,fruit and veg,150,564.6,0
+2025-04-27,Halden Smokehouse,fish,62,1067.56,0
+2025-04-27,Tide Line Oysters,fish,42,956.22,0
+2025-04-27,Velmora Cheese Cave,dairy,69,888.97,0
+2025-04-27,Brennick Bakehouse,bakery,245,1353.32,0
+2025-04-27,Sugar & Salt,bakery,166,825.64,0
+2025-04-27,Lantern Noodles,hot food,236,2733.14,0
+2025-04-27,Corranth Grill,hot food,199,2707.7,0
+2025-04-27,Frost Cart Ices,ice cream,169,792.44,0
+2025-04-27,Kestrel Coffee,coffee,319,1223.54,0
+2025-04-27,Arvena Flowers,flowers,64,1174.85,0
+2025-04-29,Orchard Row Fruit,fruit and veg,141,594.72,0
+2025-04-29,Greenleaf Greens,fruit and veg,68,229.21,0
+2025-04-29,Halden Smokehouse,fish,49,800.42,0
+2025-04-29,Tide Line Oysters,fish,36,783.53,0
+2025-04-29,Velmora Cheese Cave,dairy,47,630.71,0
+2025-04-29,Brennick Bakehouse,bakery,164,981.81,0
+2025-04-29,Sugar & Salt,bakery,115,544.83,0
+2025-04-29,Lantern Noodles,hot food,120,1323.43,0
+2025-04-29,Corranth Grill,hot food,130,1713.37,0
+2025-04-29,Frost Cart Ices,ice cream,99,448.32,0
+2025-04-29,Kestrel Coffee,coffee,228,937.23,0
+2025-04-29,Arvena Flowers,flowers,36,630.17,0
+2025-04-30,Orchard Row Fruit,fruit and veg,111,472.4,0
+2025-04-30,Greenleaf Greens,fruit and veg,102,377.34,0
+2025-04-30,Halden Smokehouse,fish,40,666.9,0
+2025-04-30,Tide Line Oysters,fish,35,718.17,0
+2025-04-30,Velmora Cheese Cave,dairy,56,706.29,0
+2025-04-30,Brennick Bakehouse,bakery,162,875.71,0
+2025-04-30,Sugar & Salt,bakery,101,460.05,0
+2025-04-30,Lantern Noodles,hot food,126,1398.26,0
+2025-04-30,Corranth Grill,hot food,140,1794.63,0
+2025-04-30,Frost Cart Ices,ice cream,95,454.39,0
+2025-04-30,Kestrel Coffee,coffee,251,1044.8,0
+2025-04-30,Arvena Flowers,flowers,41,732,0
+2025-05-01,Orchard Row Fruit,fruit and veg,109,443.68,0
+2025-05-01,Greenleaf Greens,fruit and veg,91,322.2,0
+2025-05-01,Halden Smokehouse,fish,46,792.74,0
+2025-05-01,Tide Line Oysters,fish,38,839,0
+2025-05-01,Velmora Cheese Cave,dairy,47,621.48,0
+2025-05-01,Brennick Bakehouse,bakery,168,938.42,0
+2025-05-01,Sugar & Salt,bakery,89,434.7,0
+2025-05-01,Lantern Noodles,hot food,156,1744.85,0
+2025-05-01,Corranth Grill,hot food,150,2049.04,0
+2025-05-01,Frost Cart Ices,ice cream,104,480.58,0
+2025-05-01,Kestrel Coffee,coffee,258,1023.84,0
+2025-05-01,Arvena Flowers,flowers,38,685.6,0
+2025-05-02,Orchard Row Fruit,fruit and veg,151,558.37,0
+2025-05-02,Greenleaf Greens,fruit and veg,129,442.81,0
+2025-05-02,Halden Smokehouse,fish,55,921.81,0
+2025-05-02,Tide Line Oysters,fish,48,1025.68,0
+2025-05-02,Velmora Cheese Cave,dairy,53,676.85,0
+2025-05-02,Brennick Bakehouse,bakery,226,1223.79,0
+2025-05-02,Sugar & Salt,bakery,133,627.31,0
+2025-05-02,Lantern Noodles,hot food,236,2581.67,0
+2025-05-02,Corranth Grill,hot food,171,2244.64,0
+2025-05-02,Frost Cart Ices,ice cream,127,565.35,0
+2025-05-02,Kestrel Coffee,coffee,326,1268.59,0
+2025-05-02,Arvena Flowers,flowers,50,904.8,0
+2025-05-03,Orchard Row Fruit,fruit and veg,206,853.7,0
+2025-05-03,Greenleaf Greens,fruit and veg,141,507,0
+2025-05-03,Halden Smokehouse,fish,81,1336.68,0
+2025-05-03,Tide Line Oysters,fish,56,1221.87,0
+2025-05-03,Velmora Cheese Cave,dairy,87,1053.94,0
+2025-05-03,Brennick Bakehouse,bakery,270,1425.14,0
+2025-05-03,Sugar & Salt,bakery,200,980.38,0
+2025-05-03,Lantern Noodles,hot food,249,2714.85,0
+2025-05-03,Corranth Grill,hot food,255,3530.31,0
+2025-05-03,Frost Cart Ices,ice cream,188,835.5,0
+2025-05-03,Kestrel Coffee,coffee,455,1736.14,0
+2025-05-03,Arvena Flowers,flowers,59,1093.65,0
+2025-05-04,Orchard Row Fruit,fruit and veg,171,733.04,0
+2025-05-04,Greenleaf Greens,fruit and veg,138,471.19,0
+2025-05-04,Halden Smokehouse,fish,83,1354.58,0
+2025-05-04,Tide Line Oysters,fish,41,915.63,0
+2025-05-04,Velmora Cheese Cave,dairy,84,1063.41,0
+2025-05-04,Brennick Bakehouse,bakery,298,1620.03,0
+2025-05-04,Sugar & Salt,bakery,178,839.74,0
+2025-05-04,Lantern Noodles,hot food,224,2506.55,0
+2025-05-04,Corranth Grill,hot food,211,2806.72,0
+2025-05-04,Frost Cart Ices,ice cream,153,663.4,0
+2025-05-04,Kestrel Coffee,coffee,382,1512.36,0
+2025-05-04,Arvena Flowers,flowers,51,971.02,0
+2025-05-06,Orchard Row Fruit,fruit and veg,103,435.24,0
+2025-05-06,Greenleaf Greens,fruit and veg,96,326.66,0
+2025-05-06,Halden Smokehouse,fish,41,706.04,0
+2025-05-06,Tide Line Oysters,fish,34,786.06,0
+2025-05-06,Velmora Cheese Cave,dairy,50,649.75,0
+2025-05-06,Brennick Bakehouse,bakery,166,903.57,0
+2025-05-06,Sugar & Salt,bakery,111,512.16,0
+2025-05-06,Lantern Noodles,hot food,124,1389.28,0
+2025-05-06,Corranth Grill,hot food,127,1691.33,0
+2025-05-06,Frost Cart Ices,ice cream,76,353.95,0
+2025-05-06,Kestrel Coffee,coffee,257,1037.76,0
+2025-05-06,Arvena Flowers,flowers,39,691.62,0
+2025-05-07,Orchard Row Fruit,fruit and veg,119,482.33,0
+2025-05-07,Greenleaf Greens,fruit and veg,91,315.05,0
+2025-05-07,Halden Smokehouse,fish,42,653.99,0
+2025-05-07,Tide Line Oysters,fish,34,746.03,0
+2025-05-07,Velmora Cheese Cave,dairy,54,697.34,0
+2025-05-07,Brennick Bakehouse,bakery,182,971.27,0
+2025-05-07,Sugar & Salt,bakery,102,515.38,0
+2025-05-07,Lantern Noodles,hot food,161,1698.38,0
+2025-05-07,Corranth Grill,hot food,105,1423.18,0
+2025-05-07,Frost Cart Ices,ice cream,106,482.54,0
+2025-05-07,Kestrel Coffee,coffee,206,788.28,0
+2025-05-07,Arvena Flowers,flowers,38,673.74,0
+2025-05-08,Orchard Row Fruit,fruit and veg,133,554.52,0
+2025-05-08,Greenleaf Greens,fruit and veg,90,330.15,0
+2025-05-08,Halden Smokehouse,fish,47,777.78,0
+2025-05-08,Tide Line Oysters,fish,34,750.45,0
+2025-05-08,Velmora Cheese Cave,dairy,57,716.88,0
+2025-05-08,Brennick Bakehouse,bakery,157,849.61,0
+2025-05-08,Sugar & Salt,bakery,117,577.2,0
+2025-05-08,Lantern Noodles,hot food,161,1716.86,0
+2025-05-08,Corranth Grill,hot food,120,1667.11,0
+2025-05-08,Frost Cart Ices,ice cream,91,413.74,0
+2025-05-08,Kestrel Coffee,coffee,250,1010.23,0
+2025-05-08,Arvena Flowers,flowers,36,632.13,0
+2025-05-09,Orchard Row Fruit,fruit and veg,125,522.68,2.8
+2025-05-09,Greenleaf Greens,fruit and veg,102,389.71,2.8
+2025-05-09,Halden Smokehouse,fish,51,845.23,2.8
+2025-05-09,Tide Line Oysters,fish,46,1040.91,2.8
+2025-05-09,Velmora Cheese Cave,dairy,49,630.38,2.8
+2025-05-09,Brennick Bakehouse,bakery,196,1098.95,2.8
+2025-05-09,Sugar & Salt,bakery,129,640.88,2.8
+2025-05-09,Lantern Noodles,hot food,162,1802.73,2.8
+2025-05-09,Corranth Grill,hot food,184,2491.75,2.8
+2025-05-09,Frost Cart Ices,ice cream,127,589.56,2.8
+2025-05-09,Kestrel Coffee,coffee,322,1316.47,2.8
+2025-05-09,Arvena Flowers,flowers,43,753.54,2.8
+2025-05-10,Orchard Row Fruit,fruit and veg,226,979.17,0
+2025-05-10,Greenleaf Greens,fruit and veg,169,615.66,0
+2025-05-10,Halden Smokehouse,fish,70,1197.92,0
+2025-05-10,Tide Line Oysters,fish,64,1388.53,0
+2025-05-10,Velmora Cheese Cave,dairy,87,1129.55,0
+2025-05-10,Brennick Bakehouse,bakery,266,1480.63,0
+2025-05-10,Sugar & Salt,bakery,190,926.18,0
+2025-05-10,Lantern Noodles,hot food,276,2996.48,0
+2025-05-10,Corranth Grill,hot food,223,3122.27,0
+2025-05-10,Frost Cart Ices,ice cream,147,670.3,0
+2025-05-10,Kestrel Coffee,coffee,442,1809.46,0
+2025-05-10,Arvena Flowers,flowers,71,1324.59,0
+2025-05-11,Orchard Row Fruit,fruit and veg,198,842.57,0
+2025-05-11,Greenleaf Greens,fruit and veg,150,551.72,0
+2025-05-11,Halden Smokehouse,fish,71,1171.97,0
+2025-05-11,Tide Line Oysters,fish,52,1141.09,0
+2025-05-11,Velmora Cheese Cave,dairy,72,929.78,0
+2025-05-11,Brennick Bakehouse,bakery,277,1497.65,0
+2025-05-11,Sugar & Salt,bakery,133,652.37,0
+2025-05-11,Lantern Noodles,hot food,229,2476.7,0
+2025-05-11,Corranth Grill,hot food,182,2473.37,0
+2025-05-11,Frost Cart Ices,ice cream,124,563.76,0
+2025-05-11,Kestrel Coffee,coffee,364,1394.11,0
+2025-05-11,Arvena Flowers,flowers,62,1096.07,0
+2025-05-13,Orchard Row Fruit,fruit and veg,121,516.24,0
+2025-05-13,Greenleaf Greens,fruit and veg,75,275.14,0
+2025-05-13,Halden Smokehouse,fish,45,778.31,0
+2025-05-13,Tide Line Oysters,fish,34,731.92,0
+2025-05-13,Velmora Cheese Cave,dairy,52,622.35,0
+2025-05-13,Brennick Bakehouse,bakery,174,1016.55,0
+2025-05-13,Sugar & Salt,bakery,93,444.64,0
+2025-05-13,Lantern Noodles,hot food,146,1515.67,0
+2025-05-13,Corranth Grill,hot food,147,1913.9,0
+2025-05-13,Frost Cart Ices,ice cream,61,286.49,0
+2025-05-13,Kestrel Coffee,coffee,263,1068.74,0
+2025-05-13,Arvena Flowers,flowers,35,626.04,0
+2025-05-14,Orchard Row Fruit,fruit and veg,119,503.99,0
+2025-05-14,Greenleaf Greens,fruit and veg,93,338.26,0
+2025-05-14,Halden Smokehouse,fish,55,931.05,0
+2025-05-14,Tide Line Oysters,fish,35,750.42,0
+2025-05-14,Velmora Cheese Cave,dairy,50,635.82,0
+2025-05-14,Brennick Bakehouse,bakery,149,799.3,0
+2025-05-14,Sugar & Salt,bakery,106,503.63,0
+2025-05-14,Lantern Noodles,hot food,135,1464.66,0
+2025-05-14,Corranth Grill,hot food,137,1924.86,0
+2025-05-14,Frost Cart Ices,ice cream,80,351.24,0
+2025-05-14,Kestrel Coffee,coffee,231,895.78,0
+2025-05-14,Arvena Flowers,flowers,43,789.38,0
+2025-05-15,Orchard Row Fruit,fruit and veg,98,406.14,0
+2025-05-15,Greenleaf Greens,fruit and veg,92,340.64,0
+2025-05-15,Halden Smokehouse,fish,41,639.04,0
+2025-05-15,Tide Line Oysters,fish,32,704.35,0
+2025-05-15,Velmora Cheese Cave,dairy,44,550.09,0
+2025-05-15,Brennick Bakehouse,bakery,169,943.88,0
+2025-05-15,Sugar & Salt,bakery,115,561.03,0
+2025-05-15,Lantern Noodles,hot food,176,2000.46,0
+2025-05-15,Corranth Grill,hot food,130,1748.5,0
+2025-05-15,Frost Cart Ices,ice cream,83,391.69,0
+2025-05-15,Kestrel Coffee,coffee,263,1127.88,0
+2025-05-15,Arvena Flowers,flowers,46,819.75,0
+2025-05-16,Orchard Row Fruit,fruit and veg,104,440.05,10.3
+2025-05-16,Greenleaf Greens,fruit and veg,87,305.72,10.3
+2025-05-16,Halden Smokehouse,fish,36,562.14,10.3
+2025-05-16,Tide Line Oysters,fish,22,474.9,10.3
+2025-05-16,Velmora Cheese Cave,dairy,43,533.62,10.3
+2025-05-16,Brennick Bakehouse,bakery,157,833.2,10.3
+2025-05-16,Sugar & Salt,bakery,88,418.24,10.3
+2025-05-16,Lantern Noodles,hot food,143,1570.29,10.3
+2025-05-16,Corranth Grill,hot food,109,1561.86,10.3
+2025-05-16,Frost Cart Ices,ice cream,72,325.32,10.3
+2025-05-16,Kestrel Coffee,coffee,261,1021.15,10.3
+2025-05-16,Arvena Flowers,flowers,34,629.04,10.3
+2025-05-17,Orchard Row Fruit,fruit and veg,221,931.38,0
+2025-05-17,Greenleaf Greens,fruit and veg,127,453.91,0
+2025-05-17,Halden Smokehouse,fish,79,1304.87,0
+2025-05-17,Tide Line Oysters,fish,57,1261.36,0
+2025-05-17,Velmora Cheese Cave,dairy,93,1151.99,0
+2025-05-17,Brennick Bakehouse,bakery,264,1406.55,0
+2025-05-17,Sugar & Salt,bakery,153,729.58,0
+2025-05-17,Lantern Noodles,hot food,277,3046.46,0
+2025-05-17,Corranth Grill,hot food,211,2830.57,0
+2025-05-17,Frost Cart Ices,ice cream,131,625.1,0
+2025-05-17,Kestrel Coffee,coffee,457,1824.75,0
+2025-05-17,Arvena Flowers,flowers,63,1174.28,0
+2025-05-18,Orchard Row Fruit,fruit and veg,135,565.76,2.5
+2025-05-18,Greenleaf Greens,fruit and veg,133,489.98,2.5
+2025-05-18,Halden Smokehouse,fish,56,957.07,2.5
+2025-05-18,Tide Line Oysters,fish,51,1155.46,2.5
+2025-05-18,Velmora Cheese Cave,dairy,70,869.46,2.5
+2025-05-18,Brennick Bakehouse,bakery,268,1457.97,2.5
+2025-05-18,Sugar & Salt,bakery,145,690.33,2.5
+2025-05-18,Lantern Noodles,hot food,240,2695.26,2.5
+2025-05-18,Corranth Grill,hot food,191,2561.4,2.5
+2025-05-18,Frost Cart Ices,ice cream,105,485.24,2.5
+2025-05-18,Kestrel Coffee,coffee,340,1412.39,2.5
+2025-05-18,Arvena Flowers,flowers,48,845.63,2.5
+2025-05-20,Orchard Row Fruit,fruit and veg,107,427.65,2.6
+2025-05-20,Greenleaf Greens,fruit and veg,70,258.78,2.6
+2025-05-20,Halden Smokehouse,fish,50,809.22,2.6
+2025-05-20,Tide Line Oysters,fish,26,567.07,2.6
+2025-05-20,Velmora Cheese Cave,dairy,56,751.68,2.6
+2025-05-20,Brennick Bakehouse,bakery,151,799.2,2.6
+2025-05-20,Sugar & Salt,bakery,93,423.01,2.6
+2025-05-20,Lantern Noodles,hot food,109,1213.31,2.6
+2025-05-20,Corranth Grill,hot food,150,2097.77,2.6
+2025-05-20,Frost Cart Ices,ice cream,68,324.85,2.6
+2025-05-20,Kestrel Coffee,coffee,257,1012.87,2.6
+2025-05-20,Arvena Flowers,flowers,39,713.73,2.6
+2025-05-21,Orchard Row Fruit,fruit and veg,90,408.55,0
+2025-05-21,Greenleaf Greens,fruit and veg,88,319.32,0
+2025-05-21,Halden Smokehouse,fish,53,878.38,0
+2025-05-21,Tide Line Oysters,fish,36,750.31,0
+2025-05-21,Velmora Cheese Cave,dairy,53,667.66,0
+2025-05-21,Brennick Bakehouse,bakery,151,855.49,0
+2025-05-21,Sugar & Salt,bakery,105,533.14,0
+2025-05-21,Lantern Noodles,hot food,167,1842.98,0
+2025-05-21,Corranth Grill,hot food,132,1755.37,0
+2025-05-21,Frost Cart Ices,ice cream,76,356.21,0
+2025-05-21,Kestrel Coffee,coffee,257,1005.02,0
+2025-05-21,Arvena Flowers,flowers,39,696.2,0
+2025-05-22,Orchard Row Fruit,fruit and veg,109,453.79,0
+2025-05-22,Greenleaf Greens,fruit and veg,84,316.35,0
+2025-05-22,Halden Smokehouse,fish,45,751.52,0
+2025-05-22,Tide Line Oysters,fish,35,766.67,0
+2025-05-22,Velmora Cheese Cave,dairy,48,597.99,0
+2025-05-22,Brennick Bakehouse,bakery,198,1115.23,0
+2025-05-22,Sugar & Salt,bakery,108,532.17,0
+2025-05-22,Lantern Noodles,hot food,188,1992.28,0
+2025-05-22,Corranth Grill,hot food,135,1762.05,0
+2025-05-22,Frost Cart Ices,ice cream,72,315.31,0
+2025-05-22,Kestrel Coffee,coffee,250,991.15,0
+2025-05-22,Arvena Flowers,flowers,34,626.69,0
+2025-05-23,Orchard Row Fruit,fruit and veg,150,650.28,0
+2025-05-23,Greenleaf Greens,fruit and veg,107,375.6,0
+2025-05-23,Halden Smokehouse,fish,49,832.17,0
+2025-05-23,Tide Line Oysters,fish,45,987.16,0
+2025-05-23,Velmora Cheese Cave,dairy,70,892.12,0
+2025-05-23,Brennick Bakehouse,bakery,200,1070.54,0
+2025-05-23,Sugar & Salt,bakery,144,706.02,0
+2025-05-23,Lantern Noodles,hot food,198,2270.75,0
+2025-05-23,Corranth Grill,hot food,216,2871.27,0
+2025-05-23,Frost Cart Ices,ice cream,99,408.18,0
+2025-05-23,Kestrel Coffee,coffee,392,1642.02,0
+2025-05-23,Arvena Flowers,flowers,54,1026.84,0
+2025-05-24,Orchard Row Fruit,fruit and veg,186,804.78,0
+2025-05-24,Greenleaf Greens,fruit and veg,122,439.36,0
+2025-05-24,Halden Smokehouse,fish,77,1245.46,0
+2025-05-24,Tide Line Oysters,fish,58,1293.83,0
+2025-05-24,Velmora Cheese Cave,dairy,90,1167.87,0
+2025-05-24,Brennick Bakehouse,bakery,350,1955.49,0
+2025-05-24,Sugar & Salt,bakery,194,972.15,0
+2025-05-24,Lantern Noodles,hot food,204,2243.73,0
+2025-05-24,Corranth Grill,hot food,233,3162.17,0
+2025-05-24,Frost Cart Ices,ice cream,121,556.26,0
+2025-05-24,Kestrel Coffee,coffee,427,1675.39,0
+2025-05-24,Arvena Flowers,flowers,70,1304.8,0
+2025-05-25,Orchard Row Fruit,fruit and veg,136,563.5,2.6
+2025-05-25,Greenleaf Greens,fruit and veg,99,347.12,2.6
+2025-05-25,Halden Smokehouse,fish,55,888.59,2.6
+2025-05-25,Tide Line Oysters,fish,41,892.13,2.6
+2025-05-25,Velmora Cheese Cave,dairy,69,868.72,2.6
+2025-05-25,Brennick Bakehouse,bakery,237,1263.92,2.6
+2025-05-25,Sugar & Salt,bakery,139,666.96,2.6
+2025-05-25,Lantern Noodles,hot food,211,2341.55,2.6
+2025-05-25,Corranth Grill,hot food,173,2350.06,2.6
+2025-05-25,Frost Cart Ices,ice cream,85,399.1,2.6
+2025-05-25,Kestrel Coffee,coffee,312,1247.94,2.6
+2025-05-25,Arvena Flowers,flowers,58,1078.78,2.6
+2025-05-27,Orchard Row Fruit,fruit and veg,107,445.65,0
+2025-05-27,Greenleaf Greens,fruit and veg,80,283.75,0
+2025-05-27,Halden Smokehouse,fish,41,683.29,0
+2025-05-27,Tide Line Oysters,fish,37,824.15,0
+2025-05-27,Velmora Cheese Cave,dairy,59,781.29,0
+2025-05-27,Brennick Bakehouse,bakery,195,1082.94,0
+2025-05-27,Sugar & Salt,bakery,114,558.87,0
+2025-05-27,Lantern Noodles,hot food,131,1475.32,0
+2025-05-27,Corranth Grill,hot food,112,1557.45,0
+2025-05-27,Frost Cart Ices,ice cream,60,264.47,0
+2025-05-27,Kestrel Coffee,coffee,231,873.3,0
+2025-05-27,Arvena Flowers,flowers,37,671.35,0
+2025-05-28,Orchard Row Fruit,fruit and veg,84,347.1,0
+2025-05-28,Greenleaf Greens,fruit and veg,76,277.64,0
+2025-05-28,Halden Smokehouse,fish,43,736.29,0
+2025-05-28,Tide Line Oysters,fish,33,688.35,0
+2025-05-28,Velmora Cheese Cave,dairy,49,659.22,0
+2025-05-28,Brennick Bakehouse,bakery,172,984.09,0
+2025-05-28,Sugar & Salt,bakery,111,501.64,0
+2025-05-28,Lantern Noodles,hot food,158,1661.97,0
+2025-05-28,Corranth Grill,hot food,129,1768.76,0
+2025-05-28,Frost Cart Ices,ice cream,69,310.64,0
+2025-05-28,Kestrel Coffee,coffee,236,918.58,0
+2025-05-28,Arvena Flowers,flowers,44,821.23,0
+2025-05-29,Orchard Row Fruit,fruit and veg,94,389.98,0
+2025-05-29,Greenleaf Greens,fruit and veg,78,285.12,0
+2025-05-29,Halden Smokehouse,fish,50,832.13,0
+2025-05-29,Tide Line Oysters,fish,35,759.74,0
+2025-05-29,Velmora Cheese Cave,dairy,49,610.33,0
+2025-05-29,Brennick Bakehouse,bakery,186,1075.16,0
+2025-05-29,Sugar & Salt,bakery,105,498.01,0
+2025-05-29,Lantern Noodles,hot food,157,1629.57,0
+2025-05-29,Corranth Grill,hot food,124,1691.21,0
+2025-05-29,Frost Cart Ices,ice cream,52,221.28,0
+2025-05-29,Kestrel Coffee,coffee,232,896.32,0
+2025-05-29,Arvena Flowers,flowers,40,692.09,0
+2025-05-30,Orchard Row Fruit,fruit and veg,121,508.3,3.7
+2025-05-30,Greenleaf Greens,fruit and veg,82,296.55,3.7
+2025-05-30,Halden Smokehouse,fish,49,755.56,3.7
+2025-05-30,Tide Line Oysters,fish,44,954.91,3.7
+2025-05-30,Velmora Cheese Cave,dairy,56,704.8,3.7
+2025-05-30,Brennick Bakehouse,bakery,176,974.89,3.7
+2025-05-30,Sugar & Salt,bakery,121,573.78,3.7
+2025-05-30,Lantern Noodles,hot food,193,2166.42,3.7
+2025-05-30,Corranth Grill,hot food,129,1765.37,3.7
+2025-05-30,Frost Cart Ices,ice cream,83,385.49,3.7
+2025-05-30,Kestrel Coffee,coffee,326,1320.79,3.7
+2025-05-30,Arvena Flowers,flowers,35,651.58,3.7
+2025-05-31,Orchard Row Fruit,fruit and veg,184,799.87,0
+2025-05-31,Greenleaf Greens,fruit and veg,167,618.29,0
+2025-05-31,Halden Smokehouse,fish,78,1359.69,0
+2025-05-31,Tide Line Oysters,fish,65,1423.09,0
+2025-05-31,Velmora Cheese Cave,dairy,74,951.9,0
+2025-05-31,Brennick Bakehouse,bakery,307,1718.85,0
+2025-05-31,Sugar & Salt,bakery,187,881.95,0
+2025-05-31,Lantern Noodles,hot food,276,3049.5,0
+2025-05-31,Corranth Grill,hot food,249,3222.19,0
+2025-05-31,Frost Cart Ices,ice cream,78,349.43,0
+2025-05-31,Kestrel Coffee,coffee,447,1790,0
+2025-05-31,Arvena Flowers,flowers,69,1263.22,0
+2025-06-01,Orchard Row Fruit,fruit and veg,142,604.71,8.5
+2025-06-01,Greenleaf Greens,fruit and veg,100,377.22,8.5
+2025-06-01,Halden Smokehouse,fish,42,720.2,8.5
+2025-06-01,Tide Line Oysters,fish,38,786.87,8.5
+2025-06-01,Velmora Cheese Cave,dairy,55,685.58,8.5
+2025-06-01,Brennick Bakehouse,bakery,217,1194.78,8.5
+2025-06-01,Sugar & Salt,bakery,106,516.76,8.5
+2025-06-01,Lantern Noodles,hot food,164,1756.9,8.5
+2025-06-01,Corranth Grill,hot food,145,1773.42,8.5
+2025-06-01,Frost Cart Ices,ice cream,58,277.72,8.5
+2025-06-01,Kestrel Coffee,coffee,267,1040.94,8.5
+2025-06-01,Arvena Flowers,flowers,44,738.86,8.5
+2025-06-01,Saltmere Soap Co.,crafts,28,259.47,8.5
+2025-06-03,Orchard Row Fruit,fruit and veg,77,306.84,3.9
+2025-06-03,Greenleaf Greens,fruit and veg,75,260.79,3.9
+2025-06-03,Halden Smokehouse,fish,46,765.09,3.9
+2025-06-03,Tide Line Oysters,fish,27,576.34,3.9
+2025-06-03,Velmora Cheese Cave,dairy,57,693.73,3.9
+2025-06-03,Brennick Bakehouse,bakery,155,855.76,3.9
+2025-06-03,Sugar & Salt,bakery,98,466.47,3.9
+2025-06-03,Lantern Noodles,hot food,137,1519.63,3.9
+2025-06-03,Corranth Grill,hot food,124,1688.04,3.9
+2025-06-03,Frost Cart Ices,ice cream,40,173.44,3.9
+2025-06-03,Kestrel Coffee,coffee,236,982.72,3.9
+2025-06-03,Arvena Flowers,flowers,31,545.92,3.9
+2025-06-03,Saltmere Soap Co.,crafts,24,239.07,3.9
+2025-06-04,Orchard Row Fruit,fruit and veg,100,420.39,1.3
+2025-06-04,Greenleaf Greens,fruit and veg,73,258.57,1.3
+2025-06-04,Halden Smokehouse,fish,50,837.36,1.3
+2025-06-04,Tide Line Oysters,fish,32,684.75,1.3
+2025-06-04,Velmora Cheese Cave,dairy,51,631.71,1.3
+2025-06-04,Brennick Bakehouse,bakery,167,933.03,1.3
+2025-06-04,Sugar & Salt,bakery,94,446.35,1.3
+2025-06-04,Lantern Noodles,hot food,129,1440.59,1.3
+2025-06-04,Corranth Grill,hot food,123,1687.17,1.3
+2025-06-04,Frost Cart Ices,ice cream,57,264.48,1.3
+2025-06-04,Kestrel Coffee,coffee,230,929.44,1.3
+2025-06-04,Arvena Flowers,flowers,37,659.95,1.3
+2025-06-04,Saltmere Soap Co.,crafts,21,201.24,1.3
+2025-06-05,Orchard Row Fruit,fruit and veg,73,296.07,5.3
+2025-06-05,Greenleaf Greens,fruit and veg,79,285.3,5.3
+2025-06-05,Halden Smokehouse,fish,35,560.44,5.3
+2025-06-05,Tide Line Oysters,fish,30,636.19,5.3
+2025-06-05,Velmora Cheese Cave,dairy,39,532.57,5.3
+2025-06-05,Brennick Bakehouse,bakery,193,1141.94,5.3
+2025-06-05,Sugar & Salt,bakery,89,432.68,5.3
+2025-06-05,Lantern Noodles,hot food,101,1109.58,5.3
+2025-06-05,Corranth Grill,hot food,143,1888.96,5.3
+2025-06-05,Frost Cart Ices,ice cream,42,189.62,5.3
+2025-06-05,Kestrel Coffee,coffee,204,816.51,5.3
+2025-06-05,Arvena Flowers,flowers,29,545.41,5.3
+2025-06-05,Saltmere Soap Co.,crafts,17,156.13,5.3
+2025-06-06,Orchard Row Fruit,fruit and veg,132,589.93,0
+2025-06-06,Greenleaf Greens,fruit and veg,95,343.48,0
+2025-06-06,Halden Smokehouse,fish,63,1054.25,0
+2025-06-06,Tide Line Oysters,fish,40,892.16,0
+2025-06-06,Velmora Cheese Cave,dairy,67,825.77,0
+2025-06-06,Brennick Bakehouse,bakery,243,1320.75,0
+2025-06-06,Sugar & Salt,bakery,138,670.02,0
+2025-06-06,Lantern Noodles,hot food,207,2315.18,0
+2025-06-06,Corranth Grill,hot food,173,2385.76,0
+2025-06-06,Frost Cart Ices,ice cream,57,254.36,0
+2025-06-06,Kestrel Coffee,coffee,308,1191.79,0
+2025-06-06,Arvena Flowers,flowers,45,818.24,0
+2025-06-06,Saltmere Soap Co.,crafts,23,225.64,0
+2025-06-07,Orchard Row Fruit,fruit and veg,186,777.63,0
+2025-06-07,Greenleaf Greens,fruit and veg,128,455.32,0
+2025-06-07,Halden Smokehouse,fish,78,1193.15,0
+2025-06-07,Tide Line Oysters,fish,68,1473.37,0
+2025-06-07,Velmora Cheese Cave,dairy,85,1086.44,0
+2025-06-07,Brennick Bakehouse,bakery,309,1786.47,0
+2025-06-07,Sugar & Salt,bakery,133,650.82,0
+2025-06-07,Lantern Noodles,hot food,285,3021.16,0
+2025-06-07,Corranth Grill,hot food,237,3062.72,0
+2025-06-07,Frost Cart Ices,ice cream,79,346.14,0
+2025-06-07,Kestrel Coffee,coffee,428,1839.37,0
+2025-06-07,Arvena Flowers,flowers,75,1358.23,0
+2025-06-07,Saltmere Soap Co.,crafts,43,408.44,0
+2025-06-08,Orchard Row Fruit,fruit and veg,170,703.78,0.7
+2025-06-08,Greenleaf Greens,fruit and veg,105,409.89,0.7
+2025-06-08,Halden Smokehouse,fish,79,1298.55,0.7
+2025-06-08,Tide Line Oysters,fish,51,1153.36,0.7
+2025-06-08,Velmora Cheese Cave,dairy,78,962.32,0.7
+2025-06-08,Brennick Bakehouse,bakery,304,1670.24,0.7
+2025-06-08,Sugar & Salt,bakery,150,735.56,0.7
+2025-06-08,Lantern Noodles,hot food,250,2694.75,0.7
+2025-06-08,Corranth Grill,hot food,190,2557.44,0.7
+2025-06-08,Frost Cart Ices,ice cream,59,267.73,0.7
+2025-06-08,Kestrel Coffee,coffee,463,1831.75,0.7
+2025-06-08,Arvena Flowers,flowers,59,1098.8,0.7
+2025-06-08,Saltmere Soap Co.,crafts,36,343.34,0.7
+2025-06-10,Orchard Row Fruit,fruit and veg,106,440.96,0
+2025-06-10,Greenleaf Greens,fruit and veg,78,286.62,0
+2025-06-10,Halden Smokehouse,fish,53,932.39,0
+2025-06-10,Tide Line Oysters,fish,36,798.52,0
+2025-06-10,Velmora Cheese Cave,dairy,51,639.56,0
+2025-06-10,Brennick Bakehouse,bakery,175,975.25,0
+2025-06-10,Sugar & Salt,bakery,104,521.08,0
+2025-06-10,Lantern Noodles,hot food,153,1768.92,0
+2025-06-10,Corranth Grill,hot food,177,2452,0
+2025-06-10,Frost Cart Ices,ice cream,45,205.6,0
+2025-06-10,Kestrel Coffee,coffee,212,850.7,0
+2025-06-10,Arvena Flowers,flowers,47,880.55,0
+2025-06-10,Saltmere Soap Co.,crafts,25,239.11,0
+2025-06-11,Orchard Row Fruit,fruit and veg,106,456.93,0
+2025-06-11,Greenleaf Greens,fruit and veg,83,298.59,0
+2025-06-11,Halden Smokehouse,fish,48,766.11,0
+2025-06-11,Tide Line Oysters,fish,34,807.37,0
+2025-06-11,Velmora Cheese Cave,dairy,46,571.78,0
+2025-06-11,Brennick Bakehouse,bakery,201,1143.2,0
+2025-06-11,Sugar & Salt,bakery,127,626.98,0
+2025-06-11,Lantern Noodles,hot food,174,1901.02,0
+2025-06-11,Corranth Grill,hot food,122,1735.58,0
+2025-06-11,Frost Cart Ices,ice cream,38,159.42,0
+2025-06-11,Kestrel Coffee,coffee,297,1207.3,0
+2025-06-11,Arvena Flowers,flowers,41,733.18,0
+2025-06-11,Saltmere Soap Co.,crafts,25,236.2,0
+2025-06-12,Orchard Row Fruit,fruit and veg,114,474.02,0
+2025-06-12,Greenleaf Greens,fruit and veg,76,265.36,0
+2025-06-12,Halden Smokehouse,fish,43,692.88,0
+2025-06-12,Tide Line Oysters,fish,31,712.22,0
+2025-06-12,Velmora Cheese Cave,dairy,44,560.89,0
+2025-06-12,Brennick Bakehouse,bakery,187,1045.62,0
+2025-06-12,Sugar & Salt,bakery,102,504.67,0
+2025-06-12,Lantern Noodles,hot food,150,1609.17,0
+2025-06-12,Corranth Grill,hot food,178,2525.55,0
+2025-06-12,Frost Cart Ices,ice cream,35,152.56,0
+2025-06-12,Kestrel Coffee,coffee,305,1273.51,0
+2025-06-12,Arvena Flowers,flowers,42,733.7,0
+2025-06-12,Saltmere Soap Co.,crafts,28,261.46,0
+2025-06-13,Orchard Row Fruit,fruit and veg,143,588.68,0
+2025-06-13,Greenleaf Greens,fruit and veg,115,409.54,0
+2025-06-13,Halden Smokehouse,fish,63,1022.45,0
+2025-06-13,Tide Line Oysters,fish,48,1100.18,0
+2025-06-13,Velmora Cheese Cave,dairy,73,922.73,0
+2025-06-13,Brennick Bakehouse,bakery,245,1326.57,0
+2025-06-13,Sugar & Salt,bakery,121,617.68,0
+2025-06-13,Lantern Noodles,hot food,210,2246.87,0
+2025-06-13,Corranth Grill,hot food,183,2399.96,0
+2025-06-13,Frost Cart Ices,ice cream,47,209.05,0
+2025-06-13,Kestrel Coffee,coffee,326,1243.3,0
+2025-06-13,Arvena Flowers,flowers,54,952.26,0
+2025-06-13,Saltmere Soap Co.,crafts,35,327.79,0
+2025-06-14,Orchard Row Fruit,fruit and veg,126,498.29,7.8
+2025-06-14,Greenleaf Greens,fruit and veg,124,435.79,7.8
+2025-06-14,Halden Smokehouse,fish,49,770.77,7.8
+2025-06-14,Tide Line Oysters,fish,45,967.91,7.8
+2025-06-14,Velmora Cheese Cave,dairy,66,863.58,7.8
+2025-06-14,Brennick Bakehouse,bakery,209,1129.94,7.8
+2025-06-14,Sugar & Salt,bakery,119,560.85,7.8
+2025-06-14,Lantern Noodles,hot food,189,2196.25,7.8
+2025-06-14,Corranth Grill,hot food,200,2758.43,7.8
+2025-06-14,Frost Cart Ices,ice cream,47,210.32,7.8
+2025-06-14,Kestrel Coffee,coffee,321,1300.71,7.8
+2025-06-14,Arvena Flowers,flowers,40,710.28,7.8
+2025-06-14,Saltmere Soap Co.,crafts,27,257.15,7.8
+2025-06-15,Orchard Row Fruit,fruit and veg,150,642.81,0
+2025-06-15,Greenleaf Greens,fruit and veg,127,472.62,0
+2025-06-15,Halden Smokehouse,fish,69,1135.53,0
+2025-06-15,Tide Line Oysters,fish,49,1019.24,0
+2025-06-15,Velmora Cheese Cave,dairy,84,1125.21,0
+2025-06-15,Brennick Bakehouse,bakery,240,1300.95,0
+2025-06-15,Sugar & Salt,bakery,166,786.86,0
+2025-06-15,Lantern Noodles,hot food,238,2510.93,0
+2025-06-15,Corranth Grill,hot food,187,2527.2,0
+2025-06-15,Frost Cart Ices,ice cream,59,274.41,0
+2025-06-15,Kestrel Coffee,coffee,433,1783.63,0
+2025-06-15,Arvena Flowers,flowers,56,1018.93,0
+2025-06-15,Saltmere Soap Co.,crafts,38,366.06,0
+2025-06-17,Orchard Row Fruit,fruit and veg,108,444.22,0
+2025-06-17,Greenleaf Greens,fruit and veg,75,256.87,0
+2025-06-17,Halden Smokehouse,fish,45,741.58,0
+2025-06-17,Tide Line Oysters,fish,29,643.74,0
+2025-06-17,Velmora Cheese Cave,dairy,51,699.82,0
+2025-06-17,Brennick Bakehouse,bakery,162,903.49,0
+2025-06-17,Sugar & Salt,bakery,121,593.08,0
+2025-06-17,Lantern Noodles,hot food,154,1626.65,0
+2025-06-17,Corranth Grill,hot food,151,2040.45,0
+2025-06-17,Frost Cart Ices,ice cream,30,136.14,0
+2025-06-17,Kestrel Coffee,coffee,269,1083.73,0
+2025-06-17,Arvena Flowers,flowers,37,645.94,0
+2025-06-17,Saltmere Soap Co.,crafts,30,282.76,0
+2025-06-18,Orchard Row Fruit,fruit and veg,81,329.94,2
+2025-06-18,Greenleaf Greens,fruit and veg,74,266.01,2
+2025-06-18,Halden Smokehouse,fish,45,763.66,2
+2025-06-18,Tide Line Oysters,fish,27,615.86,2
+2025-06-18,Velmora Cheese Cave,dairy,51,626.09,2
+2025-06-18,Brennick Bakehouse,bakery,176,1006.94,2
+2025-06-18,Sugar & Salt,bakery,70,329.56,2
+2025-06-18,Lantern Noodles,hot food,128,1363.08,2
+2025-06-18,Corranth Grill,hot food,140,1963.52,2
+2025-06-18,Frost Cart Ices,ice cream,32,139.14,2
+2025-06-18,Kestrel Coffee,coffee,216,880.99,2
+2025-06-18,Arvena Flowers,flowers,33,608.66,2
+2025-06-18,Saltmere Soap Co.,crafts,25,242.39,2
+2025-06-19,Orchard Row Fruit,fruit and veg,101,412.36,0
+2025-06-19,Greenleaf Greens,fruit and veg,77,285.88,0
+2025-06-19,Halden Smokehouse,fish,44,725.49,0
+2025-06-19,Tide Line Oysters,fish,32,667.74,0
+2025-06-19,Velmora Cheese Cave,dairy,44,598.61,0
+2025-06-19,Brennick Bakehouse,bakery,169,934.61,0
+2025-06-19,Sugar & Salt,bakery,100,478.7,0
+2025-06-19,Lantern Noodles,hot food,178,1944.43,0
+2025-06-19,Corranth Grill,hot food,144,1919.53,0
+2025-06-19,Frost Cart Ices,ice cream,32,147.14,0
+2025-06-19,Kestrel Coffee,coffee,273,1099.12,0
+2025-06-19,Arvena Flowers,flowers,41,756.61,0
+2025-06-19,Saltmere Soap Co.,crafts,24,227.85,0
+2025-06-20,Orchard Row Fruit,fruit and veg,119,497.68,0.7
+2025-06-20,Greenleaf Greens,fruit and veg,114,420.08,0.7
+2025-06-20,Halden Smokehouse,fish,62,1029.69,0.7
+2025-06-20,Tide Line Oysters,fish,37,826.27,0.7
+2025-06-20,Velmora Cheese Cave,dairy,80,1031.79,0.7
+2025-06-20,Brennick Bakehouse,bakery,229,1248.79,0.7
+2025-06-20,Sugar & Salt,bakery,121,570.93,0.7
+2025-06-20,Lantern Noodles,hot food,220,2319.81,0.7
+2025-06-20,Corranth Grill,hot food,187,2475.35,0.7
+2025-06-20,Frost Cart Ices,ice cream,39,178.38,0.7
+2025-06-20,Kestrel Coffee,coffee,341,1348.3,0.7
+2025-06-20,Arvena Flowers,flowers,52,956.37,0.7
+2025-06-20,Saltmere Soap Co.,crafts,35,321.92,0.7
+2025-06-21,Orchard Row Fruit,fruit and veg,147,631.81,4.1
+2025-06-21,Greenleaf Greens,fruit and veg,106,384.25,4.1
+2025-06-21,Halden Smokehouse,fish,65,1010.24,4.1
+2025-06-21,Tide Line Oysters,fish,58,1257.64,4.1
+2025-06-21,Velmora Cheese Cave,dairy,90,1147.63,4.1
+2025-06-21,Brennick Bakehouse,bakery,265,1439.75,4.1
+2025-06-21,Sugar & Salt,bakery,174,852.76,4.1
+2025-06-21,Lantern Noodles,hot food,236,2687.55,4.1
+2025-06-21,Corranth Grill,hot food,212,2864.7,4.1
+2025-06-21,Frost Cart Ices,ice cream,41,186.29,4.1
+2025-06-21,Kestrel Coffee,coffee,404,1635.5,4.1
+2025-06-21,Arvena Flowers,flowers,56,1000.3,4.1
+2025-06-21,Saltmere Soap Co.,crafts,40,395.64,4.1
+2025-06-22,Orchard Row Fruit,fruit and veg,144,598.65,0
+2025-06-22,Greenleaf Greens,fruit and veg,136,500.81,0
+2025-06-22,Halden Smokehouse,fish,67,1097.52,0
+2025-06-22,Tide Line Oysters,fish,54,1142.32,0
+2025-06-22,Velmora Cheese Cave,dairy,60,755.38,0
+2025-06-22,Brennick Bakehouse,bakery,238,1275.28,0
+2025-06-22,Sugar & Salt,bakery,146,680.82,0
+2025-06-22,Lantern Noodles,hot food,293,3195.43,0
+2025-06-22,Corranth Grill,hot food,202,2698.87,0
+2025-06-22,Frost Cart Ices,ice cream,44,191.08,0
+2025-06-22,Kestrel Coffee,coffee,460,1841.7,0
+2025-06-22,Arvena Flowers,flowers,58,1078.68,0
+2025-06-22,Saltmere Soap Co.,crafts,42,423.02,0
+2025-06-24,Orchard Row Fruit,fruit and veg,101,414.53,0
+2025-06-24,Greenleaf Greens,fruit and veg,69,250.9,0
+2025-06-24,Halden Smokehouse,fish,44,731.7,0
+2025-06-24,Tide Line Oysters,fish,43,938.61,0
+2025-06-24,Velmora Cheese Cave,dairy,48,588.73,0
+2025-06-24,Brennick Bakehouse,bakery,192,1085.01,0
+2025-06-24,Sugar & Salt,bakery,117,590.76,0
+2025-06-24,Lantern Noodles,hot food,143,1676.58,0
+2025-06-24,Corranth Grill,hot food,156,2214.42,0
+2025-06-24,Frost Cart Ices,ice cream,20,87.56,0
+2025-06-24,Kestrel Coffee,coffee,297,1189.07,0
+2025-06-24,Arvena Flowers,flowers,38,666.13,0
+2025-06-24,Saltmere Soap Co.,crafts,26,253.92,0
+2025-06-25,Orchard Row Fruit,fruit and veg,103,441.09,0
+2025-06-25,Greenleaf Greens,fruit and veg,86,299.98,0
+2025-06-25,Halden Smokehouse,fish,40,671.24,0
+2025-06-25,Tide Line Oysters,fish,41,899.26,0
+2025-06-25,Velmora Cheese Cave,dairy,39,518.24,0
+2025-06-25,Brennick Bakehouse,bakery,150,826.6,0
+2025-06-25,Sugar & Salt,bakery,92,441.31,0
+2025-06-25,Lantern Noodles,hot food,173,1864.48,0
+2025-06-25,Corranth Grill,hot food,139,1898.06,0
+2025-06-25,Frost Cart Ices,ice cream,23,103.29,0
+2025-06-25,Kestrel Coffee,coffee,231,890.12,0
+2025-06-25,Arvena Flowers,flowers,32,549.52,0
+2025-06-25,Saltmere Soap Co.,crafts,25,241.2,0
+2025-06-26,Orchard Row Fruit,fruit and veg,92,386.4,0
+2025-06-26,Greenleaf Greens,fruit and veg,68,245.58,0
+2025-06-26,Halden Smokehouse,fish,37,612.71,0
+2025-06-26,Tide Line Oysters,fish,34,772.15,0
+2025-06-26,Velmora Cheese Cave,dairy,43,560.86,0
+2025-06-26,Brennick Bakehouse,bakery,173,971.42,0
+2025-06-26,Sugar & Salt,bakery,81,382.88,0
+2025-06-26,Lantern Noodles,hot food,194,2204.35,0
+2025-06-26,Corranth Grill,hot food,157,2063.95,0
+2025-06-26,Frost Cart Ices,ice cream,24,103.78,0
+2025-06-26,Kestrel Coffee,coffee,247,1024.28,0
+2025-06-26,Arvena Flowers,flowers,31,548.11,0
+2025-06-26,Saltmere Soap Co.,crafts,29,275.2,0
+2025-06-27,Orchard Row Fruit,fruit and veg,107,446.5,0
+2025-06-27,Greenleaf Greens,fruit and veg,107,382.07,0
+2025-06-27,Halden Smokehouse,fish,58,922.9,0
+2025-06-27,Tide Line Oysters,fish,43,962.14,0
+2025-06-27,Velmora Cheese Cave,dairy,68,868.65,0
+2025-06-27,Brennick Bakehouse,bakery,272,1473.13,0
+2025-06-27,Sugar & Salt,bakery,132,639.87,0
+2025-06-27,Lantern Noodles,hot food,187,1981.2,0
+2025-06-27,Corranth Grill,hot food,158,2153.39,0
+2025-06-27,Frost Cart Ices,ice cream,33,150.39,0
+2025-06-27,Kestrel Coffee,coffee,322,1259.11,0
+2025-06-27,Arvena Flowers,flowers,46,852.8,0
+2025-06-27,Saltmere Soap Co.,crafts,32,306.57,0
+2025-06-28,Orchard Row Fruit,fruit and veg,138,556.69,7.5
+2025-06-28,Greenleaf Greens,fruit and veg,91,333.73,7.5
+2025-06-28,Halden Smokehouse,fish,45,761.64,7.5
+2025-06-28,Tide Line Oysters,fish,47,1018.69,7.5
+2025-06-28,Velmora Cheese Cave,dairy,64,850.63,7.5
+2025-06-28,Brennick Bakehouse,bakery,254,1357.04,7.5
+2025-06-28,Sugar & Salt,bakery,128,594.56,7.5
+2025-06-28,Lantern Noodles,hot food,199,2128.24,7.5
+2025-06-28,Corranth Grill,hot food,165,2264.89,7.5
+2025-06-28,Frost Cart Ices,ice cream,28,117.95,7.5
+2025-06-28,Kestrel Coffee,coffee,349,1471.39,7.5
+2025-06-28,Arvena Flowers,flowers,45,783.51,7.5
+2025-06-28,Saltmere Soap Co.,crafts,28,260.07,7.5
+2025-06-29,Orchard Row Fruit,fruit and veg,148,626.18,0
+2025-06-29,Greenleaf Greens,fruit and veg,120,449.33,0
+2025-06-29,Halden Smokehouse,fish,71,1216.19,0
+2025-06-29,Tide Line Oysters,fish,49,1087,0
+2025-06-29,Velmora Cheese Cave,dairy,68,870.86,0
+2025-06-29,Brennick Bakehouse,bakery,280,1550.76,0
+2025-06-29,Sugar & Salt,bakery,169,818.37,0
+2025-06-29,Lantern Noodles,hot food,304,3580.33,0
+2025-06-29,Corranth Grill,hot food,199,2779.19,0
+2025-06-29,Frost Cart Ices,ice cream,33,142.66,0
+2025-06-29,Kestrel Coffee,coffee,439,1810.68,0
+2025-06-29,Arvena Flowers,flowers,52,930.97,0
+2025-06-29,Saltmere Soap Co.,crafts,41,374.78,0
+2025-07-01,Orchard Row Fruit,fruit and veg,94,389.42,0
+2025-07-01,Greenleaf Greens,fruit and veg,88,316.92,0
+2025-07-01,Halden Smokehouse,fish,39,664.02,0
+2025-07-01,Tide Line Oysters,fish,34,724.18,0
+2025-07-01,Velmora Cheese Cave,dairy,52,637.65,0
+2025-07-01,Brennick Bakehouse,bakery,176,990.72,0
+2025-07-01,Sugar & Salt,bakery,98,484.63,0
+2025-07-01,Lantern Noodles,hot food,148,1587.61,0
+2025-07-01,Corranth Grill,hot food,147,2009.14,0
+2025-07-01,Frost Cart Ices,ice cream,21,95.34,0
+2025-07-01,Kestrel Coffee,coffee,279,1102.34,0
+2025-07-01,Arvena Flowers,flowers,35,621.96,0
+2025-07-01,Saltmere Soap Co.,crafts,31,283.59,0
+2025-07-02,Orchard Row Fruit,fruit and veg,108,435.36,0
+2025-07-02,Greenleaf Greens,fruit and veg,79,278.26,0
+2025-07-02,Halden Smokehouse,fish,47,748.01,0
+2025-07-02,Tide Line Oysters,fish,38,815.03,0
+2025-07-02,Velmora Cheese Cave,dairy,45,600.23,0
+2025-07-02,Brennick Bakehouse,bakery,197,1111.9,0
+2025-07-02,Sugar & Salt,bakery,100,486.19,0
+2025-07-02,Lantern Noodles,hot food,127,1385.79,0
+2025-07-02,Corranth Grill,hot food,119,1602.15,0
+2025-07-02,Frost Cart Ices,ice cream,19,89.37,0
+2025-07-02,Kestrel Coffee,coffee,268,1066.55,0
+2025-07-02,Arvena Flowers,flowers,43,794.64,0
+2025-07-02,Saltmere Soap Co.,crafts,26,241.68,0
+2025-07-03,Orchard Row Fruit,fruit and veg,97,434.03,0
+2025-07-03,Greenleaf Greens,fruit and veg,80,303.85,0
+2025-07-03,Halden Smokehouse,fish,51,783.26,0
+2025-07-03,Tide Line Oysters,fish,37,829.88,0
+2025-07-03,Velmora Cheese Cave,dairy,52,649.33,0
+2025-07-03,Brennick Bakehouse,bakery,193,1038.85,0
+2025-07-03,Sugar & Salt,bakery,81,397.06,0
+2025-07-03,Lantern Noodles,hot food,169,1801.5,0
+2025-07-03,Corranth Grill,hot food,149,1922.74,0
+2025-07-03,Frost Cart Ices,ice cream,21,94.39,0
+2025-07-03,Kestrel Coffee,coffee,307,1246.43,0
+2025-07-03,Arvena Flowers,flowers,37,652.13,0
+2025-07-03,Saltmere Soap Co.,crafts,26,257.6,0
+2025-07-04,Orchard Row Fruit,fruit and veg,118,482.75,0
+2025-07-04,Greenleaf Greens,fruit and veg,109,380.92,0
+2025-07-04,Halden Smokehouse,fish,59,1003.65,0
+2025-07-04,Tide Line Oysters,fish,49,1092.64,0
+2025-07-04,Velmora Cheese Cave,dairy,69,899.22,0
+2025-07-04,Brennick Bakehouse,bakery,212,1136.27,0
+2025-07-04,Sugar & Salt,bakery,128,590.45,0
+2025-07-04,Lantern Noodles,hot food,171,1885.81,0
+2025-07-04,Corranth Grill,hot food,159,2251.23,0
+2025-07-04,Frost Cart Ices,ice cream,26,115.74,0
+2025-07-04,Kestrel Coffee,coffee,309,1233.36,0
+2025-07-04,Arvena Flowers,flowers,44,788.66,0
+2025-07-04,Saltmere Soap Co.,crafts,33,319.54,0
+2025-07-05,Orchard Row Fruit,fruit and veg,156,675.2,0
+2025-07-05,Greenleaf Greens,fruit and veg,154,561.57,0
+2025-07-05,Halden Smokehouse,fish,78,1271.55,0
+2025-07-05,Tide Line Oysters,fish,49,1056.52,0
+2025-07-05,Velmora Cheese Cave,dairy,90,1199.25,0
+2025-07-05,Brennick Bakehouse,bakery,261,1455.93,0
+2025-07-05,Sugar & Salt,bakery,207,984.98,0
+2025-07-05,Lantern Noodles,hot food,253,2688.16,0
+2025-07-05,Corranth Grill,hot food,258,3613.59,0
+2025-07-05,Frost Cart Ices,ice cream,33,145.79,0
+2025-07-05,Kestrel Coffee,coffee,498,2010.54,0
+2025-07-05,Arvena Flowers,flowers,59,1058.54,0
+2025-07-05,Saltmere Soap Co.,crafts,53,499.13,0
+2025-07-06,Orchard Row Fruit,fruit and veg,146,595.47,0
+2025-07-06,Greenleaf Greens,fruit and veg,113,385.58,0
+2025-07-06,Halden Smokehouse,fish,74,1164.11,0
+2025-07-06,Tide Line Oysters,fish,51,1164.91,0
+2025-07-06,Velmora Cheese Cave,dairy,72,908.19,0
+2025-07-06,Brennick Bakehouse,bakery,300,1746.18,0
+2025-07-06,Sugar & Salt,bakery,108,500.68,0
+2025-07-06,Lantern Noodles,hot food,266,2900.66,0
+2025-07-06,Corranth Grill,hot food,220,2862.08,0
+2025-07-06,Frost Cart Ices,ice cream,27,123.1,0
+2025-07-06,Kestrel Coffee,coffee,390,1542.28,0
+2025-07-06,Arvena Flowers,flowers,49,883.96,0
+2025-07-06,Saltmere Soap Co.,crafts,39,381.54,0
+2025-07-08,Orchard Row Fruit,fruit and veg,84,365.92,0
+2025-07-08,Greenleaf Greens,fruit and veg,70,250.39,0
+2025-07-08,Halden Smokehouse,fish,50,831.86,0
+2025-07-08,Tide Line Oysters,fish,35,731.54,0
+2025-07-08,Velmora Cheese Cave,dairy,48,614.55,0
+2025-07-08,Brennick Bakehouse,bakery,188,1052.77,0
+2025-07-08,Sugar & Salt,bakery,101,479.21,0
+2025-07-08,Lantern Noodles,hot food,146,1625.09,0
+2025-07-08,Corranth Grill,hot food,132,1814.49,0
+2025-07-08,Frost Cart Ices,ice cream,18,80.35,0
+2025-07-08,Kestrel Coffee,coffee,299,1234.61,0
+2025-07-08,Arvena Flowers,flowers,37,660.18,0
+2025-07-08,Saltmere Soap Co.,crafts,27,266.53,0
+2025-07-09,Orchard Row Fruit,fruit and veg,91,374.72,0
+2025-07-09,Greenleaf Greens,fruit and veg,80,294.15,0
+2025-07-09,Halden Smokehouse,fish,49,818.63,0
+2025-07-09,Tide Line Oysters,fish,38,803.6,0
+2025-07-09,Velmora Cheese Cave,dairy,55,683.9,0
+2025-07-09,Brennick Bakehouse,bakery,174,982.48,0
+2025-07-09,Sugar & Salt,bakery,106,504.65,0
+2025-07-09,Lantern Noodles,hot food,142,1610.63,0
+2025-07-09,Corranth Grill,hot food,144,1841.57,0
+2025-07-09,Frost Cart Ices,ice cream,20,94.43,0
+2025-07-09,Kestrel Coffee,coffee,263,1025.95,0
+2025-07-09,Arvena Flowers,flowers,38,675.48,0
+2025-07-09,Saltmere Soap Co.,crafts,26,243.84,0
+2025-07-10,Orchard Row Fruit,fruit and veg,81,344.09,0
+2025-07-10,Greenleaf Greens,fruit and veg,82,294.37,0
+2025-07-10,Halden Smokehouse,fish,42,696.87,0
+2025-07-10,Tide Line Oysters,fish,32,699.03,0
+2025-07-10,Velmora Cheese Cave,dairy,48,614.5,0
+2025-07-10,Brennick Bakehouse,bakery,181,976.28,0
+2025-07-10,Sugar & Salt,bakery,100,492.91,0
+2025-07-10,Lantern Noodles,hot food,159,1759.77,0
+2025-07-10,Corranth Grill,hot food,145,1984.86,0
+2025-07-10,Frost Cart Ices,ice cream,18,81.23,0
+2025-07-10,Kestrel Coffee,coffee,231,924.89,0
+2025-07-10,Arvena Flowers,flowers,38,701.06,0
+2025-07-10,Saltmere Soap Co.,crafts,24,227.76,0
+2025-07-11,Orchard Row Fruit,fruit and veg,151,623.86,0
+2025-07-11,Greenleaf Greens,fruit and veg,110,404.89,0
+2025-07-11,Halden Smokehouse,fish,51,832.12,0
+2025-07-11,Tide Line Oysters,fish,46,1063.83,0
+2025-07-11,Velmora Cheese Cave,dairy,61,716.84,0
+2025-07-11,Brennick Bakehouse,bakery,235,1256.41,0
+2025-07-11,Sugar & Salt,bakery,137,684.76,0
+2025-07-11,Lantern Noodles,hot food,229,2604.52,0
+2025-07-11,Corranth Grill,hot food,203,2690.63,0
+2025-07-11,Frost Cart Ices,ice cream,23,103.8,0
+2025-07-11,Kestrel Coffee,coffee,393,1625.43,0
+2025-07-11,Arvena Flowers,flowers,53,926.9,0
+2025-07-11,Saltmere Soap Co.,crafts,31,297.45,0
+2025-07-12,Orchard Row Fruit,fruit and veg,168,705.15,0
+2025-07-12,Greenleaf Greens,fruit and veg,147,503.26,0
+2025-07-12,Halden Smokehouse,fish,81,1340.91,0
+2025-07-12,Tide Line Oysters,fish,59,1319.47,0
+2025-07-12,Velmora Cheese Cave,dairy,82,1088.26,0
+2025-07-12,Brennick Bakehouse,bakery,279,1516.14,0
+2025-07-12,Sugar & Salt,bakery,208,977.45,0
+2025-07-12,Lantern Noodles,hot food,253,2715.17,0
+2025-07-12,Corranth Grill,hot food,263,3483.83,0
+2025-07-12,Frost Cart Ices,ice cream,36,158.98,0
+2025-07-12,Kestrel Coffee,coffee,411,1661.32,0
+2025-07-12,Arvena Flowers,flowers,62,1103.09,0
+2025-07-12,Saltmere Soap Co.,crafts,51,479.03,0
+2025-07-13,Orchard Row Fruit,fruit and veg,127,524.95,0
+2025-07-13,Greenleaf Greens,fruit and veg,141,500.93,0
+2025-07-13,Halden Smokehouse,fish,79,1336.47,0
+2025-07-13,Tide Line Oysters,fish,60,1320.87,0
+2025-07-13,Velmora Cheese Cave,dairy,70,946.77,0
+2025-07-13,Brennick Bakehouse,bakery,276,1478.34,0
+2025-07-13,Sugar & Salt,bakery,180,872.84,0
+2025-07-13,Lantern Noodles,hot food,263,2931.85,0
+2025-07-13,Corranth Grill,hot food,234,3019.54,0
+2025-07-13,Frost Cart Ices,ice cream,30,129.62,0
+2025-07-13,Kestrel Coffee,coffee,439,1854.25,0
+2025-07-13,Arvena Flowers,flowers,59,1017.32,0
+2025-07-13,Saltmere Soap Co.,crafts,39,373.47,0
+2025-07-15,Orchard Row Fruit,fruit and veg,99,399.28,1.7
+2025-07-15,Greenleaf Greens,fruit and veg,80,288.05,1.7
+2025-07-15,Halden Smokehouse,fish,50,837.09,1.7
+2025-07-15,Tide Line Oysters,fish,34,771.96,1.7
+2025-07-15,Velmora Cheese Cave,dairy,53,665.85,1.7
+2025-07-15,Brennick Bakehouse,bakery,163,895.98,1.7
+2025-07-15,Sugar & Salt,bakery,104,509.97,1.7
+2025-07-15,Lantern Noodles,hot food,156,1673.13,1.7
+2025-07-15,Corranth Grill,hot food,106,1400.67,1.7
+2025-07-15,Frost Cart Ices,ice cream,17,73.17,1.7
+2025-07-15,Kestrel Coffee,coffee,262,1032.49,1.7
+2025-07-15,Arvena Flowers,flowers,39,721.24,1.7
+2025-07-15,Saltmere Soap Co.,crafts,26,248.48,1.7
+2025-07-16,Orchard Row Fruit,fruit and veg,97,407.93,0
+2025-07-16,Greenleaf Greens,fruit and veg,88,320.02,0
+2025-07-16,Halden Smokehouse,fish,49,788.15,0
+2025-07-16,Tide Line Oysters,fish,30,696.73,0
+2025-07-16,Velmora Cheese Cave,dairy,57,723.27,0
+2025-07-16,Brennick Bakehouse,bakery,165,933.13,0
+2025-07-16,Sugar & Salt,bakery,97,446.31,0
+2025-07-16,Lantern Noodles,hot food,178,1969.43,0
+2025-07-16,Corranth Grill,hot food,159,2078.07,0
+2025-07-16,Frost Cart Ices,ice cream,18,81.56,0
+2025-07-16,Kestrel Coffee,coffee,249,987.82,0
+2025-07-16,Arvena Flowers,flowers,43,791.7,0
+2025-07-16,Saltmere Soap Co.,crafts,27,256.14,0
+2025-07-17,Orchard Row Fruit,fruit and veg,100,414.89,0
+2025-07-17,Greenleaf Greens,fruit and veg,79,290.54,0
+2025-07-17,Halden Smokehouse,fish,44,727.7,0
+2025-07-17,Tide Line Oysters,fish,33,706.4,0
+2025-07-17,Velmora Cheese Cave,dairy,45,588.95,0
+2025-07-17,Brennick Bakehouse,bakery,172,958.53,0
+2025-07-17,Sugar & Salt,bakery,102,511.18,0
+2025-07-17,Lantern Noodles,hot food,152,1632.15,0
+2025-07-17,Corranth Grill,hot food,131,1782.38,0
+2025-07-17,Frost Cart Ices,ice cream,21,97.96,0
+2025-07-17,Kestrel Coffee,coffee,207,823.74,0
+2025-07-17,Arvena Flowers,flowers,37,663.66,0
+2025-07-17,Saltmere Soap Co.,crafts,22,203.84,0
+2025-07-18,Orchard Row Fruit,fruit and veg,124,510.45,0
+2025-07-18,Greenleaf Greens,fruit and veg,122,434.95,0
+2025-07-18,Halden Smokehouse,fish,59,925.15,0
+2025-07-18,Tide Line Oysters,fish,46,971.59,0
+2025-07-18,Velmora Cheese Cave,dairy,74,975.7,0
+2025-07-18,Brennick Bakehouse,bakery,215,1169.49,0
+2025-07-18,Sugar & Salt,bakery,124,607.11,0
+2025-07-18,Lantern Noodles,hot food,245,2649.82,0
+2025-07-18,Corranth Grill,hot food,200,2719.07,0
+2025-07-18,Frost Cart Ices,ice cream,28,129.8,0
+2025-07-18,Kestrel Coffee,coffee,386,1549.07,0
+2025-07-18,Arvena Flowers,flowers,41,748.56,0
+2025-07-18,Saltmere Soap Co.,crafts,36,331.63,0
+2025-07-19,Orchard Row Fruit,fruit and veg,120,497.8,9.9
+2025-07-19,Greenleaf Greens,fruit and veg,104,376.55,9.9
+2025-07-19,Halden Smokehouse,fish,53,889.99,9.9
+2025-07-19,Tide Line Oysters,fish,35,791.5,9.9
+2025-07-19,Velmora Cheese Cave,dairy,51,668.97,9.9
+2025-07-19,Brennick Bakehouse,bakery,189,1020.87,9.9
+2025-07-19,Sugar & Salt,bakery,137,659.21,9.9
+2025-07-19,Lantern Noodles,hot food,202,2258.28,9.9
+2025-07-19,Corranth Grill,hot food,179,2468.03,9.9
+2025-07-19,Frost Cart Ices,ice cream,19,88.82,9.9
+2025-07-19,Kestrel Coffee,coffee,301,1194.34,9.9
+2025-07-19,Arvena Flowers,flowers,43,760.9,9.9
+2025-07-19,Saltmere Soap Co.,crafts,34,324.39,9.9
+2025-07-20,Orchard Row Fruit,fruit and veg,143,602.42,0
+2025-07-20,Greenleaf Greens,fruit and veg,151,587.2,0
+2025-07-20,Halden Smokehouse,fish,69,1149.46,0
+2025-07-20,Tide Line Oysters,fish,53,1169.88,0
+2025-07-20,Velmora Cheese Cave,dairy,71,931.01,0
+2025-07-20,Brennick Bakehouse,bakery,304,1668.14,0
+2025-07-20,Sugar & Salt,bakery,116,568.61,0
+2025-07-20,Lantern Noodles,hot food,269,3001.32,0
+2025-07-20,Corranth Grill,hot food,194,2596.74,0
+2025-07-20,Frost Cart Ices,ice cream,33,152.3,0
+2025-07-20,Kestrel Coffee,coffee,439,1715.53,0
+2025-07-20,Arvena Flowers,flowers,53,908.2,0
+2025-07-20,Saltmere Soap Co.,crafts,46,474.44,0
+2025-07-22,Orchard Row Fruit,fruit and veg,97,395.14,0
+2025-07-22,Greenleaf Greens,fruit and veg,82,291.35,0
+2025-07-22,Halden Smokehouse,fish,40,658.54,0
+2025-07-22,Tide Line Oysters,fish,36,781.79,0
+2025-07-22,Velmora Cheese Cave,dairy,57,692.19,0
+2025-07-22,Brennick Bakehouse,bakery,153,814.6,0
+2025-07-22,Sugar & Salt,bakery,80,365.91,0
+2025-07-22,Lantern Noodles,hot food,153,1707.26,0
+2025-07-22,Corranth Grill,hot food,136,1831.59,0
+2025-07-22,Frost Cart Ices,ice cream,20,90.84,0
+2025-07-22,Kestrel Coffee,coffee,282,1178.31,0
+2025-07-22,Arvena Flowers,flowers,38,674.07,0
+2025-07-22,Saltmere Soap Co.,crafts,27,242.03,0
+2025-07-23,Orchard Row Fruit,fruit and veg,108,434.3,0
+2025-07-23,Greenleaf Greens,fruit and veg,76,284.56,0
+2025-07-23,Halden Smokehouse,fish,41,691.55,0
+2025-07-23,Tide Line Oysters,fish,38,841.63,0
+2025-07-23,Velmora Cheese Cave,dairy,53,675.03,0
+2025-07-23,Brennick Bakehouse,bakery,186,1034.15,0
+2025-07-23,Sugar & Salt,bakery,95,454.85,0
+2025-07-23,Lantern Noodles,hot food,140,1515.76,0
+2025-07-23,Corranth Grill,hot food,122,1636.31,0
+2025-07-23,Frost Cart Ices,ice cream,21,90.21,0
+2025-07-23,Kestrel Coffee,coffee,260,1069.63,0
+2025-07-23,Arvena Flowers,flowers,34,621.12,0
+2025-07-23,Saltmere Soap Co.,crafts,24,219.92,0
+2025-07-24,Orchard Row Fruit,fruit and veg,98,418.31,0
+2025-07-24,Greenleaf Greens,fruit and veg,83,299.68,0
+2025-07-24,Halden Smokehouse,fish,47,766.76,0
+2025-07-24,Tide Line Oysters,fish,31,673.97,0
+2025-07-24,Velmora Cheese Cave,dairy,55,715.51,0
+2025-07-24,Brennick Bakehouse,bakery,185,1045.04,0
+2025-07-24,Sugar & Salt,bakery,106,497.45,0
+2025-07-24,Lantern Noodles,hot food,150,1672.87,0
+2025-07-24,Corranth Grill,hot food,157,2117.58,0
+2025-07-24,Frost Cart Ices,ice cream,20,90.15,0
+2025-07-24,Kestrel Coffee,coffee,253,1035.75,0
+2025-07-24,Arvena Flowers,flowers,43,770.32,0
+2025-07-24,Saltmere Soap Co.,crafts,28,267.77,0
+2025-07-25,Orchard Row Fruit,fruit and veg,56,239.6,20.4
+2025-07-25,Greenleaf Greens,fruit and veg,47,168.34,20.4
+2025-07-25,Halden Smokehouse,fish,28,474.72,20.4
+2025-07-25,Tide Line Oysters,fish,17,382.39,20.4
+2025-07-25,Velmora Cheese Cave,dairy,30,378.72,20.4
+2025-07-25,Brennick Bakehouse,bakery,114,626.31,20.4
+2025-07-25,Sugar & Salt,bakery,57,280.99,20.4
+2025-07-25,Lantern Noodles,hot food,98,1079.27,20.4
+2025-07-25,Corranth Grill,hot food,76,1020.39,20.4
+2025-07-25,Frost Cart Ices,ice cream,12,53.64,20.4
+2025-07-25,Kestrel Coffee,coffee,157,641.03,20.4
+2025-07-25,Arvena Flowers,flowers,23,398.92,20.4
+2025-07-25,Saltmere Soap Co.,crafts,16,161.48,20.4
+2025-07-26,Orchard Row Fruit,fruit and veg,189,776.95,0
+2025-07-26,Greenleaf Greens,fruit and veg,146,513.73,0
+2025-07-26,Halden Smokehouse,fish,62,1060.58,0
+2025-07-26,Tide Line Oysters,fish,50,1105.9,0
+2025-07-26,Velmora Cheese Cave,dairy,84,1060,0
+2025-07-26,Brennick Bakehouse,bakery,265,1471.68,0
+2025-07-26,Sugar & Salt,bakery,189,898.94,0
+2025-07-26,Lantern Noodles,hot food,254,2653.12,0
+2025-07-26,Corranth Grill,hot food,221,3066.29,0
+2025-07-26,Frost Cart Ices,ice cream,34,162.03,0
+2025-07-26,Kestrel Coffee,coffee,502,2081.2,0
+2025-07-26,Arvena Flowers,flowers,74,1242.96,0
+2025-07-26,Saltmere Soap Co.,crafts,43,435.74,0
+2025-07-27,Orchard Row Fruit,fruit and veg,162,691.82,0
+2025-07-27,Greenleaf Greens,fruit and veg,135,482.37,0
+2025-07-27,Halden Smokehouse,fish,63,982.24,0
+2025-07-27,Tide Line Oysters,fish,50,1145.41,0
+2025-07-27,Velmora Cheese Cave,dairy,70,867.57,0
+2025-07-27,Brennick Bakehouse,bakery,270,1503.71,0
+2025-07-27,Sugar & Salt,bakery,155,705.56,0
+2025-07-27,Lantern Noodles,hot food,213,2371.86,0
+2025-07-27,Corranth Grill,hot food,198,2725.12,0
+2025-07-27,Frost Cart Ices,ice cream,24,106.63,0
+2025-07-27,Kestrel Coffee,coffee,455,1651.38,0
+2025-07-27,Arvena Flowers,flowers,50,877.75,0
+2025-07-27,Saltmere Soap Co.,crafts,39,365.21,0
+2025-07-29,Orchard Row Fruit,fruit and veg,98,401.78,0
+2025-07-29,Greenleaf Greens,fruit and veg,85,290.74,0
+2025-07-29,Halden Smokehouse,fish,47,803.58,0
+2025-07-29,Tide Line Oysters,fish,35,745.66,0
+2025-07-29,Velmora Cheese Cave,dairy,53,706.23,0
+2025-07-29,Brennick Bakehouse,bakery,177,1041.68,0
+2025-07-29,Sugar & Salt,bakery,100,486.37,0
+2025-07-29,Lantern Noodles,hot food,158,1771.11,0
+2025-07-29,Corranth Grill,hot food,116,1494.1,0
+2025-07-29,Frost Cart Ices,ice cream,16,69.64,0
+2025-07-29,Kestrel Coffee,coffee,258,1048.85,0
+2025-07-29,Arvena Flowers,flowers,38,686.05,0
+2025-07-29,Saltmere Soap Co.,crafts,23,216.78,0
+2025-07-30,Orchard Row Fruit,fruit and veg,95,398.86,0
+2025-07-30,Greenleaf Greens,fruit and veg,84,307.65,0
+2025-07-30,Halden Smokehouse,fish,52,888.46,0
+2025-07-30,Tide Line Oysters,fish,32,721.29,0
+2025-07-30,Velmora Cheese Cave,dairy,54,711.65,0
+2025-07-30,Brennick Bakehouse,bakery,159,904.32,0
+2025-07-30,Sugar & Salt,bakery,105,504.33,0
+2025-07-30,Lantern Noodles,hot food,144,1594.4,0
+2025-07-30,Corranth Grill,hot food,129,1723.96,0
+2025-07-30,Frost Cart Ices,ice cream,19,94.02,0
+2025-07-30,Kestrel Coffee,coffee,256,1078.78,0
+2025-07-30,Arvena Flowers,flowers,38,669.29,0
+2025-07-30,Saltmere Soap Co.,crafts,24,233.66,0
+2025-07-31,Orchard Row Fruit,fruit and veg,95,403.22,1.8
+2025-07-31,Greenleaf Greens,fruit and veg,78,281.95,1.8
+2025-07-31,Halden Smokehouse,fish,37,618.98,1.8
+2025-07-31,Tide Line Oysters,fish,33,708.12,1.8
+2025-07-31,Velmora Cheese Cave,dairy,45,585.38,1.8
+2025-07-31,Brennick Bakehouse,bakery,185,991.85,1.8
+2025-07-31,Sugar & Salt,bakery,79,372.86,1.8
+2025-07-31,Lantern Noodles,hot food,166,1771.38,1.8
+2025-07-31,Corranth Grill,hot food,119,1601.45,1.8
+2025-07-31,Frost Cart Ices,ice cream,18,79.85,1.8
+2025-07-31,Kestrel Coffee,coffee,297,1231,1.8
+2025-07-31,Arvena Flowers,flowers,31,548.38,1.8
+2025-07-31,Saltmere Soap Co.,crafts,24,220.07,1.8
+2025-08-01,Orchard Row Fruit,fruit and veg,128,560.11,0
+2025-08-01,Greenleaf Greens,fruit and veg,118,450.75,0
+2025-08-01,Halden Smokehouse,fish,60,987.11,0
+2025-08-01,Tide Line Oysters,fish,50,1080.37,0
+2025-08-01,Velmora Cheese Cave,dairy,72,914.74,0
+2025-08-01,Brennick Bakehouse,bakery,247,1351.44,0
+2025-08-01,Sugar & Salt,bakery,141,681.43,0
+2025-08-01,Lantern Noodles,hot food,197,2081.12,0
+2025-08-01,Corranth Grill,hot food,176,2271.11,0
+2025-08-01,Frost Cart Ices,ice cream,20,92.41,0
+2025-08-01,Kestrel Coffee,coffee,351,1434.26,0
+2025-08-01,Arvena Flowers,flowers,47,843.19,0
+2025-08-01,Saltmere Soap Co.,crafts,23,217.07,0
+2025-08-02,Orchard Row Fruit,fruit and veg,85,348.76,22.7
+2025-08-02,Greenleaf Greens,fruit and veg,61,218.15,22.7
+2025-08-02,Halden Smokehouse,fish,39,649.57,22.7
+2025-08-02,Tide Line Oysters,fish,26,556.1,22.7
+2025-08-02,Velmora Cheese Cave,dairy,40,498.32,22.7
+2025-08-02,Brennick Bakehouse,bakery,136,783.06,22.7
+2025-08-02,Sugar & Salt,bakery,77,393.73,22.7
+2025-08-02,Lantern Noodles,hot food,111,1267.63,22.7
+2025-08-02,Corranth Grill,hot food,109,1478.54,22.7
+2025-08-02,Frost Cart Ices,ice cream,14,63.12,22.7
+2025-08-02,Kestrel Coffee,coffee,167,680.67,22.7
+2025-08-02,Arvena Flowers,flowers,32,583.97,22.7
+2025-08-02,Saltmere Soap Co.,crafts,16,150.93,22.7
+2025-08-03,Orchard Row Fruit,fruit and veg,168,685.71,0.3
+2025-08-03,Greenleaf Greens,fruit and veg,97,353.77,0.3
+2025-08-03,Halden Smokehouse,fish,67,1020.71,0.3
+2025-08-03,Tide Line Oysters,fish,54,1198.93,0.3
+2025-08-03,Velmora Cheese Cave,dairy,74,932.94,0.3
+2025-08-03,Brennick Bakehouse,bakery,333,1831.32,0.3
+2025-08-03,Sugar & Salt,bakery,170,807.82,0.3
+2025-08-03,Lantern Noodles,hot food,240,2749.45,0.3
+2025-08-03,Corranth Grill,hot food,235,3256.77,0.3
+2025-08-03,Frost Cart Ices,ice cream,31,142.36,0.3
+2025-08-03,Kestrel Coffee,coffee,426,1673.85,0.3
+2025-08-03,Arvena Flowers,flowers,53,991.05,0.3
+2025-08-03,Saltmere Soap Co.,crafts,39,375.11,0.3
+2025-08-05,Orchard Row Fruit,fruit and veg,65,266.69,7.8
+2025-08-05,Greenleaf Greens,fruit and veg,61,223.79,7.8
+2025-08-05,Halden Smokehouse,fish,33,571.62,7.8
+2025-08-05,Tide Line Oysters,fish,26,579.01,7.8
+2025-08-05,Velmora Cheese Cave,dairy,43,565.22,7.8
+2025-08-05,Brennick Bakehouse,bakery,116,626.66,7.8
+2025-08-05,Sugar & Salt,bakery,79,384.86,7.8
+2025-08-05,Lantern Noodles,hot food,121,1321.16,7.8
+2025-08-05,Corranth Grill,hot food,104,1429.08,7.8
+2025-08-05,Frost Cart Ices,ice cream,15,68.39,7.8
+2025-08-05,Kestrel Coffee,coffee,221,867.32,7.8
+2025-08-05,Arvena Flowers,flowers,32,577.72,7.8
+2025-08-05,Saltmere Soap Co.,crafts,20,195.62,7.8
+2025-08-06,Orchard Row Fruit,fruit and veg,67,271.54,9.7
+2025-08-06,Greenleaf Greens,fruit and veg,58,220.74,9.7
+2025-08-06,Halden Smokehouse,fish,28,474.32,9.7
+2025-08-06,Tide Line Oysters,fish,23,490.12,9.7
+2025-08-06,Velmora Cheese Cave,dairy,32,411.18,9.7
+2025-08-06,Brennick Bakehouse,bakery,126,696.36,9.7
+2025-08-06,Sugar & Salt,bakery,63,319.16,9.7
+2025-08-06,Lantern Noodles,hot food,119,1320.94,9.7
+2025-08-06,Corranth Grill,hot food,90,1141.18,9.7
+2025-08-06,Frost Cart Ices,ice cream,14,62.01,9.7
+2025-08-06,Kestrel Coffee,coffee,188,756,9.7
+2025-08-06,Arvena Flowers,flowers,27,478.49,9.7
+2025-08-06,Saltmere Soap Co.,crafts,20,183.56,9.7
+2025-08-07,Orchard Row Fruit,fruit and veg,107,454.19,1.3
+2025-08-07,Greenleaf Greens,fruit and veg,74,262.43,1.3
+2025-08-07,Halden Smokehouse,fish,42,650.92,1.3
+2025-08-07,Tide Line Oysters,fish,31,700.95,1.3
+2025-08-07,Velmora Cheese Cave,dairy,43,562.34,1.3
+2025-08-07,Brennick Bakehouse,bakery,177,957.53,1.3
+2025-08-07,Sugar & Salt,bakery,94,457.81,1.3
+2025-08-07,Lantern Noodles,hot food,160,1804.36,1.3
+2025-08-07,Corranth Grill,hot food,145,2039.73,1.3
+2025-08-07,Frost Cart Ices,ice cream,22,89.81,1.3
+2025-08-07,Kestrel Coffee,coffee,231,906.84,1.3
+2025-08-07,Arvena Flowers,flowers,35,670.91,1.3
+2025-08-07,Saltmere Soap Co.,crafts,26,239.62,1.3
+2025-08-08,Orchard Row Fruit,fruit and veg,101,423.83,9
+2025-08-08,Greenleaf Greens,fruit and veg,72,246.65,9
+2025-08-08,Halden Smokehouse,fish,46,749.2,9
+2025-08-08,Tide Line Oysters,fish,30,677.56,9
+2025-08-08,Velmora Cheese Cave,dairy,43,569.55,9
+2025-08-08,Brennick Bakehouse,bakery,150,831.61,9
+2025-08-08,Sugar & Salt,bakery,82,395.51,9
+2025-08-08,Lantern Noodles,hot food,126,1406.63,9
+2025-08-08,Corranth Grill,hot food,136,1792.21,9
+2025-08-08,Frost Cart Ices,ice cream,21,99.18,9
+2025-08-08,Kestrel Coffee,coffee,232,958.37,9
+2025-08-08,Arvena Flowers,flowers,38,692.09,9
+2025-08-08,Saltmere Soap Co.,crafts,19,170.87,9
+2025-08-09,Orchard Row Fruit,fruit and veg,93,378.35,15.6
+2025-08-09,Greenleaf Greens,fruit and veg,74,262.59,15.6
+2025-08-09,Halden Smokehouse,fish,32,536.39,15.6
+2025-08-09,Tide Line Oysters,fish,27,583.18,15.6
+2025-08-09,Velmora Cheese Cave,dairy,40,523.64,15.6
+2025-08-09,Brennick Bakehouse,bakery,156,882.01,15.6
+2025-08-09,Sugar & Salt,bakery,86,411.85,15.6
+2025-08-09,Lantern Noodles,hot food,134,1523.11,15.6
+2025-08-09,Corranth Grill,hot food,135,1807.39,15.6
+2025-08-09,Frost Cart Ices,ice cream,17,76.7,15.6
+2025-08-09,Kestrel Coffee,coffee,197,796.57,15.6
+2025-08-09,Arvena Flowers,flowers,29,519.61,15.6
+2025-08-09,Saltmere Soap Co.,crafts,19,182.24,15.6
+2025-08-10,Orchard Row Fruit,fruit and veg,164,675.66,2
+2025-08-10,Greenleaf Greens,fruit and veg,123,451.29,2
+2025-08-10,Halden Smokehouse,fish,75,1238.89,2
+2025-08-10,Tide Line Oysters,fish,49,1120.42,2
+2025-08-10,Velmora Cheese Cave,dairy,79,988.4,2
+2025-08-10,Brennick Bakehouse,bakery,249,1358.21,2
+2025-08-10,Sugar & Salt,bakery,151,732.98,2
+2025-08-10,Lantern Noodles,hot food,244,2671.04,2
+2025-08-10,Corranth Grill,hot food,202,2868.39,2
+2025-08-10,Frost Cart Ices,ice cream,28,122.97,2
+2025-08-10,Kestrel Coffee,coffee,445,1645.1,2
+2025-08-10,Arvena Flowers,flowers,65,1144.09,2
+2025-08-10,Saltmere Soap Co.,crafts,35,342.37,2
+2025-08-12,Orchard Row Fruit,fruit and veg,110,464.4,0.9
+2025-08-12,Greenleaf Greens,fruit and veg,75,276.44,0.9
+2025-08-12,Halden Smokehouse,fish,44,739.56,0.9
+2025-08-12,Tide Line Oysters,fish,38,816.57,0.9
+2025-08-12,Velmora Cheese Cave,dairy,48,651.78,0.9
+2025-08-12,Brennick Bakehouse,bakery,170,906.29,0.9
+2025-08-12,Sugar & Salt,bakery,86,401.65,0.9
+2025-08-12,Lantern Noodles,hot food,165,1863.81,0.9
+2025-08-12,Corranth Grill,hot food,132,1828.34,0.9
+2025-08-12,Frost Cart Ices,ice cream,20,87.02,0.9
+2025-08-12,Kestrel Coffee,coffee,250,970.81,0.9
+2025-08-12,Arvena Flowers,flowers,35,668.22,0.9
+2025-08-12,Saltmere Soap Co.,crafts,23,216.34,0.9
+2025-08-13,Orchard Row Fruit,fruit and veg,87,370.42,0.5
+2025-08-13,Greenleaf Greens,fruit and veg,77,280.34,0.5
+2025-08-13,Halden Smokehouse,fish,48,739.55,0.5
+2025-08-13,Tide Line Oysters,fish,40,886.4,0.5
+2025-08-13,Velmora Cheese Cave,dairy,56,702.9,0.5
+2025-08-13,Brennick Bakehouse,bakery,189,1028.65,0.5
+2025-08-13,Sugar & Salt,bakery,90,448.09,0.5
+2025-08-13,Lantern Noodles,hot food,144,1570.45,0.5
+2025-08-13,Corranth Grill,hot food,147,1874.81,0.5
+2025-08-13,Frost Cart Ices,ice cream,20,94.98,0.5
+2025-08-13,Kestrel Coffee,coffee,265,1037.05,0.5
+2025-08-13,Arvena Flowers,flowers,39,705.04,0.5
+2025-08-13,Saltmere Soap Co.,crafts,24,223.26,0.5
+2025-08-14,Orchard Row Fruit,fruit and veg,74,314.49,5.9
+2025-08-14,Greenleaf Greens,fruit and veg,72,259.61,5.9
+2025-08-14,Halden Smokehouse,fish,41,660.23,5.9
+2025-08-14,Tide Line Oysters,fish,28,616.54,5.9
+2025-08-14,Velmora Cheese Cave,dairy,40,531.55,5.9
+2025-08-14,Brennick Bakehouse,bakery,172,908.26,5.9
+2025-08-14,Sugar & Salt,bakery,85,406.67,5.9
+2025-08-14,Lantern Noodles,hot food,133,1495.3,5.9
+2025-08-14,Corranth Grill,hot food,124,1728.14,5.9
+2025-08-14,Frost Cart Ices,ice cream,17,79.46,5.9
+2025-08-14,Kestrel Coffee,coffee,203,798.87,5.9
+2025-08-14,Arvena Flowers,flowers,35,600.72,5.9
+2025-08-14,Saltmere Soap Co.,crafts,14,131.66,5.9
+2025-08-15,Orchard Row Fruit,fruit and veg,136,561.19,0
+2025-08-15,Greenleaf Greens,fruit and veg,106,365.97,0
+2025-08-15,Halden Smokehouse,fish,48,788.18,0
+2025-08-15,Tide Line Oysters,fish,49,1096.27,0
+2025-08-15,Velmora Cheese Cave,dairy,57,755.06,0
+2025-08-15,Brennick Bakehouse,bakery,242,1368.8,0
+2025-08-15,Sugar & Salt,bakery,124,635.04,0
+2025-08-15,Lantern Noodles,hot food,155,1682.31,0
+2025-08-15,Corranth Grill,hot food,171,2194.81,0
+2025-08-15,Frost Cart Ices,ice cream,30,130.55,0
+2025-08-15,Kestrel Coffee,coffee,329,1385.97,0
+2025-08-15,Arvena Flowers,flowers,55,976.26,0
+2025-08-15,Saltmere Soap Co.,crafts,37,365.76,0
+2025-08-16,Orchard Row Fruit,fruit and veg,85,353.73,23.8
+2025-08-16,Greenleaf Greens,fruit and veg,53,195.43,23.8
+2025-08-16,Halden Smokehouse,fish,36,572.95,23.8
+2025-08-16,Tide Line Oysters,fish,24,512.07,23.8
+2025-08-16,Velmora Cheese Cave,dairy,34,455.29,23.8
+2025-08-16,Brennick Bakehouse,bakery,137,773.28,23.8
+2025-08-16,Sugar & Salt,bakery,95,470.75,23.8
+2025-08-16,Lantern Noodles,hot food,121,1316.83,23.8
+2025-08-16,Corranth Grill,hot food,86,1208.92,23.8
+2025-08-16,Frost Cart Ices,ice cream,19,85.96,23.8
+2025-08-16,Kestrel Coffee,coffee,187,784.89,23.8
+2025-08-16,Arvena Flowers,flowers,33,595.9,23.8
+2025-08-16,Saltmere Soap Co.,crafts,20,194.79,23.8
+2025-08-17,Orchard Row Fruit,fruit and veg,121,518.03,5.4
+2025-08-17,Greenleaf Greens,fruit and veg,95,353.79,5.4
+2025-08-17,Halden Smokehouse,fish,56,918.06,5.4
+2025-08-17,Tide Line Oysters,fish,40,903.71,5.4
+2025-08-17,Velmora Cheese Cave,dairy,68,858.43,5.4
+2025-08-17,Brennick Bakehouse,bakery,209,1130.52,5.4
+2025-08-17,Sugar & Salt,bakery,115,574.71,5.4
+2025-08-17,Lantern Noodles,hot food,199,2281.15,5.4
+2025-08-17,Corranth Grill,hot food,166,2248.32,5.4
+2025-08-17,Frost Cart Ices,ice cream,34,156.09,5.4
+2025-08-17,Kestrel Coffee,coffee,252,1033.02,5.4
+2025-08-17,Arvena Flowers,flowers,54,999.76,5.4
+2025-08-17,Saltmere Soap Co.,crafts,33,317.08,5.4
+2025-08-19,Orchard Row Fruit,fruit and veg,91,358.25,1.1
+2025-08-19,Greenleaf Greens,fruit and veg,85,309.41,1.1
+2025-08-19,Halden Smokehouse,fish,41,669.39,1.1
+2025-08-19,Tide Line Oysters,fish,32,703.11,1.1
+2025-08-19,Velmora Cheese Cave,dairy,49,649.73,1.1
+2025-08-19,Brennick Bakehouse,bakery,176,970.06,1.1
+2025-08-19,Sugar & Salt,bakery,100,494.73,1.1
+2025-08-19,Lantern Noodles,hot food,154,1635.7,1.1
+2025-08-19,Corranth Grill,hot food,136,1814.22,1.1
+2025-08-19,Frost Cart Ices,ice cream,24,107.34,1.1
+2025-08-19,Kestrel Coffee,coffee,260,1024.05,1.1
+2025-08-19,Arvena Flowers,flowers,36,663.85,1.1
+2025-08-19,Saltmere Soap Co.,crafts,24,221.59,1.1
+2025-08-20,Orchard Row Fruit,fruit and veg,111,468.62,0
+2025-08-20,Greenleaf Greens,fruit and veg,87,305.66,0
+2025-08-20,Halden Smokehouse,fish,46,804.42,0
+2025-08-20,Tide Line Oysters,fish,28,649.77,0
+2025-08-20,Velmora Cheese Cave,dairy,49,672.07,0
+2025-08-20,Brennick Bakehouse,bakery,177,989.82,0
+2025-08-20,Sugar & Salt,bakery,92,433.95,0
+2025-08-20,Lantern Noodles,hot food,157,1729.82,0
+2025-08-20,Corranth Grill,hot food,140,1922.26,0
+2025-08-20,Frost Cart Ices,ice cream,23,98.33,0
+2025-08-20,Kestrel Coffee,coffee,248,985.44,0
+2025-08-20,Arvena Flowers,flowers,38,674.47,0
+2025-08-20,Saltmere Soap Co.,crafts,29,265.82,0
+2025-08-21,Orchard Row Fruit,fruit and veg,44,188.1,16.4
+2025-08-21,Greenleaf Greens,fruit and veg,42,154.2,16.4
+2025-08-21,Halden Smokehouse,fish,21,337.24,16.4
+2025-08-21,Tide Line Oysters,fish,14,302.41,16.4
+2025-08-21,Velmora Cheese Cave,dairy,21,279.1,16.4
+2025-08-21,Brennick Bakehouse,bakery,79,442.04,16.4
+2025-08-21,Sugar & Salt,bakery,51,238.97,16.4
+2025-08-21,Lantern Noodles,hot food,78,838.99,16.4
+2025-08-21,Corranth Grill,hot food,60,763.5,16.4
+2025-08-21,Frost Cart Ices,ice cream,13,54.17,16.4
+2025-08-21,Kestrel Coffee,coffee,113,487.78,16.4
+2025-08-21,Arvena Flowers,flowers,15,275.75,16.4
+2025-08-21,Saltmere Soap Co.,crafts,11,104.9,16.4
+2025-08-22,Orchard Row Fruit,fruit and veg,149,652.02,0.7
+2025-08-22,Greenleaf Greens,fruit and veg,99,349.5,0.7
+2025-08-22,Halden Smokehouse,fish,54,872.41,0.7
+2025-08-22,Tide Line Oysters,fish,40,870.01,0.7
+2025-08-22,Velmora Cheese Cave,dairy,68,837.32,0.7
+2025-08-22,Brennick Bakehouse,bakery,183,959.87,0.7
+2025-08-22,Sugar & Salt,bakery,129,651.14,0.7
+2025-08-22,Lantern Noodles,hot food,238,2595.7,0.7
+2025-08-22,Corranth Grill,hot food,169,2394.1,0.7
+2025-08-22,Frost Cart Ices,ice cream,34,162.97,0.7
+2025-08-22,Kestrel Coffee,coffee,325,1353.21,0.7
+2025-08-22,Arvena Flowers,flowers,53,972.83,0.7
+2025-08-22,Saltmere Soap Co.,crafts,35,323.38,0.7
+2025-08-23,Orchard Row Fruit,fruit and veg,104,434.89,13.4
+2025-08-23,Greenleaf Greens,fruit and veg,86,310.13,13.4
+2025-08-23,Halden Smokehouse,fish,41,679.52,13.4
+2025-08-23,Tide Line Oysters,fish,34,751.01,13.4
+2025-08-23,Velmora Cheese Cave,dairy,43,521.07,13.4
+2025-08-23,Brennick Bakehouse,bakery,160,849.02,13.4
+2025-08-23,Sugar & Salt,bakery,82,381.32,13.4
+2025-08-23,Lantern Noodles,hot food,156,1783.53,13.4
+2025-08-23,Corranth Grill,hot food,130,1783.56,13.4
+2025-08-23,Frost Cart Ices,ice cream,23,101.92,13.4
+2025-08-23,Kestrel Coffee,coffee,222,888.9,13.4
+2025-08-23,Arvena Flowers,flowers,33,634.9,13.4
+2025-08-23,Saltmere Soap Co.,crafts,23,215.39,13.4
+2025-08-24,Orchard Row Fruit,fruit and veg,73,302.73,12.9
+2025-08-24,Greenleaf Greens,fruit and veg,76,274.68,12.9
+2025-08-24,Halden Smokehouse,fish,41,666.84,12.9
+2025-08-24,Tide Line Oysters,fish,32,685.97,12.9
+2025-08-24,Velmora Cheese Cave,dairy,48,655.64,12.9
+2025-08-24,Brennick Bakehouse,bakery,118,659.45,12.9
+2025-08-24,Sugar & Salt,bakery,100,470.28,12.9
+2025-08-24,Lantern Noodles,hot food,121,1303.01,12.9
+2025-08-24,Corranth Grill,hot food,113,1557.64,12.9
+2025-08-24,Frost Cart Ices,ice cream,22,96.05,12.9
+2025-08-24,Kestrel Coffee,coffee,201,793.69,12.9
+2025-08-24,Arvena Flowers,flowers,36,651.48,12.9
+2025-08-24,Saltmere Soap Co.,crafts,19,176.12,12.9
+2025-08-26,Orchard Row Fruit,fruit and veg,121,506.48,0
+2025-08-26,Greenleaf Greens,fruit and veg,82,305.72,0
+2025-08-26,Halden Smokehouse,fish,44,683.7,0
+2025-08-26,Tide Line Oysters,fish,36,768.9,0
+2025-08-26,Velmora Cheese Cave,dairy,51,700.04,0
+2025-08-26,Brennick Bakehouse,bakery,173,937.64,0
+2025-08-26,Sugar & Salt,bakery,109,507.59,0
+2025-08-26,Lantern Noodles,hot food,146,1619.33,0
+2025-08-26,Corranth Grill,hot food,132,1768.64,0
+2025-08-26,Frost Cart Ices,ice cream,32,148.88,0
+2025-08-26,Kestrel Coffee,coffee,305,1233.76,0
+2025-08-26,Arvena Flowers,flowers,43,753.11,0
+2025-08-26,Saltmere Soap Co.,crafts,23,218.67,0
+2025-08-27,Orchard Row Fruit,fruit and veg,95,376.52,3
+2025-08-27,Greenleaf Greens,fruit and veg,74,268.11,3
+2025-08-27,Halden Smokehouse,fish,33,545.78,3
+2025-08-27,Tide Line Oysters,fish,32,701.25,3
+2025-08-27,Velmora Cheese Cave,dairy,46,627.17,3
+2025-08-27,Brennick Bakehouse,bakery,174,968.23,3
+2025-08-27,Sugar & Salt,bakery,93,424.83,3
+2025-08-27,Lantern Noodles,hot food,156,1712.22,3
+2025-08-27,Corranth Grill,hot food,148,2059.36,3
+2025-08-27,Frost Cart Ices,ice cream,30,140.56,3
+2025-08-27,Kestrel Coffee,coffee,242,973.05,3
+2025-08-27,Arvena Flowers,flowers,33,610.3,3
+2025-08-27,Saltmere Soap Co.,crafts,27,263.01,3
+2025-08-28,Orchard Row Fruit,fruit and veg,112,474.88,0.3
+2025-08-28,Greenleaf Greens,fruit and veg,82,296.46,0.3
+2025-08-28,Halden Smokehouse,fish,48,774.17,0.3
+2025-08-28,Tide Line Oysters,fish,32,701.22,0.3
+2025-08-28,Velmora Cheese Cave,dairy,50,618.43,0.3
+2025-08-28,Brennick Bakehouse,bakery,177,1014.19,0.3
+2025-08-28,Sugar & Salt,bakery,93,452.77,0.3
+2025-08-28,Lantern Noodles,hot food,152,1783.27,0.3
+2025-08-28,Corranth Grill,hot food,134,1873.5,0.3
+2025-08-28,Frost Cart Ices,ice cream,38,166.64,0.3
+2025-08-28,Kestrel Coffee,coffee,259,1070,0.3
+2025-08-28,Arvena Flowers,flowers,37,697.67,0.3
+2025-08-28,Saltmere Soap Co.,crafts,22,219.17,0.3
+2025-08-29,Orchard Row Fruit,fruit and veg,111,466.99,0
+2025-08-29,Greenleaf Greens,fruit and veg,108,388.11,0
+2025-08-29,Halden Smokehouse,fish,63,1079.62,0
+2025-08-29,Tide Line Oysters,fish,50,1074.2,0
+2025-08-29,Velmora Cheese Cave,dairy,65,828.37,0
+2025-08-29,Brennick Bakehouse,bakery,229,1302.41,0
+2025-08-29,Sugar & Salt,bakery,141,671.7,0
+2025-08-29,Lantern Noodles,hot food,207,2397.11,0
+2025-08-29,Corranth Grill,hot food,182,2521.36,0
+2025-08-29,Frost Cart Ices,ice cream,51,229.17,0
+2025-08-29,Kestrel Coffee,coffee,374,1499.7,0
+2025-08-29,Arvena Flowers,flowers,47,821.01,0
+2025-08-29,Saltmere Soap Co.,crafts,36,329.61,0
+2025-08-30,Orchard Row Fruit,fruit and veg,177,753.06,0.1
+2025-08-30,Greenleaf Greens,fruit and veg,152,527.75,0.1
+2025-08-30,Halden Smokehouse,fish,85,1346.12,0.1
+2025-08-30,Tide Line Oysters,fish,66,1454.08,0.1
+2025-08-30,Velmora Cheese Cave,dairy,96,1187.25,0.1
+2025-08-30,Brennick Bakehouse,bakery,301,1628.08,0.1
+2025-08-30,Sugar & Salt,bakery,202,958.63,0.1
+2025-08-30,Lantern Noodles,hot food,234,2691.51,0.1
+2025-08-30,Corranth Grill,hot food,250,3615.44,0.1
+2025-08-30,Frost Cart Ices,ice cream,67,295.47,0.1
+2025-08-30,Kestrel Coffee,coffee,417,1675.95,0.1
+2025-08-30,Arvena Flowers,flowers,61,1041.58,0.1
+2025-08-30,Saltmere Soap Co.,crafts,48,458.78,0.1
+2025-08-31,Orchard Row Fruit,fruit and veg,141,600.26,0
+2025-08-31,Greenleaf Greens,fruit and veg,122,429.13,0
+2025-08-31,Halden Smokehouse,fish,73,1253.92,0
+2025-08-31,Tide Line Oysters,fish,52,1086.99,0
+2025-08-31,Velmora Cheese Cave,dairy,69,928.04,0
+2025-08-31,Brennick Bakehouse,bakery,315,1751.02,0
+2025-08-31,Sugar & Salt,bakery,149,726.55,0
+2025-08-31,Lantern Noodles,hot food,286,3279.19,0
+2025-08-31,Corranth Grill,hot food,183,2419.76,0
+2025-08-31,Frost Cart Ices,ice cream,60,266.85,0
+2025-08-31,Kestrel Coffee,coffee,409,1736,0
+2025-08-31,Arvena Flowers,flowers,62,1131.42,0
+2025-08-31,Saltmere Soap Co.,crafts,44,416.77,0
+2025-09-02,Orchard Row Fruit,fruit and veg,106,423.52,1.4
+2025-09-02,Greenleaf Greens,fruit and veg,78,274.23,1.4
+2025-09-02,Halden Smokehouse,fish,45,768.14,1.4
+2025-09-02,Tide Line Oysters,fish,36,798.43,1.4
+2025-09-02,Velmora Cheese Cave,dairy,44,554.18,1.4
+2025-09-02,Brennick Bakehouse,bakery,173,942.73,1.4
+2025-09-02,Sugar & Salt,bakery,87,403.46,1.4
+2025-09-02,Lantern Noodles,hot food,144,1468.08,1.4
+2025-09-02,Corranth Grill,hot food,124,1650.17,1.4
+2025-09-02,Frost Cart Ices,ice cream,49,217.88,1.4
+2025-09-02,Kestrel Coffee,coffee,214,846.78,1.4
+2025-09-02,Arvena Flowers,flowers,37,660.09,1.4
+2025-09-02,Saltmere Soap Co.,crafts,23,213.88,1.4
+2025-09-03,Orchard Row Fruit,fruit and veg,104,421.52,0.8
+2025-09-03,Greenleaf Greens,fruit and veg,83,296.65,0.8
+2025-09-03,Halden Smokehouse,fish,43,709.58,0.8
+2025-09-03,Tide Line Oysters,fish,29,646.38,0.8
+2025-09-03,Velmora Cheese Cave,dairy,46,587.24,0.8
+2025-09-03,Brennick Bakehouse,bakery,178,974.65,0.8
+2025-09-03,Sugar & Salt,bakery,101,483.36,0.8
+2025-09-03,Lantern Noodles,hot food,150,1656.52,0.8
+2025-09-03,Corranth Grill,hot food,129,1813.22,0.8
+2025-09-03,Frost Cart Ices,ice cream,41,179.06,0.8
+2025-09-03,Kestrel Coffee,coffee,229,909,0.8
+2025-09-03,Arvena Flowers,flowers,34,606.38,0.8
+2025-09-03,Saltmere Soap Co.,crafts,26,255.32,0.8
+2025-09-04,Orchard Row Fruit,fruit and veg,96,397.32,0
+2025-09-04,Greenleaf Greens,fruit and veg,67,249.18,0
+2025-09-04,Halden Smokehouse,fish,46,765.89,0
+2025-09-04,Tide Line Oysters,fish,35,744.59,0
+2025-09-04,Velmora Cheese Cave,dairy,53,697.12,0
+2025-09-04,Brennick Bakehouse,bakery,178,982.27,0
+2025-09-04,Sugar & Salt,bakery,110,537.94,0
+2025-09-04,Lantern Noodles,hot food,170,1826.25,0
+2025-09-04,Corranth Grill,hot food,127,1679.88,0
+2025-09-04,Frost Cart Ices,ice cream,44,203.04,0
+2025-09-04,Kestrel Coffee,coffee,233,952.15,0
+2025-09-04,Arvena Flowers,flowers,46,854.21,0
+2025-09-04,Saltmere Soap Co.,crafts,27,251.98,0
+2025-09-05,Orchard Row Fruit,fruit and veg,118,489.32,0
+2025-09-05,Greenleaf Greens,fruit and veg,102,365.86,0
+2025-09-05,Halden Smokehouse,fish,56,944.61,0
+2025-09-05,Tide Line Oysters,fish,43,892.53,0
+2025-09-05,Velmora Cheese Cave,dairy,61,763.27,0
+2025-09-05,Brennick Bakehouse,bakery,240,1302.61,0
+2025-09-05,Sugar & Salt,bakery,140,666.83,0
+2025-09-05,Lantern Noodles,hot food,191,2192.92,0
+2025-09-05,Corranth Grill,hot food,187,2620.13,0
+2025-09-05,Frost Cart Ices,ice cream,48,207.31,0
+2025-09-05,Kestrel Coffee,coffee,287,1148.07,0
+2025-09-05,Arvena Flowers,flowers,54,881.32,0
+2025-09-05,Saltmere Soap Co.,crafts,34,324.11,0
+2025-09-06,Orchard Row Fruit,fruit and veg,186,792.44,0
+2025-09-06,Greenleaf Greens,fruit and veg,134,494.87,0
+2025-09-06,Halden Smokehouse,fish,69,1091.5,0
+2025-09-06,Tide Line Oysters,fish,56,1280.68,0
+2025-09-06,Velmora Cheese Cave,dairy,70,910.53,0
+2025-09-06,Brennick Bakehouse,bakery,304,1666.51,0
+2025-09-06,Sugar & Salt,bakery,205,975.19,0
+2025-09-06,Lantern Noodles,hot food,247,2642.33,0
+2025-09-06,Corranth Grill,hot food,251,3602.45,0
+2025-09-06,Frost Cart Ices,ice cream,67,288.69,0
+2025-09-06,Kestrel Coffee,coffee,477,1936.27,0
+2025-09-06,Arvena Flowers,flowers,68,1262.81,0
+2025-09-06,Saltmere Soap Co.,crafts,35,330.24,0
+2025-09-07,Orchard Row Fruit,fruit and veg,167,715.35,3.2
+2025-09-07,Greenleaf Greens,fruit and veg,110,387.51,3.2
+2025-09-07,Halden Smokehouse,fish,73,1200.1,3.2
+2025-09-07,Tide Line Oysters,fish,44,979.29,3.2
+2025-09-07,Velmora Cheese Cave,dairy,74,944.33,3.2
+2025-09-07,Brennick Bakehouse,bakery,232,1315.43,3.2
+2025-09-07,Sugar & Salt,bakery,145,700.03,3.2
+2025-09-07,Lantern Noodles,hot food,250,2759.37,3.2
+2025-09-07,Corranth Grill,hot food,186,2482.94,3.2
+2025-09-07,Frost Cart Ices,ice cream,61,267.23,3.2
+2025-09-07,Kestrel Coffee,coffee,315,1234.65,3.2
+2025-09-07,Arvena Flowers,flowers,56,967.84,3.2
+2025-09-07,Saltmere Soap Co.,crafts,31,291.39,3.2
+2025-09-09,Orchard Row Fruit,fruit and veg,92,384.92,4.2
+2025-09-09,Greenleaf Greens,fruit and veg,71,251.94,4.2
+2025-09-09,Halden Smokehouse,fish,36,615.09,4.2
+2025-09-09,Tide Line Oysters,fish,26,603.61,4.2
+2025-09-09,Velmora Cheese Cave,dairy,43,521,4.2
+2025-09-09,Brennick Bakehouse,bakery,173,973.98,4.2
+2025-09-09,Sugar & Salt,bakery,78,383.07,4.2
+2025-09-09,Lantern Noodles,hot food,154,1662.09,4.2
+2025-09-09,Corranth Grill,hot food,117,1633.27,4.2
+2025-09-09,Frost Cart Ices,ice cream,43,192.84,4.2
+2025-09-09,Kestrel Coffee,coffee,240,976.1,4.2
+2025-09-09,Arvena Flowers,flowers,36,644.21,4.2
+2025-09-09,Saltmere Soap Co.,crafts,19,179.74,4.2
+2025-09-10,Orchard Row Fruit,fruit and veg,105,449.24,1.2
+2025-09-10,Greenleaf Greens,fruit and veg,74,257.73,1.2
+2025-09-10,Halden Smokehouse,fish,52,858.56,1.2
+2025-09-10,Tide Line Oysters,fish,30,646.52,1.2
+2025-09-10,Velmora Cheese Cave,dairy,48,603.61,1.2
+2025-09-10,Brennick Bakehouse,bakery,193,1066.7,1.2
+2025-09-10,Sugar & Salt,bakery,125,585.47,1.2
+2025-09-10,Lantern Noodles,hot food,137,1512.55,1.2
+2025-09-10,Corranth Grill,hot food,134,1847.56,1.2
+2025-09-10,Frost Cart Ices,ice cream,55,261.81,1.2
+2025-09-10,Kestrel Coffee,coffee,276,1121.68,1.2
+2025-09-10,Arvena Flowers,flowers,34,607.45,1.2
+2025-09-10,Saltmere Soap Co.,crafts,22,198.12,1.2
+2025-09-11,Orchard Row Fruit,fruit and veg,116,471.54,0
+2025-09-11,Greenleaf Greens,fruit and veg,85,316.77,0
+2025-09-11,Halden Smokehouse,fish,44,705.69,0
+2025-09-11,Tide Line Oysters,fish,36,773.36,0
+2025-09-11,Velmora Cheese Cave,dairy,62,821.39,0
+2025-09-11,Brennick Bakehouse,bakery,158,853.74,0
+2025-09-11,Sugar & Salt,bakery,102,484.27,0
+2025-09-11,Lantern Noodles,hot food,178,1937.32,0
+2025-09-11,Corranth Grill,hot food,113,1551.53,0
+2025-09-11,Frost Cart Ices,ice cream,51,239.81,0
+2025-09-11,Kestrel Coffee,coffee,237,903.24,0
+2025-09-11,Arvena Flowers,flowers,41,751.85,0
+2025-09-11,Saltmere Soap Co.,crafts,25,233.15,0
+2025-09-12,Orchard Row Fruit,fruit and veg,141,597.53,0
+2025-09-12,Greenleaf Greens,fruit and veg,84,305.78,0
+2025-09-12,Halden Smokehouse,fish,51,838.37,0
+2025-09-12,Tide Line Oysters,fish,44,995.46,0
+2025-09-12,Velmora Cheese Cave,dairy,61,776.73,0
+2025-09-12,Brennick Bakehouse,bakery,196,1123.74,0
+2025-09-12,Sugar & Salt,bakery,149,726.38,0
+2025-09-12,Lantern Noodles,hot food,177,2026.67,0
+2025-09-12,Corranth Grill,hot food,195,2537.05,0
+2025-09-12,Frost Cart Ices,ice cream,80,359.58,0
+2025-09-12,Kestrel Coffee,coffee,352,1393.96,0
+2025-09-12,Arvena Flowers,flowers,56,983.64,0
+2025-09-12,Saltmere Soap Co.,crafts,31,307.97,0
+2025-09-13,Orchard Row Fruit,fruit and veg,154,668.18,9.6
+2025-09-13,Greenleaf Greens,fruit and veg,104,380.93,9.6
+2025-09-13,Halden Smokehouse,fish,59,973.36,9.6
+2025-09-13,Tide Line Oysters,fish,31,661.65,9.6
+2025-09-13,Velmora Cheese Cave,dairy,62,797.93,9.6
+2025-09-13,Brennick Bakehouse,bakery,214,1218.43,9.6
+2025-09-13,Sugar & Salt,bakery,109,525.21,9.6
+2025-09-13,Lantern Noodles,hot food,166,1795.45,9.6
+2025-09-13,Corranth Grill,hot food,176,2305.23,9.6
+2025-09-13,Frost Cart Ices,ice cream,65,292.13,9.6
+2025-09-13,Kestrel Coffee,coffee,235,966.46,9.6
+2025-09-13,Arvena Flowers,flowers,40,751.36,9.6
+2025-09-13,Saltmere Soap Co.,crafts,32,316.73,9.6
+2025-09-14,Orchard Row Fruit,fruit and veg,132,565.32,5.7
+2025-09-14,Greenleaf Greens,fruit and veg,111,387.28,5.7
+2025-09-14,Halden Smokehouse,fish,51,804.4,5.7
+2025-09-14,Tide Line Oysters,fish,47,1070.32,5.7
+2025-09-14,Velmora Cheese Cave,dairy,65,837.99,5.7
+2025-09-14,Brennick Bakehouse,bakery,220,1263.66,5.7
+2025-09-14,Sugar & Salt,bakery,124,576.41,5.7
+2025-09-14,Lantern Noodles,hot food,226,2622.2,5.7
+2025-09-14,Corranth Grill,hot food,147,2020.69,5.7
+2025-09-14,Frost Cart Ices,ice cream,64,291.14,5.7
+2025-09-14,Kestrel Coffee,coffee,313,1221.83,5.7
+2025-09-14,Arvena Flowers,flowers,45,815,5.7
+2025-09-14,Saltmere Soap Co.,crafts,34,315.77,5.7
+2025-09-16,Orchard Row Fruit,fruit and veg,64,277.21,14.4
+2025-09-16,Greenleaf Greens,fruit and veg,45,162.34,14.4
+2025-09-16,Halden Smokehouse,fish,22,359.78,14.4
+2025-09-16,Tide Line Oysters,fish,16,334.15,14.4
+2025-09-16,Velmora Cheese Cave,dairy,27,355.28,14.4
+2025-09-16,Brennick Bakehouse,bakery,109,608.44,14.4
+2025-09-16,Sugar & Salt,bakery,53,251.46,14.4
+2025-09-16,Lantern Noodles,hot food,76,813.66,14.4
+2025-09-16,Corranth Grill,hot food,76,1004.67,14.4
+2025-09-16,Frost Cart Ices,ice cream,36,171.77,14.4
+2025-09-16,Kestrel Coffee,coffee,133,518.62,14.4
+2025-09-16,Arvena Flowers,flowers,18,320.97,14.4
+2025-09-16,Saltmere Soap Co.,crafts,13,120.94,14.4
+2025-09-17,Orchard Row Fruit,fruit and veg,122,490.36,0
+2025-09-17,Greenleaf Greens,fruit and veg,96,357.64,0
+2025-09-17,Halden Smokehouse,fish,48,777.69,0
+2025-09-17,Tide Line Oysters,fish,39,825.11,0
+2025-09-17,Velmora Cheese Cave,dairy,50,661.39,0
+2025-09-17,Brennick Bakehouse,bakery,217,1189.77,0
+2025-09-17,Sugar & Salt,bakery,95,446.05,0
+2025-09-17,Lantern Noodles,hot food,162,1697.51,0
+2025-09-17,Corranth Grill,hot food,151,2029.98,0
+2025-09-17,Frost Cart Ices,ice cream,64,270.5,0
+2025-09-17,Kestrel Coffee,coffee,287,1152.86,0
+2025-09-17,Arvena Flowers,flowers,49,902.81,0
+2025-09-17,Saltmere Soap Co.,crafts,22,208.38,0
+2025-09-18,Orchard Row Fruit,fruit and veg,39,158.14,23.3
+2025-09-18,Greenleaf Greens,fruit and veg,39,139.54,23.3
+2025-09-18,Halden Smokehouse,fish,20,340.96,23.3
+2025-09-18,Tide Line Oysters,fish,15,334.77,23.3
+2025-09-18,Velmora Cheese Cave,dairy,24,303.72,23.3
+2025-09-18,Brennick Bakehouse,bakery,78,423.82,23.3
+2025-09-18,Sugar & Salt,bakery,49,237.57,23.3
+2025-09-18,Lantern Noodles,hot food,91,981.57,23.3
+2025-09-18,Corranth Grill,hot food,57,780.3,23.3
+2025-09-18,Frost Cart Ices,ice cream,31,130.75,23.3
+2025-09-18,Kestrel Coffee,coffee,115,456.76,23.3
+2025-09-18,Arvena Flowers,flowers,16,283.59,23.3
+2025-09-18,Saltmere Soap Co.,crafts,10,95.43,23.3
+2025-09-19,Orchard Row Fruit,fruit and veg,170,750.87,0
+2025-09-19,Greenleaf Greens,fruit and veg,122,460.78,0
+2025-09-19,Halden Smokehouse,fish,64,1045.26,0
+2025-09-19,Tide Line Oysters,fish,41,913.07,0
+2025-09-19,Velmora Cheese Cave,dairy,63,778.1,0
+2025-09-19,Brennick Bakehouse,bakery,218,1187.79,0
+2025-09-19,Sugar & Salt,bakery,161,782.7,0
+2025-09-19,Lantern Noodles,hot food,194,2117,0
+2025-09-19,Corranth Grill,hot food,202,2705.29,0
+2025-09-19,Frost Cart Ices,ice cream,104,479.83,0
+2025-09-19,Kestrel Coffee,coffee,318,1281.66,0
+2025-09-19,Arvena Flowers,flowers,54,952.55,0
+2025-09-19,Saltmere Soap Co.,crafts,28,273.89,0
+2025-09-20,Orchard Row Fruit,fruit and veg,211,890.01,0
+2025-09-20,Greenleaf Greens,fruit and veg,135,501.78,0
+2025-09-20,Halden Smokehouse,fish,90,1389.8,0
+2025-09-20,Tide Line Oysters,fish,67,1496.32,0
+2025-09-20,Velmora Cheese Cave,dairy,88,1151.57,0
+2025-09-20,Brennick Bakehouse,bakery,327,1802.8,0
+2025-09-20,Sugar & Salt,bakery,163,770.93,0
+2025-09-20,Lantern Noodles,hot food,265,2753.91,0
+2025-09-20,Corranth Grill,hot food,258,3295.21,0
+2025-09-20,Frost Cart Ices,ice cream,119,516.36,0
+2025-09-20,Kestrel Coffee,coffee,358,1476.1,0
+2025-09-20,Arvena Flowers,flowers,60,1086,0
+2025-09-20,Saltmere Soap Co.,crafts,47,458.94,0
+2025-09-21,Orchard Row Fruit,fruit and veg,180,759.54,0
+2025-09-21,Greenleaf Greens,fruit and veg,140,507.26,0
+2025-09-21,Halden Smokehouse,fish,77,1213.5,0
+2025-09-21,Tide Line Oysters,fish,55,1201.2,0
+2025-09-21,Velmora Cheese Cave,dairy,87,1060.74,0
+2025-09-21,Brennick Bakehouse,bakery,249,1351.07,0
+2025-09-21,Sugar & Salt,bakery,153,757.16,0
+2025-09-21,Lantern Noodles,hot food,211,2338.03,0
+2025-09-21,Corranth Grill,hot food,204,3002.7,0
+2025-09-21,Frost Cart Ices,ice cream,76,351.91,0
+2025-09-21,Kestrel Coffee,coffee,377,1525.9,0
+2025-09-21,Arvena Flowers,flowers,62,1149.56,0
+2025-09-21,Saltmere Soap Co.,crafts,39,372.65,0
+2025-09-23,Orchard Row Fruit,fruit and veg,120,488.66,0
+2025-09-23,Greenleaf Greens,fruit and veg,85,314.39,0
+2025-09-23,Halden Smokehouse,fish,52,884.63,0
+2025-09-23,Tide Line Oysters,fish,35,801.69,0
+2025-09-23,Velmora Cheese Cave,dairy,52,656.16,0
+2025-09-23,Brennick Bakehouse,bakery,178,969.41,0
+2025-09-23,Sugar & Salt,bakery,110,520.39,0
+2025-09-23,Lantern Noodles,hot food,126,1305.29,0
+2025-09-23,Corranth Grill,hot food,152,2106.34,0
+2025-09-23,Frost Cart Ices,ice cream,67,312.14,0
+2025-09-23,Kestrel Coffee,coffee,258,1029.55,0
+2025-09-23,Arvena Flowers,flowers,38,692.56,0
+2025-09-23,Saltmere Soap Co.,crafts,24,224.64,0
+2025-09-24,Orchard Row Fruit,fruit and veg,107,461.69,0
+2025-09-24,Greenleaf Greens,fruit and veg,89,305.79,0
+2025-09-24,Halden Smokehouse,fish,44,723.27,0
+2025-09-24,Tide Line Oysters,fish,30,641.97,0
+2025-09-24,Velmora Cheese Cave,dairy,52,629.09,0
+2025-09-24,Brennick Bakehouse,bakery,186,1030.67,0
+2025-09-24,Sugar & Salt,bakery,111,565.39,0
+2025-09-24,Lantern Noodles,hot food,179,1872.12,0
+2025-09-24,Corranth Grill,hot food,133,1765.3,0
+2025-09-24,Frost Cart Ices,ice cream,64,303.67,0
+2025-09-24,Kestrel Coffee,coffee,282,1078.09,0
+2025-09-24,Arvena Flowers,flowers,37,650.78,0
+2025-09-24,Saltmere Soap Co.,crafts,27,237.01,0
+2025-09-25,Orchard Row Fruit,fruit and veg,106,425.37,0
+2025-09-25,Greenleaf Greens,fruit and veg,94,341.41,0
+2025-09-25,Halden Smokehouse,fish,42,673.97,0
+2025-09-25,Tide Line Oysters,fish,34,734.29,0
+2025-09-25,Velmora Cheese Cave,dairy,39,506.1,0
+2025-09-25,Brennick Bakehouse,bakery,171,936.53,0
+2025-09-25,Sugar & Salt,bakery,102,480.43,0
+2025-09-25,Lantern Noodles,hot food,181,1984.9,0
+2025-09-25,Corranth Grill,hot food,159,2161.53,0
+2025-09-25,Frost Cart Ices,ice cream,88,380.68,0
+2025-09-25,Kestrel Coffee,coffee,269,1053.43,0
+2025-09-25,Arvena Flowers,flowers,48,864.57,0
+2025-09-25,Saltmere Soap Co.,crafts,23,207.77,0
+2025-09-26,Orchard Row Fruit,fruit and veg,151,643.31,0
+2025-09-26,Greenleaf Greens,fruit and veg,126,444.26,0
+2025-09-26,Halden Smokehouse,fish,52,876.93,0
+2025-09-26,Tide Line Oysters,fish,54,1218.23,0
+2025-09-26,Velmora Cheese Cave,dairy,57,714.86,0
+2025-09-26,Brennick Bakehouse,bakery,198,1084.33,0
+2025-09-26,Sugar & Salt,bakery,120,589.3,0
+2025-09-26,Lantern Noodles,hot food,216,2401.87,0
+2025-09-26,Corranth Grill,hot food,192,2600.54,0
+2025-09-26,Frost Cart Ices,ice cream,101,455.89,0
+2025-09-26,Kestrel Coffee,coffee,360,1420.66,0
+2025-09-26,Arvena Flowers,flowers,53,959.18,0
+2025-09-26,Saltmere Soap Co.,crafts,34,322.65,0
+2025-09-27,Orchard Row Fruit,fruit and veg,184,776.97,0
+2025-09-27,Greenleaf Greens,fruit and veg,145,530.02,0
+2025-09-27,Halden Smokehouse,fish,71,1157.49,0
+2025-09-27,Tide Line Oysters,fish,56,1225.07,0
+2025-09-27,Velmora Cheese Cave,dairy,78,1008.78,0
+2025-09-27,Brennick Bakehouse,bakery,333,1871.45,0
+2025-09-27,Sugar & Salt,bakery,191,903.44,0
+2025-09-27,Lantern Noodles,hot food,229,2467.75,0
+2025-09-27,Corranth Grill,hot food,240,3255.07,0
+2025-09-27,Frost Cart Ices,ice cream,155,709.11,0
+2025-09-27,Kestrel Coffee,coffee,445,1739.52,0
+2025-09-27,Arvena Flowers,flowers,46,801.29,0
+2025-09-27,Saltmere Soap Co.,crafts,40,412.13,0
+2025-09-28,Orchard Row Fruit,fruit and veg,164,699.77,0
+2025-09-28,Greenleaf Greens,fruit and veg,149,514,0
+2025-09-28,Halden Smokehouse,fish,70,1088.55,0
+2025-09-28,Tide Line Oysters,fish,59,1251.91,0
+2025-09-28,Velmora Cheese Cave,dairy,73,937.55,0
+2025-09-28,Brennick Bakehouse,bakery,296,1677,0
+2025-09-28,Sugar & Salt,bakery,143,675.84,0
+2025-09-28,Lantern Noodles,hot food,222,2476.66,0
+2025-09-28,Corranth Grill,hot food,222,2947.94,0
+2025-09-28,Frost Cart Ices,ice cream,126,594.09,0
+2025-09-28,Kestrel Coffee,coffee,431,1799.84,0
+2025-09-28,Arvena Flowers,flowers,45,804.19,0
+2025-09-28,Saltmere Soap Co.,crafts,33,305.28,0
+2025-09-30,Orchard Row Fruit,fruit and veg,100,440.26,0
+2025-09-30,Greenleaf Greens,fruit and veg,74,259.98,0
+2025-09-30,Halden Smokehouse,fish,47,762.75,0
+2025-09-30,Tide Line Oysters,fish,35,765.92,0
+2025-09-30,Velmora Cheese Cave,dairy,52,683.43,0
+2025-09-30,Brennick Bakehouse,bakery,203,1131.24,0
+2025-09-30,Sugar & Salt,bakery,117,571.05,0
+2025-09-30,Lantern Noodles,hot food,180,2052.69,0
+2025-09-30,Corranth Grill,hot food,144,1922.1,0
+2025-09-30,Frost Cart Ices,ice cream,80,343.82,0
+2025-09-30,Kestrel Coffee,coffee,234,921.16,0
+2025-09-30,Arvena Flowers,flowers,36,635,0
+2025-09-30,Saltmere Soap Co.,crafts,29,280.08,0
+2025-10-01,Orchard Row Fruit,fruit and veg,118,514.52,0
+2025-10-01,Greenleaf Greens,fruit and veg,97,372.81,0
+2025-10-01,Halden Smokehouse,fish,48,795.43,0
+2025-10-01,Tide Line Oysters,fish,32,675.09,0
+2025-10-01,Velmora Cheese Cave,dairy,42,569.05,0
+2025-10-01,Brennick Bakehouse,bakery,223,1195.57,0
+2025-10-01,Sugar & Salt,bakery,102,489.6,0
+2025-10-01,Lantern Noodles,hot food,149,1670.23,0
+2025-10-01,Corranth Grill,hot food,124,1695.34,0
+2025-10-01,Frost Cart Ices,ice cream,95,425.94,0
+2025-10-01,Kestrel Coffee,coffee,270,1112.82,0
+2025-10-01,Arvena Flowers,flowers,34,612.51,0
+2025-10-01,Saltmere Soap Co.,crafts,28,255.18,0
+2025-10-02,Orchard Row Fruit,fruit and veg,134,562.69,1.1
+2025-10-02,Greenleaf Greens,fruit and veg,87,317.76,1.1
+2025-10-02,Halden Smokehouse,fish,53,899.13,1.1
+2025-10-02,Tide Line Oysters,fish,39,832.3,1.1
+2025-10-02,Velmora Cheese Cave,dairy,54,724.46,1.1
+2025-10-02,Brennick Bakehouse,bakery,211,1167.29,1.1
+2025-10-02,Sugar & Salt,bakery,103,488.91,1.1
+2025-10-02,Lantern Noodles,hot food,165,1860.45,1.1
+2025-10-02,Corranth Grill,hot food,143,1921.93,1.1
+2025-10-02,Frost Cart Ices,ice cream,75,360.85,1.1
+2025-10-02,Kestrel Coffee,coffee,250,1006.87,1.1
+2025-10-02,Arvena Flowers,flowers,34,630.57,1.1
+2025-10-02,Saltmere Soap Co.,crafts,23,202.66,1.1
+2025-10-03,Orchard Row Fruit,fruit and veg,143,570.85,0
+2025-10-03,Greenleaf Greens,fruit and veg,122,406.16,0
+2025-10-03,Halden Smokehouse,fish,59,933.38,0
+2025-10-03,Tide Line Oysters,fish,34,731.08,0
+2025-10-03,Velmora Cheese Cave,dairy,54,707.69,0
+2025-10-03,Brennick Bakehouse,bakery,204,1185.17,0
+2025-10-03,Sugar & Salt,bakery,140,667.28,0
+2025-10-03,Lantern Noodles,hot food,218,2369.04,0
+2025-10-03,Corranth Grill,hot food,189,2646.16,0
+2025-10-03,Frost Cart Ices,ice cream,123,542.08,0
+2025-10-03,Kestrel Coffee,coffee,281,1140.54,0
+2025-10-03,Arvena Flowers,flowers,45,821.11,0
+2025-10-03,Saltmere Soap Co.,crafts,31,277.54,0
+2025-10-04,Orchard Row Fruit,fruit and veg,196,813.54,0
+2025-10-04,Greenleaf Greens,fruit and veg,140,496.24,0
+2025-10-04,Halden Smokehouse,fish,85,1440.99,0
+2025-10-04,Tide Line Oysters,fish,63,1331.03,0
+2025-10-04,Velmora Cheese Cave,dairy,82,1051.61,0
+2025-10-04,Brennick Bakehouse,bakery,354,1876.48,0
+2025-10-04,Sugar & Salt,bakery,168,830.35,0
+2025-10-04,Lantern Noodles,hot food,232,2589,0
+2025-10-04,Corranth Grill,hot food,208,2642.38,0
+2025-10-04,Frost Cart Ices,ice cream,185,843.55,0
+2025-10-04,Kestrel Coffee,coffee,459,1880.21,0
+2025-10-04,Arvena Flowers,flowers,56,990.99,0
+2025-10-04,Saltmere Soap Co.,crafts,49,466.77,0
+2025-10-05,Orchard Row Fruit,fruit and veg,162,665.01,5.1
+2025-10-05,Greenleaf Greens,fruit and veg,124,455.41,5.1
+2025-10-05,Halden Smokehouse,fish,60,961.25,5.1
+2025-10-05,Tide Line Oysters,fish,48,1031.01,5.1
+2025-10-05,Velmora Cheese Cave,dairy,61,808.81,5.1
+2025-10-05,Brennick Bakehouse,bakery,232,1296.98,5.1
+2025-10-05,Sugar & Salt,bakery,162,807.42,5.1
+2025-10-05,Lantern Noodles,hot food,195,2195.37,5.1
+2025-10-05,Corranth Grill,hot food,199,2657.96,5.1
+2025-10-05,Frost Cart Ices,ice cream,119,522.5,5.1
+2025-10-05,Kestrel Coffee,coffee,360,1508.45,5.1
+2025-10-05,Arvena Flowers,flowers,47,829.71,5.1
+2025-10-05,Saltmere Soap Co.,crafts,31,306.82,5.1
+2025-10-07,Orchard Row Fruit,fruit and veg,97,418.36,3.1
+2025-10-07,Greenleaf Greens,fruit and veg,78,278.82,3.1
+2025-10-07,Halden Smokehouse,fish,37,618.73,3.1
+2025-10-07,Tide Line Oysters,fish,34,741.34,3.1
+2025-10-07,Velmora Cheese Cave,dairy,45,585.83,3.1
+2025-10-07,Brennick Bakehouse,bakery,167,889.72,3.1
+2025-10-07,Sugar & Salt,bakery,83,407.1,3.1
+2025-10-07,Lantern Noodles,hot food,144,1583.2,3.1
+2025-10-07,Corranth Grill,hot food,115,1622.16,3.1
+2025-10-07,Frost Cart Ices,ice cream,91,397.44,3.1
+2025-10-07,Kestrel Coffee,coffee,212,886.01,3.1
+2025-10-07,Arvena Flowers,flowers,37,673.27,3.1
+2025-10-07,Saltmere Soap Co.,crafts,23,220.76,3.1
+2025-10-08,Orchard Row Fruit,fruit and veg,56,230.38,13.6
+2025-10-08,Greenleaf Greens,fruit and veg,57,206.65,13.6
+2025-10-08,Halden Smokehouse,fish,26,417.76,13.6
+2025-10-08,Tide Line Oysters,fish,19,416.15,13.6
+2025-10-08,Velmora Cheese Cave,dairy,29,373.17,13.6
+2025-10-08,Brennick Bakehouse,bakery,108,587.69,13.6
+2025-10-08,Sugar & Salt,bakery,58,274.81,13.6
+2025-10-08,Lantern Noodles,hot food,72,823.05,13.6
+2025-10-08,Corranth Grill,hot food,81,1133.64,13.6
+2025-10-08,Frost Cart Ices,ice cream,50,213.83,13.6
+2025-10-08,Kestrel Coffee,coffee,138,558.44,13.6
+2025-10-08,Arvena Flowers,flowers,23,404.15,13.6
+2025-10-08,Saltmere Soap Co.,crafts,13,122.54,13.6
+2025-10-09,Orchard Row Fruit,fruit and veg,131,552.49,0
+2025-10-09,Greenleaf Greens,fruit and veg,100,356.39,0
+2025-10-09,Halden Smokehouse,fish,53,843.85,0
+2025-10-09,Tide Line Oysters,fish,35,808.3,0
+2025-10-09,Velmora Cheese Cave,dairy,43,561.46,0
+2025-10-09,Brennick Bakehouse,bakery,189,982.12,0
+2025-10-09,Sugar & Salt,bakery,100,465.99,0
+2025-10-09,Lantern Noodles,hot food,137,1489.17,0
+2025-10-09,Corranth Grill,hot food,140,1850.48,0
+2025-10-09,Frost Cart Ices,ice cream,118,535.52,0
+2025-10-09,Kestrel Coffee,coffee,227,899.14,0
+2025-10-09,Arvena Flowers,flowers,33,609.23,0
+2025-10-09,Saltmere Soap Co.,crafts,25,221.78,0
+2025-10-10,Orchard Row Fruit,fruit and veg,146,634.06,0
+2025-10-10,Greenleaf Greens,fruit and veg,121,403.99,0
+2025-10-10,Halden Smokehouse,fish,61,1024.99,0
+2025-10-10,Tide Line Oysters,fish,47,1028.09,0
+2025-10-10,Velmora Cheese Cave,dairy,70,900.98,0
+2025-10-10,Brennick Bakehouse,bakery,216,1228.01,0
+2025-10-10,Sugar & Salt,bakery,134,640.36,0
+2025-10-10,Lantern Noodles,hot food,180,1907.52,0
+2025-10-10,Corranth Grill,hot food,202,2720.42,0
+2025-10-10,Frost Cart Ices,ice cream,129,615.1,0
+2025-10-10,Kestrel Coffee,coffee,302,1202,0
+2025-10-10,Arvena Flowers,flowers,53,953.39,0
+2025-10-10,Saltmere Soap Co.,crafts,30,292.29,0
+2025-10-11,Orchard Row Fruit,fruit and veg,167,710.23,0
+2025-10-11,Greenleaf Greens,fruit and veg,163,588.48,0
+2025-10-11,Halden Smokehouse,fish,74,1220.83,0
+2025-10-11,Tide Line Oysters,fish,60,1300.97,0
+2025-10-11,Velmora Cheese Cave,dairy,113,1524.41,0
+2025-10-11,Brennick Bakehouse,bakery,253,1414.76,0
+2025-10-11,Sugar & Salt,bakery,138,644.52,0
+2025-10-11,Lantern Noodles,hot food,249,2871.85,0
+2025-10-11,Corranth Grill,hot food,229,3158.73,0
+2025-10-11,Frost Cart Ices,ice cream,142,619.84,0
+2025-10-11,Kestrel Coffee,coffee,387,1551,0
+2025-10-11,Arvena Flowers,flowers,62,1143.16,0
+2025-10-11,Saltmere Soap Co.,crafts,44,420.73,0
+2025-10-12,Orchard Row Fruit,fruit and veg,149,622.77,0
+2025-10-12,Greenleaf Greens,fruit and veg,147,532.53,0
+2025-10-12,Halden Smokehouse,fish,77,1309.72,0
+2025-10-12,Tide Line Oysters,fish,44,919.38,0
+2025-10-12,Velmora Cheese Cave,dairy,84,1115.09,0
+2025-10-12,Brennick Bakehouse,bakery,260,1432.38,0
+2025-10-12,Sugar & Salt,bakery,176,880.57,0
+2025-10-12,Lantern Noodles,hot food,218,2347.55,0
+2025-10-12,Corranth Grill,hot food,164,2223.38,0
+2025-10-12,Frost Cart Ices,ice cream,168,746.46,0
+2025-10-12,Kestrel Coffee,coffee,327,1375.71,0
+2025-10-12,Arvena Flowers,flowers,54,925.88,0
+2025-10-12,Saltmere Soap Co.,crafts,39,360.68,0
+2025-10-14,Orchard Row Fruit,fruit and veg,108,465.01,0
+2025-10-14,Greenleaf Greens,fruit and veg,86,309.52,0
+2025-10-14,Halden Smokehouse,fish,46,784.24,0
+2025-10-14,Tide Line Oysters,fish,36,795.72,0
+2025-10-14,Velmora Cheese Cave,dairy,51,648.38,0
+2025-10-14,Brennick Bakehouse,bakery,195,1073.64,0
+2025-10-14,Sugar & Salt,bakery,103,502.23,0
+2025-10-14,Lantern Noodles,hot food,122,1315.85,0
+2025-10-14,Corranth Grill,hot food,140,1842.45,0
+2025-10-14,Frost Cart Ices,ice cream,111,518.36,0
+2025-10-14,Kestrel Coffee,coffee,222,859.35,0
+2025-10-14,Arvena Flowers,flowers,31,562.48,0
+2025-10-14,Saltmere Soap Co.,crafts,25,224.06,0
+2025-10-15,Orchard Row Fruit,fruit and veg,92,396.94,6.9
+2025-10-15,Greenleaf Greens,fruit and veg,75,283.61,6.9
+2025-10-15,Halden Smokehouse,fish,30,491.21,6.9
+2025-10-15,Tide Line Oysters,fish,24,514.99,6.9
+2025-10-15,Velmora Cheese Cave,dairy,46,581.73,6.9
+2025-10-15,Brennick Bakehouse,bakery,146,829.58,6.9
+2025-10-15,Sugar & Salt,bakery,78,385.56,6.9
+2025-10-15,Lantern Noodles,hot food,121,1325.87,6.9
+2025-10-15,Corranth Grill,hot food,89,1192.52,6.9
+2025-10-15,Frost Cart Ices,ice cream,96,432.27,6.9
+2025-10-15,Kestrel Coffee,coffee,211,848.05,6.9
+2025-10-15,Arvena Flowers,flowers,33,592.44,6.9
+2025-10-15,Saltmere Soap Co.,crafts,21,196.16,6.9
+2025-10-16,Orchard Row Fruit,fruit and veg,99,419.81,0
+2025-10-16,Greenleaf Greens,fruit and veg,95,331.46,0
+2025-10-16,Halden Smokehouse,fish,47,767.52,0
+2025-10-16,Tide Line Oysters,fish,37,814.73,0
+2025-10-16,Velmora Cheese Cave,dairy,38,494,0
+2025-10-16,Brennick Bakehouse,bakery,165,932.94,0
+2025-10-16,Sugar & Salt,bakery,117,576.49,0
+2025-10-16,Lantern Noodles,hot food,143,1554.65,0
+2025-10-16,Corranth Grill,hot food,161,2309.29,0
+2025-10-16,Frost Cart Ices,ice cream,107,477.25,0
+2025-10-16,Kestrel Coffee,coffee,261,1014.91,0
+2025-10-16,Arvena Flowers,flowers,33,567.88,0
+2025-10-16,Saltmere Soap Co.,crafts,22,205.21,0
+2025-10-17,Orchard Row Fruit,fruit and veg,148,619.91,0
+2025-10-17,Greenleaf Greens,fruit and veg,110,404.26,0
+2025-10-17,Halden Smokehouse,fish,62,1061.86,0
+2025-10-17,Tide Line Oysters,fish,41,865.72,0
+2025-10-17,Velmora Cheese Cave,dairy,62,823.34,0
+2025-10-17,Brennick Bakehouse,bakery,232,1180.15,0
+2025-10-17,Sugar & Salt,bakery,132,620.74,0
+2025-10-17,Lantern Noodles,hot food,199,2174.48,0
+2025-10-17,Corranth Grill,hot food,200,2628.25,0
+2025-10-17,Frost Cart Ices,ice cream,160,738.43,0
+2025-10-17,Kestrel Coffee,coffee,369,1495.91,0
+2025-10-17,Arvena Flowers,flowers,39,695.03,0
+2025-10-17,Saltmere Soap Co.,crafts,40,362.2,0
+2025-10-18,Orchard Row Fruit,fruit and veg,232,974.73,0
+2025-10-18,Greenleaf Greens,fruit and veg,150,540.94,0
+2025-10-18,Halden Smokehouse,fish,81,1398.07,0
+2025-10-18,Tide Line Oysters,fish,58,1263.47,0
+2025-10-18,Velmora Cheese Cave,dairy,83,1070.65,0
+2025-10-18,Brennick Bakehouse,bakery,326,1831.23,0
+2025-10-18,Sugar & Salt,bakery,178,840.03,0
+2025-10-18,Lantern Noodles,hot food,291,3285.09,0
+2025-10-18,Corranth Grill,hot food,198,2637.42,0
+2025-10-18,Frost Cart Ices,ice cream,224,1004.3,0
+2025-10-18,Kestrel Coffee,coffee,374,1509.66,0
+2025-10-18,Arvena Flowers,flowers,72,1284.86,0
+2025-10-18,Saltmere Soap Co.,crafts,34,316.8,0
+2025-10-19,Orchard Row Fruit,fruit and veg,179,776.42,0
+2025-10-19,Greenleaf Greens,fruit and veg,155,532.26,0
+2025-10-19,Halden Smokehouse,fish,73,1265.18,0
+2025-10-19,Tide Line Oysters,fish,60,1247.11,0
+2025-10-19,Velmora Cheese Cave,dairy,70,896.1,0
+2025-10-19,Brennick Bakehouse,bakery,241,1309.21,0
+2025-10-19,Sugar & Salt,bakery,129,603.98,0
+2025-10-19,Lantern Noodles,hot food,258,2837.42,0
+2025-10-19,Corranth Grill,hot food,215,2940.09,0
+2025-10-19,Frost Cart Ices,ice cream,191,882.42,0
+2025-10-19,Kestrel Coffee,coffee,408,1611.23,0
+2025-10-19,Arvena Flowers,flowers,60,1115.7,0
+2025-10-19,Saltmere Soap Co.,crafts,41,389,0
+2025-10-21,Orchard Row Fruit,fruit and veg,122,518.74,0
+2025-10-21,Greenleaf Greens,fruit and veg,89,315.29,0
+2025-10-21,Halden Smokehouse,fish,54,923.18,0
+2025-10-21,Tide Line Oysters,fish,38,855.6,0
+2025-10-21,Velmora Cheese Cave,dairy,47,585.21,0
+2025-10-21,Brennick Bakehouse,bakery,152,833.45,0
+2025-10-21,Sugar & Salt,bakery,104,496.29,0
+2025-10-21,Lantern Noodles,hot food,142,1648.82,0
+2025-10-21,Corranth Grill,hot food,113,1559.84,0
+2025-10-21,Frost Cart Ices,ice cream,126,533.08,0
+2025-10-21,Kestrel Coffee,coffee,235,930.85,0
+2025-10-21,Arvena Flowers,flowers,34,577.47,0
+2025-10-21,Saltmere Soap Co.,crafts,24,222.18,0
+2025-10-22,Orchard Row Fruit,fruit and veg,61,263.44,14.1
+2025-10-22,Greenleaf Greens,fruit and veg,52,182.34,14.1
+2025-10-22,Halden Smokehouse,fish,19,322.17,14.1
+2025-10-22,Tide Line Oysters,fish,19,413.58,14.1
+2025-10-22,Velmora Cheese Cave,dairy,26,330.9,14.1
+2025-10-22,Brennick Bakehouse,bakery,91,500.79,14.1
+2025-10-22,Sugar & Salt,bakery,48,236.8,14.1
+2025-10-22,Lantern Noodles,hot food,72,806.19,14.1
+2025-10-22,Corranth Grill,hot food,68,880.57,14.1
+2025-10-22,Frost Cart Ices,ice cream,63,288.39,14.1
+2025-10-22,Kestrel Coffee,coffee,150,591.32,14.1
+2025-10-22,Arvena Flowers,flowers,24,440.13,14.1
+2025-10-22,Saltmere Soap Co.,crafts,15,143.54,14.1
+2025-10-23,Orchard Row Fruit,fruit and veg,103,442.82,0
+2025-10-23,Greenleaf Greens,fruit and veg,103,386.84,0
+2025-10-23,Halden Smokehouse,fish,49,815.5,0
+2025-10-23,Tide Line Oysters,fish,30,660.08,0
+2025-10-23,Velmora Cheese Cave,dairy,51,658.71,0
+2025-10-23,Brennick Bakehouse,bakery,198,1130.71,0
+2025-10-23,Sugar & Salt,bakery,110,531.23,0
+2025-10-23,Lantern Noodles,hot food,119,1293.09,0
+2025-10-23,Corranth Grill,hot food,124,1631.67,0
+2025-10-23,Frost Cart Ices,ice cream,119,539.25,0
+2025-10-23,Kestrel Coffee,coffee,233,935.93,0
+2025-10-23,Arvena Flowers,flowers,43,756.07,0
+2025-10-23,Saltmere Soap Co.,crafts,26,258.66,0
+2025-10-24,Orchard Row Fruit,fruit and veg,134,563,1.1
+2025-10-24,Greenleaf Greens,fruit and veg,114,430.06,1.1
+2025-10-24,Halden Smokehouse,fish,43,716.66,1.1
+2025-10-24,Tide Line Oysters,fish,42,971.45,1.1
+2025-10-24,Velmora Cheese Cave,dairy,74,898.43,1.1
+2025-10-24,Brennick Bakehouse,bakery,237,1287.38,1.1
+2025-10-24,Sugar & Salt,bakery,133,627.74,1.1
+2025-10-24,Lantern Noodles,hot food,146,1510.72,1.1
+2025-10-24,Corranth Grill,hot food,195,2632.8,1.1
+2025-10-24,Frost Cart Ices,ice cream,175,799.4,1.1
+2025-10-24,Kestrel Coffee,coffee,265,1052.6,1.1
+2025-10-24,Arvena Flowers,flowers,46,874.08,1.1
+2025-10-24,Saltmere Soap Co.,crafts,31,293.76,1.1
+2025-10-25,Orchard Row Fruit,fruit and veg,180,706.28,0.5
+2025-10-25,Greenleaf Greens,fruit and veg,134,483.33,0.5
+2025-10-25,Halden Smokehouse,fish,92,1563.97,0.5
+2025-10-25,Tide Line Oysters,fish,61,1363.48,0.5
+2025-10-25,Velmora Cheese Cave,dairy,81,1065.48,0.5
+2025-10-25,Brennick Bakehouse,bakery,280,1549.87,0.5
+2025-10-25,Sugar & Salt,bakery,183,868.75,0.5
+2025-10-25,Lantern Noodles,hot food,257,2871.91,0.5
+2025-10-25,Corranth Grill,hot food,200,2596.33,0.5
+2025-10-25,Frost Cart Ices,ice cream,182,807.98,0.5
+2025-10-25,Kestrel Coffee,coffee,461,1927.11,0.5
+2025-10-25,Arvena Flowers,flowers,76,1397.06,0.5
+2025-10-25,Saltmere Soap Co.,crafts,37,339.25,0.5
+2025-10-26,Orchard Row Fruit,fruit and veg,151,645.9,6.3
+2025-10-26,Greenleaf Greens,fruit and veg,132,473.52,6.3
+2025-10-26,Halden Smokehouse,fish,67,1121.69,6.3
+2025-10-26,Tide Line Oysters,fish,40,867.85,6.3
+2025-10-26,Velmora Cheese Cave,dairy,51,652.67,6.3
+2025-10-26,Brennick Bakehouse,bakery,238,1273.2,6.3
+2025-10-26,Sugar & Salt,bakery,108,545.6,6.3
+2025-10-26,Lantern Noodles,hot food,197,2203.13,6.3
+2025-10-26,Corranth Grill,hot food,165,2322.79,6.3
+2025-10-26,Frost Cart Ices,ice cream,167,782.79,6.3
+2025-10-26,Kestrel Coffee,coffee,299,1176.3,6.3
+2025-10-26,Arvena Flowers,flowers,48,835.68,6.3
+2025-10-26,Saltmere Soap Co.,crafts,32,310.1,6.3
+2025-10-28,Orchard Row Fruit,fruit and veg,95,381.41,4.7
+2025-10-28,Greenleaf Greens,fruit and veg,73,259.8,4.7
+2025-10-28,Halden Smokehouse,fish,32,533.49,4.7
+2025-10-28,Tide Line Oysters,fish,26,574.65,4.7
+2025-10-28,Velmora Cheese Cave,dairy,47,628.38,4.7
+2025-10-28,Brennick Bakehouse,bakery,166,924.94,4.7
+2025-10-28,Sugar & Salt,bakery,88,434.85,4.7
+2025-10-28,Lantern Noodles,hot food,96,1093.69,4.7
+2025-10-28,Corranth Grill,hot food,93,1281.89,4.7
+2025-10-28,Frost Cart Ices,ice cream,103,456.3,4.7
+2025-10-28,Kestrel Coffee,coffee,224,948.86,4.7
+2025-10-28,Arvena Flowers,flowers,32,595.91,4.7
+2025-10-28,Saltmere Soap Co.,crafts,18,162.99,4.7
+2025-10-29,Orchard Row Fruit,fruit and veg,122,502.34,0
+2025-10-29,Greenleaf Greens,fruit and veg,92,313.13,0
+2025-10-29,Halden Smokehouse,fish,47,771.53,0
+2025-10-29,Tide Line Oysters,fish,36,814.79,0
+2025-10-29,Velmora Cheese Cave,dairy,50,662.65,0
+2025-10-29,Brennick Bakehouse,bakery,175,963.28,0
+2025-10-29,Sugar & Salt,bakery,103,488.23,0
+2025-10-29,Lantern Noodles,hot food,158,1727.51,0
+2025-10-29,Corranth Grill,hot food,126,1680.23,0
+2025-10-29,Frost Cart Ices,ice cream,140,658.87,0
+2025-10-29,Kestrel Coffee,coffee,245,963.12,0
+2025-10-29,Arvena Flowers,flowers,34,617.57,0
+2025-10-29,Saltmere Soap Co.,crafts,22,202.23,0
+2025-10-30,Orchard Row Fruit,fruit and veg,117,488.72,0
+2025-10-30,Greenleaf Greens,fruit and veg,80,278.78,0
+2025-10-30,Halden Smokehouse,fish,55,902.42,0
+2025-10-30,Tide Line Oysters,fish,41,879.2,0
+2025-10-30,Velmora Cheese Cave,dairy,56,726.01,0
+2025-10-30,Brennick Bakehouse,bakery,175,961.43,0
+2025-10-30,Sugar & Salt,bakery,108,511.15,0
+2025-10-30,Lantern Noodles,hot food,156,1835.96,0
+2025-10-30,Corranth Grill,hot food,106,1461.19,0
+2025-10-30,Frost Cart Ices,ice cream,158,712.94,0
+2025-10-30,Kestrel Coffee,coffee,205,886.91,0
+2025-10-30,Arvena Flowers,flowers,45,867.99,0
+2025-10-30,Saltmere Soap Co.,crafts,25,222.43,0
+2025-10-31,Orchard Row Fruit,fruit and veg,157,674.26,5.5
+2025-10-31,Greenleaf Greens,fruit and veg,96,355.78,5.5
+2025-10-31,Halden Smokehouse,fish,48,800.37,5.5
+2025-10-31,Tide Line Oysters,fish,34,699.85,5.5
+2025-10-31,Velmora Cheese Cave,dairy,67,867.43,5.5
+2025-10-31,Brennick Bakehouse,bakery,184,1015.6,5.5
+2025-10-31,Sugar & Salt,bakery,118,568.26,5.5
+2025-10-31,Lantern Noodles,hot food,169,2023.89,5.5
+2025-10-31,Corranth Grill,hot food,152,1947.7,5.5
+2025-10-31,Frost Cart Ices,ice cream,147,640.68,5.5
+2025-10-31,Kestrel Coffee,coffee,229,872.04,5.5
+2025-10-31,Arvena Flowers,flowers,39,710.45,5.5
+2025-10-31,Saltmere Soap Co.,crafts,26,246.63,5.5
+2025-11-01,Orchard Row Fruit,fruit and veg,242,1027.24,0
+2025-11-01,Greenleaf Greens,fruit and veg,190,697.75,0
+2025-11-01,Halden Smokehouse,fish,96,1535.83,0
+2025-11-01,Tide Line Oysters,fish,60,1312.56,0
+2025-11-01,Velmora Cheese Cave,dairy,74,967.35,0
+2025-11-01,Brennick Bakehouse,bakery,285,1551.38,0
+2025-11-01,Sugar & Salt,bakery,138,660.47,0
+2025-11-01,Lantern Noodles,hot food,237,2607.99,0
+2025-11-01,Corranth Grill,hot food,190,2534.2,0
+2025-11-01,Frost Cart Ices,ice cream,262,1211.74,0
+2025-11-01,Kestrel Coffee,coffee,411,1617.15,0
+2025-11-01,Arvena Flowers,flowers,61,1020.31,0
+2025-11-01,Saltmere Soap Co.,crafts,48,463.36,0
+2025-11-02,Orchard Row Fruit,fruit and veg,163,656.66,0
+2025-11-02,Greenleaf Greens,fruit and veg,147,489.41,0
+2025-11-02,Halden Smokehouse,fish,80,1324.03,0
+2025-11-02,Tide Line Oysters,fish,52,1086.06,0
+2025-11-02,Velmora Cheese Cave,dairy,81,1108.05,0
+2025-11-02,Brennick Bakehouse,bakery,289,1514.32,0
+2025-11-02,Sugar & Salt,bakery,173,846.22,0
+2025-11-02,Lantern Noodles,hot food,165,1929.48,0
+2025-11-02,Corranth Grill,hot food,186,2552.25,0
+2025-11-02,Frost Cart Ices,ice cream,210,931.81,0
+2025-11-02,Kestrel Coffee,coffee,293,1212.54,0
+2025-11-02,Arvena Flowers,flowers,60,1058.69,0
+2025-11-02,Saltmere Soap Co.,crafts,39,362.56,0
+2025-11-04,Orchard Row Fruit,fruit and veg,133,570.42,0
+2025-11-04,Greenleaf Greens,fruit and veg,95,334.43,0
+2025-11-04,Halden Smokehouse,fish,47,818.27,0
+2025-11-04,Tide Line Oysters,fish,40,870.48,0
+2025-11-04,Velmora Cheese Cave,dairy,50,656.4,0
+2025-11-04,Brennick Bakehouse,bakery,192,1082.89,0
+2025-11-04,Sugar & Salt,bakery,116,555.19,0
+2025-11-04,Lantern Noodles,hot food,134,1484.11,0
+2025-11-04,Corranth Grill,hot food,132,1878.63,0
+2025-11-04,Frost Cart Ices,ice cream,151,711,0
+2025-11-04,Kestrel Coffee,coffee,225,915.75,0
+2025-11-04,Arvena Flowers,flowers,38,676.44,0
+2025-11-04,Saltmere Soap Co.,crafts,25,243,0
+2025-11-05,Orchard Row Fruit,fruit and veg,117,518.12,0
+2025-11-05,Greenleaf Greens,fruit and veg,102,355.86,0
+2025-11-05,Halden Smokehouse,fish,51,872.14,0
+2025-11-05,Tide Line Oysters,fish,32,725.89,0
+2025-11-05,Velmora Cheese Cave,dairy,45,595.88,0
+2025-11-05,Brennick Bakehouse,bakery,199,1147.55,0
+2025-11-05,Sugar & Salt,bakery,89,419.55,0
+2025-11-05,Lantern Noodles,hot food,150,1598.3,0
+2025-11-05,Corranth Grill,hot food,124,1727.44,0
+2025-11-05,Frost Cart Ices,ice cream,178,802.61,0
+2025-11-05,Kestrel Coffee,coffee,242,986.52,0
+2025-11-05,Arvena Flowers,flowers,32,575.88,0
+2025-11-05,Saltmere Soap Co.,crafts,26,251.34,0
+2025-11-06,Orchard Row Fruit,fruit and veg,136,568.42,0
+2025-11-06,Greenleaf Greens,fruit and veg,109,392.19,0
+2025-11-06,Halden Smokehouse,fish,44,763.58,0
+2025-11-06,Tide Line Oysters,fish,33,740.94,0
+2025-11-06,Velmora Cheese Cave,dairy,52,680.69,0
+2025-11-06,Brennick Bakehouse,bakery,179,930,0
+2025-11-06,Sugar & Salt,bakery,101,479.06,0
+2025-11-06,Lantern Noodles,hot food,131,1413.19,0
+2025-11-06,Corranth Grill,hot food,126,1698.61,0
+2025-11-06,Frost Cart Ices,ice cream,173,776.85,0
+2025-11-06,Kestrel Coffee,coffee,281,1084.2,0
+2025-11-06,Arvena Flowers,flowers,39,693.27,0
+2025-11-06,Saltmere Soap Co.,crafts,23,221.63,0
+2025-11-07,Orchard Row Fruit,fruit and veg,117,505.44,5.7
+2025-11-07,Greenleaf Greens,fruit and veg,87,307.96,5.7
+2025-11-07,Halden Smokehouse,fish,55,902.57,5.7
+2025-11-07,Tide Line Oysters,fish,38,842.99,5.7
+2025-11-07,Velmora Cheese Cave,dairy,50,647.93,5.7
+2025-11-07,Brennick Bakehouse,bakery,175,935.44,5.7
+2025-11-07,Sugar & Salt,bakery,107,522.2,5.7
+2025-11-07,Lantern Noodles,hot food,144,1599.2,5.7
+2025-11-07,Corranth Grill,hot food,159,2121.82,5.7
+2025-11-07,Frost Cart Ices,ice cream,167,757.8,5.7
+2025-11-07,Kestrel Coffee,coffee,252,926.67,5.7
+2025-11-07,Arvena Flowers,flowers,48,836.82,5.7
+2025-11-07,Saltmere Soap Co.,crafts,25,242.74,5.7
+2025-11-08,Orchard Row Fruit,fruit and veg,173,700.79,5.3
+2025-11-08,Greenleaf Greens,fruit and veg,160,552.51,5.3
+2025-11-08,Halden Smokehouse,fish,69,1145.31,5.3
+2025-11-08,Tide Line Oysters,fish,56,1257.62,5.3
+2025-11-08,Velmora Cheese Cave,dairy,70,885.62,5.3
+2025-11-08,Brennick Bakehouse,bakery,272,1558.96,5.3
+2025-11-08,Sugar & Salt,bakery,137,693.77,5.3
+2025-11-08,Lantern Noodles,hot food,183,1958.67,5.3
+2025-11-08,Corranth Grill,hot food,186,2571.29,5.3
+2025-11-08,Frost Cart Ices,ice cream,273,1179.34,5.3
+2025-11-08,Kestrel Coffee,coffee,343,1389.97,5.3
+2025-11-08,Arvena Flowers,flowers,45,823.55,5.3
+2025-11-08,Saltmere Soap Co.,crafts,36,339.54,5.3
+2025-11-09,Orchard Row Fruit,fruit and veg,175,751.3,0.6
+2025-11-09,Greenleaf Greens,fruit and veg,142,515.58,0.6
+2025-11-09,Halden Smokehouse,fish,71,1201.87,0.6
+2025-11-09,Tide Line Oysters,fish,49,1155.16,0.6
+2025-11-09,Velmora Cheese Cave,dairy,67,820.43,0.6
+2025-11-09,Brennick Bakehouse,bakery,238,1265.17,0.6
+2025-11-09,Sugar & Salt,bakery,152,711.16,0.6
+2025-11-09,Lantern Noodles,hot food,243,2675.44,0.6
+2025-11-09,Corranth Grill,hot food,222,3031.48,0.6
+2025-11-09,Frost Cart Ices,ice cream,270,1207.5,0.6
+2025-11-09,Kestrel Coffee,coffee,385,1454.2,0.6
+2025-11-09,Arvena Flowers,flowers,65,1191.26,0.6
+2025-11-09,Saltmere Soap Co.,crafts,37,349.47,0.6
+2025-11-11,Orchard Row Fruit,fruit and veg,106,454.21,0
+2025-11-11,Greenleaf Greens,fruit and veg,93,334.28,0
+2025-11-11,Halden Smokehouse,fish,44,736.39,0
+2025-11-11,Tide Line Oysters,fish,32,706.71,0
+2025-11-11,Velmora Cheese Cave,dairy,59,752.82,0
+2025-11-11,Brennick Bakehouse,bakery,175,924.18,0
+2025-11-11,Sugar & Salt,bakery,98,509.05,0
+2025-11-11,Lantern Noodles,hot food,159,1859.66,0
+2025-11-11,Corranth Grill,hot food,108,1469.51,0
+2025-11-11,Frost Cart Ices,ice cream,208,954.04,0
+2025-11-11,Kestrel Coffee,coffee,202,808.53,0
+2025-11-11,Arvena Flowers,flowers,41,762.12,0
+2025-11-11,Saltmere Soap Co.,crafts,23,227.76,0
+2025-11-12,Orchard Row Fruit,fruit and veg,123,536.62,1.6
+2025-11-12,Greenleaf Greens,fruit and veg,100,369.98,1.6
+2025-11-12,Halden Smokehouse,fish,46,716.66,1.6
+2025-11-12,Tide Line Oysters,fish,39,885.75,1.6
+2025-11-12,Velmora Cheese Cave,dairy,47,586.48,1.6
+2025-11-12,Brennick Bakehouse,bakery,167,911.6,1.6
+2025-11-12,Sugar & Salt,bakery,110,516.44,1.6
+2025-11-12,Lantern Noodles,hot food,121,1329.94,1.6
+2025-11-12,Corranth Grill,hot food,117,1583.51,1.6
+2025-11-12,Frost Cart Ices,ice cream,174,763.53,1.6
+2025-11-12,Kestrel Coffee,coffee,237,909.4,1.6
+2025-11-12,Arvena Flowers,flowers,32,577.5,1.6
+2025-11-12,Saltmere Soap Co.,crafts,19,178.98,1.6
+2025-11-13,Orchard Row Fruit,fruit and veg,126,506.75,0
+2025-11-13,Greenleaf Greens,fruit and veg,98,368.46,0
+2025-11-13,Halden Smokehouse,fish,46,785.91,0
+2025-11-13,Tide Line Oysters,fish,34,741.1,0
+2025-11-13,Velmora Cheese Cave,dairy,53,667.43,0
+2025-11-13,Brennick Bakehouse,bakery,176,980.47,0
+2025-11-13,Sugar & Salt,bakery,101,455.17,0
+2025-11-13,Lantern Noodles,hot food,139,1549.41,0
+2025-11-13,Corranth Grill,hot food,128,1696.14,0
+2025-11-13,Frost Cart Ices,ice cream,179,823.02,0
+2025-11-13,Kestrel Coffee,coffee,233,940.53,0
+2025-11-13,Arvena Flowers,flowers,39,699.58,0
+2025-11-13,Saltmere Soap Co.,crafts,25,246.29,0
+2025-11-14,Orchard Row Fruit,fruit and veg,186,787.79,0.6
+2025-11-14,Greenleaf Greens,fruit and veg,123,454.24,0.6
+2025-11-14,Halden Smokehouse,fish,57,941.68,0.6
+2025-11-14,Tide Line Oysters,fish,42,954.76,0.6
+2025-11-14,Velmora Cheese Cave,dairy,62,733.55,0.6
+2025-11-14,Brennick Bakehouse,bakery,181,1000.56,0.6
+2025-11-14,Sugar & Salt,bakery,131,620.31,0.6
+2025-11-14,Lantern Noodles,hot food,178,2001.91,0.6
+2025-11-14,Corranth Grill,hot food,171,2376.56,0.6
+2025-11-14,Frost Cart Ices,ice cream,220,1020.1,0.6
+2025-11-14,Kestrel Coffee,coffee,303,1220.5,0.6
+2025-11-14,Arvena Flowers,flowers,48,834.05,0.6
+2025-11-14,Saltmere Soap Co.,crafts,30,286.7,0.6
+2025-11-15,Orchard Row Fruit,fruit and veg,225,962.09,0.8
+2025-11-15,Greenleaf Greens,fruit and veg,170,592.46,0.8
+2025-11-15,Halden Smokehouse,fish,69,1090.77,0.8
+2025-11-15,Tide Line Oysters,fish,60,1297.65,0.8
+2025-11-15,Velmora Cheese Cave,dairy,75,963.24,0.8
+2025-11-15,Brennick Bakehouse,bakery,267,1488.19,0.8
+2025-11-15,Sugar & Salt,bakery,172,794.82,0.8
+2025-11-15,Lantern Noodles,hot food,198,2158.14,0.8
+2025-11-15,Corranth Grill,hot food,215,2874.24,0.8
+2025-11-15,Frost Cart Ices,ice cream,254,1113.46,0.8
+2025-11-15,Kestrel Coffee,coffee,369,1417.85,0.8
+2025-11-15,Arvena Flowers,flowers,60,1077.85,0.8
+2025-11-15,Saltmere Soap Co.,crafts,41,387.35,0.8
+2025-11-16,Orchard Row Fruit,fruit and veg,219,900.83,0
+2025-11-16,Greenleaf Greens,fruit and veg,133,452.25,0
+2025-11-16,Halden Smokehouse,fish,74,1236.51,0
+2025-11-16,Tide Line Oysters,fish,55,1202.05,0
+2025-11-16,Velmora Cheese Cave,dairy,71,907.27,0
+2025-11-16,Brennick Bakehouse,bakery,311,1784.92,0
+2025-11-16,Sugar & Salt,bakery,157,780.91,0
+2025-11-16,Lantern Noodles,hot food,201,2294.16,0
+2025-11-16,Corranth Grill,hot food,157,2105.97,0
+2025-11-16,Frost Cart Ices,ice cream,270,1263.71,0
+2025-11-16,Kestrel Coffee,coffee,381,1576.33,0
+2025-11-16,Arvena Flowers,flowers,65,1219.02,0
+2025-11-16,Saltmere Soap Co.,crafts,39,377.11,0
+2025-11-18,Orchard Row Fruit,fruit and veg,112,494.04,5.9
+2025-11-18,Greenleaf Greens,fruit and veg,69,250.54,5.9
+2025-11-18,Halden Smokehouse,fish,36,612.95,5.9
+2025-11-18,Tide Line Oysters,fish,22,496.93,5.9
+2025-11-18,Velmora Cheese Cave,dairy,42,559.36,5.9
+2025-11-18,Brennick Bakehouse,bakery,145,806.89,5.9
+2025-11-18,Sugar & Salt,bakery,77,376.11,5.9
+2025-11-18,Lantern Noodles,hot food,117,1184.85,5.9
+2025-11-18,Corranth Grill,hot food,90,1256.94,5.9
+2025-11-18,Frost Cart Ices,ice cream,133,603.04,5.9
+2025-11-18,Kestrel Coffee,coffee,194,781.97,5.9
+2025-11-18,Arvena Flowers,flowers,38,694.37,5.9
+2025-11-18,Saltmere Soap Co.,crafts,18,179.06,5.9
+2025-11-19,Orchard Row Fruit,fruit and veg,113,486.02,0
+2025-11-19,Greenleaf Greens,fruit and veg,101,365.88,0
+2025-11-19,Halden Smokehouse,fish,37,611.08,0
+2025-11-19,Tide Line Oysters,fish,30,661.29,0
+2025-11-19,Velmora Cheese Cave,dairy,54,695.66,0
+2025-11-19,Brennick Bakehouse,bakery,166,941.35,0
+2025-11-19,Sugar & Salt,bakery,111,544.29,0
+2025-11-19,Lantern Noodles,hot food,164,1849.38,0
+2025-11-19,Corranth Grill,hot food,134,1747.49,0
+2025-11-19,Frost Cart Ices,ice cream,158,761.12,0
+2025-11-19,Kestrel Coffee,coffee,197,821.34,0
+2025-11-19,Arvena Flowers,flowers,38,678.65,0
+2025-11-19,Saltmere Soap Co.,crafts,29,286.37,0
+2025-11-20,Orchard Row Fruit,fruit and veg,124,509.8,0
+2025-11-20,Greenleaf Greens,fruit and veg,100,375.06,0
+2025-11-20,Halden Smokehouse,fish,45,695.05,0
+2025-11-20,Tide Line Oysters,fish,30,683.1,0
+2025-11-20,Velmora Cheese Cave,dairy,50,669.78,0
+2025-11-20,Brennick Bakehouse,bakery,170,910.74,0
+2025-11-20,Sugar & Salt,bakery,104,489.79,0
+2025-11-20,Lantern Noodles,hot food,128,1432.44,0
+2025-11-20,Corranth Grill,hot food,135,1754.7,0
+2025-11-20,Frost Cart Ices,ice cream,179,814.52,0
+2025-11-20,Kestrel Coffee,coffee,211,843.95,0
+2025-11-20,Arvena Flowers,flowers,44,830.88,0
+2025-11-20,Saltmere Soap Co.,crafts,30,272.48,0
+2025-11-21,Orchard Row Fruit,fruit and veg,131,543.22,0
+2025-11-21,Greenleaf Greens,fruit and veg,132,481.84,0
+2025-11-21,Halden Smokehouse,fish,49,812.47,0
+2025-11-21,Tide Line Oysters,fish,48,1053.89,0
+2025-11-21,Velmora Cheese Cave,dairy,59,773.08,0
+2025-11-21,Brennick Bakehouse,bakery,195,1085.33,0
+2025-11-21,Sugar & Salt,bakery,120,554.3,0
+2025-11-21,Lantern Noodles,hot food,180,2054.71,0
+2025-11-21,Corranth Grill,hot food,167,2252.42,0
+2025-11-21,Frost Cart Ices,ice cream,254,1110.71,0
+2025-11-21,Kestrel Coffee,coffee,246,1000.92,0
+2025-11-21,Arvena Flowers,flowers,47,870.48,0
+2025-11-21,Saltmere Soap Co.,crafts,27,259.14,0
+2025-11-22,Orchard Row Fruit,fruit and veg,182,735.42,0
+2025-11-22,Greenleaf Greens,fruit and veg,176,634.25,0
+2025-11-22,Halden Smokehouse,fish,70,1144.8,0
+2025-11-22,Tide Line Oysters,fish,53,1092.48,0
+2025-11-22,Velmora Cheese Cave,dairy,99,1273.48,0
+2025-11-22,Brennick Bakehouse,bakery,345,1885.49,0
+2025-11-22,Sugar & Salt,bakery,148,717.65,0
+2025-11-22,Lantern Noodles,hot food,238,2604.36,0
+2025-11-22,Corranth Grill,hot food,231,3143.47,0
+2025-11-22,Frost Cart Ices,ice cream,321,1386.08,0
+2025-11-22,Kestrel Coffee,coffee,478,1881.22,0
+2025-11-22,Arvena Flowers,flowers,68,1244.52,0
+2025-11-22,Saltmere Soap Co.,crafts,49,449.21,0
+2025-11-23,Orchard Row Fruit,fruit and veg,149,627.33,9.6
+2025-11-23,Greenleaf Greens,fruit and veg,90,304.84,9.6
+2025-11-23,Halden Smokehouse,fish,42,693.61,9.6
+2025-11-23,Tide Line Oysters,fish,34,739.57,9.6
+2025-11-23,Velmora Cheese Cave,dairy,56,685.48,9.6
+2025-11-23,Brennick Bakehouse,bakery,177,943.74,9.6
+2025-11-23,Sugar & Salt,bakery,102,474.75,9.6
+2025-11-23,Lantern Noodles,hot food,141,1516.08,9.6
+2025-11-23,Corranth Grill,hot food,131,1716.38,9.6
+2025-11-23,Frost Cart Ices,ice cream,236,1016.83,9.6
+2025-11-23,Kestrel Coffee,coffee,252,1011.83,9.6
+2025-11-23,Arvena Flowers,flowers,43,751.42,9.6
+2025-11-23,Saltmere Soap Co.,crafts,32,299.53,9.6
+2025-11-25,Orchard Row Fruit,fruit and veg,121,517.3,0
+2025-11-25,Greenleaf Greens,fruit and veg,102,351.2,0
+2025-11-25,Halden Smokehouse,fish,49,811.58,0
+2025-11-25,Tide Line Oysters,fish,32,708.65,0
+2025-11-25,Velmora Cheese Cave,dairy,40,482.19,0
+2025-11-25,Brennick Bakehouse,bakery,135,767.72,0
+2025-11-25,Sugar & Salt,bakery,86,419.65,0
+2025-11-25,Lantern Noodles,hot food,140,1594.78,0
+2025-11-25,Corranth Grill,hot food,128,1752.8,0
+2025-11-25,Frost Cart Ices,ice cream,216,1002.29,0
+2025-11-25,Kestrel Coffee,coffee,250,994.61,0
+2025-11-25,Arvena Flowers,flowers,39,729.81,0
+2025-11-25,Saltmere Soap Co.,crafts,26,249.37,0
+2025-11-26,Orchard Row Fruit,fruit and veg,122,523.65,0
+2025-11-26,Greenleaf Greens,fruit and veg,87,316.01,0
+2025-11-26,Halden Smokehouse,fish,47,761.59,0
+2025-11-26,Tide Line Oysters,fish,33,708.44,0
+2025-11-26,Velmora Cheese Cave,dairy,59,769.81,0
+2025-11-26,Brennick Bakehouse,bakery,190,1053.14,0
+2025-11-26,Sugar & Salt,bakery,96,453.07,0
+2025-11-26,Lantern Noodles,hot food,131,1364.67,0
+2025-11-26,Corranth Grill,hot food,102,1367.09,0
+2025-11-26,Frost Cart Ices,ice cream,193,842,0
+2025-11-26,Kestrel Coffee,coffee,204,834.86,0
+2025-11-26,Arvena Flowers,flowers,36,652.35,0
+2025-11-26,Saltmere Soap Co.,crafts,20,192.58,0
+2025-11-27,Orchard Row Fruit,fruit and veg,114,499.43,0
+2025-11-27,Greenleaf Greens,fruit and veg,100,351.22,0
+2025-11-27,Halden Smokehouse,fish,47,765.04,0
+2025-11-27,Tide Line Oysters,fish,33,711.03,0
+2025-11-27,Velmora Cheese Cave,dairy,47,585.87,0
+2025-11-27,Brennick Bakehouse,bakery,195,1106.47,0
+2025-11-27,Sugar & Salt,bakery,107,515.37,0
+2025-11-27,Lantern Noodles,hot food,130,1403.24,0
+2025-11-27,Corranth Grill,hot food,121,1645.67,0
+2025-11-27,Frost Cart Ices,ice cream,197,894.8,0
+2025-11-27,Kestrel Coffee,coffee,181,729.66,0
+2025-11-27,Arvena Flowers,flowers,30,543.31,0
+2025-11-27,Saltmere Soap Co.,crafts,24,218.94,0
+2025-11-28,Orchard Row Fruit,fruit and veg,137,580.77,0
+2025-11-28,Greenleaf Greens,fruit and veg,148,532.05,0
+2025-11-28,Halden Smokehouse,fish,58,925.37,0
+2025-11-28,Tide Line Oysters,fish,40,913.1,0
+2025-11-28,Velmora Cheese Cave,dairy,63,823.31,0
+2025-11-28,Brennick Bakehouse,bakery,261,1441.73,0
+2025-11-28,Sugar & Salt,bakery,138,642.83,0
+2025-11-28,Lantern Noodles,hot food,182,1973.82,0
+2025-11-28,Corranth Grill,hot food,147,2023.39,0
+2025-11-28,Frost Cart Ices,ice cream,241,1043.25,0
+2025-11-28,Kestrel Coffee,coffee,325,1300.73,0
+2025-11-28,Arvena Flowers,flowers,51,920.92,0
+2025-11-28,Saltmere Soap Co.,crafts,28,282.75,0
+2025-11-29,Orchard Row Fruit,fruit and veg,189,765.02,1.2
+2025-11-29,Greenleaf Greens,fruit and veg,163,591.93,1.2
+2025-11-29,Halden Smokehouse,fish,61,999.25,1.2
+2025-11-29,Tide Line Oysters,fish,51,1059.42,1.2
+2025-11-29,Velmora Cheese Cave,dairy,78,1008.29,1.2
+2025-11-29,Brennick Bakehouse,bakery,261,1446.47,1.2
+2025-11-29,Sugar & Salt,bakery,177,886.97,1.2
+2025-11-29,Lantern Noodles,hot food,222,2400.67,1.2
+2025-11-29,Corranth Grill,hot food,214,3021.47,1.2
+2025-11-29,Frost Cart Ices,ice cream,333,1533.22,1.2
+2025-11-29,Kestrel Coffee,coffee,349,1369.31,1.2
+2025-11-29,Arvena Flowers,flowers,64,1112.77,1.2
+2025-11-29,Saltmere Soap Co.,crafts,46,435.17,1.2
+2025-11-30,Orchard Row Fruit,fruit and veg,190,860.06,0
+2025-11-30,Greenleaf Greens,fruit and veg,150,519.88,0
+2025-11-30,Halden Smokehouse,fish,62,1053.07,0
+2025-11-30,Tide Line Oysters,fish,53,1247.83,0
+2025-11-30,Velmora Cheese Cave,dairy,88,1138.81,0
+2025-11-30,Brennick Bakehouse,bakery,284,1643.82,0
+2025-11-30,Sugar & Salt,bakery,190,890.54,0
+2025-11-30,Lantern Noodles,hot food,242,2609.15,0
+2025-11-30,Corranth Grill,hot food,207,2842.94,0
+2025-11-30,Frost Cart Ices,ice cream,364,1615.97,0
+2025-11-30,Kestrel Coffee,coffee,337,1351.87,0
+2025-11-30,Arvena Flowers,flowers,56,979.45,0
+2025-11-30,Saltmere Soap Co.,crafts,34,338.44,0
+2025-12-02,Orchard Row Fruit,fruit and veg,145,592.07,0
+2025-12-02,Greenleaf Greens,fruit and veg,115,415.23,0
+2025-12-02,Halden Smokehouse,fish,54,900.6,0
+2025-12-02,Tide Line Oysters,fish,41,919.75,0
+2025-12-02,Velmora Cheese Cave,dairy,68,878.91,0
+2025-12-02,Brennick Bakehouse,bakery,251,1323.58,0
+2025-12-02,Sugar & Salt,bakery,128,610.07,0
+2025-12-02,Lantern Noodles,hot food,164,1860.14,0
+2025-12-02,Corranth Grill,hot food,161,2147.62,0
+2025-12-02,Frost Cart Ices,ice cream,237,1036.23,0
+2025-12-02,Kestrel Coffee,coffee,282,1097.26,0
+2025-12-02,Arvena Flowers,flowers,44,800.9,0
+2025-12-02,Saltmere Soap Co.,crafts,30,292.66,0
+2025-12-03,Orchard Row Fruit,fruit and veg,137,574.76,0.4
+2025-12-03,Greenleaf Greens,fruit and veg,117,422.5,0.4
+2025-12-03,Halden Smokehouse,fish,61,1011.78,0.4
+2025-12-03,Tide Line Oysters,fish,47,1029.15,0.4
+2025-12-03,Velmora Cheese Cave,dairy,67,878.52,0.4
+2025-12-03,Brennick Bakehouse,bakery,262,1454.43,0.4
+2025-12-03,Sugar & Salt,bakery,140,664.35,0.4
+2025-12-03,Lantern Noodles,hot food,167,1859.27,0.4
+2025-12-03,Corranth Grill,hot food,139,1799.44,0.4
+2025-12-03,Frost Cart Ices,ice cream,236,1080.27,0.4
+2025-12-03,Kestrel Coffee,coffee,280,1105.92,0.4
+2025-12-03,Arvena Flowers,flowers,47,804.59,0.4
+2025-12-03,Saltmere Soap Co.,crafts,33,313.38,0.4
+2025-12-04,Orchard Row Fruit,fruit and veg,170,699.34,0
+2025-12-04,Greenleaf Greens,fruit and veg,152,541.5,0
+2025-12-04,Halden Smokehouse,fish,62,988.63,0
+2025-12-04,Tide Line Oysters,fish,43,1002.62,0
+2025-12-04,Velmora Cheese Cave,dairy,59,751.35,0
+2025-12-04,Brennick Bakehouse,bakery,228,1317.07,0
+2025-12-04,Sugar & Salt,bakery,122,605.55,0
+2025-12-04,Lantern Noodles,hot food,177,1791.08,0
+2025-12-04,Corranth Grill,hot food,142,1948.46,0
+2025-12-04,Frost Cart Ices,ice cream,240,1127.65,0
+2025-12-04,Kestrel Coffee,coffee,331,1381.52,0
+2025-12-04,Arvena Flowers,flowers,49,913.14,0
+2025-12-04,Saltmere Soap Co.,crafts,30,283.46,0
+2025-12-05,Orchard Row Fruit,fruit and veg,205,825.14,0
+2025-12-05,Greenleaf Greens,fruit and veg,176,623.61,0
+2025-12-05,Halden Smokehouse,fish,84,1350.7,0
+2025-12-05,Tide Line Oysters,fish,53,1128.18,0
+2025-12-05,Velmora Cheese Cave,dairy,75,958.24,0
+2025-12-05,Brennick Bakehouse,bakery,305,1748.87,0
+2025-12-05,Sugar & Salt,bakery,147,723.6,0
+2025-12-05,Lantern Noodles,hot food,207,2275.14,0
+2025-12-05,Corranth Grill,hot food,217,2905.66,0
+2025-12-05,Frost Cart Ices,ice cream,336,1509.01,0
+2025-12-05,Kestrel Coffee,coffee,309,1282.1,0
+2025-12-05,Arvena Flowers,flowers,64,1175.66,0
+2025-12-05,Saltmere Soap Co.,crafts,44,420.88,0
+2025-12-06,Orchard Row Fruit,fruit and veg,271,1126.59,0
+2025-12-06,Greenleaf Greens,fruit and veg,237,855.73,0
+2025-12-06,Halden Smokehouse,fish,94,1610.84,0
+2025-12-06,Tide Line Oysters,fish,80,1739.62,0
+2025-12-06,Velmora Cheese Cave,dairy,95,1166.29,0
+2025-12-06,Brennick Bakehouse,bakery,383,2102.47,0
+2025-12-06,Sugar & Salt,bakery,210,998.05,0
+2025-12-06,Lantern Noodles,hot food,314,3389.18,0
+2025-12-06,Corranth Grill,hot food,251,3274.83,0
+2025-12-06,Frost Cart Ices,ice cream,482,2242.02,0
+2025-12-06,Kestrel Coffee,coffee,596,2343.04,0
+2025-12-06,Arvena Flowers,flowers,77,1298.34,0
+2025-12-06,Saltmere Soap Co.,crafts,54,513.19,0
+2025-12-07,Orchard Row Fruit,fruit and veg,232,964.72,2.4
+2025-12-07,Greenleaf Greens,fruit and veg,179,663.37,2.4
+2025-12-07,Halden Smokehouse,fish,67,1104.7,2.4
+2025-12-07,Tide Line Oysters,fish,58,1315.75,2.4
+2025-12-07,Velmora Cheese Cave,dairy,82,1052.3,2.4
+2025-12-07,Brennick Bakehouse,bakery,292,1672.75,2.4
+2025-12-07,Sugar & Salt,bakery,179,827.76,2.4
+2025-12-07,Lantern Noodles,hot food,246,2699.78,2.4
+2025-12-07,Corranth Grill,hot food,213,2893.79,2.4
+2025-12-07,Frost Cart Ices,ice cream,359,1585.78,2.4
+2025-12-07,Kestrel Coffee,coffee,444,1779.25,2.4
+2025-12-07,Arvena Flowers,flowers,78,1363.26,2.4
+2025-12-07,Saltmere Soap Co.,crafts,48,440.7,2.4
+2025-12-09,Orchard Row Fruit,fruit and veg,191,790.91,0
+2025-12-09,Greenleaf Greens,fruit and veg,131,453.19,0
+2025-12-09,Halden Smokehouse,fish,66,1073.21,0
+2025-12-09,Tide Line Oysters,fish,45,1010.4,0
+2025-12-09,Velmora Cheese Cave,dairy,64,839.66,0
+2025-12-09,Brennick Bakehouse,bakery,211,1135.93,0
+2025-12-09,Sugar & Salt,bakery,129,597.35,0
+2025-12-09,Lantern Noodles,hot food,206,2241.61,0
+2025-12-09,Corranth Grill,hot food,157,2148.75,0
+2025-12-09,Frost Cart Ices,ice cream,276,1188.44,0
+2025-12-09,Kestrel Coffee,coffee,298,1133.12,0
+2025-12-09,Arvena Flowers,flowers,50,949.15,0
+2025-12-09,Saltmere Soap Co.,crafts,26,257.2,0
+2025-12-10,Orchard Row Fruit,fruit and veg,174,706.51,0
+2025-12-10,Greenleaf Greens,fruit and veg,131,460.08,0
+2025-12-10,Halden Smokehouse,fish,48,815.17,0
+2025-12-10,Tide Line Oysters,fish,38,831.38,0
+2025-12-10,Velmora Cheese Cave,dairy,75,994.67,0
+2025-12-10,Brennick Bakehouse,bakery,210,1126,0
+2025-12-10,Sugar & Salt,bakery,119,571.35,0
+2025-12-10,Lantern Noodles,hot food,194,2150.11,0
+2025-12-10,Corranth Grill,hot food,165,2367.41,0
+2025-12-10,Frost Cart Ices,ice cream,286,1274.65,0
+2025-12-10,Kestrel Coffee,coffee,289,1208.26,0
+2025-12-10,Arvena Flowers,flowers,48,829.25,0
+2025-12-10,Saltmere Soap Co.,crafts,30,277.79,0
+2025-12-11,Orchard Row Fruit,fruit and veg,152,620.74,0
+2025-12-11,Greenleaf Greens,fruit and veg,138,509.23,0
+2025-12-11,Halden Smokehouse,fish,50,824.11,0
+2025-12-11,Tide Line Oysters,fish,45,969.68,0
+2025-12-11,Velmora Cheese Cave,dairy,69,967.6,0
+2025-12-11,Brennick Bakehouse,bakery,216,1171.9,0
+2025-12-11,Sugar & Salt,bakery,144,673.08,0
+2025-12-11,Lantern Noodles,hot food,184,2038.54,0
+2025-12-11,Corranth Grill,hot food,153,2021.13,0
+2025-12-11,Frost Cart Ices,ice cream,214,970.27,0
+2025-12-11,Kestrel Coffee,coffee,306,1210.45,0
+2025-12-11,Arvena Flowers,flowers,45,810.1,0
+2025-12-11,Saltmere Soap Co.,crafts,35,339.71,0
+2025-12-12,Orchard Row Fruit,fruit and veg,215,893.71,0
+2025-12-12,Greenleaf Greens,fruit and veg,176,612.42,0
+2025-12-12,Halden Smokehouse,fish,93,1598.33,0
+2025-12-12,Tide Line Oysters,fish,57,1344.7,0
+2025-12-12,Velmora Cheese Cave,dairy,77,981.6,0
+2025-12-12,Brennick Bakehouse,bakery,292,1754.97,0
+2025-12-12,Sugar & Salt,bakery,183,880.38,0
+2025-12-12,Lantern Noodles,hot food,204,2221.38,0
+2025-12-12,Corranth Grill,hot food,225,3031.76,0
+2025-12-12,Frost Cart Ices,ice cream,402,1858.42,0
+2025-12-12,Kestrel Coffee,coffee,393,1607.11,0
+2025-12-12,Arvena Flowers,flowers,61,1105.36,0
+2025-12-12,Saltmere Soap Co.,crafts,40,373.76,0
+2025-12-13,Orchard Row Fruit,fruit and veg,231,943.57,6.2
+2025-12-13,Greenleaf Greens,fruit and veg,197,689.46,6.2
+2025-12-13,Halden Smokehouse,fish,76,1259.03,6.2
+2025-12-13,Tide Line Oysters,fish,70,1546.1,6.2
+2025-12-13,Velmora Cheese Cave,dairy,76,983.79,6.2
+2025-12-13,Brennick Bakehouse,bakery,327,1935.71,6.2
+2025-12-13,Sugar & Salt,bakery,169,794.4,6.2
+2025-12-13,Lantern Noodles,hot food,228,2353.74,6.2
+2025-12-13,Corranth Grill,hot food,206,2715.51,6.2
+2025-12-13,Frost Cart Ices,ice cream,397,1768.83,6.2
+2025-12-13,Kestrel Coffee,coffee,371,1519.19,6.2
+2025-12-13,Arvena Flowers,flowers,72,1331.96,6.2
+2025-12-13,Saltmere Soap Co.,crafts,34,326.09,6.2
+2025-12-14,Orchard Row Fruit,fruit and veg,188,808.28,0
+2025-12-14,Greenleaf Greens,fruit and veg,173,631.72,0
+2025-12-14,Halden Smokehouse,fish,75,1230.03,0
+2025-12-14,Tide Line Oysters,fish,66,1483.02,0
+2025-12-14,Velmora Cheese Cave,dairy,91,1148.18,0
+2025-12-14,Brennick Bakehouse,bakery,381,2148.34,0
+2025-12-14,Sugar & Salt,bakery,190,860.66,0
+2025-12-14,Lantern Noodles,hot food,255,2656.65,0
+2025-12-14,Corranth Grill,hot food,198,2691.85,0
+2025-12-14,Frost Cart Ices,ice cream,416,1933.36,0
+2025-12-14,Kestrel Coffee,coffee,445,1804.67,0
+2025-12-14,Arvena Flowers,flowers,75,1396.25,0
+2025-12-14,Saltmere Soap Co.,crafts,56,523.4,0
+2025-12-16,Orchard Row Fruit,fruit and veg,146,629.76,0
+2025-12-16,Greenleaf Greens,fruit and veg,105,363.51,0
+2025-12-16,Halden Smokehouse,fish,62,1020.07,0
+2025-12-16,Tide Line Oysters,fish,40,921.5,0
+2025-12-16,Velmora Cheese Cave,dairy,67,856.75,0
+2025-12-16,Brennick Bakehouse,bakery,231,1249.22,0
+2025-12-16,Sugar & Salt,bakery,140,665.94,0
+2025-12-16,Lantern Noodles,hot food,149,1669.25,0
+2025-12-16,Corranth Grill,hot food,144,1870.29,0
+2025-12-16,Frost Cart Ices,ice cream,268,1170.05,0
+2025-12-16,Kestrel Coffee,coffee,316,1291.06,0
+2025-12-16,Arvena Flowers,flowers,48,873.41,0
+2025-12-16,Saltmere Soap Co.,crafts,30,278.42,0
+2025-12-17,Orchard Row Fruit,fruit and veg,157,621.84,0
+2025-12-17,Greenleaf Greens,fruit and veg,130,470.04,0
+2025-12-17,Halden Smokehouse,fish,64,1037.35,0
+2025-12-17,Tide Line Oysters,fish,43,959.5,0
+2025-12-17,Velmora Cheese Cave,dairy,68,899.09,0
+2025-12-17,Brennick Bakehouse,bakery,239,1302.07,0
+2025-12-17,Sugar & Salt,bakery,121,598.88,0
+2025-12-17,Lantern Noodles,hot food,179,1993.37,0
+2025-12-17,Corranth Grill,hot food,169,2243.27,0
+2025-12-17,Frost Cart Ices,ice cream,257,1200.62,0
+2025-12-17,Kestrel Coffee,coffee,280,1021.3,0
+2025-12-17,Arvena Flowers,flowers,48,834.33,0
+2025-12-17,Saltmere Soap Co.,crafts,36,354.86,0
+2025-12-18,Orchard Row Fruit,fruit and veg,174,743.36,0
+2025-12-18,Greenleaf Greens,fruit and veg,142,505.27,0
+2025-12-18,Halden Smokehouse,fish,63,1052.57,0
+2025-12-18,Tide Line Oysters,fish,39,830.98,0
+2025-12-18,Velmora Cheese Cave,dairy,69,865.47,0
+2025-12-18,Brennick Bakehouse,bakery,210,1194.7,0
+2025-12-18,Sugar & Salt,bakery,127,601.35,0
+2025-12-18,Lantern Noodles,hot food,181,1945.01,0
+2025-12-18,Corranth Grill,hot food,142,1874.64,0
+2025-12-18,Frost Cart Ices,ice cream,324,1531.68,0
+2025-12-18,Kestrel Coffee,coffee,291,1160.67,0
+2025-12-18,Arvena Flowers,flowers,44,788.01,0
+2025-12-18,Saltmere Soap Co.,crafts,30,287.39,0
+2025-12-19,Orchard Row Fruit,fruit and veg,220,878.36,0
+2025-12-19,Greenleaf Greens,fruit and veg,137,482.16,0
+2025-12-19,Halden Smokehouse,fish,75,1237.04,0
+2025-12-19,Tide Line Oysters,fish,45,957.8,0
+2025-12-19,Velmora Cheese Cave,dairy,77,997.62,0
+2025-12-19,Brennick Bakehouse,bakery,264,1431.43,0
+2025-12-19,Sugar & Salt,bakery,178,915.95,0
+2025-12-19,Lantern Noodles,hot food,255,2818.39,0
+2025-12-19,Corranth Grill,hot food,190,2575.63,0
+2025-12-19,Frost Cart Ices,ice cream,386,1740.08,0
+2025-12-19,Kestrel Coffee,coffee,390,1548.8,0
+2025-12-19,Arvena Flowers,flowers,60,1058.82,0
+2025-12-19,Saltmere Soap Co.,crafts,42,405.85,0
+2025-12-20,Orchard Row Fruit,fruit and veg,208,887.78,10.5
+2025-12-20,Greenleaf Greens,fruit and veg,155,564.14,10.5
+2025-12-20,Halden Smokehouse,fish,64,1073.62,10.5
+2025-12-20,Tide Line Oysters,fish,44,1028.82,10.5
+2025-12-20,Velmora Cheese Cave,dairy,75,962.37,10.5
+2025-12-20,Brennick Bakehouse,bakery,261,1448.67,10.5
+2025-12-20,Sugar & Salt,bakery,160,754.8,10.5
+2025-12-20,Lantern Noodles,hot food,173,1937.02,10.5
+2025-12-20,Corranth Grill,hot food,152,1974.56,10.5
+2025-12-20,Frost Cart Ices,ice cream,302,1387.01,10.5
+2025-12-20,Kestrel Coffee,coffee,250,1014.23,10.5
+2025-12-20,Arvena Flowers,flowers,49,860.28,10.5
+2025-12-20,Saltmere Soap Co.,crafts,35,341.95,10.5
+2025-12-21,Orchard Row Fruit,fruit and veg,261,1057.58,0
+2025-12-21,Greenleaf Greens,fruit and veg,192,695.61,0
+2025-12-21,Halden Smokehouse,fish,76,1223.37,0
+2025-12-21,Tide Line Oysters,fish,54,1105.36,0
+2025-12-21,Velmora Cheese Cave,dairy,100,1238.17,0
+2025-12-21,Brennick Bakehouse,bakery,317,1714.42,0
+2025-12-21,Sugar & Salt,bakery,224,1089.19,0
+2025-12-21,Lantern Noodles,hot food,267,2867.93,0
+2025-12-21,Corranth Grill,hot food,287,4058.67,0
+2025-12-21,Frost Cart Ices,ice cream,406,1877.02,0
+2025-12-21,Kestrel Coffee,coffee,461,1847.6,0
+2025-12-21,Arvena Flowers,flowers,76,1287.41,0
+2025-12-21,Saltmere Soap Co.,crafts,51,502.66,0
+2025-12-23,Orchard Row Fruit,fruit and veg,160,654.11,0
+2025-12-23,Greenleaf Greens,fruit and veg,154,553.5,0
+2025-12-23,Halden Smokehouse,fish,67,1070.66,0
+2025-12-23,Tide Line Oysters,fish,50,1102.91,0
+2025-12-23,Velmora Cheese Cave,dairy,56,701.46,0
+2025-12-23,Brennick Bakehouse,bakery,196,1107.04,0
+2025-12-23,Sugar & Salt,bakery,118,573.47,0
+2025-12-23,Lantern Noodles,hot food,142,1498.63,0
+2025-12-23,Corranth Grill,hot food,167,2281.03,0
+2025-12-23,Frost Cart Ices,ice cream,351,1637.44,0
+2025-12-23,Kestrel Coffee,coffee,284,1111.99,0
+2025-12-23,Arvena Flowers,flowers,46,795.99,0
+2025-12-23,Saltmere Soap Co.,crafts,35,341.47,0
+2025-12-24,Orchard Row Fruit,fruit and veg,174,702,0
+2025-12-24,Greenleaf Greens,fruit and veg,100,341.72,0
+2025-12-24,Halden Smokehouse,fish,50,838.71,0
+2025-12-24,Tide Line Oysters,fish,43,948.77,0
+2025-12-24,Velmora Cheese Cave,dairy,75,962.76,0
+2025-12-24,Brennick Bakehouse,bakery,226,1293.3,0
+2025-12-24,Sugar & Salt,bakery,151,711.18,0
+2025-12-24,Lantern Noodles,hot food,189,2085.81,0
+2025-12-24,Corranth Grill,hot food,157,2115.73,0
+2025-12-24,Frost Cart Ices,ice cream,279,1243.78,0
+2025-12-24,Kestrel Coffee,coffee,273,1125.87,0
+2025-12-24,Arvena Flowers,flowers,104,1862.83,0
+2025-12-24,Saltmere Soap Co.,crafts,37,347.02,0
+2025-12-25,Orchard Row Fruit,fruit and veg,221,988.39,0
+2025-12-25,Greenleaf Greens,fruit and veg,178,660.71,0
+2025-12-25,Halden Smokehouse,fish,70,1150.71,0
+2025-12-25,Tide Line Oysters,fish,63,1379.83,0
+2025-12-25,Velmora Cheese Cave,dairy,95,1220.77,0
+2025-12-25,Brennick Bakehouse,bakery,306,1674.41,0
+2025-12-25,Sugar & Salt,bakery,174,827.38,0
+2025-12-25,Lantern Noodles,hot food,218,2375.65,0
+2025-12-25,Corranth Grill,hot food,203,2676.54,0
+2025-12-25,Frost Cart Ices,ice cream,412,1848.16,0
+2025-12-25,Kestrel Coffee,coffee,236,937.35,0
+2025-12-25,Arvena Flowers,flowers,60,1041.79,0
+2025-12-25,Saltmere Soap Co.,crafts,38,361.59,0
+2025-12-26,Orchard Row Fruit,fruit and veg,259,1056.97,2.3
+2025-12-26,Greenleaf Greens,fruit and veg,216,778.04,2.3
+2025-12-26,Halden Smokehouse,fish,99,1655.73,2.3
+2025-12-26,Tide Line Oysters,fish,61,1380.55,2.3
+2025-12-26,Velmora Cheese Cave,dairy,85,1141.55,2.3
+2025-12-26,Brennick Bakehouse,bakery,357,1996.66,2.3
+2025-12-26,Sugar & Salt,bakery,200,973.37,2.3
+2025-12-26,Lantern Noodles,hot food,273,3099.33,2.3
+2025-12-26,Corranth Grill,hot food,210,2878.55,2.3
+2025-12-26,Frost Cart Ices,ice cream,401,1827.2,2.3
+2025-12-26,Kestrel Coffee,coffee,373,1585.05,2.3
+2025-12-26,Arvena Flowers,flowers,72,1303.19,2.3
+2025-12-26,Saltmere Soap Co.,crafts,58,555.72,2.3
+2025-12-27,Orchard Row Fruit,fruit and veg,331,1390.61,0
+2025-12-27,Greenleaf Greens,fruit and veg,256,962.65,0
+2025-12-27,Halden Smokehouse,fish,116,1883.65,0
+2025-12-27,Tide Line Oysters,fish,66,1438.45,0
+2025-12-27,Velmora Cheese Cave,dairy,118,1492.88,0
+2025-12-27,Brennick Bakehouse,bakery,397,2070.04,0
+2025-12-27,Sugar & Salt,bakery,204,957.05,0
+2025-12-27,Lantern Noodles,hot food,289,3171.6,0
+2025-12-27,Corranth Grill,hot food,272,3650.73,0
+2025-12-27,Frost Cart Ices,ice cream,494,2174.27,0
+2025-12-27,Kestrel Coffee,coffee,477,1945.9,0
+2025-12-27,Arvena Flowers,flowers,72,1270.78,0
+2025-12-27,Saltmere Soap Co.,crafts,57,547.09,0
+2025-12-28,Orchard Row Fruit,fruit and veg,239,942.5,0
+2025-12-28,Greenleaf Greens,fruit and veg,218,768.18,0
+2025-12-28,Halden Smokehouse,fish,92,1531.56,0
+2025-12-28,Tide Line Oysters,fish,63,1310.54,0
+2025-12-28,Velmora Cheese Cave,dairy,103,1338.07,0
+2025-12-28,Brennick Bakehouse,bakery,332,1873.33,0
+2025-12-28,Sugar & Salt,bakery,206,1002.18,0
+2025-12-28,Lantern Noodles,hot food,227,2446.32,0
+2025-12-28,Corranth Grill,hot food,252,3409.26,0
+2025-12-28,Frost Cart Ices,ice cream,406,1749.97,0
+2025-12-28,Kestrel Coffee,coffee,398,1574.59,0
+2025-12-28,Arvena Flowers,flowers,71,1288.93,0
+2025-12-28,Saltmere Soap Co.,crafts,44,412,0
+2025-12-30,Orchard Row Fruit,fruit and veg,141,554.05,0
+2025-12-30,Greenleaf Greens,fruit and veg,114,428.87,0
+2025-12-30,Halden Smokehouse,fish,75,1238.33,0
+2025-12-30,Tide Line Oysters,fish,40,877.23,0
+2025-12-30,Velmora Cheese Cave,dairy,61,744.67,0
+2025-12-30,Brennick Bakehouse,bakery,254,1394.59,0
+2025-12-30,Sugar & Salt,bakery,107,492.09,0
+2025-12-30,Lantern Noodles,hot food,179,1853.71,0
+2025-12-30,Corranth Grill,hot food,145,1944.63,0
+2025-12-30,Frost Cart Ices,ice cream,237,1077.73,0
+2025-12-30,Kestrel Coffee,coffee,257,998.45,0
+2025-12-30,Arvena Flowers,flowers,43,778.57,0
+2025-12-30,Saltmere Soap Co.,crafts,32,310.62,0
+2025-12-31,Orchard Row Fruit,fruit and veg,169,701.48,0
+2025-12-31,Greenleaf Greens,fruit and veg,135,497.88,0
+2025-12-31,Halden Smokehouse,fish,58,961.32,0
+2025-12-31,Tide Line Oysters,fish,51,1059.06,0
+2025-12-31,Velmora Cheese Cave,dairy,63,804.2,0
+2025-12-31,Brennick Bakehouse,bakery,238,1281.44,0
+2025-12-31,Sugar & Salt,bakery,133,645.01,0
+2025-12-31,Lantern Noodles,hot food,163,1767.77,0
+2025-12-31,Corranth Grill,hot food,144,1889.76,0
+2025-12-31,Frost Cart Ices,ice cream,283,1344.08,0
+2025-12-31,Kestrel Coffee,coffee,277,1131.74,0
+2025-12-31,Arvena Flowers,flowers,47,843.33,0
+2025-12-31,Saltmere Soap Co.,crafts,29,271.82,0
