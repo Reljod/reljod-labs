@@ -294,6 +294,24 @@ export const projects: Project[] = [
       "Controls re-run the saved query with no model call; code verifies every number",
     ],
   },
+  {
+    slug: "vellum",
+    icon: "grid",
+    title: "Vellum",
+    sector: "Vision",
+    summary:
+      "Hand it a screenshot and watch the newest vision model redraw the screen line by line, matching every colour, size and position. Code then lays the drawing over the original, scores how close it got and sends the worst spots back for another pass.",
+    outcome: "Watch a drawing get closer, pass by pass",
+    tags: ["Vision", "GPT-6.2 Astra", "Streaming", "Self-correcting"],
+    status: "Live",
+    href: "/demos/vellum",
+    marks: ["New"],
+    features: [
+      "Four sample screens, or drop in your own screenshot",
+      "Marks stream onto the sheet as the model writes them; corrections glide into place",
+      "A heat map shows, cell by cell, where the drawing still differs from the pixels",
+    ],
+  },
 ];
 
 /**
