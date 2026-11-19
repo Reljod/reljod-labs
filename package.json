@@ -21,7 +21,8 @@
     "seed:client-manager": "node --env-file-if-exists=.env.local scripts/seed-client-manager.mts",
     "render:name-extraction-corpus": "node --experimental-strip-types scripts/render-name-extraction-corpus.mts",
     "eval:name-extraction": "node --env-file-if-exists=.env.local scripts/eval-name-extraction.mts",
-    "render:loupe-corpus": "node --experimental-strip-types scripts/render-loupe-corpus.mts && node --experimental-strip-types scripts/build-loupe-data.mts"
+    "render:loupe-corpus": "node --experimental-strip-types scripts/render-loupe-corpus.mts && node --experimental-strip-types scripts/build-loupe-data.mts",
+    "eval:loupe": "node --experimental-strip-types scripts/eval-loupe.mts"
   },
   "dependencies": {
     "@ai-sdk/mcp": "^2.0.93",
