@@ -73,12 +73,16 @@ export async function runCode(input: {
       name: nameOf(input.owner),
       networkPolicy: "deny-all",
       timeout: SANDBOX_LIMITS.sandboxMs,
+      // Nothing is resumed: every run writes its own files. A persistent
+      // Sandbox would snapshot its whole disk at each stop and keep it 30 days.
+      persistent: false,
     });
   } catch (error) {
     return refused(`Sandbox unavailable: ${messageOf(error)}`);
   }
   try {
-    await sandbox.update({ networkPolicy: "deny-all" });
+    // getOrCreate may hand back a Sandbox made with other settings: enforce them.
+    await sandbox.update({ networkPolicy: "deny-all", persistent: false });
     const expires = sandbox.expiresAt?.getTime();
     if (expires !== undefined && expires - Date.now() < 90_000) {
       try {
