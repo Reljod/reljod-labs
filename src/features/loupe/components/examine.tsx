@@ -522,42 +522,50 @@ function VerdictCard({
     >
       <div className="space-y-3">
         {view.error ? <ErrorNote>{view.error}</ErrorNote> : null}
-        {verdict ? (
-          <div className="flex flex-wrap items-center gap-3">
-            <span
-              key={verdict.verdict}
-              data-testid="loupe-verdict"
-              data-verdict={verdict.verdict}
-              className={cx(
-                "lp-verdict outline-box rounded-sm px-3 py-1.5 font-mono text-lg font-bold tracking-[0.12em] uppercase shadow-hard-md",
-                VERDICT_TONE[verdict.verdict].box,
-                running && "opacity-70",
-              )}
-            >
-              {VERDICT_LABELS[verdict.verdict]}
-            </span>
-            <span className="flex flex-wrap gap-1">
-              <Tag tone="red">{verdict.decisive} decisive</Tag>
-              <Tag tone="brass">{verdict.supporting} supporting</Tag>
-              <Tag>{verdict.context} context</Tag>
-            </span>
-          </div>
-        ) : (
+        {verdict && view.status !== "failed" ? (
+          <>
+            <div className="flex flex-wrap items-center gap-3">
+              <span
+                key={verdict.verdict}
+                data-testid="loupe-verdict"
+                data-verdict={verdict.verdict}
+                className={cx(
+                  "lp-verdict outline-box rounded-sm px-3 py-1.5 font-mono text-lg font-bold tracking-[0.12em] uppercase shadow-hard-md",
+                  VERDICT_TONE[verdict.verdict].box,
+                  running && "opacity-70",
+                )}
+              >
+                {VERDICT_LABELS[verdict.verdict]}
+              </span>
+              <span className="flex flex-wrap gap-1">
+                <Tag tone="red">{verdict.decisive} decisive</Tag>
+                <Tag tone="brass">{verdict.supporting} supporting</Tag>
+                <Tag>{verdict.context} context</Tag>
+              </span>
+            </div>
+            <ul className="space-y-1 text-sm">
+              {verdict.reasons.slice(0, 5).map((reason) => (
+                <li key={reason} className="flex gap-2">
+                  <span aria-hidden="true">·</span>
+                  <span>{reason}</span>
+                </li>
+              ))}
+            </ul>
+          </>
+        ) : running ? (
           <p className="flex items-center gap-2 text-sm text-ink-muted">
             <Spinner /> Waiting for the Sweep's first Measurements…
           </p>
-        )}
-        {verdict ? (
-          <ul className="space-y-1 text-sm">
-            {verdict.reasons.slice(0, 5).map((reason) => (
-              <li key={reason} className="flex gap-2">
-                <span aria-hidden="true">·</span>
-                <span>{reason}</span>
-              </li>
-            ))}
-          </ul>
+        ) : view.status !== "failed" ? (
+          <p className="text-sm text-ink-muted">
+            No Verdict: the Examination ended before any Measurements were
+            taken.
+          </p>
         ) : null}
-        {gate && view.driver !== "sweep" ? (
+        {gate &&
+        gate.pagesTotal > 0 &&
+        view.driver !== "sweep" &&
+        view.status !== "failed" ? (
           <p
             className="flex flex-wrap gap-1.5 text-xs"
             data-testid="loupe-gate"

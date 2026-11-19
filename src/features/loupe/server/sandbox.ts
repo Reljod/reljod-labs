@@ -167,6 +167,26 @@ function inputName(fileName: string) {
   return `input.${ext === "jpeg" ? "jpg" : (ext ?? "bin")}`;
 }
 
+async function seed(sandbox: Sandbox, document: () => Promise<DocumentFile>) {
+  const file = await document();
+  const name = inputName(file.fileName);
+  await sandbox.runCommand("mkdir", [
+    "-p",
+    `${WORK}/doc`,
+    `${WORK}/out`,
+    `${WORK}/code`,
+    `${TOOLKIT_DIR}/loupe/checks`,
+  ]);
+  await sandbox.writeFiles([
+    ...toolkitFiles(),
+    {
+      path: `${WORK}/doc/${name}`,
+      content: file.bytes,
+    },
+    { path: `${WORK}/doc/name.txt`, content: name },
+  ]);
+}
+
 async function create(
   examinationId: string,
   snapshotId: string,
@@ -179,25 +199,22 @@ async function create(
     timeout: SANDBOX_LIMITS.sandboxMs,
     persistent: false,
     onCreate: async (created) => {
-      const file = await document();
-      await created.runCommand("mkdir", [
-        "-p",
-        `${WORK}/doc`,
-        `${WORK}/out`,
-        `${WORK}/code`,
-        `${TOOLKIT_DIR}/loupe/checks`,
-      ]);
-      await created.writeFiles([
-        ...toolkitFiles(),
-        {
-          path: `${WORK}/doc/${inputName(file.fileName)}`,
-          content: file.bytes,
-        },
-        { path: `${WORK}/doc/name.txt`, content: inputName(file.fileName) },
-      ]);
+      try {
+        await seed(created, document);
+      } catch (error) {
+        // Never leave a half-made named Sandbox behind for a retry to pick up.
+        await created.stop().catch(() => {});
+        await created.delete({ deleteOrphanSnapshots: true }).catch(() => {});
+        throw error;
+      }
+    },
+    onResume: async (resumed) => {
+      await seed(resumed, document);
     },
   });
 }
+
+const DOCUMENT_ERROR = /^(The Sample|No such Sample|The Upload|The Document)/;
 
 /**
  * The Examination's Sandbox, made on first use. A snapshot that is gone
@@ -213,6 +230,7 @@ async function open(
     sandbox = await create(examinationId, await ensureSnapshot(), document);
   } catch (error) {
     if (error instanceof SandboxUnavailable) throw error;
+    if (DOCUMENT_ERROR.test(message(error))) throw error;
     if (!/snapshot/i.test(message(error))) {
       console.error("[loupe] sandbox create failed", error);
       throw new SandboxUnavailable(
@@ -223,6 +241,8 @@ async function open(
     try {
       sandbox = await create(examinationId, await ensureSnapshot(), document);
     } catch (again) {
+      if (again instanceof SandboxUnavailable) throw again;
+      if (DOCUMENT_ERROR.test(message(again))) throw again;
       console.error("[loupe] sandbox create failed after rebuild", again);
       throw new SandboxUnavailable(
         "Sandbox unavailable: it could not be started.",
@@ -277,6 +297,10 @@ const COMMAND_SECONDS = Math.floor(SANDBOX_LIMITS.commandMs / 1000) - 2;
 export const RUNNER_SCRIPT = [
   `ulimit -f ${SANDBOX_LIMITS.outputFileBlocks} 2>/dev/null`,
   'log="$1"; shift',
+  `mkdir -p "${WORK}/out" && cd "${WORK}"`,
+  // A Sandbox resumed on a fresh disk has its files again (onResume) but not
+  // the rendered pages: render them once before any other Toolkit command.
+  `[ "$4" = "prepare" ] || [ -f "${WORK}/doc.json" ] || timeout -k 2 ${COMMAND_SECONDS} python3 -m loupe prepare --doc "${WORK}/doc/$(cat "${WORK}/doc/name.txt" 2>/dev/null || echo input.bin)" --work "${WORK}" >/dev/null 2>&1`,
   'out="$log.out"; err="$log.err"',
   // `timeout` kills the process itself; the Sandbox's own timeout would kill only sh.
   `timeout -k 2 ${COMMAND_SECONDS} "$@" >"$out" 2>"$err"`,
@@ -321,7 +345,6 @@ async function run(
         `${WORK}/out/${logName}`,
         ...command,
       ],
-      cwd: WORK,
       env: {
         PYTHONPATH: TOOLKIT_DIR,
         LOUPE_WORK: WORK,
@@ -611,9 +634,10 @@ async function runAndCollect(
   try {
     sandbox = await open(examinationId, document);
   } catch (error) {
+    const text = message(error);
     return refused(
-      error instanceof SandboxUnavailable
-        ? error.message
+      error instanceof SandboxUnavailable || DOCUMENT_ERROR.test(text)
+        ? text
         : "Sandbox unavailable: it could not be started.",
     );
   }

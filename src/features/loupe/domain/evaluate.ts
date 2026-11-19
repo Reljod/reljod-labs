@@ -406,6 +406,9 @@ export function doneGate(input: {
     findingsOpen,
     hypothesesOpen,
     passed:
-      looked >= input.pagesTotal && findingsOpen === 0 && hypothesesOpen === 0,
+      input.pagesTotal > 0 &&
+      looked >= input.pagesTotal &&
+      findingsOpen === 0 &&
+      hypothesesOpen === 0,
   };
 }

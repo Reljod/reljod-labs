@@ -313,6 +313,14 @@ describe("the Done gate", () => {
         hypotheses: [pending],
       }).passed,
     ).toBe(false);
+    expect(
+      doneGate({
+        pagesTotal: 0,
+        pagesLooked: [],
+        findings: [],
+        hypotheses: [],
+      }).passed,
+    ).toBe(false);
   });
 });
 

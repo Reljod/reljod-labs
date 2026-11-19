@@ -277,6 +277,10 @@ export function applyEvents(
         next.error = event.error ?? null;
         next.stoppedBy = event.stoppedBy ?? null;
         next.score = event.score ?? next.score;
+        if (event.status === "failed") {
+          next.verdict = null;
+          if (next.gate?.pagesTotal === 0) next.gate = null;
+        }
         break;
     }
   }

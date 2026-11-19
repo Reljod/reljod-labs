@@ -29,8 +29,10 @@ vi.mock("./repository", () => ({
 import {
   disposeSandbox,
   ensureSnapshot,
+  prepareDocument,
   runCheck,
   SANDBOX_LIMITS,
+  SandboxUnavailable,
   sandboxName,
 } from "./sandbox";
 
@@ -108,5 +110,58 @@ describe("a Loupe Sandbox leaves no snapshots behind", () => {
     // 0 would mean never expire.
     expect(SANDBOX_LIMITS.snapshotMs).toBeGreaterThanOrEqual(60 * 60_000);
     expect(SANDBOX_LIMITS.snapshotMs).toBeLessThanOrEqual(48 * 60 * 60_000);
+  });
+
+  it("stops and deletes the half-created Sandbox when onCreate fails, and propagates document errors", async () => {
+    mocks.snapshotFor.mockResolvedValue("snap_known");
+    const sandbox = fakeSandbox();
+    mocks.getOrCreate.mockImplementation(
+      async (params: { onCreate?: (sbx: typeof sandbox) => Promise<void> }) => {
+        await params.onCreate?.(sandbox);
+        return sandbox;
+      },
+    );
+
+    const err = new Error("The Sample's file could not be read.");
+    const promise = prepareDocument(ID, async () => {
+      throw err;
+    });
+
+    await expect(promise).rejects.toThrow(
+      "The Sample's file could not be read.",
+    );
+    await expect(promise).rejects.not.toBeInstanceOf(SandboxUnavailable);
+    expect(sandbox.stop).toHaveBeenCalledTimes(1);
+    expect(sandbox.delete).toHaveBeenCalledWith({
+      deleteOrphanSnapshots: true,
+    });
+    expect(mocks.getOrCreate).toHaveBeenCalledWith(
+      expect.objectContaining({
+        onResume: expect.any(Function),
+      }),
+    );
+  });
+
+  it("propagates document errors from runCheck instead of masking them as Sandbox unavailable", async () => {
+    mocks.snapshotFor.mockResolvedValue("snap_known");
+    const sandbox = fakeSandbox();
+    mocks.getOrCreate.mockImplementation(
+      async (params: { onCreate?: (sbx: typeof sandbox) => Promise<void> }) => {
+        await params.onCreate?.(sandbox);
+        return sandbox;
+      },
+    );
+
+    const out = await runCheck({
+      examinationId: ID,
+      document: async () => {
+        throw new Error("The Upload is gone.");
+      },
+      callId: "c-2",
+      check: "pdf_structure",
+      kind: "payslip",
+    });
+    expect(out.exitCode).toBe(1);
+    expect(out.stderr).toBe("The Upload is gone.");
   });
 });

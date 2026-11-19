@@ -82,15 +82,16 @@ export async function endExamination(
       events.push({ type: "log", level: "warn", text: outcome.note });
     if (outcome.status === "failed")
       events.push({ type: "log", level: "error", text: outcome.error });
-    events.push(
-      {
-        type: "findings",
-        findings: standing.findings,
-        verdict: standing.verdict,
-        rulebookVersion: row.rulebook_version,
-      },
-      { type: "gate", gate: standing.gate },
-    );
+    if (outcome.status === "completed")
+      events.push(
+        {
+          type: "findings",
+          findings: standing.findings,
+          verdict: standing.verdict,
+          rulebookVersion: row.rulebook_version,
+        },
+        { type: "gate", gate: standing.gate },
+      );
     // What it did is on the Trail before the row says it is over; `end`
     // follows only if this call is the one that ended the row.
     await emit(examinationId, ...events);

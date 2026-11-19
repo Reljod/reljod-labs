@@ -22,13 +22,15 @@ export type ExaminationInput = { examinationId: string };
 const message = (error: unknown) =>
   error instanceof Error ? error.message : String(error);
 
+// At the start, or after a workflow's own "Step … failed after 1 retry: ".
+const SHOWN_ERROR =
+  /(?:^|: )((?:Sandbox unavailable|The Document could not be opened|The Sweep failed|The Upload|The Sample|No such Sample|No recorded Sweep)[\s\S]*)/;
+
 /** What a person may be told about a failure: the Toolkit's and the Sandbox's own refusals, nothing else. */
-function shown(error: unknown) {
-  const text = message(error);
-  return /^(Sandbox unavailable|The Document could not be opened|The Sweep failed|The Upload|The Sample|No recorded Sweep)/.test(
-    text,
-  )
-    ? text.slice(0, 300)
+export function shown(error: unknown) {
+  const match = SHOWN_ERROR.exec(message(error));
+  return match
+    ? match[1].trim().slice(0, 300)
     : "The Examination failed on our side.";
 }
 
