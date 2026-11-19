@@ -186,9 +186,13 @@ export async function runCode(input: {
       name: sandboxName(input.sessionId),
       networkPolicy: "deny-all",
       timeout: SANDBOX_LIMITS.sandboxMs,
+      // Not persistent: the data is written again before every run, so no
+      // disk has to be resumed. A persistent Sandbox snapshots its whole
+      // disk on every stop and keeps it for 30 days, which fills the quota.
+      persistent: false,
     });
-    // getOrCreate may hand back a Sandbox made with another policy: enforce it.
-    await sandbox.update({ networkPolicy: "deny-all" });
+    // getOrCreate may hand back a Sandbox made with other settings: enforce them.
+    await sandbox.update({ networkPolicy: "deny-all", persistent: false });
     const file = `${ROOT}/run-${input.callId.replace(/[^\w-]/g, "_").slice(0, 60)}.mjs`;
     await sandbox.writeFiles([
       ...input.files,
@@ -225,7 +229,8 @@ export async function disposeSandbox(sessionId: string) {
   try {
     const sandbox = await Sandbox.get({ name: sandboxName(sessionId) });
     await sandbox.stop().catch(() => {});
-    await sandbox.delete();
+    // With its snapshots: `delete()` alone would leave them behind.
+    await sandbox.delete({ deleteOrphanSnapshots: true });
   } catch {
     // None was made, or it is already gone.
   }
