@@ -190,6 +190,28 @@ describe("the Examiner's own code", () => {
     expect(run([own], allowed).verdict.verdict).toBe("tampered");
   });
 
+  it("never makes a Document Tampered by itself, however many reports it writes", () => {
+    const second = m({
+      id: "m2",
+      metric: "format.date_anomaly",
+      value: 100,
+      finder: "examiner",
+      check: null,
+    });
+    const both = run([own, second]);
+    expect(both.findings.map((finding) => finding.weight)).toEqual([
+      "supporting",
+      "supporting",
+    ]);
+    expect(both.verdict.verdict).toBe("suspicious");
+    // The same two from named Checks do.
+    const named = run([
+      { ...own, check: "arithmetic" },
+      { ...second, check: "dates_formats" },
+    ]);
+    expect(named.verdict.verdict).toBe("tampered");
+  });
+
   it("links a supported Hypothesis to its Finding", () => {
     const hypothesis: Hypothesis = {
       id: "h1",

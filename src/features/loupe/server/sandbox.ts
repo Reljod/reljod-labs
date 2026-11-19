@@ -378,6 +378,8 @@ const PNG_MAGIC = Buffer.from([0x89, 0x50, 0x4e, 0x47]);
  * checked one by one, because the code may be the Examiner's) and the
  * Evidence layers they name (PNG only, size-capped).
  */
+const LAYER_NAME = /^[A-Za-z0-9][\w-]{0,58}\.png$/;
+
 async function collect(
   sandbox: Sandbox,
   outDir: string,
@@ -426,7 +428,18 @@ async function collect(
     ...new Set(
       measurements.flatMap((item) => (item.layer ? [item.layer] : [])),
     ),
-  ].slice(0, SANDBOX_LIMITS.layersPerRun);
+  ]
+    .filter((name) => {
+      // A name that would not make a servable asset key is dropped here, not
+      // thrown on later, so the run keeps its Measurements.
+      if (LAYER_NAME.test(name)) return true;
+      if (rejected.length < 6)
+        rejected.push(
+          "A layer's file name must be letters, digits, _ or - and end in .png (64 characters at most); that layer was dropped.",
+        );
+      return false;
+    })
+    .slice(0, SANDBOX_LIMITS.layersPerRun);
   const layers: Layer[] = [];
   await Promise.all(
     names.map(async (name) => {
@@ -577,8 +590,10 @@ async function runAndCollect(
   command: (outDir: string) => string[],
   source: "measurements.json" | "reports.jsonl",
   before?: (sandbox: Sandbox, outDir: string) => Promise<void>,
+  /** A client's Check on a finished Examination: a fresh Sandbox from the Document, removed after. */
+  afterEnd = false,
 ): Promise<RunOutput> {
-  if (await over(examinationId))
+  if (!afterEnd && (await over(examinationId)))
     return refused("The Examination is over; nothing was run.");
   let sandbox: Sandbox;
   try {
@@ -646,6 +661,7 @@ export function runCheck(input: {
   kind: DocumentKind;
   page?: number;
   box?: Box | null;
+  afterEnd?: boolean;
 }) {
   return runAndCollect(
     input.examinationId,
@@ -667,6 +683,8 @@ export function runCheck(input: {
       ...(input.box ? ["--box", boxArg(input.box)] : []),
     ],
     "measurements.json",
+    undefined,
+    input.afterEnd,
   );
 }
 

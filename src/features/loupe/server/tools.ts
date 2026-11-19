@@ -175,6 +175,18 @@ async function examinationFor(
   return { row };
 }
 
+const OVER = "The Examination is over; its tools are closed.";
+
+/**
+ * `mutateState` for the Examiner's own tools: refused, under the same row
+ * lock, once the Examination has ended, so a tool that began before a Stop
+ * cannot change a finished Examination.
+ */
+const mutateLive: typeof mutateState = (examinationId, change) =>
+  mutateState(examinationId, (row) =>
+    isOver(row.status) ? { refusal: OVER } : change(row),
+  );
+
 const finderOf = (caller: Caller): Finder =>
   caller.role.kind === "examiner" ? "examiner" : "client";
 
@@ -233,7 +245,14 @@ async function takeIn(input: {
       upload(assetPath(row.owner, row.id, keyOf(layer.name)), layer.bytes),
     ),
   );
-  const changed = await mutateState(row.id, (current) => {
+  const changed = await mutateState<{
+    added: Measurement[];
+    standing: Standing;
+  }>(row.id, (current) => {
+    // Decided under the lock: a Stop may have landed while the code ran.
+    const ended = isOver(current.status);
+    if (ended && input.caller.role.kind === "examiner")
+      return { refusal: OVER };
     const start = current.state.counters.nextMeasurement;
     const added = asMeasurements(
       input.raw.map((item) => ({
@@ -263,6 +282,14 @@ async function takeIn(input: {
           : {}),
       },
     };
+    // A Check run again on a finished Examination puts its Measurements on
+    // record and leaves the Verdict as it was given: only Re-evaluate, which
+    // is audited and scored, decides a finished Examination again.
+    if (ended)
+      return {
+        state,
+        result: { added, standing: standingOf(current, current.state) },
+      };
     const standing = standingOf(current, state);
     return {
       state,
@@ -374,7 +401,7 @@ export async function look(
       }
       const key = `looks/${callId.replace(/[^\w-]/g, "_")}.jpg`;
       if (bytes) await upload(assetPath(row.owner, row.id, key), bytes);
-      const changed = await mutateState(row.id, (current) => {
+      const changed = await mutateLive(row.id, (current) => {
         const state: ExaminationState = {
           ...current.state,
           looked: [...new Set([...current.state.looked, input.page])],
@@ -517,6 +544,7 @@ export async function runCheck(
             kind: row.kind,
             page: input.page,
             box: input.box,
+            afterEnd: caller.role.kind === "client",
           });
       const taken = await takeIn({
         caller,
@@ -551,6 +579,11 @@ export async function runCheck(
         text: [
           `${CHECKS[input.check].label}: ${taken.added.length} Measurement${taken.added.length === 1 ? "" : "s"} in ${(result.ms / 1000).toFixed(1)} s.`,
           ...(lines.length ? lines : ["Nothing measurable was found there."]),
+          ...(isOver(taken.row.status)
+            ? [
+                "The Examination is over: these Measurements are on record and its Verdict stands as given. Re-evaluate decides it again with them.",
+              ]
+            : []),
           gateLine(taken.row, taken.standing),
         ].join("\n"),
         data: {
@@ -664,6 +697,8 @@ export async function loadSkill(
   callId = newCallId(),
 ): Promise<ToolOutcome> {
   const skill = SKILLS[input.skill];
+  if (caller.role.kind === "examiner" && !input.examinationId)
+    return refusal("No such Examination.");
   if (!input.examinationId) return { ok: true, text: skill.body };
   const found = await examinationFor(caller, input.examinationId, "examining");
   if ("refusal" in found) return refusal(found.refusal);
@@ -674,7 +709,7 @@ export async function loadSkill(
     input.skill,
     input,
     async () => {
-      await mutateState(found.row.id, (current) => ({
+      await mutateLive(found.row.id, (current) => ({
         state: current.state.skills.includes(input.skill)
           ? current.state
           : {
@@ -713,7 +748,7 @@ export async function hypothesize(
     async () => {
       const bad = pageRefusal(row, input.page);
       if (bad) return refusal(bad);
-      const changed = await mutateState<{
+      const changed = await mutateLive<{
         hypothesis: Hypothesis;
         standing: Standing;
       }>(row.id, (current) => {
@@ -782,7 +817,7 @@ export async function conclude(
     `${input.hypothesisId} ${input.outcome}`,
     input,
     async () => {
-      const changed = await mutateState<{
+      const changed = await mutateLive<{
         hypothesis: Hypothesis;
         standing: Standing;
         tripping: number;
@@ -881,7 +916,7 @@ export async function reviewFinding(
     `${input.findingId}: ${input.stance}`,
     input,
     async () => {
-      const changed = await mutateState<Standing>(row.id, (current) => {
+      const changed = await mutateLive<Standing>(row.id, (current) => {
         const before = standingOf(current, current.state);
         const finding = before.findings.find(
           (item) =>
@@ -982,7 +1017,7 @@ export async function finish(
     input.summary.slice(0, 140),
     input,
     async () => {
-      const changed = await mutateState<Standing>(row.id, (current) => {
+      const changed = await mutateLive<Standing>(row.id, (current) => {
         const standing = standingOf(current, current.state);
         if (!standing.gate.passed)
           return { refusal: gateRefusal(standing, current.state) };

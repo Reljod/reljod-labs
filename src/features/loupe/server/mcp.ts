@@ -69,11 +69,18 @@ type ToolContext = {
   http?: { authInfo?: { extra?: Record<string, unknown> } };
 };
 
-function callerOf(ctx: unknown): Caller {
+/**
+ * Who is calling. The in-app Examiner's token is for the Examiner's own tools
+ * on its own Examination and nothing else: every other tool refuses it, so a
+ * leaked one cannot start, stop, read or re-decide the Owner's Examinations.
+ */
+function callerOf(ctx: unknown, examinerTool = false): Caller {
   const caller = (ctx as ToolContext).http?.authInfo?.extra?.caller as
     | Caller
     | undefined;
   if (!caller) throw new Error("Not authorised");
+  if (caller.role.kind === "examiner" && !examinerTool)
+    throw new Error("Not authorised: this token is for the Examiner's tools.");
   return caller;
 }
 
@@ -144,7 +151,7 @@ function examinerTool<S extends z.ZodObject>(
     },
     async (args: unknown, ctx: unknown) => {
       try {
-        const caller = callerOf(ctx);
+        const caller = callerOf(ctx, true);
         return answer(caller, await work(caller, args as z.infer<S>));
       } catch (error) {
         console.error(`[loupe] mcp ${id}`, error);
@@ -201,7 +208,7 @@ export function registerLoupeTools(server: McpServer) {
       annotations: { readOnlyHint: true },
     },
     async (args, ctx) => {
-      const caller = callerOf(ctx);
+      const caller = callerOf(ctx, true);
       return answer(caller, await loadSkill(caller, args));
     },
   );

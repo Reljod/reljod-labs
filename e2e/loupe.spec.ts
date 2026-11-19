@@ -274,6 +274,19 @@ test("an outside client examines a document through the MCP server, with the Swe
     "falsePositiveRate",
   );
 
+  // A Check run again on the finished Examination really runs (a fresh
+  // Sandbox), is put on record, and leaves the Verdict as it was given.
+  const again = await tool(api, token, "run_check", {
+    examinationId,
+    check: "pdf_structure",
+  });
+  expect(again.isError, again.content[0]?.text).toBeFalsy();
+  expect(again.content[0]?.text).toContain("Verdict stands");
+  const after = (await tool(api, token, "get_examination", { examinationId }))
+    .structuredContent as Record<string, unknown>;
+  expect(after.status).toBe("completed");
+  expect(after.verdict).toBe(examination.verdict);
+
   // The Examiner's own tools are closed on an Examination the client does not drive.
   const refused = await tool(api, token, "finish", {
     examinationId,

@@ -314,7 +314,13 @@ export function decide(findings: Finding[], rulebook: Rulebook): VerdictResult {
       ...counts,
     };
   }
-  if (supporting.length >= tamperedAtSupporting) {
+  // What the Examiner's own code reported is whatever that code said, and a
+  // Document's text can steer the model that wrote it: alone it never makes
+  // a Document Tampered. Only Findings a named Check measured count here.
+  const repeatable = rulebook.policy.ownCodeDecisive
+    ? supporting
+    : supporting.filter((finding) => finding.check !== null);
+  if (repeatable.length >= tamperedAtSupporting) {
     return {
       verdict: "tampered",
       reasons: [
@@ -328,7 +334,9 @@ export function decide(findings: Finding[], rulebook: Rulebook): VerdictResult {
     return {
       verdict: "suspicious",
       reasons: [
-        `${plural(supporting.length, "supporting Finding")}: enough to look closer (Suspicious at ${suspiciousAtSupporting}), not enough to call it Tampered (${tamperedAtSupporting}).`,
+        supporting.length >= tamperedAtSupporting
+          ? `${plural(supporting.length, "supporting Finding")}, but only ${repeatable.length} from a named Check: what the Examiner's own code reports cannot make a Document Tampered by itself (${tamperedAtSupporting} from named Checks would).`
+          : `${plural(supporting.length, "supporting Finding")}: enough to look closer (Suspicious at ${suspiciousAtSupporting}), not enough to call it Tampered (${tamperedAtSupporting}).`,
         ...supporting.map((finding) => `${findingLine(finding)}.`),
       ],
       ...counts,

@@ -1,6 +1,7 @@
 import { ownerOf } from "@/features/access/domain/owner";
 import { currentAccess, denied } from "@/features/access/server/gate";
 import type { StoredEvent } from "@/features/loupe/domain/contract";
+import { closeIfStale } from "@/features/loupe/server/examinations";
 import {
   eventsAfter,
   getExamination,
@@ -82,7 +83,9 @@ export async function GET(
           if (page.length === PAGE) continue;
           if (fresh.length === 0) {
             // An Examination that is over but never wrote `end` (its workflow died) stops here.
-            const latest = await getExamination(examination.id);
+            // One lost long ago is closed here too, or the page would reconnect for ever.
+            const found = await getExamination(examination.id);
+            const latest = found ? await closeIfStale(found) : null;
             if (!latest || isOver(latest.status)) {
               if (overPolls < OVER_GRACE_POLLS) {
                 overPolls += 1;
