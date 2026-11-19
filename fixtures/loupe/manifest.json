@@ -1,0 +1,1501 @@
+{
+ "version": 1,
+ "generatedBy": "fixtures/loupe/generate/build.py",
+ "documents": [
+  {
+   "id": "lp-tr-payslip-01",
+   "baseId": "lp-tr-payslip-01",
+   "title": "Payslip, March 2026",
+   "kind": "payslip",
+   "format": "pdf",
+   "split": "train",
+   "file": "lp-tr-payslip-01.pdf",
+   "pages": 1,
+   "issuer": "Tidewater Logistics Ltd",
+   "tampers": [],
+   "benign": [],
+   "hard": false,
+   "featured": true,
+   "blurb": "Payslip \u00b7 Tidewater Logistics Ltd \u00b7 March 2026"
+  },
+  {
+   "id": "lp-tr-payslip-01-t1",
+   "baseId": "lp-tr-payslip-01",
+   "title": "Payslip, March 2026",
+   "kind": "payslip",
+   "format": "pdf",
+   "split": "train",
+   "file": "lp-tr-payslip-01-t1.pdf",
+   "pages": 1,
+   "issuer": "Tidewater Logistics Ltd",
+   "tampers": [
+    {
+     "type": "text_edit",
+     "page": 1,
+     "box": [
+      0.81027,
+      0.58314,
+      0.91008,
+      0.60202
+     ],
+     "field": "net",
+     "from": "4,436.94",
+     "to": "6,336.94"
+    }
+   ],
+   "benign": [],
+   "hard": false,
+   "featured": false,
+   "blurb": "Payslip \u00b7 Tidewater Logistics Ltd \u00b7 March 2026"
+  },
+  {
+   "id": "lp-tr-payslip-01-t2",
+   "baseId": "lp-tr-payslip-01",
+   "title": "Payslip, March 2026",
+   "kind": "payslip",
+   "format": "pdf",
+   "split": "train",
+   "file": "lp-tr-payslip-01-t2.pdf",
+   "pages": 1,
+   "issuer": "Tidewater Logistics Ltd",
+   "tampers": [
+    {
+     "type": "overpaint_edit",
+     "page": 1,
+     "box": [
+      0.85662,
+      0.29811,
+      0.92185,
+      0.31141
+     ],
+     "field": "earn.0",
+     "from": "4,980.00",
+     "to": "7,380.00"
+    },
+    {
+     "type": "overpaint_edit",
+     "page": 1,
+     "box": [
+      0.854,
+      0.36307,
+      0.92185,
+      0.37685
+     ],
+     "field": "earn_total",
+     "from": "6,063.75",
+     "to": "8,463.75"
+    }
+   ],
+   "benign": [],
+   "hard": false,
+   "featured": true,
+   "blurb": "Payslip \u00b7 Tidewater Logistics Ltd \u00b7 March 2026"
+  },
+  {
+   "id": "lp-tr-payslip-01-t3",
+   "baseId": "lp-tr-payslip-01",
+   "title": "Payslip, March 2026",
+   "kind": "payslip",
+   "format": "pdf",
+   "split": "train",
+   "file": "lp-tr-payslip-01-t3.pdf",
+   "pages": 1,
+   "issuer": "Tidewater Logistics Ltd",
+   "tampers": [
+    {
+     "type": "text_edit",
+     "page": 1,
+     "box": [
+      0.8583,
+      0.29886,
+      0.92017,
+      0.31044
+     ],
+     "field": "earn.0",
+     "from": "4,980.00",
+     "to": "6,480.00"
+    },
+    {
+     "type": "text_edit",
+     "page": 1,
+     "box": [
+      0.85568,
+      0.3638,
+      0.92017,
+      0.37589
+     ],
+     "field": "earn_total",
+     "from": "6,063.75",
+     "to": "7,563.75"
+    },
+    {
+     "type": "text_edit",
+     "page": 1,
+     "box": [
+      0.8583,
+      0.43188,
+      0.92017,
+      0.44346
+     ],
+     "field": "ded.0",
+     "from": "1,032.75",
+     "to": "1,332.75"
+    },
+    {
+     "type": "text_edit",
+     "page": 1,
+     "box": [
+      0.87119,
+      0.45325,
+      0.92017,
+      0.46484
+     ],
+     "field": "ded.1",
+     "from": "272.87",
+     "to": "340.37"
+    },
+    {
+     "type": "text_edit",
+     "page": 1,
+     "box": [
+      0.87119,
+      0.47463,
+      0.92017,
+      0.48621
+     ],
+     "field": "ded.2",
+     "from": "303.19",
+     "to": "378.19"
+    },
+    {
+     "type": "text_edit",
+     "page": 1,
+     "box": [
+      0.85568,
+      0.51819,
+      0.92017,
+      0.53028
+     ],
+     "field": "ded_total",
+     "from": "1,626.81",
+     "to": "2,069.31"
+    },
+    {
+     "type": "text_edit",
+     "page": 1,
+     "box": [
+      0.81027,
+      0.58314,
+      0.91008,
+      0.60202
+     ],
+     "field": "net",
+     "from": "4,436.94",
+     "to": "5,494.44"
+    }
+   ],
+   "benign": [],
+   "hard": true,
+   "featured": false,
+   "blurb": "Payslip \u00b7 Tidewater Logistics Ltd \u00b7 March 2026"
+  },
+  {
+   "id": "lp-tr-payslip-01-b1",
+   "baseId": "lp-tr-payslip-01",
+   "title": "Payslip, March 2026",
+   "kind": "payslip",
+   "format": "pdf",
+   "split": "train",
+   "file": "lp-tr-payslip-01-b1.pdf",
+   "pages": 1,
+   "issuer": "Tidewater Logistics Ltd",
+   "tampers": [],
+   "benign": [
+    "resave_pdf"
+   ],
+   "hard": false,
+   "featured": false,
+   "blurb": "Payslip \u00b7 Tidewater Logistics Ltd \u00b7 March 2026"
+  },
+  {
+   "id": "lp-tr-statement-01",
+   "baseId": "lp-tr-statement-01",
+   "title": "Bank statement, April 2026",
+   "kind": "bank_statement",
+   "format": "pdf",
+   "split": "train",
+   "file": "lp-tr-statement-01.pdf",
+   "pages": 2,
+   "issuer": "Port Selene Savings Bank",
+   "tampers": [],
+   "benign": [],
+   "hard": false,
+   "featured": false,
+   "blurb": "Bank statement \u00b7 Port Selene Savings Bank \u00b7 April 2026"
+  },
+  {
+   "id": "lp-tr-statement-01-t1",
+   "baseId": "lp-tr-statement-01",
+   "title": "Bank statement, April 2026",
+   "kind": "bank_statement",
+   "format": "pdf",
+   "split": "train",
+   "file": "lp-tr-statement-01-t1.pdf",
+   "pages": 2,
+   "issuer": "Port Selene Savings Bank",
+   "tampers": [
+    {
+     "type": "incremental_update",
+     "page": 1,
+     "box": [
+      0.72105,
+      0.54884,
+      0.77899,
+      0.55966
+     ],
+     "field": "tx.11.amt",
+     "from": "3,720.00",
+     "to": "7,720.00"
+    }
+   ],
+   "benign": [],
+   "hard": false,
+   "featured": false,
+   "blurb": "Bank statement \u00b7 Port Selene Savings Bank \u00b7 April 2026"
+  },
+  {
+   "id": "lp-tr-statement-01-t2",
+   "baseId": "lp-tr-statement-01",
+   "title": "Bank statement, April 2026",
+   "kind": "bank_statement",
+   "format": "pdf",
+   "split": "train",
+   "file": "lp-tr-statement-01-t2.pdf",
+   "pages": 2,
+   "issuer": "Port Selene Savings Bank",
+   "tampers": [
+    {
+     "type": "date_change",
+     "page": 2,
+     "box": [
+      0.07647,
+      0.18798,
+      0.15978,
+      0.19856
+     ],
+     "field": "tx.32.date",
+     "from": "30 Apr 2026",
+     "to": "09 May 2026"
+    }
+   ],
+   "benign": [],
+   "hard": false,
+   "featured": false,
+   "blurb": "Bank statement \u00b7 Port Selene Savings Bank \u00b7 April 2026"
+  },
+  {
+   "id": "lp-tr-statement-01-b1",
+   "baseId": "lp-tr-statement-01",
+   "title": "Bank statement, April 2026",
+   "kind": "bank_statement",
+   "format": "pdf",
+   "split": "train",
+   "file": "lp-tr-statement-01-b1.pdf",
+   "pages": 2,
+   "issuer": "Port Selene Savings Bank",
+   "tampers": [],
+   "benign": [
+    "resave_pdf"
+   ],
+   "hard": false,
+   "featured": false,
+   "blurb": "Bank statement \u00b7 Port Selene Savings Bank \u00b7 April 2026"
+  },
+  {
+   "id": "lp-tr-invoice-01",
+   "baseId": "lp-tr-invoice-01",
+   "title": "Invoice, May 2026",
+   "kind": "invoice",
+   "format": "pdf",
+   "split": "train",
+   "file": "lp-tr-invoice-01.pdf",
+   "pages": 1,
+   "issuer": "Saltmarsh Print Works",
+   "tampers": [],
+   "benign": [],
+   "hard": false,
+   "featured": false,
+   "blurb": "Invoice \u00b7 Saltmarsh Print Works \u00b7 May 2026"
+  },
+  {
+   "id": "lp-tr-invoice-01-t1",
+   "baseId": "lp-tr-invoice-01",
+   "title": "Invoice, May 2026",
+   "kind": "invoice",
+   "format": "pdf",
+   "split": "train",
+   "file": "lp-tr-invoice-01-t1.pdf",
+   "pages": 1,
+   "issuer": "Saltmarsh Print Works",
+   "tampers": [
+    {
+     "type": "payee_change",
+     "page": 1,
+     "box": [
+      0.16723,
+      0.49639,
+      0.38752,
+      0.50747
+     ],
+     "field": "payee",
+     "from": "Saltmarsh Print Works",
+     "to": "Saltmarsh Print Works (Holdings)"
+    },
+    {
+     "type": "payee_change",
+     "page": 1,
+     "box": [
+      0.16723,
+      0.51302,
+      0.36459,
+      0.5241
+     ],
+     "field": "iban",
+     "from": "MR28 LQCU 3232 2183 4062",
+     "to": "MR28 LQCU 3232 2133 4092"
+    }
+   ],
+   "benign": [],
+   "hard": false,
+   "featured": false,
+   "blurb": "Invoice \u00b7 Saltmarsh Print Works \u00b7 May 2026"
+  },
+  {
+   "id": "lp-tr-invoice-01-t2",
+   "baseId": "lp-tr-invoice-01",
+   "title": "Invoice, May 2026",
+   "kind": "invoice",
+   "format": "pdf",
+   "split": "train",
+   "file": "lp-tr-invoice-01-t2.pdf",
+   "pages": 1,
+   "issuer": "Saltmarsh Print Works",
+   "tampers": [
+    {
+     "type": "font_substitution",
+     "page": 1,
+     "box": [
+      0.8635,
+      0.27485,
+      0.92017,
+      0.28662
+     ],
+     "field": "item.0.amt",
+     "from": "1,150.00",
+     "to": "850.00"
+    },
+    {
+     "type": "font_substitution",
+     "page": 1,
+     "box": [
+      0.84701,
+      0.37917,
+      0.92017,
+      0.39119
+     ],
+     "field": "subtotal",
+     "from": "1,741.72",
+     "to": "1,441.72"
+    },
+    {
+     "type": "font_substitution",
+     "page": 1,
+     "box": [
+      0.86233,
+      0.40173,
+      0.92017,
+      0.41376
+     ],
+     "field": "vat",
+     "from": "209.01",
+     "to": "173.01"
+    },
+    {
+     "type": "font_substitution",
+     "page": 1,
+     "box": [
+      0.83265,
+      0.42354,
+      0.92017,
+      0.43657
+     ],
+     "field": "total",
+     "from": "1,950.73",
+     "to": "1,614.73"
+    }
+   ],
+   "benign": [],
+   "hard": false,
+   "featured": false,
+   "blurb": "Invoice \u00b7 Saltmarsh Print Works \u00b7 May 2026"
+  },
+  {
+   "id": "lp-tr-invoice-01-b1",
+   "baseId": "lp-tr-invoice-01",
+   "title": "Invoice, May 2026",
+   "kind": "invoice",
+   "format": "image",
+   "split": "train",
+   "file": "lp-tr-invoice-01-b1.jpg",
+   "pages": 1,
+   "issuer": "Saltmarsh Print Works",
+   "tampers": [],
+   "benign": [
+    "screenshot"
+   ],
+   "hard": false,
+   "featured": false,
+   "blurb": "Invoice \u00b7 Saltmarsh Print Works \u00b7 May 2026"
+  },
+  {
+   "id": "lp-tr-bill-01",
+   "baseId": "lp-tr-bill-01",
+   "title": "Utility bill, July 2026",
+   "kind": "utility_bill",
+   "format": "image",
+   "split": "train",
+   "file": "lp-tr-bill-01.jpg",
+   "pages": 1,
+   "issuer": "Halcyon Water & Power",
+   "tampers": [],
+   "benign": [],
+   "hard": false,
+   "featured": false,
+   "blurb": "Utility bill \u00b7 Halcyon Water & Power \u00b7 July 2026 \u00b7 scan"
+  },
+  {
+   "id": "lp-tr-bill-01-t1",
+   "baseId": "lp-tr-bill-01",
+   "title": "Utility bill, July 2026",
+   "kind": "utility_bill",
+   "format": "image",
+   "split": "train",
+   "file": "lp-tr-bill-01-t1.jpg",
+   "pages": 1,
+   "issuer": "Halcyon Water & Power",
+   "tampers": [
+    {
+     "type": "pasted_patch",
+     "page": 1,
+     "box": [
+      0.85411,
+      0.57375,
+      0.92573,
+      0.59313
+     ],
+     "field": "amount_due",
+     "from": "132.69",
+     "to": "41.13"
+    },
+    {
+     "type": "pasted_patch",
+     "page": 1,
+     "box": [
+      0.72237,
+      0.24625,
+      0.91247,
+      0.27687
+     ],
+     "field": "amount_due_big",
+     "from": "M$ 132.69",
+     "to": "M$ 41.13"
+    }
+   ],
+   "benign": [],
+   "hard": false,
+   "featured": true,
+   "blurb": "Utility bill \u00b7 Halcyon Water & Power \u00b7 July 2026 \u00b7 scan"
+  },
+  {
+   "id": "lp-tr-bill-01-t2",
+   "baseId": "lp-tr-bill-01",
+   "title": "Utility bill, July 2026",
+   "kind": "utility_bill",
+   "format": "image",
+   "split": "train",
+   "file": "lp-tr-bill-01-t2.jpg",
+   "pages": 1,
+   "issuer": "Halcyon Water & Power",
+   "tampers": [
+    {
+     "type": "copy_move",
+     "page": 1,
+     "box": [
+      0.85588,
+      0.51125,
+      0.92219,
+      0.52687
+     ],
+     "field": "total",
+     "from": "132.69",
+     "to": "27.38"
+    }
+   ],
+   "benign": [],
+   "hard": false,
+   "featured": false,
+   "blurb": "Utility bill \u00b7 Halcyon Water & Power \u00b7 July 2026 \u00b7 scan"
+  },
+  {
+   "id": "lp-tr-bill-01-b1",
+   "baseId": "lp-tr-bill-01",
+   "title": "Utility bill, July 2026",
+   "kind": "utility_bill",
+   "format": "image",
+   "split": "train",
+   "file": "lp-tr-bill-01-b1.jpg",
+   "pages": 1,
+   "issuer": "Halcyon Water & Power",
+   "tampers": [],
+   "benign": [
+    "rescan"
+   ],
+   "hard": false,
+   "featured": false,
+   "blurb": "Utility bill \u00b7 Halcyon Water & Power \u00b7 July 2026 \u00b7 scan"
+  },
+  {
+   "id": "lp-tr-payslip-02",
+   "baseId": "lp-tr-payslip-02",
+   "title": "Payslip, July 2026",
+   "kind": "payslip",
+   "format": "image",
+   "split": "train",
+   "file": "lp-tr-payslip-02.jpg",
+   "pages": 1,
+   "issuer": "Corvane Shipyards plc",
+   "tampers": [],
+   "benign": [],
+   "hard": false,
+   "featured": false,
+   "blurb": "Payslip \u00b7 Corvane Shipyards plc \u00b7 July 2026 \u00b7 scan"
+  },
+  {
+   "id": "lp-tr-payslip-02-t1",
+   "baseId": "lp-tr-payslip-02",
+   "title": "Payslip, July 2026",
+   "kind": "payslip",
+   "format": "image",
+   "split": "train",
+   "file": "lp-tr-payslip-02-t1.jpg",
+   "pages": 1,
+   "issuer": "Corvane Shipyards plc",
+   "tampers": [
+    {
+     "type": "recompressed_splice",
+     "page": 1,
+     "box": [
+      0.77965,
+      0.59499,
+      0.91503,
+      0.62335
+     ],
+     "field": "net",
+     "from": "3,037.05",
+     "to": "5,337.05"
+    }
+   ],
+   "benign": [],
+   "hard": false,
+   "featured": false,
+   "blurb": "Payslip \u00b7 Corvane Shipyards plc \u00b7 July 2026 \u00b7 scan"
+  },
+  {
+   "id": "lp-tr-payslip-02-t2",
+   "baseId": "lp-tr-payslip-02",
+   "title": "Payslip, July 2026",
+   "kind": "payslip",
+   "format": "image",
+   "split": "train",
+   "file": "lp-tr-payslip-02-t2.jpg",
+   "pages": 1,
+   "issuer": "Corvane Shipyards plc",
+   "tampers": [
+    {
+     "type": "resaved_region",
+     "page": 1,
+     "box": [
+      0.77218,
+      0.35884,
+      0.95518,
+      0.41359
+     ],
+     "field": "earn_total",
+     "from": "3,859.13",
+     "to": "5,659.13"
+    }
+   ],
+   "benign": [],
+   "hard": false,
+   "featured": false,
+   "blurb": "Payslip \u00b7 Corvane Shipyards plc \u00b7 July 2026 \u00b7 scan"
+  },
+  {
+   "id": "lp-tr-idcard-01",
+   "baseId": "lp-tr-idcard-01",
+   "title": "National identity card",
+   "kind": "id_card",
+   "format": "image",
+   "split": "train",
+   "file": "lp-tr-idcard-01.jpg",
+   "pages": 1,
+   "issuer": "Republic of Meridia, Civil Registry",
+   "tampers": [],
+   "benign": [],
+   "hard": false,
+   "featured": false,
+   "blurb": "Identity card \u00b7 Republic of Meridia \u00b7 scan"
+  },
+  {
+   "id": "lp-tr-idcard-01-t1",
+   "baseId": "lp-tr-idcard-01",
+   "title": "National identity card",
+   "kind": "id_card",
+   "format": "image",
+   "split": "train",
+   "file": "lp-tr-idcard-01-t1.jpg",
+   "pages": 1,
+   "issuer": "Republic of Meridia, Civil Registry",
+   "tampers": [
+    {
+     "type": "pasted_patch",
+     "page": 1,
+     "box": [
+      0.32267,
+      0.44053,
+      0.45494,
+      0.48899
+     ],
+     "field": "dob",
+     "from": "08 JUL 1980",
+     "to": "08 JUL 1989"
+    }
+   ],
+   "benign": [],
+   "hard": false,
+   "featured": false,
+   "blurb": "Identity card \u00b7 Republic of Meridia \u00b7 scan"
+  },
+  {
+   "id": "lp-tr-idcard-01-b1",
+   "baseId": "lp-tr-idcard-01",
+   "title": "National identity card",
+   "kind": "id_card",
+   "format": "image",
+   "split": "train",
+   "file": "lp-tr-idcard-01-b1.jpg",
+   "pages": 1,
+   "issuer": "Republic of Meridia, Civil Registry",
+   "tampers": [],
+   "benign": [
+    "rescan"
+   ],
+   "hard": false,
+   "featured": true,
+   "blurb": "Identity card \u00b7 Republic of Meridia \u00b7 scan"
+  },
+  {
+   "id": "lp-va-statement-01",
+   "baseId": "lp-va-statement-01",
+   "title": "Bank statement, February 2026",
+   "kind": "bank_statement",
+   "format": "pdf",
+   "split": "validation",
+   "file": "lp-va-statement-01.pdf",
+   "pages": 1,
+   "issuer": "Lantern Quay Credit Union",
+   "tampers": [],
+   "benign": [],
+   "hard": false,
+   "featured": false,
+   "blurb": "Bank statement \u00b7 Lantern Quay Credit Union \u00b7 February 2026"
+  },
+  {
+   "id": "lp-va-statement-01-t1",
+   "baseId": "lp-va-statement-01",
+   "title": "Bank statement, February 2026",
+   "kind": "bank_statement",
+   "format": "pdf",
+   "split": "validation",
+   "file": "lp-va-statement-01-t1.pdf",
+   "pages": 1,
+   "issuer": "Lantern Quay Credit Union",
+   "tampers": [
+    {
+     "type": "overpaint_edit",
+     "page": 1,
+     "box": [
+      0.8215,
+      0.22686,
+      0.92185,
+      0.24171
+     ],
+     "field": "closing",
+     "from": "6,942.20",
+     "to": "18,942.20"
+    },
+    {
+     "type": "overpaint_edit",
+     "page": 1,
+     "box": [
+      0.84029,
+      0.7664,
+      0.92521,
+      0.77923
+     ],
+     "field": "closing_row",
+     "from": "6,942.20",
+     "to": "18,942.20"
+    }
+   ],
+   "benign": [],
+   "hard": false,
+   "featured": true,
+   "blurb": "Bank statement \u00b7 Lantern Quay Credit Union \u00b7 February 2026"
+  },
+  {
+   "id": "lp-va-statement-01-t2",
+   "baseId": "lp-va-statement-01",
+   "title": "Bank statement, February 2026",
+   "kind": "bank_statement",
+   "format": "pdf",
+   "split": "validation",
+   "file": "lp-va-statement-01-t2.pdf",
+   "pages": 1,
+   "issuer": "Lantern Quay Credit Union",
+   "tampers": [
+    {
+     "type": "payee_change",
+     "page": 1,
+     "box": [
+      0.06639,
+      0.12304,
+      0.28323,
+      0.13626
+     ],
+     "field": "name",
+     "from": "Callum Linhart",
+     "to": "Leandro Whitlow-Marchetti"
+    }
+   ],
+   "benign": [],
+   "hard": true,
+   "featured": false,
+   "blurb": "Bank statement \u00b7 Lantern Quay Credit Union \u00b7 February 2026"
+  },
+  {
+   "id": "lp-va-statement-01-b1",
+   "baseId": "lp-va-statement-01",
+   "title": "Bank statement, February 2026",
+   "kind": "bank_statement",
+   "format": "pdf",
+   "split": "validation",
+   "file": "lp-va-statement-01-b1.pdf",
+   "pages": 1,
+   "issuer": "Lantern Quay Credit Union",
+   "tampers": [],
+   "benign": [
+    "resave_pdf"
+   ],
+   "hard": false,
+   "featured": false,
+   "blurb": "Bank statement \u00b7 Lantern Quay Credit Union \u00b7 February 2026"
+  },
+  {
+   "id": "lp-va-bill-01",
+   "baseId": "lp-va-bill-01",
+   "title": "Utility bill, September 2026",
+   "kind": "utility_bill",
+   "format": "pdf",
+   "split": "validation",
+   "file": "lp-va-bill-01.pdf",
+   "pages": 1,
+   "issuer": "Halcyon Water & Power",
+   "tampers": [],
+   "benign": [],
+   "hard": false,
+   "featured": false,
+   "blurb": "Utility bill \u00b7 Halcyon Water & Power \u00b7 September 2026"
+  },
+  {
+   "id": "lp-va-bill-01-t1",
+   "baseId": "lp-va-bill-01",
+   "title": "Utility bill, September 2026",
+   "kind": "utility_bill",
+   "format": "pdf",
+   "split": "validation",
+   "file": "lp-va-bill-01-t1.pdf",
+   "pages": 1,
+   "issuer": "Halcyon Water & Power",
+   "tampers": [
+    {
+     "type": "date_change",
+     "page": 1,
+     "box": [
+      0.68487,
+      0.13178,
+      0.81995,
+      0.14286
+     ],
+     "field": "bill_date",
+     "from": "2 September 2026",
+     "to": "2 November 2026"
+    }
+   ],
+   "benign": [],
+   "hard": false,
+   "featured": false,
+   "blurb": "Utility bill \u00b7 Halcyon Water & Power \u00b7 September 2026"
+  },
+  {
+   "id": "lp-va-bill-01-t2",
+   "baseId": "lp-va-bill-01",
+   "title": "Utility bill, September 2026",
+   "kind": "utility_bill",
+   "format": "pdf",
+   "split": "validation",
+   "file": "lp-va-bill-01-t2.pdf",
+   "pages": 1,
+   "issuer": "Halcyon Water & Power",
+   "tampers": [
+    {
+     "type": "incremental_update",
+     "page": 1,
+     "box": [
+      0.77208,
+      0.25131,
+      0.91008,
+      0.27397
+     ],
+     "field": "amount_due_big",
+     "from": "M$ 170.12",
+     "to": "M$ 0.00"
+    },
+    {
+     "type": "incremental_update",
+     "page": 1,
+     "box": [
+      0.88034,
+      0.57914,
+      0.92017,
+      0.59073
+     ],
+     "field": "amount_due",
+     "from": "170.12",
+     "to": "0.00"
+    }
+   ],
+   "benign": [],
+   "hard": false,
+   "featured": true,
+   "blurb": "Utility bill \u00b7 Halcyon Water & Power \u00b7 September 2026"
+  },
+  {
+   "id": "lp-va-invoice-01",
+   "baseId": "lp-va-invoice-01",
+   "title": "Invoice, September 2026",
+   "kind": "invoice",
+   "format": "image",
+   "split": "validation",
+   "file": "lp-va-invoice-01.jpg",
+   "pages": 1,
+   "issuer": "Greywether Timber Supply",
+   "tampers": [],
+   "benign": [],
+   "hard": false,
+   "featured": true,
+   "blurb": "Invoice \u00b7 Greywether Timber Supply \u00b7 September 2026 \u00b7 scan"
+  },
+  {
+   "id": "lp-va-invoice-01-t1",
+   "baseId": "lp-va-invoice-01",
+   "title": "Invoice, September 2026",
+   "kind": "invoice",
+   "format": "image",
+   "split": "validation",
+   "file": "lp-va-invoice-01-t1.jpg",
+   "pages": 1,
+   "issuer": "Greywether Timber Supply",
+   "tampers": [
+    {
+     "type": "pasted_patch",
+     "page": 1,
+     "box": [
+      0.84755,
+      0.42509,
+      0.9242,
+      0.44519
+     ],
+     "field": "total",
+     "from": "959.00",
+     "to": "5,959.00"
+    }
+   ],
+   "benign": [],
+   "hard": false,
+   "featured": false,
+   "blurb": "Invoice \u00b7 Greywether Timber Supply \u00b7 September 2026 \u00b7 scan"
+  },
+  {
+   "id": "lp-va-invoice-01-t2",
+   "baseId": "lp-va-invoice-01",
+   "title": "Invoice, September 2026",
+   "kind": "invoice",
+   "format": "image",
+   "split": "validation",
+   "file": "lp-va-invoice-01-t2.jpg",
+   "pages": 1,
+   "issuer": "Greywether Timber Supply",
+   "tampers": [
+    {
+     "type": "recompressed_splice",
+     "page": 1,
+     "box": [
+      0.16193,
+      0.51644,
+      0.36865,
+      0.53654
+     ],
+     "field": "iban",
+     "from": "MR33 PSSB 0946 6852 3470",
+     "to": "MR33 PSSB 0946 6802 3400"
+    }
+   ],
+   "benign": [],
+   "hard": false,
+   "featured": true,
+   "blurb": "Invoice \u00b7 Greywether Timber Supply \u00b7 September 2026 \u00b7 scan"
+  },
+  {
+   "id": "lp-va-invoice-01-b1",
+   "baseId": "lp-va-invoice-01",
+   "title": "Invoice, September 2026",
+   "kind": "invoice",
+   "format": "image",
+   "split": "validation",
+   "file": "lp-va-invoice-01-b1.jpg",
+   "pages": 1,
+   "issuer": "Greywether Timber Supply",
+   "tampers": [],
+   "benign": [
+    "rescan"
+   ],
+   "hard": false,
+   "featured": false,
+   "blurb": "Invoice \u00b7 Greywether Timber Supply \u00b7 September 2026 \u00b7 scan"
+  },
+  {
+   "id": "lp-va-idcard-01",
+   "baseId": "lp-va-idcard-01",
+   "title": "National identity card",
+   "kind": "id_card",
+   "format": "image",
+   "split": "validation",
+   "file": "lp-va-idcard-01.jpg",
+   "pages": 1,
+   "issuer": "Republic of Meridia, Civil Registry",
+   "tampers": [],
+   "benign": [],
+   "hard": false,
+   "featured": false,
+   "blurb": "Identity card \u00b7 Republic of Meridia \u00b7 scan"
+  },
+  {
+   "id": "lp-va-idcard-01-t1",
+   "baseId": "lp-va-idcard-01",
+   "title": "National identity card",
+   "kind": "id_card",
+   "format": "image",
+   "split": "validation",
+   "file": "lp-va-idcard-01-t1.jpg",
+   "pages": 1,
+   "issuer": "Republic of Meridia, Civil Registry",
+   "tampers": [
+    {
+     "type": "resaved_region",
+     "page": 1,
+     "box": [
+      0.26926,
+      0.23229,
+      0.48131,
+      0.34146
+     ],
+     "field": "surname",
+     "from": "MARCHETTI",
+     "to": "HARTWELL"
+    }
+   ],
+   "benign": [],
+   "hard": false,
+   "featured": false,
+   "blurb": "Identity card \u00b7 Republic of Meridia \u00b7 scan"
+  },
+  {
+   "id": "lp-va-idcard-01-t2",
+   "baseId": "lp-va-idcard-01",
+   "title": "National identity card",
+   "kind": "id_card",
+   "format": "image",
+   "split": "validation",
+   "file": "lp-va-idcard-01-t2.jpg",
+   "pages": 1,
+   "issuer": "Republic of Meridia, Civil Registry",
+   "tampers": [
+    {
+     "type": "copy_move",
+     "page": 1,
+     "box": [
+      0.72845,
+      0.62137,
+      0.74218,
+      0.65738
+     ],
+     "field": "expiry",
+     "from": "22 NOV 2030",
+     "to": "22 NOV 2039"
+    }
+   ],
+   "benign": [],
+   "hard": false,
+   "featured": true,
+   "blurb": "Identity card \u00b7 Republic of Meridia \u00b7 scan"
+  },
+  {
+   "id": "lp-te-payslip-01",
+   "baseId": "lp-te-payslip-01",
+   "title": "Payslip, September 2026",
+   "kind": "payslip",
+   "format": "pdf",
+   "split": "test",
+   "file": "lp-te-payslip-01.pdf",
+   "pages": 1,
+   "issuer": "Corvane Shipyards plc",
+   "tampers": [],
+   "benign": [],
+   "hard": false,
+   "featured": false,
+   "blurb": "Payslip \u00b7 Corvane Shipyards plc \u00b7 September 2026"
+  },
+  {
+   "id": "lp-te-payslip-01-t1",
+   "baseId": "lp-te-payslip-01",
+   "title": "Payslip, September 2026",
+   "kind": "payslip",
+   "format": "pdf",
+   "split": "test",
+   "file": "lp-te-payslip-01-t1.pdf",
+   "pages": 1,
+   "issuer": "Corvane Shipyards plc",
+   "tampers": [
+    {
+     "type": "text_edit",
+     "page": 1,
+     "box": [
+      0.84103,
+      0.37805,
+      0.92017,
+      0.39014
+     ],
+     "field": "earn_total",
+     "from": "4,683.81",
+     "to": "7,683.81"
+    }
+   ],
+   "benign": [],
+   "hard": false,
+   "featured": false,
+   "blurb": "Payslip \u00b7 Corvane Shipyards plc \u00b7 September 2026"
+  },
+  {
+   "id": "lp-te-payslip-01-t2",
+   "baseId": "lp-te-payslip-01",
+   "title": "Payslip, September 2026",
+   "kind": "payslip",
+   "format": "pdf",
+   "split": "test",
+   "file": "lp-te-payslip-01-t2.pdf",
+   "pages": 1,
+   "issuer": "Corvane Shipyards plc",
+   "tampers": [
+    {
+     "type": "font_substitution",
+     "page": 1,
+     "box": [
+      0.81027,
+      0.59644,
+      0.91008,
+      0.61532
+     ],
+     "field": "net",
+     "from": "3,464.09",
+     "to": "4,664.09"
+    }
+   ],
+   "benign": [],
+   "hard": false,
+   "featured": true,
+   "blurb": "Payslip \u00b7 Corvane Shipyards plc \u00b7 September 2026"
+  },
+  {
+   "id": "lp-te-payslip-01-t3",
+   "baseId": "lp-te-payslip-01",
+   "title": "Payslip, September 2026",
+   "kind": "payslip",
+   "format": "pdf",
+   "split": "test",
+   "file": "lp-te-payslip-01-t3.pdf",
+   "pages": 1,
+   "issuer": "Corvane Shipyards plc",
+   "tampers": [
+    {
+     "type": "date_change",
+     "page": 1,
+     "box": [
+      0.64118,
+      0.14366,
+      0.81623,
+      0.15474
+     ],
+     "field": "period",
+     "from": "01 Sep 2026 to 30 Sep 2026",
+     "to": "01 Nov 2026 to 30 Nov 2026"
+    },
+    {
+     "type": "date_change",
+     "page": 1,
+     "box": [
+      0.64118,
+      0.16029,
+      0.72009,
+      0.17136
+     ],
+     "field": "pay_date",
+     "from": "27 Sep 2026",
+     "to": "27 Nov 2026"
+    }
+   ],
+   "benign": [],
+   "hard": true,
+   "featured": false,
+   "blurb": "Payslip \u00b7 Corvane Shipyards plc \u00b7 September 2026"
+  },
+  {
+   "id": "lp-te-payslip-01-b1",
+   "baseId": "lp-te-payslip-01",
+   "title": "Payslip, September 2026",
+   "kind": "payslip",
+   "format": "pdf",
+   "split": "test",
+   "file": "lp-te-payslip-01-b1.pdf",
+   "pages": 1,
+   "issuer": "Corvane Shipyards plc",
+   "tampers": [],
+   "benign": [
+    "resave_pdf"
+   ],
+   "hard": false,
+   "featured": false,
+   "blurb": "Payslip \u00b7 Corvane Shipyards plc \u00b7 September 2026"
+  },
+  {
+   "id": "lp-te-statement-01",
+   "baseId": "lp-te-statement-01",
+   "title": "Bank statement, October 2026",
+   "kind": "bank_statement",
+   "format": "pdf",
+   "split": "test",
+   "file": "lp-te-statement-01.pdf",
+   "pages": 2,
+   "issuer": "Port Selene Savings Bank",
+   "tampers": [],
+   "benign": [],
+   "hard": false,
+   "featured": false,
+   "blurb": "Bank statement \u00b7 Port Selene Savings Bank \u00b7 October 2026"
+  },
+  {
+   "id": "lp-te-statement-01-t1",
+   "baseId": "lp-te-statement-01",
+   "title": "Bank statement, October 2026",
+   "kind": "bank_statement",
+   "format": "pdf",
+   "split": "test",
+   "file": "lp-te-statement-01-t1.pdf",
+   "pages": 2,
+   "issuer": "Port Selene Savings Bank",
+   "tampers": [
+    {
+     "type": "incremental_update",
+     "page": 1,
+     "box": [
+      0.72105,
+      0.75074,
+      0.77899,
+      0.76156
+     ],
+     "field": "tx.21.amt",
+     "from": "3,701.00",
+     "to": "6,701.00"
+    },
+    {
+     "type": "incremental_update",
+     "page": 1,
+     "box": [
+      0.86559,
+      0.75074,
+      0.92353,
+      0.76156
+     ],
+     "field": "tx.21.bal",
+     "from": "2,208.03",
+     "to": "5,208.03"
+    }
+   ],
+   "benign": [],
+   "hard": false,
+   "featured": true,
+   "blurb": "Bank statement \u00b7 Port Selene Savings Bank \u00b7 October 2026"
+  },
+  {
+   "id": "lp-te-statement-01-t2",
+   "baseId": "lp-te-statement-01",
+   "title": "Bank statement, October 2026",
+   "kind": "bank_statement",
+   "format": "pdf",
+   "split": "test",
+   "file": "lp-te-statement-01-t2.pdf",
+   "pages": 2,
+   "issuer": "Port Selene Savings Bank",
+   "tampers": [
+    {
+     "type": "payee_change",
+     "page": 1,
+     "box": [
+      0.69328,
+      0.13101,
+      0.89237,
+      0.14384
+     ],
+     "field": "iban",
+     "from": "MR08 PSSB 2437 0015 8508",
+     "to": "MR08 PSSB 2437 0065 8538"
+    },
+    {
+     "type": "payee_change",
+     "page": 1,
+     "box": [
+      0.06471,
+      0.12948,
+      0.2443,
+      0.14432
+     ],
+     "field": "name",
+     "from": "Ilse Hartwell",
+     "to": "Desmond Kovalenko"
+    }
+   ],
+   "benign": [],
+   "hard": false,
+   "featured": false,
+   "blurb": "Bank statement \u00b7 Port Selene Savings Bank \u00b7 October 2026"
+  },
+  {
+   "id": "lp-te-statement-01-b1",
+   "baseId": "lp-te-statement-01",
+   "title": "Bank statement, October 2026",
+   "kind": "bank_statement",
+   "format": "image",
+   "split": "test",
+   "file": "lp-te-statement-01-b1.jpg",
+   "pages": 1,
+   "issuer": "Port Selene Savings Bank",
+   "tampers": [],
+   "benign": [
+    "screenshot"
+   ],
+   "hard": false,
+   "featured": true,
+   "blurb": "Bank statement \u00b7 Port Selene Savings Bank \u00b7 October 2026"
+  },
+  {
+   "id": "lp-te-bill-01",
+   "baseId": "lp-te-bill-01",
+   "title": "Utility bill, December 2026",
+   "kind": "utility_bill",
+   "format": "image",
+   "split": "test",
+   "file": "lp-te-bill-01.jpg",
+   "pages": 1,
+   "issuer": "Brightline Telecom",
+   "tampers": [],
+   "benign": [],
+   "hard": false,
+   "featured": false,
+   "blurb": "Utility bill \u00b7 Brightline Telecom \u00b7 December 2026 \u00b7 scan"
+  },
+  {
+   "id": "lp-te-bill-01-t1",
+   "baseId": "lp-te-bill-01",
+   "title": "Utility bill, December 2026",
+   "kind": "utility_bill",
+   "format": "image",
+   "split": "test",
+   "file": "lp-te-bill-01-t1.jpg",
+   "pages": 1,
+   "issuer": "Brightline Telecom",
+   "tampers": [
+    {
+     "type": "pasted_patch",
+     "page": 1,
+     "box": [
+      0.06536,
+      0.11675,
+      0.20635,
+      0.13852
+     ],
+     "field": "name",
+     "from": "Callum Estrada",
+     "to": "Matteo Estrada"
+    }
+   ],
+   "benign": [],
+   "hard": false,
+   "featured": true,
+   "blurb": "Utility bill \u00b7 Brightline Telecom \u00b7 December 2026 \u00b7 scan"
+  },
+  {
+   "id": "lp-te-bill-01-t2",
+   "baseId": "lp-te-bill-01",
+   "title": "Utility bill, December 2026",
+   "kind": "utility_bill",
+   "format": "image",
+   "split": "test",
+   "file": "lp-te-bill-01-t2.jpg",
+   "pages": 1,
+   "issuer": "Brightline Telecom",
+   "tampers": [
+    {
+     "type": "resaved_region",
+     "page": 1,
+     "box": [
+      0.80112,
+      0.50066,
+      0.95331,
+      0.55475
+     ],
+     "field": "amount_due",
+     "from": "98.54",
+     "to": "19.71"
+    }
+   ],
+   "benign": [],
+   "hard": false,
+   "featured": false,
+   "blurb": "Utility bill \u00b7 Brightline Telecom \u00b7 December 2026 \u00b7 scan"
+  },
+  {
+   "id": "lp-te-bill-01-b1",
+   "baseId": "lp-te-bill-01",
+   "title": "Utility bill, December 2026",
+   "kind": "utility_bill",
+   "format": "image",
+   "split": "test",
+   "file": "lp-te-bill-01-b1.jpg",
+   "pages": 1,
+   "issuer": "Brightline Telecom",
+   "tampers": [],
+   "benign": [
+    "rescan"
+   ],
+   "hard": false,
+   "featured": false,
+   "blurb": "Utility bill \u00b7 Brightline Telecom \u00b7 December 2026 \u00b7 scan"
+  },
+  {
+   "id": "lp-te-idcard-01",
+   "baseId": "lp-te-idcard-01",
+   "title": "National identity card",
+   "kind": "id_card",
+   "format": "image",
+   "split": "test",
+   "file": "lp-te-idcard-01.jpg",
+   "pages": 1,
+   "issuer": "Republic of Meridia, Civil Registry",
+   "tampers": [],
+   "benign": [],
+   "hard": false,
+   "featured": false,
+   "blurb": "Identity card \u00b7 Republic of Meridia \u00b7 scan"
+  },
+  {
+   "id": "lp-te-idcard-01-t1",
+   "baseId": "lp-te-idcard-01",
+   "title": "National identity card",
+   "kind": "id_card",
+   "format": "image",
+   "split": "test",
+   "file": "lp-te-idcard-01-t1.jpg",
+   "pages": 1,
+   "issuer": "Republic of Meridia, Civil Registry",
+   "tampers": [
+    {
+     "type": "recompressed_splice",
+     "page": 1,
+     "box": [
+      0.32195,
+      0.43943,
+      0.45785,
+      0.49009
+     ],
+     "field": "dob",
+     "from": "13 JAN 1976",
+     "to": "13 JAN 1964"
+    }
+   ],
+   "benign": [],
+   "hard": false,
+   "featured": true,
+   "blurb": "Identity card \u00b7 Republic of Meridia \u00b7 scan"
+  },
+  {
+   "id": "lp-te-idcard-01-t2",
+   "baseId": "lp-te-idcard-01",
+   "title": "National identity card",
+   "kind": "id_card",
+   "format": "image",
+   "split": "test",
+   "file": "lp-te-idcard-01-t2.jpg",
+   "pages": 1,
+   "issuer": "Republic of Meridia, Civil Registry",
+   "tampers": [
+    {
+     "type": "copy_move",
+     "page": 1,
+     "box": [
+      0.44622,
+      0.53194,
+      0.46003,
+      0.56718
+     ],
+     "field": "doc_no",
+     "from": "MRD51982148",
+     "to": "MRD51982198"
+    }
+   ],
+   "benign": [],
+   "hard": false,
+   "featured": false,
+   "blurb": "Identity card \u00b7 Republic of Meridia \u00b7 scan"
+  }
+ ]
+}

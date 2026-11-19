@@ -1,0 +1,357 @@
+{
+ "tunedOn": [
+  "train",
+  "validation"
+ ],
+ "rule": "a Document is flagged if any Measurement >= its Metric's threshold",
+ "metrics": {
+  "arith.balance_break": {
+   "threshold": 0.02,
+   "direction": ">=",
+   "trainValCaught": 2,
+   "trainValFalse": 0,
+   "maxUntouched": 0.0,
+   "note": "Every untouched Document in train and validation measures exactly 0, so the threshold is the smallest value that means anything."
+  },
+  "arith.rate_mismatch": {
+   "threshold": 0.02,
+   "direction": ">=",
+   "trainValCaught": 1,
+   "trainValFalse": 0,
+   "maxUntouched": 0.0,
+   "note": "Every untouched Document in train and validation measures exactly 0, so the threshold is the smallest value that means anything."
+  },
+  "arith.sum_mismatch": {
+   "threshold": 0.02,
+   "direction": ">=",
+   "trainValCaught": 2,
+   "trainValFalse": 0,
+   "maxUntouched": 0.0,
+   "note": "Every untouched Document in train and validation measures exactly 0, so the threshold is the smallest value that means anything."
+  },
+  "format.date_anomaly": {
+   "threshold": 1.0,
+   "direction": ">=",
+   "trainValCaught": 2,
+   "trainValFalse": 0,
+   "maxUntouched": 0.0,
+   "note": "No false flag on train and validation at this threshold: halfway between the highest untouched value and the lowest value on a Tamper above it."
+  },
+  "format.style_break": {
+   "threshold": 1.0,
+   "direction": ">=",
+   "trainValCaught": 0,
+   "trainValFalse": 0,
+   "maxUntouched": 0.0,
+   "note": "Never fired on a Tamper in train or validation without also firing elsewhere; set above every untouched value, so it stays quiet."
+  },
+  "glyph.baseline_offset_pt": {
+   "threshold": 0.9,
+   "direction": ">=",
+   "trainValCaught": 1,
+   "trainValFalse": 0,
+   "maxUntouched": 0.0,
+   "note": "No false flag on train and validation at this threshold: halfway between the highest untouched value and the lowest value on a Tamper above it."
+  },
+  "glyph.color_delta": {
+   "threshold": 1.0,
+   "direction": ">=",
+   "trainValCaught": 0,
+   "trainValFalse": 0,
+   "maxUntouched": 0.0,
+   "note": "Never fired on a Tamper in train or validation without also firing elsewhere; set above every untouched value, so it stays quiet."
+  },
+  "glyph.font_outlier": {
+   "threshold": 0.675,
+   "direction": ">=",
+   "trainValCaught": 1,
+   "trainValFalse": 0,
+   "maxUntouched": 0.35,
+   "note": "No false flag on train and validation at this threshold: halfway between the highest untouched value and the lowest value on a Tamper above it."
+  },
+  "glyph.size_delta_pt": {
+   "threshold": 0.275,
+   "direction": ">=",
+   "trainValCaught": 1,
+   "trainValFalse": 0,
+   "maxUntouched": 0.2,
+   "note": "No false flag on train and validation at this threshold: halfway between the highest untouched value and the lowest value on a Tamper above it."
+  },
+  "glyph.spacing_outlier": {
+   "threshold": 1.0,
+   "direction": ">=",
+   "trainValCaught": 0,
+   "trainValFalse": 0,
+   "maxUntouched": 0.0,
+   "note": "Never fired on a Tamper in train or validation without also firing elsewhere; set above every untouched value, so it stays quiet."
+  },
+  "id.checksum_invalid": {
+   "threshold": 1.0,
+   "direction": ">=",
+   "trainValCaught": 1,
+   "trainValFalse": 0,
+   "maxUntouched": 0.0,
+   "note": "No false flag on train and validation at this threshold: halfway between the highest untouched value and the lowest value on a Tamper above it."
+  },
+  "image.copy_move": {
+   "threshold": 0.01,
+   "direction": ">=",
+   "trainValCaught": 1,
+   "trainValFalse": 0,
+   "maxUntouched": 0.0,
+   "note": "Every untouched Document in train and validation measures exactly 0, so the threshold is the smallest value that means anything."
+  },
+  "image.edge_halo": {
+   "threshold": 3.381,
+   "direction": ">=",
+   "trainValCaught": 0,
+   "trainValFalse": 0,
+   "maxUntouched": 2.6966,
+   "note": "Never fired on a Tamper in train or validation without also firing elsewhere; set above every untouched value, so it stays quiet."
+  },
+  "image.ela_ratio": {
+   "threshold": 2.848,
+   "direction": ">=",
+   "trainValCaught": 3,
+   "trainValFalse": 0,
+   "maxUntouched": 2.6504,
+   "note": "No false flag on train and validation at this threshold: halfway between the highest untouched value and the lowest value on a Tamper above it."
+  },
+  "image.jpeg_ghost": {
+   "threshold": 0.725,
+   "direction": ">=",
+   "trainValCaught": 5,
+   "trainValFalse": 0,
+   "maxUntouched": 0.6078,
+   "note": "No false flag on train and validation at this threshold: halfway between the highest untouched value and the lowest value on a Tamper above it."
+  },
+  "image.noise_ratio": {
+   "threshold": 2.358,
+   "direction": ">=",
+   "trainValCaught": 6,
+   "trainValFalse": 0,
+   "maxUntouched": 2.3413,
+   "note": "No false flag on train and validation at this threshold: halfway between the highest untouched value and the lowest value on a Tamper above it."
+  },
+  "pdf.covered_text": {
+   "threshold": 1.0,
+   "direction": ">=",
+   "trainValCaught": 2,
+   "trainValFalse": 0,
+   "maxUntouched": 0.0,
+   "note": "No false flag on train and validation at this threshold: halfway between the highest untouched value and the lowest value on a Tamper above it."
+  },
+  "pdf.editor_producer": {
+   "threshold": 1.0,
+   "direction": ">=",
+   "trainValCaught": 4,
+   "trainValFalse": 0,
+   "maxUntouched": 0.0,
+   "note": "No false flag on train and validation at this threshold: halfway between the highest untouched value and the lowest value on a Tamper above it."
+  },
+  "pdf.incremental_updates": {
+   "threshold": 1.0,
+   "direction": ">=",
+   "trainValCaught": 2,
+   "trainValFalse": 0,
+   "maxUntouched": 0.0,
+   "note": "No false flag on train and validation at this threshold: halfway between the highest untouched value and the lowest value on a Tamper above it."
+  },
+  "pdf.modified_gap_hours": {
+   "threshold": 1.0,
+   "direction": ">=",
+   "trainValCaught": 4,
+   "trainValFalse": 0,
+   "maxUntouched": 0.0,
+   "note": "Every untouched Document in train and validation measures exactly 0, so the threshold is the smallest value that means anything."
+  }
+ },
+ "splits": {
+  "train": {
+   "documents": 23,
+   "tampered": 12,
+   "hard": 1,
+   "genuineOrBenign": 11,
+   "detectionRate": 0.917,
+   "detectionRateNonHard": 1.0,
+   "localised": 0.917,
+   "falsePositiveRate": 0.0,
+   "falseFlagged": [],
+   "perTamperType": {
+    "copy_move": {
+     "caught": 1,
+     "of": 1,
+     "missed": []
+    },
+    "date_change": {
+     "caught": 1,
+     "of": 1,
+     "missed": []
+    },
+    "font_substitution": {
+     "caught": 1,
+     "of": 1,
+     "missed": []
+    },
+    "incremental_update": {
+     "caught": 1,
+     "of": 1,
+     "missed": []
+    },
+    "overpaint_edit": {
+     "caught": 1,
+     "of": 1,
+     "missed": []
+    },
+    "pasted_patch": {
+     "caught": 2,
+     "of": 2,
+     "missed": []
+    },
+    "payee_change": {
+     "caught": 1,
+     "of": 1,
+     "missed": []
+    },
+    "recompressed_splice": {
+     "caught": 1,
+     "of": 1,
+     "missed": []
+    },
+    "resaved_region": {
+     "caught": 1,
+     "of": 1,
+     "missed": []
+    },
+    "text_edit": {
+     "caught": 1,
+     "of": 2,
+     "missed": [
+      "lp-tr-payslip-01-t3 (hard)"
+     ]
+    }
+   }
+  },
+  "validation": {
+   "documents": 14,
+   "tampered": 8,
+   "hard": 1,
+   "genuineOrBenign": 6,
+   "detectionRate": 0.625,
+   "detectionRateNonHard": 0.714,
+   "localised": 0.625,
+   "falsePositiveRate": 0.0,
+   "falseFlagged": [],
+   "perTamperType": {
+    "copy_move": {
+     "caught": 0,
+     "of": 1,
+     "missed": [
+      "lp-va-idcard-01-t2"
+     ]
+    },
+    "date_change": {
+     "caught": 1,
+     "of": 1,
+     "missed": []
+    },
+    "incremental_update": {
+     "caught": 1,
+     "of": 1,
+     "missed": []
+    },
+    "overpaint_edit": {
+     "caught": 1,
+     "of": 1,
+     "missed": []
+    },
+    "pasted_patch": {
+     "caught": 1,
+     "of": 1,
+     "missed": []
+    },
+    "payee_change": {
+     "caught": 0,
+     "of": 1,
+     "missed": [
+      "lp-va-statement-01-t2 (hard)"
+     ]
+    },
+    "recompressed_splice": {
+     "caught": 0,
+     "of": 1,
+     "missed": [
+      "lp-va-invoice-01-t2"
+     ]
+    },
+    "resaved_region": {
+     "caught": 1,
+     "of": 1,
+     "missed": []
+    }
+   }
+  },
+  "test": {
+   "documents": 16,
+   "tampered": 9,
+   "hard": 1,
+   "genuineOrBenign": 7,
+   "detectionRate": 0.778,
+   "detectionRateNonHard": 0.875,
+   "localised": 0.778,
+   "falsePositiveRate": 0.0,
+   "falseFlagged": [],
+   "perTamperType": {
+    "copy_move": {
+     "caught": 0,
+     "of": 1,
+     "missed": [
+      "lp-te-idcard-01-t2"
+     ]
+    },
+    "date_change": {
+     "caught": 0,
+     "of": 1,
+     "missed": [
+      "lp-te-payslip-01-t3 (hard)"
+     ]
+    },
+    "font_substitution": {
+     "caught": 1,
+     "of": 1,
+     "missed": []
+    },
+    "incremental_update": {
+     "caught": 1,
+     "of": 1,
+     "missed": []
+    },
+    "pasted_patch": {
+     "caught": 1,
+     "of": 1,
+     "missed": []
+    },
+    "payee_change": {
+     "caught": 1,
+     "of": 1,
+     "missed": []
+    },
+    "recompressed_splice": {
+     "caught": 1,
+     "of": 1,
+     "missed": []
+    },
+    "resaved_region": {
+     "caught": 1,
+     "of": 1,
+     "missed": []
+    },
+    "text_edit": {
+     "caught": 1,
+     "of": 1,
+     "missed": []
+    }
+   }
+  }
+ }
+}

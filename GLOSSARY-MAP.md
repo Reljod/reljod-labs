@@ -10,4 +10,8 @@ Each context keeps its own language.
 - **Process transfer**: a recorded handover call turned into a Process, a workflow document and a checked, approved Deck. `src/features/process-transfer/GLOSSARY.md`
 - **Harness**: Jod: Harness for Bank, a banking agent with Skills, Pipelines, a Knowledge base and a Sandbox behind one MCP server. `src/features/harness/GLOSSARY.md`
 - **Name Extraction** (shown as Sieve): one Analyst agent lists every party named in a long AML document, recall first. `src/features/name-extraction/GLOSSARY.md`
+- **Operator**: one agent that keys a legacy terminal system (HARBOURMASTER) by looking at the Screen, through a Guard, with a Verdict from code. `src/features/operator/GLOSSARY.md`
+- **Bank** (shown as Tidewater Bank): a retail bank on a double-entry ledger, run from the app or through the Teller, that grows itself through GitHub. `src/features/bank/GLOSSARY.md`
+- **Loupe**: a forensic examiner for documents: one Examiner looks, tests what it suspects with code, and Rules decide whether a document was tampered with. `src/features/loupe/GLOSSARY.md`
+- **Switchboard**: a railway's phone line answered by one voice Agent the Caller can interrupt, with Rules checked at every tool call. `src/features/switchboard/GLOSSARY.md`
 - **Canvas**: one Analyst answers a Question about data with Views (charts with Controls, drawn by an MCP App) whose numbers code verifies. `src/features/canvas/GLOSSARY.md`

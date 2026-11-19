@@ -1,0 +1,275 @@
+{
+ "id": "lp-te-payslip-01-t3",
+ "format": "pdf",
+ "kindGuess": "payslip",
+ "pages": [
+  {
+   "page": 1,
+   "width": 1131,
+   "height": 1600
+  }
+ ],
+ "measurements": [
+  {
+   "metric": "pdf.incremental_updates",
+   "value": 0.0,
+   "page": 0,
+   "box": null,
+   "detail": "The file was written in one save: nothing was appended after it.",
+   "facts": {
+    "sections": 0.0,
+    "objects": 0.0
+   },
+   "check": "pdf_structure"
+  },
+  {
+   "metric": "pdf.editor_producer",
+   "value": 0.0,
+   "page": 0,
+   "box": null,
+   "detail": "The file names 'Corvane HR Suite / PayPrint 2.9' as the software that wrote it, which is not on the list of editing tools.",
+   "facts": {
+    "producer": "Corvane HR Suite / PayPrint 2.9",
+    "creator": "Corvane Shipyards plc"
+   },
+   "check": "pdf_structure"
+  },
+  {
+   "metric": "pdf.modified_gap_hours",
+   "value": 0.0,
+   "page": 0,
+   "box": null,
+   "detail": "Last modified 0.0 hours after it was created (2026-09-27 08:23 to 2026-09-27 08:23).",
+   "facts": {
+    "created": "2026-09-27 08:23:00",
+    "modified": "2026-09-27 08:23:00"
+   },
+   "check": "pdf_structure"
+  },
+  {
+   "metric": "pdf.covered_text",
+   "value": 0.0,
+   "page": 0,
+   "box": null,
+   "detail": "No text is hidden under an opaque shape on 1 page(s).",
+   "check": "pdf_overpaint"
+  },
+  {
+   "metric": "glyph.font_outlier",
+   "value": 0.35,
+   "page": 1,
+   "box": [
+    0.84187,
+    0.37815,
+    0.91933,
+    0.38956
+   ],
+   "detail": "'4,683.81' is set in LiberationMono-Bold while the runs it sits with use LiberationMono (score 0.35; 1 on its line, 9 in its column).",
+   "facts": {
+    "text": "4,683.81",
+    "font": "LiberationMono-Bold",
+    "size": 9.6,
+    "peerFont": "LiberationMono",
+    "peerSize": 9.2
+   },
+   "layer": "glyphs-p1.png",
+   "layerKind": "marks",
+   "check": "glyphs"
+  },
+  {
+   "metric": "glyph.font_outlier",
+   "value": 0.35,
+   "page": 1,
+   "box": [
+    0.84187,
+    0.53255,
+    0.91933,
+    0.54395
+   ],
+   "detail": "'1,219.72' is set in LiberationMono-Bold while the runs it sits with use LiberationMono (score 0.35; 1 on its line, 9 in its column).",
+   "facts": {
+    "text": "1,219.72",
+    "font": "LiberationMono-Bold",
+    "size": 9.6,
+    "peerFont": "LiberationMono",
+    "peerSize": 9.2
+   },
+   "layer": "glyphs-p1.png",
+   "layerKind": "marks",
+   "check": "glyphs"
+  },
+  {
+   "metric": "glyph.size_delta_pt",
+   "value": 0.0,
+   "page": 1,
+   "box": [
+    0.0789,
+    0.05169,
+    0.09589,
+    0.06832
+   ],
+   "detail": "Nothing stands out among 58 runs; the largest value is 0.00 at 'C'.",
+   "facts": {
+    "text": "C",
+    "font": "LiberationSerif-Bold",
+    "size": 14.0,
+    "peerFont": "LiberationSerif",
+    "peerSize": 14.0
+   },
+   "check": "glyphs"
+  },
+  {
+   "metric": "glyph.baseline_offset_pt",
+   "value": 0.0,
+   "page": 1,
+   "box": [
+    0.0789,
+    0.05169,
+    0.09589,
+    0.06832
+   ],
+   "detail": "Nothing stands out among 58 runs; the largest value is 0.00 at 'C'.",
+   "facts": {
+    "text": "C",
+    "font": "LiberationSerif-Bold",
+    "size": 14.0,
+    "peerFont": "LiberationSerif",
+    "peerSize": 14.0
+   },
+   "check": "glyphs"
+  },
+  {
+   "metric": "glyph.spacing_outlier",
+   "value": 0.0,
+   "page": 1,
+   "box": [
+    0.0789,
+    0.05169,
+    0.09589,
+    0.06832
+   ],
+   "detail": "Nothing stands out among 58 runs; the largest value is 0.00 at 'C'.",
+   "facts": {
+    "text": "C",
+    "font": "LiberationSerif-Bold",
+    "size": 14.0,
+    "peerFont": "LiberationSerif",
+    "peerSize": 14.0
+   },
+   "check": "glyphs"
+  },
+  {
+   "metric": "glyph.color_delta",
+   "value": 0.0,
+   "page": 1,
+   "box": [
+    0.0789,
+    0.05169,
+    0.09589,
+    0.06832
+   ],
+   "detail": "Nothing stands out among 58 runs; the largest value is 0.00 at 'C'.",
+   "facts": {
+    "text": "C",
+    "font": "LiberationSerif-Bold",
+    "size": 14.0,
+    "peerFont": "LiberationSerif",
+    "peerSize": 14.0
+   },
+   "check": "glyphs"
+  },
+  {
+   "metric": "arith.sum_mismatch",
+   "value": 0.0,
+   "page": 1,
+   "box": [
+    0.78822,
+    0.59755,
+    0.90924,
+    0.61536
+   ],
+   "detail": "3 figure(s) recomputed and all agree; the last is 3,464.09 against 3,464.09.",
+   "facts": {
+    "printed": 3464.09,
+    "computed": 3464.09,
+    "checked": 3.0
+   },
+   "check": "arithmetic"
+  },
+  {
+   "metric": "arith.rate_mismatch",
+   "value": 0.0,
+   "page": 1,
+   "box": [
+    0.86365,
+    0.48876,
+    0.91933,
+    0.49968
+   ],
+   "detail": "2 figure(s) recomputed and all agree; the last is 234.19 against 234.19.",
+   "facts": {
+    "printed": 234.19,
+    "computed": 234.19,
+    "checked": 2.0
+   },
+   "check": "arithmetic"
+  },
+  {
+   "metric": "format.date_anomaly",
+   "value": 0.0,
+   "page": 0,
+   "box": null,
+   "detail": "5 date(s) read; none contradicts the document.",
+   "check": "dates_formats"
+  },
+  {
+   "metric": "format.style_break",
+   "value": 0.0,
+   "page": 0,
+   "box": null,
+   "detail": "Dates and figures are formatted alike within their columns.",
+   "check": "dates_formats"
+  },
+  {
+   "metric": "id.checksum_invalid",
+   "value": 0.0,
+   "page": 0,
+   "box": null,
+   "detail": "4 number(s) with check digits read; all pass.",
+   "check": "checksums"
+  }
+ ],
+ "checks": [
+  {
+   "check": "pdf_structure",
+   "ms": 2,
+   "measurements": 3
+  },
+  {
+   "check": "pdf_overpaint",
+   "ms": 0,
+   "measurements": 1
+  },
+  {
+   "check": "glyphs",
+   "ms": 63,
+   "measurements": 6
+  },
+  {
+   "check": "arithmetic",
+   "ms": 0,
+   "measurements": 2
+  },
+  {
+   "check": "dates_formats",
+   "ms": 0,
+   "measurements": 2
+  },
+  {
+   "check": "checksums",
+   "ms": 0,
+   "measurements": 1
+  }
+ ],
+ "toolkitMs": 128
+}

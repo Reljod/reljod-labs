@@ -1,0 +1,144 @@
+{
+ "id": "lp-tr-invoice-01-b1",
+ "format": "image",
+ "kindGuess": "other",
+ "pages": [
+  {
+   "page": 1,
+   "width": 923,
+   "height": 1306
+  }
+ ],
+ "measurements": [
+  {
+   "metric": "image.ela_ratio",
+   "value": 1.0,
+   "page": 1,
+   "box": null,
+   "detail": "The paper carries no grain (error level 0.00) and the pixels sit on no earlier JPEG grid, so a re-save changes every part alike.",
+   "facts": {
+    "quality": 70.0,
+    "native": 0.0
+   },
+   "check": "ela"
+  },
+  {
+   "metric": "image.noise_ratio",
+   "value": 1.0,
+   "page": 1,
+   "box": null,
+   "detail": "The page has no grain (noise 0.00 grey levels on open paper): it is digital, so there is no noise to compare.",
+   "facts": {
+    "pageGrain": 0.0
+   },
+   "check": "noise"
+  },
+  {
+   "metric": "image.jpeg_ghost",
+   "value": 0.0,
+   "page": 1,
+   "box": null,
+   "detail": "The page has no grain, so its paper keeps no compression history to compare.",
+   "check": "jpeg_ghost"
+  },
+  {
+   "metric": "image.copy_move",
+   "value": 0.0,
+   "page": 1,
+   "box": null,
+   "detail": "The page has no grain to tell a copy from repeated print (noise 0.00 grey levels), so nothing can be measured.",
+   "facts": {
+    "grain": 0.0
+   },
+   "check": "copy_move"
+  },
+  {
+   "metric": "image.edge_halo",
+   "value": 2.6966,
+   "page": 1,
+   "box": [
+    0.052,
+    0.22665,
+    0.95341,
+    0.2879
+   ],
+   "detail": "The halo round the characters here is 2.70x tighter than round characters across the page (page halo 0.58 px; 510 samples): these edges were not made the way the page's were.",
+   "facts": {
+    "direction": "below",
+    "blocks": 510.0,
+    "pageHalo": 0.5763
+   },
+   "layer": "edge_halo-p1.png",
+   "layerKind": "heatmap",
+   "check": "edge_halo"
+  },
+  {
+   "metric": "image.edge_halo",
+   "value": 2.4962,
+   "page": 1,
+   "box": [
+    0.04334,
+    0.03063,
+    0.14735,
+    0.08576
+   ],
+   "detail": "The halo round the characters here is 2.50x tighter than round characters across the page (page halo 0.58 px; 54 samples): these edges were not made the way the page's were.",
+   "facts": {
+    "direction": "below",
+    "blocks": 54.0,
+    "pageHalo": 0.5763
+   },
+   "layer": "edge_halo-p1.png",
+   "layerKind": "heatmap",
+   "check": "edge_halo"
+  },
+  {
+   "metric": "image.edge_halo",
+   "value": 1.3795,
+   "page": 1,
+   "box": [
+    0.18202,
+    0.03063,
+    0.40737,
+    0.06738
+   ],
+   "detail": "The halo round the characters here is 1.38x tighter than round characters across the page (page halo 0.58 px; 51 samples): these edges were not made the way the page's were.",
+   "facts": {
+    "direction": "below",
+    "blocks": 51.0,
+    "pageHalo": 0.5763
+   },
+   "layer": "edge_halo-p1.png",
+   "layerKind": "heatmap",
+   "check": "edge_halo"
+  }
+ ],
+ "checks": [
+  {
+   "check": "ela",
+   "ms": 512,
+   "measurements": 1
+  },
+  {
+   "check": "noise",
+   "ms": 58,
+   "measurements": 1
+  },
+  {
+   "check": "jpeg_ghost",
+   "ms": 0,
+   "measurements": 1
+  },
+  {
+   "check": "copy_move",
+   "ms": 0,
+   "measurements": 1
+  },
+  {
+   "check": "edge_halo",
+   "ms": 376,
+   "measurements": 3
+  }
+ ],
+ "toolkitMs": 956
+}
