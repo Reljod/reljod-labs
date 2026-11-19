@@ -278,8 +278,14 @@ function usePile(
         natural.push(y);
         heights.push(card.offsetHeight);
         y += card.offsetHeight + gap;
-        // "auto" (not sticky: a small screen) reads as NaN.
-        tops.push(Number.parseFloat(getComputedStyle(card).top));
+        // Only a sticky card has a top to settle at. A relative card (a small
+        // screen) reads its `top` as "0px", not "auto", so ask its position.
+        const cardStyle = getComputedStyle(card);
+        tops.push(
+          cardStyle.position === "sticky"
+            ? Number.parseFloat(cardStyle.top)
+            : Number.NaN,
+        );
       }
       viewport = window.innerHeight;
       const header = 4.125 * 16 + 40;
