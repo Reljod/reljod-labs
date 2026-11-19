@@ -1,11 +1,13 @@
 import { createHook, sleep } from "workflow";
 import type { Owner } from "@/features/access/domain/owner";
+import { LIMITS } from "../domain/limits";
 import {
   callbackDue,
   cutOff,
   failWrapup,
   openWrapup,
   saveWrapup,
+  stillLive,
   writeNote,
 } from "./call-steps";
 
@@ -40,15 +42,21 @@ export async function callLifecycle(input: LifecycleInput) {
     token: callHookToken(input.callId),
   });
   await ended.getConflict();
-  const waitMs = Math.max(
-    1_000,
-    Date.parse(input.deadlineAt) - Date.now() + 20_000,
-  );
-  const byHook = await Promise.race([
-    ended.then(() => true),
-    sleep(`${Math.ceil(waitMs / 1000)}s`).then(() => false),
-  ]);
-  if (!byHook) await cutOff(input.owner, input.callId);
+  // A Call that ended before the hook was registered will never resume it:
+  // ask once, now that the hook exists, and wait only for a Call still live.
+  if (await stillLive(input.owner, input.callId)) {
+    const waitMs = Math.max(
+      1_000,
+      Date.parse(input.deadlineAt) -
+        Date.now() +
+        LIMITS.cutOffGraceSeconds * 1000,
+    );
+    const byHook = await Promise.race([
+      ended.then(() => true),
+      sleep(`${Math.ceil(waitMs / 1000)}s`).then(() => false),
+    ]);
+    if (!byHook) await cutOff(input.owner, input.callId);
+  }
   // The browser's last words (the final Turn, the Session log) land just after the end.
   await sleep("3s");
 

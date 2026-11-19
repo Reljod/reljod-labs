@@ -46,6 +46,12 @@ export async function cutOff(owner: Owner, callId: string) {
   return cutOffIfLive(owner, callId);
 }
 
+export async function stillLive(owner: Owner, callId: string) {
+  "use step";
+  const { isLive } = await import("./calls");
+  return isLive(owner, callId);
+}
+
 /** Marks the Wrap-up as running. False when there is nothing to wrap up. */
 export async function openWrapup(owner: Owner, callId: string) {
   "use step";
@@ -125,7 +131,12 @@ export async function writeNote(owner: Owner, callId: string): Promise<Note> {
   const call = toCall(row);
   const events = await callEvents(owner, callId);
   const said = events.some((event) => event.type === "turn.caller");
-  if (call.model === STUB_MODEL || !said)
+  // A retry after the model was already paid for does not pay again: the
+  // code writes the note instead.
+  const paid = events.some(
+    (event) => event.type === "model.call" && event.data.purpose === "wrapup",
+  );
+  if (call.model === STUB_MODEL || !said || paid)
     return { ...plainNote(events), model: "code", costUsd: 0 };
 
   const digest = digestOf(call, events);
@@ -200,6 +211,8 @@ You have one tool, run_code: Node.js in a Sandbox with no network, with this Cal
 export async function saveWrapup(owner: Owner, callId: string, note: Note) {
   "use step";
   return sql().begin(async (tx) => {
+    // The Workspace first, then the Call: the same lock order as `callTool`.
+    await tx`select 1 from switchboard.workspaces where owner = ${owner} for update`;
     const row = await callRow(owner, callId, tx, true);
     if (!row) throw new Error("The Call is gone.");
     if (row.wrapup_status === "done") return null;

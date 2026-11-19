@@ -322,6 +322,10 @@ export async function callTool(input: {
   await takeRate(input.who, input.owner, "turn");
   const started = Date.now();
   const outcome = await sql().begin(async (tx) => {
+    // The Workspace first, then the Call: the one lock order everywhere
+    // (`startCall`, `saveWrapup`), so two of them can never deadlock.
+    const [workspace] = await tx<{ ref_seq: number }[]>`
+      select ref_seq from switchboard.workspaces where owner = ${input.owner} for update`;
     const found = await liveCall(tx, input.owner, input.callId);
     if (!found.live)
       return {
@@ -332,12 +336,8 @@ export async function callTool(input: {
         over: found.row.status,
       } satisfies ToolOutcome;
     const row = found.row;
-    const [records, events, [workspace]] = [
-      await listRecords(input.owner, tx),
-      await callEvents(input.owner, row.id, tx),
-      await tx<{ ref_seq: number }[]>`
-        select ref_seq from switchboard.workspaces where owner = ${input.owner} for update`,
-    ];
+    const records = await listRecords(input.owner, tx);
+    const events = await callEvents(input.owner, row.id, tx);
     const heard = heardIn(
       events,
       (input.saying ?? "").slice(0, LIMITS.transcriptChars),
@@ -525,6 +525,77 @@ export async function reportEvents(input: {
     status: result.status,
     costUsd: result.costUsd,
   };
+}
+
+/** The spend cap on the text Line: the server cuts the Call, as it does on the voice Line. */
+export async function cutOffForSpend(owner: Owner, callId: string) {
+  const cut = await sql().begin(async (tx) => {
+    const row = await callRow(owner, callId, tx, true);
+    if (!row || row.status !== "live") return false;
+    await finish(
+      tx,
+      row,
+      "cut_off",
+      "server",
+      `The Call reached its spend cap of $${LIMITS.usdPerCall.toFixed(2)}.`,
+    );
+    return true;
+  });
+  if (cut) await wake(callId);
+}
+
+/** Whether the Call is still live: the Workflow asks before it waits for the end. */
+export async function isLive(owner: Owner, callId: string) {
+  const row = await callRow(owner, callId);
+  return row?.status === "live";
+}
+
+/**
+ * Appends a Turn an outside MCP client reports, under the Call's row lock and
+ * the same per-Call Event cap as the browser's reports.
+ */
+export async function recordTurn(input: {
+  owner: Owner;
+  who: Visitor;
+  callId: string;
+  speaker: "caller" | "agent";
+  text: string;
+}) {
+  await takeRate(input.who, input.owner, "turn");
+  const cut = await sql().begin(async (tx) => {
+    const found = await liveCall(tx, input.owner, input.callId);
+    if (!found.live) {
+      if ("cut" in found) return true;
+      throw new StateError("That Call is over.");
+    }
+    const [{ count }] = await tx<{ count: number }[]>`
+      select count(*)::int as count from switchboard.events
+      where owner = ${input.owner} and call_id = ${found.row.id}`;
+    if (count >= LIMITS.eventsPerCall)
+      throw new LimitError("This Call has reached its Event limit.");
+    const text = input.text.slice(0, LIMITS.transcriptChars);
+    const atMs = Date.now() - found.row.started_at.getTime();
+    const language = detectLanguage(text);
+    if (input.speaker === "caller")
+      await emit(tx, input.owner, found.row.id, "caller", "turn.caller", {
+        text,
+        language,
+        via: "mcp",
+        atMs,
+      });
+    else
+      await emit(tx, input.owner, found.row.id, "client", "turn.agent", {
+        text,
+        language,
+        atMs,
+        interrupted: false,
+      });
+    return false;
+  });
+  if (cut) {
+    await wake(input.callId);
+    throw new StateError("That Call is over.");
+  }
 }
 
 /** The Workflow's timer: cuts the Call off if it is still live at its deadline. */

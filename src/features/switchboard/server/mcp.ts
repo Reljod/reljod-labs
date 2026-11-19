@@ -7,14 +7,12 @@ import type { Owner } from "@/features/access/domain/owner";
 import { env as accessEnv } from "@/features/access/server/env";
 import { guestPassOf } from "@/features/access/server/repository";
 import { scenarioSchema } from "../domain/contract";
-import { detectLanguage } from "../domain/hearing";
 import { LIMITS } from "../domain/limits";
 import { renderRule, ruleDefinition } from "../domain/rules";
 import { readMcpToken, type SwitchboardClaims } from "../domain/token";
 import { BACK_OFFICE_TOOLS } from "../domain/tools";
 import { RECORD_KINDS } from "../domain/world";
-import { callTool, endCall, loadCall, startCall } from "./calls";
-import { sql } from "./db";
+import { callTool, endCall, loadCall, recordTurn, startCall } from "./calls";
 import { digestOf } from "./digest";
 import { env } from "./env";
 import { messageOf, StateError } from "./errors";
@@ -22,7 +20,6 @@ import { greet, takeTurn } from "./line";
 import type { Visitor } from "./rate";
 import { restoreRule, rulesView, saveRule } from "./rules";
 import {
-  emit,
   ensureWorkspace,
   listCalls,
   listRecords,
@@ -226,24 +223,13 @@ export function registerSwitchboardTools(server: McpServer) {
       guarded(async () => {
         const caller = callerOf(ctx);
         const callId = await callIdFor(caller.owner, args.callId);
-        const { call } = await loadCall(caller.owner, callId);
-        if (call.status !== "live") throw new StateError("That Call is over.");
-        const atMs = Date.now() - Date.parse(call.startedAt);
-        const language = detectLanguage(args.text);
-        if (args.who === "caller")
-          await emit(sql(), caller.owner, callId, "caller", "turn.caller", {
-            text: args.text,
-            language,
-            via: "mcp",
-            atMs,
-          });
-        else
-          await emit(sql(), caller.owner, callId, "client", "turn.agent", {
-            text: args.text,
-            language,
-            atMs,
-            interrupted: false,
-          });
+        await recordTurn({
+          owner: caller.owner,
+          who: caller.who,
+          callId,
+          speaker: args.who,
+          text: args.text,
+        });
         return { recorded: true };
       }),
   );

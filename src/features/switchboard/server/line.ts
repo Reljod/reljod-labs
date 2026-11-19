@@ -10,7 +10,7 @@ import { LIMITS } from "../domain/limits";
 import { STUB_MODEL } from "../domain/models";
 import { stubReply, stubTurn } from "../domain/stub";
 import { BACK_OFFICE_TOOLS } from "../domain/tools";
-import { callTool, endCall, type ToolOutcome } from "./calls";
+import { callTool, cutOffForSpend } from "./calls";
 import { isUuid, sql } from "./db";
 import { InvalidError, messageOf, NotFoundError, StateError } from "./errors";
 import { gateway, gatewayCost } from "./llm";
@@ -101,11 +101,12 @@ export async function* takeTurn(input: {
   };
 
   const pending: CallEvent[] = [];
-  let over: ToolOutcome["over"] = null;
   let toolMs = 0;
   let said = "";
   let firstWordMs: number | null = null;
   let toolSeq = 0;
+  /** Books the model call's cost, once, however the Turn ends. */
+  let settle: (() => Promise<CallEvent | null>) | null = null;
   const runTool = async (name: string, args: unknown, id?: string) => {
     const before = Date.now();
     const outcome = await callTool({
@@ -120,7 +121,6 @@ export async function* takeTurn(input: {
     });
     toolMs += Date.now() - before;
     pending.push(...outcome.events);
-    if (outcome.over) over = outcome.over;
     return outcome;
   };
 
@@ -160,6 +160,38 @@ export async function* takeTurn(input: {
         stopWhen: isStepCount(LIMITS.stepsPerTurn),
         abortSignal: input.signal,
       });
+      settle = async () => {
+        settle = null;
+        try {
+          const usage = await result.totalUsage;
+          const costUsd = gatewayCost(await result.providerMetadata) ?? 0;
+          const event = await emit(
+            sql(),
+            input.owner,
+            row.id,
+            "system",
+            "model.call",
+            {
+              purpose: "turn",
+              model: row.model,
+              inputTokens: usage.inputTokens ?? 0,
+              outputTokens: usage.outputTokens ?? 0,
+              costUsd,
+              ms: Date.now() - started,
+            },
+          );
+          const [spent] = await sql()<{ cost_usd: string }[]>`
+            update switchboard.calls set cost_usd = cost_usd + ${costUsd.toFixed(6)}
+            where id = ${row.id} and owner = ${input.owner}
+            returning cost_usd`;
+          if (Number(spent?.cost_usd ?? 0) >= LIMITS.usdPerCall)
+            await cutOffForSpend(input.owner, row.id);
+          return event;
+        } catch {
+          // The usage never arrived (the request was dropped before the model answered).
+          return null;
+        }
+      };
       for await (const part of result.fullStream) {
         if (part.type === "text-delta") {
           firstWordMs ??= Date.now() - started;
@@ -178,33 +210,13 @@ export async function* takeTurn(input: {
             : new Error(String(part.error));
         }
       }
-      const usage = await result.totalUsage;
-      const costUsd = gatewayCost(await result.providerMetadata) ?? 0;
-      yield {
-        kind: "event",
-        event: await emit(sql(), input.owner, row.id, "system", "model.call", {
-          purpose: "turn",
-          model: row.model,
-          inputTokens: usage.inputTokens ?? 0,
-          outputTokens: usage.outputTokens ?? 0,
-          costUsd,
-          ms: Date.now() - started,
-        }),
-      };
-      const [spent] = await sql()<{ cost_usd: string }[]>`
-        update switchboard.calls set cost_usd = cost_usd + ${costUsd.toFixed(6)}
-        where id = ${row.id} and owner = ${input.owner}
-        returning cost_usd`;
-      if (!over && Number(spent?.cost_usd ?? 0) >= LIMITS.usdPerCall) {
-        await endCall({
-          owner: input.owner,
-          callId: row.id,
-          by: "client",
-          reason: `The Call reached its spend cap of $${LIMITS.usdPerCall.toFixed(2)}.`,
-        });
-      }
+      const paid = await settle?.();
+      if (paid) yield { kind: "event", event: paid };
     }
   } catch (error) {
+    // A Turn that failed or was dropped mid-stream still cost what it cost.
+    const paid = await settle?.();
+    if (paid) yield { kind: "event", event: paid };
     for (const event of pending.splice(0)) yield { kind: "event", event };
     if (!said.trim()) {
       console.error("[switchboard] text Turn failed", messageOf(error));
