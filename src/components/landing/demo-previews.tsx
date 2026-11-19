@@ -1,10 +1,12 @@
 import type { ReactNode } from "react";
+import { BankPreview } from "@/components/showcase/previews/bank-preview";
 import { CaseworkPreview } from "@/components/showcase/previews/casework-preview";
 import { ClientManagerPreview } from "@/components/showcase/previews/client-manager-preview";
 import { DocumentCompliancePreview } from "@/components/showcase/previews/document-compliance-preview";
 import { HarnessPreview } from "@/components/showcase/previews/harness-preview";
 import { LedgerPreview } from "@/components/showcase/previews/ledger-preview";
 import { LoupePreview } from "@/components/showcase/previews/loupe-preview";
+import { OperatorPreview } from "@/components/showcase/previews/operator-preview";
 import { ProcessTransferPreview } from "@/components/showcase/previews/process-transfer-preview";
 import { SievePreview } from "@/components/showcase/previews/sieve-preview";
 import type { Project } from "@/content/types";
@@ -20,5 +22,7 @@ export const demoPreviews: Record<string, (project: Project) => ReactNode> = {
   "process-transfer": () => <ProcessTransferPreview />,
   "bank-harness": () => <HarnessPreview />,
   "name-extraction": () => <SievePreview />,
+  operator: () => <OperatorPreview />,
+  "tidewater-bank": () => <BankPreview />,
   loupe: () => <LoupePreview />,
 };

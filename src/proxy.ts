@@ -68,6 +68,8 @@ export const config = {
     "/api/process-transfer/:path*",
     "/api/harness/:path*",
     "/api/name-extraction/:path*",
+    "/api/operator/:path*",
+    "/api/bank/:path*",
     "/api/loupe/:path*",
     "/access/:path*",
   ],

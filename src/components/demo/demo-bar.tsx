@@ -25,6 +25,8 @@ type DemoSlug =
   | "process-transfer"
   | "bank-harness"
   | "name-extraction"
+  | "operator"
+  | "tidewater-bank"
   | "loupe";
 
 /** A place inside a demo: a page (`href`) or a view the demo swaps itself (`onSelect`). */

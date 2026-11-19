@@ -31,6 +31,8 @@ describe("featuredProjects", () => {
       "process-transfer",
       "bank-harness",
       "name-extraction",
+      "operator",
+      "tidewater-bank",
       "loupe",
     ]);
   });
@@ -44,6 +46,8 @@ describe("featuredProjects", () => {
       "client-manager",
       "process-transfer",
       "name-extraction",
+      "operator",
+      "tidewater-bank",
       "loupe",
     ]);
   });
@@ -55,6 +59,8 @@ describe("featuredProjects", () => {
       "process-transfer",
       "bank-harness",
       "name-extraction",
+      "operator",
+      "tidewater-bank",
       "loupe",
     ]);
     expect(marked("Beta")).toEqual(["bank-harness"]);

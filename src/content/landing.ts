@@ -169,6 +169,10 @@ export const demoProblems: Record<string, string> = {
   "process-transfer":
     "A colleague is leaving. Turn their screen-share call into a how-to guide and slides.",
   "name-extraction": "Find every person and company named in a 500-page file.",
+  operator:
+    "Our oldest system has no way in but the keyboard. Let an assistant do the typing, and ask me before anything risky.",
+  "tidewater-bank":
+    "Run a small bank by talking to it, and ask it to learn what it can't do yet.",
   loupe: "Someone sent a payslip. Was a number on it changed?",
 };
 
@@ -192,7 +196,7 @@ export const demoShelves = [
   {
     id: "questions",
     label: "Answers questions",
-    slugs: ["ledger", "client-manager", "bank-harness"],
+    slugs: ["ledger", "client-manager", "bank-harness", "tidewater-bank"],
   },
   {
     id: "person",
@@ -201,6 +205,8 @@ export const demoShelves = [
       "document-compliance-checks",
       "casework-desk",
       "bank-harness",
+      "operator",
+      "tidewater-bank",
       "loupe",
     ],
   },
