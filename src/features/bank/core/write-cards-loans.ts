@@ -322,8 +322,11 @@ export async function settleAuthorisation(
     ],
     {
       ...(auth.holdId ? { captureHold: auth.holdId } : {}),
-      // Authorised money is the merchant's: it settles even from a frozen account.
+      // Authorised money is the merchant's: it settles even from a frozen
+      // account, or one a reversal has since emptied (a refusal here would
+      // fail end-of-day on every retry).
       allowFrozen: true,
+      force: true,
       ref: { cardAuthId: auth.id },
     },
   );
