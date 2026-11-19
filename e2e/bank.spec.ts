@@ -266,7 +266,8 @@ test("the same bank through MCP: a token from Connect a client, every command a 
 
   const call = async (name: string, args: object) =>
     (await mcp(request, token, "tools/call", { name, arguments: args })) as {
-      structuredContent?: Record<string, never>;
+      // biome-ignore lint/suspicious/noExplicitAny: a tool result is whatever the command returned.
+      structuredContent?: any;
       isError?: boolean;
       content?: { text: string }[];
     };
