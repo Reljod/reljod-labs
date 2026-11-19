@@ -62,7 +62,7 @@ export function TransactionsTable({
 
   return (
     <div>
-      <div className="overflow-x-auto" aria-busy={busy || undefined}>
+      <div className="relative overflow-x-auto" aria-busy={busy || undefined}>
         <table
           className="w-full min-w-[40rem] text-sm"
           data-testid="bank-transactions"
