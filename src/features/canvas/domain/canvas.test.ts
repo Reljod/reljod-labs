@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import { blocks, checkView } from "./chart-checks";
 import { partsOf, titleOf } from "./chat";
 import { guardStatement, minimumGroupTemplate, parametersOf } from "./guard";
+import extraFixtures from "./guard.fixtures.extra.json";
 import fixtures from "./guard.fixtures.json";
 import {
   applyRuleEdits,
@@ -23,7 +24,10 @@ import {
 // The Guard, on statements DuckDB 2.0.0 really parsed (guard.fixtures.json) ---------------
 
 type Case = { sql: string; ast: { error?: boolean } };
-const cases = fixtures.cases as unknown as Record<string, Case>;
+const cases = {
+  ...fixtures.cases,
+  ...extraFixtures.cases,
+} as unknown as Record<string, Case>;
 const catalog = {
   tables: {
     household_survey: [
@@ -74,7 +78,11 @@ describe("the Guard", () => {
       "share_filter",
       "where_filter",
       "cte_ok",
-      "join_ok",
+      "rounded_avg",
+      "avg_of_case",
+      "banded_group",
+      "aggregate_then_join",
+      "nested_own_table",
     ]) {
       const verdict = guard(name);
       expect(verdict.ok, name).toBe(true);
@@ -86,6 +94,39 @@ describe("the Guard", () => {
       expect(JSON.stringify(verdict.ast), name).toContain("count_star");
       expect(verdict.ast, name).not.toBe(cases[name].ast);
     }
+  });
+
+  it("refuses the shapes an independent review found: each returned a household's own value", () => {
+    const expected: Record<string, string> = {
+      // A correlated or LATERAL subquery reaching for the outer row.
+      correlated_scalar: "access.restricted_columns",
+      lateral_leak: "access.restricted_columns",
+      lateral_whole_row: "access.restricted_columns",
+      nested_whole_row: "access.restricted_columns",
+      // A CTE named after the Table, hiding the Table from the Guard.
+      cte_shadow: "query.unknown_table",
+      // A join or table function multiplying rows past the minimum group size.
+      join_multiplies: "access.restricted_columns",
+      self_join_multiplies: "access.restricted_columns",
+      join_ok: "access.restricted_columns",
+      // Aggregates and functions not known to summarise: denied by default.
+      arbitrary_fn: "access.restricted_columns",
+      quantile_disc_max: "access.restricted_columns",
+      approx_top_k_fn: "access.restricted_columns",
+      arg_max_null_fn: "access.restricted_columns",
+      unknown_scalar: "access.restricted_columns",
+    };
+    for (const [name, rule] of Object.entries(expected)) {
+      const verdict = guard(name);
+      expect(verdict.ok, name).toBe(false);
+      if (!verdict.ok) expect(verdict.rule, name).toBe(rule);
+    }
+  });
+
+  it("still lets a join through when it touches no Restricted column", () => {
+    const verdict = guard("open_join");
+    expect(verdict.ok).toBe(true);
+    if (verdict.ok) expect(verdict.rewritten).toBe(false);
   });
 
   it("refuses every way of getting a Restricted column back row by row", () => {

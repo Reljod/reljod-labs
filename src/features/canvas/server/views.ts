@@ -419,10 +419,16 @@ const LINKED_MAX = 4;
  * of the same name and type). No model is called.
  */
 export async function updateViewParams(
-  caller: Caller,
+  asked: Caller,
   input: { viewId: string; params: Record<string, unknown> },
 ): Promise<{ view: ViewRecord; linked: ViewRecord[] }> {
-  const row = await load(sql(), caller, input.viewId);
+  const row = await load(sql(), asked, input.viewId);
+  // The Trail files the change under the View's own Conversation, read from
+  // the Owner's row: never under an id the caller sent.
+  const caller: Caller = {
+    ...asked,
+    conversationId: row.conversation_id ?? undefined,
+  };
   const merged = mergeParams(row.spec, row.params, input.params);
   if (merged.errors.length > 0) throw new InvalidError(merged.errors.join(" "));
   const context = await runContext(caller);

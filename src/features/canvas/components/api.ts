@@ -31,16 +31,11 @@ export type ToolCallResult = {
 export async function callApp(input: {
   name: string;
   arguments: Record<string, unknown>;
-  conversationId?: string | null;
 }): Promise<ToolCallResult> {
   const response = await fetch(API.appCall, {
     method: "POST",
     headers: { "content-type": "application/json" },
-    body: JSON.stringify({
-      name: input.name,
-      arguments: input.arguments,
-      ...(input.conversationId ? { conversationId: input.conversationId } : {}),
-    }),
+    body: JSON.stringify({ name: input.name, arguments: input.arguments }),
   });
   if (!response.ok) {
     const error = await errorOf(response);

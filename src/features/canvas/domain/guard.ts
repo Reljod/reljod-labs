@@ -68,7 +68,6 @@ export const SUMMARISING_AGGREGATES = new Set([
   "median",
   "quantile",
   "quantile_cont",
-  "quantile_disc",
   "approx_quantile",
   "stddev",
   "stddev_samp",
@@ -109,6 +108,26 @@ const AGGREGATE_HINTS = new Set([
   "kurtosis",
   "skewness",
   "entropy",
+]);
+
+/**
+ * Scalar functions a Restricted column may pass through on its way into an
+ * aggregate or a GROUP BY. Every other function is taken to be able to hand
+ * back a row's value (`arbitrary`, `quantile_disc`, `approx_top_k`...): the
+ * list is what is allowed, not what is refused.
+ */
+const HARMLESS_SCALARS = new Set([
+  "round",
+  "floor",
+  "ceil",
+  "ceiling",
+  "abs",
+  "coalesce",
+  "nullif",
+  "ln",
+  "log",
+  "log10",
+  "sqrt",
 ]);
 
 const isNode = (value: unknown): value is Node =>
@@ -185,8 +204,17 @@ type Use = {
   plain: boolean;
 };
 
-/** How a SELECT uses the given column names, not counting nested SELECTs. */
-function usesIn(select: Node, names: Set<string>): Use[] {
+/**
+ * How a SELECT uses the given column names. A nested SELECT that reads a
+ * Restricted Table of its own is judged on its own; any other nested SELECT
+ * (a correlated or LATERAL subquery) can only be reaching for this SELECT's
+ * columns, so a use inside it counts as one that returns a row's value.
+ */
+function usesIn(
+  select: Node,
+  names: Set<string>,
+  judgedOnItsOwn: (nested: Node) => boolean,
+): Use[] {
   const uses: Use[] = [];
   const visit = (
     value: unknown,
@@ -197,15 +225,23 @@ function usesIn(select: Node, names: Set<string>): Use[] {
       return;
     }
     if (!isNode(value)) return;
-    if (isSelect(value) || value.type === "SET_OPERATION_NODE") return;
     let next = state;
-    if (value.class === "WINDOW") {
+    if (isSelect(value)) {
+      if (judgedOnItsOwn(value)) return;
+      next = { ...state, revealing: "a subquery" };
+    } else if (value.class === "WINDOW") {
       next = { ...state, revealing: lower(value.function_name) || "a window" };
     } else if (value.class === "FUNCTION") {
       const name = lower(value.function_name);
       if (SUMMARISING_AGGREGATES.has(name))
         next = { ...state, summarised: true };
-      else if (AGGREGATE_HINTS.has(name)) next = { ...state, revealing: name };
+      else if (
+        !state.summarised &&
+        value.is_operator !== true &&
+        !HARMLESS_SCALARS.has(name)
+      )
+        // Deny by default: an aggregate or function not known to summarise.
+        next = { ...state, revealing: name || "a function" };
     }
     if (value.class === "COLUMN_REF" && Array.isArray(value.column_names)) {
       const parts = value.column_names.map(lower);
@@ -322,6 +358,14 @@ export function guardStatement(input: {
     return true;
   });
   const ctes = cteNames(ast);
+  // A CTE is only visible in its own scope, but its name is skipped as "not a
+  // Table" everywhere. One named after a Table could hide that Table.
+  const shadow = [...ctes].find((name) => catalog.tables[name]);
+  if (shadow)
+    return refuse(
+      "query.unknown_table",
+      `A CTE may not be named after a Catalog Table ("${shadow}"). Give it another name.`,
+    );
   const tables = new Set<string>();
   let refusal: GuardRefusal | null = null;
 
@@ -415,6 +459,32 @@ export function guardStatement(input: {
     // A whole row at once: `*`, `t.*`, COLUMNS(...), `#1`, or the Table's own name as a value.
     let wholeRow: string | null = null;
     const aliases = new Set(direct.flatMap((ref) => [ref.table, ref.alias]));
+    const judgedOnItsOwn = (nested: Node) =>
+      directTables(nested, ctes).some((ref) =>
+        restrictedTables.includes(ref.table),
+      );
+    /** Inside a correlated subquery: the outer row by its alias, or `alias.*`. */
+    const scanNested = (value: unknown) => {
+      if (wholeRow) return;
+      if (Array.isArray(value)) {
+        for (const item of value) scanNested(item);
+        return;
+      }
+      if (!isNode(value)) return;
+      if (isSelect(value) && judgedOnItsOwn(value)) return;
+      if (value.class === "STAR" && aliases.has(lower(value.relation_name)))
+        wholeRow = `"${value.relation_name}.*" in a subquery`;
+      else if (
+        value.class === "COLUMN_REF" &&
+        Array.isArray(value.column_names) &&
+        value.column_names.length === 1 &&
+        aliases.has(lower(value.column_names[0])) &&
+        !names.has(lower(value.column_names[0]))
+      )
+        wholeRow = `the whole row "${value.column_names[0]}" in a subquery`;
+      if (wholeRow) return;
+      for (const child of Object.values(value)) scanNested(child);
+    };
     const scan = (value: unknown) => {
       if (wholeRow) return;
       if (Array.isArray(value)) {
@@ -422,7 +492,12 @@ export function guardStatement(input: {
         return;
       }
       if (!isNode(value)) return;
-      if (isSelect(value) || value.type === "SET_OPERATION_NODE") return;
+      if (isSelect(value)) {
+        // A nested SELECT over its own Restricted Table is judged on its own;
+        // any other may still name this SELECT's row (`(select h)`, `h.*`).
+        if (!judgedOnItsOwn(value)) scanNested(value);
+        return;
+      }
       if (value.class === "STAR") {
         const excluded = new Set(
           [
@@ -458,6 +533,8 @@ export function guardStatement(input: {
     };
     for (const [key, child] of Object.entries(node))
       if (key !== "cte_map" && key !== "from_table") scan(child);
+    // A LATERAL subquery in FROM can name the row too.
+    scanNested(node.from_table);
     if (wholeRow) {
       refusal = refuse(
         "access.restricted_columns",
@@ -466,8 +543,18 @@ export function guardStatement(input: {
       return false;
     }
 
-    const uses = usesIn(node, names);
+    const uses = usesIn(node, names, judgedOnItsOwn);
     if (uses.length === 0) return true;
+    // The minimum group size counts rows. A join, a table function or a
+    // VALUES list beside the Table multiplies them, so one household could
+    // fill a group. A Restricted column is aggregated from its Table alone.
+    if ((node.from_table as Node | undefined)?.type !== "BASE_TABLE") {
+      refusal = refuse(
+        "access.restricted_columns",
+        `${uses[0].column} is Restricted: aggregate it in a SELECT that reads ${label} alone (no join, no table function), in a CTE or subquery, then join that result.`,
+      );
+      return false;
+    }
     const revealing = uses.find((use) => use.revealing);
     if (revealing) {
       refusal = refuse(

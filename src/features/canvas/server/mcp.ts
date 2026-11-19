@@ -18,7 +18,7 @@ import { viewSpecSchema } from "../domain/view";
 import { SKILLS, skillOf } from "../skills";
 import type { Caller } from "./caller";
 import { catalogFor } from "./catalog";
-import { isSafeError } from "./errors";
+import { InvalidError, isSafeError } from "./errors";
 import { callerOfBearer } from "./mcp-token";
 import { currentRulebook, saveRules } from "./rules";
 import { runCode, runQuery } from "./runs";
@@ -521,6 +521,12 @@ export function registerCanvasTools(server: McpServer) {
       }),
     },
     async (args, caller) => {
+      // The Rules bind the Analyst; it does not get to change them. A person
+      // edits them on the Rules place, or through a client they connected.
+      if (caller.actor === "analyst")
+        throw new InvalidError(
+          "The Analyst may not edit Rules. The person can, on the Rules place.",
+        );
       const saved = await saveRules(caller, args.edits);
       return said(
         `Rulebook v${saved.version}.\n${rulebookText(saved.rulebook, saved.version)}`,

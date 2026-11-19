@@ -176,6 +176,9 @@ async function* stubTurn(
     yield emit({ type: "text.delta", text: word });
 }
 
+/** The Analyst is bound by the Rules; it is never handed the tool that edits them. */
+const ANALYST_DENIED_TOOL = "save_rules";
+
 type StreamPart = { type: string } & Record<string, unknown>;
 
 async function* modelTurn(
@@ -191,7 +194,14 @@ async function* modelTurn(
   const mcp = await turnClient(turn);
   try {
     const [tools, system, history] = await Promise.all([
-      mcp.tools(),
+      // Every tool but the one that edits Rules (the server refuses it too).
+      mcp.tools().then((all) => {
+        const { [ANALYST_DENIED_TOOL]: _denied, ...rest } = all as Record<
+          string,
+          unknown
+        >;
+        return rest;
+      }),
       instructions(turn),
       conversationMessages(turn.caller, turn.caller.conversationId as string),
     ]);
