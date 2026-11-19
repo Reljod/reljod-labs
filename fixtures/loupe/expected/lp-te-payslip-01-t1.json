@@ -1,0 +1,330 @@
+{
+ "id": "lp-te-payslip-01-t1",
+ "format": "pdf",
+ "kindGuess": "payslip",
+ "pages": [
+  {
+   "page": 1,
+   "width": 1131,
+   "height": 1600
+  }
+ ],
+ "measurements": [
+  {
+   "metric": "pdf.incremental_updates",
+   "value": 0.0,
+   "page": 0,
+   "box": null,
+   "detail": "The file was written in one save: nothing was appended after it.",
+   "facts": {
+    "sections": 0.0,
+    "objects": 0.0
+   },
+   "check": "pdf_structure"
+  },
+  {
+   "metric": "pdf.editor_producer",
+   "value": 1.0,
+   "page": 0,
+   "box": null,
+   "detail": "The file names 'Meridia PDF Editor 4.2' as the software that wrote it, which matches the editing tool 'Meridia PDF Editor'.",
+   "facts": {
+    "producer": "Meridia PDF Editor 4.2",
+    "creator": "Corvane Shipyards plc",
+    "matched": "Meridia PDF Editor"
+   },
+   "check": "pdf_structure"
+  },
+  {
+   "metric": "pdf.modified_gap_hours",
+   "value": 157.4,
+   "page": 0,
+   "box": null,
+   "detail": "Last modified 157.4 hours after it was created (2026-09-27 08:23 to 2026-10-03 21:47).",
+   "facts": {
+    "created": "2026-09-27 08:23:00",
+    "modified": "2026-10-03 21:47:00"
+   },
+   "check": "pdf_structure"
+  },
+  {
+   "metric": "pdf.covered_text",
+   "value": 0.0,
+   "page": 0,
+   "box": null,
+   "detail": "No text is hidden under an opaque shape on 1 page(s).",
+   "check": "pdf_overpaint"
+  },
+  {
+   "metric": "glyph.font_outlier",
+   "value": 0.35,
+   "page": 1,
+   "box": [
+    0.84187,
+    0.37815,
+    0.91933,
+    0.38956
+   ],
+   "detail": "'7,683.81' is set in LiberationMono-Bold while the runs it sits with use LiberationMono (score 0.35; 1 on its line, 9 in its column).",
+   "facts": {
+    "text": "7,683.81",
+    "font": "LiberationMono-Bold",
+    "size": 9.6,
+    "peerFont": "LiberationMono",
+    "peerSize": 9.2
+   },
+   "layer": "glyphs-p1.png",
+   "layerKind": "marks",
+   "check": "glyphs"
+  },
+  {
+   "metric": "glyph.font_outlier",
+   "value": 0.35,
+   "page": 1,
+   "box": [
+    0.84187,
+    0.53255,
+    0.91933,
+    0.54395
+   ],
+   "detail": "'1,219.72' is set in LiberationMono-Bold while the runs it sits with use LiberationMono (score 0.35; 1 on its line, 9 in its column).",
+   "facts": {
+    "text": "1,219.72",
+    "font": "LiberationMono-Bold",
+    "size": 9.6,
+    "peerFont": "LiberationMono",
+    "peerSize": 9.2
+   },
+   "layer": "glyphs-p1.png",
+   "layerKind": "marks",
+   "check": "glyphs"
+  },
+  {
+   "metric": "glyph.size_delta_pt",
+   "value": 0.0,
+   "page": 1,
+   "box": [
+    0.0789,
+    0.05169,
+    0.09589,
+    0.06832
+   ],
+   "detail": "Nothing stands out among 58 runs; the largest value is 0.00 at 'C'.",
+   "facts": {
+    "text": "C",
+    "font": "LiberationSerif-Bold",
+    "size": 14.0,
+    "peerFont": "LiberationSerif",
+    "peerSize": 14.0
+   },
+   "check": "glyphs"
+  },
+  {
+   "metric": "glyph.baseline_offset_pt",
+   "value": 0.0,
+   "page": 1,
+   "box": [
+    0.0789,
+    0.05169,
+    0.09589,
+    0.06832
+   ],
+   "detail": "Nothing stands out among 58 runs; the largest value is 0.00 at 'C'.",
+   "facts": {
+    "text": "C",
+    "font": "LiberationSerif-Bold",
+    "size": 14.0,
+    "peerFont": "LiberationSerif",
+    "peerSize": 14.0
+   },
+   "check": "glyphs"
+  },
+  {
+   "metric": "glyph.spacing_outlier",
+   "value": 0.0,
+   "page": 1,
+   "box": [
+    0.0789,
+    0.05169,
+    0.09589,
+    0.06832
+   ],
+   "detail": "Nothing stands out among 58 runs; the largest value is 0.00 at 'C'.",
+   "facts": {
+    "text": "C",
+    "font": "LiberationSerif-Bold",
+    "size": 14.0,
+    "peerFont": "LiberationSerif",
+    "peerSize": 14.0
+   },
+   "check": "glyphs"
+  },
+  {
+   "metric": "glyph.color_delta",
+   "value": 0.0,
+   "page": 1,
+   "box": [
+    0.0789,
+    0.05169,
+    0.09589,
+    0.06832
+   ],
+   "detail": "Nothing stands out among 58 runs; the largest value is 0.00 at 'C'.",
+   "facts": {
+    "text": "C",
+    "font": "LiberationSerif-Bold",
+    "size": 14.0,
+    "peerFont": "LiberationSerif",
+    "peerSize": 14.0
+   },
+   "check": "glyphs"
+  },
+  {
+   "metric": "arith.sum_mismatch",
+   "value": 3000.0,
+   "page": 1,
+   "box": [
+    0.84187,
+    0.37815,
+    0.91933,
+    0.38956
+   ],
+   "detail": "'gross pay' prints 7,683.81 but the lines above it come to 4,683.81: off by 3,000.00.",
+   "facts": {
+    "label": "gross pay",
+    "printed": 7683.81,
+    "computed": 4683.81,
+    "how": "the lines above it",
+    "items": 4.0
+   },
+   "layer": "arith-sum-p1-1.png",
+   "layerKind": "compare",
+   "check": "arithmetic"
+  },
+  {
+   "metric": "arith.sum_mismatch",
+   "value": 3000.0,
+   "page": 1,
+   "box": [
+    0.78822,
+    0.59755,
+    0.90924,
+    0.61536
+   ],
+   "detail": "'net pay m$' prints 3,464.09 but the two totals before it, subtracted come to 6,464.09: off by 3,000.00.",
+   "facts": {
+    "label": "net pay m$",
+    "printed": 3464.09,
+    "computed": 6464.09,
+    "how": "the two totals before it, subtracted",
+    "items": 0.0
+   },
+   "layer": "arith-sum-p1-2.png",
+   "layerKind": "compare",
+   "check": "arithmetic"
+  },
+  {
+   "metric": "arith.rate_mismatch",
+   "value": 150.0,
+   "page": 1,
+   "box": [
+    0.86365,
+    0.48876,
+    0.91933,
+    0.49968
+   ],
+   "detail": "'pension contribution (5.0% of gross pay)' prints 234.19, but 5% of 7,683.81 is 384.19: off by 150.00.",
+   "facts": {
+    "label": "pension contribution (5.0% of gross pay)",
+    "printed": 234.19,
+    "computed": 384.19,
+    "rate": 5.0,
+    "base": 7683.81,
+    "baseLabel": "gross pay"
+   },
+   "layer": "arith-rate-p1-1.png",
+   "layerKind": "compare",
+   "check": "arithmetic"
+  },
+  {
+   "metric": "arith.rate_mismatch",
+   "value": 135.0,
+   "page": 1,
+   "box": [
+    0.86365,
+    0.46738,
+    0.91933,
+    0.47831
+   ],
+   "detail": "'social insurance (4.5% of gross pay)' prints 210.77, but 4.5% of 7,683.81 is 345.77: off by 135.00.",
+   "facts": {
+    "label": "social insurance (4.5% of gross pay)",
+    "printed": 210.77,
+    "computed": 345.77,
+    "rate": 4.5,
+    "base": 7683.81,
+    "baseLabel": "gross pay"
+   },
+   "layer": "arith-rate-p1-2.png",
+   "layerKind": "compare",
+   "check": "arithmetic"
+  },
+  {
+   "metric": "format.date_anomaly",
+   "value": 0.0,
+   "page": 0,
+   "box": null,
+   "detail": "5 date(s) read; none contradicts the document.",
+   "check": "dates_formats"
+  },
+  {
+   "metric": "format.style_break",
+   "value": 0.0,
+   "page": 0,
+   "box": null,
+   "detail": "Dates and figures are formatted alike within their columns.",
+   "check": "dates_formats"
+  },
+  {
+   "metric": "id.checksum_invalid",
+   "value": 0.0,
+   "page": 0,
+   "box": null,
+   "detail": "4 number(s) with check digits read; all pass.",
+   "check": "checksums"
+  }
+ ],
+ "checks": [
+  {
+   "check": "pdf_structure",
+   "ms": 2,
+   "measurements": 3
+  },
+  {
+   "check": "pdf_overpaint",
+   "ms": 0,
+   "measurements": 1
+  },
+  {
+   "check": "glyphs",
+   "ms": 55,
+   "measurements": 6
+  },
+  {
+   "check": "arithmetic",
+   "ms": 182,
+   "measurements": 4
+  },
+  {
+   "check": "dates_formats",
+   "ms": 0,
+   "measurements": 2
+  },
+  {
+   "check": "checksums",
+   "ms": 0,
+   "measurements": 1
+  }
+ ],
+ "toolkitMs": 305
+}

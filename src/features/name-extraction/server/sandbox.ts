@@ -14,6 +14,12 @@ import {
  * first `run_code` with the pages on disk, reused by later calls (they may
  * run in other function instances: the name finds it), and stopped when the
  * Run ends. Auth is the deployment's OIDC token (VERCEL_OIDC_TOKEN locally).
+ *
+ * Not persistent: a persistent Sandbox (the SDK's default) snapshots its whole
+ * disk (~800 MB) every time it stops, and those snapshots live for 30 days
+ * and count against the plan's Sandbox quota. Nothing on the disk is worth
+ * keeping: the state files and the code are written on every `run_code`, and
+ * the pages whenever a session starts (made, or resumed after a timeout).
  */
 export const SANDBOX_LIMITS = {
   /** Wall time of one run_code. */
@@ -130,22 +136,27 @@ export async function runInSandbox(input: {
   // A Run stopped while the Analyst was deciding must not get a new Sandbox.
   if (await runIsOver(input.runId))
     return refused("The Run is over; the code was not run.");
+  const seed = async (box: Sandbox) =>
+    writeAll(box, documentFiles(await input.document()));
   let sandbox: Sandbox;
   try {
     sandbox = await Sandbox.getOrCreate({
       name: sandboxName(input.runId),
+      persistent: false,
       networkPolicy: "deny-all",
       timeout: SANDBOX_LIMITS.sandboxMs,
-      onCreate: async (created) => {
-        await writeAll(created, documentFiles(await input.document()));
-      },
+      // A Sandbox that timed out between two calls comes back as a new
+      // session with an empty disk (it is not persistent), so the pages go
+      // in again whenever a session starts, not only when the Sandbox is made.
+      onCreate: seed,
+      onResume: seed,
     });
   } catch (error) {
     return refused(`The Sandbox could not be started: ${message(error)}`);
   }
   try {
-    // getOrCreate may hand back a Sandbox made with another policy: enforce it.
-    await sandbox.update({ networkPolicy: "deny-all" });
+    // getOrCreate may hand back a Sandbox made with other settings: enforce them.
+    await sandbox.update({ networkPolicy: "deny-all", persistent: false });
     await extendIfShort(sandbox);
     const file = `${RUN_DIR}/${input.callId.replace(/[^\w-]/g, "_").slice(0, 80)}.mjs`;
     await writeAll(sandbox, [
@@ -195,7 +206,9 @@ export async function disposeSandbox(runId: string) {
     } catch {
       // Already stopped.
     }
-    await sandbox.delete();
+    // Also drop any snapshot a stop left behind (one made before this
+    // Sandbox stopped being persistent); the SDK keeps them by default.
+    await sandbox.delete({ deleteOrphanSnapshots: true });
   } catch {
     // No Sandbox was made for this Run, or it is already gone.
   }

@@ -10,6 +10,13 @@ Demos that call a paid model guard the work with limits (documents per run, runs
 - When you add a path that feeds work into an existing run, check it against the same limits as the path that started it.
 - Reads count too. A search that embeds its query calls a paid model on every request: the Harness first shipped `searchKnowledge` with no cap on either the route or the MCP tool. Where refusing would break a chat turn, fall back to the unpaid path (words alone) once the cap is reached.
 
+## Take the cap before the first paid step, not the main one
+
+A request that is refused partway through still spent whatever ran before the refusal. In Canvas, `run_query` sent the SQL to the Sandbox to be parsed for the Guard, and only took a Run from the hourly allowance afterwards, in `runGuardedQuery`. A statement the Guard refused never got there, so an MCP client could send refused SQL in a loop: a Sandbox job and a Trail row each time, with no cap.
+
+- Take the rate (and check any per-Question budget) before the first call to a model, a Sandbox or any other metered service in the request, including validation steps such as parsing.
+- When a later step also takes the rate, pass along that it was already taken, so one Run counts once.
+
 ## Make the escape hatch work when the thing it escapes is broken
 
 A stop, cancel or cleanup path exists for when something went wrong, so it must not depend on the broken part. Treat calls to the external system (workflow cancel, stream close, provider abort) as best effort, and always write the local state change. In Casework, `stopRun` awaited `workflow.cancel()` before marking the Run stopped. Cancel throws on a workflow that already ended, which is exactly the Run that needed stopping, so the row stayed `running` and the one-active-run gate blocked the desk for 45 minutes.
@@ -112,3 +119,12 @@ Moving reads off the action queue lets them overlap with writes. In Handover, a 
 - A write discards every read of the same data that is still in flight, then reads again (or applies the write's own answer).
 - A newer refresh aborts the older one (`AbortController`), and an answer for a view that is no longer open is dropped.
 - A page appended to a list ("Load older") attaches only to the version of the list it was requested for.
+
+## A batch job never fails on state a visitor can reach
+
+A step that runs on a schedule and retries the same work until it succeeds (end-of-day, a nightly sweep) is wedged for good by one item it can never process. In the bank, end-of-day stopped forever when a card settlement hit an account a reversal had emptied (the funds check refused it), and when a term deposit earned 0 interest (an entry of zeros does not balance). Both were reachable from the UI.
+
+- Money already promised (an authorised card, a cleared payment) posts with `force`; the funds check is for new requests, not for settling old ones.
+- Skip an entry whose amount is 0 rather than posting it; a Rule's minimum of 0 makes that reachable.
+- When an item truly cannot be processed, mark it and move on, so the rest of the batch still runs.
+- A path that skips a check for scheduled work (`scheduled: true` skips Approvals) must apply that check when the schedule is created, or it becomes a way around it.

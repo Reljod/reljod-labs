@@ -93,6 +93,12 @@ importers:
       '@types/react-dom':
         specifier: ^19
         version: 19.3.0(@types/react@19.3.0)
+      esbuild:
+        specifier: 0.28.2
+        version: 0.28.2
+      preact:
+        specifier: ^11.2.0
+        version: 11.2.0
       tailwindcss:
         specifier: ^4
         version: 4.3.4
@@ -2785,6 +2791,14 @@ packages:
   postgres@4.1.0:
     resolution: {integrity: sha512-s+0WH67YAyLdBQUb6XczbziBhY+C9uiQsg9S8R5RHdZhk6sdyK6202E+T2tXpiInSEEjDLRSJ3OpYBe3PN6MsQ==}
     engines: {node: '>=18'}
+
+  preact@11.2.0:
+    resolution: {integrity: sha512-/HfHI/7N84e6GrWBJ3J280z3mLaRJiDcSvj/A+y/4AbLnND/1UlGHe1sR6oYuTGwId0nP7dqDU9OnLxMPZ7xBg==}
+    peerDependencies:
+      preact-render-to-string: '>=6.7.0'
+    peerDependenciesMeta:
+      preact-render-to-string:
+        optional: true
 
   proper-lockfile@4.1.2:
     resolution: {integrity: sha512-TjNPblN4BwAWMXU8s9AEz4JmQxnD1NNL7bNOY/AKUzyamc379FWASUhc/K1pL2noVb+XmZKLL68cjzLsiOAMaA==}
@@ -5730,6 +5744,8 @@ snapshots:
       source-map-js: 1.2.2
 
   postgres@4.1.0: {}
+
+  preact@11.2.0: {}
 
   proper-lockfile@4.1.2:
     dependencies:

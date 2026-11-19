@@ -1,0 +1,742 @@
+{
+  "dataVersion": "meridia-2025.1",
+  "note": "The open data of the fictional Republic of Meridia, 2025: synthetic, SPECIMEN. Generated from a seed by src/features/canvas/domain/data. Written by scripts/render-canvas-data.mts; do not edit by hand.",
+  "totalRows": 961394,
+  "story": [
+    {
+      "id": "heatwave",
+      "title": "Northern heatwave",
+      "tables": [
+        "weather",
+        "grid_load",
+        "grid_generation",
+        "air_quality"
+      ]
+    },
+    {
+      "id": "ferry-strike",
+      "title": "Ferry strike",
+      "tables": [
+        "ridership",
+        "harbour_calls",
+        "card_spend"
+      ]
+    },
+    {
+      "id": "budget-gap",
+      "title": "Velmora's totals do not add up",
+      "tables": [
+        "municipal_budget_lines",
+        "municipal_budget_totals"
+      ]
+    },
+    {
+      "id": "storm",
+      "title": "Storm closes Port Halden",
+      "tables": [
+        "weather",
+        "harbour_calls",
+        "ridership",
+        "card_spend",
+        "grid_generation"
+      ]
+    },
+    {
+      "id": "new-rail",
+      "title": "Saltmere Crosslink opens",
+      "tables": [
+        "transport_routes",
+        "ridership"
+      ]
+    }
+  ],
+  "tables": [
+    {
+      "name": "regions",
+      "title": "Regions",
+      "group": "reference",
+      "grain": "One row per region.",
+      "rows": 8,
+      "bytes": 472,
+      "sha256": "b53a5cd905797326a663638dcd2e98314d061ae5f7b0b26e65cb2aaac33b4e90",
+      "columns": [
+        {
+          "name": "region_code",
+          "type": "varchar",
+          "description": "Three-letter region code."
+        },
+        {
+          "name": "name",
+          "type": "varchar",
+          "description": "Region name."
+        },
+        {
+          "name": "capital",
+          "type": "varchar",
+          "description": "Regional capital."
+        },
+        {
+          "name": "population",
+          "type": "integer",
+          "description": "Residents, 2025 estimate.",
+          "unit": "people"
+        },
+        {
+          "name": "area_km2",
+          "type": "integer",
+          "description": "Land area.",
+          "unit": "km²"
+        },
+        {
+          "name": "coastal",
+          "type": "boolean",
+          "description": "Whether the region has a sea coast."
+        },
+        {
+          "name": "centroid_x",
+          "type": "integer",
+          "description": "Map x of the region's centre (0..1000)."
+        },
+        {
+          "name": "centroid_y",
+          "type": "integer",
+          "description": "Map y of the region's centre (0..700, y down)."
+        }
+      ]
+    },
+    {
+      "name": "municipalities",
+      "title": "Municipalities",
+      "group": "reference",
+      "grain": "One row per municipality.",
+      "rows": 48,
+      "bytes": 1012,
+      "sha256": "4f3b83304d9659cae8e272a710bd264e859c88e4496d634ac4f500f2a8c1581a",
+      "columns": [
+        {
+          "name": "municipality",
+          "type": "varchar",
+          "description": "Municipality name (unique)."
+        },
+        {
+          "name": "region_code",
+          "type": "varchar",
+          "description": "Three-letter region code; joins to regions.region_code."
+        },
+        {
+          "name": "population",
+          "type": "integer",
+          "description": "Residents, 2025 estimate.",
+          "unit": "people"
+        }
+      ]
+    },
+    {
+      "name": "grid_load",
+      "title": "Electricity demand",
+      "group": "energy",
+      "grain": "One row per region per hour.",
+      "rows": 70080,
+      "bytes": 2099761,
+      "sha256": "68ee01d02fe2902a8d1fa7519160df256ef86647c22c46adbec73df0c1ef7c95",
+      "columns": [
+        {
+          "name": "ts",
+          "type": "timestamp",
+          "description": "Start of the hour, local time."
+        },
+        {
+          "name": "region_code",
+          "type": "varchar",
+          "description": "Three-letter region code; joins to regions.region_code."
+        },
+        {
+          "name": "load_mw",
+          "type": "double",
+          "description": "Average demand during the hour.",
+          "unit": "MW"
+        }
+      ]
+    },
+    {
+      "name": "grid_generation",
+      "title": "Electricity generation",
+      "group": "energy",
+      "grain": "One row per region per source per hour (only the sources a region has).",
+      "rows": 394200,
+      "bytes": 13556174,
+      "sha256": "fe9e5bc88982491e05de163a33cce59398916ca94250d91a6f4214f463dc3dde",
+      "columns": [
+        {
+          "name": "ts",
+          "type": "timestamp",
+          "description": "Start of the hour, local time."
+        },
+        {
+          "name": "region_code",
+          "type": "varchar",
+          "description": "Three-letter region code; joins to regions.region_code."
+        },
+        {
+          "name": "source",
+          "type": "varchar",
+          "description": "hydro, wind, solar, gas, coal or imports."
+        },
+        {
+          "name": "generation_mw",
+          "type": "double",
+          "description": "Average output during the hour.",
+          "unit": "MW"
+        }
+      ]
+    },
+    {
+      "name": "weather",
+      "title": "Weather",
+      "group": "weather",
+      "grain": "One row per region per hour.",
+      "rows": 70080,
+      "bytes": 2854221,
+      "sha256": "3f3c9d92dd9076cdc9a529b91293e5aa47f42b5ef20e51abfa0a33daaf4e2f8e",
+      "columns": [
+        {
+          "name": "ts",
+          "type": "timestamp",
+          "description": "Start of the hour, local time."
+        },
+        {
+          "name": "region_code",
+          "type": "varchar",
+          "description": "Three-letter region code; joins to regions.region_code."
+        },
+        {
+          "name": "temperature_c",
+          "type": "double",
+          "description": "Air temperature.",
+          "unit": "°C"
+        },
+        {
+          "name": "wind_ms",
+          "type": "double",
+          "description": "Mean wind speed.",
+          "unit": "m/s"
+        },
+        {
+          "name": "rain_mm",
+          "type": "double",
+          "description": "Rain during the hour.",
+          "unit": "mm"
+        },
+        {
+          "name": "humidity_pct",
+          "type": "integer",
+          "description": "Relative humidity.",
+          "unit": "%"
+        },
+        {
+          "name": "solar_wm2",
+          "type": "integer",
+          "description": "Global horizontal irradiance.",
+          "unit": "W/m²"
+        }
+      ]
+    },
+    {
+      "name": "air_stations",
+      "title": "Air quality stations",
+      "group": "air",
+      "grain": "One row per station.",
+      "rows": 12,
+      "bytes": 654,
+      "sha256": "80946b0ca267f0a063f708378c67122ff6d4ef8184739f146eb696013236fe4c",
+      "columns": [
+        {
+          "name": "station_id",
+          "type": "varchar",
+          "description": "Station id."
+        },
+        {
+          "name": "name",
+          "type": "varchar",
+          "description": "Station name."
+        },
+        {
+          "name": "region_code",
+          "type": "varchar",
+          "description": "Three-letter region code; joins to regions.region_code."
+        },
+        {
+          "name": "municipality",
+          "type": "varchar",
+          "description": "Municipality the station is in."
+        },
+        {
+          "name": "setting",
+          "type": "varchar",
+          "description": "urban, suburban, rural or coastal."
+        },
+        {
+          "name": "x",
+          "type": "integer",
+          "description": "Map x (0..1000)."
+        },
+        {
+          "name": "y",
+          "type": "integer",
+          "description": "Map y (0..700, y down)."
+        }
+      ]
+    },
+    {
+      "name": "air_quality",
+      "title": "Air quality",
+      "group": "air",
+      "grain": "One row per station per hour.",
+      "rows": 105120,
+      "bytes": 4501414,
+      "sha256": "17a5edf58e42a55d3ac7917c9e8552db54d61c76143d9d2d4fdb613102f6b151",
+      "columns": [
+        {
+          "name": "ts",
+          "type": "timestamp",
+          "description": "Start of the hour, local time."
+        },
+        {
+          "name": "station_id",
+          "type": "varchar",
+          "description": "Station id; joins to air_stations."
+        },
+        {
+          "name": "region_code",
+          "type": "varchar",
+          "description": "Three-letter region code; joins to regions.region_code."
+        },
+        {
+          "name": "pm25",
+          "type": "double",
+          "description": "Fine particulate matter.",
+          "unit": "µg/m³"
+        },
+        {
+          "name": "no2",
+          "type": "double",
+          "description": "Nitrogen dioxide.",
+          "unit": "µg/m³"
+        },
+        {
+          "name": "o3",
+          "type": "double",
+          "description": "Ozone.",
+          "unit": "µg/m³"
+        }
+      ]
+    },
+    {
+      "name": "transport_routes",
+      "title": "Ferry routes and rail lines",
+      "group": "transport",
+      "grain": "One row per route.",
+      "rows": 21,
+      "bytes": 1471,
+      "sha256": "3a67047901a346da39346395fb8d8bed840534e8c8f496b5fad5b414211d70fa",
+      "columns": [
+        {
+          "name": "route_id",
+          "type": "varchar",
+          "description": "Route id (FR- ferry, RL- rail)."
+        },
+        {
+          "name": "mode",
+          "type": "varchar",
+          "description": "ferry or rail."
+        },
+        {
+          "name": "name",
+          "type": "varchar",
+          "description": "Route name."
+        },
+        {
+          "name": "from_place",
+          "type": "varchar",
+          "description": "One end of the route."
+        },
+        {
+          "name": "to_place",
+          "type": "varchar",
+          "description": "The other end."
+        },
+        {
+          "name": "region_code",
+          "type": "varchar",
+          "description": "Three-letter region code; joins to regions.region_code."
+        },
+        {
+          "name": "opened",
+          "type": "date",
+          "description": "Date the route opened."
+        },
+        {
+          "name": "length_km",
+          "type": "integer",
+          "description": "Route length.",
+          "unit": "km"
+        }
+      ]
+    },
+    {
+      "name": "ridership",
+      "title": "Ridership",
+      "group": "transport",
+      "grain": "One row per route per service hour.",
+      "rows": 135626,
+      "bytes": 5392089,
+      "sha256": "e0a97021202b5b840570172b80a12ea407db074785a4cfb9a3d710d86a251896",
+      "columns": [
+        {
+          "name": "date",
+          "type": "date",
+          "description": "Service date."
+        },
+        {
+          "name": "hour",
+          "type": "integer",
+          "description": "Hour of day, 0-23."
+        },
+        {
+          "name": "route_id",
+          "type": "varchar",
+          "description": "Route id; joins to transport_routes."
+        },
+        {
+          "name": "mode",
+          "type": "varchar",
+          "description": "ferry or rail."
+        },
+        {
+          "name": "boardings",
+          "type": "integer",
+          "description": "Passengers who boarded in the hour.",
+          "unit": "people"
+        },
+        {
+          "name": "capacity",
+          "type": "integer",
+          "description": "Places offered in the hour.",
+          "unit": "people"
+        },
+        {
+          "name": "cancelled",
+          "type": "boolean",
+          "description": "Whether the hour's services were cancelled."
+        }
+      ]
+    },
+    {
+      "name": "harbour_calls",
+      "title": "Harbour calls",
+      "group": "harbour",
+      "grain": "One row per vessel call.",
+      "rows": 45055,
+      "bytes": 3634868,
+      "sha256": "8d7c863e7e3ae671554226ac03027859ba102eda25a7d4e69e4dd0d217d4d8e4",
+      "columns": [
+        {
+          "name": "call_id",
+          "type": "varchar",
+          "description": "Call id, in order of arrival."
+        },
+        {
+          "name": "port",
+          "type": "varchar",
+          "description": "Port name."
+        },
+        {
+          "name": "region_code",
+          "type": "varchar",
+          "description": "Three-letter region code; joins to regions.region_code."
+        },
+        {
+          "name": "vessel_type",
+          "type": "varchar",
+          "description": "container, bulk, tanker, ferry, fishing or cruise."
+        },
+        {
+          "name": "arrival_ts",
+          "type": "timestamp",
+          "description": "Arrival at berth, local time."
+        },
+        {
+          "name": "departure_ts",
+          "type": "timestamp",
+          "description": "Departure from berth, local time (may fall in 2026)."
+        },
+        {
+          "name": "berth_hours",
+          "type": "double",
+          "description": "Hours at berth.",
+          "unit": "h"
+        },
+        {
+          "name": "cargo_tonnes",
+          "type": "integer",
+          "description": "Cargo handled (0 for cruise ships).",
+          "unit": "t"
+        },
+        {
+          "name": "teu",
+          "type": "integer",
+          "description": "Containers handled, twenty-foot equivalents (container ships only, otherwise empty).",
+          "unit": "TEU"
+        }
+      ]
+    },
+    {
+      "name": "municipal_budget_lines",
+      "title": "Municipal budget lines",
+      "group": "budget",
+      "grain": "One row per fiscal year per municipality per line item.",
+      "rows": 5760,
+      "bytes": 384565,
+      "sha256": "1ed1d9acbe25643ebe776b064f71e463d0a28abfc6a188a435eb91866d803b9b",
+      "columns": [
+        {
+          "name": "fiscal_year",
+          "type": "integer",
+          "description": "Fiscal year."
+        },
+        {
+          "name": "municipality",
+          "type": "varchar",
+          "description": "Municipality; joins to municipalities."
+        },
+        {
+          "name": "region_code",
+          "type": "varchar",
+          "description": "Three-letter region code; joins to regions.region_code."
+        },
+        {
+          "name": "category",
+          "type": "varchar",
+          "description": "Spending category."
+        },
+        {
+          "name": "line_item",
+          "type": "varchar",
+          "description": "Line item within the category."
+        },
+        {
+          "name": "budgeted_mdc",
+          "type": "integer",
+          "description": "Budget adopted for the year.",
+          "unit": "MDC"
+        },
+        {
+          "name": "actual_mdc",
+          "type": "integer",
+          "description": "Actual spending in the year.",
+          "unit": "MDC"
+        }
+      ]
+    },
+    {
+      "name": "municipal_budget_totals",
+      "title": "Municipal budget totals",
+      "group": "budget",
+      "grain": "One row per fiscal year per municipality.",
+      "rows": 240,
+      "bytes": 9269,
+      "sha256": "96f0b9e32a628dd573a0d2aa803ba98825e23e215c3ea6646b33b66cb30a36b3",
+      "columns": [
+        {
+          "name": "fiscal_year",
+          "type": "integer",
+          "description": "Fiscal year."
+        },
+        {
+          "name": "municipality",
+          "type": "varchar",
+          "description": "Municipality; joins to municipalities."
+        },
+        {
+          "name": "region_code",
+          "type": "varchar",
+          "description": "Three-letter region code; joins to regions.region_code."
+        },
+        {
+          "name": "reported_budget_mdc",
+          "type": "integer",
+          "description": "Reported total budget.",
+          "unit": "MDC"
+        },
+        {
+          "name": "reported_actual_mdc",
+          "type": "integer",
+          "description": "Reported total actual spending.",
+          "unit": "MDC"
+        }
+      ]
+    },
+    {
+      "name": "household_survey",
+      "title": "Household survey",
+      "group": "survey",
+      "grain": "One row per household.",
+      "rows": 30000,
+      "bytes": 2142543,
+      "sha256": "4008361edcfb2ffecb092f3f2a2268e3edbeceb1a67fab562bee2b939f80faab",
+      "columns": [
+        {
+          "name": "household_id",
+          "type": "varchar",
+          "description": "Anonymised household id.",
+          "restrictedByDefault": true
+        },
+        {
+          "name": "region_code",
+          "type": "varchar",
+          "description": "Three-letter region code; joins to regions.region_code."
+        },
+        {
+          "name": "municipality",
+          "type": "varchar",
+          "description": "Municipality of residence."
+        },
+        {
+          "name": "household_size",
+          "type": "integer",
+          "description": "People in the household.",
+          "unit": "people"
+        },
+        {
+          "name": "monthly_income_mdc",
+          "type": "integer",
+          "description": "Household income after tax, per month.",
+          "unit": "MDC",
+          "restrictedByDefault": true
+        },
+        {
+          "name": "monthly_energy_spend_mdc",
+          "type": "double",
+          "description": "Electricity and heating spend, monthly average.",
+          "unit": "MDC"
+        },
+        {
+          "name": "housing_tenure",
+          "type": "varchar",
+          "description": "owner_outright, mortgage, private_rent or social_rent."
+        },
+        {
+          "name": "has_car",
+          "type": "boolean",
+          "description": "Whether the household has a car."
+        },
+        {
+          "name": "commute_mode",
+          "type": "varchar",
+          "description": "Respondent's main commute: car, rail, bus, ferry, bike, walk or none."
+        },
+        {
+          "name": "commute_minutes",
+          "type": "integer",
+          "description": "One-way commute time (empty when commute_mode is none).",
+          "unit": "min"
+        },
+        {
+          "name": "respondent_age",
+          "type": "integer",
+          "description": "Age of the respondent.",
+          "unit": "years",
+          "restrictedByDefault": true
+        },
+        {
+          "name": "survey_weight",
+          "type": "double",
+          "description": "Households this response stands for."
+        }
+      ]
+    },
+    {
+      "name": "bank_branches",
+      "title": "Corvane Savings Bank branches",
+      "group": "banking",
+      "grain": "One row per branch.",
+      "rows": 24,
+      "bytes": 1643,
+      "sha256": "82beee581821b686ee7bdd6b2b91b9f0ec3c94725f96ccf95575ac5c836018d2",
+      "columns": [
+        {
+          "name": "branch_id",
+          "type": "varchar",
+          "description": "Branch id."
+        },
+        {
+          "name": "name",
+          "type": "varchar",
+          "description": "Branch name."
+        },
+        {
+          "name": "region_code",
+          "type": "varchar",
+          "description": "Three-letter region code; joins to regions.region_code."
+        },
+        {
+          "name": "municipality",
+          "type": "varchar",
+          "description": "Municipality the branch is in."
+        },
+        {
+          "name": "coastal",
+          "type": "boolean",
+          "description": "Whether the branch's region is coastal."
+        },
+        {
+          "name": "opened",
+          "type": "date",
+          "description": "Date the branch opened."
+        }
+      ]
+    },
+    {
+      "name": "card_spend",
+      "title": "Card spend",
+      "group": "banking",
+      "grain": "One row per day per branch per merchant category.",
+      "rows": 105120,
+      "bytes": 4429356,
+      "sha256": "25e8016ee0cacfd62358111e500f99a6965a193db8a148a6e507efe1ce4692c6",
+      "columns": [
+        {
+          "name": "date",
+          "type": "date",
+          "description": "Day of spend."
+        },
+        {
+          "name": "branch_id",
+          "type": "varchar",
+          "description": "Branch id; joins to bank_branches."
+        },
+        {
+          "name": "region_code",
+          "type": "varchar",
+          "description": "Three-letter region code; joins to regions.region_code."
+        },
+        {
+          "name": "category",
+          "type": "varchar",
+          "description": "Merchant category."
+        },
+        {
+          "name": "transactions",
+          "type": "integer",
+          "description": "Number of card transactions."
+        },
+        {
+          "name": "amount_mdc",
+          "type": "double",
+          "description": "Total spend.",
+          "unit": "MDC"
+        }
+      ]
+    }
+  ]
+}

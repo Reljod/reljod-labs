@@ -1,0 +1,221 @@
+{
+ "id": "lp-te-idcard-01",
+ "format": "image",
+ "kindGuess": "other",
+ "pages": [
+  {
+   "page": 1,
+   "width": 1376,
+   "height": 908
+  }
+ ],
+ "measurements": [
+  {
+   "metric": "image.ela_ratio",
+   "value": 1.5937,
+   "page": 1,
+   "box": [
+    0.09884,
+    0.08811,
+    0.11628,
+    0.11454
+   ],
+   "detail": "Re-saved at quality 70, this region changes 1.6x less than the same kind of area across the page (page level 1.36; 0 samples).",
+   "facts": {
+    "direction": "below",
+    "blocks": 0.0,
+    "quality": 70.0,
+    "native": 0.0
+   },
+   "check": "ela"
+  },
+  {
+   "metric": "image.noise_ratio",
+   "value": 1.6487,
+   "page": 1,
+   "box": [
+    0.83721,
+    0.63436,
+    0.85465,
+    0.66079
+   ],
+   "detail": "The paper here is 1.6x quieter than the same kind of paper across the page (page grain 1.62 grey levels; 0 samples).",
+   "facts": {
+    "direction": "below",
+    "blocks": 0.0,
+    "pageGrain": 1.6244
+   },
+   "check": "noise"
+  },
+  {
+   "metric": "image.jpeg_ghost",
+   "value": 0.3655,
+   "page": 1,
+   "box": [
+    0.58721,
+    0.44934,
+    0.61047,
+    0.49339
+   ],
+   "detail": "Across re-saves at qualities 50 to 90 this region's error curve departs from the page's by 0.37 on a 0 to 1 scale (10 samples): it was compressed differently before.",
+   "facts": {
+    "samples": 10.0
+   },
+   "layer": "jpeg_ghost-p1.png",
+   "layerKind": "heatmap",
+   "check": "jpeg_ghost"
+  },
+  {
+   "metric": "image.jpeg_ghost",
+   "value": 0.3492,
+   "page": 1,
+   "box": [
+    0.81395,
+    0.23789,
+    0.83721,
+    0.26432
+   ],
+   "detail": "Across re-saves at qualities 50 to 90 this region's error curve departs from the page's by 0.35 on a 0 to 1 scale (6 samples): it was compressed differently before.",
+   "facts": {
+    "samples": 6.0
+   },
+   "layer": "jpeg_ghost-p1.png",
+   "layerKind": "heatmap",
+   "check": "jpeg_ghost"
+  },
+  {
+   "metric": "image.jpeg_ghost",
+   "value": 0.3146,
+   "page": 1,
+   "box": [
+    0.92442,
+    0.62555,
+    0.94186,
+    0.65198
+   ],
+   "detail": "Across re-saves at qualities 50 to 90 this region's error curve departs from the page's by 0.31 on a 0 to 1 scale (6 samples): it was compressed differently before.",
+   "facts": {
+    "samples": 6.0
+   },
+   "layer": "jpeg_ghost-p1.png",
+   "layerKind": "heatmap",
+   "check": "jpeg_ghost"
+  },
+  {
+   "metric": "image.jpeg_ghost",
+   "value": 0.3105,
+   "page": 1,
+   "box": [
+    0.45349,
+    0.31718,
+    0.47093,
+    0.36123
+   ],
+   "detail": "Across re-saves at qualities 50 to 90 this region's error curve departs from the page's by 0.31 on a 0 to 1 scale (6 samples): it was compressed differently before.",
+   "facts": {
+    "samples": 6.0
+   },
+   "layer": "jpeg_ghost-p1.png",
+   "layerKind": "heatmap",
+   "check": "jpeg_ghost"
+  },
+  {
+   "metric": "image.jpeg_ghost",
+   "value": 0.2567,
+   "page": 1,
+   "box": [
+    0.1686,
+    0.20264,
+    0.18605,
+    0.22907
+   ],
+   "detail": "Across re-saves at qualities 50 to 90 this region's error curve departs from the page's by 0.26 on a 0 to 1 scale (6 samples): it was compressed differently before.",
+   "facts": {
+    "samples": 6.0
+   },
+   "layer": "jpeg_ghost-p1.png",
+   "layerKind": "heatmap",
+   "check": "jpeg_ghost"
+  },
+  {
+   "metric": "image.copy_move",
+   "value": 0.0,
+   "page": 1,
+   "box": null,
+   "detail": "No area is a pixel-level copy of another: 5040 keypoints compared, none shares its paper grain with a look-alike.",
+   "facts": {
+    "keypoints": 5040.0,
+    "grain": 1.6244
+   },
+   "check": "copy_move"
+  },
+  {
+   "metric": "image.edge_halo",
+   "value": 1.6596,
+   "page": 1,
+   "box": [
+    0.26744,
+    0.84581,
+    0.30233,
+    0.86344
+   ],
+   "detail": "The halo round the characters here is 1.66x tighter than round characters across the page (page halo 0.48 px; 11 samples): these edges were not made the way the page's were.",
+   "facts": {
+    "direction": "below",
+    "blocks": 11.0,
+    "pageHalo": 0.4849
+   },
+   "layer": "edge_halo-p1.png",
+   "layerKind": "heatmap",
+   "check": "edge_halo"
+  },
+  {
+   "metric": "image.edge_halo",
+   "value": 1.6429,
+   "page": 1,
+   "box": [
+    0.17442,
+    0.79295,
+    0.23256,
+    0.81057
+   ],
+   "detail": "The halo round the characters here is 1.64x tighter than round characters across the page (page halo 0.48 px; 17 samples): these edges were not made the way the page's were.",
+   "facts": {
+    "direction": "below",
+    "blocks": 17.0,
+    "pageHalo": 0.4849
+   },
+   "layer": "edge_halo-p1.png",
+   "layerKind": "heatmap",
+   "check": "edge_halo"
+  }
+ ],
+ "checks": [
+  {
+   "check": "ela",
+   "ms": 175,
+   "measurements": 1
+  },
+  {
+   "check": "noise",
+   "ms": 34,
+   "measurements": 1
+  },
+  {
+   "check": "jpeg_ghost",
+   "ms": 146,
+   "measurements": 5
+  },
+  {
+   "check": "copy_move",
+   "ms": 451,
+   "measurements": 1
+  },
+  {
+   "check": "edge_halo",
+   "ms": 100,
+   "measurements": 2
+  }
+ ],
+ "toolkitMs": 921
+}

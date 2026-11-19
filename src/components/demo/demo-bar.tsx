@@ -24,7 +24,12 @@ type DemoSlug =
   | "client-manager"
   | "process-transfer"
   | "bank-harness"
-  | "name-extraction";
+  | "name-extraction"
+  | "operator"
+  | "tidewater-bank"
+  | "loupe"
+  | "switchboard"
+  | "canvas";
 
 /** A place inside a demo: a page (`href`) or a view the demo swaps itself (`onSelect`). */
 export type DemoTab =

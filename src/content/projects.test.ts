@@ -31,6 +31,11 @@ describe("featuredProjects", () => {
       "process-transfer",
       "bank-harness",
       "name-extraction",
+      "operator",
+      "tidewater-bank",
+      "loupe",
+      "switchboard",
+      "canvas",
     ]);
   });
 
@@ -43,6 +48,11 @@ describe("featuredProjects", () => {
       "client-manager",
       "process-transfer",
       "name-extraction",
+      "operator",
+      "tidewater-bank",
+      "loupe",
+      "switchboard",
+      "canvas",
     ]);
   });
 
@@ -53,6 +63,11 @@ describe("featuredProjects", () => {
       "process-transfer",
       "bank-harness",
       "name-extraction",
+      "operator",
+      "tidewater-bank",
+      "loupe",
+      "switchboard",
+      "canvas",
     ]);
     expect(marked("Beta")).toEqual(["bank-harness"]);
     expect(liveDemos[0]?.slug).toBe("bank-harness");

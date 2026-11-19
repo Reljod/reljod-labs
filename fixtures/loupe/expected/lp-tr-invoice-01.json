@@ -1,0 +1,251 @@
+{
+ "id": "lp-tr-invoice-01",
+ "format": "pdf",
+ "kindGuess": "invoice",
+ "pages": [
+  {
+   "page": 1,
+   "width": 1131,
+   "height": 1600
+  }
+ ],
+ "measurements": [
+  {
+   "metric": "pdf.incremental_updates",
+   "value": 0.0,
+   "page": 0,
+   "box": null,
+   "detail": "The file was written in one save: nothing was appended after it.",
+   "facts": {
+    "sections": 0.0,
+    "objects": 0.0
+   },
+   "check": "pdf_structure"
+  },
+  {
+   "metric": "pdf.editor_producer",
+   "value": 0.0,
+   "page": 0,
+   "box": null,
+   "detail": "The file names 'Saltmarsh Ledger Invoicing 6.2' as the software that wrote it, which is not on the list of editing tools.",
+   "facts": {
+    "producer": "Saltmarsh Ledger Invoicing 6.2",
+    "creator": "Saltmarsh Print Works"
+   },
+   "check": "pdf_structure"
+  },
+  {
+   "metric": "pdf.modified_gap_hours",
+   "value": 0.0,
+   "page": 0,
+   "box": null,
+   "detail": "Last modified 0.0 hours after it was created (2026-05-14 09:15 to 2026-05-14 09:15).",
+   "facts": {
+    "created": "2026-05-14 09:15:00",
+    "modified": "2026-05-14 09:15:00"
+   },
+   "check": "pdf_structure"
+  },
+  {
+   "metric": "pdf.covered_text",
+   "value": 0.0,
+   "page": 0,
+   "box": null,
+   "detail": "No text is hidden under an opaque shape on 1 page(s).",
+   "check": "pdf_overpaint"
+  },
+  {
+   "metric": "glyph.font_outlier",
+   "value": 0.0,
+   "page": 1,
+   "box": [
+    0.08085,
+    0.05169,
+    0.09394,
+    0.06832
+   ],
+   "detail": "Nothing stands out among 58 runs; the largest value is 0.00 at 'S'.",
+   "facts": {
+    "text": "S",
+    "font": "LiberationSerif-Bold",
+    "size": 14.0,
+    "peerFont": "LiberationSans",
+    "peerSize": 14.0
+   },
+   "check": "glyphs"
+  },
+  {
+   "metric": "glyph.size_delta_pt",
+   "value": 0.0,
+   "page": 1,
+   "box": [
+    0.08085,
+    0.05169,
+    0.09394,
+    0.06832
+   ],
+   "detail": "Nothing stands out among 58 runs; the largest value is 0.00 at 'S'.",
+   "facts": {
+    "text": "S",
+    "font": "LiberationSerif-Bold",
+    "size": 14.0,
+    "peerFont": "LiberationSans",
+    "peerSize": 14.0
+   },
+   "check": "glyphs"
+  },
+  {
+   "metric": "glyph.baseline_offset_pt",
+   "value": 0.0,
+   "page": 1,
+   "box": [
+    0.08085,
+    0.05169,
+    0.09394,
+    0.06832
+   ],
+   "detail": "Nothing stands out among 58 runs; the largest value is 0.00 at 'S'.",
+   "facts": {
+    "text": "S",
+    "font": "LiberationSerif-Bold",
+    "size": 14.0,
+    "peerFont": "LiberationSans",
+    "peerSize": 14.0
+   },
+   "check": "glyphs"
+  },
+  {
+   "metric": "glyph.spacing_outlier",
+   "value": 0.0,
+   "page": 1,
+   "box": [
+    0.08085,
+    0.05169,
+    0.09394,
+    0.06832
+   ],
+   "detail": "Nothing stands out among 58 runs; the largest value is 0.00 at 'S'.",
+   "facts": {
+    "text": "S",
+    "font": "LiberationSerif-Bold",
+    "size": 14.0,
+    "peerFont": "LiberationSans",
+    "peerSize": 14.0
+   },
+   "check": "glyphs"
+  },
+  {
+   "metric": "glyph.color_delta",
+   "value": 0.0,
+   "page": 1,
+   "box": [
+    0.08085,
+    0.05169,
+    0.09394,
+    0.06832
+   ],
+   "detail": "Nothing stands out among 58 runs; the largest value is 0.00 at 'S'.",
+   "facts": {
+    "text": "S",
+    "font": "LiberationSerif-Bold",
+    "size": 14.0,
+    "peerFont": "LiberationSans",
+    "peerSize": 14.0
+   },
+   "check": "glyphs"
+  },
+  {
+   "metric": "arith.sum_mismatch",
+   "value": 0.0,
+   "page": 1,
+   "box": [
+    0.8605,
+    0.42299,
+    0.91933,
+    0.43487
+   ],
+   "detail": "2 figure(s) recomputed and all agree; the last is 1,950.73 against 1,950.73.",
+   "facts": {
+    "printed": 1950.73,
+    "computed": 1950.73,
+    "checked": 2.0
+   },
+   "check": "arithmetic"
+  },
+  {
+   "metric": "arith.rate_mismatch",
+   "value": 0.0,
+   "page": 1,
+   "box": [
+    0.87204,
+    0.40111,
+    0.91933,
+    0.41204
+   ],
+   "detail": "1 figure(s) recomputed and all agree; the last is 209.01 against 209.01.",
+   "facts": {
+    "printed": 209.01,
+    "computed": 209.01,
+    "checked": 1.0
+   },
+   "check": "arithmetic"
+  },
+  {
+   "metric": "format.date_anomaly",
+   "value": 0.0,
+   "page": 0,
+   "box": null,
+   "detail": "2 date(s) read; none contradicts the document.",
+   "check": "dates_formats"
+  },
+  {
+   "metric": "format.style_break",
+   "value": 0.0,
+   "page": 0,
+   "box": null,
+   "detail": "Dates and figures are formatted alike within their columns.",
+   "check": "dates_formats"
+  },
+  {
+   "metric": "id.checksum_invalid",
+   "value": 0.0,
+   "page": 0,
+   "box": null,
+   "detail": "3 number(s) with check digits read; all pass.",
+   "check": "checksums"
+  }
+ ],
+ "checks": [
+  {
+   "check": "pdf_structure",
+   "ms": 2,
+   "measurements": 3
+  },
+  {
+   "check": "pdf_overpaint",
+   "ms": 0,
+   "measurements": 1
+  },
+  {
+   "check": "glyphs",
+   "ms": 10,
+   "measurements": 5
+  },
+  {
+   "check": "arithmetic",
+   "ms": 0,
+   "measurements": 2
+  },
+  {
+   "check": "dates_formats",
+   "ms": 0,
+   "measurements": 2
+  },
+  {
+   "check": "checksums",
+   "ms": 0,
+   "measurements": 1
+  }
+ ],
+ "toolkitMs": 90
+}

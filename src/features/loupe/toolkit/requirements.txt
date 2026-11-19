@@ -1,0 +1,12 @@
+pillow==13.0.0
+numpy==2.5.5
+opencv-python-headless==5.1.0.95
+scipy==1.18.1
+scikit-image==0.26.0
+pikepdf==10.18.2
+pypdf==7.1.1
+pdfminer.six==20260107
+pypdfium2==5.15.2
+reportlab==5.1.0
+python-stdnum==2.2
+python-dateutil==4.0.0

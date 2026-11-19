@@ -1,0 +1,251 @@
+{
+ "id": "lp-va-bill-01",
+ "format": "pdf",
+ "kindGuess": "utility_bill",
+ "pages": [
+  {
+   "page": 1,
+   "width": 1131,
+   "height": 1600
+  }
+ ],
+ "measurements": [
+  {
+   "metric": "pdf.incremental_updates",
+   "value": 0.0,
+   "page": 0,
+   "box": null,
+   "detail": "The file was written in one save: nothing was appended after it.",
+   "facts": {
+    "sections": 0.0,
+    "objects": 0.0
+   },
+   "check": "pdf_structure"
+  },
+  {
+   "metric": "pdf.editor_producer",
+   "value": 0.0,
+   "page": 0,
+   "box": null,
+   "detail": "The file names 'Halcyon BillRun 5.4' as the software that wrote it, which is not on the list of editing tools.",
+   "facts": {
+    "producer": "Halcyon BillRun 5.4",
+    "creator": "Halcyon Water & Power"
+   },
+   "check": "pdf_structure"
+  },
+  {
+   "metric": "pdf.modified_gap_hours",
+   "value": 0.0,
+   "page": 0,
+   "box": null,
+   "detail": "Last modified 0.0 hours after it was created (2026-09-02 14:20 to 2026-09-02 14:20).",
+   "facts": {
+    "created": "2026-09-02 14:20:00",
+    "modified": "2026-09-02 14:20:00"
+   },
+   "check": "pdf_structure"
+  },
+  {
+   "metric": "pdf.covered_text",
+   "value": 0.0,
+   "page": 0,
+   "box": null,
+   "detail": "No text is hidden under an opaque shape on 1 page(s).",
+   "check": "pdf_overpaint"
+  },
+  {
+   "metric": "glyph.font_outlier",
+   "value": 0.0,
+   "page": 1,
+   "box": [
+    0.06723,
+    0.03511,
+    0.49375,
+    0.05768
+   ],
+   "detail": "Nothing stands out among 56 runs; the largest value is 0.00 at 'Halcyon Water & Power'.",
+   "facts": {
+    "text": "Halcyon Water & Power",
+    "font": "BitstreamVeraSans-Bold",
+    "size": 19.0,
+    "peerFont": "BitstreamVeraSans-Bold",
+    "peerSize": 13.0
+   },
+   "check": "glyphs"
+  },
+  {
+   "metric": "glyph.size_delta_pt",
+   "value": 0.0,
+   "page": 1,
+   "box": [
+    0.06723,
+    0.03511,
+    0.49375,
+    0.05768
+   ],
+   "detail": "Nothing stands out among 56 runs; the largest value is 0.00 at 'Halcyon Water & Power'.",
+   "facts": {
+    "text": "Halcyon Water & Power",
+    "font": "BitstreamVeraSans-Bold",
+    "size": 19.0,
+    "peerFont": "BitstreamVeraSans-Bold",
+    "peerSize": 13.0
+   },
+   "check": "glyphs"
+  },
+  {
+   "metric": "glyph.baseline_offset_pt",
+   "value": 0.0,
+   "page": 1,
+   "box": [
+    0.06723,
+    0.03511,
+    0.49375,
+    0.05768
+   ],
+   "detail": "Nothing stands out among 56 runs; the largest value is 0.00 at 'Halcyon Water & Power'.",
+   "facts": {
+    "text": "Halcyon Water & Power",
+    "font": "BitstreamVeraSans-Bold",
+    "size": 19.0,
+    "peerFont": "BitstreamVeraSans-Bold",
+    "peerSize": 13.0
+   },
+   "check": "glyphs"
+  },
+  {
+   "metric": "glyph.spacing_outlier",
+   "value": 0.0,
+   "page": 1,
+   "box": [
+    0.06723,
+    0.03511,
+    0.49375,
+    0.05768
+   ],
+   "detail": "Nothing stands out among 56 runs; the largest value is 0.00 at 'Halcyon Water & Power'.",
+   "facts": {
+    "text": "Halcyon Water & Power",
+    "font": "BitstreamVeraSans-Bold",
+    "size": 19.0,
+    "peerFont": "BitstreamVeraSans-Bold",
+    "peerSize": 13.0
+   },
+   "check": "glyphs"
+  },
+  {
+   "metric": "glyph.color_delta",
+   "value": 0.0,
+   "page": 1,
+   "box": [
+    0.06723,
+    0.03511,
+    0.49375,
+    0.05768
+   ],
+   "detail": "Nothing stands out among 56 runs; the largest value is 0.00 at 'Halcyon Water & Power'.",
+   "facts": {
+    "text": "Halcyon Water & Power",
+    "font": "BitstreamVeraSans-Bold",
+    "size": 19.0,
+    "peerFont": "BitstreamVeraSans-Bold",
+    "peerSize": 13.0
+   },
+   "check": "glyphs"
+  },
+  {
+   "metric": "arith.sum_mismatch",
+   "value": 0.0,
+   "page": 1,
+   "box": [
+    0.85966,
+    0.57958,
+    0.91933,
+    0.59051
+   ],
+   "detail": "3 figure(s) recomputed and all agree; the last is 170.12 against 170.12.",
+   "facts": {
+    "printed": 170.12,
+    "computed": 170.12,
+    "checked": 3.0
+   },
+   "check": "arithmetic"
+  },
+  {
+   "metric": "arith.rate_mismatch",
+   "value": 0.0,
+   "page": 1,
+   "box": [
+    0.8849,
+    0.49407,
+    0.91933,
+    0.505
+   ],
+   "detail": "1 figure(s) recomputed and all agree; the last is 8.10 against 8.10.",
+   "facts": {
+    "printed": 8.1,
+    "computed": 8.1,
+    "checked": 1.0
+   },
+   "check": "arithmetic"
+  },
+  {
+   "metric": "format.date_anomaly",
+   "value": 0.0,
+   "page": 0,
+   "box": null,
+   "detail": "5 date(s) read; none contradicts the document.",
+   "check": "dates_formats"
+  },
+  {
+   "metric": "format.style_break",
+   "value": 0.0,
+   "page": 0,
+   "box": null,
+   "detail": "Dates and figures are formatted alike within their columns.",
+   "check": "dates_formats"
+  },
+  {
+   "metric": "id.checksum_invalid",
+   "value": 0.0,
+   "page": 0,
+   "box": null,
+   "detail": "1 number(s) with check digits read; all pass.",
+   "check": "checksums"
+  }
+ ],
+ "checks": [
+  {
+   "check": "pdf_structure",
+   "ms": 1,
+   "measurements": 3
+  },
+  {
+   "check": "pdf_overpaint",
+   "ms": 0,
+   "measurements": 1
+  },
+  {
+   "check": "glyphs",
+   "ms": 11,
+   "measurements": 5
+  },
+  {
+   "check": "arithmetic",
+   "ms": 0,
+   "measurements": 2
+  },
+  {
+   "check": "dates_formats",
+   "ms": 0,
+   "measurements": 2
+  },
+  {
+   "check": "checksums",
+   "ms": 0,
+   "measurements": 1
+  }
+ ],
+ "toolkitMs": 68
+}
