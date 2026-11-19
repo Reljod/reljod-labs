@@ -8,22 +8,26 @@ import type {
   SessionSummary,
 } from "../../domain/chat";
 import { commandDef } from "../../domain/commands";
+import {
+  defaultExamples,
+  EXAMPLES,
+  hasMoreExamples,
+} from "../../domain/examples";
 import { LIMITS } from "../../domain/limits";
 import type { ConfirmationView } from "../../domain/views";
 import { createSessionAction, deleteSessionAction } from "../../server/actions";
 import { chatApi, messageOf, type SessionDetail } from "../api";
 import { ResultCard } from "../chat/result-card";
-import { Badge, Button, ErrorNote, inputClass, Markdown, Spinner } from "../ui";
+import {
+  Badge,
+  Button,
+  Dialog,
+  ErrorNote,
+  inputClass,
+  Markdown,
+  Spinner,
+} from "../ui";
 import { useBank } from "../use-bank";
-
-const EXAMPLES = [
-  "What can Mara spend right now, and why is it less than her balance?",
-  "Transfer MRF 25 from Mara's everyday account to Joren",
-  "Pay Tavi's supplier Old Mill Supplies MRF 180",
-  "Chart Mara's spending by month",
-  "Freeze Mara's card",
-  "I want savings goals with a target and a progress bar",
-];
 
 type ToolPart = Extract<MessagePart, { type: "tool" }>;
 type Live = {
@@ -183,6 +187,7 @@ export function ChatTab() {
   const [text, setText] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [drawerOpen, setDrawerOpen] = useState(false);
+  const [allExamples, setAllExamples] = useState(false);
   const abort = useRef<AbortController | null>(null);
   const busy = useRef(false);
   const end = useRef<HTMLDivElement | null>(null);
@@ -461,7 +466,7 @@ export function ChatTab() {
                   ask, say so: the Teller raises it and the bank builds it.
                 </p>
                 <div className="flex flex-wrap gap-2">
-                  {EXAMPLES.map((example) => (
+                  {defaultExamples().map((example) => (
                     <button
                       key={example}
                       type="button"
@@ -473,6 +478,45 @@ export function ChatTab() {
                     </button>
                   ))}
                 </div>
+                {hasMoreExamples() ? (
+                  <button
+                    type="button"
+                    data-testid="bank-chat-examples-more"
+                    aria-haspopup="dialog"
+                    className="press self-start font-mono text-xs underline"
+                    onClick={() => setAllExamples(true)}
+                  >
+                    See more examples ({EXAMPLES.length})
+                  </button>
+                ) : null}
+                {allExamples ? (
+                  <Dialog
+                    title="Ask the Teller"
+                    wide
+                    onClose={() => setAllExamples(false)}
+                  >
+                    <ul
+                      data-testid="bank-chat-examples-all"
+                      className="flex flex-col gap-2"
+                    >
+                      {EXAMPLES.map((example) => (
+                        <li key={example}>
+                          <button
+                            type="button"
+                            data-testid="bank-chat-example-all"
+                            className="outline-box press w-full rounded-sm bg-paper px-2.5 py-1.5 text-left text-xs"
+                            onClick={() => {
+                              setAllExamples(false);
+                              void send(example);
+                            }}
+                          >
+                            {example}
+                          </button>
+                        </li>
+                      ))}
+                    </ul>
+                  </Dialog>
+                ) : null}
               </div>
             ) : null}
             <ul
