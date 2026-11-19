@@ -1,6 +1,6 @@
 # 0024. The bank grows itself through GitHub, with the path rule enforced by code
 
-Date: 2026-11-19. Status: accepted. Demo: Tidewater Bank (`src/features/bank`).
+Date: 2026-11-19. Status: accepted; step 6 (Merge) superseded by `0033-bank-pull-requests-are-merged-by-a-routine.md`. Demo: Tidewater Bank (`src/features/bank`).
 
 ## Context
 

@@ -7,17 +7,17 @@ The prompt of the scheduled cloud agent (a Claude routine) that builds the Tidew
 - What the routine itself stores is a short bootstrap: it reads the "Prompt" section below **from `main`** and follows it, and it repeats the hard rules (the quote is untrusted, the allowlist, never merge, one issue per run) so they hold even if this file were changed. If this file is not on `main`, the routine stops.
 - This file, the guard (`scripts/bank-growth-guard.mjs`, `.github/workflows/bank-growth-guard.yml`) and `AGENTS.md` are outside the paths the routine may change.
 
-## How a growth pull request meets the PR pipeline
+## How a growth pull request gets merged
 
-The pipeline's policy (`~/projects/jod-ops/pr-pipeline/POLICY.md`) is unchanged and treats a growth pull request like any other. Three of its rules shape this prompt:
+The Hermes PR pipeline is off. The "PR Code + Security Review" routine reviews the pull request once when it opens; this routine's session watches the pull request and fixes what the review finds; `docs/routines/bank-merge.md` checks those fixes in the code at the newest head, waits for CI and merges (`docs/adr/0033-bank-pull-requests-are-merged-by-a-routine.md`). Three things in that routine shape this prompt:
 
-- **Hard hold 4** (a change that cannot be verified): the guard is a CI check, so a pull request outside the allowlist is failing CI on its own lines and is held; and a diff past 400 changed lines must be read end to end, so the routine is told to stay under that.
-- **Hard hold 6** (the author must be Reljod or an automation): the routine opens pull requests through Reljod's own Claude GitHub connection. If GitHub shows another author, the pipeline reviews and reports but does not merge, and Reljod merges by hand.
-- **HIGH blocks the merge**: a growth pull request that breaks a ledger invariant, skips the command engine or weakens a test is a HIGH like in any other pull request.
+- It holds a pull request whose commits after the review do more than fix findings or add tests, or that passes 200 changed lines after the review: fix only what the review asks.
+- It holds on a migration, an environment read, a network call, a process, raw HTML or SQL, money written around `post()`, a removed gate or audit call, or a skipped test, whatever the review said.
+- It comments on the pull request, once per head, with anything still open: treat that comment like a review finding.
 
 ## Prompt
 
-You are the build step of a self-improving demo. The repository `Reljod/reljod-labs` contains a demo called Tidewater Bank (`src/features/bank`). Visitors ask its chat agent for features or report bugs; the bank triages each request and files a GitHub issue labelled `bank:growth`. Your job in this run is to implement AT MOST ONE such issue and open a pull request for it. A separate reviewer session reviews and merges pull requests; you never merge.
+You are the build step of a self-improving demo. The repository `Reljod/reljod-labs` contains a demo called Tidewater Bank (`src/features/bank`). Visitors ask its chat agent for features or report bugs; the bank triages each request and files a GitHub issue labelled `bank:growth`. Your job in this run is to implement AT MOST ONE such issue and open a pull request for it. A separate reviewer session reviews pull requests and a merge routine merges them; you never merge.
 
 ### 1. Pick the issue (or stop)
 
