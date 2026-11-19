@@ -105,10 +105,8 @@ export function Rules({
     onSaved();
   });
 
-  const setRule = (
-    metric: MetricId,
-    patch: Parameters<typeof withRule>[2],
-  ) => setDraft((book) => withRule(book, metric, patch));
+  const setRule = (metric: MetricId, patch: Parameters<typeof withRule>[2]) =>
+    setDraft((book) => withRule(book, metric, patch));
   const setPolicy = (patch: Partial<Rulebook["policy"]>) =>
     setDraft((book) => ({ ...book, policy: { ...book.policy, ...patch } }));
 
@@ -138,7 +136,10 @@ export function Rules({
           </Panel>
         ))}
 
-        <Panel eyebrow="Policy" title="From Findings to a Verdict, and what is benign">
+        <Panel
+          eyebrow="Policy"
+          title="From Findings to a Verdict, and what is benign"
+        >
           <div className="grid gap-4 sm:grid-cols-2">
             <NumberField
               label="Tampered at this many supporting Findings"
@@ -253,9 +254,12 @@ export function Rules({
             {!valid.ok ? <ErrorNote>{valid.error}</ErrorNote> : null}
             {error ? <ErrorNote>{error}</ErrorNote> : null}
             {message ? (
-              <p className="text-sm font-medium" role="status" data-testid="loupe-saved">
+              <output
+                className="block text-sm font-medium"
+                data-testid="loupe-saved"
+              >
                 {message}
-              </p>
+              </output>
             ) : null}
           </div>
         </Panel>
@@ -390,8 +394,7 @@ function RuleCard({
 }) {
   const rule = rulebook.rules[metric];
   const text = RULE_TEXT[metric];
-  const edited =
-    JSON.stringify(rule) !== JSON.stringify(saved.rules[metric]);
+  const edited = JSON.stringify(rule) !== JSON.stringify(saved.rules[metric]);
   const fixed = text.min === text.max;
   return (
     <li
@@ -434,7 +437,9 @@ function RuleCard({
           value={rule.weight}
           aria-label={`${METRICS[metric].label}: Weight`}
           data-testid={`loupe-weight-${metric}`}
-          onChange={(event) => onChange({ weight: event.target.value as Weight })}
+          onChange={(event) =>
+            onChange({ weight: event.target.value as Weight })
+          }
         >
           {WEIGHTS.map((weight) => (
             <option key={weight} value={weight}>
@@ -501,8 +506,8 @@ export function CalibrationTable({
         <strong data-testid="loupe-fpr">
           {all.falsePositives} of {all.genuine}
         </strong>{" "}
-        genuine documents ({percent(all.falsePositiveRate)} false positives)
-        and detects{" "}
+        genuine documents ({percent(all.falsePositiveRate)} false positives) and
+        detects{" "}
         <strong data-testid="loupe-detection">
           {all.detected} of {all.tampered}
         </strong>{" "}
@@ -549,7 +554,8 @@ export function CalibrationTable({
           <ul className="mt-1 space-y-0.5 text-ink-muted">
             {draft.missed.map((item) => (
               <li key={item.id}>
-                {item.id}: {item.types.map((type) => TAMPER_TYPES[type]).join(", ")}
+                {item.id}:{" "}
+                {item.types.map((type) => TAMPER_TYPES[type]).join(", ")}
                 {item.hard
                   ? " (an edit that keeps every number consistent; nothing to measure)"
                   : ""}
@@ -566,9 +572,8 @@ export function CalibrationTable({
       ) : null}
       <p className="text-xs text-ink-muted">
         {all.documents} synthetic documents; thresholds were tuned on train and
-        validation only. A small sample: read the rates as a floor check, not
-        a guarantee. No false positive here does not mean none on real
-        paperwork.
+        validation only. A small sample: read the rates as a floor check, not a
+        guarantee. No false positive here does not mean none on real paperwork.
       </p>
     </div>
   );

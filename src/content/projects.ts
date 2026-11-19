@@ -208,6 +208,25 @@ export const projects: Project[] = [
       "An editable, versioned rulebook and a full audit trail with cost",
     ],
   },
+  // Appended last, like the others, so every `projects.<index>` source path keeps its entry.
+  {
+    slug: "loupe",
+    icon: "scan",
+    title: "Loupe",
+    sector: "Document forensics",
+    summary:
+      "Was this payslip, statement, invoice or ID edited? One agent looks at the document, then proves what it saw with code in a sandbox: error levels, glyph metrics, sums that no longer add up. Every finding is boxed on the page with the measurement behind it, and rules in code give the verdict.",
+    outcome: "Evidence for a reviewer, with its measured error rates",
+    tags: ["Agents", "Vision", "Sandbox", "MCP", "Durable workflows"],
+    status: "Live",
+    href: "/demos/loupe",
+    marks: ["New"],
+    features: [
+      "Synthetic payslips, statements, bills, invoices and IDs, or your own file",
+      "Watch the examiner look, suspect, and test each suspicion with code",
+      "Editable thresholds; re-decide a finished examination with no model call",
+    ],
+  },
 ];
 
 /**

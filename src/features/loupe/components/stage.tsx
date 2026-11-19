@@ -73,7 +73,9 @@ export const Stage = memo(function Stage({
             .filter(
               (finding) =>
                 finding.layer &&
-                (selected ? finding.id === selected : finding.weight !== "context"),
+                (selected
+                  ? finding.id === selected
+                  : finding.weight !== "context"),
             )
             .map((finding) => [finding.layer as string, finding]),
         ).values(),
@@ -114,7 +116,9 @@ export const Stage = memo(function Stage({
         ? hypotheses
             .filter(
               (item) =>
-                item.page === page.page && item.box && item.status !== "supported",
+                item.page === page.page &&
+                item.box &&
+                item.status !== "supported",
             )
             .map((item) => (
               <div

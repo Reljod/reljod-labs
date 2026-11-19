@@ -304,7 +304,9 @@ export function decide(findings: Finding[], rulebook: Rulebook): VerdictResult {
     return {
       verdict: "tampered",
       reasons: [
-        ...decisive.map((finding) => `${findingLine(finding)}. Decisive alone.`),
+        ...decisive.map(
+          (finding) => `${findingLine(finding)}. Decisive alone.`,
+        ),
         ...(supporting.length
           ? [`${plural(supporting.length, "supporting Finding")} as well.`]
           : []),

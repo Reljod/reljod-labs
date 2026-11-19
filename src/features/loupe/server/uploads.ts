@@ -67,7 +67,9 @@ export async function openUpload(
     if (!entry?.featured || !files) return { error: "No such Sample." };
     if (contentType === "application/pdf")
       return { error: "A Forgery from the bench is an image." };
-    if (parsed.data.forgery.edits.some((edit) => edit.page > files.pages.length))
+    if (
+      parsed.data.forgery.edits.some((edit) => edit.page > files.pages.length)
+    )
       return { error: "An Edit names a page the Sample does not have." };
     forgery = parsed.data.forgery;
     kind = entry.kind;

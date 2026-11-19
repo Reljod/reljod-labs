@@ -13,10 +13,12 @@ import { recordedMeasurements, samplePages } from "../domain/corpus";
 import { findingLine, findingsToReview, trips } from "../domain/evaluate";
 import { RUN_LIMITS } from "../domain/limits";
 import { asMeasurements } from "../domain/score";
+import { sql } from "./db";
 import { documentOf } from "./document";
 import { type EndOutcome, endExamination } from "./ending";
 import { env } from "./env";
 import { callOptions, trackCall } from "./llm";
+import { IMAGE_MARK } from "./marks";
 import { mcpHandler } from "./mcp";
 import { signLoupeToken } from "./mcp-token";
 import { examinerBrief, examinerInstructions } from "./prompt";
@@ -39,7 +41,6 @@ import { assetPath, download, upload } from "./storage";
 import { examinerTools, isToolId } from "./tool-schemas";
 import { standingOf } from "./tools";
 import { emit } from "./trail";
-import { sql } from "./db";
 
 /*
  * The Examiner's side of an Examination, one function per workflow step
@@ -279,11 +280,6 @@ export type TurnResult =
       costUsd: number;
     };
 
-const IMAGE_MARK = /^\[\[loupe-image:((?:pages|looks)\/[\w.-]+\.jpg)\]\]$/;
-
-/** The marker a look leaves in the conversation in place of its image. */
-export const imageMark = (key: string) => `[[loupe-image:${key}]]`;
-
 /**
  * Puts the last few looked-at images back into the conversation for the
  * model call. The workflow's history holds only their keys, so a page image
@@ -435,15 +431,16 @@ async function stubTurn(
       },
     });
   } else if (state.counters.checkRuns === 0) {
-    const check =
-      lead?.check ?? (row.format === "pdf" ? "arithmetic" : "ela");
+    const check = lead?.check ?? (row.format === "pdf" ? "arithmetic" : "ela");
     thought = `Testing it with the ${check} Check.`;
     calls.push({
       toolName: "run_check",
       input: { check, page: lead?.page ?? 1 },
     });
   } else if (hypothesis?.status === "open") {
-    const mine = state.measurements.filter((item) => item.finder === "examiner");
+    const mine = state.measurements.filter(
+      (item) => item.finder === "examiner",
+    );
     const tripping = mine.filter(
       (item) => trips(item, row.kind, row.rulebook).tripped,
     );
@@ -456,9 +453,10 @@ async function stubTurn(
       input: {
         hypothesisId: hypothesis.id,
         outcome: tripping.length ? "supported" : "refuted",
-        measurementIds: (cite.length ? cite : state.measurements.slice(0, 1)).map(
-          (item) => item.id,
-        ),
+        measurementIds: (cite.length
+          ? cite
+          : state.measurements.slice(0, 1)
+        ).map((item) => item.id),
         explanation: tripping.length
           ? "The Check on this region measured a value past its Rule's threshold."
           : "The Check on this region measured nothing out of the ordinary.",
@@ -466,8 +464,10 @@ async function stubTurn(
       },
     });
   } else if (unlooked.length || findingsToReview(standing.findings).length) {
-    thought = "Covering the remaining pages and reviewing the Sweep's Findings.";
-    for (const page of unlooked) calls.push({ toolName: "look", input: { page } });
+    thought =
+      "Covering the remaining pages and reviewing the Sweep's Findings.";
+    for (const page of unlooked)
+      calls.push({ toolName: "look", input: { page } });
     for (const finding of findingsToReview(standing.findings))
       calls.push({
         toolName: "review_finding",
@@ -562,10 +562,10 @@ export async function callTool(
     imageKey: null,
     finished: false,
   });
-  if (!isToolId(call.toolName))
-    return none(`Unknown tool "${call.toolName}".`);
+  if (!isToolId(call.toolName)) return none(`Unknown tool "${call.toolName}".`);
   const row = await getExamination(examinationId);
-  if (!row || isOver(row.status)) return none("Not run: the Examination is over.");
+  if (!row || isOver(row.status))
+    return none("Not run: the Examination is over.");
   const token = signLoupeToken(
     {
       kind: "examiner",

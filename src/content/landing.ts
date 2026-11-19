@@ -169,6 +169,7 @@ export const demoProblems: Record<string, string> = {
   "process-transfer":
     "A colleague is leaving. Turn their screen-share call into a how-to guide and slides.",
   "name-extraction": "Find every person and company named in a 500-page file.",
+  loupe: "Someone sent a payslip. Was a number on it changed?",
 };
 
 /**
@@ -185,6 +186,7 @@ export const demoShelves = [
       "client-manager",
       "bank-harness",
       "name-extraction",
+      "loupe",
     ],
   },
   {
@@ -195,7 +197,12 @@ export const demoShelves = [
   {
     id: "person",
     label: "A person decides",
-    slugs: ["document-compliance-checks", "casework-desk", "bank-harness"],
+    slugs: [
+      "document-compliance-checks",
+      "casework-desk",
+      "bank-harness",
+      "loupe",
+    ],
   },
 ] as const;
 

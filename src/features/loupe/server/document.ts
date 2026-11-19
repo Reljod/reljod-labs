@@ -1,6 +1,6 @@
 import "server-only";
-import { samplePages } from "../domain/corpus";
 import type { PageInfo } from "../domain/contract";
+import { samplePages } from "../domain/corpus";
 import type { ExaminationRow } from "./repository";
 import { ownedUpload } from "./repository";
 import { sampleBytes } from "./sample-files";

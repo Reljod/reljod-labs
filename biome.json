@@ -16,7 +16,10 @@
       "!fixtures/casework/cases",
       "!fixtures/casework/watchlist",
       "!fixtures/casework/out",
-      "!public/name-extraction/replays"
+      "!public/name-extraction/replays",
+      "!fixtures/loupe",
+      "!public/loupe/samples",
+      "!src/features/loupe/**/*.generated.json"
     ]
   },
   "formatter": {

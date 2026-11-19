@@ -158,15 +158,26 @@ const metricSchema = z.enum(METRIC_IDS as [MetricId, ...MetricId[]]);
 
 export function registerLoupeTools(server: McpServer) {
   // The Examiner's tools ---------------------------------------------------------
-  examinerTool(server, "look", MCP_INPUTS.look, (caller, input) => look(caller, input));
-  examinerTool(server, "run_check", MCP_INPUTS.run_check, (caller, input) => runCheck(caller, input));
-  examinerTool(server, "run_code", MCP_INPUTS.run_code, (caller, input) => runCode(caller, input));
+  examinerTool(server, "look", MCP_INPUTS.look, (caller, input) =>
+    look(caller, input),
+  );
+  examinerTool(server, "run_check", MCP_INPUTS.run_check, (caller, input) =>
+    runCheck(caller, input),
+  );
+  examinerTool(server, "run_code", MCP_INPUTS.run_code, (caller, input) =>
+    runCode(caller, input),
+  );
   examinerTool(server, "hypothesize", MCP_INPUTS.hypothesize, (caller, input) =>
     hypothesize(caller, input),
   );
-  examinerTool(server, "conclude", MCP_INPUTS.conclude, (caller, input) => conclude(caller, input));
-  examinerTool(server, "review_finding", MCP_INPUTS.review_finding, (caller, input) =>
-    reviewFinding(caller, input),
+  examinerTool(server, "conclude", MCP_INPUTS.conclude, (caller, input) =>
+    conclude(caller, input),
+  );
+  examinerTool(
+    server,
+    "review_finding",
+    MCP_INPUTS.review_finding,
+    (caller, input) => reviewFinding(caller, input),
   );
   examinerTool(server, "finish", MCP_INPUTS.finish, async (caller, input) => {
     const outcome = await finish(caller, input);
@@ -223,9 +234,7 @@ export function registerLoupeTools(server: McpServer) {
       description: `Opens an Upload for your own Document and returns a signed URL. PUT the file's bytes to signedUrl (header "content-type" as given, then "x-upsert: false"), then call start_examination with the uploadId. PDF, JPEG, PNG or WebP. The file is yours: private, never used as a Sample.`,
       inputSchema: z.object({
         title: z.string().min(1).max(120),
-        contentType: z.enum(
-          Object.keys(UPLOAD_TYPES) as [string, ...string[]],
-        ),
+        contentType: z.enum(Object.keys(UPLOAD_TYPES) as [string, ...string[]]),
         bytes: z.number().int().min(1),
         kind: z.enum(DOCUMENT_KINDS).optional(),
       }),
@@ -250,9 +259,7 @@ export function registerLoupeTools(server: McpServer) {
       inputSchema: z.object({
         sampleId: z.string().max(60).optional(),
         uploadId: z.string().uuid().optional(),
-        mode: z
-          .enum(Object.keys(DRIVERS) as [Driver, ...Driver[]])
-          .optional(),
+        mode: z.enum(Object.keys(DRIVERS) as [Driver, ...Driver[]]).optional(),
         model: z.enum(MODEL_IDS as [ModelId, ...ModelId[]]).optional(),
       }),
     },
@@ -458,7 +465,8 @@ export function registerLoupeTools(server: McpServer) {
           ...(args.kinds ? { kinds: args.kinds } : {}),
         });
       }
-      if (args.policy) next = { ...next, policy: { ...next.policy, ...args.policy } };
+      if (args.policy)
+        next = { ...next, policy: { ...next.policy, ...args.policy } };
       const saved = await saveRulebookFor(who, {
         rulebook: next,
         note: args.note,

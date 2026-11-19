@@ -5,8 +5,8 @@ import { AUDIT_ACTIONS, type AuditEvent, MCP_PATH } from "../domain/api";
 import { CHECKS, DRIVERS, TOOLS } from "../domain/contract";
 import { LIMITS, RUN_LIMITS } from "../domain/limits";
 import type { Calibration } from "../domain/score";
-import { SKILLS } from "../skills";
 import { mintMcpToken } from "../server/actions";
+import { SKILLS } from "../skills";
 import { api } from "./api";
 import { CalibrationTable } from "./rules";
 import { Button, ErrorNote, Panel, Tag, useWrite } from "./ui";
@@ -45,7 +45,8 @@ export function Hood({
     (f) => f.foundBy.includes("examiner") || f.foundBy.includes("client"),
   ).length;
   const tokensIn = view?.calls.reduce((sum, c) => sum + c.inputTokens, 0) ?? 0;
-  const tokensOut = view?.calls.reduce((sum, c) => sum + c.outputTokens, 0) ?? 0;
+  const tokensOut =
+    view?.calls.reduce((sum, c) => sum + c.outputTokens, 0) ?? 0;
   const cached =
     view?.calls.reduce((sum, c) => sum + c.cachedInputTokens, 0) ?? 0;
   return (
@@ -58,7 +59,10 @@ export function Hood({
           {view ? (
             <div className="space-y-4" data-testid="loupe-hood">
               <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
-                <Stat label="Examiner turns" value={String(view.calls.length)} />
+                <Stat
+                  label="Examiner turns"
+                  value={String(view.calls.length)}
+                />
                 <Stat label="Tool calls" value={String(tools.length)} />
                 <Stat label="Code runs" value={String(runs.length)} />
                 <Stat label="Cost" value={money(view.costUsd)} />
@@ -98,11 +102,15 @@ export function Hood({
                     {view.calls.map((call, index) => (
                       <tr key={call.seq} className="border-ink/10 border-b">
                         <td className="py-1">{index + 1}</td>
-                        <td className="py-1">{call.inputTokens.toLocaleString()}</td>
+                        <td className="py-1">
+                          {call.inputTokens.toLocaleString()}
+                        </td>
                         <td className="py-1">
                           {call.cachedInputTokens.toLocaleString()}
                         </td>
-                        <td className="py-1">{call.outputTokens.toLocaleString()}</td>
+                        <td className="py-1">
+                          {call.outputTokens.toLocaleString()}
+                        </td>
                         <td className="py-1">{seconds(call.ms)}</td>
                         <td className="py-1">{money(call.costUsd)}</td>
                       </tr>
@@ -171,7 +179,10 @@ export function Hood({
           </Panel>
         ) : null}
 
-        <Panel eyebrow="How it works" title="One Examiner, tools, and a harness that owns the gates">
+        <Panel
+          eyebrow="How it works"
+          title="One Examiner, tools, and a harness that owns the gates"
+        >
           <div className="space-y-3 text-sm">
             <ol className="list-decimal space-y-1.5 pl-5">
               <li>
@@ -206,9 +217,9 @@ export function Hood({
             <p className="text-xs text-ink-muted">
               The harness caps an Examination at {RUN_LIMITS.turns} turns,{" "}
               {RUN_LIMITS.codeRuns} code runs, {RUN_LIMITS.checkRuns} Checks,{" "}
-              {RUN_LIMITS.looks} looks and ${RUN_LIMITS.costUsd.toFixed(2)},
-              and an Owner at {LIMITS.examinationsPerOwnerPerDay} Examinations
-              a day. `finish` is refused until every page was looked at, every
+              {RUN_LIMITS.looks} looks and ${RUN_LIMITS.costUsd.toFixed(2)}, and
+              an Owner at {LIMITS.examinationsPerOwnerPerDay} Examinations a
+              day. `finish` is refused until every page was looked at, every
               Sweep Finding reviewed and every Hypothesis settled. The same
               tools are the MCP server at {MCP_PATH}.
             </p>
@@ -242,7 +253,11 @@ function AuditPanel() {
     return () => controller.abort();
   }, []);
   return (
-    <Panel eyebrow="Audit trail" title="Your writes, append-only" bodyClassName="p-0">
+    <Panel
+      eyebrow="Audit trail"
+      title="Your writes, append-only"
+      bodyClassName="p-0"
+    >
       {events === null ? (
         <p className="p-4 text-sm text-ink-muted" aria-busy="true">
           Loading…
@@ -255,8 +270,13 @@ function AuditPanel() {
           data-testid="loupe-audit"
         >
           {events.slice(0, 60).map((event) => (
-            <li key={event.id} className="flex flex-wrap items-center gap-1.5 px-4 py-1.5">
-              <span className="font-semibold">{AUDIT_ACTIONS[event.action]}</span>
+            <li
+              key={event.id}
+              className="flex flex-wrap items-center gap-1.5 px-4 py-1.5"
+            >
+              <span className="font-semibold">
+                {AUDIT_ACTIONS[event.action]}
+              </span>
               {event.via === "mcp" ? <Tag tone="blue">via MCP</Tag> : null}
               <span className="ml-auto font-mono text-ink-muted">
                 {new Date(event.at).toLocaleTimeString()}
@@ -271,9 +291,10 @@ function AuditPanel() {
 
 /** Connect a client: a per-Owner token for the Loupe MCP server, shown once. */
 export function Connect() {
-  const [token, setToken] = useState<{ token: string; expiresAt: string } | null>(
-    null,
-  );
+  const [token, setToken] = useState<{
+    token: string;
+    expiresAt: string;
+  } | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
   const mint = useWrite(async () => {
@@ -292,8 +313,8 @@ export function Connect() {
           <p>
             Everything on this page is a tool on one MCP server, the same one
             Loupe's own Examiner uses. Mint a token and Claude (or any MCP
-            client) can examine documents for you, under your Rules, your
-            limits and your Audit trail.
+            client) can examine documents for you, under your Rules, your limits
+            and your Audit trail.
           </p>
           <Button
             variant="primary"
@@ -338,14 +359,23 @@ export function Connect() {
               "start_examination",
               "with Loupe's Examiner, the Sweep alone, or mode \"client\": you drive the Examiner's tools yourself",
             ],
-            ["get_examination, get_evidence", "the Verdict, Findings and Evidence images"],
+            [
+              "get_examination, get_evidence",
+              "the Verdict, Findings and Evidence images",
+            ],
             ["run_check", "one named Check on a page or a region"],
             [
               "look, run_code, hypothesize, conclude, review_finding, finish",
               "the Examiner's own tools, on an Examination you drive",
             ],
-            ["list_rules, edit_rule, reevaluate", "the Rulebook, versioned, and a new Verdict with no model call"],
-            ["read_trail, get_calibration", "the Trail, your Audit trail, the error rates on the Corpus"],
+            [
+              "list_rules, edit_rule, reevaluate",
+              "the Rulebook, versioned, and a new Verdict with no model call",
+            ],
+            [
+              "read_trail, get_calibration",
+              "the Trail, your Audit trail, the error rates on the Corpus",
+            ],
           ].map(([name, what]) => (
             <li key={name}>
               <code className="font-mono text-xs font-bold">{name}</code>

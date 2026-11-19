@@ -113,7 +113,9 @@ export function Loupe({
       setError(null);
     } catch (reason) {
       if (!controller.signal.aborted)
-        setError(reason instanceof Error ? reason.message : "Could not refresh.");
+        setError(
+          reason instanceof Error ? reason.message : "Could not refresh.",
+        );
     }
   }, []);
 
@@ -147,9 +149,9 @@ export function Loupe({
           className="outline-box rounded-sm bg-paper px-3 py-2 text-sm shadow-hard-sm"
           data-testid="loupe-claim"
         >
-          <strong>Evidence for a human reviewer, not a decision.</strong> On
-          our {all.documents}-document synthetic Corpus the model-free Sweep
-          flagged {all.falsePositives} of {all.genuine} genuine documents
+          <strong>Evidence for a human reviewer, not a decision.</strong> On our{" "}
+          {all.documents}-document synthetic Corpus the model-free Sweep flagged{" "}
+          {all.falsePositives} of {all.genuine} genuine documents
           (false-positive rate {(all.falsePositiveRate * 100).toFixed(0)}%) and
           detected {all.detected} of {all.tampered} tampered ones (
           {(all.detectionRate * 100).toFixed(0)}%). A small sample: expect
@@ -228,9 +230,9 @@ export function LoupeSkeleton() {
     <div className="flex min-h-dvh flex-col bg-marble" aria-busy="true">
       <div className="h-14 border-ink border-b-2 bg-marble" />
       <div className="mx-auto w-full max-w-[100rem] flex-1 space-y-5 px-3 py-5 sm:px-5">
-        <span className="sr-only" role="status" aria-live="polite">
+        <output className="sr-only" aria-live="polite">
           Loading Loupe
-        </span>
+        </output>
         <div className="outline-box h-10 rounded-sm bg-paper" />
         <div className="grid gap-5 xl:grid-cols-[minmax(0,1fr)_22rem]">
           <div className="outline-box rounded-sm bg-paper p-4">

@@ -30,9 +30,7 @@ export const TOOL_INPUTS = {
   run_check: z.object({
     check: z
       .enum(CHECK_IDS as [CheckId, ...CheckId[]])
-      .describe(
-        CHECK_IDS.map((id) => `${id}: ${CHECKS[id].hint}`).join(". "),
-      ),
+      .describe(CHECK_IDS.map((id) => `${id}: ${CHECKS[id].hint}`).join(". ")),
     page: page.optional(),
     box,
   }),

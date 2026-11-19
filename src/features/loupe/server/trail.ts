@@ -8,7 +8,10 @@ import { insertEvents } from "./repository";
  * Trail's insert failed would lose the work and still not record it. Outside
  * production it throws, so a schema drift is seen at once.
  */
-export async function emit(examinationId: string, ...events: TrailEventInput[]) {
+export async function emit(
+  examinationId: string,
+  ...events: TrailEventInput[]
+) {
   if (events.length === 0) return;
   try {
     await insertEvents(examinationId, events);

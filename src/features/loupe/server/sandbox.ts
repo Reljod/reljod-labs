@@ -4,9 +4,9 @@ import { z } from "zod";
 import {
   type Box,
   type CheckId,
+  DOCUMENT_KINDS,
   type DocumentFormat,
   type DocumentKind,
-  DOCUMENT_KINDS,
   type RawMeasurement,
   rawMeasurementSchema,
 } from "../domain/contract";
@@ -180,7 +180,10 @@ async function create(
       ]);
       await created.writeFiles([
         ...toolkitFiles(),
-        { path: `${WORK}/doc/${inputName(file.fileName)}`, content: file.bytes },
+        {
+          path: `${WORK}/doc/${inputName(file.fileName)}`,
+          content: file.bytes,
+        },
         { path: `${WORK}/doc/name.txt`, content: inputName(file.fileName) },
       ]);
     },
@@ -203,14 +206,18 @@ async function open(
     if (error instanceof SandboxUnavailable) throw error;
     if (!/snapshot/i.test(message(error))) {
       console.error("[loupe] sandbox create failed", error);
-      throw new SandboxUnavailable("Sandbox unavailable: it could not be started.");
+      throw new SandboxUnavailable(
+        "Sandbox unavailable: it could not be started.",
+      );
     }
     await forgetSnapshot(bundle.requirementsHash);
     try {
       sandbox = await create(examinationId, await ensureSnapshot(), document);
     } catch (again) {
       console.error("[loupe] sandbox create failed after rebuild", again);
-      throw new SandboxUnavailable("Sandbox unavailable: it could not be started.");
+      throw new SandboxUnavailable(
+        "Sandbox unavailable: it could not be started.",
+      );
     }
   }
   // getOrCreate may hand back a Sandbox made with another policy: enforce it.
@@ -295,7 +302,13 @@ async function run(
   try {
     const result = await sandbox.runCommand({
       cmd: "sh",
-      args: ["-c", RUNNER_SCRIPT, "loupe", `${WORK}/out/${logName}`, ...command],
+      args: [
+        "-c",
+        RUNNER_SCRIPT,
+        "loupe",
+        `${WORK}/out/${logName}`,
+        ...command,
+      ],
       cwd: WORK,
       env: {
         PYTHONPATH: TOOLKIT_DIR,
@@ -400,7 +413,9 @@ async function collect(
         measurements.push(parsed.data);
     } else if (rejected.length < 5) {
       const issue = parsed.error.issues[0];
-      rejected.push(`${issue?.path.join(".") || "measurement"}: ${issue?.message}`);
+      rejected.push(
+        `${issue?.path.join(".") || "measurement"}: ${issue?.message}`,
+      );
     }
   }
   if (items.length > SANDBOX_LIMITS.measurementsPerRun)
@@ -430,7 +445,9 @@ async function collect(
   return {
     // A Measurement whose layer could not be taken keeps its number.
     measurements: measurements.map((item) =>
-      item.layer && !kept.has(item.layer) ? { ...item, layer: undefined } : item,
+      item.layer && !kept.has(item.layer)
+        ? { ...item, layer: undefined }
+        : item,
     ),
     layers,
     rejected,
@@ -518,7 +535,11 @@ export async function prepareDocument(
       return { ...page, bytes };
     }),
   );
-  return { format: parsed.data.format, kindGuess: parsed.data.kindGuess, pages };
+  return {
+    format: parsed.data.format,
+    kindGuess: parsed.data.kindGuess,
+    pages,
+  };
 }
 
 const boxArg = (box: Box) => box.map((n) => n.toFixed(5)).join(",");
@@ -532,7 +553,8 @@ export function checkCode(check: CheckId, page?: number, box?: Box | null) {
   return `import loupe\nfor m in loupe.checks.${check}(${args}):\n    loupe.report(**m)`;
 }
 
-export const SWEEP_CODE = "python3 -m loupe sweep  # every Check that fits the Document";
+export const SWEEP_CODE =
+  "python3 -m loupe sweep  # every Check that fits the Document";
 
 type Seed = () => Promise<DocumentFile>;
 

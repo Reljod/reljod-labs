@@ -382,10 +382,17 @@ export const rawMeasurementSchema = z.object({
   detail: z.string().min(1).max(400),
   /** The numbers behind `value`, for display: { printed: 4810.5, computed: 4100.5 }. */
   facts: z
-    .record(z.string().max(40), z.union([z.number().finite(), z.string().max(200)]))
+    .record(
+      z.string().max(40),
+      z.union([z.number().finite(), z.string().max(200)]),
+    )
     .optional(),
   /** File name of an Evidence layer written beside it (PNG). */
-  layer: z.string().max(120).regex(/^[\w.-]+\.png$/).optional(),
+  layer: z
+    .string()
+    .max(120)
+    .regex(/^[\w.-]+\.png$/)
+    .optional(),
   layerKind: z.enum(LAYER_KINDS).optional(),
   check: checkIdSchema.optional(),
 });

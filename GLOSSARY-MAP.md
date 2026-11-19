@@ -10,3 +10,4 @@ Each context keeps its own language.
 - **Process transfer**: a recorded handover call turned into a Process, a workflow document and a checked, approved Deck. `src/features/process-transfer/GLOSSARY.md`
 - **Harness**: Jod: Harness for Bank, a banking agent with Skills, Pipelines, a Knowledge base and a Sandbox behind one MCP server. `src/features/harness/GLOSSARY.md`
 - **Name Extraction** (shown as Sieve): one Analyst agent lists every party named in a long AML document, recall first. `src/features/name-extraction/GLOSSARY.md`
+- **Loupe**: a forensic examiner for documents: one Examiner looks, tests what it suspects with code, and Rules decide whether a document was tampered with. `src/features/loupe/GLOSSARY.md`

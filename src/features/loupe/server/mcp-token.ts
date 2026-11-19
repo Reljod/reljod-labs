@@ -33,7 +33,9 @@ const PREFIX = "loupe_";
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
 const sign = (payload: string, secret: string) =>
-  createHmac("sha256", `loupe-mcp:${secret}`).update(payload).digest("base64url");
+  createHmac("sha256", `loupe-mcp:${secret}`)
+    .update(payload)
+    .digest("base64url");
 
 export function signLoupeToken(claims: LoupeClaims, secret: string) {
   const payload = Buffer.from(JSON.stringify(claims)).toString("base64url");

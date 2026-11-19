@@ -45,7 +45,9 @@ async function LoupeWithData({
   calibration: Calibration;
 }) {
   let view: {
-    examinations: Awaited<ReturnType<typeof initialView>>["examinations"] | null;
+    examinations:
+      | Awaited<ReturnType<typeof initialView>>["examinations"]
+      | null;
     rulebooks: Awaited<ReturnType<typeof initialView>>["rulebooks"] | null;
   } = { examinations: null, rulebooks: null };
   try {

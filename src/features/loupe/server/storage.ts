@@ -19,7 +19,10 @@ function bucket() {
 
 /** A stable, non-reversible folder per Owner: no raw input reaches a storage key. */
 export function ownerFolder(owner: Owner) {
-  return createHash("sha256").update(`loupe:${owner}`).digest("hex").slice(0, 32);
+  return createHash("sha256")
+    .update(`loupe:${owner}`)
+    .digest("hex")
+    .slice(0, 32);
 }
 
 /** Where an Upload lives. The id is a server-made uuid and the extension comes from a fixed map. */

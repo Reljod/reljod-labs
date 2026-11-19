@@ -8,8 +8,8 @@ import type {
 import { manifestEntry } from "../domain/corpus";
 import { scoreExamination, tampersOfEdits } from "../domain/score";
 import {
-  endExaminationIfGoing,
   type ExaminationRow,
+  endExaminationIfGoing,
   getExamination,
   isOver,
   ownedUpload,
@@ -43,7 +43,12 @@ export async function scoreOf(
 // End --------------------------------------------------------------------------------
 
 export type EndOutcome =
-  | { status: "completed"; summary?: string; note?: string; stoppedBy?: StopReason }
+  | {
+      status: "completed";
+      summary?: string;
+      note?: string;
+      stoppedBy?: StopReason;
+    }
   | { status: "failed"; error: string };
 
 /**
@@ -125,4 +130,3 @@ export async function endExamination(
     await disposeSandbox(examinationId);
   }
 }
-

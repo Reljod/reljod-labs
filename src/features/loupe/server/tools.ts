@@ -160,10 +160,12 @@ async function examinationFor(
   if (caller.role.kind === "client" && row.state.driver !== "client")
     return {
       refusal:
-        "This Examination has its own Examiner. Start one with mode \"client\" to drive the Examiner's tools yourself, or use run_check.",
+        'This Examination has its own Examiner. Start one with mode "client" to drive the Examiner\'s tools yourself, or use run_check.',
     };
   if (row.pages.length === 0)
-    return { refusal: "The Document is still being prepared. Try again shortly." };
+    return {
+      refusal: "The Document is still being prepared. Try again shortly.",
+    };
   return { row };
 }
 
@@ -444,7 +446,10 @@ export async function runCheck(
     return refusal("The Document is still being prepared. Try again shortly.");
   const spec = CHECKS[input.check];
   // A PDF page that is one scan takes the image Checks too; an image has no file structure.
-  if (row.format === "image" && !(spec.formats as readonly string[]).includes("image"))
+  if (
+    row.format === "image" &&
+    !(spec.formats as readonly string[]).includes("image")
+  )
     return refusal(
       `${input.check} is for ${spec.formats.join(" and ")} Documents; this one is an image.`,
     );
@@ -588,12 +593,14 @@ export async function runCode(
     row.id,
     "run_code",
     callId,
-    input.purpose?.slice(0, 120) || `${input.code.split("\n").length} lines of Python`,
+    input.purpose?.slice(0, 120) ||
+      `${input.code.split("\n").length} lines of Python`,
     input,
     async () => {
       const result: RunOutput = row.state.stub
         ? {
-            stdout: "recorded run: no Sandbox in the e2e suite's scripted Examination\n",
+            stdout:
+              "recorded run: no Sandbox in the e2e suite's scripted Examination\n",
             stderr: "",
             exitCode: 0,
             ms: 9,
@@ -680,7 +687,12 @@ export async function loadSkill(
 
 export async function hypothesize(
   caller: Caller,
-  input: { examinationId: string; page: number; box?: Box | null; claim: string },
+  input: {
+    examinationId: string;
+    page: number;
+    box?: Box | null;
+    claim: string;
+  },
   callId = newCallId(),
 ): Promise<ToolOutcome> {
   const found = await examinationFor(caller, input.examinationId, "examining");
@@ -695,7 +707,10 @@ export async function hypothesize(
     async () => {
       const bad = pageRefusal(row, input.page);
       if (bad) return refusal(bad);
-      const changed = await mutateState<{ hypothesis: Hypothesis; standing: Standing }>(row.id, (current) => {
+      const changed = await mutateState<{
+        hypothesis: Hypothesis;
+        standing: Standing;
+      }>(row.id, (current) => {
         if (current.state.hypotheses.length >= RUN_LIMITS.hypotheses)
           return {
             refusal: `hypothesize refused: this Examination has its ${RUN_LIMITS.hypotheses} Hypotheses. Settle the open ones.`,
@@ -761,12 +776,18 @@ export async function conclude(
     `${input.hypothesisId} ${input.outcome}`,
     input,
     async () => {
-      const changed = await mutateState<{ hypothesis: Hypothesis; standing: Standing; tripping: number }>(row.id, (current) => {
+      const changed = await mutateState<{
+        hypothesis: Hypothesis;
+        standing: Standing;
+        tripping: number;
+      }>(row.id, (current) => {
         const hypothesis = current.state.hypotheses.find(
           (item) => item.id === input.hypothesisId,
         );
         if (!hypothesis)
-          return { refusal: `conclude refused: no Hypothesis ${input.hypothesisId}.` };
+          return {
+            refusal: `conclude refused: no Hypothesis ${input.hypothesisId}.`,
+          };
         const ids = [...new Set(input.measurementIds)];
         const measurements = ids.map((id) =>
           current.state.measurements.find((item) => item.id === id),
@@ -910,7 +931,10 @@ export function gateRefusal(standing: Standing, state: ExaminationState) {
             !finding.review &&
             !finding.hypothesisId,
         )
-        .map((finding) => `${finding.id} (${finding.metric}, page ${finding.page})`)
+        .map(
+          (finding) =>
+            `${finding.id} (${finding.metric}, page ${finding.page})`,
+        )
         .join("; ")}.`,
     );
   if (gate.hypothesesOpen > 0)

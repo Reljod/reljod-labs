@@ -432,9 +432,7 @@ export async function createExamination(input: {
     await tx`select pg_advisory_xact_lock(hashtextextended(${`loupe:visitor:${input.visitorHash}`}, 0))`;
     if (input.limits) {
       const stale = `${Math.round(input.limits.staleMs / 1000)} seconds`;
-      const [{ active, today }] = await tx<
-        { active: number; today: number }[]
-      >`
+      const [{ active, today }] = await tx<{ active: number; today: number }[]>`
         select
           count(*) filter (
             where status in ('queued', 'running')
@@ -627,7 +625,11 @@ export async function mutateState<T>(
     await tx`update loupe.examinations set ${tx(values)} where id = ${examinationId}`;
     return {
       result: next.result,
-      row: { ...row, ...(next.patch ?? {}), state: next.state } as ExaminationRow,
+      row: {
+        ...row,
+        ...(next.patch ?? {}),
+        state: next.state,
+      } as ExaminationRow,
     };
   });
 }
@@ -641,7 +643,11 @@ export async function insertEvents(
 ) {
   if (events.length === 0) return;
   const rows = events.map((event) => {
-    const { type, at: _at, ...payload } = event as TrailEventInput & {
+    const {
+      type,
+      at: _at,
+      ...payload
+    } = event as TrailEventInput & {
       at?: number;
     };
     return { examination_id: examinationId, type, payload: jsonb(db, payload) };

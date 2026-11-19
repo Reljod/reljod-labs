@@ -1,63 +1,23 @@
-import type { ModelMessage, ToolResultPart } from "ai";
+import type { ToolResultPart } from "ai";
 import { RUN_LIMITS } from "../domain/limits";
 import type { EndOutcome } from "./ending";
+import { imageMark } from "./marks";
 import {
-  callTool,
-  end,
-  imageMark,
-  note,
-  opening,
-  prepare,
-  sweep,
-  type ToolCall,
-  turn,
-} from "./examiner";
+  endStep,
+  noteStep,
+  openingStep,
+  prepareStep,
+  sweepStep,
+  toolStep,
+  turnStep,
+} from "./steps";
 
 export type ExaminationInput = { examinationId: string };
 
-// Steps: each is durable, so a crash resumes after the last finished one. Their
-// names are replay keys (conventions.md): do not rename or move them. -----------------
-
-async function prepareStep(examinationId: string) {
-  "use step";
-  return prepare(examinationId);
-}
-prepareStep.maxRetries = 1;
-
-async function sweepStep(examinationId: string) {
-  "use step";
-  return sweep(examinationId);
-}
-sweepStep.maxRetries = 1;
-
-async function openingStep(examinationId: string) {
-  "use step";
-  return opening(examinationId);
-}
-
-async function turnStep(examinationId: string, messages: ModelMessage[]) {
-  "use step";
-  return turn(examinationId, messages);
-}
-// The gateway is sometimes flaky for a provider; a failed turn is retried.
-turnStep.maxRetries = 2;
-
-async function toolStep(examinationId: string, call: ToolCall) {
-  "use step";
-  return callTool(examinationId, call);
-}
-// A tool reports its own failures; a retry would run code or a Check twice.
-toolStep.maxRetries = 0;
-
-async function noteStep(examinationId: string, text: string) {
-  "use step";
-  await note(examinationId, text);
-}
-
-async function endStep(examinationId: string, outcome: EndOutcome) {
-  "use step";
-  return end(examinationId, outcome);
-}
+/*
+ * Only pure code runs in the workflow body; everything that touches the
+ * database, the Sandbox or a model is a step in ./steps.
+ */
 
 const message = (error: unknown) =>
   error instanceof Error ? error.message : String(error);
@@ -166,7 +126,10 @@ export async function loupeExamination(input: ExaminationInput) {
             type: "tool-result",
             toolCallId: call.toolCallId,
             toolName: call.toolName,
-            output: { type: "text", value: "Not run: the Examination finished." },
+            output: {
+              type: "text",
+              value: "Not run: the Examination finished.",
+            },
           });
           continue;
         }

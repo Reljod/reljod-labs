@@ -19,7 +19,9 @@ export async function visitor(): Promise<Visitor & { origin: string }> {
     requestHeaders.get("x-forwarded-host") ?? requestHeaders.get("host") ?? "";
   const proto =
     requestHeaders.get("x-forwarded-proto") ??
-    (host.startsWith("localhost") || host.startsWith("127.") ? "http" : "https");
+    (host.startsWith("localhost") || host.startsWith("127.")
+      ? "http"
+      : "https");
   const origin = host ? `${proto}://${host}` : "";
   const bypass = env.e2eBypassToken();
   if (bypass && requestHeaders.get(E2E_HEADER) === bypass) {

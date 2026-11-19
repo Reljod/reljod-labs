@@ -105,7 +105,8 @@ export const RULE_TEXT: Record<
     why: "An issuer's system writes a document once. A later save that replaces content is an edit, and the earlier version is still in the file.",
   },
   "pdf.editor_producer": {
-    sentence: "A PDF written by an editing tool on the editors list is flagged.",
+    sentence:
+      "A PDF written by an editing tool on the editors list is flagged.",
     min: 1,
     max: 1,
     step: 1,
@@ -410,7 +411,9 @@ export function parseRulebook(
       ok: false,
       error: parsed.error.issues
         .slice(0, 3)
-        .map((issue) => `${issue.path.join(".") || "rulebook"}: ${issue.message}`)
+        .map(
+          (issue) => `${issue.path.join(".") || "rulebook"}: ${issue.message}`,
+        )
         .join("; "),
     };
   }

@@ -14,8 +14,8 @@ import {
   type ModelId,
   type SampleCard,
   TAMPER_TYPES,
-  type Verdict,
   VERDICT_LABELS,
+  type Verdict,
   WEIGHT_LABELS,
 } from "../domain/contract";
 import { LIMITS, UPLOAD_TYPES } from "../domain/limits";
@@ -40,12 +40,7 @@ import {
   useWrite,
 } from "./ui";
 import type { useExamination } from "./use-examination";
-import {
-  type ExaminationView,
-  type FeedItem,
-  money,
-  seconds,
-} from "./view";
+import { type ExaminationView, type FeedItem, money, seconds } from "./view";
 
 const VERDICT_TONE: Record<Verdict, { tone: TagTone; box: string }> = {
   genuine: { tone: "green", box: "bg-ivy text-paper" },
@@ -97,7 +92,8 @@ export function Shelf({
         headers: { "content-type": file.type, "x-upsert": "false" },
         body: file,
       });
-      if (!put.ok) return setError("The file could not be uploaded. Try again.");
+      if (!put.ok)
+        return setError("The file could not be uploaded. Try again.");
       source = { kind: "upload", uploadId: opened.uploadId };
     } else if (sample) {
       source = { kind: "sample", sampleId: sample.id };
@@ -251,7 +247,9 @@ export function Shelf({
                     driver === id ? "bg-ink text-paper" : "bg-paper",
                   )}
                 >
-                  {id === "examiner" ? "Examiner + Sweep" : "Sweep only, no model"}
+                  {id === "examiner"
+                    ? "Examiner + Sweep"
+                    : "Sweep only, no model"}
                 </button>
               ))}
             </div>
@@ -286,9 +284,9 @@ export function Shelf({
           </Button>
           {error ? <ErrorNote>{error}</ErrorNote> : null}
           <p className="text-xs text-ink-muted">
-            The Examiner looks, suspects, then proves it with code in a
-            sandbox. Only what code measured becomes a Finding, and Rules
-            decide the Verdict. An Examination costs a few cents.
+            The Examiner looks, suspects, then proves it with code in a sandbox.
+            Only what code measured becomes a Finding, and Rules decide the
+            Verdict. An Examination costs a few cents.
           </p>
         </div>
       </Panel>
@@ -394,7 +392,9 @@ export function Examination({
                 data-testid={`loupe-toggle-${key}`}
                 className={cx(
                   "outline-box rounded-sm px-2 py-1 font-mono text-[0.68rem] font-bold uppercase",
-                  toggles[key] ? "bg-ink text-paper" : "bg-paper text-ink-muted",
+                  toggles[key]
+                    ? "bg-ink text-paper"
+                    : "bg-paper text-ink-muted",
                 )}
               >
                 {label}
@@ -629,13 +629,12 @@ function VerdictCard({
               No model call: the stored Measurements are decided again by code.
             </span>
             {note ? (
-              <p
-                className="basis-full text-sm font-medium"
-                role="status"
+              <output
+                className="block basis-full text-sm font-medium"
                 data-testid="loupe-reevaluate-note"
               >
                 {note}
-              </p>
+              </output>
             ) : null}
             {error ? <ErrorNote>{error}</ErrorNote> : null}
           </div>
@@ -766,7 +765,9 @@ const Findings = memo(function Findings({
                     </p>
                     <p className="flex flex-wrap gap-1">
                       <Tag>
-                        {finding.page > 0 ? `page ${finding.page}` : "whole file"}
+                        {finding.page > 0
+                          ? `page ${finding.page}`
+                          : "whole file"}
                       </Tag>
                       <Tag title="From how far past the threshold the measured value is. Code's, not the model's.">
                         confidence {Math.round(finding.confidence * 100)}%
@@ -782,7 +783,13 @@ const Findings = memo(function Findings({
                         </Tag>
                       ))}
                       {finding.review ? (
-                        <Tag tone={finding.review.stance === "agree" ? "green" : "brass"}>
+                        <Tag
+                          tone={
+                            finding.review.stance === "agree"
+                              ? "green"
+                              : "brass"
+                          }
+                        >
                           Examiner {finding.review.stance}s
                         </Tag>
                       ) : null}
@@ -807,7 +814,9 @@ const Findings = memo(function Findings({
                     <details className="rounded-sm border-2 border-ink bg-paper">
                       <summary className="cursor-pointer px-2.5 py-1.5 font-mono text-xs font-bold uppercase">
                         The code that measured it
-                        {finding.check ? ` · ${CHECKS[finding.check].label}` : ""}
+                        {finding.check
+                          ? ` · ${CHECKS[finding.check].label}`
+                          : ""}
                       </summary>
                       <pre className="max-h-56 overflow-auto border-ink border-t-2 bg-ink p-2.5 font-mono text-[0.7rem] leading-relaxed text-paper">
                         {code?.code ??
@@ -833,9 +842,7 @@ const Findings = memo(function Findings({
                           Run this Check again here
                         </Button>
                         {ranNote ? (
-                          <span className="text-xs" role="status">
-                            {ranNote}
-                          </span>
+                          <output className="text-xs">{ranNote}</output>
                         ) : null}
                       </div>
                     ) : null}
@@ -960,7 +967,10 @@ function Feed({ view, running }: { view: ExaminationView; running: boolean }) {
       {hypotheses.length ? (
         <ul className="mb-3 space-y-1.5" data-testid="loupe-hypotheses">
           {hypotheses.map((item) => (
-            <li key={item.id} className="flex flex-wrap items-start gap-1.5 text-xs">
+            <li
+              key={item.id}
+              className="flex flex-wrap items-start gap-1.5 text-xs"
+            >
               <Tag
                 tone={
                   item.status === "supported"

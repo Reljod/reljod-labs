@@ -1,10 +1,6 @@
 import { requireOwner } from "@/features/access/server/gate";
 import { ownedExamination } from "@/features/loupe/server/repository";
-import {
-  failure,
-  IMMUTABLE,
-  notFound,
-} from "@/features/loupe/server/respond";
+import { failure, IMMUTABLE, notFound } from "@/features/loupe/server/respond";
 import {
   assetPath,
   contentTypeOf,

@@ -13,13 +13,14 @@ import {
 } from "../domain/contract";
 import { manifestEntry, sampleFiles } from "../domain/corpus";
 import { LIMITS, STALE_EXAMINATION_MS } from "../domain/limits";
+import { endExamination, scoreOf } from "./ending";
 import { env } from "./env";
 import {
   audit,
   createExamination,
   currentRulebook,
-  endExaminationIfGoing,
   type ExaminationRow,
+  endExaminationIfGoing,
   getExamination,
   isOver,
   ownedExamination,
@@ -29,7 +30,6 @@ import {
 } from "./repository";
 import { disposeSandbox } from "./sandbox";
 import { storedSize } from "./storage";
-import { endExamination, scoreOf } from "./ending";
 import { standingOf } from "./tools";
 import { emit } from "./trail";
 import { loupeExamination } from "./workflow";
@@ -44,7 +44,9 @@ export type Who = {
 /** The Examiner's model: the one asked for, else LOUPE_MODEL, else the default. */
 export function modelFor(asked?: string): ModelId {
   const pick = asked || env.model();
-  return (MODEL_IDS as string[]).includes(pick) ? (pick as ModelId) : DEFAULT_MODEL;
+  return (MODEL_IDS as string[]).includes(pick)
+    ? (pick as ModelId)
+    : DEFAULT_MODEL;
 }
 
 // Start ------------------------------------------------------------------------------
@@ -160,9 +162,12 @@ export async function startExamination(
 }
 
 /** Closes an Examination whose workflow (or whose client) is long gone, so it stops counting as active. */
-export async function closeIfStale(row: ExaminationRow): Promise<ExaminationRow> {
+export async function closeIfStale(
+  row: ExaminationRow,
+): Promise<ExaminationRow> {
   if (isOver(row.status)) return row;
-  if (Date.now() - Date.parse(row.started_at) < STALE_EXAMINATION_MS) return row;
+  if (Date.now() - Date.parse(row.started_at) < STALE_EXAMINATION_MS)
+    return row;
   // A client's own Examination that it never finished ends with what was measured.
   await endExamination(
     row.id,
@@ -172,7 +177,10 @@ export async function closeIfStale(row: ExaminationRow): Promise<ExaminationRow>
           stoppedBy: "idle",
           note: "The client stopped calling tools before the Done gate passed.",
         }
-      : { status: "failed", error: "The Examination lost its workflow and was closed." },
+      : {
+          status: "failed",
+          error: "The Examination lost its workflow and was closed.",
+        },
   );
   return (await getExamination(row.id)) ?? row;
 }
