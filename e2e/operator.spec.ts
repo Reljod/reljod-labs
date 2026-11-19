@@ -376,6 +376,7 @@ test.describe("with the real model", () => {
     // The claim under test is that a real model drove the Screen to the end
     // and code judged it; the Verdict itself is reported, not assumed.
     console.log(`live Verdict: ${await verdict(page).textContent()}`);
-    await expect(page.getByText(/approved by a person/)).toBeVisible();
+    // The Operator's own summary may say the same words; the Finding comes first.
+    await expect(page.getByText(/approved by a person/).first()).toBeVisible();
   });
 });
