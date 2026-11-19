@@ -124,7 +124,9 @@ describe("growth-pr.sh", () => {
       join(dir, "issue-69.json"),
       JSON.stringify({
         labels: [{ name: "bank:growth" }],
-        pull_request: { url: "https://api.github.com/repos/owner/repo/pulls/69" },
+        pull_request: {
+          url: "https://api.github.com/repos/owner/repo/pulls/69",
+        },
       }),
     );
     pr({ body: "Checked on #69, which is a growth pull request." });
