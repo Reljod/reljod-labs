@@ -1,0 +1,2551 @@
+{
+  "duckdb": "2.0.0",
+  "cases": {
+    "correlated_scalar": {
+      "sql": "select (select h.monthly_income_mdc), (select h.household_id) from household_survey h",
+      "ast": {
+        "error": false,
+        "statements": [
+          {
+            "node": {
+              "type": "SELECT_NODE",
+              "modifiers": [],
+              "cte_map": {
+                "map": []
+              },
+              "select_list": [
+                {
+                  "class": "SUBQUERY",
+                  "type": "SUBQUERY",
+                  "alias": "",
+                  "query_location": 7,
+                  "query_location_length": 29,
+                  "subquery_type": "SCALAR",
+                  "subquery": {
+                    "node": {
+                      "type": "SELECT_NODE",
+                      "modifiers": [],
+                      "cte_map": {
+                        "map": []
+                      },
+                      "select_list": [
+                        {
+                          "class": "COLUMN_REF",
+                          "type": "COLUMN_REF",
+                          "alias": "",
+                          "query_location": 15,
+                          "query_location_length": 20,
+                          "column_names": ["h", "monthly_income_mdc"]
+                        }
+                      ],
+                      "from_table": {
+                        "type": "EMPTY",
+                        "alias": "",
+                        "sample": null,
+                        "query_location": 18446744073709551615,
+                        "query_location_length": 0
+                      },
+                      "where_clause": null,
+                      "group_expressions": [],
+                      "group_sets": [],
+                      "aggregate_handling": "STANDARD_HANDLING",
+                      "having": null,
+                      "sample": null,
+                      "qualify": null
+                    },
+                    "named_param_map": []
+                  },
+                  "child": null,
+                  "comparison_type": "INVALID"
+                },
+                {
+                  "class": "SUBQUERY",
+                  "type": "SUBQUERY",
+                  "alias": "",
+                  "query_location": 38,
+                  "query_location_length": 23,
+                  "subquery_type": "SCALAR",
+                  "subquery": {
+                    "node": {
+                      "type": "SELECT_NODE",
+                      "modifiers": [],
+                      "cte_map": {
+                        "map": []
+                      },
+                      "select_list": [
+                        {
+                          "class": "COLUMN_REF",
+                          "type": "COLUMN_REF",
+                          "alias": "",
+                          "query_location": 46,
+                          "query_location_length": 14,
+                          "column_names": ["h", "household_id"]
+                        }
+                      ],
+                      "from_table": {
+                        "type": "EMPTY",
+                        "alias": "",
+                        "sample": null,
+                        "query_location": 18446744073709551615,
+                        "query_location_length": 0
+                      },
+                      "where_clause": null,
+                      "group_expressions": [],
+                      "group_sets": [],
+                      "aggregate_handling": "STANDARD_HANDLING",
+                      "having": null,
+                      "sample": null,
+                      "qualify": null
+                    },
+                    "named_param_map": []
+                  },
+                  "child": null,
+                  "comparison_type": "INVALID"
+                }
+              ],
+              "from_table": {
+                "type": "BASE_TABLE",
+                "alias": "h",
+                "sample": null,
+                "query_location": 67,
+                "query_location_length": 18,
+                "schema_name": "",
+                "table_name": "household_survey",
+                "column_name_alias": [],
+                "catalog_name": "",
+                "at_clause": null,
+                "qualified_name": {
+                  "path": ["household_survey"]
+                }
+              },
+              "where_clause": null,
+              "group_expressions": [],
+              "group_sets": [],
+              "aggregate_handling": "STANDARD_HANDLING",
+              "having": null,
+              "sample": null,
+              "qualify": null
+            },
+            "named_param_map": []
+          }
+        ]
+      }
+    },
+    "lateral_leak": {
+      "sql": "select x from household_survey h, lateral (select h.monthly_income_mdc as x)",
+      "ast": {
+        "error": false,
+        "statements": [
+          {
+            "node": {
+              "type": "SELECT_NODE",
+              "modifiers": [],
+              "cte_map": {
+                "map": []
+              },
+              "select_list": [
+                {
+                  "class": "COLUMN_REF",
+                  "type": "COLUMN_REF",
+                  "alias": "",
+                  "query_location": 7,
+                  "query_location_length": 1,
+                  "column_names": ["x"]
+                }
+              ],
+              "from_table": {
+                "type": "JOIN",
+                "alias": "",
+                "sample": null,
+                "query_location": 9,
+                "query_location_length": 67,
+                "left": {
+                  "type": "BASE_TABLE",
+                  "alias": "h",
+                  "sample": null,
+                  "query_location": 14,
+                  "query_location_length": 18,
+                  "schema_name": "",
+                  "table_name": "household_survey",
+                  "column_name_alias": [],
+                  "catalog_name": "",
+                  "at_clause": null,
+                  "qualified_name": {
+                    "path": ["household_survey"]
+                  }
+                },
+                "right": {
+                  "type": "SUBQUERY",
+                  "alias": "",
+                  "sample": null,
+                  "query_location": 42,
+                  "query_location_length": 34,
+                  "subquery": {
+                    "node": {
+                      "type": "SELECT_NODE",
+                      "modifiers": [],
+                      "cte_map": {
+                        "map": []
+                      },
+                      "select_list": [
+                        {
+                          "class": "COLUMN_REF",
+                          "type": "COLUMN_REF",
+                          "alias": "x",
+                          "query_location": 50,
+                          "query_location_length": 20,
+                          "column_names": ["h", "monthly_income_mdc"]
+                        }
+                      ],
+                      "from_table": {
+                        "type": "EMPTY",
+                        "alias": "",
+                        "sample": null,
+                        "query_location": 18446744073709551615,
+                        "query_location_length": 0
+                      },
+                      "where_clause": null,
+                      "group_expressions": [],
+                      "group_sets": [],
+                      "aggregate_handling": "STANDARD_HANDLING",
+                      "having": null,
+                      "sample": null,
+                      "qualify": null
+                    },
+                    "named_param_map": []
+                  },
+                  "column_name_alias": []
+                },
+                "condition": null,
+                "join_type": "INNER",
+                "ref_type": "CROSS",
+                "using_columns": [],
+                "delim_flipped": false,
+                "duplicate_eliminated_columns": [],
+                "is_implicit": true,
+                "ranking_expression": null,
+                "nearest_count": 1,
+                "nearest_order_type": "ASCENDING",
+                "nearest_approx": false
+              },
+              "where_clause": null,
+              "group_expressions": [],
+              "group_sets": [],
+              "aggregate_handling": "STANDARD_HANDLING",
+              "having": null,
+              "sample": null,
+              "qualify": null
+            },
+            "named_param_map": []
+          }
+        ]
+      }
+    },
+    "lateral_whole_row": {
+      "sql": "select s from household_survey h, lateral (select h as s)",
+      "ast": {
+        "error": false,
+        "statements": [
+          {
+            "node": {
+              "type": "SELECT_NODE",
+              "modifiers": [],
+              "cte_map": {
+                "map": []
+              },
+              "select_list": [
+                {
+                  "class": "COLUMN_REF",
+                  "type": "COLUMN_REF",
+                  "alias": "",
+                  "query_location": 7,
+                  "query_location_length": 1,
+                  "column_names": ["s"]
+                }
+              ],
+              "from_table": {
+                "type": "JOIN",
+                "alias": "",
+                "sample": null,
+                "query_location": 9,
+                "query_location_length": 48,
+                "left": {
+                  "type": "BASE_TABLE",
+                  "alias": "h",
+                  "sample": null,
+                  "query_location": 14,
+                  "query_location_length": 18,
+                  "schema_name": "",
+                  "table_name": "household_survey",
+                  "column_name_alias": [],
+                  "catalog_name": "",
+                  "at_clause": null,
+                  "qualified_name": {
+                    "path": ["household_survey"]
+                  }
+                },
+                "right": {
+                  "type": "SUBQUERY",
+                  "alias": "",
+                  "sample": null,
+                  "query_location": 42,
+                  "query_location_length": 15,
+                  "subquery": {
+                    "node": {
+                      "type": "SELECT_NODE",
+                      "modifiers": [],
+                      "cte_map": {
+                        "map": []
+                      },
+                      "select_list": [
+                        {
+                          "class": "COLUMN_REF",
+                          "type": "COLUMN_REF",
+                          "alias": "s",
+                          "query_location": 50,
+                          "query_location_length": 1,
+                          "column_names": ["h"]
+                        }
+                      ],
+                      "from_table": {
+                        "type": "EMPTY",
+                        "alias": "",
+                        "sample": null,
+                        "query_location": 18446744073709551615,
+                        "query_location_length": 0
+                      },
+                      "where_clause": null,
+                      "group_expressions": [],
+                      "group_sets": [],
+                      "aggregate_handling": "STANDARD_HANDLING",
+                      "having": null,
+                      "sample": null,
+                      "qualify": null
+                    },
+                    "named_param_map": []
+                  },
+                  "column_name_alias": []
+                },
+                "condition": null,
+                "join_type": "INNER",
+                "ref_type": "CROSS",
+                "using_columns": [],
+                "delim_flipped": false,
+                "duplicate_eliminated_columns": [],
+                "is_implicit": true,
+                "ranking_expression": null,
+                "nearest_count": 1,
+                "nearest_order_type": "ASCENDING",
+                "nearest_approx": false
+              },
+              "where_clause": null,
+              "group_expressions": [],
+              "group_sets": [],
+              "aggregate_handling": "STANDARD_HANDLING",
+              "having": null,
+              "sample": null,
+              "qualify": null
+            },
+            "named_param_map": []
+          }
+        ]
+      }
+    },
+    "nested_whole_row": {
+      "sql": "select (select h) from household_survey h",
+      "ast": {
+        "error": false,
+        "statements": [
+          {
+            "node": {
+              "type": "SELECT_NODE",
+              "modifiers": [],
+              "cte_map": {
+                "map": []
+              },
+              "select_list": [
+                {
+                  "class": "SUBQUERY",
+                  "type": "SUBQUERY",
+                  "alias": "",
+                  "query_location": 7,
+                  "query_location_length": 10,
+                  "subquery_type": "SCALAR",
+                  "subquery": {
+                    "node": {
+                      "type": "SELECT_NODE",
+                      "modifiers": [],
+                      "cte_map": {
+                        "map": []
+                      },
+                      "select_list": [
+                        {
+                          "class": "COLUMN_REF",
+                          "type": "COLUMN_REF",
+                          "alias": "",
+                          "query_location": 15,
+                          "query_location_length": 1,
+                          "column_names": ["h"]
+                        }
+                      ],
+                      "from_table": {
+                        "type": "EMPTY",
+                        "alias": "",
+                        "sample": null,
+                        "query_location": 18446744073709551615,
+                        "query_location_length": 0
+                      },
+                      "where_clause": null,
+                      "group_expressions": [],
+                      "group_sets": [],
+                      "aggregate_handling": "STANDARD_HANDLING",
+                      "having": null,
+                      "sample": null,
+                      "qualify": null
+                    },
+                    "named_param_map": []
+                  },
+                  "child": null,
+                  "comparison_type": "INVALID"
+                }
+              ],
+              "from_table": {
+                "type": "BASE_TABLE",
+                "alias": "h",
+                "sample": null,
+                "query_location": 23,
+                "query_location_length": 18,
+                "schema_name": "",
+                "table_name": "household_survey",
+                "column_name_alias": [],
+                "catalog_name": "",
+                "at_clause": null,
+                "qualified_name": {
+                  "path": ["household_survey"]
+                }
+              },
+              "where_clause": null,
+              "group_expressions": [],
+              "group_sets": [],
+              "aggregate_handling": "STANDARD_HANDLING",
+              "having": null,
+              "sample": null,
+              "qualify": null
+            },
+            "named_param_map": []
+          }
+        ]
+      }
+    },
+    "cte_shadow": {
+      "sql": "select monthly_income_mdc from household_survey, (with household_survey as (select 1 x) select x from household_survey) s",
+      "ast": {
+        "error": false,
+        "statements": [
+          {
+            "node": {
+              "type": "SELECT_NODE",
+              "modifiers": [],
+              "cte_map": {
+                "map": []
+              },
+              "select_list": [
+                {
+                  "class": "COLUMN_REF",
+                  "type": "COLUMN_REF",
+                  "alias": "",
+                  "query_location": 7,
+                  "query_location_length": 18,
+                  "column_names": ["monthly_income_mdc"]
+                }
+              ],
+              "from_table": {
+                "type": "JOIN",
+                "alias": "",
+                "sample": null,
+                "query_location": 26,
+                "query_location_length": 95,
+                "left": {
+                  "type": "BASE_TABLE",
+                  "alias": "",
+                  "sample": null,
+                  "query_location": 31,
+                  "query_location_length": 16,
+                  "schema_name": "",
+                  "table_name": "household_survey",
+                  "column_name_alias": [],
+                  "catalog_name": "",
+                  "at_clause": null,
+                  "qualified_name": {
+                    "path": ["household_survey"]
+                  }
+                },
+                "right": {
+                  "type": "SUBQUERY",
+                  "alias": "s",
+                  "sample": null,
+                  "query_location": 49,
+                  "query_location_length": 70,
+                  "subquery": {
+                    "node": {
+                      "type": "SELECT_NODE",
+                      "modifiers": [],
+                      "cte_map": {
+                        "map": [
+                          {
+                            "key": "household_survey",
+                            "value": {
+                              "aliases": [],
+                              "materialized": "CTE_MATERIALIZE_DEFAULT",
+                              "key_targets": [],
+                              "payload_aggregates": [],
+                              "query_node": {
+                                "type": "SELECT_NODE",
+                                "modifiers": [],
+                                "cte_map": {
+                                  "map": []
+                                },
+                                "select_list": [
+                                  {
+                                    "class": "CONSTANT",
+                                    "type": "VALUE_CONSTANT",
+                                    "alias": "x",
+                                    "query_location": 83,
+                                    "query_location_length": 1,
+                                    "literal": {
+                                      "kind": "INTEGER",
+                                      "text": "1"
+                                    }
+                                  }
+                                ],
+                                "from_table": {
+                                  "type": "EMPTY",
+                                  "alias": "",
+                                  "sample": null,
+                                  "query_location": 18446744073709551615,
+                                  "query_location_length": 0
+                                },
+                                "where_clause": null,
+                                "group_expressions": [],
+                                "group_sets": [],
+                                "aggregate_handling": "STANDARD_HANDLING",
+                                "having": null,
+                                "sample": null,
+                                "qualify": null
+                              }
+                            }
+                          }
+                        ]
+                      },
+                      "select_list": [
+                        {
+                          "class": "COLUMN_REF",
+                          "type": "COLUMN_REF",
+                          "alias": "",
+                          "query_location": 95,
+                          "query_location_length": 1,
+                          "column_names": ["x"]
+                        }
+                      ],
+                      "from_table": {
+                        "type": "BASE_TABLE",
+                        "alias": "",
+                        "sample": null,
+                        "query_location": 102,
+                        "query_location_length": 16,
+                        "schema_name": "",
+                        "table_name": "household_survey",
+                        "column_name_alias": [],
+                        "catalog_name": "",
+                        "at_clause": null,
+                        "qualified_name": {
+                          "path": ["household_survey"]
+                        }
+                      },
+                      "where_clause": null,
+                      "group_expressions": [],
+                      "group_sets": [],
+                      "aggregate_handling": "STANDARD_HANDLING",
+                      "having": null,
+                      "sample": null,
+                      "qualify": null
+                    },
+                    "named_param_map": []
+                  },
+                  "column_name_alias": []
+                },
+                "condition": null,
+                "join_type": "INNER",
+                "ref_type": "CROSS",
+                "using_columns": [],
+                "delim_flipped": false,
+                "duplicate_eliminated_columns": [],
+                "is_implicit": true,
+                "ranking_expression": null,
+                "nearest_count": 1,
+                "nearest_order_type": "ASCENDING",
+                "nearest_approx": false
+              },
+              "where_clause": null,
+              "group_expressions": [],
+              "group_sets": [],
+              "aggregate_handling": "STANDARD_HANDLING",
+              "having": null,
+              "sample": null,
+              "qualify": null
+            },
+            "named_param_map": []
+          }
+        ]
+      }
+    },
+    "join_multiplies": {
+      "sql": "select h.household_id, avg(h.monthly_income_mdc) from household_survey h, range(10) r group by h.household_id",
+      "ast": {
+        "error": false,
+        "statements": [
+          {
+            "node": {
+              "type": "SELECT_NODE",
+              "modifiers": [],
+              "cte_map": {
+                "map": []
+              },
+              "select_list": [
+                {
+                  "class": "COLUMN_REF",
+                  "type": "COLUMN_REF",
+                  "alias": "",
+                  "query_location": 7,
+                  "query_location_length": 14,
+                  "column_names": ["h", "household_id"]
+                },
+                {
+                  "class": "FUNCTION",
+                  "type": "FUNCTION",
+                  "alias": "",
+                  "query_location": 23,
+                  "query_location_length": 25,
+                  "function_name": "avg",
+                  "schema": "",
+                  "filter": null,
+                  "order_bys": {
+                    "type": "ORDER_MODIFIER",
+                    "orders": []
+                  },
+                  "distinct": false,
+                  "is_operator": false,
+                  "export_state": false,
+                  "catalog": "",
+                  "arguments": [
+                    {
+                      "name": "",
+                      "expression": {
+                        "class": "COLUMN_REF",
+                        "type": "COLUMN_REF",
+                        "alias": "",
+                        "query_location": 27,
+                        "query_location_length": 20,
+                        "column_names": ["h", "monthly_income_mdc"]
+                      }
+                    }
+                  ],
+                  "qualified_name": {
+                    "path": ["avg"]
+                  }
+                }
+              ],
+              "from_table": {
+                "type": "JOIN",
+                "alias": "",
+                "sample": null,
+                "query_location": 49,
+                "query_location_length": 36,
+                "left": {
+                  "type": "BASE_TABLE",
+                  "alias": "h",
+                  "sample": null,
+                  "query_location": 54,
+                  "query_location_length": 18,
+                  "schema_name": "",
+                  "table_name": "household_survey",
+                  "column_name_alias": [],
+                  "catalog_name": "",
+                  "at_clause": null,
+                  "qualified_name": {
+                    "path": ["household_survey"]
+                  }
+                },
+                "right": {
+                  "type": "TABLE_FUNCTION",
+                  "alias": "r",
+                  "sample": null,
+                  "query_location": 74,
+                  "query_location_length": 11,
+                  "function": {
+                    "class": "FUNCTION",
+                    "type": "FUNCTION",
+                    "alias": "",
+                    "query_location": 18446744073709551615,
+                    "query_location_length": 0,
+                    "function_name": "range",
+                    "schema": "",
+                    "filter": null,
+                    "order_bys": {
+                      "type": "ORDER_MODIFIER",
+                      "orders": []
+                    },
+                    "distinct": false,
+                    "is_operator": false,
+                    "export_state": false,
+                    "catalog": "",
+                    "arguments": [
+                      {
+                        "name": "",
+                        "expression": {
+                          "class": "CONSTANT",
+                          "type": "VALUE_CONSTANT",
+                          "alias": "",
+                          "query_location": 80,
+                          "query_location_length": 2,
+                          "literal": {
+                            "kind": "INTEGER",
+                            "text": "10"
+                          }
+                        }
+                      }
+                    ],
+                    "qualified_name": {
+                      "path": ["range"]
+                    }
+                  },
+                  "column_name_alias": [],
+                  "with_ordinality": "WITHOUT_ORDINALITY"
+                },
+                "condition": null,
+                "join_type": "INNER",
+                "ref_type": "CROSS",
+                "using_columns": [],
+                "delim_flipped": false,
+                "duplicate_eliminated_columns": [],
+                "is_implicit": true,
+                "ranking_expression": null,
+                "nearest_count": 1,
+                "nearest_order_type": "ASCENDING",
+                "nearest_approx": false
+              },
+              "where_clause": null,
+              "group_expressions": [
+                {
+                  "class": "COLUMN_REF",
+                  "type": "COLUMN_REF",
+                  "alias": "",
+                  "query_location": 95,
+                  "query_location_length": 14,
+                  "column_names": ["h", "household_id"]
+                }
+              ],
+              "group_sets": [[0]],
+              "aggregate_handling": "STANDARD_HANDLING",
+              "having": null,
+              "sample": null,
+              "qualify": null
+            },
+            "named_param_map": []
+          }
+        ]
+      }
+    },
+    "self_join_multiplies": {
+      "sql": "select a.household_id, avg(a.monthly_income_mdc) from household_survey a join household_survey b on true group by 1",
+      "ast": {
+        "error": false,
+        "statements": [
+          {
+            "node": {
+              "type": "SELECT_NODE",
+              "modifiers": [],
+              "cte_map": {
+                "map": []
+              },
+              "select_list": [
+                {
+                  "class": "COLUMN_REF",
+                  "type": "COLUMN_REF",
+                  "alias": "",
+                  "query_location": 7,
+                  "query_location_length": 14,
+                  "column_names": ["a", "household_id"]
+                },
+                {
+                  "class": "FUNCTION",
+                  "type": "FUNCTION",
+                  "alias": "",
+                  "query_location": 23,
+                  "query_location_length": 25,
+                  "function_name": "avg",
+                  "schema": "",
+                  "filter": null,
+                  "order_bys": {
+                    "type": "ORDER_MODIFIER",
+                    "orders": []
+                  },
+                  "distinct": false,
+                  "is_operator": false,
+                  "export_state": false,
+                  "catalog": "",
+                  "arguments": [
+                    {
+                      "name": "",
+                      "expression": {
+                        "class": "COLUMN_REF",
+                        "type": "COLUMN_REF",
+                        "alias": "",
+                        "query_location": 27,
+                        "query_location_length": 20,
+                        "column_names": ["a", "monthly_income_mdc"]
+                      }
+                    }
+                  ],
+                  "qualified_name": {
+                    "path": ["avg"]
+                  }
+                }
+              ],
+              "from_table": {
+                "type": "JOIN",
+                "alias": "",
+                "sample": null,
+                "query_location": 73,
+                "query_location_length": 31,
+                "left": {
+                  "type": "BASE_TABLE",
+                  "alias": "a",
+                  "sample": null,
+                  "query_location": 54,
+                  "query_location_length": 18,
+                  "schema_name": "",
+                  "table_name": "household_survey",
+                  "column_name_alias": [],
+                  "catalog_name": "",
+                  "at_clause": null,
+                  "qualified_name": {
+                    "path": ["household_survey"]
+                  }
+                },
+                "right": {
+                  "type": "BASE_TABLE",
+                  "alias": "b",
+                  "sample": null,
+                  "query_location": 78,
+                  "query_location_length": 18,
+                  "schema_name": "",
+                  "table_name": "household_survey",
+                  "column_name_alias": [],
+                  "catalog_name": "",
+                  "at_clause": null,
+                  "qualified_name": {
+                    "path": ["household_survey"]
+                  }
+                },
+                "condition": {
+                  "class": "CONSTANT",
+                  "type": "VALUE_CONSTANT",
+                  "alias": "",
+                  "query_location": 100,
+                  "query_location_length": 4,
+                  "literal": {
+                    "kind": "BOOLEAN",
+                    "text": "true"
+                  }
+                },
+                "join_type": "INNER",
+                "ref_type": "REGULAR",
+                "using_columns": [],
+                "delim_flipped": false,
+                "duplicate_eliminated_columns": [],
+                "is_implicit": false,
+                "ranking_expression": null,
+                "nearest_count": 1,
+                "nearest_order_type": "ASCENDING",
+                "nearest_approx": false
+              },
+              "where_clause": null,
+              "group_expressions": [
+                {
+                  "class": "CONSTANT",
+                  "type": "VALUE_CONSTANT",
+                  "alias": "",
+                  "query_location": 114,
+                  "query_location_length": 1,
+                  "literal": {
+                    "kind": "INTEGER",
+                    "text": "1"
+                  }
+                }
+              ],
+              "group_sets": [[0]],
+              "aggregate_handling": "STANDARD_HANDLING",
+              "having": null,
+              "sample": null,
+              "qualify": null
+            },
+            "named_param_map": []
+          }
+        ]
+      }
+    },
+    "arbitrary_fn": {
+      "sql": "select region_code, arbitrary(household_id), arbitrary(monthly_income_mdc) from household_survey group by region_code",
+      "ast": {
+        "error": false,
+        "statements": [
+          {
+            "node": {
+              "type": "SELECT_NODE",
+              "modifiers": [],
+              "cte_map": {
+                "map": []
+              },
+              "select_list": [
+                {
+                  "class": "COLUMN_REF",
+                  "type": "COLUMN_REF",
+                  "alias": "",
+                  "query_location": 7,
+                  "query_location_length": 11,
+                  "column_names": ["region_code"]
+                },
+                {
+                  "class": "FUNCTION",
+                  "type": "FUNCTION",
+                  "alias": "",
+                  "query_location": 20,
+                  "query_location_length": 23,
+                  "function_name": "arbitrary",
+                  "schema": "",
+                  "filter": null,
+                  "order_bys": {
+                    "type": "ORDER_MODIFIER",
+                    "orders": []
+                  },
+                  "distinct": false,
+                  "is_operator": false,
+                  "export_state": false,
+                  "catalog": "",
+                  "arguments": [
+                    {
+                      "name": "",
+                      "expression": {
+                        "class": "COLUMN_REF",
+                        "type": "COLUMN_REF",
+                        "alias": "",
+                        "query_location": 30,
+                        "query_location_length": 12,
+                        "column_names": ["household_id"]
+                      }
+                    }
+                  ],
+                  "qualified_name": {
+                    "path": ["arbitrary"]
+                  }
+                },
+                {
+                  "class": "FUNCTION",
+                  "type": "FUNCTION",
+                  "alias": "",
+                  "query_location": 45,
+                  "query_location_length": 29,
+                  "function_name": "arbitrary",
+                  "schema": "",
+                  "filter": null,
+                  "order_bys": {
+                    "type": "ORDER_MODIFIER",
+                    "orders": []
+                  },
+                  "distinct": false,
+                  "is_operator": false,
+                  "export_state": false,
+                  "catalog": "",
+                  "arguments": [
+                    {
+                      "name": "",
+                      "expression": {
+                        "class": "COLUMN_REF",
+                        "type": "COLUMN_REF",
+                        "alias": "",
+                        "query_location": 55,
+                        "query_location_length": 18,
+                        "column_names": ["monthly_income_mdc"]
+                      }
+                    }
+                  ],
+                  "qualified_name": {
+                    "path": ["arbitrary"]
+                  }
+                }
+              ],
+              "from_table": {
+                "type": "BASE_TABLE",
+                "alias": "",
+                "sample": null,
+                "query_location": 80,
+                "query_location_length": 16,
+                "schema_name": "",
+                "table_name": "household_survey",
+                "column_name_alias": [],
+                "catalog_name": "",
+                "at_clause": null,
+                "qualified_name": {
+                  "path": ["household_survey"]
+                }
+              },
+              "where_clause": null,
+              "group_expressions": [
+                {
+                  "class": "COLUMN_REF",
+                  "type": "COLUMN_REF",
+                  "alias": "",
+                  "query_location": 106,
+                  "query_location_length": 11,
+                  "column_names": ["region_code"]
+                }
+              ],
+              "group_sets": [[0]],
+              "aggregate_handling": "STANDARD_HANDLING",
+              "having": null,
+              "sample": null,
+              "qualify": null
+            },
+            "named_param_map": []
+          }
+        ]
+      }
+    },
+    "quantile_disc_max": {
+      "sql": "select region_code, quantile_disc(monthly_income_mdc, 1) from household_survey group by region_code",
+      "ast": {
+        "error": false,
+        "statements": [
+          {
+            "node": {
+              "type": "SELECT_NODE",
+              "modifiers": [],
+              "cte_map": {
+                "map": []
+              },
+              "select_list": [
+                {
+                  "class": "COLUMN_REF",
+                  "type": "COLUMN_REF",
+                  "alias": "",
+                  "query_location": 7,
+                  "query_location_length": 11,
+                  "column_names": ["region_code"]
+                },
+                {
+                  "class": "FUNCTION",
+                  "type": "FUNCTION",
+                  "alias": "",
+                  "query_location": 20,
+                  "query_location_length": 36,
+                  "function_name": "quantile_disc",
+                  "schema": "",
+                  "filter": null,
+                  "order_bys": {
+                    "type": "ORDER_MODIFIER",
+                    "orders": []
+                  },
+                  "distinct": false,
+                  "is_operator": false,
+                  "export_state": false,
+                  "catalog": "",
+                  "arguments": [
+                    {
+                      "name": "",
+                      "expression": {
+                        "class": "COLUMN_REF",
+                        "type": "COLUMN_REF",
+                        "alias": "",
+                        "query_location": 34,
+                        "query_location_length": 18,
+                        "column_names": ["monthly_income_mdc"]
+                      }
+                    },
+                    {
+                      "name": "",
+                      "expression": {
+                        "class": "CONSTANT",
+                        "type": "VALUE_CONSTANT",
+                        "alias": "",
+                        "query_location": 54,
+                        "query_location_length": 1,
+                        "literal": {
+                          "kind": "INTEGER",
+                          "text": "1"
+                        }
+                      }
+                    }
+                  ],
+                  "qualified_name": {
+                    "path": ["quantile_disc"]
+                  }
+                }
+              ],
+              "from_table": {
+                "type": "BASE_TABLE",
+                "alias": "",
+                "sample": null,
+                "query_location": 62,
+                "query_location_length": 16,
+                "schema_name": "",
+                "table_name": "household_survey",
+                "column_name_alias": [],
+                "catalog_name": "",
+                "at_clause": null,
+                "qualified_name": {
+                  "path": ["household_survey"]
+                }
+              },
+              "where_clause": null,
+              "group_expressions": [
+                {
+                  "class": "COLUMN_REF",
+                  "type": "COLUMN_REF",
+                  "alias": "",
+                  "query_location": 88,
+                  "query_location_length": 11,
+                  "column_names": ["region_code"]
+                }
+              ],
+              "group_sets": [[0]],
+              "aggregate_handling": "STANDARD_HANDLING",
+              "having": null,
+              "sample": null,
+              "qualify": null
+            },
+            "named_param_map": []
+          }
+        ]
+      }
+    },
+    "approx_top_k_fn": {
+      "sql": "select region_code, approx_top_k(monthly_income_mdc, 3) from household_survey group by region_code",
+      "ast": {
+        "error": false,
+        "statements": [
+          {
+            "node": {
+              "type": "SELECT_NODE",
+              "modifiers": [],
+              "cte_map": {
+                "map": []
+              },
+              "select_list": [
+                {
+                  "class": "COLUMN_REF",
+                  "type": "COLUMN_REF",
+                  "alias": "",
+                  "query_location": 7,
+                  "query_location_length": 11,
+                  "column_names": ["region_code"]
+                },
+                {
+                  "class": "FUNCTION",
+                  "type": "FUNCTION",
+                  "alias": "",
+                  "query_location": 20,
+                  "query_location_length": 35,
+                  "function_name": "approx_top_k",
+                  "schema": "",
+                  "filter": null,
+                  "order_bys": {
+                    "type": "ORDER_MODIFIER",
+                    "orders": []
+                  },
+                  "distinct": false,
+                  "is_operator": false,
+                  "export_state": false,
+                  "catalog": "",
+                  "arguments": [
+                    {
+                      "name": "",
+                      "expression": {
+                        "class": "COLUMN_REF",
+                        "type": "COLUMN_REF",
+                        "alias": "",
+                        "query_location": 33,
+                        "query_location_length": 18,
+                        "column_names": ["monthly_income_mdc"]
+                      }
+                    },
+                    {
+                      "name": "",
+                      "expression": {
+                        "class": "CONSTANT",
+                        "type": "VALUE_CONSTANT",
+                        "alias": "",
+                        "query_location": 53,
+                        "query_location_length": 1,
+                        "literal": {
+                          "kind": "INTEGER",
+                          "text": "3"
+                        }
+                      }
+                    }
+                  ],
+                  "qualified_name": {
+                    "path": ["approx_top_k"]
+                  }
+                }
+              ],
+              "from_table": {
+                "type": "BASE_TABLE",
+                "alias": "",
+                "sample": null,
+                "query_location": 61,
+                "query_location_length": 16,
+                "schema_name": "",
+                "table_name": "household_survey",
+                "column_name_alias": [],
+                "catalog_name": "",
+                "at_clause": null,
+                "qualified_name": {
+                  "path": ["household_survey"]
+                }
+              },
+              "where_clause": null,
+              "group_expressions": [
+                {
+                  "class": "COLUMN_REF",
+                  "type": "COLUMN_REF",
+                  "alias": "",
+                  "query_location": 87,
+                  "query_location_length": 11,
+                  "column_names": ["region_code"]
+                }
+              ],
+              "group_sets": [[0]],
+              "aggregate_handling": "STANDARD_HANDLING",
+              "having": null,
+              "sample": null,
+              "qualify": null
+            },
+            "named_param_map": []
+          }
+        ]
+      }
+    },
+    "arg_max_null_fn": {
+      "sql": "select region_code, arg_max_null(monthly_income_mdc, respondent_age) from household_survey group by region_code",
+      "ast": {
+        "error": false,
+        "statements": [
+          {
+            "node": {
+              "type": "SELECT_NODE",
+              "modifiers": [],
+              "cte_map": {
+                "map": []
+              },
+              "select_list": [
+                {
+                  "class": "COLUMN_REF",
+                  "type": "COLUMN_REF",
+                  "alias": "",
+                  "query_location": 7,
+                  "query_location_length": 11,
+                  "column_names": ["region_code"]
+                },
+                {
+                  "class": "FUNCTION",
+                  "type": "FUNCTION",
+                  "alias": "",
+                  "query_location": 20,
+                  "query_location_length": 48,
+                  "function_name": "arg_max_null",
+                  "schema": "",
+                  "filter": null,
+                  "order_bys": {
+                    "type": "ORDER_MODIFIER",
+                    "orders": []
+                  },
+                  "distinct": false,
+                  "is_operator": false,
+                  "export_state": false,
+                  "catalog": "",
+                  "arguments": [
+                    {
+                      "name": "",
+                      "expression": {
+                        "class": "COLUMN_REF",
+                        "type": "COLUMN_REF",
+                        "alias": "",
+                        "query_location": 33,
+                        "query_location_length": 18,
+                        "column_names": ["monthly_income_mdc"]
+                      }
+                    },
+                    {
+                      "name": "",
+                      "expression": {
+                        "class": "COLUMN_REF",
+                        "type": "COLUMN_REF",
+                        "alias": "",
+                        "query_location": 53,
+                        "query_location_length": 14,
+                        "column_names": ["respondent_age"]
+                      }
+                    }
+                  ],
+                  "qualified_name": {
+                    "path": ["arg_max_null"]
+                  }
+                }
+              ],
+              "from_table": {
+                "type": "BASE_TABLE",
+                "alias": "",
+                "sample": null,
+                "query_location": 74,
+                "query_location_length": 16,
+                "schema_name": "",
+                "table_name": "household_survey",
+                "column_name_alias": [],
+                "catalog_name": "",
+                "at_clause": null,
+                "qualified_name": {
+                  "path": ["household_survey"]
+                }
+              },
+              "where_clause": null,
+              "group_expressions": [
+                {
+                  "class": "COLUMN_REF",
+                  "type": "COLUMN_REF",
+                  "alias": "",
+                  "query_location": 100,
+                  "query_location_length": 11,
+                  "column_names": ["region_code"]
+                }
+              ],
+              "group_sets": [[0]],
+              "aggregate_handling": "STANDARD_HANDLING",
+              "having": null,
+              "sample": null,
+              "qualify": null
+            },
+            "named_param_map": []
+          }
+        ]
+      }
+    },
+    "unknown_scalar": {
+      "sql": "select region_code, sha256(household_id::varchar) from household_survey group by all",
+      "ast": {
+        "error": false,
+        "statements": [
+          {
+            "node": {
+              "type": "SELECT_NODE",
+              "modifiers": [],
+              "cte_map": {
+                "map": []
+              },
+              "select_list": [
+                {
+                  "class": "COLUMN_REF",
+                  "type": "COLUMN_REF",
+                  "alias": "",
+                  "query_location": 7,
+                  "query_location_length": 11,
+                  "column_names": ["region_code"]
+                },
+                {
+                  "class": "FUNCTION",
+                  "type": "FUNCTION",
+                  "alias": "",
+                  "query_location": 20,
+                  "query_location_length": 29,
+                  "function_name": "sha256",
+                  "schema": "",
+                  "filter": null,
+                  "order_bys": {
+                    "type": "ORDER_MODIFIER",
+                    "orders": []
+                  },
+                  "distinct": false,
+                  "is_operator": false,
+                  "export_state": false,
+                  "catalog": "",
+                  "arguments": [
+                    {
+                      "name": "",
+                      "expression": {
+                        "class": "CAST",
+                        "type": "OPERATOR_CAST",
+                        "alias": "",
+                        "query_location": 39,
+                        "query_location_length": 9,
+                        "child": {
+                          "class": "COLUMN_REF",
+                          "type": "COLUMN_REF",
+                          "alias": "",
+                          "query_location": 27,
+                          "query_location_length": 12,
+                          "column_names": ["household_id"]
+                        },
+                        "try_cast": false,
+                        "type_expr": {
+                          "class": "TYPE",
+                          "type": "TYPE",
+                          "alias": "",
+                          "query_location": 41,
+                          "query_location_length": 7,
+                          "catalog": "",
+                          "schema": "",
+                          "type_name": "VARCHAR",
+                          "children": [],
+                          "qualified_name": {
+                            "path": ["VARCHAR"]
+                          }
+                        }
+                      }
+                    }
+                  ],
+                  "qualified_name": {
+                    "path": ["sha256"]
+                  }
+                }
+              ],
+              "from_table": {
+                "type": "BASE_TABLE",
+                "alias": "",
+                "sample": null,
+                "query_location": 55,
+                "query_location_length": 16,
+                "schema_name": "",
+                "table_name": "household_survey",
+                "column_name_alias": [],
+                "catalog_name": "",
+                "at_clause": null,
+                "qualified_name": {
+                  "path": ["household_survey"]
+                }
+              },
+              "where_clause": null,
+              "group_expressions": [],
+              "group_sets": [],
+              "aggregate_handling": "FORCE_AGGREGATES",
+              "having": null,
+              "sample": null,
+              "qualify": null
+            },
+            "named_param_map": []
+          }
+        ]
+      }
+    },
+    "rounded_avg": {
+      "sql": "select region_code, round(avg(monthly_income_mdc)) as mean_income from household_survey group by all order by 1",
+      "ast": {
+        "error": false,
+        "statements": [
+          {
+            "node": {
+              "type": "SELECT_NODE",
+              "modifiers": [
+                {
+                  "type": "ORDER_MODIFIER",
+                  "orders": [
+                    {
+                      "type": "ORDER_DEFAULT",
+                      "null_order": "ORDER_DEFAULT",
+                      "expression": {
+                        "class": "CONSTANT",
+                        "type": "VALUE_CONSTANT",
+                        "alias": "",
+                        "query_location": 110,
+                        "query_location_length": 1,
+                        "literal": {
+                          "kind": "INTEGER",
+                          "text": "1"
+                        }
+                      }
+                    }
+                  ]
+                }
+              ],
+              "cte_map": {
+                "map": []
+              },
+              "select_list": [
+                {
+                  "class": "COLUMN_REF",
+                  "type": "COLUMN_REF",
+                  "alias": "",
+                  "query_location": 7,
+                  "query_location_length": 11,
+                  "column_names": ["region_code"]
+                },
+                {
+                  "class": "FUNCTION",
+                  "type": "FUNCTION",
+                  "alias": "mean_income",
+                  "query_location": 20,
+                  "query_location_length": 30,
+                  "function_name": "round",
+                  "schema": "",
+                  "filter": null,
+                  "order_bys": {
+                    "type": "ORDER_MODIFIER",
+                    "orders": []
+                  },
+                  "distinct": false,
+                  "is_operator": false,
+                  "export_state": false,
+                  "catalog": "",
+                  "arguments": [
+                    {
+                      "name": "",
+                      "expression": {
+                        "class": "FUNCTION",
+                        "type": "FUNCTION",
+                        "alias": "",
+                        "query_location": 26,
+                        "query_location_length": 23,
+                        "function_name": "avg",
+                        "schema": "",
+                        "filter": null,
+                        "order_bys": {
+                          "type": "ORDER_MODIFIER",
+                          "orders": []
+                        },
+                        "distinct": false,
+                        "is_operator": false,
+                        "export_state": false,
+                        "catalog": "",
+                        "arguments": [
+                          {
+                            "name": "",
+                            "expression": {
+                              "class": "COLUMN_REF",
+                              "type": "COLUMN_REF",
+                              "alias": "",
+                              "query_location": 30,
+                              "query_location_length": 18,
+                              "column_names": ["monthly_income_mdc"]
+                            }
+                          }
+                        ],
+                        "qualified_name": {
+                          "path": ["avg"]
+                        }
+                      }
+                    }
+                  ],
+                  "qualified_name": {
+                    "path": ["round"]
+                  }
+                }
+              ],
+              "from_table": {
+                "type": "BASE_TABLE",
+                "alias": "",
+                "sample": null,
+                "query_location": 71,
+                "query_location_length": 16,
+                "schema_name": "",
+                "table_name": "household_survey",
+                "column_name_alias": [],
+                "catalog_name": "",
+                "at_clause": null,
+                "qualified_name": {
+                  "path": ["household_survey"]
+                }
+              },
+              "where_clause": null,
+              "group_expressions": [],
+              "group_sets": [],
+              "aggregate_handling": "FORCE_AGGREGATES",
+              "having": null,
+              "sample": null,
+              "qualify": null
+            },
+            "named_param_map": []
+          }
+        ]
+      }
+    },
+    "avg_of_case": {
+      "sql": "select region_code, avg(case when monthly_income_mdc > 4000 then 1 else 0 end) as share from household_survey group by 1",
+      "ast": {
+        "error": false,
+        "statements": [
+          {
+            "node": {
+              "type": "SELECT_NODE",
+              "modifiers": [],
+              "cte_map": {
+                "map": []
+              },
+              "select_list": [
+                {
+                  "class": "COLUMN_REF",
+                  "type": "COLUMN_REF",
+                  "alias": "",
+                  "query_location": 7,
+                  "query_location_length": 11,
+                  "column_names": ["region_code"]
+                },
+                {
+                  "class": "FUNCTION",
+                  "type": "FUNCTION",
+                  "alias": "share",
+                  "query_location": 20,
+                  "query_location_length": 58,
+                  "function_name": "avg",
+                  "schema": "",
+                  "filter": null,
+                  "order_bys": {
+                    "type": "ORDER_MODIFIER",
+                    "orders": []
+                  },
+                  "distinct": false,
+                  "is_operator": false,
+                  "export_state": false,
+                  "catalog": "",
+                  "arguments": [
+                    {
+                      "name": "",
+                      "expression": {
+                        "class": "CASE",
+                        "type": "CASE_EXPR",
+                        "alias": "",
+                        "query_location": 24,
+                        "query_location_length": 53,
+                        "case_checks": [
+                          {
+                            "when_expr": {
+                              "class": "COMPARISON",
+                              "type": "COMPARE_GREATERTHAN",
+                              "alias": "",
+                              "query_location": 34,
+                              "query_location_length": 25,
+                              "left": {
+                                "class": "COLUMN_REF",
+                                "type": "COLUMN_REF",
+                                "alias": "",
+                                "query_location": 34,
+                                "query_location_length": 18,
+                                "column_names": ["monthly_income_mdc"]
+                              },
+                              "right": {
+                                "class": "CONSTANT",
+                                "type": "VALUE_CONSTANT",
+                                "alias": "",
+                                "query_location": 55,
+                                "query_location_length": 4,
+                                "literal": {
+                                  "kind": "INTEGER",
+                                  "text": "4000"
+                                }
+                              }
+                            },
+                            "then_expr": {
+                              "class": "CONSTANT",
+                              "type": "VALUE_CONSTANT",
+                              "alias": "",
+                              "query_location": 65,
+                              "query_location_length": 1,
+                              "literal": {
+                                "kind": "INTEGER",
+                                "text": "1"
+                              }
+                            }
+                          }
+                        ],
+                        "else_expr": {
+                          "class": "CONSTANT",
+                          "type": "VALUE_CONSTANT",
+                          "alias": "",
+                          "query_location": 72,
+                          "query_location_length": 1,
+                          "literal": {
+                            "kind": "INTEGER",
+                            "text": "0"
+                          }
+                        }
+                      }
+                    }
+                  ],
+                  "qualified_name": {
+                    "path": ["avg"]
+                  }
+                }
+              ],
+              "from_table": {
+                "type": "BASE_TABLE",
+                "alias": "",
+                "sample": null,
+                "query_location": 93,
+                "query_location_length": 16,
+                "schema_name": "",
+                "table_name": "household_survey",
+                "column_name_alias": [],
+                "catalog_name": "",
+                "at_clause": null,
+                "qualified_name": {
+                  "path": ["household_survey"]
+                }
+              },
+              "where_clause": null,
+              "group_expressions": [
+                {
+                  "class": "CONSTANT",
+                  "type": "VALUE_CONSTANT",
+                  "alias": "",
+                  "query_location": 119,
+                  "query_location_length": 1,
+                  "literal": {
+                    "kind": "INTEGER",
+                    "text": "1"
+                  }
+                }
+              ],
+              "group_sets": [[0]],
+              "aggregate_handling": "STANDARD_HANDLING",
+              "having": null,
+              "sample": null,
+              "qualify": null
+            },
+            "named_param_map": []
+          }
+        ]
+      }
+    },
+    "banded_group": {
+      "sql": "select floor(respondent_age / 10) * 10 as age_band, count(*) as n, median(monthly_income_mdc) as m from household_survey group by 1",
+      "ast": {
+        "error": false,
+        "statements": [
+          {
+            "node": {
+              "type": "SELECT_NODE",
+              "modifiers": [],
+              "cte_map": {
+                "map": []
+              },
+              "select_list": [
+                {
+                  "class": "FUNCTION",
+                  "type": "FUNCTION",
+                  "alias": "age_band",
+                  "query_location": 7,
+                  "query_location_length": 31,
+                  "function_name": "*",
+                  "schema": "",
+                  "filter": null,
+                  "order_bys": {
+                    "type": "ORDER_MODIFIER",
+                    "orders": []
+                  },
+                  "distinct": false,
+                  "is_operator": true,
+                  "export_state": false,
+                  "catalog": "",
+                  "arguments": [
+                    {
+                      "name": "",
+                      "expression": {
+                        "class": "FUNCTION",
+                        "type": "FUNCTION",
+                        "alias": "",
+                        "query_location": 7,
+                        "query_location_length": 26,
+                        "function_name": "floor",
+                        "schema": "",
+                        "filter": null,
+                        "order_bys": {
+                          "type": "ORDER_MODIFIER",
+                          "orders": []
+                        },
+                        "distinct": false,
+                        "is_operator": false,
+                        "export_state": false,
+                        "catalog": "",
+                        "arguments": [
+                          {
+                            "name": "",
+                            "expression": {
+                              "class": "FUNCTION",
+                              "type": "FUNCTION",
+                              "alias": "",
+                              "query_location": 13,
+                              "query_location_length": 19,
+                              "function_name": "/",
+                              "schema": "",
+                              "filter": null,
+                              "order_bys": {
+                                "type": "ORDER_MODIFIER",
+                                "orders": []
+                              },
+                              "distinct": false,
+                              "is_operator": true,
+                              "export_state": false,
+                              "catalog": "",
+                              "arguments": [
+                                {
+                                  "name": "",
+                                  "expression": {
+                                    "class": "COLUMN_REF",
+                                    "type": "COLUMN_REF",
+                                    "alias": "",
+                                    "query_location": 13,
+                                    "query_location_length": 14,
+                                    "column_names": ["respondent_age"]
+                                  }
+                                },
+                                {
+                                  "name": "",
+                                  "expression": {
+                                    "class": "CONSTANT",
+                                    "type": "VALUE_CONSTANT",
+                                    "alias": "",
+                                    "query_location": 30,
+                                    "query_location_length": 2,
+                                    "literal": {
+                                      "kind": "INTEGER",
+                                      "text": "10"
+                                    }
+                                  }
+                                }
+                              ],
+                              "qualified_name": {
+                                "path": ["/"]
+                              }
+                            }
+                          }
+                        ],
+                        "qualified_name": {
+                          "path": ["floor"]
+                        }
+                      }
+                    },
+                    {
+                      "name": "",
+                      "expression": {
+                        "class": "CONSTANT",
+                        "type": "VALUE_CONSTANT",
+                        "alias": "",
+                        "query_location": 36,
+                        "query_location_length": 2,
+                        "literal": {
+                          "kind": "INTEGER",
+                          "text": "10"
+                        }
+                      }
+                    }
+                  ],
+                  "qualified_name": {
+                    "path": ["*"]
+                  }
+                },
+                {
+                  "class": "FUNCTION",
+                  "type": "FUNCTION",
+                  "alias": "n",
+                  "query_location": 52,
+                  "query_location_length": 8,
+                  "function_name": "count_star",
+                  "schema": "",
+                  "filter": null,
+                  "order_bys": {
+                    "type": "ORDER_MODIFIER",
+                    "orders": []
+                  },
+                  "distinct": false,
+                  "is_operator": false,
+                  "export_state": false,
+                  "catalog": "",
+                  "arguments": [],
+                  "qualified_name": {
+                    "path": ["count_star"]
+                  }
+                },
+                {
+                  "class": "FUNCTION",
+                  "type": "FUNCTION",
+                  "alias": "m",
+                  "query_location": 67,
+                  "query_location_length": 26,
+                  "function_name": "median",
+                  "schema": "",
+                  "filter": null,
+                  "order_bys": {
+                    "type": "ORDER_MODIFIER",
+                    "orders": []
+                  },
+                  "distinct": false,
+                  "is_operator": false,
+                  "export_state": false,
+                  "catalog": "",
+                  "arguments": [
+                    {
+                      "name": "",
+                      "expression": {
+                        "class": "COLUMN_REF",
+                        "type": "COLUMN_REF",
+                        "alias": "",
+                        "query_location": 74,
+                        "query_location_length": 18,
+                        "column_names": ["monthly_income_mdc"]
+                      }
+                    }
+                  ],
+                  "qualified_name": {
+                    "path": ["median"]
+                  }
+                }
+              ],
+              "from_table": {
+                "type": "BASE_TABLE",
+                "alias": "",
+                "sample": null,
+                "query_location": 104,
+                "query_location_length": 16,
+                "schema_name": "",
+                "table_name": "household_survey",
+                "column_name_alias": [],
+                "catalog_name": "",
+                "at_clause": null,
+                "qualified_name": {
+                  "path": ["household_survey"]
+                }
+              },
+              "where_clause": null,
+              "group_expressions": [
+                {
+                  "class": "CONSTANT",
+                  "type": "VALUE_CONSTANT",
+                  "alias": "",
+                  "query_location": 130,
+                  "query_location_length": 1,
+                  "literal": {
+                    "kind": "INTEGER",
+                    "text": "1"
+                  }
+                }
+              ],
+              "group_sets": [[0]],
+              "aggregate_handling": "STANDARD_HANDLING",
+              "having": null,
+              "sample": null,
+              "qualify": null
+            },
+            "named_param_map": []
+          }
+        ]
+      }
+    },
+    "aggregate_then_join": {
+      "sql": "with s as (select region_code, avg(monthly_income_mdc) as income from household_survey group by 1) select g.region_code, s.income, max(g.load_mw) as peak from grid_load g join s using (region_code) group by 1, 2",
+      "ast": {
+        "error": false,
+        "statements": [
+          {
+            "node": {
+              "type": "SELECT_NODE",
+              "modifiers": [],
+              "cte_map": {
+                "map": [
+                  {
+                    "key": "s",
+                    "value": {
+                      "aliases": [],
+                      "materialized": "CTE_MATERIALIZE_DEFAULT",
+                      "key_targets": [],
+                      "payload_aggregates": [],
+                      "query_node": {
+                        "type": "SELECT_NODE",
+                        "modifiers": [],
+                        "cte_map": {
+                          "map": []
+                        },
+                        "select_list": [
+                          {
+                            "class": "COLUMN_REF",
+                            "type": "COLUMN_REF",
+                            "alias": "",
+                            "query_location": 18,
+                            "query_location_length": 11,
+                            "column_names": ["region_code"]
+                          },
+                          {
+                            "class": "FUNCTION",
+                            "type": "FUNCTION",
+                            "alias": "income",
+                            "query_location": 31,
+                            "query_location_length": 23,
+                            "function_name": "avg",
+                            "schema": "",
+                            "filter": null,
+                            "order_bys": {
+                              "type": "ORDER_MODIFIER",
+                              "orders": []
+                            },
+                            "distinct": false,
+                            "is_operator": false,
+                            "export_state": false,
+                            "catalog": "",
+                            "arguments": [
+                              {
+                                "name": "",
+                                "expression": {
+                                  "class": "COLUMN_REF",
+                                  "type": "COLUMN_REF",
+                                  "alias": "",
+                                  "query_location": 35,
+                                  "query_location_length": 18,
+                                  "column_names": ["monthly_income_mdc"]
+                                }
+                              }
+                            ],
+                            "qualified_name": {
+                              "path": ["avg"]
+                            }
+                          }
+                        ],
+                        "from_table": {
+                          "type": "BASE_TABLE",
+                          "alias": "",
+                          "sample": null,
+                          "query_location": 70,
+                          "query_location_length": 16,
+                          "schema_name": "",
+                          "table_name": "household_survey",
+                          "column_name_alias": [],
+                          "catalog_name": "",
+                          "at_clause": null,
+                          "qualified_name": {
+                            "path": ["household_survey"]
+                          }
+                        },
+                        "where_clause": null,
+                        "group_expressions": [
+                          {
+                            "class": "CONSTANT",
+                            "type": "VALUE_CONSTANT",
+                            "alias": "",
+                            "query_location": 96,
+                            "query_location_length": 1,
+                            "literal": {
+                              "kind": "INTEGER",
+                              "text": "1"
+                            }
+                          }
+                        ],
+                        "group_sets": [[0]],
+                        "aggregate_handling": "STANDARD_HANDLING",
+                        "having": null,
+                        "sample": null,
+                        "qualify": null
+                      }
+                    }
+                  }
+                ]
+              },
+              "select_list": [
+                {
+                  "class": "COLUMN_REF",
+                  "type": "COLUMN_REF",
+                  "alias": "",
+                  "query_location": 106,
+                  "query_location_length": 13,
+                  "column_names": ["g", "region_code"]
+                },
+                {
+                  "class": "COLUMN_REF",
+                  "type": "COLUMN_REF",
+                  "alias": "",
+                  "query_location": 121,
+                  "query_location_length": 8,
+                  "column_names": ["s", "income"]
+                },
+                {
+                  "class": "FUNCTION",
+                  "type": "FUNCTION",
+                  "alias": "peak",
+                  "query_location": 131,
+                  "query_location_length": 14,
+                  "function_name": "max",
+                  "schema": "",
+                  "filter": null,
+                  "order_bys": {
+                    "type": "ORDER_MODIFIER",
+                    "orders": []
+                  },
+                  "distinct": false,
+                  "is_operator": false,
+                  "export_state": false,
+                  "catalog": "",
+                  "arguments": [
+                    {
+                      "name": "",
+                      "expression": {
+                        "class": "COLUMN_REF",
+                        "type": "COLUMN_REF",
+                        "alias": "",
+                        "query_location": 135,
+                        "query_location_length": 9,
+                        "column_names": ["g", "load_mw"]
+                      }
+                    }
+                  ],
+                  "qualified_name": {
+                    "path": ["max"]
+                  }
+                }
+              ],
+              "from_table": {
+                "type": "JOIN",
+                "alias": "",
+                "sample": null,
+                "query_location": 171,
+                "query_location_length": 26,
+                "left": {
+                  "type": "BASE_TABLE",
+                  "alias": "g",
+                  "sample": null,
+                  "query_location": 159,
+                  "query_location_length": 11,
+                  "schema_name": "",
+                  "table_name": "grid_load",
+                  "column_name_alias": [],
+                  "catalog_name": "",
+                  "at_clause": null,
+                  "qualified_name": {
+                    "path": ["grid_load"]
+                  }
+                },
+                "right": {
+                  "type": "BASE_TABLE",
+                  "alias": "",
+                  "sample": null,
+                  "query_location": 176,
+                  "query_location_length": 1,
+                  "schema_name": "",
+                  "table_name": "s",
+                  "column_name_alias": [],
+                  "catalog_name": "",
+                  "at_clause": null,
+                  "qualified_name": {
+                    "path": ["s"]
+                  }
+                },
+                "condition": null,
+                "join_type": "INNER",
+                "ref_type": "REGULAR",
+                "using_columns": ["region_code"],
+                "delim_flipped": false,
+                "duplicate_eliminated_columns": [],
+                "is_implicit": false,
+                "ranking_expression": null,
+                "nearest_count": 1,
+                "nearest_order_type": "ASCENDING",
+                "nearest_approx": false
+              },
+              "where_clause": null,
+              "group_expressions": [
+                {
+                  "class": "CONSTANT",
+                  "type": "VALUE_CONSTANT",
+                  "alias": "",
+                  "query_location": 207,
+                  "query_location_length": 1,
+                  "literal": {
+                    "kind": "INTEGER",
+                    "text": "1"
+                  }
+                },
+                {
+                  "class": "CONSTANT",
+                  "type": "VALUE_CONSTANT",
+                  "alias": "",
+                  "query_location": 210,
+                  "query_location_length": 1,
+                  "literal": {
+                    "kind": "INTEGER",
+                    "text": "2"
+                  }
+                }
+              ],
+              "group_sets": [[0, 1]],
+              "aggregate_handling": "STANDARD_HANDLING",
+              "having": null,
+              "sample": null,
+              "qualify": null
+            },
+            "named_param_map": []
+          }
+        ]
+      }
+    },
+    "nested_own_table": {
+      "sql": "select region_code, count(*) as n from household_survey where region_code in (select region_code from household_survey group by 1 having avg(monthly_income_mdc) > 3000) group by 1",
+      "ast": {
+        "error": false,
+        "statements": [
+          {
+            "node": {
+              "type": "SELECT_NODE",
+              "modifiers": [],
+              "cte_map": {
+                "map": []
+              },
+              "select_list": [
+                {
+                  "class": "COLUMN_REF",
+                  "type": "COLUMN_REF",
+                  "alias": "",
+                  "query_location": 7,
+                  "query_location_length": 11,
+                  "column_names": ["region_code"]
+                },
+                {
+                  "class": "FUNCTION",
+                  "type": "FUNCTION",
+                  "alias": "n",
+                  "query_location": 20,
+                  "query_location_length": 8,
+                  "function_name": "count_star",
+                  "schema": "",
+                  "filter": null,
+                  "order_bys": {
+                    "type": "ORDER_MODIFIER",
+                    "orders": []
+                  },
+                  "distinct": false,
+                  "is_operator": false,
+                  "export_state": false,
+                  "catalog": "",
+                  "arguments": [],
+                  "qualified_name": {
+                    "path": ["count_star"]
+                  }
+                }
+              ],
+              "from_table": {
+                "type": "BASE_TABLE",
+                "alias": "",
+                "sample": null,
+                "query_location": 39,
+                "query_location_length": 16,
+                "schema_name": "",
+                "table_name": "household_survey",
+                "column_name_alias": [],
+                "catalog_name": "",
+                "at_clause": null,
+                "qualified_name": {
+                  "path": ["household_survey"]
+                }
+              },
+              "where_clause": {
+                "class": "SUBQUERY",
+                "type": "SUBQUERY",
+                "alias": "",
+                "query_location": 77,
+                "query_location_length": 91,
+                "subquery_type": "ANY",
+                "subquery": {
+                  "node": {
+                    "type": "SELECT_NODE",
+                    "modifiers": [],
+                    "cte_map": {
+                      "map": []
+                    },
+                    "select_list": [
+                      {
+                        "class": "COLUMN_REF",
+                        "type": "COLUMN_REF",
+                        "alias": "",
+                        "query_location": 85,
+                        "query_location_length": 11,
+                        "column_names": ["region_code"]
+                      }
+                    ],
+                    "from_table": {
+                      "type": "BASE_TABLE",
+                      "alias": "",
+                      "sample": null,
+                      "query_location": 102,
+                      "query_location_length": 16,
+                      "schema_name": "",
+                      "table_name": "household_survey",
+                      "column_name_alias": [],
+                      "catalog_name": "",
+                      "at_clause": null,
+                      "qualified_name": {
+                        "path": ["household_survey"]
+                      }
+                    },
+                    "where_clause": null,
+                    "group_expressions": [
+                      {
+                        "class": "CONSTANT",
+                        "type": "VALUE_CONSTANT",
+                        "alias": "",
+                        "query_location": 128,
+                        "query_location_length": 1,
+                        "literal": {
+                          "kind": "INTEGER",
+                          "text": "1"
+                        }
+                      }
+                    ],
+                    "group_sets": [[0]],
+                    "aggregate_handling": "STANDARD_HANDLING",
+                    "having": {
+                      "class": "COMPARISON",
+                      "type": "COMPARE_GREATERTHAN",
+                      "alias": "",
+                      "query_location": 137,
+                      "query_location_length": 30,
+                      "left": {
+                        "class": "FUNCTION",
+                        "type": "FUNCTION",
+                        "alias": "",
+                        "query_location": 137,
+                        "query_location_length": 23,
+                        "function_name": "avg",
+                        "schema": "",
+                        "filter": null,
+                        "order_bys": {
+                          "type": "ORDER_MODIFIER",
+                          "orders": []
+                        },
+                        "distinct": false,
+                        "is_operator": false,
+                        "export_state": false,
+                        "catalog": "",
+                        "arguments": [
+                          {
+                            "name": "",
+                            "expression": {
+                              "class": "COLUMN_REF",
+                              "type": "COLUMN_REF",
+                              "alias": "",
+                              "query_location": 141,
+                              "query_location_length": 18,
+                              "column_names": ["monthly_income_mdc"]
+                            }
+                          }
+                        ],
+                        "qualified_name": {
+                          "path": ["avg"]
+                        }
+                      },
+                      "right": {
+                        "class": "CONSTANT",
+                        "type": "VALUE_CONSTANT",
+                        "alias": "",
+                        "query_location": 163,
+                        "query_location_length": 4,
+                        "literal": {
+                          "kind": "INTEGER",
+                          "text": "3000"
+                        }
+                      }
+                    },
+                    "sample": null,
+                    "qualify": null
+                  },
+                  "named_param_map": []
+                },
+                "child": {
+                  "class": "COLUMN_REF",
+                  "type": "COLUMN_REF",
+                  "alias": "",
+                  "query_location": 62,
+                  "query_location_length": 11,
+                  "column_names": ["region_code"]
+                },
+                "comparison_type": "COMPARE_EQUAL"
+              },
+              "group_expressions": [
+                {
+                  "class": "CONSTANT",
+                  "type": "VALUE_CONSTANT",
+                  "alias": "",
+                  "query_location": 178,
+                  "query_location_length": 1,
+                  "literal": {
+                    "kind": "INTEGER",
+                    "text": "1"
+                  }
+                }
+              ],
+              "group_sets": [[0]],
+              "aggregate_handling": "STANDARD_HANDLING",
+              "having": null,
+              "sample": null,
+              "qualify": null
+            },
+            "named_param_map": []
+          }
+        ]
+      }
+    },
+    "open_join": {
+      "sql": "select h.region_code, count(*) as n, max(g.load_mw) as peak from household_survey h join grid_load g using (region_code) group by 1",
+      "ast": {
+        "error": false,
+        "statements": [
+          {
+            "node": {
+              "type": "SELECT_NODE",
+              "modifiers": [],
+              "cte_map": {
+                "map": []
+              },
+              "select_list": [
+                {
+                  "class": "COLUMN_REF",
+                  "type": "COLUMN_REF",
+                  "alias": "",
+                  "query_location": 7,
+                  "query_location_length": 13,
+                  "column_names": ["h", "region_code"]
+                },
+                {
+                  "class": "FUNCTION",
+                  "type": "FUNCTION",
+                  "alias": "n",
+                  "query_location": 22,
+                  "query_location_length": 8,
+                  "function_name": "count_star",
+                  "schema": "",
+                  "filter": null,
+                  "order_bys": {
+                    "type": "ORDER_MODIFIER",
+                    "orders": []
+                  },
+                  "distinct": false,
+                  "is_operator": false,
+                  "export_state": false,
+                  "catalog": "",
+                  "arguments": [],
+                  "qualified_name": {
+                    "path": ["count_star"]
+                  }
+                },
+                {
+                  "class": "FUNCTION",
+                  "type": "FUNCTION",
+                  "alias": "peak",
+                  "query_location": 37,
+                  "query_location_length": 14,
+                  "function_name": "max",
+                  "schema": "",
+                  "filter": null,
+                  "order_bys": {
+                    "type": "ORDER_MODIFIER",
+                    "orders": []
+                  },
+                  "distinct": false,
+                  "is_operator": false,
+                  "export_state": false,
+                  "catalog": "",
+                  "arguments": [
+                    {
+                      "name": "",
+                      "expression": {
+                        "class": "COLUMN_REF",
+                        "type": "COLUMN_REF",
+                        "alias": "",
+                        "query_location": 41,
+                        "query_location_length": 9,
+                        "column_names": ["g", "load_mw"]
+                      }
+                    }
+                  ],
+                  "qualified_name": {
+                    "path": ["max"]
+                  }
+                }
+              ],
+              "from_table": {
+                "type": "JOIN",
+                "alias": "",
+                "sample": null,
+                "query_location": 84,
+                "query_location_length": 36,
+                "left": {
+                  "type": "BASE_TABLE",
+                  "alias": "h",
+                  "sample": null,
+                  "query_location": 65,
+                  "query_location_length": 18,
+                  "schema_name": "",
+                  "table_name": "household_survey",
+                  "column_name_alias": [],
+                  "catalog_name": "",
+                  "at_clause": null,
+                  "qualified_name": {
+                    "path": ["household_survey"]
+                  }
+                },
+                "right": {
+                  "type": "BASE_TABLE",
+                  "alias": "g",
+                  "sample": null,
+                  "query_location": 89,
+                  "query_location_length": 11,
+                  "schema_name": "",
+                  "table_name": "grid_load",
+                  "column_name_alias": [],
+                  "catalog_name": "",
+                  "at_clause": null,
+                  "qualified_name": {
+                    "path": ["grid_load"]
+                  }
+                },
+                "condition": null,
+                "join_type": "INNER",
+                "ref_type": "REGULAR",
+                "using_columns": ["region_code"],
+                "delim_flipped": false,
+                "duplicate_eliminated_columns": [],
+                "is_implicit": false,
+                "ranking_expression": null,
+                "nearest_count": 1,
+                "nearest_order_type": "ASCENDING",
+                "nearest_approx": false
+              },
+              "where_clause": null,
+              "group_expressions": [
+                {
+                  "class": "CONSTANT",
+                  "type": "VALUE_CONSTANT",
+                  "alias": "",
+                  "query_location": 130,
+                  "query_location_length": 1,
+                  "literal": {
+                    "kind": "INTEGER",
+                    "text": "1"
+                  }
+                }
+              ],
+              "group_sets": [[0]],
+              "aggregate_handling": "STANDARD_HANDLING",
+              "having": null,
+              "sample": null,
+              "qualify": null
+            },
+            "named_param_map": []
+          }
+        ]
+      }
+    }
+  }
+}

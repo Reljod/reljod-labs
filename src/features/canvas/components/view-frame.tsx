@@ -62,12 +62,10 @@ const HOST_CONTEXT = {
 
 export function ViewFrame({
   payload,
-  conversationId,
   onLinked,
   onLog,
 }: {
   payload: ViewPayload;
-  conversationId: string | null;
   /** Views the server ran again because they share a changed Parameter. */
   onLinked: (payloads: ViewPayload[]) => void;
   onLog: (entry: BridgeLog) => void;
@@ -79,8 +77,8 @@ export function ViewFrame({
   const ready = useRef(false);
   const latest = useRef(payload);
   const sent = useRef<string>("");
-  const callbacks = useRef({ onLinked, onLog, conversationId });
-  callbacks.current = { onLinked, onLog, conversationId };
+  const callbacks = useRef({ onLinked, onLog });
+  callbacks.current = { onLinked, onLog };
   const viewId = payload.view.id;
 
   useEffect(() => {
@@ -195,11 +193,14 @@ export function ViewFrame({
             });
             return;
           }
-          const result = await callApp({
-            name,
-            arguments: args,
-            conversationId: callbacks.current.conversationId,
-          });
+          // A failed fetch (offline, aborted) must still answer the App's request.
+          const result = await callApp({ name, arguments: args }).catch(
+            (error: Error) => ({
+              isError: true,
+              content: [{ type: "text", text: error.message }],
+              structuredContent: undefined,
+            }),
+          );
           const structured = result.structuredContent;
           if (isViewPayload(structured)) {
             sent.current = `${structured.view.id}:${structured.view.revision}`;

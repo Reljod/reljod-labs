@@ -105,6 +105,9 @@ export async function guardAll(
       throw new InvalidError(
         `A Query may be at most ${LIMITS.queryChars} characters.`,
       );
+  // Parsing is a Sandbox command too: taken from the hourly allowance before
+  // it runs, so a stream of Queries the Guard refuses is capped like any other.
+  await takeRate(caller.visitor, caller.owner, "run");
   const { answer } = await runJob(
     caller.owner,
     {

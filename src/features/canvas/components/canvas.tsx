@@ -549,7 +549,6 @@ export function Canvas({
               <ViewFrame
                 key={payload.view.id}
                 payload={payload}
-                conversationId={conversationId}
                 onLinked={upsertViews}
                 onLog={onLog}
               />
