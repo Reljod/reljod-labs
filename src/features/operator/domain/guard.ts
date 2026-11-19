@@ -47,13 +47,18 @@ export type GuardDecision =
 export function fingerprint(change: Change): string {
   // An update is approved for the values the person was shown, not for any
   // later change of the same kind to the same record.
-  const values =
+  // The same holds for a new record: every field of it is part of what was
+  // approved. A delete is named by its key alone.
+  const fields =
     change.op === "update"
-      ? [...(change.fields ?? [])]
-          .sort()
-          .map((field) => `${field}=${String(change.after?.[field] ?? "")}`)
-          .join("|")
-      : "";
+      ? (change.fields ?? [])
+      : change.op === "add"
+        ? Object.keys(change.after ?? {})
+        : [];
+  const values = [...fields]
+    .sort()
+    .map((field) => `${field}=${String(change.after?.[field] ?? "")}`)
+    .join("|");
   return `${actionKindOf(change)}:${change.key}${values ? `:${values}` : ""}`;
 }
 

@@ -254,6 +254,19 @@ export const screenApprove = (
 export const screenTouch = (runId: string, secret: string) =>
   call<{ ok: true }>(runId, secret, "/touch", {});
 
+/**
+ * Gives a Run's Screen sandbox more time, for a wait the harness imposed (a
+ * pause for a person). Best effort: at the plan's limit it keeps what it has.
+ */
+export async function extendScreen(runId: string, ms: number) {
+  try {
+    const sandbox = await Sandbox.get({ name: screenName(runId) });
+    await sandbox.extendTimeout(ms);
+  } catch (error) {
+    console.error("[operator] screen sandbox: extend failed", message(error));
+  }
+}
+
 /** The Books as they are now, for the checks. */
 export const screenBooks = (runId: string, secret: string) =>
   call<BooksReport>(runId, secret, "/books");

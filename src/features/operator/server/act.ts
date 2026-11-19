@@ -13,9 +13,14 @@ import {
   type RunContext,
 } from "./context";
 import { emit } from "./emit";
-import { insertApproval, moveRun, updateRun } from "./repository";
+import {
+  decideApprovalRow,
+  insertApproval,
+  moveRun,
+  updateRun,
+} from "./repository";
 import type { Blocked } from "./sandbox/protocol";
-import { screenAct } from "./screen";
+import { extendScreen, screenAct } from "./screen";
 import { putFrame } from "./storage";
 
 /*
@@ -170,7 +175,13 @@ export async function openApproval(
     pending,
     hookToken,
   });
-  if (!(await moveRun(ctx.runId, ["running"], "paused"))) return null;
+  if (!(await moveRun(ctx.runId, ["running"], "paused"))) {
+    // The Run ended meanwhile: nothing may wait on an Approval nobody can settle.
+    await decideApprovalRow(ctx.runId, pending.approvalId, "expired");
+    return null;
+  }
+  // The sandbox must outlive the wait the harness is about to impose.
+  await extendScreen(ctx.runId, (LIMITS.approvalWaitMinutes + 1) * 60_000);
   await updateRun(ctx.runId, { metrics: metricsFrom(next) });
   await emit(ctx.runId, { type: "pause", pending });
   return { pending, counters: next };

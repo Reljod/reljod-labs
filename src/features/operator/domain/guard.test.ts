@@ -384,7 +384,39 @@ describe("fingerprint", () => {
       fingerprint(releaseHold(VALID)),
     );
     expect(fingerprint(placeHold())).not.toBe(fingerprint(releaseHold()));
-    expect(fingerprint(placeHold())).toBe("hold.place:TRSU3304186");
+    expect(fingerprint(placeHold())).toBe(
+      "hold.place:TRSU3304186:container=TRSU3304186|reason=23|status=ACTIVE",
+    );
+  });
+
+  it("names a new record with its values, so an Approval covers only what was shown", () => {
+    const shown = placeHold();
+    const other: Change = {
+      ...shown,
+      after: { ...shown.after, reason: "41" },
+    };
+    expect(fingerprint(other)).not.toBe(fingerprint(shown));
+    // Approved for reason 23; the same key with reason 41 pauses again.
+    const decision = guard(
+      {
+        ...DEFAULT_RULEBOOK,
+        guarded: { enabled: true, actions: ["hold.place"] },
+      },
+      { records: 0, approved: [fingerprint(shown)] },
+      { from: "HMH400", to: "HMH400", changes: [other] },
+    );
+    expect(decision.kind).toBe("pause");
+  });
+
+  it("names a delete by its key alone", () => {
+    expect(
+      fingerprint({
+        op: "delete",
+        record: "line",
+        key: "0377E#12",
+        before: { voyage: "0377E", lineNo: 12 },
+      }),
+    ).toBe("line.delete:0377E#12");
   });
 });
 

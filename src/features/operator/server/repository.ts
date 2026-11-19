@@ -16,7 +16,7 @@ import {
   type RunSummary,
   type StopReason,
 } from "../domain/contract";
-import { LIMITS } from "../domain/limits";
+import { STALE_RUN_MINUTES } from "../domain/limits";
 import type { ManifestRow } from "../domain/manifest";
 import {
   DEFAULT_RULEBOOK,
@@ -286,7 +286,7 @@ export async function createRun(input: {
           (select count(*)::int from operator.runs
             where owner = ${input.owner} and driver <> 'hand'
               and status in ('queued', 'running', 'paused')
-              and started_at > now() - make_interval(mins => ${LIMITS.sandboxMinutes + 5})) as active`;
+              and started_at > now() - make_interval(mins => ${STALE_RUN_MINUTES})) as active`;
       if (counts.hour >= input.limits.perVisitorPerHour)
         return {
           refusal: `That's ${input.limits.perVisitorPerHour} in the last hour. Try again later.`,

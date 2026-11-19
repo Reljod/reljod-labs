@@ -94,6 +94,9 @@ export async function readManifest(
   const row = await ownedManifest(owner, manifestId);
   if (!row) return { error: "No such Manifest." };
   if (row.status === "read") return manifestSummary(row);
+  // A file that could not be read is not downloaded and parsed again.
+  if (row.status === "failed")
+    return { error: "That file could not be read. Attach it again." };
   const { data, error } = await bucket().download(row.storage_path);
   if (error || !data)
     return { error: "The file has not arrived. Upload it again." };

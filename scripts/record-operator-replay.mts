@@ -25,7 +25,10 @@ if (!run.taskId) throw new Error("only a Run of a sample Task can be a Replay");
 if (run.status !== "completed" || run.verdict !== "correct")
   throw new Error(`not a good Run: ${run.status}, ${run.verdict}`);
 
-const dir = new URL(`../public/operator/replays/${run.taskId}/`, import.meta.url);
+const dir = new URL(
+  `../public/operator/replays/${run.taskId}/`,
+  import.meta.url,
+);
 rmSync(dir, { recursive: true, force: true });
 mkdirSync(new URL("frames/", dir), { recursive: true });
 
@@ -33,11 +36,16 @@ const browser = await chromium.launch();
 const page = await browser.newPage();
 await page.goto("about:blank");
 let bytes = 0;
-const frames = run.events.filter((event: { type: string }) => event.type === "frame");
+const frames = run.events.filter(
+  (event: { type: string }) => event.type === "frame",
+);
 for (const frame of frames) {
-  const png = await fetch(`${base}/api/operator/runs/${runId}/frames/${frame.n}`, {
-    headers,
-  });
+  const png = await fetch(
+    `${base}/api/operator/runs/${runId}/frames/${frame.n}`,
+    {
+      headers,
+    },
+  );
   if (!png.ok) throw new Error(`frame ${frame.n}: ${png.status}`);
   const data = Buffer.from(await png.arrayBuffer()).toString("base64");
   const webp: string = await page.evaluate(async (source) => {

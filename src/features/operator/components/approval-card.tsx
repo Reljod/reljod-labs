@@ -70,6 +70,25 @@ export function ApprovalCard({
         >
           {pending.label}
         </h3>
+        {/* An Approval covers exactly these values (the Guard's fingerprint). */}
+        {pending.change.op !== "delete" ? (
+          <dl className="grid grid-cols-[auto_1fr] gap-x-3 gap-y-0.5 font-mono text-xs">
+            {(pending.change.op === "update"
+              ? (pending.change.fields ?? [])
+              : Object.keys(pending.change.after ?? {})
+            ).map((field) => (
+              <div key={field} className="contents">
+                <dt className="text-ink-muted">{field}</dt>
+                <dd>
+                  {pending.change.op === "update"
+                    ? `${String(pending.change.before?.[field] ?? "")} → `
+                    : ""}
+                  <strong>{String(pending.change.after?.[field] ?? "")}</strong>
+                </dd>
+              </div>
+            ))}
+          </dl>
+        ) : null}
         <p id={`approval-${pending.approvalId}-why`} className="text-sm">
           The Operator pressed{" "}
           <kbd className="font-mono font-bold">{pending.key}</kbd> on{" "}

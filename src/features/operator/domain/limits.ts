@@ -18,6 +18,8 @@ export const LIMITS = {
   codeRunsPerRun: 6,
   /** How long a paused Run waits for a person before the Action is refused. */
   approvalWaitMinutes: 10,
+  /** Pauses one Run may take; a guarded Action after that is refused by the harness. */
+  pausesPerRun: 3,
   runsPerVisitorPerHour: 6,
   runsPerOwnerPerDay: 24,
   /** Runs with a live Screen one Owner may have at once. */
@@ -36,7 +38,9 @@ export const LIMITS = {
 } as const;
 
 /** A Run older than this that still says it is going has lost its workflow. */
-export const STALE_RUN_MS = (LIMITS.sandboxMinutes + 5) * 60_000;
+export const STALE_RUN_MINUTES =
+  LIMITS.sandboxMinutes + LIMITS.pausesPerRun * LIMITS.approvalWaitMinutes + 5;
+export const STALE_RUN_MS = STALE_RUN_MINUTES * 60_000;
 
 /**
  * The request header that asks for the scripted Operator (a sample Task's

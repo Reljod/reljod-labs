@@ -28,7 +28,8 @@ async function beginStep(ctx: RunContext) {
   "use step";
   return begin(ctx);
 }
-beginStep.maxRetries = 1;
+// A second try would find the sandbox's name taken and remove the working one.
+beginStep.maxRetries = 0;
 
 async function turnStep(
   ctx: RunContext,
@@ -75,6 +76,9 @@ async function pauseStep(
   "use step";
   return pause(ctx, counters, outcome, token);
 }
+// Neither opening nor settling an Approval can be repeated: a second try
+// would open a second Approval, or find the Run already moved on.
+pauseStep.maxRetries = 0;
 
 async function settleStep(
   ctx: RunContext,
@@ -85,6 +89,7 @@ async function settleStep(
   "use step";
   return settle(ctx, approvalId, fingerprint, answer);
 }
+settleStep.maxRetries = 0;
 
 async function saveStep(ctx: RunContext, counters: Counters) {
   "use step";
@@ -133,6 +138,8 @@ export async function operatorRun(input: RunInput) {
     let keyed: Change[] = [];
     let outcome: EndOutcome | null = null;
     let idle = 0;
+    // Time spent waiting for a person is the harness's, not the Operator's.
+    let pausedMs = 0;
 
     while (!outcome) {
       if (counters.turns >= LIMITS.turnsPerRun)
@@ -141,7 +148,10 @@ export async function operatorRun(input: RunInput) {
         outcome = { status: "completed", stoppedBy: "actions" };
       else if (counters.costUsd >= LIMITS.usdPerRun)
         outcome = { status: "completed", stoppedBy: "cost" };
-      else if (Date.now() - startedAt > (LIMITS.sandboxMinutes - 2) * 60_000)
+      else if (
+        Date.now() - startedAt - pausedMs >
+        (LIMITS.sandboxMinutes - 2) * 60_000
+      )
         outcome = { status: "completed", stoppedBy: "time" };
       if (outcome) break;
 
@@ -167,7 +177,9 @@ export async function operatorRun(input: RunInput) {
           counters.cachedInputTokens + (result.usage?.cachedInputTokens ?? 0),
       };
       const calls = result.calls;
-      transcript.push({ role: "assistant", text: result.text, calls });
+      // An assistant message with nothing in it is refused by the provider.
+      if (result.text || calls.length > 0)
+        transcript.push({ role: "assistant", text: result.text, calls });
 
       if (calls.length === 0) {
         idle += 1;
@@ -216,7 +228,14 @@ export async function operatorRun(input: RunInput) {
         counters = done.counters;
         let output = done.output;
         const stopped = done.outcome?.blocked;
-        if (done.outcome && stopped?.decision.kind === "pause") {
+        if (
+          done.outcome &&
+          stopped?.decision.kind === "pause" &&
+          counters.pauses >= LIMITS.pausesPerRun
+        ) {
+          output = `This Run has used its ${LIMITS.pausesPerRun} pauses for a person, so the harness refused the change. The key was not pressed. Leave it undone and carry on with the rest of the Task.`;
+          halted = true;
+        } else if (done.outcome && stopped?.decision.kind === "pause") {
           // The harness pauses here; the model is not asked and cannot answer.
           const token = `operator:${ctx.runId}:${counters.pauses}`;
           const hook = createHook<ApprovalAnswer>({ token });
@@ -229,6 +248,7 @@ export async function operatorRun(input: RunInput) {
             continue;
           }
           counters = opened.counters;
+          const waitedFrom = Date.now();
           const decided = await Promise.race([
             hook.then((payload) => payload.decision),
             sleep(`${LIMITS.approvalWaitMinutes}m`).then(() => null),
@@ -239,6 +259,7 @@ export async function operatorRun(input: RunInput) {
             opened.fingerprint,
             decided,
           );
+          pausedMs += Date.now() - waitedFrom;
           if (!settled.active) {
             over = true;
             answer(NOT_RUN);
@@ -254,7 +275,7 @@ export async function operatorRun(input: RunInput) {
             );
             counters = done.counters;
             output = done.outcome
-              ? done.output
+              ? `A person approved the first change and the harness pressed that key. Then: ${done.output} That second change was not keyed; look at the Screen and send it again if the Task needs it.`
               : "The Run paused for a person, who APPROVED. The harness pressed the key. The Screen now is in the picture.";
             if (done.outcome) halted = true;
           } else {
