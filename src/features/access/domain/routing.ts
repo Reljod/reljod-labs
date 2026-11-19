@@ -15,6 +15,7 @@ const BEARER_ROUTES = [
   "/api/harness/mcp",
   "/api/harness/oauth",
   "/api/name-extraction/mcp",
+  "/api/operator/mcp",
   "/api/bank/mcp",
   // GitHub's webhook: checks the delivery's signature itself.
   "/api/bank/github",

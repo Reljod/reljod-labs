@@ -26,6 +26,9 @@
     "src/app/api/name-extraction/runs/[runId]/events/route.ts": {
       "supportsCancellation": true
     },
+    "src/app/api/operator/runs/[runId]/events/route.ts": {
+      "supportsCancellation": true
+    },
     "src/app/api/bank/sessions/[id]/chat/route.ts": {
       "supportsCancellation": true
     }

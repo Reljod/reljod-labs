@@ -21,7 +21,9 @@
     "render:process-transfer-samples": "node --experimental-strip-types scripts/render-process-transfer-samples.mts",
     "seed:client-manager": "node --env-file-if-exists=.env.local scripts/seed-client-manager.mts",
     "render:name-extraction-corpus": "node --experimental-strip-types scripts/render-name-extraction-corpus.mts",
-    "eval:name-extraction": "node --env-file-if-exists=.env.local scripts/eval-name-extraction.mts"
+    "eval:name-extraction": "node --env-file-if-exists=.env.local scripts/eval-name-extraction.mts",
+    "build:operator-screen": "node --experimental-strip-types scripts/build-operator-screen.mts",
+    "record:operator-replay": "node --env-file-if-exists=.env.local --experimental-strip-types scripts/record-operator-replay.mts"
   },
   "dependencies": {
     "@ai-sdk/mcp": "^2.0.93",
@@ -54,6 +56,7 @@
     "@types/node": "^20",
     "@types/react": "^19",
     "@types/react-dom": "^19",
+    "esbuild": "0.28.2",
     "tailwindcss": "^4",
     "typescript": "^7.0.2",
     "vitest": "^5.1.0"

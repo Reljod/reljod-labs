@@ -16,7 +16,9 @@
       "!fixtures/casework/cases",
       "!fixtures/casework/watchlist",
       "!fixtures/casework/out",
-      "!public/name-extraction/replays"
+      "!public/name-extraction/replays",
+      "!public/operator/replays",
+      "!src/features/operator/server/sandbox/screen-bundle.generated.ts"
     ]
   },
   "formatter": {
