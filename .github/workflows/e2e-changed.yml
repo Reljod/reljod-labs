@@ -13,7 +13,7 @@ name: e2e-changed
 # (scripts/growth-pr.sh, the same check the growth guard uses). Growth pull
 # requests are written by an agent from a visitor's request (docs/adr/0024);
 # their tests run after the merge, on main. The growth check rests on the
-# label, the branch and the issue the pull request closes; a routine that
+# label, the branch and the issue the pull request names; a routine that
 # drops all three is caught by review, not here.
 #
 # Secrets reach the job only in its last step: `.env.local` is written right
