@@ -9,22 +9,27 @@ import { SandboxUnavailable } from "../errors";
 import { storage } from "../supabase";
 import { ensureImage, forgetImage, IMAGE_KEY } from "./image";
 import { localPython, runLocal } from "./local";
+import {
+  disposeOptions,
+  ownerSandboxOptions,
+  ownerSandboxUpdate,
+} from "./options";
 import { INBOX_DIR, RUNNER_PATH } from "./runner-source";
 
 /*
  * An Owner's Sandbox (ADR 0032): a microVM with no network, started from the
- * image, found again by name from any function instance. It holds the shared
- * Catalog and this Owner's Uploads (`/data/uploads.duckdb`), which is why it
- * is one per Owner and never shared. Everything the server asks of it is one
- * job for the runner: one command, one JSON answer.
+ * image, found again by name from any function instance while it runs. It
+ * holds the shared Catalog and this Owner's Uploads (`/data/uploads.duckdb`),
+ * which is why it is one per Owner and never shared. It is not persistent
+ * (`options.ts`): when it stops its disk is gone, the next Query starts a
+ * fresh one from the image, and Uploads are put back from Storage. Everything
+ * the server asks of it is one job for the runner: one command, one JSON
+ * answer.
  */
 
 const MINUTE = 60_000;
-const SANDBOX_MINUTES = 20;
 const EXTEND_BELOW_MINUTES = 4;
 const EXTEND_BY_MINUTES = 15;
-/** Uploads stay in a stopped Sandbox this long; after that they are loaded again from Storage. */
-const KEEP_DAYS = 7;
 /** A job longer than this goes in as a file, not on the command line. */
 const ARGV_CHARS = 90_000;
 
@@ -75,13 +80,7 @@ async function open(
   let created = false;
   const make = () =>
     Sandbox.getOrCreate({
-      name,
-      source: { type: "snapshot", snapshotId },
-      networkPolicy: "deny-all",
-      timeout: SANDBOX_MINUTES * MINUTE,
-      persistent: true,
-      snapshotExpiration: KEEP_DAYS * 24 * 60 * MINUTE,
-      resources: { vcpus: 2 },
+      ...ownerSandboxOptions(name, snapshotId),
       onCreate: async () => {
         created = true;
       },
@@ -89,6 +88,12 @@ async function open(
   let sandbox: Sandbox;
   try {
     sandbox = await make();
+    // One found by name keeps the settings it was made with: say them again,
+    // so none stays persistent (a snapshot of its disk on every stop).
+    if (!created)
+      await sandbox.update(
+        ownerSandboxUpdate() as Parameters<Sandbox["update"]>[0],
+      );
   } catch (error) {
     const reason = reasonOf(error);
     console.error("[canvas] sandbox start failed", reason);
@@ -115,7 +120,7 @@ export async function removeSandbox(owner: Owner) {
   try {
     const sandbox = await Sandbox.get({ name });
     await sandbox.stop().catch(() => {});
-    await sandbox.delete();
+    await sandbox.delete(disposeOptions());
   } catch {
     // None was made, or it is already gone.
   }
@@ -242,7 +247,7 @@ export async function runJob(
         throw new SandboxUnavailable(
           `Sandbox unavailable: the work could not be run (${reason}). Try again.`,
         );
-      // A stopped persistent Sandbox resumes on get; one that is broken is removed and made again.
+      // One that has stopped or is broken is removed, snapshots and all, and made again.
       if (attempt === 0 && !/timeout|aborted/i.test(reason))
         await removeIfBroken(owner);
     }

@@ -11,6 +11,11 @@ import { sql } from "../db";
 import { env } from "../env";
 import { SandboxUnavailable } from "../errors";
 import {
+  imageBuildOptions,
+  imageIsFresh,
+  imageSnapshotOptions,
+} from "./options";
+import {
   CANVAS_LIB_PY,
   DATA_DB,
   INBOX_DIR,
@@ -30,8 +35,6 @@ import {
 /** The image this code needs. A new data or runner version is a new image. */
 export const IMAGE_KEY = `${DATA_VERSION}:r${RUNNER_VERSION}`;
 
-const REGION = "syd1";
-const BUILD_MINUTES = 12;
 /** A build claimed longer ago than this is taken to have died. */
 const STALE_CLAIM_MINUTES = 15;
 const LOAD_DIR = "/tmp/canvas-load";
@@ -90,12 +93,9 @@ async function sh(sandbox: Sandbox, script: string, timeoutMs = 240_000) {
 
 /** Builds the image and returns its snapshot id. Takes a minute or two. */
 async function build(): Promise<string> {
-  const sandbox = await Sandbox.create({
-    runtime: "python3.13",
-    region: REGION,
-    timeout: BUILD_MINUTES * 60_000,
-    resources: { vcpus: 2 },
-  } as Parameters<typeof Sandbox.create>[0]);
+  const sandbox = await Sandbox.create(
+    imageBuildOptions() as Parameters<typeof Sandbox.create>[0],
+  );
   try {
     await sh(
       sandbox,
@@ -137,34 +137,56 @@ chmod 1777 ${INBOX_DIR}
 runuser -u analyst -- python3 -c "import duckdb, numpy"
 ! runuser -u analyst -- ls /data >/dev/null 2>&1`,
     );
-    const snapshot = await sandbox.snapshot({ expiration: 0 });
+    // The one snapshot Canvas keeps, and it expires (`options.ts`).
+    const snapshot = await sandbox.snapshot(imageSnapshotOptions());
     return snapshot.snapshotId;
   } finally {
-    // Taking a snapshot stops the Sandbox; this only clears up a failed build.
+    // Taking a snapshot stops the Sandbox; this only clears up a failed
+    // build. It is not persistent, so stopping writes no snapshot. It is not
+    // deleted with its snapshots: the image is one of them.
     await sandbox.stop().catch(() => {});
   }
 }
 
-let ready: { key: string; snapshotId: string } | undefined;
+let ready: { key: string; snapshotId: string; builtAt: Date } | undefined;
 
 /**
  * The snapshot every Owner's Sandbox starts from. Built on first use, by
  * whichever request gets there first; the others are told to come back.
  */
 export async function ensureImage(): Promise<string> {
-  if (ready?.key === IMAGE_KEY) return ready.snapshotId;
+  if (ready?.key === IMAGE_KEY && imageIsFresh(ready.builtAt))
+    return ready.snapshotId;
+  ready = undefined;
   if (!env.sandboxConfigured())
     throw new SandboxUnavailable("Sandbox unavailable: it is not set up here.");
   const db = sql();
-  const [row] = await db<
-    { snapshot_id: string | null; status: string; stale: boolean }[]
+  const read = () => db<
+    {
+      snapshot_id: string | null;
+      status: string;
+      stale: boolean;
+      built_at: Date | null;
+    }[]
   >`
-    select snapshot_id, status,
+    select snapshot_id, status, built_at,
            claimed_at < now() - make_interval(mins => ${STALE_CLAIM_MINUTES}) as stale
     from canvas.sandbox_images where key = ${IMAGE_KEY}`;
+  let [row] = await read();
   if (row?.status === "ready" && row.snapshot_id) {
-    ready = { key: IMAGE_KEY, snapshotId: row.snapshot_id };
-    return row.snapshot_id;
+    if (imageIsFresh(row.built_at)) {
+      ready = {
+        key: IMAGE_KEY,
+        snapshotId: row.snapshot_id,
+        builtAt: row.built_at as Date,
+      };
+      return row.snapshot_id;
+    }
+    // Its snapshot has expired, or is about to: clear the row and build anew.
+    await db`
+      delete from canvas.sandbox_images
+      where key = ${IMAGE_KEY} and snapshot_id = ${row.snapshot_id}`;
+    [row] = await read();
   }
   const [claim] = row
     ? row.stale
@@ -188,7 +210,7 @@ export async function ensureImage(): Promise<string> {
       update canvas.sandbox_images
       set snapshot_id = ${snapshotId}, status = 'ready', built_at = now()
       where key = ${IMAGE_KEY}`;
-    ready = { key: IMAGE_KEY, snapshotId };
+    ready = { key: IMAGE_KEY, snapshotId, builtAt: new Date() };
     return snapshotId;
   } catch (error) {
     await db`delete from canvas.sandbox_images where key = ${IMAGE_KEY} and status = 'building'`.catch(
