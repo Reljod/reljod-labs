@@ -6,6 +6,7 @@ import { MAX_AMOUNT } from "./money";
 import { isAccountNumber, isBankCode } from "./numbers";
 import type { Action } from "./permissions";
 import { RULE_IDS } from "./rules";
+import { SEARCH_CHARS } from "./search";
 
 /**
  * Everything the bank can be asked to do, in one list. The app calls a
@@ -103,11 +104,18 @@ export const COMMANDS = [
   read(
     "list_transactions",
     "Transactions",
-    "An account's transactions from the ledger, newest first, each with the running balance and its journal entry id.",
+    "An account's transactions from the ledger, newest first, each with the running balance and its journal entry id. Give `query` to keep only those whose description contains that text (case-insensitive), e.g. every Greenmarket purchase; paging with limit and beforeId works the same.",
     z.object({
       accountId: id,
       limit,
       beforeId: z.number().int().positive().optional(),
+      query: z
+        .string()
+        .trim()
+        .min(1, "Type some text to search for")
+        .max(SEARCH_CHARS)
+        .optional()
+        .describe("Text the description must contain, any case"),
     }),
   ),
   read(

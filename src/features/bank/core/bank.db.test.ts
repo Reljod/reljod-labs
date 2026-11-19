@@ -8,6 +8,7 @@ import type {
   CustomerDetail,
   CustomerSummary,
   OverviewView,
+  TransactionView,
   TrialBalanceView,
 } from "../domain/views";
 import type { Actor } from "./actor";
@@ -287,6 +288,64 @@ describe.skipIf(!url)("the bank's ledger, on Postgres", () => {
         fromAccountId: current(mara).id,
         toAccountNumber: current(joren).number,
         amount: 1_00,
+      }),
+    ).rejects.toBeInstanceOf(NotFoundError);
+  });
+
+  it("searches an account's transactions by description, in that account only", async () => {
+    type Page = { transactions: TransactionView[] };
+    const accountId = current(mara).id;
+    const all = await read<Page>("list_transactions", {
+      accountId,
+      query: "greenMARKET",
+    });
+    expect(all.transactions.length).toBeGreaterThan(1);
+    for (const row of all.transactions)
+      expect(row.description.toLowerCase()).toContain("greenmarket");
+    const ids = all.transactions.map((row) => row.id);
+    expect(ids).toEqual([...ids].sort((a, b) => b - a));
+    // Paging with limit and beforeId walks the same matches.
+    const first = await read<Page>("list_transactions", {
+      accountId,
+      query: "greenmarket",
+      limit: 1,
+    });
+    const next = await read<Page>("list_transactions", {
+      accountId,
+      query: "greenmarket",
+      limit: 1,
+      beforeId: first.transactions[0]?.id,
+    });
+    expect(
+      [...first.transactions, ...next.transactions].map((r) => r.id),
+    ).toEqual(ids.slice(0, 2));
+    // The running balance is the account's, not the filtered rows'.
+    const ledger = await read<Page>("list_transactions", {
+      accountId,
+      limit: 50,
+    });
+    const match = all.transactions[0] as TransactionView;
+    expect(match.balanceAfter).toBe(
+      ledger.transactions.find((row) => row.id === match.id)?.balanceAfter,
+    );
+    // Wildcards are literal; no match is an empty list.
+    for (const query of ["%", "_", "no such merchant"])
+      expect(
+        (await read<Page>("list_transactions", { accountId, query }))
+          .transactions,
+      ).toEqual([]);
+    // Joren's account holds no Greenmarket rows of Mara's; another Owner sees nothing.
+    for (const row of (
+      await read<Page>("list_transactions", {
+        accountId: current(joren).id,
+        query: "greenmarket",
+      })
+    ).transactions)
+      expect(ids).not.toContain(row.id);
+    await expect(
+      runRead(pool, { ...as("ines-maro"), owner: OTHER }, "list_transactions", {
+        accountId,
+        query: "greenmarket",
       }),
     ).rejects.toBeInstanceOf(NotFoundError);
   });

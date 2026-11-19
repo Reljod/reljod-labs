@@ -2,6 +2,7 @@ import type { Owner } from "@/features/access/domain/owner";
 import { type CommandName, commandDef } from "../domain/commands";
 import { LIMITS } from "../domain/limits";
 import { ruleDef } from "../domain/rules";
+import { containsPattern } from "../domain/search";
 import type {
   AccountDetail,
   AccountView,
@@ -209,7 +210,12 @@ async function getCustomer(
 export async function transactionsOf(
   db: Db,
   owner: Owner,
-  input: { accountId: string; limit?: number; beforeId?: number },
+  input: {
+    accountId: string;
+    limit?: number;
+    beforeId?: number;
+    query?: string;
+  },
 ): Promise<TransactionView[]> {
   const limit = input.limit ?? 25;
   return db<TransactionView[]>`
@@ -227,7 +233,14 @@ export async function transactionsOf(
       join bank.accounts a on a.id = p.account_id
       where p.owner = ${owner} and p.account_id = ${input.accountId}
     ) t
-    ${input.beforeId ? db`where t.id < ${input.beforeId}` : db``}
+    where true
+    ${input.beforeId ? db`and t.id < ${input.beforeId}` : db``}
+    ${
+      // Filtered outside the window, so the running balance stays the account's.
+      input.query
+        ? db`and t.description ilike ${containsPattern(input.query)} escape '\\'`
+        : db``
+    }
     order by t.id desc
     limit ${limit}`;
 }
@@ -733,7 +746,12 @@ export const READS: Partial<Record<CommandName, ReadHandler>> = {
   list_transactions: async (
     db,
     owner,
-    input: { accountId: string; limit?: number; beforeId?: number },
+    input: {
+      accountId: string;
+      limit?: number;
+      beforeId?: number;
+      query?: string;
+    },
   ) => {
     await accountById(db, owner, input.accountId);
     const transactions = await transactionsOf(db, owner, input);
