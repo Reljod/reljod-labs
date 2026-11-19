@@ -755,6 +755,10 @@ export const cancelStandingOrder: WriteHandler<
 };
 
 export const receiveCredit: WriteHandler<CommandInput<"receive_credit">> = {
+  async describe(ctx, input) {
+    const account = await accountById(ctx.tx, ctx.owner, input.accountId);
+    return `Credit ${formatMoney(input.amount)} from ${input.from} to ${formatAccountNumber(account.number)} (${account.customerName})`;
+  },
   async run(ctx, input) {
     await lock(ctx.tx, ctx.owner, [input.accountId]);
     const account = await accountById(ctx.tx, ctx.owner, input.accountId);

@@ -156,6 +156,8 @@ describe("the command list", () => {
       "decide_alert",
       "edit_rule",
       "restore_rule",
+      "receive_credit",
+      "advance_clock",
     ];
     for (const name of always) {
       const def = commandDef(name);

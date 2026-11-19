@@ -229,7 +229,10 @@ export function ChatTab() {
 
   // biome-ignore lint/correctness/useExhaustiveDependencies: scroll when the conversation grows.
   useEffect(() => {
-    end.current?.scrollIntoView({ block: "end" });
+    // Never on the empty state: its first lines must stay in view on a phone.
+    if (detail?.messages.length || live) {
+      end.current?.scrollIntoView({ block: "end" });
+    }
   }, [detail?.messages.length, live?.text, live?.tools.length]);
 
   const open = (id: string | null) => {

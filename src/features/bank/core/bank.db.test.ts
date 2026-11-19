@@ -398,13 +398,19 @@ describe.skipIf(!url)("the bank's ledger, on Postgres", () => {
     );
     expect(confirmed.status).toBe("confirmed");
     expect((await account(from.id)).balance).toBe(before.balance - 12_00);
-    // Reads and harmless writes go straight through for the Teller.
+    // A harmless write goes straight through for the Teller; creating money does not.
+    const read = await write(
+      "mark_notifications_read",
+      { customerId: mara.customer.id },
+      as("ines-maro", "chat"),
+    );
+    expect(read.status).toBe("done");
     const credit = await write(
       "receive_credit",
       { accountId: from.id, amount: 5_00, from: "Refund Desk" },
       as("ines-maro", "chat"),
     );
-    expect(credit.status).toBe("done");
+    expect(credit.status).toBe("needs_confirmation");
   });
 
   it("Roles are enforced by the engine", async () => {

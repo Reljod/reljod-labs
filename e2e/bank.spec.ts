@@ -283,14 +283,18 @@ test("the same bank through MCP: a token from Connect a client, every command a 
     detail.accounts.find((item) => item.kind === "savings"),
   ];
 
-  // A harmless write goes through; a money-moving one is parked for the person.
+  // A harmless write goes through; anything that moves or makes money is parked for the person.
+  const marked = await call("mark_notifications_read", {
+    customerId: mara?.id,
+    idempotencyKey: `e2e-${Date.now()}`,
+  });
+  expect(marked.structuredContent?.status).toBe("done");
   const credit = await call("receive_credit", {
     accountId: current?.id,
     amount: 5_00,
     from: "Refund Desk",
-    idempotencyKey: `e2e-${Date.now()}`,
   });
-  expect(credit.structuredContent?.status).toBe("done");
+  expect(credit.structuredContent?.status).toBe("needs_confirmation");
   const asked = await call("transfer", {
     fromAccountId: current?.id,
     toAccountNumber: savings?.number,
@@ -299,7 +303,7 @@ test("the same bank through MCP: a token from Connect a client, every command a 
   expect(asked.structuredContent?.status).toBe("needs_confirmation");
   const after = (await call("get_account", { accountId: current?.id }))
     .structuredContent as { account: { balance: number } };
-  expect(after.account.balance).toBe((current?.balance ?? 0) + 5_00);
+  expect(after.account.balance).toBe(current?.balance ?? 0);
   // The Rules refuse through MCP exactly as they do in the app.
   const tooMuch = await call("transfer", {
     fromAccountId: current?.id,
@@ -338,12 +342,18 @@ test("a supervisor edits a Rule; a teller may not", async ({ page }) => {
   const next = (await sentence.textContent())?.includes("costs MRF 2.00")
     ? "1.50"
     : "2.00";
+  const version = Number(
+    /Version (\d+)/.exec((await card.textContent()) ?? "")?.[1] ?? 0,
+  );
   await card.getByLabel("Payment to another bank").fill(next);
   // The sentence follows the Parameter as it is typed.
   await expect(sentence).toContainText(`costs MRF ${next}`);
   await card.getByTestId("bank-rule-fees.payments-save").click();
   await page.getByTestId("bank-rule-fees.payments-confirm").click();
-  await expect(card).toContainText(/Version \d+/, { timeout: 60_000 });
+  // Saved as the next Version, never over the old one.
+  await expect(card).toContainText(`Version ${version + 1}`, {
+    timeout: 60_000,
+  });
   await page.reload();
   await expect(
     page.getByTestId("bank-rule-fees.payments-sentence"),

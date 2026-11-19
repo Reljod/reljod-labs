@@ -172,6 +172,9 @@ export const restoreRule: WriteHandler<CommandInput<"restore_rule">> = {
 };
 
 export const advanceClock: WriteHandler<CommandInput<"advance_clock">> = {
+  async describe(ctx, input) {
+    return `Move the bank's clock ${input.days} day(s) forward from ${formatDate(ctx.today)}; end-of-day runs for each day crossed and cannot be undone`;
+  },
   async run(ctx, input) {
     const [bank] = await ctx.tx<{ clockOffsetSeconds: number }[]>`
       select clock_offset_seconds from bank.banks where owner = ${ctx.owner} for update`;

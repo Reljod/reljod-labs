@@ -481,6 +481,7 @@ export const COMMANDS = [
     kind: "write",
     title: "Receive a credit",
     action: "money.move",
+    sensitive: true,
     description:
       "Simulates money arriving from outside the bank (a salary, a refund, a cash deposit) into an account.",
     input: z.object({ accountId: id, amount, from: name, reference }),
@@ -725,6 +726,7 @@ export const COMMANDS = [
     kind: "write",
     title: "Fast-forward the clock",
     action: "clock.advance",
+    sensitive: true,
     description:
       "Moves the bank's simulated clock forward by whole days. Each day crossed runs end-of-day (interest, scheduled payments, loan collections, maturities) and due payments settle.",
     input: z.object({
