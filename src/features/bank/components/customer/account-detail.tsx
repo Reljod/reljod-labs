@@ -166,6 +166,7 @@ export function AccountDetailPanel({
               Transactions
             </h4>
             <TransactionsTable
+              key={view.account.id}
               account={view.account}
               first={view.transactions}
               busy={detail.isFetching}

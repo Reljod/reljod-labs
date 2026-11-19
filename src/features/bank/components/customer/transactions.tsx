@@ -31,10 +31,10 @@ export function TransactionsTable({
   first: TransactionView[];
   busy: boolean;
 }) {
-  const [search, setSearch] = useState({ accountId: account.id, query: "" });
+  // Keyed by the account at the call site, so a search never follows you to another account.
+  const [query, setQuery] = useState("");
   const [draft, setDraft] = useState("");
   const inputId = useId();
-  const query = search.accountId === account.id ? search.query : "";
   if (first.length === 0) {
     return (
       <p className="px-4 py-6 text-sm text-ink-muted">
@@ -44,7 +44,7 @@ export function TransactionsTable({
   }
   const submit = (event: FormEvent) => {
     event.preventDefault();
-    setSearch({ accountId: account.id, query: draft.trim() });
+    setQuery(draft.trim());
   };
   return (
     <div>
@@ -75,7 +75,7 @@ export function TransactionsTable({
             variant="ghost"
             onClick={() => {
               setDraft("");
-              setSearch({ accountId: account.id, query: "" });
+              setQuery("");
             }}
           >
             Clear
@@ -83,7 +83,12 @@ export function TransactionsTable({
         ) : null}
       </form>
       {query ? (
-        <SearchResults key={query} account={account} query={query} />
+        <SearchResults
+          key={query}
+          account={account}
+          query={query}
+          busy={busy}
+        />
       ) : (
         <LedgerTable account={account} first={first} busy={busy} />
       )}
@@ -121,7 +126,11 @@ function LedgerTable({
     lastCursor === undefined
       ? first.length >= PAGE
       : (last.data?.transactions.length ?? 0) >= PAGE;
-  const nextCursor = tail.at(-1)?.id;
+  // While a page loads, `last` still holds the one before it (placeholder
+  // data), whose cursor is stale: the button waits for the new page.
+  const loading =
+    lastCursor !== undefined && (last.isPlaceholderData || !last.data);
+  const nextCursor = loading ? undefined : tail.at(-1)?.id;
 
   return (
     <div>
@@ -138,7 +147,7 @@ function LedgerTable({
             animate
           />
           {cursors.map((cursor) => (
-            <OlderRows
+            <PageRows
               key={cursor}
               account={account}
               beforeId={cursor}
@@ -156,17 +165,20 @@ function LedgerTable({
         <p className="text-xs text-ink-muted">
           Every row is a Posting on a balanced journal entry.
         </p>
-        {hasMore && nextCursor !== undefined ? (
+        {loading || (hasMore && nextCursor !== undefined) ? (
           <Button
             size="sm"
             variant="ghost"
-            pending={lastCursor !== undefined && last.isFetching && !last.data}
+            pending={loading}
             pendingLabel="Loading…"
             onClick={() =>
+              nextCursor !== undefined &&
               setOlder({
                 accountId: account.id,
                 top,
-                cursors: [...cursors, nextCursor],
+                cursors: cursors.includes(nextCursor)
+                  ? cursors
+                  : [...cursors, nextCursor],
               })
             }
             data-testid="bank-load-older"
@@ -194,9 +206,11 @@ function LedgerTable({
 function SearchResults({
   account,
   query,
+  busy,
 }: {
   account: AccountView;
   query: string;
+  busy: boolean;
 }) {
   const [cursors, setCursors] = useState<number[]>([]);
   const [disputing, setDisputing] = useState<TransactionView | null>(null);
@@ -206,7 +220,10 @@ function SearchResults({
     { accountId: account.id, query, beforeId: lastCursor, limit: PAGE },
   );
   const rows = last.data?.transactions;
-  const nextCursor = rows?.at(-1)?.id;
+  // While the next page loads, `rows` is still the page before it (placeholder
+  // data), whose cursor is stale: the button waits for the new page.
+  const loading = last.isPlaceholderData || !rows;
+  const nextCursor = loading ? undefined : rows?.at(-1)?.id;
   if (last.error) {
     return (
       <ErrorNote className="m-3" onRetry={() => void last.refetch()}>
@@ -226,14 +243,14 @@ function SearchResults({
   }
   return (
     <div>
-      <div className="relative overflow-x-auto">
+      <div className="relative overflow-x-auto" aria-busy={busy || undefined}>
         <table
           className="w-full min-w-[40rem] text-sm"
           data-testid="bank-transactions"
         >
           <TableHead />
           {[undefined, ...cursors].map((cursor) => (
-            <OlderRows
+            <PageRows
               key={cursor ?? "first"}
               account={account}
               beforeId={cursor}
@@ -247,15 +264,23 @@ function SearchResults({
         <p className="text-xs text-ink-muted">
           Only transactions whose description contains “{query}”.
         </p>
-        {rows && rows.length >= PAGE && nextCursor !== undefined ? (
+        {(loading && cursors.length > 0) ||
+        (rows && rows.length >= PAGE && nextCursor !== undefined) ? (
           <Button
             size="sm"
             variant="ghost"
-            onClick={() => setCursors([...cursors, nextCursor])}
+            pending={loading}
+            pendingLabel="Loading…"
+            onClick={() =>
+              nextCursor !== undefined &&
+              setCursors((now) =>
+                now.includes(nextCursor) ? now : [...now, nextCursor],
+              )
+            }
           >
             Load older matches
           </Button>
-        ) : rows ? (
+        ) : !loading ? (
           <span className="text-xs text-ink-muted">No older matches.</span>
         ) : null}
       </div>
@@ -288,7 +313,7 @@ function TableHead() {
   );
 }
 
-function OlderRows({
+function PageRows({
   account,
   beforeId,
   query,
@@ -314,7 +339,7 @@ function OlderRows({
         <tr>
           <td colSpan={7} className="px-3 py-2">
             <span className="sr-only" aria-live="polite">
-              Loading older transactions
+              Loading transactions
             </span>
             <div className="hx-shimmer h-8 rounded-sm border-2 border-ink/20" />
           </td>
