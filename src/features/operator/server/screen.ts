@@ -128,7 +128,18 @@ async function ensureBase() {
         continue;
       }
     }
-    if (base.status === "stopped") return;
+    if (base.status === "stopped") {
+      // A base built before these settings keeps its own (a snapshot that
+      // never expired); give it the bounded ones. A metadata call: it does
+      // not wake the base. Best effort.
+      await base
+        .update({
+          snapshotExpiration: BASE_OPTIONS.snapshotExpiration,
+          keepLastSnapshots: BASE_OPTIONS.keepLastSnapshots,
+        })
+        .catch(() => {});
+      return;
+    }
     await sleep(3000);
   }
   throw new Error("the base sandbox did not become ready");

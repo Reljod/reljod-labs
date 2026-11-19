@@ -14,6 +14,7 @@
  *    a picture of the Screen.
  * The model never talks to either port. It gets pictures and sends Actions.
  */
+import { timingSafeEqual } from "node:crypto";
 import { readFileSync } from "node:fs";
 import { createServer, type IncomingMessage } from "node:http";
 import type { ScreenAction } from "../../domain/actions";
@@ -293,6 +294,16 @@ async function main() {
     }
   }
 
+  const expected = Buffer.from(config.secret);
+  /** The harness's secret, compared in constant time. */
+  const sameSecret = (given: string | string[] | undefined) => {
+    if (typeof given !== "string") return false;
+    const offered = Buffer.from(given);
+    return (
+      offered.length === expected.length && timingSafeEqual(offered, expected)
+    );
+  };
+
   const report = (): BooksReport => ({
     books: state.books,
     diff: diffBooks(config.fixture.books, state.books),
@@ -308,7 +319,7 @@ async function main() {
       response.setHeader("content-type", "application/json");
       response.end(JSON.stringify(value));
     };
-    if (request.headers[SECRET_HEADER] !== config.secret)
+    if (!sameSecret(request.headers[SECRET_HEADER]))
       return send(403, { error: "forbidden" });
     try {
       if (request.url === "/health") return send(200, { ok: true });

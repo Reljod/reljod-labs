@@ -1,5 +1,6 @@
 import { requireOwner } from "@/features/access/server/gate";
-import { metricsOf, ownedRun } from "@/features/operator/server/repository";
+import { LIMITS } from "@/features/operator/domain/limits";
+import { ownedRun } from "@/features/operator/server/repository";
 import { failure, notFound } from "@/features/operator/server/respond";
 import { getFrame } from "@/features/operator/server/storage";
 
@@ -17,8 +18,9 @@ export async function GET(
     const frame = Number(n);
     const run = await ownedRun(owner, runId);
     if (!run || !Number.isInteger(frame) || frame < 0) return notFound();
-    // While a Run goes, its row's count may trail the Trail by a Frame or two.
-    if (frame > metricsOf(run).frames + 400) return notFound();
+    // No Run has more Frames than Actions, plus the sign-on Frame and a
+    // look after each pause; anything past that is not a Frame of this Run.
+    if (frame > LIMITS.actionsPerRun + LIMITS.turnsPerRun) return notFound();
     const png = await getFrame(run.id, frame);
     if (!png) return notFound();
     return new Response(new Uint8Array(png), {

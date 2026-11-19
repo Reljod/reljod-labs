@@ -31,10 +31,13 @@ function ownerFolder(owner: string) {
     .slice(0, 32);
 }
 
-/** The two kinds a Manifest may be, from the name's ending. Nothing else of the name reaches a path. */
+/**
+ * The two kinds a Manifest may be, from the name's ending: the same two the
+ * attach button offers. Nothing else of the name reaches a path.
+ */
 function kindOf(name: string): "csv" | "pdf" | null {
   const lower = name.toLowerCase();
-  if (lower.endsWith(".csv") || lower.endsWith(".txt")) return "csv";
+  if (lower.endsWith(".csv")) return "csv";
   if (lower.endsWith(".pdf")) return "pdf";
   return null;
 }

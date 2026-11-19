@@ -18,7 +18,9 @@ We run **one agent, the Operator**, inside a harness that owns everything that d
 
 - A new kind of Rule is code in `domain/guard.ts` and `domain/checks.ts` with a test that it can fail; a new value is a Rulebook edit.
 - The Operator's context keeps the latest one to four pictures and replaces older ones with one line each, dropped in blocks of four so the provider's prompt cache holds (most of a Run's input tokens are cache reads).
-- An Action is never retried by the workflow: a key pressed twice is a second key. A Turn (a model call) is.
+- An Action is never retried by the workflow: a key pressed twice is a second key. A Turn (a model call) is. Opening and settling an Approval are never retried either.
+- A client-driven Run has no workflow, so the harness does what the workflow would: one MCP call at a time (`client_busy_until`, a lease, so a dead call frees it), an Approval nobody decided before `expiresAt` is expired and refused on the next call or decision that touches the Run, and time spent paused for a person does not count against the Run's time cap.
+- An Approval is for the values the person was shown: the Guard's fingerprint names the record and, for an add or an update, every value it would write. A different value for the same record pauses again.
 - Caps live in `LIMITS` (`domain/limits.ts`) and are taken in `server/runs.ts` and `server/act.ts`, which the page, the workflow and the MCP tools all call.
 - A scripted Operator (`x-operator-stub` with the e2e bypass token) plays a sample Task's Script instead of calling the model, through the same sandbox, Guard and checks. It cannot see a refusal, which the e2e suite uses to show the checks failing.
 - The recorded Run under `public/operator/replays/` is served as static files outside the demo gate, like Sieve's: synthetic data, nothing to spend. Record only sample Tasks.

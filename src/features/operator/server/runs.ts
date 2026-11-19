@@ -33,6 +33,8 @@ import { env } from "./env";
 import { finishRun } from "./finish";
 import type { ToolCall } from "./operator";
 import {
+  claimClientCall,
+  countHandRunsSince,
   createRun,
   currentRulebook,
   decideApprovalRow,
@@ -42,7 +44,9 @@ import {
   insertEvents,
   ownedManifest,
   ownedRun,
+  pausedMsOf,
   type RunRow,
+  releaseClientCall,
   setWorkflowRun,
 } from "./repository";
 import { begin, runCall, saveCounters, settle } from "./run-steps";
@@ -55,6 +59,31 @@ import type { Visitor } from "./visitor";
  * the MCP tools alike: both call these, so the caps, the Rules and the Trail
  * are the same whichever way a request comes in (ADR 0025).
  */
+
+/**
+ * How long a client-driven start may spend booting its Screen: below the MCP
+ * route's `maxDuration` (300 s), with room for the base to be built first.
+ */
+export const CLIENT_BOOT_MS = 240_000;
+
+/** The work's answer, or a ScreenUnavailable once `ms` have passed. The work itself is not cancelled. */
+export async function withDeadline<T>(
+  work: Promise<T>,
+  ms: number,
+): Promise<T> {
+  let timer: ReturnType<typeof setTimeout> | undefined;
+  const deadline = new Promise<never>((_, reject) => {
+    timer = setTimeout(
+      () => reject(new ScreenUnavailable(`no Screen after ${ms} ms`)),
+      ms,
+    );
+  });
+  try {
+    return await Promise.race([work, deadline]);
+  } finally {
+    clearTimeout(timer);
+  }
+}
 
 const limitsFor = (visitor: Visitor, hand = false) =>
   visitor.trusted
@@ -250,7 +279,10 @@ export async function startRun(input: {
       const run = await start(operatorRun, [{ ctx }]);
       await setWorkflowRun(runId, run.runId);
     } else {
-      const begun = await begin(ctx);
+      // A client's Screen boots inside its MCP request. Give up before the
+      // route's own limit, so the Run is closed and its slot freed rather than
+      // left `running` by a killed function.
+      const begun = await withDeadline(begin(ctx), CLIENT_BOOT_MS);
       await saveCounters(ctx, begun.counters);
     }
   } catch (error) {
@@ -329,6 +361,11 @@ export async function decideApproval(input: {
     };
   if (run.status !== "paused")
     return { error: "This Run is not waiting for a decision." };
+  if (await expireIfLate(input.owner, run))
+    return {
+      error:
+        "Too late: nobody decided in time, so the harness refused the change and the Run carried on.",
+    };
   const claimed = await decideApprovalRow(
     run.id,
     input.approvalId,
@@ -343,6 +380,12 @@ export async function decideApproval(input: {
     } catch (error) {
       console.error("[operator] resume failed", error);
       const reason = "The Run could not be resumed after the decision.";
+      // The workflow would otherwise sleep out its wait; it acts on nothing
+      // once the row is over, but it should not linger. Best effort.
+      if (run.workflow_run_id)
+        await getWorkflowRun(run.workflow_run_id)
+          .cancel({ cancelReason: reason })
+          .catch(() => {});
       if (await endRunIfGoing(run.id, { status: "failed", error: reason }))
         await insertEvents(run.id, [
           {
@@ -367,6 +410,38 @@ export async function decideApproval(input: {
     };
   }
   return { ok: true };
+}
+
+/**
+ * A client-driven Run has no workflow to expire its Approval, so the harness
+ * does it on the next call or decision that touches the Run: the change is
+ * refused, the Run goes back to running, and the Trail says so. True when it
+ * expired the Approval here. An Operator-driven Run's workflow expires its own.
+ */
+async function expireIfLate(owner: Owner, run: RunRow): Promise<boolean> {
+  const pending = run.pending;
+  if (run.driver !== "client" || run.status !== "paused" || !pending)
+    return false;
+  if (pending.expiresAt > Date.now()) return false;
+  const expired = await decideApprovalRow(
+    run.id,
+    pending.approvalId,
+    "expired",
+  );
+  // Decided by a person a moment ago: their decision stands.
+  if (!expired) return false;
+  try {
+    await settle(
+      await loadContext(owner, run),
+      expired.id,
+      expired.fingerprint,
+      null,
+    );
+  } catch (error) {
+    // The Screen is gone: the next call finds that and closes the Run.
+    console.error("[operator] settle after expiry failed", error);
+  }
+  return true;
 }
 
 // A Run an outside client drives -------------------------------------------------------------
@@ -394,23 +469,60 @@ export async function clientCall(
 ): Promise<ClientCallResult> {
   const found = await ownedRun(owner, runId);
   if (!found) return { error: "No such Run." };
-  const run = await closeIfStale(found);
+  let run = await closeIfStale(found);
   if (run.driver !== "client")
     return {
       error:
         'This Run is not driven through the MCP server. Start one with driver "client".',
     };
+  let note = "";
+  if (run.status === "paused" && (await expireIfLate(owner, run))) {
+    note =
+      "The pending Approval expired: nobody decided in time, so the harness refused that change and its key was not pressed. ";
+    run = (await getRunRow(run.id)) ?? run;
+  }
   if (run.status === "paused")
     return {
       error:
         "The Run is paused: a person must approve or refuse the pending Action in the app first.",
     };
   if (run.status !== "running") return { error: `The Run is ${run.status}.` };
+  // One call at a time: two at once would read the same counters, take the
+  // same Frame number and could pass the Run's caps together.
+  if (!(await claimClientCall(run.id)))
+    return {
+      error:
+        "Another call on this Run is still going. Send this one again when it has answered.",
+    };
+  try {
+    return await claimedCall(owner, run.id, toolName, input, note);
+  } finally {
+    await releaseClientCall(run.id).catch(() => {});
+  }
+}
+
+/** The body of a client call, run only while the call holds its Run. */
+async function claimedCall(
+  owner: Owner,
+  runId: string,
+  toolName: string,
+  input: unknown,
+  note: string,
+): Promise<ClientCallResult> {
+  // Read again under the claim: the counters the call before this one saved.
+  const run = await getRunRow(runId);
+  if (!run || run.status !== "running")
+    return { error: `The Run is ${run?.status ?? "gone"}.` };
   const ctx = await loadContext(owner, run);
   let counters: Counters = countersOf(run);
   const startedAt = run.started_at.getTime();
   try {
-    if (Date.now() - startedAt > (LIMITS.sandboxMinutes - 1) * 60_000) {
+    // Time spent waiting for a person is the harness's, not the client's.
+    const pausedMs = await pausedMsOf(run.id);
+    if (
+      Date.now() - startedAt - pausedMs >
+      (LIMITS.sandboxMinutes - 1) * 60_000
+    ) {
       await finishRun(
         ctx,
         counters,
@@ -456,14 +568,14 @@ export async function clientCall(
         startedAt,
       );
       return {
-        text: "Finished. Code checked the Books: call get_run for the Verdict and Findings.",
+        text: `${note}Finished. Code checked the Books: call get_run for the Verdict and Findings.`,
         frame: null,
         finished: true,
       };
     }
     await saveCounters(ctx, counters);
     if (done.hint) text = `${text} (${done.hint})`;
-    return { text, frame: done.frame, finished: false };
+    return { text: `${note}${text}`, frame: done.frame, finished: false };
   } catch (error) {
     if (error instanceof ScreenUnavailable) {
       await finishRun(
@@ -502,6 +614,18 @@ export async function submitHandRun(input: {
   if (input.inputs.length === 0) return { error: "Nothing was keyed." };
   if (input.inputs.length > LIMITS.handInputs)
     return { error: `An attempt is at most ${LIMITS.handInputs} inputs.` };
+  // Refuse before the replay, so a visitor over the cap costs a count, not a
+  // replay. `createRun` checks again under its lock; that one is the gate.
+  if (
+    !input.visitor.trusted &&
+    (await countHandRunsSince(
+      input.visitor.hash,
+      new Date(Date.now() - 3_600_000),
+    )) >= LIMITS.handRunsPerVisitorPerHour
+  )
+    return {
+      error: `That's ${LIMITS.handRunsPerVisitorPerHour} in the last hour. Try again later.`,
+    };
   let state = boot(task.fixture, HAND_EPOCH);
   const screens = new Set<ScreenCode>([state.screen]);
   let clock = 0;

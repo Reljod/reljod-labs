@@ -21,6 +21,8 @@ const OPEN_MS = 280_000;
 /** Polls a Run seen over waits for its own `end` before the stream writes one. */
 const OVER_GRACE_POLLS = 3;
 const PAGE = 500;
+/** With no new events, the Run's row is read on every this many polls (about 2 s). */
+const ROW_EVERY = 4;
 
 const wait = (ms: number, signal: AbortSignal) =>
   new Promise<void>((resolve) => {
@@ -60,6 +62,7 @@ export async function GET(
       const send = (event: RunEvent) =>
         controller.enqueue(encoder.encode(`${JSON.stringify(event)}\n`));
       let overPolls = 0;
+      let emptyPolls = 0;
       try {
         while (!signal.aborted && Date.now() - opened < OPEN_MS) {
           const page = await eventsAfter(run.id, readFrom(cursor), PAGE);
@@ -73,7 +76,11 @@ export async function GET(
             }
           }
           if (page.length === PAGE) continue;
-          if (taken.fresh.length === 0) {
+          if (taken.fresh.length > 0) emptyPolls = 0;
+          else emptyPolls += 1;
+          // A quiet stream (a Run waiting for a person) reads the row only
+          // every few polls, not twice a second for every viewer.
+          if (taken.fresh.length === 0 && emptyPolls % ROW_EVERY === 0) {
             // A Run that is over but never wrote `end` (its workflow died) stops here.
             const latest = await getRunRow(run.id);
             if (!latest || isOver(latest.status)) {

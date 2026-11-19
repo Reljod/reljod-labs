@@ -1,4 +1,5 @@
 import { isValidContainer, normaliseContainer } from "./iso6346";
+import { LIMITS } from "./limits";
 
 /**
  * A Manifest: the cargo list a Task comes with, as text. CSV as the samples
@@ -26,7 +27,8 @@ export type ParsedManifest = {
   problems: string[];
 };
 
-export const MANIFEST_MAX_ROWS = 60;
+/** The cap lives in LIMITS with the demo's others; this name is what the parser and its tests read. */
+export const MANIFEST_MAX_ROWS = LIMITS.manifestRows;
 
 /** container, iso_type, seal, gross_kg, pol, consignee, haz, goods. */
 const COLUMNS = 8;

@@ -155,6 +155,11 @@ describe("the Screen sandbox", () => {
     mocks.get.mockResolvedValueOnce(stale).mockResolvedValueOnce(stale);
     mocks.create.mockResolvedValueOnce(rebuilt);
     await boot();
+    // An old base found on the way is first given the bounded settings.
+    expect(stale.update).toHaveBeenCalledWith({
+      snapshotExpiration: BASE_OPTIONS.snapshotExpiration,
+      keepLastSnapshots: { count: 1 },
+    });
     expect(stale.delete).toHaveBeenCalledWith({ deleteOrphanSnapshots: true });
     expect(mocks.create).toHaveBeenCalledTimes(1);
     expect(mocks.fork).toHaveBeenCalledTimes(3);

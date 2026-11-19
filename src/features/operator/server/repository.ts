@@ -320,6 +320,15 @@ export async function createRun(input: {
   });
 }
 
+/** A visitor's hand attempts since a time: the cheap check before a replay. */
+export async function countHandRunsSince(visitorHash: string, since: Date) {
+  const [{ count }] = await sql()<{ count: number }[]>`
+    select count(*)::int as count from operator.runs
+    where visitor_hash = ${visitorHash} and driver = 'hand'
+      and started_at > ${since}`;
+  return count;
+}
+
 export async function ownedRun(
   owner: Owner,
   runId: string,
@@ -536,6 +545,44 @@ export async function approvalRow(
     select id, run_id, fingerprint, pending, status, hook_token
     from operator.approvals where id = ${approvalId} and run_id = ${runId}`;
   return row ?? null;
+}
+
+/**
+ * How long a Run has waited for people so far: the time from each Approval
+ * opening to its decision, or to now for one still pending. A pause is the
+ * harness's wait, not the driver's, so it is not counted against the Run's
+ * time cap (the workflow does the same with its own clock).
+ */
+export async function pausedMsOf(runId: string): Promise<number> {
+  const [row] = await sql()<{ ms: number | null }[]>`
+    select coalesce(sum(
+      extract(epoch from (coalesce(decided_at, now()) - created_at)) * 1000
+    ), 0)::float8 as ms
+    from operator.approvals where run_id = ${runId}`;
+  return Math.max(0, Math.round(row?.ms ?? 0));
+}
+
+/** How long one client call may hold its Run: longer than the slowest call (`run_code`, then the checks). */
+export const CLIENT_CALL_LEASE_SECONDS = 120;
+
+/**
+ * Claims a client-driven Run for one MCP call. False when another call on
+ * the same Run is still going (or the Run is not running): the caller must
+ * not act. The claim is a lease, so a call whose function died frees it.
+ */
+export async function claimClientCall(runId: string): Promise<boolean> {
+  const rows = await sql()`
+    update operator.runs
+    set client_busy_until = now() + make_interval(secs => ${CLIENT_CALL_LEASE_SECONDS})
+    where id = ${runId} and driver = 'client' and status = 'running'
+      and (client_busy_until is null or client_busy_until < now())
+    returning id`;
+  return rows.length > 0;
+}
+
+/** Frees a Run a client call claimed. Whatever the Run's status: a call that ended it frees it too. */
+export async function releaseClientCall(runId: string) {
+  await sql()`update operator.runs set client_busy_until = null where id = ${runId}`;
 }
 
 /** Fingerprints a person approved in a Run, for the checks at the end. */

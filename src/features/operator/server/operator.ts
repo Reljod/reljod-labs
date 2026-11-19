@@ -13,7 +13,7 @@ import {
   type ScreenAction,
   screenActionSchema,
 } from "../domain/actions";
-import { estimateCost } from "../domain/contract";
+import { DEFAULT_MODEL, estimateCost } from "../domain/contract";
 import { LIMITS } from "../domain/limits";
 import { rulebookText } from "../domain/rules";
 import { sampleTask } from "../domain/tasks";
@@ -421,7 +421,7 @@ export async function operatorTurn(
   const status = await runStatus(ctx.runId);
   if (status !== "running") return { kind: "over" };
   if (ctx.stubbed) return scriptedTurn(ctx, turn);
-  const model = ctx.model ?? "anthropic/claude-sonnet-5.5";
+  const model = ctx.model ?? DEFAULT_MODEL;
   const started = Date.now();
   const result = await generateText({
     model: gateway()(model),
