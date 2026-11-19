@@ -263,12 +263,15 @@ export async function triageRequest(
     return { proceed: false, note: refusal.message };
   }
   // Open requests of every Owner: the capability is the bank's, not one Owner's.
+  // The e2e suite's dry-run requests are never filed, so they shadow no one else's.
+  const hidden = owner !== "e2e" && dryRun("e2e") ? "e2e" : null;
   const open = await db<
     { id: string; title: string; issueNumber: number | null }[]
   >`
     select id, coalesce(triage ->> 'title', title) as title, issue_number
     from bank.growth_requests
     where id <> ${row.id} and status in ('triaged', 'issue', 'pr', 'merged', 'live')
+      and (${hidden}::text is null or owner <> ${hidden})
     order by created_at desc limit 200`;
   const duplicate = findDuplicate(row.title, open);
   if (duplicate) {
@@ -351,7 +354,8 @@ export async function triageRequest(
 
 // The issue --------------------------------------------------------------------
 
-export type FileResult = { filed: boolean; note: string };
+/** `waiting`: not filed yet, but it will be once a token is set or the daily cap frees up. */
+export type FileResult = { filed: boolean; note: string; waiting?: boolean };
 
 /** Files the triaged request as a GitHub issue, once. Without a token it waits as "triaged". */
 export async function fileIssue(
@@ -378,7 +382,11 @@ export async function fileIssue(
       "triaged",
       "Triaged, waiting for a token: this server has no BANK_GITHUB_TOKEN to file the issue with.",
     );
-    return { filed: false, note: "Triaged, waiting for a token" };
+    return {
+      filed: false,
+      note: "Triaged, waiting for a token",
+      waiting: true,
+    };
   }
   const db = sql();
   const [today] = await db<{ count: number }[]>`
@@ -390,7 +398,7 @@ export async function fileIssue(
       "triaged",
       `Triaged. The bank files at most ${LIMITS.growthIssuesPerDay} issues a day; it will be filed tomorrow.`,
     );
-    return { filed: false, note: "Daily issue cap reached" };
+    return { filed: false, note: "Daily issue cap reached", waiting: true };
   }
   const spec: GrowthSpec = {
     kind: row.kind,

@@ -794,22 +794,24 @@ async function matureTerms(ctx: Ctx, date: BankDate): Promise<string> {
     // A closed payout account cannot take the money: the deposit waits.
     if (payout.status === "closed") continue;
     const interest = termInterest(term.balance, term.rateBps, term.termMonths);
-    await post(
-      tx,
-      owner,
-      null,
-      "interest_paid",
-      `Term deposit interest, ${term.number}`,
-      [
-        {
-          account: await gl(tx, owner, GL.interestExpense),
-          dir: "D",
-          amount: interest,
-        },
-        { account: term.id, dir: "C", amount: interest },
-      ],
-      { entryDate: date },
-    );
+    // No interest (a 0 rate, or a tiny deposit): an entry of zeros would not balance.
+    if (interest > 0)
+      await post(
+        tx,
+        owner,
+        null,
+        "interest_paid",
+        `Term deposit interest, ${term.number}`,
+        [
+          {
+            account: await gl(tx, owner, GL.interestExpense),
+            dir: "D",
+            amount: interest,
+          },
+          { account: term.id, dir: "C", amount: interest },
+        ],
+        { entryDate: date },
+      );
     await post(
       tx,
       owner,

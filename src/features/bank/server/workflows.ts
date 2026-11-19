@@ -422,7 +422,12 @@ export async function bankGrow(message: Message, requestId: string) {
       await finish(message, id, "completed", triaged.note);
       return triaged;
     }
-    const filed = await issue(message.owner, id, requestId);
+    let filed = await issue(message.owner, id, requestId);
+    // No token yet, or the daily issue cap: try again once a day for a week.
+    for (let day = 0; !filed.filed && filed.waiting && day < 7; day += 1) {
+      await sleep(new Date(Date.now() + 86_400_000));
+      filed = await issue(message.owner, id, requestId);
+    }
     if (!filed.filed) {
       await finish(message, id, "completed", filed.note);
       return filed;

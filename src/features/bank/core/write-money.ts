@@ -653,6 +653,16 @@ export const removePayee: WriteHandler<CommandInput<"remove_payee">> = {
 export const createStandingOrder: WriteHandler<
   CommandInput<"create_standing_order">
 > = {
+  // Scheduled runs skip the Approval check, so a large order is approved when it is made.
+  async gate(ctx, input) {
+    const threshold = num(ctx.book, "approval.threshold", "paymentsFrom");
+    return input.amount >= threshold
+      ? {
+          reason: `A scheduled payment of ${formatMoney(threshold)} or more needs a supervisor who did not make it.`,
+          amount: input.amount,
+        }
+      : null;
+  },
   async describe(ctx, input) {
     const from = await accountById(ctx.tx, ctx.owner, input.fromAccountId);
     const to = input.payeeId
