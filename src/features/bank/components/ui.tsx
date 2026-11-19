@@ -238,7 +238,10 @@ export function RoleBadge({
   className?: string;
 }) {
   return (
-    <Badge tone={role === "supervisor" ? "ink" : "neutral"} className={className}>
+    <Badge
+      tone={role === "supervisor" ? "ink" : "neutral"}
+      className={className}
+    >
       {ROLE_LABEL[role]}
     </Badge>
   );
@@ -259,7 +262,9 @@ export function Initials({
       aria-hidden="true"
       className={cx(
         "inline-flex size-7 shrink-0 items-center justify-center rounded-sm border-2 border-ink font-mono text-[0.65rem] font-bold",
-        role === "supervisor" ? "bg-ink text-paper" : "bg-morning-haze text-ink",
+        role === "supervisor"
+          ? "bg-ink text-paper"
+          : "bg-morning-haze text-ink",
         className,
       )}
     >

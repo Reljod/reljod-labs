@@ -34,7 +34,11 @@ export async function noteRun(input: {
   status?: "running" | "sleeping" | "waiting";
   wakeAt?: string | null;
 }): Promise<void> {
-  const line = { name: input.step, at: new Date().toISOString(), note: input.note.slice(0, 240) };
+  const line = {
+    name: input.step,
+    at: new Date().toISOString(),
+    note: input.note.slice(0, 240),
+  };
   await sql()`
     update bank.workflow_runs set
       steps = (case when jsonb_array_length(steps) >= 60 then steps - 0 else steps end) || ${sql().json(line)}::jsonb,

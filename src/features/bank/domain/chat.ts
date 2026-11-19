@@ -8,7 +8,12 @@ export type ChatEvent =
   | { type: "session"; session: SessionSummary }
   | { type: "text.delta"; text: string }
   | { type: "reasoning.delta"; text: string }
-  | { type: "tool.started"; id: string; name: string; args: Record<string, unknown> }
+  | {
+      type: "tool.started";
+      id: string;
+      name: string;
+      args: Record<string, unknown>;
+    }
   | {
       type: "tool.finished";
       id: string;
@@ -18,7 +23,13 @@ export type ChatEvent =
       /** The tool's structured result, for a rich card. Dropped when it is too big. */
       data: unknown | null;
     }
-  | { type: "usage"; model: string; inputTokens: number; outputTokens: number; costUsd: number | null }
+  | {
+      type: "usage";
+      model: string;
+      inputTokens: number;
+      outputTokens: number;
+      costUsd: number | null;
+    }
   | { type: "error"; message: string }
   | { type: "done"; messageId: string };
 
@@ -43,7 +54,12 @@ export type MessagePart =
       summary: string;
       data: unknown | null;
     }
-  | { type: "growth"; requestId: string; prNumber: number | null; prUrl: string | null };
+  | {
+      type: "growth";
+      requestId: string;
+      prNumber: number | null;
+      prUrl: string | null;
+    };
 
 export type MessageView = {
   id: string;
@@ -100,7 +116,9 @@ export function toolData(output: unknown): unknown | null {
 export function toolSummary(name: string, output: unknown): string {
   const out = output as ToolOutput | null;
   if (out?.isError) return (out.content?.[0]?.text ?? "Refused").slice(0, 240);
-  const data = out?.structuredContent as { message?: unknown; status?: unknown } | undefined;
+  const data = out?.structuredContent as
+    | { message?: unknown; status?: unknown }
+    | undefined;
   if (typeof data?.message === "string") return data.message.slice(0, 240);
   return commandDef(name)?.title ?? name;
 }
@@ -108,10 +126,14 @@ export function toolSummary(name: string, output: unknown): string {
 /** The events of a finished turn, as the parts saved with the Teller's message. */
 export function partsOf(events: ChatEvent[]): MessagePart[] {
   const parts: MessagePart[] = [];
-  const started = new Map<string, Extract<ChatEvent, { type: "tool.started" }>>();
+  const started = new Map<
+    string,
+    Extract<ChatEvent, { type: "tool.started" }>
+  >();
   let reasoning = "";
   const flush = () => {
-    if (reasoning.trim()) parts.push({ type: "reasoning", text: reasoning.trim().slice(0, 4_000) });
+    if (reasoning.trim())
+      parts.push({ type: "reasoning", text: reasoning.trim().slice(0, 4_000) });
     reasoning = "";
   };
   for (const event of events) {
@@ -145,10 +167,18 @@ export function historyOf(
   let chars = 0;
   for (let index = messages.length - 1; index >= 0; index -= 1) {
     const message = messages[index];
-    if (!message || message.role === "system" || !message.content.trim()) continue;
-    if (kept.length >= HISTORY.messages || chars + message.content.length > HISTORY.chars) break;
+    if (!message || message.role === "system" || !message.content.trim())
+      continue;
+    if (
+      kept.length >= HISTORY.messages ||
+      chars + message.content.length > HISTORY.chars
+    )
+      break;
     chars += message.content.length;
-    kept.unshift({ role: message.role === "person" ? "user" : "assistant", content: message.content });
+    kept.unshift({
+      role: message.role === "person" ? "user" : "assistant",
+      content: message.content,
+    });
   }
   while (kept[0]?.role === "assistant") kept.shift();
   return kept;
@@ -157,7 +187,9 @@ export function historyOf(
 /** A title for a Session from its first message. */
 export function titleFrom(text: string): string {
   const line = text.replace(/\s+/g, " ").trim();
-  return line.length > 48 ? `${line.slice(0, 47)}…` : line || "New conversation";
+  return line.length > 48
+    ? `${line.slice(0, 47)}…`
+    : line || "New conversation";
 }
 
 export type SkillIndexEntry = { id: string; name: string; description: string };
@@ -198,7 +230,8 @@ export function instructionsFor(brief: TellerBrief): string {
       : "No customer is open in the app.",
     "Customers of this bank:",
     ...brief.customers.map(
-      (customer) => `- ${customer.name} (${customer.number}, identity ${customer.kycStatus}): customerId ${customer.id}`,
+      (customer) =>
+        `- ${customer.name} (${customer.number}, identity ${customer.kycStatus}): customerId ${customer.id}`,
     ),
     "",
     "Skills (load one with `load_skill` before a task it describes):",
@@ -208,7 +241,8 @@ export function instructionsFor(brief: TellerBrief): string {
           "",
           "Requests you made in this conversation that needed the person's confirmation:",
           ...brief.confirmations.map(
-            (item) => `- ${item.summary}: ${item.status}${item.result ? ` (${item.result})` : ""}`,
+            (item) =>
+              `- ${item.summary}: ${item.status}${item.result ? ` (${item.result})` : ""}`,
           ),
         ]
       : []),
@@ -216,11 +250,15 @@ export function instructionsFor(brief: TellerBrief): string {
 }
 
 /** The e2e suite's turn: which one tool to call for a message, with no model. */
-export function stubPlan(text: string): { name: CommandName; needs: "none" | "transfer" } | null {
-  if (/\btransfer\b/i.test(text)) return { name: "transfer", needs: "transfer" };
+export function stubPlan(
+  text: string,
+): { name: CommandName; needs: "none" | "transfer" } | null {
+  if (/\btransfer\b/i.test(text))
+    return { name: "transfer", needs: "transfer" };
   if (/\b(wish|feature|cannot|can't|export|goals?|bug)\b/i.test(text)) {
     return { name: "raise_request", needs: "none" };
   }
-  if (/\bcustomers?\b/i.test(text)) return { name: "list_customers", needs: "none" };
+  if (/\bcustomers?\b/i.test(text))
+    return { name: "list_customers", needs: "none" };
   return { name: "get_overview", needs: "none" };
 }

@@ -18,7 +18,8 @@ export async function GET(
   try {
     const context = await requireStaff();
     const { name } = await params;
-    if (commandDef(name)?.kind !== "read") throw new InvalidError("There is no such read.");
+    if (commandDef(name)?.kind !== "read")
+      throw new InvalidError("There is no such read.");
     const raw = new URL(request.url).searchParams.get("input");
     let input: unknown = {};
     if (raw) {

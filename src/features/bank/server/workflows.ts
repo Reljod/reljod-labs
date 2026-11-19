@@ -34,11 +34,19 @@ const MIN_SLEEP_MS = 3_000;
 const MAX_SLEEP_MS = 6 * 60 * 60_000;
 
 function sleepUntil(wakeAt: string): Date {
-  const wait = Math.min(Math.max(Date.parse(wakeAt) - Date.now(), MIN_SLEEP_MS), MAX_SLEEP_MS);
+  const wait = Math.min(
+    Math.max(Date.parse(wakeAt) - Date.now(), MIN_SLEEP_MS),
+    MAX_SLEEP_MS,
+  );
   return new Date(Date.now() + wait);
 }
 
-async function begin(message: Message, kind: string, subject: string, runId: string) {
+async function begin(
+  message: Message,
+  kind: string,
+  subject: string,
+  runId: string,
+) {
   "use step";
   return openRun({ ...message, kind, subject, runId });
 }
@@ -48,9 +56,20 @@ async function note(owner: Owner, id: string, step: string, text: string) {
   await noteRun({ owner, id, step, note: text });
 }
 
-async function finish(message: Message, id: string, status: "completed" | "failed", detail: string) {
+async function finish(
+  message: Message,
+  id: string,
+  status: "completed" | "failed",
+  detail: string,
+) {
   "use step";
-  await closeRun({ owner: message.owner, id, outboxId: message.outboxId, status, detail });
+  await closeRun({
+    owner: message.owner,
+    id,
+    outboxId: message.outboxId,
+    status,
+    detail,
+  });
 }
 
 const message_ = (error: unknown) =>
@@ -65,7 +84,10 @@ async function lookAtPayment(owner: Owner, id: string, paymentId: string) {
     owner,
     id,
     step: result.state === "waiting" ? "wait for settlement" : "settle",
-    note: result.state === "waiting" ? `In clearing; settles on ${result.settlesOn}` : result.note,
+    note:
+      result.state === "waiting"
+        ? `In clearing; settles on ${result.settlesOn}`
+        : result.note,
     status: result.state === "waiting" ? "sleeping" : "running",
     wakeAt: result.state === "waiting" ? result.wakeAt : null,
   });
@@ -103,7 +125,10 @@ async function lookAtAlert(owner: Owner, id: string, alertId: string) {
     owner,
     id,
     step: result.state === "waiting" ? "wait for a decision" : "conclude",
-    note: result.state === "waiting" ? "Held for review; waiting for compliance or the deadline" : result.note,
+    note:
+      result.state === "waiting"
+        ? "Held for review; waiting for compliance or the deadline"
+        : result.note,
     status: result.state === "waiting" ? "waiting" : "running",
     wakeAt: result.state === "waiting" ? result.wakeAt : null,
   });
@@ -136,12 +161,21 @@ export async function bankReviewAlert(message: Message, alertId: string) {
 async function payOutLoan(owner: Owner, id: string, loanId: string) {
   "use step";
   const result = await sql().begin(async (tx) => {
-    const [clock] = await tx<{ today: BankDate }[]>`select bank.today(${owner}) as today`;
-    const paid = await disburseLoan(tx as never, owner, loanId, clock?.today as BankDate);
+    const [clock] = await tx<
+      { today: BankDate }[]
+    >`select bank.today(${owner}) as today`;
+    const paid = await disburseLoan(
+      tx as never,
+      owner,
+      loanId,
+      clock?.today as BankDate,
+    );
     await notify(tx as never, owner, {
       customerId: paid.customerId,
       kind: "loan",
-      title: paid.disbursed ? "Your loan was paid out" : "Your loan could not be paid out",
+      title: paid.disbursed
+        ? "Your loan was paid out"
+        : "Your loan could not be paid out",
       body: paid.disbursed
         ? `${formatMoney(paid.principal)} for loan ${paid.number} is in your account. Your repayment schedule is ready.`
         : `Loan ${paid.number}: ${paid.reason}.`,
@@ -167,7 +201,14 @@ export async function bankDisburseLoan(message: Message, loanId: string) {
   const id = await begin(message, "loan.disburse", loanId, workflowRunId);
   try {
     const result = await payOutLoan(message.owner, id, loanId);
-    await finish(message, id, "completed", result.disbursed ? `Loan ${result.number} disbursed` : `Not disbursed: ${result.reason}`);
+    await finish(
+      message,
+      id,
+      "completed",
+      result.disbursed
+        ? `Loan ${result.number} disbursed`
+        : `Not disbursed: ${result.reason}`,
+    );
     return result;
   } catch (error) {
     await finish(message, id, "failed", message_(error));
@@ -177,20 +218,52 @@ export async function bankDisburseLoan(message: Message, loanId: string) {
 
 // Statements ------------------------------------------------------------------------
 
-async function buildStatement(owner: Owner, id: string, accountId: string, start: BankDate, end: BankDate) {
+async function buildStatement(
+  owner: Owner,
+  id: string,
+  accountId: string,
+  start: BankDate,
+  end: BankDate,
+) {
   "use step";
   const built = await generateStatement(sql(), owner, accountId, start, end);
-  await noteRun({ owner, id, step: "generate", note: `${built.lines} lines from the ledger, ${start} to ${end}` });
+  await noteRun({
+    owner,
+    id,
+    step: "generate",
+    note: `${built.lines} lines from the ledger, ${start} to ${end}`,
+  });
   return built;
 }
 
-export async function bankGenerateStatement(message: Message, accountId: string, start: BankDate, end: BankDate) {
+export async function bankGenerateStatement(
+  message: Message,
+  accountId: string,
+  start: BankDate,
+  end: BankDate,
+) {
   "use workflow";
   const { workflowRunId } = getWorkflowMetadata();
-  const id = await begin(message, "statement.generate", `${accountId} ${start}`, workflowRunId);
+  const id = await begin(
+    message,
+    "statement.generate",
+    `${accountId} ${start}`,
+    workflowRunId,
+  );
   try {
-    const built = await buildStatement(message.owner, id, accountId, start, end);
-    await finish(message, id, "completed", `Statement ready (${built.lines} lines)`);
+    const built = await buildStatement(
+      message.owner,
+      id,
+      accountId,
+      start,
+      end,
+    );
+    await finish(
+      message,
+      id,
+      "completed",
+      `Statement ready (${built.lines} lines)`,
+    );
     return built;
   } catch (error) {
     await finish(message, id, "failed", message_(error));
@@ -208,8 +281,14 @@ async function datesOwed(owner: Owner, through: BankDate) {
 async function endOfDay(owner: Owner, id: string, date: BankDate) {
   "use step";
   const lines: string[] = [];
-  for (const step of EOD_STEPS) lines.push(await runEodStep(sql(), owner, date, step));
-  await noteRun({ owner, id, step: `end-of-day ${date}`, note: lines.filter((line) => !/^0 |Not a month/.test(line)).join("; ") });
+  for (const step of EOD_STEPS)
+    lines.push(await runEodStep(sql(), owner, date, step));
+  await noteRun({
+    owner,
+    id,
+    step: `end-of-day ${date}`,
+    note: lines.filter((line) => !/^0 |Not a month/.test(line)).join("; "),
+  });
   return lines;
 }
 
@@ -222,11 +301,23 @@ async function endOfDay(owner: Owner, id: string, date: BankDate) {
 export async function bankEndOfDay(message: Message, through: BankDate) {
   "use workflow";
   const { workflowRunId } = getWorkflowMetadata();
-  const id = await begin(message, "end-of-day", `through ${through}`, workflowRunId);
+  const id = await begin(
+    message,
+    "end-of-day",
+    `through ${through}`,
+    workflowRunId,
+  );
   try {
     const dates = await datesOwed(message.owner, through);
     for (const date of dates) await endOfDay(message.owner, id, date);
-    await finish(message, id, "completed", dates.length > 0 ? `${dates.length} day(s) closed, through ${dates.at(-1)}` : "Nothing was owed");
+    await finish(
+      message,
+      id,
+      "completed",
+      dates.length > 0
+        ? `${dates.length} day(s) closed, through ${dates.at(-1)}`
+        : "Nothing was owed",
+    );
     return { days: dates.length };
   } catch (error) {
     await finish(message, id, "failed", message_(error));
@@ -236,7 +327,11 @@ export async function bankEndOfDay(message: Message, through: BankDate) {
 
 // Notification fan-out --------------------------------------------------------------
 
-async function deliver(owner: Owner, notificationId: string, channel: "inbox" | "email" | "push") {
+async function deliver(
+  owner: Owner,
+  notificationId: string,
+  channel: "inbox" | "email" | "push",
+) {
   "use step";
   // The email and push channels are simulated: delivery is recording it.
   await sql()`
@@ -258,7 +353,12 @@ export async function bankNotify(message: Message, notificationId: string) {
       deliver(message.owner, notificationId, "email"),
       deliver(message.owner, notificationId, "push"),
     ]);
-    await note(message.owner, id, "fan out", `Delivered on ${channels.join(", ")}`);
+    await note(
+      message.owner,
+      id,
+      "fan out",
+      `Delivered on ${channels.join(", ")}`,
+    );
     await finish(message, id, "completed", "Delivered on 3 channels");
   } catch (error) {
     await finish(message, id, "failed", message_(error));
@@ -293,7 +393,9 @@ async function watch(owner: Owner, id: string, requestId: string) {
     step: "watch GitHub",
     note: result.note,
     status: result.done ? "running" : "sleeping",
-    wakeAt: result.done ? null : new Date(Date.now() + result.againInMs).toISOString(),
+    wakeAt: result.done
+      ? null
+      : new Date(Date.now() + result.againInMs).toISOString(),
   });
   return result;
 }
@@ -329,7 +431,9 @@ export async function bankGrow(message: Message, requestId: string) {
     for (let look = 0; look < 400; look += 1) {
       const state = await watch(message.owner, id, requestId);
       if (state.done) {
-        const told = state.live ? await tell(message.owner, id, requestId) : state.note;
+        const told = state.live
+          ? await tell(message.owner, id, requestId)
+          : state.note;
         await finish(message, id, "completed", told);
         return state;
       }

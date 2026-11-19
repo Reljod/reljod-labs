@@ -20,7 +20,8 @@ export const env = {
   /** The Teller. */
   chatModel: () => process.env.BANK_MODEL ?? "anthropic/claude-sonnet-5.5",
   /** The one model call of Growth triage. */
-  triageModel: () => process.env.BANK_TRIAGE_MODEL ?? "anthropic/claude-haiku-5.5",
+  triageModel: () =>
+    process.env.BANK_TRIAGE_MODEL ?? "anthropic/claude-haiku-5.5",
   /**
    * A fine-grained GitHub token with Issues read/write (and Pull requests
    * read) on the one repository. Without it a Growth request stops at

@@ -4,12 +4,18 @@ import { Suspense } from "react";
 import { projects } from "@/content/projects";
 import { ACCESS_PATH } from "@/features/access/constants";
 import { AccessDeniedError } from "@/features/access/server/gate";
-import { isUuid } from "@/features/bank/core/db";
 import { BankApp } from "@/features/bank/components/app";
 import { BankSkeleton } from "@/features/bank/components/skeleton";
-import { BankProvider, type FirstView } from "@/features/bank/components/use-bank";
+import {
+  BankProvider,
+  type FirstView,
+} from "@/features/bank/components/use-bank";
+import { isUuid } from "@/features/bank/core/db";
 import { DEMO_PATH, isTab } from "@/features/bank/domain/api";
-import type { CustomerSummary, OverviewView } from "@/features/bank/domain/views";
+import type {
+  CustomerSummary,
+  OverviewView,
+} from "@/features/bank/domain/views";
 import { read } from "@/features/bank/server/bank";
 import { actorOf, requireStaff } from "@/features/bank/server/context";
 import "@/features/bank/bank.css";
@@ -60,7 +66,9 @@ async function App({ searchParams }: { searchParams: Props["searchParams"] }) {
   const actor = actorOf(context);
   const [overview, customers] = await Promise.all([
     read(actor, "get_overview", {}) as Promise<OverviewView>,
-    read(actor, "list_customers", {}) as Promise<{ customers: CustomerSummary[] }>,
+    read(actor, "list_customers", {}) as Promise<{
+      customers: CustomerSummary[];
+    }>,
   ]);
   const tab = param("tab");
   const customer = param("customer");
@@ -72,9 +80,12 @@ async function App({ searchParams }: { searchParams: Props["searchParams"] }) {
     activeStaffId: context.staff.id,
     tab: isTab(tab) ? tab : "bank",
     customerId:
-      (isUuid(customer) && customers.customers.some((item) => item.id === customer)
+      (isUuid(customer) &&
+      customers.customers.some((item) => item.id === customer)
         ? customer
-        : null) ?? customers.customers[0]?.id ?? null,
+        : null) ??
+      customers.customers[0]?.id ??
+      null,
     sessionId: isUuid(session) ? session : null,
   };
   return (

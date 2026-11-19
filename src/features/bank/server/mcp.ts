@@ -16,10 +16,14 @@ import { refusalOf } from "./respond";
  * request: those commands are not in MCP_COMMANDS.
  */
 
-type ToolContext = { http?: { authInfo?: { extra?: Record<string, unknown> } } };
+type ToolContext = {
+  http?: { authInfo?: { extra?: Record<string, unknown> } };
+};
 
 function callerFrom(ctx: unknown): Caller {
-  const caller = (ctx as ToolContext).http?.authInfo?.extra?.caller as Caller | undefined;
+  const caller = (ctx as ToolContext).http?.authInfo?.extra?.caller as
+    | Caller
+    | undefined;
   if (!caller) throw new Error("Not authorised");
   return caller;
 }
@@ -53,7 +57,9 @@ function toolSchema(def: CommandDef) {
           .min(8)
           .max(120)
           .optional()
-          .describe("Optional. Send the same key to retry safely: the command runs once."),
+          .describe(
+            "Optional. Send the same key to retry safely: the command runs once.",
+          ),
       });
 }
 
@@ -70,7 +76,8 @@ export function registerBankTools(server: McpServer) {
       async (args: Record<string, unknown>, ctx: unknown) => {
         const caller = callerFrom(ctx);
         try {
-          if (def.kind === "read") return result(await read(caller.actor, def.name, args));
+          if (def.kind === "read")
+            return result(await read(caller.actor, def.name, args));
           const { idempotencyKey, ...input } = args;
           return result(
             await write(

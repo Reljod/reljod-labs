@@ -15,12 +15,21 @@ import { takeRate, type Visitor } from "./rate";
  */
 
 /** Commands after which a sleeping Workflow should look again at once. */
-const WAKES = new Set(["advance_clock", "decide_alert", "decide_approval", "confirm_request"]);
+const WAKES = new Set([
+  "advance_clock",
+  "decide_alert",
+  "decide_approval",
+  "confirm_request",
+]);
 
 /** Reads that also nudge the outbox, so Operations never shows a stuck queue. */
 const KICKS = new Set(["get_operations", "get_overview"]);
 
-export async function read(actor: Actor, name: string, input: unknown): Promise<unknown> {
+export async function read(
+  actor: Actor,
+  name: string,
+  input: unknown,
+): Promise<unknown> {
   if (name === "list_growth") {
     // Growth reads GitHub as well as the database; the Role check is the engine's.
     await runRead(sql(), actor, "get_overview", {});

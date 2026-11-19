@@ -62,7 +62,9 @@ if (process.argv[1]?.endsWith("bank-growth-guard.mjs")) {
   }
   // 3000 is GitHub's cap on listed files: a larger pull request cannot be checked.
   if (files.length >= 3000) {
-    console.error("Too many files to check: a bank:growth pull request must be small.");
+    console.error(
+      "Too many files to check: a bank:growth pull request must be small.",
+    );
     process.exit(1);
   }
   const outside = outsideAllowlist(files);
@@ -73,5 +75,7 @@ if (process.argv[1]?.endsWith("bank-growth-guard.mjs")) {
     for (const item of outside) console.error(`  ${item.path}  (${item.why})`);
     process.exit(1);
   }
-  console.log(`bank:growth guard: ${files.length} file(s), all inside the allowlist.`);
+  console.log(
+    `bank:growth guard: ${files.length} file(s), all inside the allowlist.`,
+  );
 }

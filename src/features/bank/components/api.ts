@@ -33,12 +33,17 @@ async function refusalOf(response: Response): Promise<ApiError> {
     if (typeof body?.error === "string") message = body.error;
   } catch {}
   return new ApiError(
-    message && message.length < 300 ? message : response.statusText || `Request failed (${response.status})`,
+    message && message.length < 300
+      ? message
+      : response.statusText || `Request failed (${response.status})`,
     response.status,
   );
 }
 
-export async function getJson<T>(path: string, init?: { signal?: AbortSignal }): Promise<T> {
+export async function getJson<T>(
+  path: string,
+  init?: { signal?: AbortSignal },
+): Promise<T> {
   const response = await fetch(path, {
     cache: "no-store",
     headers: { accept: "application/json" },

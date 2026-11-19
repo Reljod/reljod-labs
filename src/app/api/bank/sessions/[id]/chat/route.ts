@@ -29,7 +29,8 @@ export async function POST(
     const { id } = await params;
     const body = bodySchema.parse(await request.json().catch(() => ({})));
     const stubbed =
-      context.visitor.trusted && (await headers()).get(CHAT_STUB_HEADER) === "1";
+      context.visitor.trusted &&
+      (await headers()).get(CHAT_STUB_HEADER) === "1";
     turn = await prepareTurn({
       context,
       sessionId: id,

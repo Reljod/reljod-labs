@@ -19,22 +19,32 @@ export async function listSessions(owner: Owner): Promise<SessionSummary[]> {
     order by updated_at desc limit ${LIMITS.sessionsPerBank}`;
 }
 
-export async function ownedSession(owner: Owner, sessionId: string): Promise<SessionSummary> {
+export async function ownedSession(
+  owner: Owner,
+  sessionId: string,
+): Promise<SessionSummary> {
   const db = sql();
   const [session] = isUuid(sessionId)
     ? await db<SessionSummary[]>`
         select ${columns(db)} from bank.sessions where owner = ${owner} and id = ${sessionId}`
     : [];
-  if (!session) throw new NotFoundError("That conversation is not in this bank.");
+  if (!session)
+    throw new NotFoundError("That conversation is not in this bank.");
   return session;
 }
 
-export async function createSession(owner: Owner, staffId: string, customerId: string | null): Promise<SessionSummary> {
+export async function createSession(
+  owner: Owner,
+  staffId: string,
+  customerId: string | null,
+): Promise<SessionSummary> {
   const db = sql();
   const [count] = await db<{ count: number }[]>`
     select count(*)::int as count from bank.sessions where owner = ${owner}`;
   if ((count?.count ?? 0) >= LIMITS.sessionsPerBank) {
-    throw new LimitError(`This bank keeps at most ${LIMITS.sessionsPerBank} conversations. Delete one first.`);
+    throw new LimitError(
+      `This bank keeps at most ${LIMITS.sessionsPerBank} conversations. Delete one first.`,
+    );
   }
   const [session] = await db<SessionSummary[]>`
     insert into bank.sessions (owner, staff_id, customer_id)
@@ -45,7 +55,10 @@ export async function createSession(owner: Owner, staffId: string, customerId: s
   return session;
 }
 
-export async function deleteSession(owner: Owner, sessionId: string): Promise<void> {
+export async function deleteSession(
+  owner: Owner,
+  sessionId: string,
+): Promise<void> {
   await ownedSession(owner, sessionId);
   await sql()`delete from bank.sessions where owner = ${owner} and id = ${sessionId}`;
 }
@@ -65,16 +78,25 @@ export async function setSession(
       updated_at = now()
     where owner = ${owner} and id = ${sessionId}
     returning ${columns(db)}`;
-  if (!session) throw new NotFoundError("That conversation is not in this bank.");
+  if (!session)
+    throw new NotFoundError("That conversation is not in this bank.");
   return session;
 }
 
-export async function listMessages(owner: Owner, sessionId: string): Promise<MessageView[]> {
-  const rows = await sql()<(Omit<MessageView, "costUsd"> & { costUsd: string | null })[]>`
+export async function listMessages(
+  owner: Owner,
+  sessionId: string,
+): Promise<MessageView[]> {
+  const rows = await sql()<
+    (Omit<MessageView, "costUsd"> & { costUsd: string | null })[]
+  >`
     select id, role, content, parts, model, input_tokens, output_tokens, cost_usd, created_at
     from bank.messages where owner = ${owner} and session_id = ${sessionId}
     order by created_at, id limit 400`;
-  return rows.map((row) => ({ ...row, costUsd: row.costUsd === null ? null : Number(row.costUsd) }));
+  return rows.map((row) => ({
+    ...row,
+    costUsd: row.costUsd === null ? null : Number(row.costUsd),
+  }));
 }
 
 export async function appendMessage(input: {

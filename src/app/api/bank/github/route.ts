@@ -9,8 +9,14 @@ import { onGithubEvent, validSignature } from "@/features/bank/server/growth";
  */
 export async function POST(request: Request) {
   const body = await request.text();
-  if (body.length > 1_000_000 || !validSignature(body, request.headers.get("x-hub-signature-256"))) {
-    return new Response("Not found", { status: 404, headers: { "cache-control": "no-store" } });
+  if (
+    body.length > 1_000_000 ||
+    !validSignature(body, request.headers.get("x-hub-signature-256"))
+  ) {
+    return new Response("Not found", {
+      status: 404,
+      headers: { "cache-control": "no-store" },
+    });
   }
   let payload: unknown;
   try {
@@ -20,7 +26,10 @@ export async function POST(request: Request) {
   }
   try {
     const touched = await onGithubEvent(payload);
-    return Response.json({ ok: true, touched }, { headers: { "cache-control": "no-store" } });
+    return Response.json(
+      { ok: true, touched },
+      { headers: { "cache-control": "no-store" } },
+    );
   } catch (error) {
     console.error("[bank] github webhook", error);
     return Response.json({ ok: false }, { status: 500 });

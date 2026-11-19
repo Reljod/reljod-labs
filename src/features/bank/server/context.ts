@@ -33,7 +33,10 @@ export async function listStaff(owner: Owner): Promise<Staff[]> {
 }
 
 async function bankStaff(owner: Owner): Promise<Staff[]> {
-  const [, staff] = await Promise.all([ensureBank(sql(), owner), listStaff(owner)]);
+  const [, staff] = await Promise.all([
+    ensureBank(sql(), owner),
+    listStaff(owner),
+  ]);
   if (staff.length > 0) return staff;
   // A new bank (the read raced its seed), or one purged since: seed and read again.
   forgetBank(owner);
@@ -50,7 +53,11 @@ async function bankStaff(owner: Owner): Promise<Staff[]> {
  */
 export async function requireStaff(): Promise<StaffContext> {
   const { access, owner } = await requireOwner();
-  const [everyone, who, jar] = await Promise.all([bankStaff(owner), visitor(), cookies()]);
+  const [everyone, who, jar] = await Promise.all([
+    bankStaff(owner),
+    visitor(),
+    cookies(),
+  ]);
   const chosen = jar.get(STAFF_COOKIE)?.value;
   const staff =
     (isUuid(chosen) ? everyone.find((member) => member.id === chosen) : null) ??
@@ -78,12 +85,16 @@ export async function switchStaff(staffId: string): Promise<Staff> {
     path: "/",
   });
   if (to.id !== context.staff.id) {
-    await auditIn(sql(), { actor: actorOf({ owner: context.owner, staff: to }) }, {
-      action: "staff.switched",
-      summary: `Signed in as ${to.name} (${to.role}), was ${context.staff.name}`,
-      target: { kind: "staff", id: to.id },
-      detail: { from: context.staff.name, to: to.name },
-    });
+    await auditIn(
+      sql(),
+      { actor: actorOf({ owner: context.owner, staff: to }) },
+      {
+        action: "staff.switched",
+        summary: `Signed in as ${to.name} (${to.role}), was ${context.staff.name}`,
+        target: { kind: "staff", id: to.id },
+        detail: { from: context.staff.name, to: to.name },
+      },
+    );
   }
   return to;
 }

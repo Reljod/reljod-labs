@@ -216,8 +216,15 @@ export const projects: Project[] = [
     sector: "Retail banking",
     summary:
       "A whole retail bank you can run: accounts, payments that clear and settle, cards, loans and fraud holds, all on a double-entry ledger the database itself keeps balanced. Do anything by clicking or by asking the Teller. Ask for a feature it lacks and the bank files the issue, builds it and merges it by itself.",
-    outcome: "Every florin posted twice, and a trial balance that always nets to zero",
-    tags: ["Double-entry ledger", "Durable workflows", "MCP", "Agents", "Self-improving"],
+    outcome:
+      "Every florin posted twice, and a trial balance that always nets to zero",
+    tags: [
+      "Double-entry ledger",
+      "Durable workflows",
+      "MCP",
+      "Agents",
+      "Self-improving",
+    ],
     status: "Live",
     href: "/demos/bank",
     marks: ["New"],

@@ -1,8 +1,14 @@
 import { readdirSync, readFileSync, statSync } from "node:fs";
 import { join } from "node:path";
 import { describe, expect, it, vi } from "vitest";
-import { z } from "zod";
-import { COMMANDS, commandDef, HUMAN_ONLY, isSensitive, MCP_COMMANDS } from "./commands";
+import type { z } from "zod";
+import {
+  COMMANDS,
+  commandDef,
+  HUMAN_ONLY,
+  isSensitive,
+  MCP_COMMANDS,
+} from "./commands";
 import { accountNumber, formatAccountNumber } from "./numbers";
 import { ACTIONS } from "./permissions";
 
@@ -14,10 +20,17 @@ vi.mock("mcp-handler", () => ({
   withMcpAuth: (handler: unknown) => handler,
 }));
 vi.mock("../server/bank", () => ({ read: vi.fn(), write: vi.fn() }));
-vi.mock("../server/mcp-auth", () => ({ callerOf: vi.fn(), verifyBearer: vi.fn() }));
+vi.mock("../server/mcp-auth", () => ({
+  callerOf: vi.fn(),
+  verifyBearer: vi.fn(),
+}));
 vi.mock("../server/respond", () => ({ refusalOf: () => null }));
 
-type Registered = { name: string; inputSchema: z.ZodObject; annotations?: { readOnlyHint?: boolean } };
+type Registered = {
+  name: string;
+  inputSchema: z.ZodObject;
+  annotations?: { readOnlyHint?: boolean };
+};
 
 async function mcpTools(): Promise<Registered[]> {
   const { registerBankTools } = await import("../server/mcp");
@@ -42,8 +55,12 @@ function sources(dir: string): string[] {
 /** The commands the app's own code runs: every `run("x")`, `runCommand("x")`, `useRead("x")` and `readBank("x")`. */
 function commandsTheUiUses(): Map<string, string> {
   const used = new Map<string, string>();
-  const call = /\b(?:run|runCommand|useRead|readBank)(?:<[^()]*>)?\(\s*["'`]([a-z_]+)["'`]/g;
-  for (const file of [...sources("src/features/bank/components"), ...sources("src/app/demos/bank")]) {
+  const call =
+    /\b(?:run|runCommand|useRead|readBank)(?:<[^()]*>)?\(\s*["'`]([a-z_]+)["'`]/g;
+  for (const file of [
+    ...sources("src/features/bank/components"),
+    ...sources("src/app/demos/bank"),
+  ]) {
     for (const match of readFileSync(file, "utf8").matchAll(call)) {
       used.set(match[1] as string, file);
     }
@@ -61,7 +78,10 @@ describe("the UI and the chat are the same bank", () => {
     expect(tools).toEqual(MCP_COMMANDS.map((command) => command.name).sort());
     // No tool gives an Approval or confirms the Teller's own request. If this
     // list grows, it is a decision: say why in the ADR.
-    expect([...HUMAN_ONLY].sort()).toEqual(["confirm_request", "decide_approval"]);
+    expect([...HUMAN_ONLY].sort()).toEqual([
+      "confirm_request",
+      "decide_approval",
+    ]);
     for (const name of HUMAN_ONLY) expect(tools).not.toContain(name);
   });
 
@@ -71,9 +91,15 @@ describe("the UI and the chat are the same bank", () => {
     // The app must actually be built on commands: this is not vacuous.
     expect(used.size).toBeGreaterThan(30);
     for (const [name, file] of used) {
-      expect(commandDef(name), `${file} runs "${name}", which is not a command`).toBeDefined();
+      expect(
+        commandDef(name),
+        `${file} runs "${name}", which is not a command`,
+      ).toBeDefined();
       if (HUMAN_ONLY.includes(name as never)) continue;
-      expect(tools.has(name), `${file} runs "${name}", which has no MCP tool`).toBe(true);
+      expect(
+        tools.has(name),
+        `${file} runs "${name}", which has no MCP tool`,
+      ).toBe(true);
     }
   });
 
@@ -89,9 +115,13 @@ describe("the UI and the chat are the same bank", () => {
     for (const tool of await mcpTools()) {
       const def = commandDef(tool.name);
       if (!def) throw new Error(tool.name);
-      const own = Object.keys((def.input as unknown as z.ZodObject).shape).sort();
+      const own = Object.keys(
+        (def.input as unknown as z.ZodObject).shape,
+      ).sort();
       const offered = Object.keys(tool.inputSchema.shape).sort();
-      expect(offered).toEqual(def.kind === "write" ? [...own, "idempotencyKey"].sort() : own);
+      expect(offered).toEqual(
+        def.kind === "write" ? [...own, "idempotencyKey"].sort() : own,
+      );
       expect(tool.annotations?.readOnlyHint).toBe(def.kind === "read");
     }
   });
@@ -110,9 +140,22 @@ describe("the command list", () => {
 
   it("marks every money-moving and hard-to-undo write sensitive", () => {
     const always = [
-      "transfer", "pay_payee", "create_standing_order", "reverse_payment", "open_term_deposit",
-      "set_account_status", "close_account", "set_overdraft", "decide_kyc", "resolve_dispute",
-      "set_card_limits", "accept_loan", "repay_loan", "decide_alert", "edit_rule", "restore_rule",
+      "transfer",
+      "pay_payee",
+      "create_standing_order",
+      "reverse_payment",
+      "open_term_deposit",
+      "set_account_status",
+      "close_account",
+      "set_overdraft",
+      "decide_kyc",
+      "resolve_dispute",
+      "set_card_limits",
+      "accept_loan",
+      "repay_loan",
+      "decide_alert",
+      "edit_rule",
+      "restore_rule",
     ];
     for (const name of always) {
       const def = commandDef(name);
@@ -131,21 +174,52 @@ describe("the command list", () => {
     const transfer = commandDef("transfer")?.input as z.ZodType;
     const real = accountNumber("current", 1);
     const typo = `${real.slice(0, 9)}${(Number(real[9]) + 1) % 10}`;
-    const base = { fromAccountId: "00000000-0000-4000-8000-000000000001", toAccountNumber: typo, amount: 100 };
+    const base = {
+      fromAccountId: "00000000-0000-4000-8000-000000000001",
+      toAccountNumber: typo,
+      amount: 100,
+    };
     expect(transfer.safeParse(base).success).toBe(false); // bad check digit
     // Typed the way the screen shows it, with spaces.
     const good = { ...base, toAccountNumber: formatAccountNumber(real) };
     const parsed = transfer.safeParse(good);
-    expect(parsed.success && (parsed.data as { toAccountNumber: string }).toAccountNumber).toBe(real);
+    expect(
+      parsed.success &&
+        (parsed.data as { toAccountNumber: string }).toAccountNumber,
+    ).toBe(real);
     for (const amount of [0, -5, 1.5, 1e13, "100", Number.NaN]) {
-      expect(transfer.safeParse({ ...good, amount }).success, String(amount)).toBe(false);
+      expect(
+        transfer.safeParse({ ...good, amount }).success,
+        String(amount),
+      ).toBe(false);
     }
-    expect(transfer.safeParse({ ...good, fromAccountId: "1; drop table" }).success).toBe(false);
+    expect(
+      transfer.safeParse({ ...good, fromAccountId: "1; drop table" }).success,
+    ).toBe(false);
     const order = commandDef("create_standing_order")?.input as z.ZodType;
-    const schedule = { fromAccountId: base.fromAccountId, amount: 100, frequency: "monthly", startOn: "2026-12-01" };
+    const schedule = {
+      fromAccountId: base.fromAccountId,
+      amount: 100,
+      frequency: "monthly",
+      startOn: "2026-12-01",
+    };
     expect(order.safeParse(schedule).success).toBe(false); // neither destination
-    expect(order.safeParse({ ...schedule, toAccountNumber: real, payeeId: base.fromAccountId }).success).toBe(false); // both
-    expect(order.safeParse({ ...schedule, toAccountNumber: real }).success).toBe(true);
-    expect(order.safeParse({ ...schedule, toAccountNumber: real, startOn: "2026-13-01" }).success).toBe(false);
+    expect(
+      order.safeParse({
+        ...schedule,
+        toAccountNumber: real,
+        payeeId: base.fromAccountId,
+      }).success,
+    ).toBe(false); // both
+    expect(
+      order.safeParse({ ...schedule, toAccountNumber: real }).success,
+    ).toBe(true);
+    expect(
+      order.safeParse({
+        ...schedule,
+        toAccountNumber: real,
+        startOn: "2026-13-01",
+      }).success,
+    ).toBe(false);
   });
 });

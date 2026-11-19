@@ -24,20 +24,33 @@ export function json<T>(body: T, init?: { status?: number }): Response {
 }
 
 /** The status and words for an error, or null when it is not one a person may read. */
-export function refusalOf(error: unknown): { status: number; message: string; errors?: unknown } | null {
-  if (error instanceof ForbiddenError) return { status: 403, message: error.message };
-  if (error instanceof NotFoundError) return { status: 404, message: error.message };
-  if (error instanceof StateError) return { status: 409, message: error.message };
-  if (error instanceof LimitError) return { status: 429, message: error.message };
-  if (error instanceof RuleRefusedError || error instanceof InsufficientFundsError) {
+export function refusalOf(
+  error: unknown,
+): { status: number; message: string; errors?: unknown } | null {
+  if (error instanceof ForbiddenError)
+    return { status: 403, message: error.message };
+  if (error instanceof NotFoundError)
+    return { status: 404, message: error.message };
+  if (error instanceof StateError)
+    return { status: 409, message: error.message };
+  if (error instanceof LimitError)
+    return { status: 429, message: error.message };
+  if (
+    error instanceof RuleRefusedError ||
+    error instanceof InsufficientFundsError
+  ) {
     return { status: 422, message: error.message };
   }
   if (error instanceof RuleEditRefusedError) {
     return { status: 400, message: error.message, errors: error.errors };
   }
-  if (error instanceof InvalidError) return { status: 400, message: error.message };
+  if (error instanceof InvalidError)
+    return { status: 400, message: error.message };
   if (error instanceof ZodError) {
-    return { status: 400, message: error.issues[0]?.message ?? "That request doesn't look right." };
+    return {
+      status: 400,
+      message: error.issues[0]?.message ?? "That request doesn't look right.",
+    };
   }
   return null;
 }
@@ -52,7 +65,10 @@ export function failure(error: unknown): Response {
   const refusal = refusalOf(error);
   if (refusal) {
     return json(
-      { error: refusal.message, ...(refusal.errors ? { errors: refusal.errors } : {}) },
+      {
+        error: refusal.message,
+        ...(refusal.errors ? { errors: refusal.errors } : {}),
+      },
       { status: refusal.status },
     );
   }

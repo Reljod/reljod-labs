@@ -3,9 +3,19 @@
  * A Skill is know-how in words. It decides nothing: Rules and the command
  * engine do.
  */
-export type Skill = { id: string; name: string; description: string; body: string };
+export type Skill = {
+  id: string;
+  name: string;
+  description: string;
+  body: string;
+};
 
-const skill = (id: string, name: string, description: string, body: string): Skill => ({
+const skill = (
+  id: string,
+  name: string,
+  description: string,
+  body: string,
+): Skill => ({
   id,
   name,
   description,
@@ -96,4 +106,6 @@ The bank grows itself. A request raised with \`raise_request\` is triaged by the
 ];
 
 export const skillById = (id: string) =>
-  SKILLS.find((item) => item.id === id || item.name.toLowerCase() === id.toLowerCase());
+  SKILLS.find(
+    (item) => item.id === id || item.name.toLowerCase() === id.toLowerCase(),
+  );

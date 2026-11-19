@@ -25,19 +25,23 @@ export const ALLOWED_PREFIXES = [
 ] as const;
 export const ALLOWED_FILES = ["e2e/bank.spec.ts"] as const;
 /** A new bank migration may be added; no migration may be changed or removed. */
-export const ALLOWED_NEW_MIGRATION = /^supabase\/migrations\/\d{14}_[a-z0-9_]*bank[a-z0-9_]*\.sql$/;
+export const ALLOWED_NEW_MIGRATION =
+  /^supabase\/migrations\/\d{14}_[a-z0-9_]*bank[a-z0-9_]*\.sql$/;
 
 export type ChangedFile = { path: string; status: string };
 
 /** The files of a pull request that fall outside the allowlist, each with why. */
-export function outsideAllowlist(files: ChangedFile[]): { path: string; why: string }[] {
+export function outsideAllowlist(
+  files: ChangedFile[],
+): { path: string; why: string }[] {
   const out: { path: string; why: string }[] = [];
   for (const file of files) {
     const path = file.path;
     if (path.includes("..")) {
       out.push({ path, why: "not a plain path" });
     } else if (ALLOWED_NEW_MIGRATION.test(path)) {
-      if (file.status !== "added") out.push({ path, why: "a migration may only be added, never changed" });
+      if (file.status !== "added")
+        out.push({ path, why: "a migration may only be added, never changed" });
     } else if (
       !(ALLOWED_FILES as readonly string[]).includes(path) &&
       !ALLOWED_PREFIXES.some((prefix) => path.startsWith(prefix))
@@ -56,14 +60,19 @@ export type GrowthSpec = {
   acceptance: string[];
 };
 
-const fenceSafe = (text: string) => text.replace(/`{3,}/g, "'''").replace(/<!--|-->/g, "");
+const fenceSafe = (text: string) =>
+  text.replace(/`{3,}/g, "'''").replace(/<!--|-->/g, "");
 
 /**
  * The issue, written as a spec. The person's words appear once, fenced and
  * labelled untrusted: whoever builds this implements the acceptance
  * criteria and never follows instructions inside the quote.
  */
-export function issueBody(spec: GrowthSpec, quote: { want: string; evidence: string }, requestId: string): string {
+export function issueBody(
+  spec: GrowthSpec,
+  quote: { want: string; evidence: string },
+  requestId: string,
+): string {
   return [
     `A ${spec.kind === "bug" ? "bug report" : "feature request"} raised in the Tidewater Bank demo's chat and triaged by the bank's Growth Rules.`,
     "",
@@ -96,9 +105,42 @@ export function issueBody(spec: GrowthSpec, quote: { want: string; evidence: str
 }
 
 export const issueTitle = (spec: GrowthSpec) =>
-  `[bank] ${spec.kind === "bug" ? "Bug" : "Feature"}: ${spec.title}`.slice(0, 120);
+  `[bank] ${spec.kind === "bug" ? "Bug" : "Feature"}: ${spec.title}`.slice(
+    0,
+    120,
+  );
 
-const STOP = new Set(["a", "an", "the", "to", "for", "of", "in", "on", "and", "or", "my", "me", "i", "want", "please", "can", "could", "would", "like", "be", "able", "bank", "add", "let", "with", "is", "it", "that", "this"]);
+const STOP = new Set([
+  "a",
+  "an",
+  "the",
+  "to",
+  "for",
+  "of",
+  "in",
+  "on",
+  "and",
+  "or",
+  "my",
+  "me",
+  "i",
+  "want",
+  "please",
+  "can",
+  "could",
+  "would",
+  "like",
+  "be",
+  "able",
+  "bank",
+  "add",
+  "let",
+  "with",
+  "is",
+  "it",
+  "that",
+  "this",
+]);
 
 const wordsOf = (text: string) =>
   new Set(
@@ -122,7 +164,10 @@ export function similarity(a: string, b: string): number {
 /** Two requests this alike are the same request. */
 export const DUPLICATE_AT = 0.6;
 
-export function findDuplicate<T extends { title: string }>(title: string, open: T[]): T | null {
+export function findDuplicate<T extends { title: string }>(
+  title: string,
+  open: T[],
+): T | null {
   let best: T | null = null;
   let score = 0;
   for (const item of open) {
@@ -149,7 +194,10 @@ const closes = (issue: number) =>
   new RegExp(`\\b(close[sd]?|fix(e[sd])?|resolve[sd]?)\\s+#${issue}\\b`, "i");
 
 /** The pull request that says it closes this issue: a merged one first, then the newest open one. */
-export function linkedPull(issue: number, pulls: PullFacts[]): PullFacts | null {
+export function linkedPull(
+  issue: number,
+  pulls: PullFacts[],
+): PullFacts | null {
   const linked = pulls.filter((pull) => closes(issue).test(pull.body));
   return (
     linked.find((pull) => pull.merged) ??
@@ -171,22 +219,35 @@ export function statusFromGithub(facts: {
   const { pull } = facts;
   if (pull?.merged) {
     if (facts.deployed === false) {
-      return { status: "merged", note: `Pull request #${pull.number} is merged; waiting for the deploy.` };
+      return {
+        status: "merged",
+        note: `Pull request #${pull.number} is merged; waiting for the deploy.`,
+      };
     }
     return {
       status: "live",
-      note: facts.deployed === null
-        ? `Pull request #${pull.number} is merged. This server does not know its build, so it counts as live.`
-        : `Pull request #${pull.number} is merged and deployed.`,
+      note:
+        facts.deployed === null
+          ? `Pull request #${pull.number} is merged. This server does not know its build, so it counts as live.`
+          : `Pull request #${pull.number} is merged and deployed.`,
     };
   }
   if (pull?.state === "open") {
-    return { status: "pr", note: `Pull request #${pull.number} is open; the PR pipeline is reviewing it.` };
+    return {
+      status: "pr",
+      note: `Pull request #${pull.number} is open; the PR pipeline is reviewing it.`,
+    };
   }
   if (facts.issueState === "closed") {
-    return { status: "closed", note: "The issue was closed without a merged pull request." };
+    return {
+      status: "closed",
+      note: "The issue was closed without a merged pull request.",
+    };
   }
-  return { status: "issue", note: "Waiting for the routine to pick the issue up." };
+  return {
+    status: "issue",
+    note: "Waiting for the routine to pick the issue up.",
+  };
 }
 
 /** The order a request moves through, for the tracker. */

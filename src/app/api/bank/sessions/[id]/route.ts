@@ -17,7 +17,11 @@ export async function GET(
       listMessages(context.owner, session.id),
       listConfirmations(sql(), context.owner, { sessionId: session.id }),
     ]);
-    return json({ session, messages, confirmations: confirmations.confirmations });
+    return json({
+      session,
+      messages,
+      confirmations: confirmations.confirmations,
+    });
   } catch (error) {
     return failure(error);
   }

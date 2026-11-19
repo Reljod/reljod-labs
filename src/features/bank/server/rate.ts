@@ -32,15 +32,18 @@ export async function visitor(): Promise<Visitor> {
 const RATES = {
   message: {
     perHour: LIMITS.messagesPerHour,
-    refusal: (limit: number) => `That's ${limit} messages this hour. Try again soon.`,
+    refusal: (limit: number) =>
+      `That's ${limit} messages this hour. Try again soon.`,
   },
   write: {
     perHour: LIMITS.writesPerHour,
-    refusal: (limit: number) => `That's ${limit} changes this hour. Try again soon.`,
+    refusal: (limit: number) =>
+      `That's ${limit} changes this hour. Try again soon.`,
   },
   sandbox: {
     perHour: LIMITS.sandboxRunsPerHour,
-    refusal: (limit: number) => `That's ${limit} Sandbox runs this hour. Try again soon.`,
+    refusal: (limit: number) =>
+      `That's ${limit} Sandbox runs this hour. Try again soon.`,
   },
 } as const;
 
@@ -53,7 +56,11 @@ export type RateKind = keyof typeof RATES;
  * insert run under an advisory lock on (visitor, kind), so two requests at
  * once cannot both take the last place.
  */
-export async function takeRate(who: Visitor, owner: Owner, kind: RateKind): Promise<void> {
+export async function takeRate(
+  who: Visitor,
+  owner: Owner,
+  kind: RateKind,
+): Promise<void> {
   if (who.trusted) return;
   const rate = RATES[kind];
   const taken = await sql().begin(async (tx) => {

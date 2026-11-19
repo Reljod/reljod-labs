@@ -35,7 +35,10 @@ const token = (id: number) => `bank-outbox:${id}`;
 async function launch(owner: Owner, row: Row) {
   const message = { owner, outboxId: row.id };
   const options = {
-    experimental_hook: { token: token(row.id), experimental_minRetention: "30d" as const },
+    experimental_hook: {
+      token: token(row.id),
+      experimental_minRetention: "30d" as const,
+    },
   };
   const p = row.payload;
   switch (row.topic) {
@@ -48,7 +51,12 @@ async function launch(owner: Owner, row: Row) {
     case "statement.generate":
       return start(
         bankGenerateStatement,
-        [message, String(p.accountId), p.periodStart as BankDate, p.periodEnd as BankDate],
+        [
+          message,
+          String(p.accountId),
+          p.periodStart as BankDate,
+          p.periodEnd as BankDate,
+        ],
         options,
       );
     case "clock.advanced":
@@ -122,7 +130,10 @@ export async function wakeSleepers(owner: Owner): Promise<number> {
  * date that ended by itself (the real clock crossed midnight), then start
  * the waiting Workflows. Call it after a write, and when Operations is read.
  */
-export async function kick(owner: Owner, options: { wake?: boolean } = {}): Promise<void> {
+export async function kick(
+  owner: Owner,
+  options: { wake?: boolean } = {},
+): Promise<void> {
   try {
     await sql()`
       insert into bank.outbox (owner, topic, payload)

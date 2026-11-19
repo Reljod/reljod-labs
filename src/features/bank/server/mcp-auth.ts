@@ -8,7 +8,11 @@ import type { Actor } from "../core/actor";
 import { auditIn } from "../core/audit";
 import { ForbiddenError } from "../core/errors";
 import { BANK_MCP_PATH, type McpTokenResponse } from "../domain/api";
-import { type BankClaims, readBankToken, signBankToken } from "../domain/mcp-token";
+import {
+  type BankClaims,
+  readBankToken,
+  signBankToken,
+} from "../domain/mcp-token";
 import { can } from "../domain/permissions";
 import type { Staff } from "../domain/staff";
 import type { StaffContext } from "./context";
@@ -20,17 +24,30 @@ const DAY = 86_400;
 /** The Teller's token for one turn: long enough for a turn, short enough not to matter if seen. */
 const CHAT_TOKEN_SECONDS = 10 * 60;
 
-function baseClaims(access: Access, owner: Owner, staff: Pick<Staff, "id">, who: Visitor) {
+function baseClaims(
+  access: Access,
+  owner: Owner,
+  staff: Pick<Staff, "id">,
+  who: Visitor,
+) {
   const now = Math.floor(Date.now() / 1000);
   const base = { owner, staffId: staff.id, visitor: who.hash };
   switch (access.kind) {
     case "guest":
       return {
-        ...base, kind: "guest" as const, user: access.userId, pass: access.passId,
+        ...base,
+        kind: "guest" as const,
+        user: access.userId,
+        pass: access.passId,
         until: Math.floor(Date.parse(access.expiresAt) / 1000),
       };
     case "host":
-      return { ...base, kind: "host" as const, email: access.email, until: now + 30 * DAY };
+      return {
+        ...base,
+        kind: "host" as const,
+        email: access.email,
+        until: now + 30 * DAY,
+      };
     case "e2e":
       return { ...base, kind: "e2e" as const, until: now + DAY };
   }
@@ -41,18 +58,33 @@ function baseClaims(access: Access, owner: Owner, staff: Pick<Staff, "id">, who:
  * signed in now, for this Owner alone, under their limits. Writes
  * `mcp.connected` before the token is handed over.
  */
-export async function mintToken(context: StaffContext, origin: string): Promise<McpTokenResponse> {
+export async function mintToken(
+  context: StaffContext,
+  origin: string,
+): Promise<McpTokenResponse> {
   if (!can(context.staff, "mcp.connect")) {
     throw new ForbiddenError("Your Role may not connect an MCP client.");
   }
-  const { until, ...claims } = baseClaims(context.access, context.owner, context.staff, context.visitor);
-  const token = signBankToken({ ...claims, via: "mcp", exp: until }, env.rateLimitSalt());
-  await auditIn(sql(), { actor: { owner: context.owner, staff: context.staff, via: "app" } }, {
-    action: "mcp.connected",
-    summary: `Took an MCP token acting as ${context.staff.name}`,
-    target: { kind: "staff", id: context.staff.id },
-    detail: { role: context.staff.role, expiresAt: until },
-  });
+  const { until, ...claims } = baseClaims(
+    context.access,
+    context.owner,
+    context.staff,
+    context.visitor,
+  );
+  const token = signBankToken(
+    { ...claims, via: "mcp", exp: until },
+    env.rateLimitSalt(),
+  );
+  await auditIn(
+    sql(),
+    { actor: { owner: context.owner, staff: context.staff, via: "app" } },
+    {
+      action: "mcp.connected",
+      summary: `Took an MCP token acting as ${context.staff.name}`,
+      target: { kind: "staff", id: context.staff.id },
+      detail: { role: context.staff.role, expiresAt: until },
+    },
+  );
   return {
     token,
     url: `${origin}${BANK_MCP_PATH}`,
@@ -63,9 +95,19 @@ export async function mintToken(context: StaffContext, origin: string): Promise<
 
 /** The Teller's token for one chat turn. */
 export function chatToken(context: StaffContext, sessionId: string): string {
-  const { until: _until, ...claims } = baseClaims(context.access, context.owner, context.staff, context.visitor);
+  const { until: _until, ...claims } = baseClaims(
+    context.access,
+    context.owner,
+    context.staff,
+    context.visitor,
+  );
   return signBankToken(
-    { ...claims, via: "chat", sessionId, exp: Math.floor(Date.now() / 1000) + CHAT_TOKEN_SECONDS },
+    {
+      ...claims,
+      via: "chat",
+      sessionId,
+      exp: Math.floor(Date.now() / 1000) + CHAT_TOKEN_SECONDS,
+    },
     env.rateLimitSalt(),
   );
 }
@@ -78,7 +120,9 @@ export async function verifyBearer(bearer: string): Promise<BankClaims | null> {
     case "e2e":
       return env.e2eBypassToken() ? claims : null;
     case "host":
-      return claims.email && accessEnv.hostEmails().includes(claims.email) ? claims : null;
+      return claims.email && accessEnv.hostEmails().includes(claims.email)
+        ? claims
+        : null;
     case "guest": {
       if (!claims.user || !claims.pass) return null;
       const pass = await guestPassOf(claims.user);
@@ -102,7 +146,15 @@ export async function callerOf(claims: BankClaims): Promise<Caller | null> {
     where owner = ${claims.owner} and id = ${claims.staffId}`;
   if (!staff) return null;
   return {
-    actor: { owner: claims.owner, staff, via: claims.via, sessionId: claims.sessionId ?? null },
-    visitor: { hash: claims.visitor, trusted: claims.kind === "e2e" || claims.visitor === E2E_VISITOR },
+    actor: {
+      owner: claims.owner,
+      staff,
+      via: claims.via,
+      sessionId: claims.sessionId ?? null,
+    },
+    visitor: {
+      hash: claims.visitor,
+      trusted: claims.kind === "e2e" || claims.visitor === E2E_VISITOR,
+    },
   };
 }

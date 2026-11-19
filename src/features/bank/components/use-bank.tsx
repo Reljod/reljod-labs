@@ -74,27 +74,46 @@ function writeAddress(params: Record<string, string | null>) {
   window.history.replaceState(null, "", `${url.pathname}${url.search}`);
 }
 
-export function BankProvider({ first, children }: { first: FirstView; children: ReactNode }) {
+export function BankProvider({
+  first,
+  children,
+}: {
+  first: FirstView;
+  children: ReactNode;
+}) {
   const [client] = useState(() => {
     const created = new QueryClient({
-      defaultOptions: { queries: { staleTime: 4_000, retry: false, refetchOnWindowFocus: false } },
+      defaultOptions: {
+        queries: {
+          staleTime: 4_000,
+          retry: false,
+          refetchOnWindowFocus: false,
+        },
+      },
     });
     // The first view is already here: the tabs paint it and do not ask again on mount.
     created.setQueryData(keyOf("get_overview"), first.overview);
-    created.setQueryData(keyOf("list_customers"), { customers: first.customers });
+    created.setQueryData(keyOf("list_customers"), {
+      customers: first.customers,
+    });
     return created;
   });
   const [activeStaff, setActiveStaff] = useState(
-    () => first.staff.find((member) => member.id === first.activeStaffId) ?? (first.staff[0] as Staff),
+    () =>
+      first.staff.find((member) => member.id === first.activeStaffId) ??
+      (first.staff[0] as Staff),
   );
   const [tab, setTab] = useState<Tab>(first.tab);
   const [customerId, setCustomer] = useState<string | null>(first.customerId);
 
-  const openTab = useCallback((next: Tab, params: Record<string, string | null> = {}) => {
-    if (!isTab(next)) return;
-    setTab(next);
-    writeAddress({ tab: next === "bank" ? null : next, ...params });
-  }, []);
+  const openTab = useCallback(
+    (next: Tab, params: Record<string, string | null> = {}) => {
+      if (!isTab(next)) return;
+      setTab(next);
+      writeAddress({ tab: next === "bank" ? null : next, ...params });
+    },
+    [],
+  );
   const setCustomerId = useCallback((id: string | null) => {
     setCustomer(id);
     writeAddress({ customer: id });
@@ -118,7 +137,16 @@ export function BankProvider({ first, children }: { first: FirstView; children: 
       sessionId: first.sessionId,
       refresh,
     }),
-    [first.staff, first.sessionId, activeStaff, tab, openTab, customerId, setCustomerId, refresh],
+    [
+      first.staff,
+      first.sessionId,
+      activeStaff,
+      tab,
+      openTab,
+      customerId,
+      setCustomerId,
+      refresh,
+    ],
   );
 
   return (
@@ -169,11 +197,16 @@ export function useCommand<Result = unknown>() {
   const running = useRef(false);
   const [pending, setPending] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [fieldErrors, setFieldErrors] = useState<{ field: string; message: string }[]>([]);
+  const [fieldErrors, setFieldErrors] = useState<
+    { field: string; message: string }[]
+  >([]);
   const [outcome, setOutcome] = useState<WriteOutcome<Result> | null>(null);
 
   const run = useCallback(
-    async (name: CommandName, input: Record<string, unknown>): Promise<WriteOutcome<Result> | undefined> => {
+    async (
+      name: CommandName,
+      input: Record<string, unknown>,
+    ): Promise<WriteOutcome<Result> | undefined> => {
       if (running.current) return undefined;
       running.current = true;
       setPending(true);
@@ -189,7 +222,8 @@ export function useCommand<Result = unknown>() {
         return result;
       } catch (caught) {
         setError(messageOf(caught));
-        if (caught instanceof ApiError && caught.errors) setFieldErrors(caught.errors);
+        if (caught instanceof ApiError && caught.errors)
+          setFieldErrors(caught.errors);
         return undefined;
       } finally {
         running.current = false;

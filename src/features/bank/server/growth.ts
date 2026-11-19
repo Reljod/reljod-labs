@@ -53,7 +53,10 @@ type RequestRow = {
   toldAt: string | null;
 };
 
-async function requestRow(owner: Owner, requestId: string): Promise<RequestRow | null> {
+async function requestRow(
+  owner: Owner,
+  requestId: string,
+): Promise<RequestRow | null> {
   const [row] = await sql()<RequestRow[]>`
     select id, owner, kind, title, want, evidence, session_id, status, triage,
            issue_number, pr_number, merge_sha, told_at
@@ -103,27 +106,41 @@ export const githubReady = () => Boolean(env.githubToken());
 const dryRun = (owner: Owner) =>
   owner === "e2e" && process.env.BANK_GROWTH_E2E_LIVE !== "1";
 
-async function github<T>(path: string, init?: { method?: string; body?: unknown }): Promise<T> {
-  const response = await fetch(`https://api.github.com/repos/${env.githubRepo()}${path}`, {
-    method: init?.method ?? "GET",
-    headers: {
-      accept: "application/vnd.github+json",
-      "x-github-api-version": "2022-11-28",
-      authorization: `Bearer ${env.githubToken()}`,
-      "user-agent": "tidewater-bank-demo",
-      ...(init?.body ? { "content-type": "application/json" } : {}),
+async function github<T>(
+  path: string,
+  init?: { method?: string; body?: unknown },
+): Promise<T> {
+  const response = await fetch(
+    `https://api.github.com/repos/${env.githubRepo()}${path}`,
+    {
+      method: init?.method ?? "GET",
+      headers: {
+        accept: "application/vnd.github+json",
+        "x-github-api-version": "2022-11-28",
+        authorization: `Bearer ${env.githubToken()}`,
+        "user-agent": "tidewater-bank-demo",
+        ...(init?.body ? { "content-type": "application/json" } : {}),
+      },
+      body: init?.body ? JSON.stringify(init.body) : undefined,
+      cache: "no-store",
     },
-    body: init?.body ? JSON.stringify(init.body) : undefined,
-    cache: "no-store",
-  });
+  );
   if (!response.ok) {
     // The status only: a GitHub error body can echo the request.
-    throw new Error(`GitHub answered ${response.status} for ${init?.method ?? "GET"} ${path.split("?")[0]}`);
+    throw new Error(
+      `GitHub answered ${response.status} for ${init?.method ?? "GET"} ${path.split("?")[0]}`,
+    );
   }
   return (await response.json()) as T;
 }
 
-type GithubIssue = { number: number; html_url: string; state: "open" | "closed"; title: string; pull_request?: unknown };
+type GithubIssue = {
+  number: number;
+  html_url: string;
+  state: "open" | "closed";
+  title: string;
+  pull_request?: unknown;
+};
 type GithubPull = {
   number: number;
   html_url: string;
@@ -135,7 +152,9 @@ type GithubPull = {
 };
 
 async function recentPulls(): Promise<PullFacts[]> {
-  const pulls = await github<GithubPull[]>("/pulls?state=all&sort=updated&direction=desc&per_page=50");
+  const pulls = await github<GithubPull[]>(
+    "/pulls?state=all&sort=updated&direction=desc&per_page=50",
+  );
   return pulls.map((pull) => ({
     number: pull.number,
     url: pull.html_url,
@@ -153,7 +172,9 @@ async function deployed(mergeSha: string | null): Promise<boolean | null> {
   if (!build || !mergeSha) return null;
   if (build === mergeSha) return true;
   try {
-    const compare = await github<{ status: string }>(`/compare/${mergeSha}...${build}`);
+    const compare = await github<{ status: string }>(
+      `/compare/${mergeSha}...${build}`,
+    );
     return compare.status === "ahead" || compare.status === "identical";
   } catch {
     return false;
@@ -163,11 +184,30 @@ async function deployed(mergeSha: string | null): Promise<boolean | null> {
 // Triage -----------------------------------------------------------------------
 
 const specSchema = z.object({
-  inScope: z.boolean().describe("True only if this is about the Tidewater Bank demo's own features or behaviour"),
-  reason: z.string().max(240).describe("One sentence: why it is or is not in scope"),
-  title: z.string().max(80).describe("A short imperative title, e.g. 'Export transactions as OFX'"),
-  problem: z.string().max(700).describe("What the person cannot do today and why it matters, in your own words"),
-  acceptance: z.array(z.string().max(200)).min(1).max(6).describe("Concrete, testable acceptance criteria"),
+  inScope: z
+    .boolean()
+    .describe(
+      "True only if this is about the Tidewater Bank demo's own features or behaviour",
+    ),
+  reason: z
+    .string()
+    .max(240)
+    .describe("One sentence: why it is or is not in scope"),
+  title: z
+    .string()
+    .max(80)
+    .describe("A short imperative title, e.g. 'Export transactions as OFX'"),
+  problem: z
+    .string()
+    .max(700)
+    .describe(
+      "What the person cannot do today and why it matters, in your own words",
+    ),
+  acceptance: z
+    .array(z.string().max(200))
+    .min(1)
+    .max(6)
+    .describe("Concrete, testable acceptance criteria"),
 });
 
 const TRIAGE_SYSTEM = `You triage requests to improve one product: the Tidewater Bank demo, a fictional retail bank (customers, accounts, payments, cards, loans, fraud alerts, a chat Teller, an Operations view) inside a portfolio website.
@@ -194,7 +234,10 @@ export type TriageResult = { proceed: boolean; note: string };
  * Triage: de-duplicate (code), the Growth Rule (code), then one model call
  * that only classifies and writes the spec. Code decides whether to go on.
  */
-export async function triageRequest(owner: Owner, requestId: string): Promise<TriageResult> {
+export async function triageRequest(
+  owner: Owner,
+  requestId: string,
+): Promise<TriageResult> {
   const row = await requestRow(owner, requestId);
   if (!row) return { proceed: false, note: "The request is gone" };
   if (row.status !== "requested") {
@@ -204,17 +247,25 @@ export async function triageRequest(owner: Owner, requestId: string): Promise<Tr
   const book = await loadRulebook(db, owner);
   const [refusal] = checkGrowthRequest(book, row);
   if (refusal) {
-    await setStatus(row, "refused", refusal.message, { triage: { inScope: false, reason: refusal.message } });
-    await auditIn(db, { owner, system: "Growth triage" }, {
-      action: "growth.refused",
-      summary: `Refused by the Growth Rule: ${refusal.message}`,
-      target: { kind: "growth_request", id: row.id },
-      detail: { ruleId: refusal.ruleId, version: refusal.version },
+    await setStatus(row, "refused", refusal.message, {
+      triage: { inScope: false, reason: refusal.message },
     });
+    await auditIn(
+      db,
+      { owner, system: "Growth triage" },
+      {
+        action: "growth.refused",
+        summary: `Refused by the Growth Rule: ${refusal.message}`,
+        target: { kind: "growth_request", id: row.id },
+        detail: { ruleId: refusal.ruleId, version: refusal.version },
+      },
+    );
     return { proceed: false, note: refusal.message };
   }
   // Open requests of every Owner: the capability is the bank's, not one Owner's.
-  const open = await db<{ id: string; title: string; issueNumber: number | null }[]>`
+  const open = await db<
+    { id: string; title: string; issueNumber: number | null }[]
+  >`
     select id, coalesce(triage ->> 'title', title) as title, issue_number
     from bank.growth_requests
     where id <> ${row.id} and status in ('triaged', 'issue', 'pr', 'merged', 'live')
@@ -251,7 +302,11 @@ export async function triageRequest(owner: Owner, requestId: string): Promise<Tr
       maxOutputTokens: 900,
     });
     spec = answer.output;
-    usage = usageOf({ model, usage: answer.usage, providerMetadata: answer.providerMetadata });
+    usage = usageOf({
+      model,
+      usage: answer.usage,
+      providerMetadata: answer.providerMetadata,
+    });
   }
   // The model's own words go through the same Rule: a spec that smuggles a
   // blocked topic in is refused like the request would have been.
@@ -263,17 +318,35 @@ export async function triageRequest(owner: Owner, requestId: string): Promise<Tr
   });
   const refused = !spec.inScope || Boolean(late);
   const reason = late?.message ?? spec.reason;
-  await setStatus(row, refused ? "refused" : "triaged", refused ? reason : "In scope. Waiting to be filed.", {
-    triage: { ...spec, kind: row.kind },
-  });
-  await auditIn(db, { owner, system: "Growth triage" }, {
-    action: refused ? "growth.refused" : "growth.triaged",
-    summary: refused ? `Out of scope: ${reason}` : `Triaged as in scope: ${spec.title}`,
-    target: { kind: "growth_request", id: row.id },
-    detail: { inScope: spec.inScope, title: spec.title, criteria: spec.acceptance.length },
-    usage,
-  });
-  return { proceed: !refused, note: refused ? `Refused: ${reason}` : `In scope: ${spec.title}` };
+  await setStatus(
+    row,
+    refused ? "refused" : "triaged",
+    refused ? reason : "In scope. Waiting to be filed.",
+    {
+      triage: { ...spec, kind: row.kind },
+    },
+  );
+  await auditIn(
+    db,
+    { owner, system: "Growth triage" },
+    {
+      action: refused ? "growth.refused" : "growth.triaged",
+      summary: refused
+        ? `Out of scope: ${reason}`
+        : `Triaged as in scope: ${spec.title}`,
+      target: { kind: "growth_request", id: row.id },
+      detail: {
+        inScope: spec.inScope,
+        title: spec.title,
+        criteria: spec.acceptance.length,
+      },
+      usage,
+    },
+  );
+  return {
+    proceed: !refused,
+    note: refused ? `Refused: ${reason}` : `In scope: ${spec.title}`,
+  };
 }
 
 // The issue --------------------------------------------------------------------
@@ -281,17 +354,30 @@ export async function triageRequest(owner: Owner, requestId: string): Promise<Tr
 export type FileResult = { filed: boolean; note: string };
 
 /** Files the triaged request as a GitHub issue, once. Without a token it waits as "triaged". */
-export async function fileIssue(owner: Owner, requestId: string): Promise<FileResult> {
+export async function fileIssue(
+  owner: Owner,
+  requestId: string,
+): Promise<FileResult> {
   const row = await requestRow(owner, requestId);
   if (!row) return { filed: false, note: "The request is gone" };
-  if (row.issueNumber) return { filed: true, note: `Already filed as #${row.issueNumber}` };
-  if (row.status !== "triaged") return { filed: false, note: `The request is ${row.status}` };
+  if (row.issueNumber)
+    return { filed: true, note: `Already filed as #${row.issueNumber}` };
+  if (row.status !== "triaged")
+    return { filed: false, note: `The request is ${row.status}` };
   if (dryRun(owner)) {
-    await setStatus(row, "triaged", "Triaged. Not filed: this is the e2e suite's bank.");
+    await setStatus(
+      row,
+      "triaged",
+      "Triaged. Not filed: this is the e2e suite's bank.",
+    );
     return { filed: false, note: "e2e: triaged, not filed" };
   }
   if (!githubReady()) {
-    await setStatus(row, "triaged", "Triaged, waiting for a token: this server has no BANK_GITHUB_TOKEN to file the issue with.");
+    await setStatus(
+      row,
+      "triaged",
+      "Triaged, waiting for a token: this server has no BANK_GITHUB_TOKEN to file the issue with.",
+    );
     return { filed: false, note: "Triaged, waiting for a token" };
   }
   const db = sql();
@@ -299,7 +385,11 @@ export async function fileIssue(owner: Owner, requestId: string): Promise<FileRe
     select count(*)::int as count from bank.growth_requests
     where issue_number is not null and updated_at > now() - interval '1 day'`;
   if ((today?.count ?? 0) >= LIMITS.growthIssuesPerDay) {
-    await setStatus(row, "triaged", `Triaged. The bank files at most ${LIMITS.growthIssuesPerDay} issues a day; it will be filed tomorrow.`);
+    await setStatus(
+      row,
+      "triaged",
+      `Triaged. The bank files at most ${LIMITS.growthIssuesPerDay} issues a day; it will be filed tomorrow.`,
+    );
     return { filed: false, note: "Daily issue cap reached" };
   }
   const spec: GrowthSpec = {
@@ -310,11 +400,18 @@ export async function fileIssue(owner: Owner, requestId: string): Promise<FileRe
   };
   // A retry after a crash finds the issue it already filed by its marker.
   const marker = `bank-growth-request:${row.id}`;
-  const existing = (await github<GithubIssue[]>(`/issues?labels=${encodeURIComponent(GROWTH_LABEL)}&state=all&per_page=50`))
-    .filter((item) => !item.pull_request);
+  const existing = (
+    await github<GithubIssue[]>(
+      `/issues?labels=${encodeURIComponent(GROWTH_LABEL)}&state=all&per_page=50`,
+    )
+  ).filter((item) => !item.pull_request);
   let issue = null as GithubIssue | null;
-  for (const candidate of existing.filter((item) => item.title === issueTitle(spec))) {
-    const full = await github<GithubIssue & { body: string | null }>(`/issues/${candidate.number}`);
+  for (const candidate of existing.filter(
+    (item) => item.title === issueTitle(spec),
+  )) {
+    const full = await github<GithubIssue & { body: string | null }>(
+      `/issues/${candidate.number}`,
+    );
     if (full.body?.includes(marker)) issue = full;
   }
   issue ??= await github<GithubIssue>("/issues", {
@@ -325,34 +422,62 @@ export async function fileIssue(owner: Owner, requestId: string): Promise<FileRe
       labels: [GROWTH_LABEL, KIND_LABEL[row.kind]],
     },
   });
-  await setStatus(row, "issue", "Filed. Waiting for the routine to pick it up.", {
-    issue_number: issue.number,
-    issue_url: issue.html_url,
-  });
-  await auditIn(db, { owner, system: "Growth" }, {
-    action: "growth.issue_filed",
-    summary: `Filed GitHub issue #${issue.number}: ${spec.title}`,
-    target: { kind: "growth_request", id: row.id },
-    detail: { issue: issue.number, repo: env.githubRepo() },
-  });
+  await setStatus(
+    row,
+    "issue",
+    "Filed. Waiting for the routine to pick it up.",
+    {
+      issue_number: issue.number,
+      issue_url: issue.html_url,
+    },
+  );
+  await auditIn(
+    db,
+    { owner, system: "Growth" },
+    {
+      action: "growth.issue_filed",
+      summary: `Filed GitHub issue #${issue.number}: ${spec.title}`,
+      target: { kind: "growth_request", id: row.id },
+      detail: { issue: issue.number, repo: env.githubRepo() },
+    },
+  );
   return { filed: true, note: `Filed as issue #${issue.number}` };
 }
 
 // Following it -----------------------------------------------------------------
 
-export type SyncResult = { done: boolean; live: boolean; note: string; againInMs: number };
+export type SyncResult = {
+  done: boolean;
+  live: boolean;
+  note: string;
+  againInMs: number;
+};
 
 const AGAIN_MS = 3 * 60_000;
 
 /** One look at GitHub for a filed request; moves its status forward. */
-export async function syncRequest(owner: Owner, requestId: string): Promise<SyncResult> {
+export async function syncRequest(
+  owner: Owner,
+  requestId: string,
+): Promise<SyncResult> {
   const row = await requestRow(owner, requestId);
-  if (!row?.issueNumber) return { done: true, live: false, note: "Nothing to watch", againInMs: 0 };
+  if (!row?.issueNumber)
+    return { done: true, live: false, note: "Nothing to watch", againInMs: 0 };
   if (row.status === "live" || row.status === "closed") {
-    return { done: true, live: row.status === "live", note: `Already ${row.status}`, againInMs: 0 };
+    return {
+      done: true,
+      live: row.status === "live",
+      note: `Already ${row.status}`,
+      againInMs: 0,
+    };
   }
   if (!githubReady()) {
-    return { done: false, live: false, note: "No GitHub token to look with", againInMs: AGAIN_MS * 5 };
+    return {
+      done: false,
+      live: false,
+      note: "No GitHub token to look with",
+      againInMs: AGAIN_MS * 5,
+    };
   }
   const [issue, pulls] = await Promise.all([
     github<GithubIssue>(`/issues/${row.issueNumber}`),
@@ -370,27 +495,47 @@ export async function syncRequest(owner: Owner, requestId: string): Promise<Sync
       pr_url: pull?.url ?? null,
       merge_sha: pull?.mergeSha ?? null,
     });
-    await auditIn(sql(), { owner, system: "Growth" }, {
-      action: next.status === "live" ? "growth.live" : "growth.advanced",
-      summary: `Issue #${row.issueNumber}: ${next.note}`,
-      target: { kind: "growth_request", id: row.id },
-      detail: { status: next.status, pr: pull?.number ?? null },
-    });
+    await auditIn(
+      sql(),
+      { owner, system: "Growth" },
+      {
+        action: next.status === "live" ? "growth.live" : "growth.advanced",
+        summary: `Issue #${row.issueNumber}: ${next.note}`,
+        target: { kind: "growth_request", id: row.id },
+        detail: { status: next.status, pr: pull?.number ?? null },
+      },
+    );
   } else {
     await sql()`update bank.growth_requests set synced_at = now() where id = ${row.id}`;
   }
   const done = next.status === "live" || next.status === "closed";
-  return { done, live: next.status === "live", note: next.note, againInMs: AGAIN_MS };
+  return {
+    done,
+    live: next.status === "live",
+    note: next.note,
+    againInMs: AGAIN_MS,
+  };
 }
 
 /**
  * Closes the loop in the product, once: the Teller tells the person who
  * asked, in the chat they asked in, and they get a notification.
  */
-export async function tellLive(owner: Owner, requestId: string): Promise<string> {
+export async function tellLive(
+  owner: Owner,
+  requestId: string,
+): Promise<string> {
   const db = sql();
   const told = await db.begin(async (tx) => {
-    const [row] = await tx<{ id: string; title: string; sessionId: string | null; prNumber: number | null; prUrl: string | null }[]>`
+    const [row] = await tx<
+      {
+        id: string;
+        title: string;
+        sessionId: string | null;
+        prNumber: number | null;
+        prUrl: string | null;
+      }[]
+    >`
       update bank.growth_requests set told_at = now()
       where owner = ${owner} and id = ${requestId} and status = 'live' and told_at is null
       returning id, coalesce(triage ->> 'title', title) as title, session_id, pr_number, pr_url`;
@@ -461,7 +606,10 @@ export async function growthView(owner: Owner): Promise<GrowthView> {
     requests,
     changelog: [
       ...FOUNDING,
-      ...learned.map(({ owner: asker, ...entry }) => ({ ...entry, mine: asker === owner })),
+      ...learned.map(({ owner: asker, ...entry }) => ({
+        ...entry,
+        mine: asker === owner,
+      })),
     ],
     githubReady: githubReady(),
     repo: env.githubRepo(),
@@ -474,17 +622,24 @@ export async function growthView(owner: Owner): Promise<GrowthView> {
 export function validSignature(body: string, header: string | null): boolean {
   const secret = env.githubWebhookSecret();
   if (!secret || !header?.startsWith("sha256=")) return false;
-  const expected = Buffer.from(`sha256=${createHmac("sha256", secret).update(body).digest("hex")}`);
+  const expected = Buffer.from(
+    `sha256=${createHmac("sha256", secret).update(body).digest("hex")}`,
+  );
   const given = Buffer.from(header);
   return expected.length === given.length && timingSafeEqual(expected, given);
 }
 
 /** A verified delivery about an issue or a pull request: re-read the requests it may concern. */
 export async function onGithubEvent(payload: unknown): Promise<number> {
-  const event = payload as { issue?: { number?: number }; pull_request?: { body?: string | null } };
+  const event = payload as {
+    issue?: { number?: number };
+    pull_request?: { body?: string | null };
+  };
   const numbers = new Set<number>();
   if (typeof event.issue?.number === "number") numbers.add(event.issue.number);
-  for (const match of (event.pull_request?.body ?? "").matchAll(/#(\d{1,7})\b/g)) {
+  for (const match of (event.pull_request?.body ?? "").matchAll(
+    /#(\d{1,7})\b/g,
+  )) {
     numbers.add(Number(match[1]));
   }
   if (numbers.size === 0) return 0;

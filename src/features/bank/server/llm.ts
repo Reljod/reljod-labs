@@ -2,7 +2,9 @@ import "server-only";
 import { createGateway, type LanguageModelUsage, type streamText } from "ai";
 import { env } from "./env";
 
-type ProviderOptions = NonNullable<Parameters<typeof streamText>[0]["providerOptions"]>;
+type ProviderOptions = NonNullable<
+  Parameters<typeof streamText>[0]["providerOptions"]
+>;
 
 let client: ReturnType<typeof createGateway> | undefined;
 
@@ -15,10 +17,14 @@ export function gateway() {
 /** Makes a model's thinking visible, so the chat can stream it. Visibility only. */
 export function visibleThinking(model: string): ProviderOptions | undefined {
   if (model.startsWith("anthropic/")) {
-    return { anthropic: { thinking: { type: "adaptive", display: "summarized" } } };
+    return {
+      anthropic: { thinking: { type: "adaptive", display: "summarized" } },
+    };
   }
-  if (model.startsWith("openai/")) return { openai: { reasoningSummary: "auto" } };
-  if (model.startsWith("google/")) return { google: { thinkingConfig: { includeThoughts: true } } };
+  if (model.startsWith("openai/"))
+    return { openai: { reasoningSummary: "auto" } };
+  if (model.startsWith("google/"))
+    return { google: { thinkingConfig: { includeThoughts: true } } };
   return undefined;
 }
 
@@ -38,7 +44,11 @@ export type Usage = {
 };
 
 function gatewayCost(providerMetadata: unknown): number | null {
-  const meta = (providerMetadata as { gateway?: { cost?: unknown; marketCost?: unknown } } | undefined)?.gateway;
+  const meta = (
+    providerMetadata as
+      | { gateway?: { cost?: unknown; marketCost?: unknown } }
+      | undefined
+  )?.gateway;
   if (!meta) return null;
   let best: number | null = null;
   for (const value of [meta.cost, meta.marketCost]) {
@@ -67,7 +77,10 @@ export function usageOf(input: {
     model: input.model,
     inputTokens,
     outputTokens,
-    costUsd: reported !== null && (reported > 0 || inputTokens + outputTokens === 0) ? reported : estimated,
+    costUsd:
+      reported !== null && (reported > 0 || inputTokens + outputTokens === 0)
+        ? reported
+        : estimated,
   };
 }
 
@@ -79,7 +92,10 @@ export function addUsage(calls: Usage[]): Usage | null {
       model: sum.model,
       inputTokens: sum.inputTokens + call.inputTokens,
       outputTokens: sum.outputTokens + call.outputTokens,
-      costUsd: sum.costUsd === null && call.costUsd === null ? null : (sum.costUsd ?? 0) + (call.costUsd ?? 0),
+      costUsd:
+        sum.costUsd === null && call.costUsd === null
+          ? null
+          : (sum.costUsd ?? 0) + (call.costUsd ?? 0),
     }),
     first,
   );

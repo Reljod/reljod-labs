@@ -3,7 +3,7 @@
 import { getPublicOrigin } from "mcp-handler";
 import { headers } from "next/headers";
 import { z } from "zod";
-import { type ApiError, type McpTokenResponse } from "../domain/api";
+import type { ApiError, McpTokenResponse } from "../domain/api";
 import type { SessionSummary } from "../domain/chat";
 import { commandDef, type WriteOutcome } from "../domain/commands";
 import type { Staff } from "../domain/staff";
@@ -31,7 +31,9 @@ async function answer<T>(work: () => Promise<T>): Promise<ActionResult<T>> {
       return {
         ok: false,
         error: refusal.message,
-        ...(refusal.errors ? { errors: refusal.errors as ApiError["errors"] } : {}),
+        ...(refusal.errors
+          ? { errors: refusal.errors as ApiError["errors"] }
+          : {}),
       };
     }
     // AccessDeniedError and anything unexpected: the framework's own handling.
@@ -59,47 +61,86 @@ export async function bankCommand(
     const context = await requireStaff();
     const call = commandSchema.parse({ name, input, idempotencyKey });
     if (commandDef(call.name)?.kind !== "write") {
-      throw new z.ZodError([{ code: "custom", path: ["name"], message: "There is no such command.", input: call.name }]);
+      throw new z.ZodError([
+        {
+          code: "custom",
+          path: ["name"],
+          message: "There is no such command.",
+          input: call.name,
+        },
+      ]);
     }
     return {
-      outcome: await write(actorOf(context), context.visitor, call.name, call.input, call.idempotencyKey),
+      outcome: await write(
+        actorOf(context),
+        context.visitor,
+        call.name,
+        call.input,
+        call.idempotencyKey,
+      ),
     };
   });
 }
 
-export async function switchStaffAction(staffId: string): Promise<ActionResult<{ staff: Staff }>> {
-  return answer(async () => ({ staff: await switchStaff(z.string().uuid().parse(staffId)) }));
+export async function switchStaffAction(
+  staffId: string,
+): Promise<ActionResult<{ staff: Staff }>> {
+  return answer(async () => ({
+    staff: await switchStaff(z.string().uuid().parse(staffId)),
+  }));
 }
 
 /** A token for an outside MCP client, acting as the Staff member signed in now. */
-export async function mintTokenAction(): Promise<ActionResult<McpTokenResponse>> {
+export async function mintTokenAction(): Promise<
+  ActionResult<McpTokenResponse>
+> {
   return answer(async () => {
     const context = await requireStaff();
     const requestHeaders = await headers();
-    const host = requestHeaders.get("x-forwarded-host") ?? requestHeaders.get("host") ?? "localhost";
-    const proto = requestHeaders.get("x-forwarded-proto") ?? (host.startsWith("localhost") ? "http" : "https");
-    const origin = getPublicOrigin(new Request(`${proto}://${host}/`, { headers: requestHeaders }));
+    const host =
+      requestHeaders.get("x-forwarded-host") ??
+      requestHeaders.get("host") ??
+      "localhost";
+    const proto =
+      requestHeaders.get("x-forwarded-proto") ??
+      (host.startsWith("localhost") ? "http" : "https");
+    const origin = getPublicOrigin(
+      new Request(`${proto}://${host}/`, { headers: requestHeaders }),
+    );
     return mintToken(context, origin);
   });
 }
 
-export async function createSessionAction(customerId: string | null): Promise<ActionResult<{ session: SessionSummary }>> {
-  return answer(async () => {
-    const context = await requireStaff();
-    return { session: await createSession(context.owner, context.staff.id, customerId) };
-  });
-}
-
-export async function focusSessionAction(sessionId: string, customerId: string | null): Promise<ActionResult<{ session: SessionSummary }>> {
+export async function createSessionAction(
+  customerId: string | null,
+): Promise<ActionResult<{ session: SessionSummary }>> {
   return answer(async () => {
     const context = await requireStaff();
     return {
-      session: await setSession(context.owner, z.string().uuid().parse(sessionId), { customerId }),
+      session: await createSession(context.owner, context.staff.id, customerId),
     };
   });
 }
 
-export async function deleteSessionAction(sessionId: string): Promise<ActionResult<{ deleted: string }>> {
+export async function focusSessionAction(
+  sessionId: string,
+  customerId: string | null,
+): Promise<ActionResult<{ session: SessionSummary }>> {
+  return answer(async () => {
+    const context = await requireStaff();
+    return {
+      session: await setSession(
+        context.owner,
+        z.string().uuid().parse(sessionId),
+        { customerId },
+      ),
+    };
+  });
+}
+
+export async function deleteSessionAction(
+  sessionId: string,
+): Promise<ActionResult<{ deleted: string }>> {
   return answer(async () => {
     const context = await requireStaff();
     const id = z.string().uuid().parse(sessionId);

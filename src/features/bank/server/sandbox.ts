@@ -3,7 +3,12 @@ import { Sandbox } from "@vercel/sandbox";
 import type { Actor } from "../core/actor";
 import { runRead } from "../core/engine";
 import { LIMITS } from "../domain/limits";
-import type { AccountDetail, CustomerDetail, LoanDetail, RulesView } from "../domain/views";
+import type {
+  AccountDetail,
+  CustomerDetail,
+  LoanDetail,
+  RulesView,
+} from "../domain/views";
 import { sql } from "./db";
 import { env } from "./env";
 
@@ -67,8 +72,15 @@ export function chartOf(stdout: string): Chart | null {
   if (!line) return null;
   try {
     const chart = JSON.parse(line.slice(6)) as Chart;
-    if (!["bar", "line"].includes(chart.type) || !Array.isArray(chart.labels) || !Array.isArray(chart.series)) return null;
-    const labels = chart.labels.slice(0, 36).map((label) => String(label).slice(0, 24));
+    if (
+      !["bar", "line"].includes(chart.type) ||
+      !Array.isArray(chart.labels) ||
+      !Array.isArray(chart.series)
+    )
+      return null;
+    const labels = chart.labels
+      .slice(0, 36)
+      .map((label) => String(label).slice(0, 24));
     const series = chart.series.slice(0, 4).map((item) => ({
       name: String(item.name).slice(0, 40),
       values: labels.map((_, index) => {
@@ -94,7 +106,9 @@ export async function customerFiles(
   customerId: string,
 ): Promise<{ path: string; content: string }[]> {
   const db = sql();
-  const detail = (await runRead(db, actor, "get_customer", { customerId })) as CustomerDetail;
+  const detail = (await runRead(db, actor, "get_customer", {
+    customerId,
+  })) as CustomerDetail;
   const files: { path: string; content: string }[] = [];
   let bytes = 0;
   const add = (path: string, value: unknown) => {
@@ -121,11 +135,22 @@ export async function customerFiles(
     add(`transactions/${account.number}.json`, pages);
   }
   for (const loan of detail.loans) {
-    add(`loans/${loan.number}.json`, (await runRead(db, actor, "get_loan", { loanId: loan.id })) as LoanDetail);
+    add(
+      `loans/${loan.number}.json`,
+      (await runRead(db, actor, "get_loan", { loanId: loan.id })) as LoanDetail,
+    );
   }
-  add("rules.json", ((await runRead(db, actor, "list_rules", {})) as RulesView).rules.map((rule) => ({
-    id: rule.id, sentence: rule.sentence, params: rule.params, enabled: rule.enabled,
-  })));
+  add(
+    "rules.json",
+    ((await runRead(db, actor, "list_rules", {})) as RulesView).rules.map(
+      (rule) => ({
+        id: rule.id,
+        sentence: rule.sentence,
+        params: rule.params,
+        enabled: rule.enabled,
+      }),
+    ),
+  );
   return files;
 }
 
@@ -144,11 +169,17 @@ export async function runCode(input: {
 }): Promise<CodeResult> {
   const started = Date.now();
   const failed = (stderr: string): CodeResult => ({
-    stdout: "", stderr, exitCode: 1, ms: Date.now() - started, chart: null,
+    stdout: "",
+    stderr,
+    exitCode: 1,
+    ms: Date.now() - started,
+    chart: null,
     files: input.files.map((file) => file.path.replace(`${ROOT}/`, "")),
   });
   if (!env.sandboxConfigured()) {
-    return failed("Sandbox unavailable: this server has no Vercel Sandbox credentials.");
+    return failed(
+      "Sandbox unavailable: this server has no Vercel Sandbox credentials.",
+    );
   }
   try {
     const sandbox = await Sandbox.getOrCreate({
@@ -159,11 +190,21 @@ export async function runCode(input: {
     // getOrCreate may hand back a Sandbox made with another policy: enforce it.
     await sandbox.update({ networkPolicy: "deny-all" });
     const file = `${ROOT}/run-${input.callId.replace(/[^\w-]/g, "_").slice(0, 60)}.mjs`;
-    await sandbox.writeFiles([...input.files, { path: file, content: input.code }]);
-    const result = await sandbox.runCommand("sh", ["-c", RUNNER, "bank", file], {
-      timeoutMs: SANDBOX_LIMITS.commandMs + 5_000,
-    });
-    const [stdout, stderr] = await Promise.all([result.stdout(), result.stderr()]);
+    await sandbox.writeFiles([
+      ...input.files,
+      { path: file, content: input.code },
+    ]);
+    const result = await sandbox.runCommand(
+      "sh",
+      ["-c", RUNNER, "bank", file],
+      {
+        timeoutMs: SANDBOX_LIMITS.commandMs + 5_000,
+      },
+    );
+    const [stdout, stderr] = await Promise.all([
+      result.stdout(),
+      result.stderr(),
+    ]);
     return {
       stdout: cap(stdout),
       stderr: cap(stderr),
@@ -173,7 +214,9 @@ export async function runCode(input: {
       files: input.files.map((item) => item.path.replace(`${ROOT}/`, "")),
     };
   } catch (error) {
-    return failed(`The Sandbox could not run the code: ${error instanceof Error ? error.message : String(error)}`);
+    return failed(
+      `The Sandbox could not run the code: ${error instanceof Error ? error.message : String(error)}`,
+    );
   }
 }
 
