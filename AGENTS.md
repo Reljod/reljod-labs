@@ -88,7 +88,7 @@
 - Each Call has one Workflow (`server/call-workflow.ts`): the server-side cut-off, the Wrap-up, the Callback sleep. In-call writes are POST routes (`domain/api.ts` says why); other writes are server actions.
 - Env: optional `SWITCHBOARD_AI_GATEWAY_API_KEY` (falls back to `DOCUMENT_COMPLIANCE_AI_GATEWAY_API_KEY`), optional `SWITCHBOARD_DATABASE_URL` (falls back to `CLIENT_MANAGER_DATABASE_URL`); shares `RATE_LIMIT_SALT` (it signs the MCP tokens) and `E2E_BYPASS_TOKEN`. Data lives in the `switchboard` schema (`supabase/migrations/20261119150000_switchboard.sql`, added with `git add -f`), reached directly; only `switchboard.workspaces` is in `access.owned_tables`. The Sandbox authenticates like Sieve's.
 - Sample callers: lines in `domain/samples.ts`, clips in `public/switchboard/samples/` (README in `fixtures/switchboard/`).
-- `e2e/switchboard.spec.ts` is skipped unless `E2E_SWITCHBOARD=1`; the Agent's Turns are stubbed (`x-switchboard-stub` with the e2e token). `E2E_SWITCHBOARD_LIVE=1` adds two real runs (a typed Call, and a Sample caller's audio into a real Session). Run it only when asked.
+- `e2e/switchboard.spec.ts` is skipped unless `E2E_SWITCHBOARD=1`; the Agent's Turns are stubbed (`x-switchboard-stub` with the e2e token). `E2E_SWITCHBOARD_LIVE=1` adds three real runs (a typed Call, and two Sample callers' audio into a real Session: turn-taking and a Barge-in). Run it only when asked.
 
 ## Access (the gate in front of the demos)
 

@@ -17,6 +17,8 @@ import { type SampleCaller, sampleClipPath } from "../domain/samples";
  */
 
 const CHUNK_MS = 100;
+/** How long a Sample caller waits for an answer that never comes before going on. */
+const STALL_MS = 10_000;
 /** The silence server turn detection waits for before it calls a Turn over. */
 export const VAD_SILENCE_MS = 500;
 
@@ -468,6 +470,27 @@ export class VoiceSession {
         this.callerSpeaking;
       const idle = !waitingForAgent && !this.agentSpeaking();
       const quietFor = performance.now() - this.lastActivity;
+      // A response that never arrives (an error the provider did not report,
+      // or a model that sends fewer lifecycle events) must not stall the
+      // script for the rest of the Call: after a long silence, move on.
+      if (
+        (this.awaitingResponse || this.awaitingToolResponse) &&
+        !this.responseActive &&
+        this.pendingTools === 0 &&
+        !this.callerSpeaking &&
+        !this.agentSpeaking() &&
+        quietFor > STALL_MS
+      ) {
+        this.log(
+          "sample.stall",
+          `no response after ${Math.round(quietFor)} ms`,
+        );
+        this.awaitingResponse = false;
+        this.awaitingToolResponse = false;
+        this.greeted = true;
+        this.lastActivity = performance.now();
+        return;
+      }
       if (this.clipIndex >= this.clips.length) {
         if (idle && quietFor > 2500)
           this.handlers.onOver("The Caller hung up.");

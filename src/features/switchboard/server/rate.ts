@@ -36,16 +36,6 @@ const RATES = {
     refusal: (limit: number) =>
       `That's ${limit} Turns and tool calls this hour. Try again soon.`,
   },
-  supervisor: {
-    perHour: LIMITS.supervisorQuestionsPerHour,
-    refusal: (limit: number) =>
-      `That's ${limit} Supervisor questions this hour. Try again soon.`,
-  },
-  sandbox: {
-    perHour: LIMITS.sandboxRunsPerHour,
-    refusal: (limit: number) =>
-      `That's ${limit} Sandbox runs this hour. Try again soon.`,
-  },
 } as const;
 
 export type RateKind = keyof typeof RATES;

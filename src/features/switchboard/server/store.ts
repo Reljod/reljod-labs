@@ -32,6 +32,7 @@ import {
   seedRecords,
 } from "../domain/world";
 import { type Db, jsonb, sql } from "./db";
+import { StateError } from "./errors";
 
 /**
  * Everything Switchboard keeps, read and written here and nowhere else.
@@ -76,6 +77,15 @@ export async function ensureWorkspace(owner: Owner) {
 export async function resetRecords(owner: Owner) {
   await sql().begin(async (tx) => {
     await tx`select 1 from switchboard.workspaces where owner = ${owner} for update`;
+    // A live Call's state points at Records (who is verified, its callback):
+    // pulling them out from under it would leave the Call and its Wrap-up
+    // reading a different Back office than the one it ran on.
+    const [live] = await tx<{ id: string }[]>`
+      select id from switchboard.calls where owner = ${owner} and status = 'live' limit 1`;
+    if (live)
+      throw new StateError(
+        "A Call is live. Hang up before resetting the Back office.",
+      );
     await tx`delete from switchboard.records where owner = ${owner}`;
     await tx`update switchboard.workspaces set ref_seq = 0 where owner = ${owner}`;
     await seed(tx, owner);

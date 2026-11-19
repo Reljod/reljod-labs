@@ -104,7 +104,7 @@ export type EventData = {
   };
   usage: { usage: RealtimeUsage; costUsd: number };
   "model.call": {
-    purpose: "turn" | "wrapup" | "supervisor";
+    purpose: "turn" | "wrapup";
     model: string;
     inputTokens: number;
     outputTokens: number;
@@ -122,7 +122,7 @@ export type EventData = {
   "wrapup.step": { step: string; note: string };
   "wrapup.done": { costUsd: number };
   "wrapup.failed": { error: string };
-  "code.run": { purpose: "wrapup" | "supervisor"; code: string };
+  "code.run": { purpose: "wrapup"; code: string };
   "code.result": {
     exitCode: number;
     stdout: string;
@@ -141,8 +141,6 @@ export type EventData = {
   "world.reset": Record<string, never>;
   "scenario.set": { bookingRef: string; issue: string };
   "mcp.token": { expiresAt: string };
-  "supervisor.asked": { question: string };
-  "supervisor.answered": { text: string; steps: number; costUsd: number };
 };
 
 export type EventType = keyof EventData;
@@ -342,15 +340,6 @@ export type TurnStreamPart =
   | { kind: "call"; call: CallView }
   | { kind: "error"; message: string }
   | { kind: "done" };
-
-/** One line the Supervisor streams (NDJSON). */
-export type SupervisorStreamPart =
-  | { kind: "delta"; text: string }
-  | { kind: "tool"; name: string; note: string }
-  | { kind: "code"; code: string }
-  | { kind: "code_result"; exitCode: number; stdout: string; stderr: string }
-  | { kind: "error"; message: string }
-  | { kind: "done"; costUsd: number; steps: number };
 
 export const seconds = (from: string, to: string | null, now = Date.now()) =>
   Math.max(

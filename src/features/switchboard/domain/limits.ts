@@ -26,19 +26,12 @@ export const LIMITS = {
   /** Events the browser may report in one request, and in one Call. */
   eventsPerRequest: 40,
   eventsPerCall: 1500,
-  supervisorQuestionsPerHour: 20,
-  supervisorSteps: 8,
-  /** Past Calls the Supervisor's Sandbox is handed. */
-  supervisorCalls: 20,
-  sandboxRunsPerHour: 20,
-  /** Runs of code in one Supervisor answer, and in one Wrap-up. */
-  sandboxRunsPerAnswer: 3,
+  /** Runs of code in one Wrap-up. The Wrap-up runs once per Call, so Calls per hour bound it. */
+  sandboxRunsPerWrapup: 1,
   /** How long a promised Callback waits, at most: this is a demo, not a call centre. */
   callbackMaxMinutes: 30,
   /** Calls listed in the history. */
   historyCalls: 50,
-  /** A recording's size, the same number as the bucket's own limit. */
-  audioBytes: 25 * 1024 * 1024,
   /** Saved Versions of one Rule. */
   ruleVersions: 50,
 } as const;

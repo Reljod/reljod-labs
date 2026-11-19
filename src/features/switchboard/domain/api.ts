@@ -29,14 +29,13 @@ export const paths = {
   records: `${API}/records`,
   rules: `${API}/rules`,
   trail: `${API}/trail`,
-  supervisor: `${API}/supervisor`,
 } as const;
 
 /** The header the end-to-end test sends for canned Agent Turns; honoured only with the e2e token. */
 export const STUB_HEADER = "x-switchboard-stub";
 
 export type RateUse = Record<
-  "call" | "turn" | "supervisor" | "sandbox",
+  "call" | "turn",
   { used: number; perHour: number }
 >;
 

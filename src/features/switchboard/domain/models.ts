@@ -127,14 +127,12 @@ export function addUsage(
   return out;
 }
 
-/** The text Line, the Wrap-up and Supervisor mode run on language models. */
+/** The text Line and the Wrap-up run on language models. */
 export const TEXT_MODELS = {
   /** The Agent on the text Line: quick, good with tools. */
   line: "anthropic/claude-haiku-5.5",
   /** The Wrap-up's summary. */
   wrapup: "anthropic/claude-haiku-5.5",
-  /** Supervisor mode writes code. */
-  supervisor: "anthropic/claude-sonnet-5.5",
 } as const;
 
 /** The "model" of a Call the end-to-end test runs with canned Turns (`domain/stub.ts`). */

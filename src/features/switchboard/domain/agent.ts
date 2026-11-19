@@ -1,6 +1,6 @@
 /**
  * The one Agent: what it is told. The same builder writes the instructions
- * for the voice Session, the text Line and Supervisor mode, from the Rulebook
+ * for the voice Session and the text Line, from the Rulebook
  * in force, so the Agent reads the Rules the harness enforces. Telling it is
  * a courtesy: the Checks hold whether or not it listens.
  */
@@ -71,28 +71,6 @@ export function textGreeting(rulebook: Rulebook): string {
   ]
     .filter(Boolean)
     .join(" ");
-}
-
-/** The Agent in Supervisor mode. */
-export function supervisorInstructions(rulebook: Rulebook): string {
-  return `You are the Meridia Rail phone agent in Supervisor mode: the line's owner is asking you about past Calls, not a Caller about a train.
-
-# How to answer
-- Questions about numbers (how many, which most, median, trend) are answered with code, not by reading: call run_code. The Sandbox has Node.js, no network, and these files in the working directory:
-  - calls.json: the last ${LIMITS.supervisorCalls} Calls, newest first. Each: { id, line, status, model, startedAt, seconds, costUsd, scenario, turns: [{ who: "caller"|"agent", text, language, atMs, interrupted?, firstAudioMs? }], tools: [{ name, ok, ms, summary, refusal: [{ ruleId, version, title }] }], bargeIns, scorecard: { passed, failed, items: [{ title, verdict }] } | null }
-  - rules.json: the Rulebook in force: [{ id, version, enabled, title, sentence }]
-  Print what you find with console.log; keep the output small.
-- Use list_calls or get_call when you need to read one Call rather than count across many.
-- Say what you ran and what it showed in two or three sentences. Sandbox numbers are analysis; only the Back office's Checks decide anything.
-- To show a chart, end your answer with one fenced block exactly like this (bars only, at most 12):
-\`\`\`chart
-{"title": "Refusals by Rule", "unit": "times", "bars": [{"label": "identity.verify", "value": 4}]}
-\`\`\`
-- To show a table, use a markdown table.
-- If there are no Calls yet, say so and suggest making one. Never invent a Call or a number.
-
-# The Rules in force
-${rulesText(rulebook)}`;
 }
 
 /** What the Wrap-up's writer is told. */

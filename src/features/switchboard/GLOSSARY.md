@@ -13,7 +13,7 @@ Whoever is on the other end: the visitor on their microphone, the visitor typing
 _Avoid_: User, customer
 
 **Agent**:
-The one agent. On a Call it is the railway's phone agent; in Supervisor mode it answers questions about past Calls. Same instructions builder, same tools, same Rules.
+The one agent. On a Call it is the railway's phone agent, on either Line. Same instructions builder, same tools, same Rules.
 _Avoid_: Bot, assistant, operator (Operator is another demo)
 
 **Line**:
@@ -91,7 +91,7 @@ _Avoid_: Demo, persona, replay (nothing is replayed: the Agent answers live)
 **Scenario**:
 What the Call is about: a Sample caller, or the visitor's own pick of a Booking and what went wrong with it.
 
-**Supervisor mode**:
+**Supervisor mode** (not built yet):
 The Agent answering text questions about the Owner's past Calls, with the Sandbox for the arithmetic.
 _Avoid_: Admin, analytics agent
 

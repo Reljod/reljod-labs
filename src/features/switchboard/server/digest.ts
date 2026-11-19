@@ -1,14 +1,9 @@
 import "server-only";
-import type { Owner } from "@/features/access/domain/owner";
 import { type CallEvent, type CallView, seconds } from "../domain/contract";
-import { LIMITS } from "../domain/limits";
-import { type Rulebook, renderRule, ruleDefinition } from "../domain/rules";
-import { sql } from "./db";
-import { type CallRow, callEvents, toCall } from "./store";
 
 /**
  * A Call as the Sandbox is handed it: small, flat, the shape the Agent's
- * instructions describe (`supervisorInstructions`).
+ * instructions describe.
  */
 export function digestOf(call: CallView, events: CallEvent[]) {
   const turns: Record<string, unknown>[] = [];
@@ -71,29 +66,3 @@ export function digestOf(call: CallView, events: CallEvent[]) {
       : null,
   };
 }
-
-/** The Owner's last Calls, newest first, as digests. */
-export async function digests(
-  owner: Owner,
-  limit: number = LIMITS.supervisorCalls,
-) {
-  const rows = await sql()<CallRow[]>`
-    select * from switchboard.calls
-    where owner = ${owner}
-    order by started_at desc
-    limit ${limit}`;
-  return Promise.all(
-    rows.map(async (row) =>
-      digestOf(toCall(row), await callEvents(owner, row.id)),
-    ),
-  );
-}
-
-export const rulesFile = (rulebook: Rulebook) =>
-  rulebook.map((rule) => ({
-    id: rule.id,
-    version: rule.version,
-    enabled: rule.enabled,
-    title: ruleDefinition(rule.id)?.title ?? rule.id,
-    sentence: renderRule(rule),
-  }));

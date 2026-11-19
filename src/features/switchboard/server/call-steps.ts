@@ -159,7 +159,8 @@ You have one tool, run_code: Node.js in a Sandbox with no network, with this Cal
             "Runs JavaScript (an ES module) in the Sandbox and returns what it printed.",
           inputSchema: z.object({ code: z.string().min(1).max(20_000) }),
           execute: async ({ code }) => {
-            if (runs >= 1) return "Already run once; write the note now.";
+            if (runs >= LIMITS.sandboxRunsPerWrapup)
+              return "Already run once; write the note now.";
             runs++;
             await emit(sql(), owner, callId, "agent", "code.run", {
               purpose: "wrapup",
@@ -332,7 +333,8 @@ export async function saveWrapup(owner: Owner, callId: string, note: Note) {
     };
     await tx`
       update switchboard.calls
-      set wrapup = ${jsonb(tx, wrapup)}, wrapup_status = 'done'
+      set wrapup = ${jsonb(tx, wrapup)}, wrapup_status = 'done',
+        cost_usd = cost_usd + ${note.costUsd.toFixed(6)}
       where id = ${callId}`;
     await emit(tx, owner, callId, "system", "wrapup.done", {
       costUsd: note.costUsd,

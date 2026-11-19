@@ -83,6 +83,11 @@ export async function* takeTurn(input: {
   if (!row) throw new NotFoundError("No such Call.");
   if (row.status !== "live")
     throw new StateError("That Call is over. Start a new one.");
+  // Past its deadline the Call is only waiting to be cut off: no model call.
+  if (Date.now() >= row.deadline_at.getTime())
+    throw new StateError(
+      "That Call has reached its longest length. Hang up to see the wrap-up.",
+    );
   if (row.line !== "text")
     throw new StateError(
       "That Call is on the voice Line: type into its Session instead.",

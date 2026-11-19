@@ -155,6 +155,14 @@ export async function startCall(input: StartInput): Promise<CallView> {
     !sampleCaller(input.scenario.sampleId)
   )
     throw new InvalidError("No such Sample caller.");
+  // A typo in the Booking costs nothing: check it before taking the rate.
+  if (input.scenario.kind === "own") {
+    const reference = normalizeReference(input.scenario.bookingRef);
+    const [found] = await sql()<{ ref: string }[]>`
+      select ref from switchboard.records
+      where owner = ${input.owner} and kind = 'booking' and ref = ${reference}`;
+    if (!found) throw new InvalidError("No such Booking in the Back office.");
+  }
   await takeRate(input.who, input.owner, "call");
   const replaced: string[] = [];
   const row = await sql().begin(async (tx) => {

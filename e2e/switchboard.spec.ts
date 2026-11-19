@@ -287,37 +287,85 @@ test.describe("live", () => {
     await hangUp(page);
   });
 
-  test("a sample caller's recorded voice, played into a real speech-to-speech session, is refused by a Rule", async ({
-    page,
-  }) => {
+  /** Who spoke, in transcript order: "c" for the Caller, "a" for the Agent. */
+  async function speakers(page: Page) {
+    return page
+      .locator(
+        '[data-testid="swb-caller-turn"], [data-testid="swb-agent-turn"]',
+      )
+      .evaluateAll((nodes) =>
+        nodes
+          .map((node) =>
+            node.getAttribute("data-testid") === "swb-caller-turn" ? "c" : "a",
+          )
+          .join(""),
+      );
+  }
+
+  async function playSample(page: Page, id: string) {
     await page.goto("/demos/switchboard");
-    await page.getByTestId("swb-sample-manager").click();
+    await page.getByTestId(`swb-sample-${id}`).click();
     await expect(page.getByTestId("swb-stage")).toHaveAttribute(
       "data-phase",
       "live",
-      {
-        timeout: 60_000,
-      },
+      { timeout: 60_000 },
     );
-    // The Agent's own voice, transcribed by the session.
-    await expect(page.getByTestId("swb-agent-turn").first()).toBeVisible({
-      timeout: 60_000,
-    });
+  }
+
+  test("a sample caller's recorded voice, played into a real speech-to-speech session, gets spoken answers turn by turn and no refund", async ({
+    page,
+  }) => {
+    await playSample(page, "manager");
     await expect(page.getByTestId("swb-caller-turn").first()).toContainText(
       /station manager/i,
-      {
-        timeout: 60_000,
-      },
+      { timeout: 60_000 },
     );
-    await expect(page.getByTestId("swb-agent-turn").nth(1)).toBeVisible({
-      timeout: 60_000,
-    });
+    // The Agent answers between the Caller's lines: three exchanges, and the
+    // Caller never speaks three times in a row over a silent Agent.
+    await expect
+      .poll(async () => (await speakers(page)).match(/ca/g)?.length ?? 0, {
+        timeout: 150_000,
+        intervals: [2000],
+      })
+      .toBeGreaterThanOrEqual(3);
+    const order = await speakers(page);
+    console.log(`[switchboard live] manager transcript order: ${order}`);
+    expect(order.startsWith("a"), "the Agent greets first").toBe(true);
+    expect(order).not.toMatch(/ccc/);
     const waits = await page
       .getByTestId("swb-stage")
       .getByText(/first audio \d+ ms/i)
       .innerText({ timeout: 60_000 });
     console.log(`[switchboard live] ${waits}`);
+    // Whatever the model says, the Back office issued no refund to the "manager".
+    const tools = await page.getByTestId("swb-tool").allInnerTexts();
+    expect(tools.join("\n")).not.toMatch(/Refunded/);
     await hangUp(page);
     await expect(page.getByTestId("swb-scorecard")).toBeVisible();
+  });
+
+  test("the angry sample caller barges in and the Agent's audio is cut off, then the Agent answers again", async ({
+    page,
+  }) => {
+    await playSample(page, "angry");
+    await expect(page.getByTestId("swb-barge").first()).toBeVisible({
+      timeout: 150_000,
+    });
+    // The cut Turn is marked, and the Agent speaks again after it.
+    await expect(page.getByText("cut off").first()).toBeVisible();
+    const before = await page.getByTestId("swb-agent-turn").count();
+    await expect
+      .poll(() => page.getByTestId("swb-agent-turn").count(), {
+        timeout: 60_000,
+        intervals: [2000],
+      })
+      .toBeGreaterThan(before);
+    const order = await speakers(page);
+    console.log(`[switchboard live] angry transcript order: ${order}`);
+    expect(order).not.toMatch(/ccc/);
+    await hangUp(page);
+    await expect(page.getByTestId("swb-scorecard")).toContainText(
+      /Barge|Refund|identity/i,
+    );
   });
 });

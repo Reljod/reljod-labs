@@ -62,7 +62,7 @@ export async function bodyOf(request: Request): Promise<unknown> {
   return request.json().catch(() => ({}));
 }
 
-/** The response headers of an NDJSON stream (a text Turn, a Supervisor answer). */
+/** The response headers of an NDJSON stream (a text Turn). */
 export const NDJSON_HEADERS = {
   "content-type": "application/x-ndjson; charset=utf-8",
   "cache-control": `${NO_STORE}, no-transform`,
