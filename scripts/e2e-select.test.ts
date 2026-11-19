@@ -90,7 +90,28 @@ describe("e2e-select", () => {
     expect(locationsFor("e2e/a.spec.ts", spec, "@@ -5 +5 @@")).toEqual([
       "e2e/a.spec.ts:4",
     ]);
-    expect(locationsFor("e2e/a.spec.ts", serial, "@@ -1 +1 @@")).toEqual([]);
+    expect(locationsFor("e2e/a.spec.ts", serial, "@@ -1 +1 @@")).toEqual([
+      "e2e/a.spec.ts",
+    ]);
+    expect(locationsFor("e2e/a.spec.ts", serial, "")).toEqual([]);
+  });
+
+  it("runs the whole spec for a change that can reach several tests", () => {
+    // Above the first test (a helper), and the `test.describe(` header.
+    expect(locationsFor("e2e/a.spec.ts", spec, "@@ -2 +2 @@")).toEqual([
+      "e2e/a.spec.ts",
+    ]);
+    expect(locationsFor("e2e/a.spec.ts", spec, "@@ -8 +8 @@")).toEqual([
+      "e2e/a.spec.ts",
+    ]);
+    // A test.use or a hook inside a describe, between tests.
+    const hooked = spec.replace(
+      'test.describe("group", () => {',
+      'test.describe("group", () => {\n  test.use({ locale: "en" });',
+    );
+    expect(locationsFor("e2e/a.spec.ts", hooked, "@@ -9 +9 @@")).toEqual([
+      "e2e/a.spec.ts",
+    ]);
   });
 
   it("keeps an added line that starts with ++ inside its hunk", () => {
@@ -155,8 +176,9 @@ describe("e2e-select, through git", () => {
         cwd: repo,
         encoding: "utf8",
       });
+      // A new spec runs whole (its import line sits above the first test).
       expect(out.trim().split("\n").sort()).toEqual([
-        "e2e/added.spec.ts:2",
+        "e2e/added.spec.ts",
         "e2e/kept.spec.ts:4",
       ]);
     } finally {

@@ -13,15 +13,14 @@
  *   node scripts/e2e-select.mjs <base sha> <head sha>
  *
  * A test's range runs from its `test(` line to the line before the next
- * `test(` (the last test's to the end of the file), so a change in that range
- * selects it, even one in a helper or a `test.describe` header that sits
- * there. A change above the first test (imports, helpers, `test.use`), and a
- * change to e2e/global-setup.ts or playwright.config.ts, selects nothing: the
- * full run after the merge covers it.
- *
- * A spec that runs serially (`test.describe.configure({ mode: "serial" })`)
- * is selected whole: its tests build on each other's state, so one alone
- * would fail for want of the ones before it.
+ * `test(` (the last test's to the end of the file); a change in that range
+ * selects that test. The whole spec runs instead when the change can reach
+ * several tests: a line above the first test (imports, helpers, a top-level
+ * `test.use`), a `test.describe`, `test.use` or hook line, or any change to a
+ * spec that runs serially (`test.describe.configure({ mode: "serial" })`),
+ * whose tests build on each other's state. A change to e2e/global-setup.ts,
+ * playwright.config.ts or a helper file selects nothing: the full run after
+ * the merge covers it.
  */
 import { execFileSync } from "node:child_process";
 
@@ -69,12 +68,27 @@ export function selectTests(spec, diff) {
 /** A spec whose tests run in order, each on the state the last one left. */
 const SERIAL = /describe\.configure\(\s*\{[^}]*mode:\s*["'`]serial["'`]/;
 
-/** The Playwright locations to run in one spec: [], [path] (whole file) or `path:line` each. */
+/** A line that shapes more than one test: a describe, `test.use`, a hook. */
+const SHARED =
+  /^\s*test\.(?:describe|use|beforeAll|beforeEach|afterAll|afterEach)\b/;
+
+/**
+ * The Playwright locations to run in one spec: [] when the diff changes no
+ * line, the whole file ([path]) when the spec is serial or the diff touches
+ * a line that shapes several tests (above the first test, a describe,
+ * `test.use` or a hook), otherwise `path:line` for each changed test.
+ */
 export function locationsFor(path, spec, diff) {
-  const starts = selectTests(spec, diff);
-  if (starts.length === 0) return [];
-  if (SERIAL.test(spec)) return [path];
-  return starts.map((line) => `${path}:${line}`);
+  const changed = [...changedLines(diff)];
+  if (changed.length === 0) return [];
+  const starts = testStarts(spec);
+  const lines = spec.split("\n");
+  const shared =
+    starts.length === 0 ||
+    changed.some((line) => line < starts[0]) ||
+    changed.some((line) => SHARED.test(lines[line - 1] ?? ""));
+  if (shared || SERIAL.test(spec)) return [path];
+  return selectTests(spec, diff).map((line) => `${path}:${line}`);
 }
 
 /**

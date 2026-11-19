@@ -5,17 +5,27 @@ name: e2e-changed
 # (e2e.yml), so this stays a few minutes and is never a required check.
 #
 # The tests need the app's secrets, so this runs on `pull_request_target`:
-# the workflow file and the selector (scripts/e2e-select.mjs) come from the
-# default branch, and a pull request cannot rewrite either to read the
-# secrets. The pull request's own code still runs with them (that is what an
-# end-to-end test is), so it runs only for code a person wrote: a branch of
-# this repository, opened by the owner or a collaborator, and never a Bank
-# Growth pull request (`bank:growth` label or a `bank-growth/` branch). Those
-# are written by an agent from a visitor's request (docs/adr/0024); their
-# tests run after the merge, on main.
+# the workflow file and the scripts it runs come from the default branch, and
+# a pull request cannot rewrite them to read the secrets. The pull request's
+# own code still runs with them (that is what an end-to-end test is), so it
+# runs only for code a person wrote: a branch of this repository, opened by
+# the owner or a collaborator, and never a Bank Growth pull request
+# (scripts/growth-pr.sh, the same check the growth guard uses). Growth pull
+# requests are written by an agent from a visitor's request (docs/adr/0024);
+# their tests run after the merge, on main. The growth check rests on the
+# label, the branch and the issue the pull request names; a routine that
+# drops all three is caught by review, not here.
 #
-# Nothing is uploaded: on a public repository an artifact (a Playwright
-# trace records request headers) is readable by anyone and never masked.
+# Secrets reach the job only in its last step: `.env.local` is written right
+# before the tests, after every third-party action and the install (actions
+# are pinned to commit SHAs). Nothing is uploaded: on a public repository an
+# artifact (a Playwright trace records request headers) is readable by
+# anyone and never masked.
+#
+# A run here keeps its rows (`E2E_KEEP_RUNS=1` skips global-teardown), so it
+# never deletes the `e2e` Owner's data under another run; the full run on
+# main cleans up. A run on main can still clean up under a run here, which
+# shows as a failure of this optional check: re-run it.
 
 on:
   pull_request_target:
@@ -33,28 +43,40 @@ jobs:
     name: pick the changed e2e tests
     runs-on: ubuntu-latest
     timeout-minutes: 5
+    permissions:
+      contents: read
+      pull-requests: read
+      issues: read
     if: >-
       !github.event.pull_request.draft &&
       github.event.pull_request.head.repo.full_name == github.repository &&
-      contains(fromJSON('["OWNER","MEMBER","COLLABORATOR"]'), github.event.pull_request.author_association) &&
-      !contains(github.event.pull_request.labels.*.name, 'bank:growth') &&
-      !startsWith(github.event.pull_request.head.ref, 'bank-growth/')
+      contains(fromJSON('["OWNER","MEMBER","COLLABORATOR"]'), github.event.pull_request.author_association)
     outputs:
       tests: ${{ steps.pick.outputs.tests }}
       ready: ${{ steps.secret.outputs.ready }}
+      growth: ${{ steps.growth.outputs.growth }}
     steps:
-      - name: Check out the default branch (the selector comes from here)
-        uses: actions/checkout@v4
+      - name: Check out the default branch (the scripts come from here)
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
         with:
           ref: ${{ github.sha }}
           fetch-depth: 0
           persist-credentials: false
+      - name: Is this a growth pull request? (never run with secrets)
+        id: growth
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPO: ${{ github.repository }}
+          PR: ${{ github.event.pull_request.number }}
+        run: bash scripts/growth-pr.sh
       - name: Fetch the pull request's head commit (read as text, never run)
+        if: steps.growth.outputs.growth == 'false'
         env:
           HEAD: ${{ github.event.pull_request.head.sha }}
         run: git fetch --no-tags origin "$HEAD"
       - name: Pick the tests
         id: pick
+        if: steps.growth.outputs.growth == 'false'
         env:
           BASE: ${{ github.event.pull_request.base.sha }}
           HEAD: ${{ github.event.pull_request.head.sha }}
@@ -82,14 +104,12 @@ jobs:
   e2e:
     name: changed e2e tests
     needs: select
-    if: needs.select.outputs.tests != '' && needs.select.outputs.ready == 'true'
+    if: >-
+      needs.select.outputs.growth == 'false' &&
+      needs.select.outputs.tests != '' &&
+      needs.select.outputs.ready == 'true'
     runs-on: ubuntu-latest
     timeout-minutes: 25
-    # One e2e run at a time across both e2e workflows: they share the live
-    # project and the `e2e` Owner, and global-teardown deletes that Owner's rows.
-    concurrency:
-      group: e2e-live
-      cancel-in-progress: false
     env:
       # Opt-in suites run when a pull request changes one of their tests. The
       # *_LIVE switches (a real model turn) stay off.
@@ -98,16 +118,22 @@ jobs:
       E2E_HARNESS: "1"
       E2E_OPERATOR: "1"
       E2E_SWITCHBOARD: "1"
+      E2E_KEEP_RUNS: "1"
     steps:
       - name: Check out the pull request
-        uses: actions/checkout@v4
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
         with:
           ref: ${{ github.event.pull_request.head.sha }}
           persist-credentials: false
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
         with:
           node-version: 24
-      - name: Write .env.local from the E2E_ENV secret and mask every value
+      - uses: pnpm/action-setup@b906affcce14559ad1aafd4ab0e942779e9f58b1 # v4
+      # No dependency cache: a cache saved here would be saved in the base
+      # branch's scope, where a pull request could poison it for main.
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm exec playwright install --with-deps chromium
+      - name: Write .env.local from the E2E_ENV secret and mask its values
         env:
           E2E_ENV: ${{ secrets.E2E_ENV }}
         run: |
@@ -120,11 +146,6 @@ jobs:
               for (const line of value.split("\n"))
                 if (line.trim().length >= 6) process.stdout.write(`::add-mask::${line}\n`);
           '
-      - uses: pnpm/action-setup@v4
-      # No dependency cache: a cache saved here would be saved in the base
-      # branch's scope, where a pull request could poison it for main.
-      - run: pnpm install --frozen-lockfile
-      - run: pnpm exec playwright install --with-deps chromium
       - name: Run the changed tests (CI builds and starts production)
         env:
           TESTS: ${{ needs.select.outputs.tests }}
