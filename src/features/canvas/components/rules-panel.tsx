@@ -100,7 +100,7 @@ export function RulesPanel({ initial }: { initial: RulesResponse | null }) {
 
   return (
     <div
-      className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_20rem]"
+      className="grid grid-cols-[minmax(0,1fr)] gap-4 lg:grid-cols-[minmax(0,1fr)_20rem]"
       id="cv-panel-rules"
     >
       <div className="flex flex-col gap-4">

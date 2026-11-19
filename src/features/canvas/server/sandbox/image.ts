@@ -46,7 +46,10 @@ const DUCK_TYPE: Record<ColumnType, string> = {
 };
 
 /** The Python that loads every CSV into the DuckDB file, typed as the Catalog says. */
-export function loadScript(dataDb: string = DATA_DB, loadDir: string = LOAD_DIR) {
+export function loadScript(
+  dataDb: string = DATA_DB,
+  loadDir: string = LOAD_DIR,
+) {
   const tables = CATALOG.map((table) => ({
     name: table.name,
     columns: table.columns.map(

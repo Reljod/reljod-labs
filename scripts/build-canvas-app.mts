@@ -6,7 +6,8 @@
  *
  *   pnpm build:canvas-app
  */
-import { readFile, writeFile } from "node:fs/promises";
+import { execFileSync } from "node:child_process";
+import { readFile, rm, writeFile } from "node:fs/promises";
 import { join } from "node:path";
 import { build } from "esbuild";
 
@@ -61,6 +62,15 @@ export const VIEW_APP_BYTES = ${Buffer.byteLength(html)};
 `;
 
 const target = join(APP, "view-app.generated.ts");
+const scratch = join(APP, ".view-app.generated.next.ts");
+await writeFile(scratch, `${out.trimEnd()}\n`);
+// The repo's formatter has the last word on quoting, so `pnpm lint` passes on it.
+execFileSync("pnpm", ["exec", "biome", "format", "--write", scratch], {
+  cwd: ROOT,
+  stdio: "ignore",
+});
+const formatted = await readFile(scratch, "utf8");
+await rm(scratch);
 const before = await readFile(target, "utf8").catch(() => "");
-if (before !== out) await writeFile(target, `${out.trimEnd()}\n`);
+if (before !== formatted) await writeFile(target, formatted);
 console.log(`view-app.generated.ts: ${Buffer.byteLength(html)} bytes`);

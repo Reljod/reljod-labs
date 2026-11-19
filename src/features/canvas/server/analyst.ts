@@ -52,7 +52,11 @@ const textOf = (output: unknown) =>
   "";
 
 const summaryOf = (output: unknown) =>
-  textOf(output).split("\n")[0].slice(0, 200) || "Done";
+  textOf(output)
+    .split("\n")
+    // A Skill opens with its front matter rule; the line after says what it is.
+    .find((line) => line.trim() && line.trim() !== "---")
+    ?.slice(0, 200) || "Done";
 
 function turnClient(turn: Turn) {
   return createMCPClient({
@@ -284,6 +288,7 @@ async function* modelTurn(
         });
         spent.calls.push(usage);
         await trail(turn.caller, {
+          actor: "analyst",
           action: "model.called",
           summary: `Turn ${spent.calls.length}: ${usage.inputTokens} in, ${usage.outputTokens} out`,
           detail: {

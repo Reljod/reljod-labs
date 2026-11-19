@@ -8,7 +8,7 @@ export function DataPanel({ catalog }: { catalog: CatalogTableInfo[] }) {
   const rows = catalog.reduce((sum, table) => sum + table.rows, 0);
   return (
     <div
-      className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_22rem]"
+      className="grid grid-cols-[minmax(0,1fr)] gap-4 lg:grid-cols-[minmax(0,1fr)_22rem]"
       id="cv-panel-data"
     >
       <Panel

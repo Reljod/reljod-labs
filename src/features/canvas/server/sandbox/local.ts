@@ -93,7 +93,9 @@ export async function runLocal(
   const { stdout } = await run(python, [join(dir, "runner.py"), arg], {
     timeout: (seconds + 15) * 1000,
     maxBuffer: 64 * 1024 * 1024,
+    // Only what the runner needs: none of the server's secrets reach it.
     env: {
+      NODE_ENV: process.env.NODE_ENV,
       PATH: process.env.PATH ?? "",
       CANVAS_DATA_DB: join(dir, "meridia.duckdb"),
       CANVAS_UPLOADS_DB: join(dir, "no-uploads.duckdb"),

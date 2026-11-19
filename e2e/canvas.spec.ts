@@ -78,7 +78,9 @@ test.describe("stubbed Analyst", () => {
     // Under the hood: the Trail has the change, and the Bridge log has the messages.
     await page.getByTestId("canvas-tab-hood").click();
     const trail = page.getByTestId("trail");
-    await expect(trail.getByText("View Parameters changed").first()).toBeVisible({
+    await expect(
+      trail.getByText("View Parameters changed").first(),
+    ).toBeVisible({
       timeout: 30_000,
     });
     await expect(trail.getByText("Query finished").first()).toBeVisible();
@@ -101,12 +103,17 @@ test.describe("stubbed Analyst", () => {
     await page.getByRole("button", { name: "Make a token" }).click();
     const header = page.getByText(/Authorization: Bearer canvas_/);
     await expect(header).toBeVisible({ timeout: 30_000 });
-    const token = ((await header.textContent()) ?? "").split("Bearer ")[1].trim();
+    const token = ((await header.textContent()) ?? "")
+      .split("Bearer ")[1]
+      .trim();
     const url = `${baseURL}/api/canvas/mcp`;
 
     // No bearer, no entry.
     const refused = await page.request.post(url, {
-      headers: { "content-type": "application/json", accept: "application/json, text/event-stream" },
+      headers: {
+        "content-type": "application/json",
+        accept: "application/json, text/event-stream",
+      },
       data: { jsonrpc: "2.0", id: 1, method: "tools/list" },
     });
     expect(refused.status()).toBe(401);
@@ -121,14 +128,20 @@ test.describe("stubbed Analyst", () => {
         headers: { authorization: `Bearer ${token}` },
       },
     });
-    const text = (result: { content?: unknown }) =>
-      ((result.content as { text?: string }[] | undefined) ?? [])
+    const text = (result: unknown) =>
+      (
+        ((result as { content?: unknown }).content as
+          | { text?: string }[]
+          | undefined) ?? []
+      )
         .map((item) => item.text ?? "")
         .join("\n");
     try {
       // The View tools point at the UI resource, and the resource is the App.
       const listed = await client.listTools();
-      const createTool = listed.tools.find((tool) => tool.name === "create_view");
+      const createTool = listed.tools.find(
+        (tool) => tool.name === "create_view",
+      );
       expect(
         (createTool?._meta as { ui?: { resourceUri?: string } } | undefined)?.ui
           ?.resourceUri,
@@ -153,7 +166,12 @@ test.describe("stubbed Analyst", () => {
       expect(made.isError ?? false).toBe(false);
       const first = made.structuredContent as {
         kind: string;
-        view: { id: string; revision: number; status: string; result: { rowCount: number } };
+        view: {
+          id: string;
+          revision: number;
+          status: string;
+          result: { rowCount: number };
+        };
       };
       expect(first.kind).toBe("canvas.view");
       expect(first.view.status).toBe("verified");
@@ -202,7 +220,10 @@ test.describe("stubbed Analyst", () => {
 
       // A Rule edit takes effect at the query tool: restrict a column, and it is refused.
       const sql = "select amount_mdc from card_spend limit 3";
-      const before = await client.callTool({ name: "run_query", arguments: { sql } });
+      const before = await client.callTool({
+        name: "run_query",
+        arguments: { sql },
+      });
       expect(before.isError ?? false).toBe(false);
       const rules = await client.callTool({ name: "get_rules", arguments: {} });
       const current = (
@@ -223,14 +244,19 @@ test.describe("stubbed Analyst", () => {
       });
       expect(saved.isError ?? false).toBe(false);
       try {
-        const after = await client.callTool({ name: "run_query", arguments: { sql } });
+        const after = await client.callTool({
+          name: "run_query",
+          arguments: { sql },
+        });
         expect(after.isError).toBe(true);
         expect(text(after)).toMatch(/Restricted/i);
       } finally {
         await client.callTool({
           name: "save_rules",
           arguments: {
-            edits: [{ id: "access.restricted_columns", params: { columns: current } }],
+            edits: [
+              { id: "access.restricted_columns", params: { columns: current } },
+            ],
           },
         });
       }
@@ -238,7 +264,9 @@ test.describe("stubbed Analyst", () => {
       // A bad Rule value is refused where it is made.
       const bad = await client.callTool({
         name: "save_rules",
-        arguments: { edits: [{ id: "verify.tolerance", params: { percent: 900 } }] },
+        arguments: {
+          edits: [{ id: "verify.tolerance", params: { percent: 900 } }],
+        },
       });
       expect(bad.isError).toBe(true);
     } finally {
@@ -262,7 +290,9 @@ test.describe("stubbed Analyst", () => {
     });
     await page.reload();
     await page.getByTestId("canvas-tab-rules").click();
-    await expect(page.locator('[id="rule-verify.tolerance-percent"]')).toHaveValue(next);
+    await expect(
+      page.locator('[id="rule-verify.tolerance-percent"]'),
+    ).toHaveValue(next);
   });
 });
 
@@ -318,7 +348,9 @@ test.describe("the real Analyst", () => {
     await expect(frame.getByText(/Verified|Flagged/).first()).toBeVisible({
       timeout: 60_000,
     });
-    await expect(page.getByRole("button", { name: "Ask", exact: true })).toBeVisible({
+    await expect(
+      page.getByRole("button", { name: "Ask", exact: true }),
+    ).toBeVisible({
       timeout: 360_000,
     });
     const usage = page.getByTestId("usage");

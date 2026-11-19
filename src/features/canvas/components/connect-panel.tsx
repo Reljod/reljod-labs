@@ -40,7 +40,10 @@ export function ConnectPanel() {
   };
 
   return (
-    <div className="grid gap-4 lg:grid-cols-2" id="cv-panel-connect">
+    <div
+      className="grid grid-cols-[minmax(0,1fr)] gap-4 lg:grid-cols-2"
+      id="cv-panel-connect"
+    >
       <Panel eyebrow="One MCP server" title="Connect a client">
         <p className="text-sm leading-relaxed">
           The Analyst on this page reaches everything through one MCP server. An

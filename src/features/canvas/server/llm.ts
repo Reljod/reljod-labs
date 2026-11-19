@@ -54,7 +54,9 @@ function gatewayCost(providerMetadata: unknown): number | null {
   if (!isRecord(meta)) return null;
   for (const value of [meta.cost, meta.marketCost]) {
     const number = typeof value === "string" ? Number(value) : value;
-    if (typeof number === "number" && Number.isFinite(number)) return number;
+    // Zero means "not priced", not "free": fall back to the list price.
+    if (typeof number === "number" && Number.isFinite(number) && number > 0)
+      return number;
   }
   return null;
 }

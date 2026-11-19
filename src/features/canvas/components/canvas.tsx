@@ -358,7 +358,7 @@ export function Canvas({
       <main className="mx-auto w-full max-w-[1500px] flex-1 px-3 py-4 sm:px-5 sm:py-6">
         <div
           hidden={tab !== "ask"}
-          className="grid gap-4 xl:grid-cols-[minmax(0,26rem)_minmax(0,1fr)]"
+          className="grid grid-cols-[minmax(0,1fr)] gap-4 xl:grid-cols-[minmax(0,26rem)_minmax(0,1fr)]"
         >
           <Panel
             eyebrow="The Analyst"

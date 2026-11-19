@@ -131,6 +131,21 @@
 
 - Vercel Functions run in `syd1` (`regions` in `vercel.json`), beside the Supabase project (ap-southeast-2). A demo request makes several database round trips (the Access gate in the proxy and again in the route, then the Workspace), so the two must stay in one region; move them together.
 
+## Canvas (an analyst that answers with working interfaces)
+
+- A live demo at `/demos/canvas` in five places (Ask, Data, Rules, Under the hood, Connect): one Analyst answers a Question about the open data of the fictional Republic of Meridia with Views. Domain language: `src/features/canvas/GLOSSARY.md`. Decisions: `docs/adr/0031-canvas-views-are-a-typed-grammar-drawn-by-one-mcp-app.md`, `docs/adr/0032-canvas-sandbox-image-and-the-local-runner.md`.
+- A View is a spec in the View grammar (`domain/view.ts`, `canvas.view/1`), never model HTML. A new kind of chart is a change to the grammar, to `domain/chart-checks.ts` and to the App; `CHARTS` in `app/view-card.tsx` lists the kinds the App draws (others fall back to their rows).
+- The App (`src/features/canvas/app/`, Preact, its own bridge) is one HTML document served as the MCP Apps resource `ui://canvas/view.html`. After changing anything under `app/`, run `pnpm build:canvas-app` and commit `view-app.generated.ts`. Nothing in `app/` may import zod or server code; it takes types only from `domain/`.
+- The page is an MCP Apps host (`components/view-frame.tsx`, `server/host.ts`): the frame is `sandbox="allow-scripts"` and must never get `allow-same-origin`; the App's `tools/call` is proxied only for the tools in `APP_TOOLS`.
+- The Analyst reaches everything through the Canvas MCP server (`server/mcp.ts`, `/api/canvas/mcp`, which checks its own bearer). A new capability is a new MCP tool that calls a server function taking a `Caller`; the page calls the same function.
+- Every Query goes through `server/runs.ts`: limits, the Guard on the parsed statement (`domain/guard.ts`), the Trail, then the Sandbox. Never run SQL any other way. The Guard's fixtures (`domain/guard.fixtures.json`) are statements DuckDB really parsed; a new Guard rule needs a new fixture and a test that it can refuse.
+- Rules are data (`domain/rules.ts`, Versions in `canvas.rulebooks`); the checks that read them are pure code (`guard.ts`, `verify.ts`, `chart-checks.ts`). Only `verify.ts` marks a View Verified.
+- Every server function that writes calls `trail()` (or `trailIn(tx, …)`) with an action from `domain/trail.ts`. `canvas.events` refuses UPDATE and DELETE; events go only when the Workspace does. Every table carries `owner` and cascades from `canvas.workspaces`, the only Canvas table in `access.owned_tables`.
+- Data: generated from seeds in `domain/data/` (README in `fixtures/canvas/`); `pnpm render:canvas-data` rewrites the manifest and the two sample CSVs. Bump `DATA_VERSION` when a generated value changes and `RUNNER_VERSION` when the runner does: both key the Sandbox image.
+- Env: `CANVAS_DATABASE_URL` (falls back to `CLIENT_MANAGER_DATABASE_URL`), `CANVAS_AI_GATEWAY_API_KEY` (falls back to `DOCUMENT_COMPLIANCE_AI_GATEWAY_API_KEY`), optional `CANVAS_MODEL` (default `anthropic/claude-sonnet-5.5`); shares `RATE_LIMIT_SALT` (it signs Canvas MCP tokens) and `E2E_BYPASS_TOKEN`. The Sandbox authenticates like the Harness's. `CANVAS_LOCAL_RUNNER=<python with duckdb>` runs guarded Queries on the dev machine instead (never on Vercel or in production; it refuses `run_code`). Migration: `supabase/migrations/20261119160000_canvas.sql` (added with `git add -f`).
+- Tests: `e2e/canvas.spec.ts` is skipped unless `E2E_CANVAS=1`; the Analyst's turn is stubbed (`x-canvas-stub` with the e2e bypass token), the tools are real. `E2E_CANVAS_LIVE=1` adds one Question to the real model. Run it only when asked.
+- Not built yet (tables exist): Boards with a Refresh workflow, export, and bring-your-own CSV.
+
 <!-- BEGIN:nextjs-agent-rules -->
 
 ## This is NOT the Next.js you know
