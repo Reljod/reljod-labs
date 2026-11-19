@@ -44,7 +44,10 @@ if [ "$growth" = "false" ]; then
     # number in prose) is skipped. Any other error (a 5xx, a rate limit)
     # stops the check, so an outage never turns a growth PR into an
     # ordinary one.
-    if ! labels=$(gh api "repos/$REPO/issues/$number" --jq '[.labels[].name] | join(",")' 2>"$err"); then
+    # The issues API also returns pull requests; only an issue counts (a pull
+    # request that names a growth pull request, like a fix to the loop, is
+    # not itself one).
+    if ! labels=$(gh api "repos/$REPO/issues/$number" --jq 'if .pull_request then "" else [.labels[].name] | join(",") end' 2>"$err"); then
       if grep -q 'HTTP 404' "$err"; then continue; fi
       echo "Could not read issue #$number, so cannot tell whether this is a growth pull request:" >&2
       cat "$err" >&2
