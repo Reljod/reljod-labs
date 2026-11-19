@@ -130,6 +130,10 @@ export async function clearPayment(
         ).toISOString(),
       };
     }
+    const settledOn =
+      payment.settlesOn && payment.settlesOn <= payment.today
+        ? payment.settlesOn
+        : payment.today;
     const outcome = railOutcome(payment.payeeNumber);
     const clearing = await gl(tx, owner, GL.clearing);
     if (outcome.settled) {
@@ -147,10 +151,10 @@ export async function clearPayment(
             amount: payment.amount,
           },
         ],
-        { ref: { paymentId: payment.id } },
+        { ref: { paymentId: payment.id }, entryDate: settledOn },
       );
       await tx`
-        update bank.payments set status = 'settled', settled_on = ${payment.today},
+        update bank.payments set status = 'settled', settled_on = ${settledOn},
                settle_entry_id = ${entryId}
         where id = ${payment.id}`;
       await auditIn(
@@ -163,7 +167,7 @@ export async function clearPayment(
           detail: { amount: payment.amount, entryId },
         },
       );
-      return { state: "settled", note: `Settled on ${payment.today}` };
+      return { state: "settled", note: `Settled on ${settledOn}` };
     }
     // Returned: the customer gets the money back. Bank-initiated, so it
     // credits even a frozen account.
@@ -178,7 +182,7 @@ export async function clearPayment(
         { account: clearing, dir: "D", amount: payment.amount },
         { account: payment.fromAccountId, dir: "C", amount: payment.amount },
       ],
-      { ref: { paymentId: payment.id } },
+      { ref: { paymentId: payment.id }, entryDate: settledOn },
     );
     const fee = book["fees.payments"].enabled
       ? num(book, "fees.payments", "returned")
@@ -196,12 +200,12 @@ export async function clearPayment(
           { account: account.id, dir: "D", amount: fee },
           { account: await gl(tx, owner, GL.fees), dir: "C", amount: fee },
         ],
-        { ref: { paymentId: payment.id } },
+        { ref: { paymentId: payment.id }, entryDate: settledOn },
       );
       charged = fee;
     }
     await tx`
-      update bank.payments set status = 'returned', settled_on = ${payment.today},
+      update bank.payments set status = 'returned', settled_on = ${settledOn},
              settle_entry_id = ${entryId},
              status_reason = ${`${outcome.code}: ${outcome.reason}`}
       where id = ${payment.id}`;
@@ -396,7 +400,11 @@ export async function runEodStep(
   step: EodStep,
 ): Promise<string> {
   return once(pool, owner, `eod:${date}:${step}`, async (tx) => {
-    const ctx = await systemCtx(tx, owner, "End-of-day");
+    const ctx = {
+      ...(await systemCtx(tx, owner, "End-of-day")),
+      today: date,
+      now: `${date}T12:00:00.000Z`,
+    };
     switch (step) {
       case "cards":
         return settleCards(ctx, date);
@@ -643,7 +651,7 @@ async function collectLoans(ctx: Ctx, date: BankDate): Promise<string> {
             { account: account.id, dir: "D", amount: fee },
             { account: await gl(tx, owner, GL.fees), dir: "C", amount: fee },
           ],
-          { ref: { loanId: loan.id } },
+          { ref: { loanId: loan.id }, entryDate: date },
         );
       }
       await notify(tx, owner, {

@@ -23,7 +23,10 @@ SQL
 # The Owner registry and purge, exactly as the access migration defines them.
 sed -n '/^create table access.owned_tables/,/^\$\$;/p' \
   "$root/supabase/migrations/20261115120000_access_owners.sql" | psql
-psql < "$root/supabase/migrations/20261119120000_bank.sql"
+# Every bank migration, in timestamp order.
+for migration in "$root"/supabase/migrations/*_bank*.sql; do
+  psql < "$migration"
+done
 
 cd "$root"
 BANK_TEST_DATABASE_URL="postgres://postgres:test@127.0.0.1:$port/postgres" \

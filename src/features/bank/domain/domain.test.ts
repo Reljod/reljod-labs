@@ -467,6 +467,32 @@ describe("the affordability decision", () => {
     expect(decideLoan(book, { ...facts, risk: "high" }).rateBps).toBe(1_190);
     expect(decideLoan(book, { ...facts, risk: "low" }).rateBps).toBe(790);
   });
+  it("re-checks an offer on its own payment, not one repriced by a later Rule edit", () => {
+    const offered = decideLoan(book, { ...facts, amount: 13_000_00 });
+    expect(offered.approved).toBe(true);
+    // The base rate goes up by 30 points after the offer was made.
+    const dearer = resolveRulebook([
+      {
+        ruleId: "lending.pricing",
+        version: 1,
+        enabled: true,
+        params: { baseBps: 3_890, highRiskBps: 300, lowRiskBps: 100 },
+      },
+    ]);
+    // Priced afresh, the same loan no longer fits the 35% cap...
+    expect(decideLoan(dearer, { ...facts, amount: 13_000_00 }).approved).toBe(
+      false,
+    );
+    // ...but the offer keeps the payment it was offered at, and still fits.
+    expect(
+      decideLoan(dearer, {
+        ...facts,
+        amount: 13_000_00,
+        monthlyPayment: offered.monthlyPayment,
+      }).approved,
+    ).toBe(true);
+  });
+
   it("declines, and says every reason", () => {
     const failed = (over: object) =>
       decideLoan(book, { ...facts, ...over }).findings.filter(

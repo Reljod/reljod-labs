@@ -157,6 +157,7 @@ describe("following GitHub", () => {
     expect(linkedPull(61, pulls)?.number).toBe(71);
     expect(linkedPull(61, pulls.slice(0, 2))?.number).toBe(70);
     expect(linkedPull(62, pulls)).toBeNull();
+    expect(linkedPull(61, [pull({ number: 72, labels: [] })])).toBeNull();
   });
   it("moves a request Issue, Pull request, Merged, Live", () => {
     expect(

@@ -72,6 +72,7 @@ type StatusExtra = {
   pr_number?: number | null;
   pr_url?: string | null;
   merge_sha?: string | null;
+  synced?: boolean;
 };
 
 async function setStatus(
@@ -82,6 +83,7 @@ async function setStatus(
 ) {
   const db = sql();
   const pull = "pr_number" in extra;
+  const synced = pull || Boolean(extra.synced);
   await db`
     update bank.growth_requests set
       status = ${status},
@@ -91,10 +93,14 @@ async function setStatus(
       duplicate_of = coalesce(${extra.duplicate_of ?? null}, duplicate_of),
       issue_number = coalesce(${extra.issue_number ?? null}, issue_number),
       issue_url = coalesce(${extra.issue_url ?? null}, issue_url),
+      issue_filed_at = coalesce(
+        issue_filed_at,
+        case when ${extra.issue_number ?? null}::int is not null then now() else null end
+      ),
       pr_number = case when ${pull} then ${extra.pr_number ?? null} else pr_number end,
       pr_url = case when ${pull} then ${extra.pr_url ?? null} else pr_url end,
       merge_sha = case when ${pull} then ${extra.merge_sha ?? null} else merge_sha end,
-      synced_at = case when ${pull} then now() else synced_at end
+      synced_at = case when ${synced} then now() else synced_at end
     where owner = ${row.owner} and id = ${row.id}`;
 }
 
@@ -151,11 +157,8 @@ type GithubPull = {
   labels: { name: string }[];
 };
 
-async function recentPulls(): Promise<PullFacts[]> {
-  const pulls = await github<GithubPull[]>(
-    "/pulls?state=all&sort=updated&direction=desc&per_page=50",
-  );
-  return pulls.map((pull) => ({
+function toPullFacts(pull: GithubPull): PullFacts {
+  return {
     number: pull.number,
     url: pull.html_url,
     body: pull.body ?? "",
@@ -163,7 +166,22 @@ async function recentPulls(): Promise<PullFacts[]> {
     merged: Boolean(pull.merged_at),
     mergeSha: pull.merge_commit_sha,
     labels: pull.labels.map((label) => label.name),
-  }));
+  };
+}
+
+async function recentPulls(): Promise<PullFacts[]> {
+  const pulls = await github<GithubPull[]>(
+    "/pulls?state=all&sort=updated&direction=desc&per_page=50",
+  );
+  return pulls.map(toPullFacts);
+}
+
+async function pullByNumber(prNumber: number): Promise<PullFacts | null> {
+  try {
+    return toPullFacts(await github<GithubPull>(`/pulls/${prNumber}`));
+  } catch {
+    return null;
+  }
 }
 
 /** Whether the running build contains a commit, or null when this server does not know its build. */
@@ -389,10 +407,40 @@ export async function fileIssue(
     };
   }
   const db = sql();
-  const [today] = await db<{ count: number }[]>`
-    select count(*)::int as count from bank.growth_requests
-    where issue_number is not null and updated_at > now() - interval '1 day'`;
-  if ((today?.count ?? 0) >= LIMITS.growthIssuesPerDay) {
+  const slot = await db.begin(async (tx) => {
+    await tx`select pg_advisory_xact_lock(hashtext('bank:growth:file_issue'))`;
+    const [locked] = await tx<RequestRow[]>`
+      select id, owner, kind, title, want, evidence, session_id, status, triage,
+             issue_number, pr_number, merge_sha, told_at
+      from bank.growth_requests
+      where owner = ${owner} and id = ${row.id}
+      for update`;
+    if (!locked) return { kind: "gone" as const };
+    if (locked.issueNumber)
+      return { kind: "already" as const, issueNumber: locked.issueNumber };
+    if (locked.status !== "triaged")
+      return { kind: "status" as const, status: locked.status };
+    const [today] = await tx<{ count: number }[]>`
+      select count(*)::int as count from bank.growth_requests
+      where id <> ${row.id}
+        and issue_filed_at > now() - interval '1 day'
+        and (issue_number is not null or issue_filed_at > now() - interval '5 minutes')`;
+    if ((today?.count ?? 0) >= LIMITS.growthIssuesPerDay) {
+      return { kind: "capped" as const };
+    }
+    await tx`
+      update bank.growth_requests
+      set issue_filed_at = coalesce(issue_filed_at, now())
+      where owner = ${owner} and id = ${row.id}`;
+    return { kind: "claimed" as const, row: locked };
+  });
+  if (slot.kind === "gone")
+    return { filed: false, note: "The request is gone" };
+  if (slot.kind === "already")
+    return { filed: true, note: `Already filed as #${slot.issueNumber}` };
+  if (slot.kind === "status")
+    return { filed: false, note: `The request is ${slot.status}` };
+  if (slot.kind === "capped") {
     await setStatus(
       row,
       "triaged",
@@ -401,44 +449,58 @@ export async function fileIssue(
     return { filed: false, note: "Daily issue cap reached", waiting: true };
   }
   const spec: GrowthSpec = {
-    kind: row.kind,
-    title: row.triage.title ?? row.title,
-    problem: row.triage.problem ?? row.title,
-    acceptance: row.triage.acceptance ?? [],
+    kind: slot.row.kind,
+    title: slot.row.triage.title ?? slot.row.title,
+    problem: slot.row.triage.problem ?? slot.row.title,
+    acceptance: slot.row.triage.acceptance ?? [],
   };
-  // A retry after a crash finds the issue it already filed by its marker.
-  const marker = `bank-growth-request:${row.id}`;
-  const existing = (
-    await github<GithubIssue[]>(
-      `/issues?labels=${encodeURIComponent(GROWTH_LABEL)}&state=all&per_page=50`,
-    )
-  ).filter((item) => !item.pull_request);
-  let issue = null as GithubIssue | null;
-  for (const candidate of existing.filter(
-    (item) => item.title === issueTitle(spec),
-  )) {
-    const full = await github<GithubIssue & { body: string | null }>(
-      `/issues/${candidate.number}`,
+  let issue: GithubIssue;
+  try {
+    // A retry after a crash finds the issue it already filed by its marker.
+    const marker = `bank-growth-request:${row.id}`;
+    const existing = (
+      await github<GithubIssue[]>(
+        `/issues?labels=${encodeURIComponent(GROWTH_LABEL)}&state=all&per_page=50`,
+      )
+    ).filter((item) => !item.pull_request);
+    let found = null as GithubIssue | null;
+    for (const candidate of existing.filter(
+      (item) => item.title === issueTitle(spec),
+    )) {
+      const full = await github<GithubIssue & { body: string | null }>(
+        `/issues/${candidate.number}`,
+      );
+      if (full.body?.includes(marker)) found = full;
+    }
+    issue =
+      found ??
+      (await github<GithubIssue>("/issues", {
+        method: "POST",
+        body: {
+          title: issueTitle(spec),
+          body: issueBody(
+            spec,
+            { want: slot.row.want, evidence: slot.row.evidence },
+            slot.row.id,
+          ),
+          labels: [GROWTH_LABEL, KIND_LABEL[slot.row.kind]],
+        },
+      }));
+    await setStatus(
+      row,
+      "issue",
+      "Filed. Waiting for the routine to pick it up.",
+      {
+        issue_number: issue.number,
+        issue_url: issue.html_url,
+      },
     );
-    if (full.body?.includes(marker)) issue = full;
+  } catch (error) {
+    await db`
+      update bank.growth_requests set issue_filed_at = null
+      where owner = ${owner} and id = ${row.id} and issue_number is null`;
+    throw error;
   }
-  issue ??= await github<GithubIssue>("/issues", {
-    method: "POST",
-    body: {
-      title: issueTitle(spec),
-      body: issueBody(spec, { want: row.want, evidence: row.evidence }, row.id),
-      labels: [GROWTH_LABEL, KIND_LABEL[row.kind]],
-    },
-  });
-  await setStatus(
-    row,
-    "issue",
-    "Filed. Waiting for the routine to pick it up.",
-    {
-      issue_number: issue.number,
-      issue_url: issue.html_url,
-    },
-  );
   await auditIn(
     db,
     { owner, system: "Growth" },
@@ -491,18 +553,31 @@ export async function syncRequest(
     github<GithubIssue>(`/issues/${row.issueNumber}`),
     recentPulls(),
   ]);
-  const pull = linkedPull(row.issueNumber, pulls);
+  let pull = linkedPull(row.issueNumber, pulls);
+  if (!pull && row.prNumber) {
+    const seen =
+      pulls.find((item) => item.number === row.prNumber) ??
+      (await pullByNumber(row.prNumber));
+    if (seen?.labels.includes(GROWTH_LABEL)) pull = seen;
+  }
   const next = statusFromGithub({
     issueState: issue.state,
     pull,
     deployed: pull?.merged ? await deployed(pull.mergeSha) : null,
   });
   if (next.status !== row.status || (pull && pull.number !== row.prNumber)) {
-    await setStatus(row, next.status, next.note, {
-      pr_number: pull?.number ?? null,
-      pr_url: pull?.url ?? null,
-      merge_sha: pull?.mergeSha ?? null,
-    });
+    await setStatus(
+      row,
+      next.status,
+      next.note,
+      pull
+        ? {
+            pr_number: pull.number,
+            pr_url: pull.url,
+            merge_sha: pull.mergeSha,
+          }
+        : { synced: true },
+    );
     await auditIn(
       sql(),
       { owner, system: "Growth" },

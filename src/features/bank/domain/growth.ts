@@ -198,7 +198,10 @@ export function linkedPull(
   issue: number,
   pulls: PullFacts[],
 ): PullFacts | null {
-  const linked = pulls.filter((pull) => closes(issue).test(pull.body));
+  const linked = pulls.filter(
+    (pull) =>
+      pull.labels.includes(GROWTH_LABEL) && closes(issue).test(pull.body),
+  );
   return (
     linked.find((pull) => pull.merged) ??
     linked.find((pull) => pull.state === "open") ??

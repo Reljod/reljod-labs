@@ -12,8 +12,8 @@ import {
  * without a model and never filed on GitHub. It still writes to the `e2e`
  * Owner's bank in the database and starts real Workflows.
  *
- * Opt-in with `E2E_BANK=1` once `supabase/migrations/20261119120000_bank.sql`
- * is applied to the project the suite runs against. `E2E_BANK_LIVE=1` adds
+ * Opt-in with `E2E_BANK=1` once the bank migrations
+ * (`supabase/migrations/2026111912*_bank*.sql`) are applied to the project the suite runs against. `E2E_BANK_LIVE=1` adds
  * one real, cheap Teller turn.
  */
 test.skip(

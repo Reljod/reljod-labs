@@ -182,6 +182,7 @@ export function ChatTab() {
   const [sent, setSent] = useState<string | null>(null);
   const [text, setText] = useState("");
   const [error, setError] = useState<string | null>(null);
+  const [drawerOpen, setDrawerOpen] = useState(false);
   const abort = useRef<AbortController | null>(null);
   const busy = useRef(false);
   const end = useRef<HTMLDivElement | null>(null);
@@ -235,6 +236,7 @@ export function ChatTab() {
   }, [detail?.messages.length, live?.text, live?.tools.length]);
 
   const open = (id: string | null) => {
+    setDrawerOpen(false);
     setCurrent(id);
     setError(null);
     openTab("chat", { session: id });
@@ -356,8 +358,21 @@ export function ChatTab() {
   const empty = !current || (detail !== null && messages.length === 0 && !live);
 
   return (
-    <div className="flex h-full min-h-0">
-      <aside className="hidden w-64 shrink-0 flex-col gap-2 overflow-y-auto border-ink border-r-2 p-3 md:flex">
+    <div className="relative flex h-full min-h-0">
+      <aside
+        aria-label="Conversations"
+        className={`${drawerOpen ? "flex" : "hidden"} absolute inset-y-0 left-0 z-20 w-[min(18rem,85vw)] shrink-0 flex-col gap-2 overflow-y-auto border-ink border-r-2 bg-marble p-3 shadow-hard-md md:static md:flex md:w-64 md:bg-transparent md:shadow-none`}
+      >
+        <div className="flex items-center justify-between md:hidden">
+          <span className="eyebrow">Conversations</span>
+          <button
+            type="button"
+            className="press text-xs underline"
+            onClick={() => setDrawerOpen(false)}
+          >
+            Close
+          </button>
+        </div>
         <Button
           data-testid="bank-chat-new"
           disabled={Boolean(live)}
@@ -409,6 +424,15 @@ export function ChatTab() {
       </aside>
       <div className="flex min-h-0 min-w-0 flex-1 flex-col">
         <div className="flex flex-wrap items-center gap-2 border-ink border-b-2 bg-paper px-3 py-2 text-xs sm:px-5">
+          <button
+            type="button"
+            data-testid="bank-chat-drawer"
+            aria-expanded={drawerOpen}
+            className="outline-box press rounded-sm bg-paper px-2 py-1 text-xs md:hidden"
+            onClick={() => setDrawerOpen((before) => !before)}
+          >
+            Conversations ({sessions.length})
+          </button>
           <span className="font-semibold text-sm">
             {detail?.session.title ?? "The Teller"}
           </span>
@@ -417,7 +441,8 @@ export function ChatTab() {
           </span>
           <button
             type="button"
-            className="press ml-auto underline md:hidden"
+            disabled={Boolean(live)}
+            className="press ml-auto underline disabled:opacity-40 md:hidden"
             onClick={() => open(null)}
           >
             New

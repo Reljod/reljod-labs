@@ -328,6 +328,7 @@ export async function settleAuthorisation(
       allowFrozen: true,
       force: true,
       ref: { cardAuthId: auth.id },
+      entryDate: today,
     },
   );
   await db`
@@ -416,6 +417,8 @@ type LoanRow = {
   rateBps: number;
   termMonths: number;
   monthlyPayment: number;
+  declaredIncome: number;
+  declaredExpenses: number;
   status: string;
   loanAccountId: string | null;
   disburseAccountId: string;
@@ -430,7 +433,8 @@ export async function loanRow(
 ): Promise<LoanRow> {
   const [loan] = await db<LoanRow[]>`
     select id, customer_id, number, principal, rate_bps, term_months,
-           monthly_payment, status, loan_account_id, disburse_account_id, arrears
+           monthly_payment, declared_income, declared_expenses, status,
+           loan_account_id, disburse_account_id, arrears
     from bank.loans where owner = ${owner} and id = ${loanId}
     ${forUpdate ? db`for update` : db``}`;
   if (!loan) throw new NotFoundError("That loan is not in this bank.");
@@ -439,7 +443,7 @@ export async function loanRow(
 
 export const applyForLoan: WriteHandler<CommandInput<"apply_for_loan">> = {
   async run(ctx, input) {
-    const customer = await customerRow(ctx, input.customerId);
+    const customer = await customerRow(ctx, input.customerId, true);
     const account = await accountById(
       ctx.tx,
       ctx.owner,
@@ -458,7 +462,7 @@ export const applyForLoan: WriteHandler<CommandInput<"apply_for_loan">> = {
       { loans: number; repayments: number; inArrears: boolean }[]
     >`
       select count(*)::int as loans,
-             coalesce(sum(monthly_payment) filter (where status in ('accepted', 'active', 'arrears')), 0)::bigint as repayments,
+             coalesce(sum(monthly_payment) filter (where status in ('offered', 'accepted', 'active', 'arrears')), 0)::bigint as repayments,
              coalesce(bool_or(status = 'arrears'), false) as in_arrears
       from bank.loans where owner = ${ctx.owner} and customer_id = ${customer.id}`;
     if ((facts?.loans ?? 0) >= LIMITS.loansPerCustomer) {
@@ -539,9 +543,34 @@ export const acceptLoan: WriteHandler<CommandInput<"accept_loan">> = {
     return `Accept loan ${loan.number}: ${formatMoney(loan.principal)} over ${loan.termMonths} months, ${formatMoney(loan.monthlyPayment)} a month`;
   },
   async run(ctx, input) {
-    const loan = await loanRow(ctx.tx, ctx.owner, input.loanId);
+    const target = await loanRow(ctx.tx, ctx.owner, input.loanId, false);
+    const customer = await customerRow(ctx, target.customerId, true);
+    const loan = await loanRow(ctx.tx, ctx.owner, input.loanId, true);
     if (loan.status !== "offered")
       throw new StateError(`That loan is ${loan.status}, not an open offer.`);
+    const [facts] = await ctx.tx<{ repayments: number; inArrears: boolean }[]>`
+      select coalesce(sum(monthly_payment) filter (where status in ('accepted', 'active', 'arrears')), 0)::bigint as repayments,
+             coalesce(bool_or(status = 'arrears'), false) as in_arrears
+      from bank.loans
+      where owner = ${ctx.owner} and customer_id = ${customer.id} and id <> ${loan.id}`;
+    const decision = decideLoan(ctx.book, {
+      amount: loan.principal,
+      termMonths: loan.termMonths,
+      monthlyIncome: loan.declaredIncome,
+      monthlyExpenses: loan.declaredExpenses,
+      existingRepayments: facts?.repayments ?? 0,
+      kycStatus: customer.kycStatus,
+      risk: customer.risk,
+      inArrears: facts?.inArrears ?? false,
+      // The offer's own terms: a pricing Rule edited since does not reprice it.
+      monthlyPayment: loan.monthlyPayment,
+    });
+    if (!decision.approved) {
+      const refusal = decision.findings.find(
+        (item) => item.outcome === "refuse",
+      );
+      if (refusal) throw new RuleRefusedError(refusal);
+    }
     await ctx.tx`update bank.loans set status = 'accepted' where id = ${loan.id}`;
     await enqueue(ctx.tx, ctx.owner, "loan.disburse", { loanId: loan.id });
     await auditIn(
@@ -616,7 +645,7 @@ export async function disburseLoan(
       { account: loanAccount.id, dir: "D", amount: loan.principal },
       { account: account.id, dir: "C", amount: loan.principal },
     ],
-    { ref: { loanId: loan.id } },
+    { ref: { loanId: loan.id }, entryDate: today },
   );
   const schedule = amortise(
     loan.principal,
@@ -695,7 +724,7 @@ export async function payInstalment(
         amount: instalment.interest,
       },
     ],
-    { ref: { loanId: loan.id } },
+    { ref: { loanId: loan.id }, entryDate: today },
   );
   await db`
     update bank.loan_instalments set status = 'paid', paid_on = ${today}, entry_id = ${entryId}

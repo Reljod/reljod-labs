@@ -581,6 +581,44 @@ describe.skipIf(!url)("the bank's ledger, on Postgres", () => {
       }),
     );
     expect(offered.status).toBe("offered");
+    // Open offers count towards the DTI cap: a second loan that fits alone
+    // exceeds the cap while the first offer is still open.
+    const second = done(
+      await write("apply_for_loan", {
+        customerId: mara.customer.id,
+        disburseAccountId: current(mara).id,
+        amount: 8_500_00,
+        termMonths: 12,
+        purpose: "Another boat",
+        monthlyIncome: 3_400_00,
+        monthlyExpenses: 1_800_00,
+      }),
+    );
+    expect(second.status).toBe("declined");
+    // Tightening the Rule before acceptance stops accept_loan from taking it.
+    await write(
+      "edit_rule",
+      {
+        ruleId: "lending.affordability",
+        params: {
+          minIncome: 1_200_00,
+          maxAmount: 60_000_00,
+          maxIncomeMultiple: 12,
+          maxTermMonths: 60,
+          maxDtiPercent: 10,
+          minLeftOver: 300_00,
+        },
+      },
+      as("tomas-vell"),
+    );
+    await expect(
+      write("accept_loan", { loanId: offered.loanId }),
+    ).rejects.toBeInstanceOf(RuleRefusedError);
+    await write(
+      "restore_rule",
+      { ruleId: "lending.affordability" },
+      as("tomas-vell"),
+    );
     await write("accept_loan", { loanId: offered.loanId });
     const { disburseLoan } = await import("./write-cards-loans");
     const today = (await read<OverviewView>("get_overview")).bankDate;
@@ -621,6 +659,10 @@ describe.skipIf(!url)("the bank's ledger, on Postgres", () => {
     for (const step of EOD_STEPS) await runEodStep(pool, OWNER, last, step);
     expect((await books()).entries).toBe(entries);
     expect((await read<OverviewView>("get_overview")).eodThrough).toBe(last);
+    const laterEod = await pool`
+      select 1 from bank.journal_entries
+      where owner = ${OWNER} and via = 'workflow' and entry_date > ${last}`;
+    expect(laterEod).toHaveLength(0);
     // Joren's next loan instalment was collected and savings interest was paid.
     const loan = (await customer("Joren Pike")).loans[0];
     expect(loan?.status).toBe("active");

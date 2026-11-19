@@ -35,10 +35,12 @@ type CustomerRow = {
 export async function customerRow(
   ctx: Ctx,
   customerId: string,
+  forUpdate = false,
 ): Promise<CustomerRow> {
   const [customer] = await ctx.tx<CustomerRow[]>`
     select id, number, name, kyc_status, risk, monthly_income
-    from bank.customers where owner = ${ctx.owner} and id = ${customerId}`;
+    from bank.customers where owner = ${ctx.owner} and id = ${customerId}
+    ${forUpdate ? ctx.tx`for update` : ctx.tx``}`;
   if (!customer) throw new NotFoundError("That customer is not in this bank.");
   return customer;
 }

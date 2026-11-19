@@ -199,6 +199,7 @@ export async function sendPayment(ctx: Ctx, input: SendInput): Promise<Done> {
         { account: from.id, dir: "D", amount },
         { account: to.id, dir: "C", amount },
       ],
+      { entryDate: ctx.today },
     );
     const paymentId = await insert("settled", {
       settledOn: ctx.today,
@@ -366,7 +367,7 @@ async function postToClearing(
       { account: await gl(ctx.tx, ctx.owner, GL.clearing), dir: "C", amount },
       { account: await gl(ctx.tx, ctx.owner, GL.fees), dir: "C", amount: fee },
     ],
-    captureHold ? { captureHold } : {},
+    { ...(captureHold ? { captureHold } : {}), entryDate: ctx.today },
   );
 }
 

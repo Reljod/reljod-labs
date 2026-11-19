@@ -444,6 +444,12 @@ export type LoanFacts = {
   kycStatus: "pending" | "verified" | "rejected";
   risk: "low" | "standard" | "high";
   inArrears: boolean;
+  /**
+   * The monthly payment to test, when it is already fixed: an offer being
+   * accepted keeps the rate and payment it was offered at, whatever the
+   * pricing Rule says now. Without it, the payment is priced afresh.
+   */
+  monthlyPayment?: number;
 };
 
 export type LoanDecision = {
@@ -468,9 +474,10 @@ export function decideLoan(book: Rulebook, facts: LoanFacts): LoanDecision {
   const rule = "lending.affordability" as const;
   const rateBps = loanRate(book, facts.risk);
   const payment =
-    facts.termMonths > 0 && facts.amount > 0
+    facts.monthlyPayment ??
+    (facts.termMonths > 0 && facts.amount > 0
       ? monthlyPayment(facts.amount, rateBps, facts.termMonths)
-      : 0;
+      : 0);
   const findings: Finding[] = [];
   const test = (passed: boolean, message: string, facts_: Finding["facts"]) =>
     findings.push(
