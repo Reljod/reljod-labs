@@ -112,3 +112,12 @@ Moving reads off the action queue lets them overlap with writes. In Handover, a 
 - A write discards every read of the same data that is still in flight, then reads again (or applies the write's own answer).
 - A newer refresh aborts the older one (`AbortController`), and an answer for a view that is no longer open is dropped.
 - A page appended to a list ("Load older") attaches only to the version of the list it was requested for.
+
+## A batch job never fails on state a visitor can reach
+
+A step that runs on a schedule and retries the same work until it succeeds (end-of-day, a nightly sweep) is wedged for good by one item it can never process. In the bank, end-of-day stopped forever when a card settlement hit an account a reversal had emptied (the funds check refused it), and when a term deposit earned 0 interest (an entry of zeros does not balance). Both were reachable from the UI.
+
+- Money already promised (an authorised card, a cleared payment) posts with `force`; the funds check is for new requests, not for settling old ones.
+- Skip an entry whose amount is 0 rather than posting it; a Rule's minimum of 0 makes that reachable.
+- When an item truly cannot be processed, mark it and move on, so the rest of the batch still runs.
+- A path that skips a check for scheduled work (`scheduled: true` skips Approvals) must apply that check when the schedule is created, or it becomes a way around it.

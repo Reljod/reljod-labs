@@ -208,6 +208,68 @@ export const projects: Project[] = [
       "An editable, versioned rulebook and a full audit trail with cost",
     ],
   },
+  // Appended last, like the others, so every `projects.<index>` source path keeps its entry.
+  {
+    slug: "operator",
+    icon: "agents",
+    title: "Operator",
+    sector: "Ports, banks and anyone with a green screen",
+    summary:
+      "An agent that works the system nobody can integrate with. It looks at a 1990s terminal screen and keys a cargo manifest with the keyboard and mouse while you watch, stops for your approval before a guarded key, and code checks the result.",
+    outcome: "Only code says the work was done correctly",
+    tags: ["Computer use", "Sandbox", "MCP", "Durable workflows", "Rules"],
+    status: "Live",
+    href: "/demos/operator",
+    marks: ["New"],
+    features: [
+      "A live screen with a gliding cursor, and a replay of every frame",
+      "Rules decide which keys need a person; the agent cannot approve",
+      "Take the keyboard yourself and compare your time and errors",
+    ],
+  },
+  {
+    slug: "tidewater-bank",
+    icon: "chart",
+    title: "Tidewater Bank",
+    sector: "Retail banking",
+    summary:
+      "A whole retail bank you can run: accounts, payments that clear and settle, cards, loans and fraud holds, all on a double-entry ledger the database itself keeps balanced. Do anything by clicking or by asking the Teller. Ask for a feature it lacks and the bank files the issue, builds it and merges it by itself.",
+    outcome:
+      "Every florin posted twice, and a trial balance that always nets to zero",
+    tags: [
+      "Double-entry ledger",
+      "Durable workflows",
+      "MCP",
+      "Agents",
+      "Self-improving",
+    ],
+    status: "Live",
+    href: "/demos/bank",
+    marks: ["New"],
+    features: [
+      "Fast-forward the clock and watch end-of-day, settlement and interest run",
+      "Everything in the app is also an MCP tool; sensitive ones wait for your click",
+      "Ask for a missing feature in chat and follow it from issue to merged pull request",
+    ],
+  },
+  {
+    slug: "loupe",
+    icon: "scan",
+    title: "Loupe",
+    sector: "Document forensics",
+    summary:
+      "Was this payslip, statement, invoice or ID edited? One agent looks at the document, then proves what it saw with code in a sandbox: error levels, glyph metrics, sums that no longer add up. Every finding is boxed on the page with the measurement behind it, and rules in code give the verdict.",
+    outcome: "Evidence for a reviewer, with its measured error rates",
+    tags: ["Agents", "Vision", "Sandbox", "MCP", "Durable workflows"],
+    status: "Live",
+    href: "/demos/loupe",
+    marks: ["New"],
+    features: [
+      "Synthetic payslips, statements, bills, invoices and IDs, or your own file",
+      "Watch the examiner look, suspect, and test each suspicion with code",
+      "Editable thresholds; re-decide a finished examination with no model call",
+    ],
+  },
   {
     slug: "switchboard",
     icon: "chat",

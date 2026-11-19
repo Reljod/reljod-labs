@@ -35,7 +35,10 @@ const nextConfig: NextConfig = {
       "./node_modules/.pnpm/tesseract.js@*/node_modules/**/*",
       "./node_modules/.pnpm/tesseract.js-core@*/node_modules/tesseract.js-core/*.{js,wasm}",
       "./node_modules/.pnpm/{bmp-js,wasm-feature-detect,zlibjs}@*/node_modules/**/*",
+      "./public/loupe/samples/*/document.*",
     ],
+    "/api/loupe/mcp": ["./public/loupe/samples/*/document.*"],
+    "/demos/loupe": ["./public/loupe/samples/*/document.*"],
   },
   turbopack: {
     rules: {

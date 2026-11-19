@@ -1,0 +1,127 @@
+{
+ "id": "lp-te-bill-01",
+ "format": "image",
+ "kindGuess": "other",
+ "pages": [
+  {
+   "page": 1,
+   "width": 1071,
+   "height": 1516
+  }
+ ],
+ "measurements": [
+  {
+   "metric": "image.ela_ratio",
+   "value": 1.6487,
+   "page": 1,
+   "box": [
+    0.3436,
+    0.03694,
+    0.36601,
+    0.05277
+   ],
+   "detail": "Re-saved at quality 70, this region changes 1.6x less than the same kind of area across the page (page level 1.15; 0 samples).",
+   "facts": {
+    "direction": "below",
+    "blocks": 0.0,
+    "quality": 70.0,
+    "native": 0.0
+   },
+   "check": "ela"
+  },
+  {
+   "metric": "image.noise_ratio",
+   "value": 1.6487,
+   "page": 1,
+   "box": [
+    0.11204,
+    0.51187,
+    0.13445,
+    0.5277
+   ],
+   "detail": "The paper here is 1.6x quieter than the same kind of paper across the page (page grain 1.99 grey levels; 0 samples).",
+   "facts": {
+    "direction": "below",
+    "blocks": 0.0,
+    "pageGrain": 1.9858
+   },
+   "check": "noise"
+  },
+  {
+   "metric": "image.jpeg_ghost",
+   "value": 0.3059,
+   "page": 1,
+   "box": [
+    0.08217,
+    0.34828,
+    0.11951,
+    0.37467
+   ],
+   "detail": "Across re-saves at qualities 50 to 90 this region's error curve departs from the page's by 0.31 on a 0 to 1 scale (10 samples): it was compressed differently before.",
+   "facts": {
+    "samples": 10.0
+   },
+   "layer": "jpeg_ghost-p1.png",
+   "layerKind": "heatmap",
+   "check": "jpeg_ghost"
+  },
+  {
+   "metric": "image.copy_move",
+   "value": 0.0,
+   "page": 1,
+   "box": null,
+   "detail": "No area is a pixel-level copy of another: 5316 keypoints compared, none shares its paper grain with a look-alike.",
+   "facts": {
+    "keypoints": 5316.0,
+    "grain": 1.9858
+   },
+   "check": "copy_move"
+  },
+  {
+   "metric": "image.edge_halo",
+   "value": 1.3499,
+   "page": 1,
+   "box": [
+    0.27638,
+    0.02111,
+    0.29879,
+    0.03694
+   ],
+   "detail": "The halo round the characters here is 1.35x tighter than round characters across the page (page halo 0.51 px; 0 samples): these edges were not made the way the page's were.",
+   "facts": {
+    "direction": "below",
+    "blocks": 0.0,
+    "pageHalo": 0.512
+   },
+   "check": "edge_halo"
+  }
+ ],
+ "checks": [
+  {
+   "check": "ela",
+   "ms": 231,
+   "measurements": 1
+  },
+  {
+   "check": "noise",
+   "ms": 54,
+   "measurements": 1
+  },
+  {
+   "check": "jpeg_ghost",
+   "ms": 286,
+   "measurements": 1
+  },
+  {
+   "check": "copy_move",
+   "ms": 572,
+   "measurements": 1
+  },
+  {
+   "check": "edge_halo",
+   "ms": 55,
+   "measurements": 1
+  }
+ ],
+ "toolkitMs": 1208
+}

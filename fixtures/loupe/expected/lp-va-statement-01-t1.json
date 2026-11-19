@@ -1,0 +1,288 @@
+{
+ "id": "lp-va-statement-01-t1",
+ "format": "pdf",
+ "kindGuess": "bank_statement",
+ "pages": [
+  {
+   "page": 1,
+   "width": 1131,
+   "height": 1600
+  }
+ ],
+ "measurements": [
+  {
+   "metric": "pdf.incremental_updates",
+   "value": 0.0,
+   "page": 0,
+   "box": null,
+   "detail": "The file was written in one save: nothing was appended after it.",
+   "facts": {
+    "sections": 0.0,
+    "objects": 0.0
+   },
+   "check": "pdf_structure"
+  },
+  {
+   "metric": "pdf.editor_producer",
+   "value": 1.0,
+   "page": 0,
+   "box": null,
+   "detail": "The file names 'QuickEdit PDF 11' as the software that wrote it, which matches the editing tool 'QuickEdit PDF'.",
+   "facts": {
+    "producer": "QuickEdit PDF 11",
+    "creator": "Lantern Quay Credit Union",
+    "matched": "QuickEdit PDF"
+   },
+   "check": "pdf_structure"
+  },
+  {
+   "metric": "pdf.modified_gap_hours",
+   "value": 104.4667,
+   "page": 0,
+   "box": null,
+   "detail": "Last modified 104.5 hours after it was created (2026-02-28 13:19 to 2026-03-04 21:47).",
+   "facts": {
+    "created": "2026-02-28 13:19:00",
+    "modified": "2026-03-04 21:47:00"
+   },
+   "check": "pdf_structure"
+  },
+  {
+   "metric": "pdf.covered_text",
+   "value": 1.0,
+   "page": 1,
+   "box": [
+    0.8215,
+    0.22686,
+    0.92185,
+    0.24171
+   ],
+   "detail": "'6,942.20' is still in the file under an opaque shape; '18,942.20' is drawn on top.",
+   "facts": {
+    "hidden": "6,942.20",
+    "shown": "18,942.20"
+   },
+   "layer": "pdf_overpaint-p1.png",
+   "layerKind": "marks",
+   "check": "pdf_overpaint"
+  },
+  {
+   "metric": "pdf.covered_text",
+   "value": 1.0,
+   "page": 1,
+   "box": [
+    0.84029,
+    0.7664,
+    0.92521,
+    0.77923
+   ],
+   "detail": "'6,942.20' is still in the file under an opaque shape; '18,942.20' is drawn on top.",
+   "facts": {
+    "hidden": "6,942.20",
+    "shown": "18,942.20"
+   },
+   "layer": "pdf_overpaint-p1.png",
+   "layerKind": "marks",
+   "check": "pdf_overpaint"
+  },
+  {
+   "metric": "glyph.font_outlier",
+   "value": 0.35,
+   "page": 1,
+   "box": [
+    0.84281,
+    0.76727,
+    0.92269,
+    0.77772
+   ],
+   "detail": "'18,942.20' is set in LiberationMono-Bold while the runs it sits with use LiberationMono (score 0.35; 1 on its line, 23 in its column).",
+   "facts": {
+    "text": "18,942.20",
+    "font": "LiberationMono-Bold",
+    "size": 8.8,
+    "peerFont": "LiberationMono",
+    "peerSize": 8.6
+   },
+   "layer": "glyphs-p1.png",
+   "layerKind": "marks",
+   "check": "glyphs"
+  },
+  {
+   "metric": "glyph.size_delta_pt",
+   "value": 0.0,
+   "page": 1,
+   "box": [
+    0.07955,
+    0.05169,
+    0.09524,
+    0.06832
+   ],
+   "detail": "Nothing stands out among 121 runs; the largest value is 0.00 at 'L'.",
+   "facts": {
+    "text": "L",
+    "font": "LiberationSerif-Bold",
+    "size": 14.0,
+    "peerFont": "LiberationSerif",
+    "peerSize": 14.0
+   },
+   "check": "glyphs"
+  },
+  {
+   "metric": "glyph.baseline_offset_pt",
+   "value": 0.0,
+   "page": 1,
+   "box": [
+    0.07955,
+    0.05169,
+    0.09524,
+    0.06832
+   ],
+   "detail": "Nothing stands out among 121 runs; the largest value is 0.00 at 'L'.",
+   "facts": {
+    "text": "L",
+    "font": "LiberationSerif-Bold",
+    "size": 14.0,
+    "peerFont": "LiberationSerif",
+    "peerSize": 14.0
+   },
+   "check": "glyphs"
+  },
+  {
+   "metric": "glyph.spacing_outlier",
+   "value": 0.0,
+   "page": 1,
+   "box": [
+    0.07955,
+    0.05169,
+    0.09524,
+    0.06832
+   ],
+   "detail": "Nothing stands out among 121 runs; the largest value is 0.00 at 'L'.",
+   "facts": {
+    "text": "L",
+    "font": "LiberationSerif-Bold",
+    "size": 14.0,
+    "peerFont": "LiberationSerif",
+    "peerSize": 14.0
+   },
+   "check": "glyphs"
+  },
+  {
+   "metric": "glyph.color_delta",
+   "value": 0.0,
+   "page": 1,
+   "box": [
+    0.07955,
+    0.05169,
+    0.09524,
+    0.06832
+   ],
+   "detail": "Nothing stands out among 121 runs; the largest value is 0.00 at 'L'.",
+   "facts": {
+    "text": "L",
+    "font": "LiberationSerif-Bold",
+    "size": 14.0,
+    "peerFont": "LiberationSerif",
+    "peerSize": 14.0
+   },
+   "check": "glyphs"
+  },
+  {
+   "metric": "arith.balance_break",
+   "value": 12000.0,
+   "page": 1,
+   "box": [
+    0.84281,
+    0.76727,
+    0.92269,
+    0.77772
+   ],
+   "detail": "The balance 18,942.20 should be 6,942.20 from the balance before it and this row's transaction: off by 12,000.00.",
+   "facts": {
+    "printed": 18942.2,
+    "computed": 6942.2,
+    "what": "row"
+   },
+   "layer": "arith-balance-p1-1.png",
+   "layerKind": "compare",
+   "check": "arithmetic"
+  },
+  {
+   "metric": "arith.balance_break",
+   "value": 12000.0,
+   "page": 1,
+   "box": [
+    0.82402,
+    0.22741,
+    0.91933,
+    0.23988
+   ],
+   "detail": "Closing balance 18,942.20 is not opening balance plus paid in less paid out (6,942.20): off by 12,000.00.",
+   "facts": {
+    "printed": 18942.2,
+    "computed": 6942.2,
+    "what": "summary"
+   },
+   "layer": "arith-balance-p1-2.png",
+   "layerKind": "compare",
+   "check": "arithmetic"
+  },
+  {
+   "metric": "format.date_anomaly",
+   "value": 0.0,
+   "page": 0,
+   "box": null,
+   "detail": "25 date(s) read; none contradicts the document.",
+   "check": "dates_formats"
+  },
+  {
+   "metric": "format.style_break",
+   "value": 0.0,
+   "page": 0,
+   "box": null,
+   "detail": "Dates and figures are formatted alike within their columns.",
+   "check": "dates_formats"
+  },
+  {
+   "metric": "id.checksum_invalid",
+   "value": 0.0,
+   "page": 0,
+   "box": null,
+   "detail": "1 number(s) with check digits read; all pass.",
+   "check": "checksums"
+  }
+ ],
+ "checks": [
+  {
+   "check": "pdf_structure",
+   "ms": 2,
+   "measurements": 3
+  },
+  {
+   "check": "pdf_overpaint",
+   "ms": 51,
+   "measurements": 2
+  },
+  {
+   "check": "glyphs",
+   "ms": 96,
+   "measurements": 5
+  },
+  {
+   "check": "arithmetic",
+   "ms": 105,
+   "measurements": 2
+  },
+  {
+   "check": "dates_formats",
+   "ms": 0,
+   "measurements": 2
+  },
+  {
+   "check": "checksums",
+   "ms": 0,
+   "measurements": 1
+  }
+ ],
+ "toolkitMs": 352
+}
