@@ -72,7 +72,10 @@ describe("runInSandbox", () => {
     expect(command).toBe("sh");
     expect(args.slice(0, 3)).toEqual(["-c", RUNNER_SCRIPT, "sieve"]);
     expect(args[3]).toMatch(/\/call_1\.mjs$/);
-    expect(sandbox.update).toHaveBeenCalledWith({ networkPolicy: "deny-all" });
+    expect(sandbox.update).toHaveBeenCalledWith({
+      networkPolicy: "deny-all",
+      persistent: false,
+    });
     expect(sandbox.extendTimeout).not.toHaveBeenCalled();
   });
 
@@ -133,7 +136,9 @@ describe("runInSandbox", () => {
     const result = await runInSandbox(input);
     expect(result.exitCode).toBe(0);
     expect(sandbox.stop).toHaveBeenCalled();
-    expect(sandbox.delete).toHaveBeenCalled();
+    expect(sandbox.delete).toHaveBeenCalledWith({
+      deleteOrphanSnapshots: true,
+    });
   });
 
   it("extends a Sandbox that is about to time out, and survives a refusal", async () => {
@@ -158,6 +163,8 @@ describe("runInSandbox", () => {
       expect.objectContaining({
         networkPolicy: "deny-all",
         timeout: SANDBOX_LIMITS.sandboxMs,
+        // A persistent Sandbox snapshots its whole disk on every stop.
+        persistent: false,
       }),
     );
     expect(SANDBOX_LIMITS.sandboxMs).toBeLessThanOrEqual(10 * 60_000);

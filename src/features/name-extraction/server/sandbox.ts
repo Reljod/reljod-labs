@@ -14,6 +14,11 @@ import {
  * first `run_code` with the pages on disk, reused by later calls (they may
  * run in other function instances: the name finds it), and stopped when the
  * Run ends. Auth is the deployment's OIDC token (VERCEL_OIDC_TOKEN locally).
+ *
+ * Not persistent: a persistent Sandbox (the SDK's default) snapshots its whole
+ * disk (~800 MB) every time it stops, and those snapshots live for 30 days
+ * and count against the plan's Sandbox quota. A Run's files are rewritten on
+ * every `run_code`, so nothing on the disk is worth keeping.
  */
 export const SANDBOX_LIMITS = {
   /** Wall time of one run_code. */
@@ -134,6 +139,7 @@ export async function runInSandbox(input: {
   try {
     sandbox = await Sandbox.getOrCreate({
       name: sandboxName(input.runId),
+      persistent: false,
       networkPolicy: "deny-all",
       timeout: SANDBOX_LIMITS.sandboxMs,
       onCreate: async (created) => {
@@ -144,8 +150,8 @@ export async function runInSandbox(input: {
     return refused(`The Sandbox could not be started: ${message(error)}`);
   }
   try {
-    // getOrCreate may hand back a Sandbox made with another policy: enforce it.
-    await sandbox.update({ networkPolicy: "deny-all" });
+    // getOrCreate may hand back a Sandbox made with other settings: enforce them.
+    await sandbox.update({ networkPolicy: "deny-all", persistent: false });
     await extendIfShort(sandbox);
     const file = `${RUN_DIR}/${input.callId.replace(/[^\w-]/g, "_").slice(0, 80)}.mjs`;
     await writeAll(sandbox, [
@@ -195,7 +201,9 @@ export async function disposeSandbox(runId: string) {
     } catch {
       // Already stopped.
     }
-    await sandbox.delete();
+    // Also drop any snapshot a stop left behind (one made before this
+    // Sandbox stopped being persistent); the SDK keeps them by default.
+    await sandbox.delete({ deleteOrphanSnapshots: true });
   } catch {
     // No Sandbox was made for this Run, or it is already gone.
   }

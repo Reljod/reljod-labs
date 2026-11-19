@@ -9,7 +9,8 @@ const GENERATED = `console.log("Hello from generated code");\n`;
 async function main() {
   const sandbox = await Sandbox.getOrCreate({
     name: "my-sandbox-260140",
-    persistent: true,
+    // Not persistent: a persistent sandbox snapshots its disk on every stop.
+    persistent: false,
     networkPolicy: "deny-all",
   });
   try {
