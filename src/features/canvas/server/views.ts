@@ -155,7 +155,10 @@ async function compute(
           label,
           true,
         );
-  const findings = checkView(spec, ran.result, context.rules);
+  // A Control may filter a View down to nothing: that is an answer ("no days
+  // above the threshold"), and the App says so. A new View with no rows is not.
+  const emptied = atOrigin !== null && ran.result.rowCount === 0;
+  const findings = emptied ? [] : checkView(spec, ran.result, context.rules);
   if (blocks(findings)) {
     const blocking = findings.filter((finding) => finding.outcome === "block");
     throw new RuleRefusal(
