@@ -16,15 +16,6 @@ import { RULE_DEFS, rulebookText } from "../domain/rules";
 import { TRAIL_ACTIONS } from "../domain/trail";
 import { viewSpecSchema } from "../domain/view";
 import { SKILLS, skillOf } from "../skills";
-import {
-  arrangeBoard,
-  createBoard,
-  getBoard,
-  getRefresh,
-  listBoards,
-  pinView,
-  startRefresh,
-} from "./boards";
 import type { Caller } from "./caller";
 import { catalogFor } from "./catalog";
 import { isSafeError } from "./errors";
@@ -107,12 +98,19 @@ const cell = (value: unknown) =>
 
 /** A result as a small text table: the first rows, and how many there are. */
 function tableText(
-  result: { columns: { name: string; type: string }[]; rows: unknown[][]; rowCount: number; truncated: boolean },
+  result: {
+    columns: { name: string; type: string }[];
+    rows: unknown[][];
+    rowCount: number;
+    truncated: boolean;
+  },
   shown: number,
 ) {
   const head = result.columns.map((column) => column.name).join(" | ");
   const types = result.columns.map((column) => column.type).join(" | ");
-  const rows = result.rows.slice(0, shown).map((row) => row.map(cell).join(" | "));
+  const rows = result.rows
+    .slice(0, shown)
+    .map((row) => row.map(cell).join(" | "));
   const more =
     result.rowCount > rows.length
       ? `\n… ${result.rowCount - rows.length} more rows not shown (${result.rowCount} in all${result.truncated ? ", capped by the row limit" : ""}).`
@@ -129,7 +127,8 @@ function viewText(view: ViewRecord, note = "") {
     lines.push(
       `Claim ${claim.id} (${claim.label}): stated ${claim.stated}, code computed ${claim.actual ?? "nothing"}: ${claim.ok ? "ok" : `MISMATCH${claim.note ? ` (${claim.note})` : ""}`}.`,
     );
-  for (const reason of view.verification.reasons) lines.push(`Flagged: ${reason}`);
+  for (const reason of view.verification.reasons)
+    lines.push(`Flagged: ${reason}`);
   for (const finding of view.findings)
     lines.push(`Check finding (${finding.rule}): ${finding.message}`);
   if (view.work.minGroupSize !== null)
@@ -187,7 +186,8 @@ export function registerCanvasTools(server: McpServer) {
           result = await handler(args, caller);
         } catch (error) {
           unstable_rethrow(error);
-          if (!isSafeError(error)) console.error(`[canvas] tool ${name}`, error);
+          if (!isSafeError(error))
+            console.error(`[canvas] tool ${name}`, error);
           result = {
             ...said(
               isSafeError(error)
@@ -199,7 +199,11 @@ export function registerCanvasTools(server: McpServer) {
         }
         await trail(caller, {
           action: result.isError ? "tool.failed" : "tool.called",
-          summary: `${name}${result.isError ? ` failed: ${result.content[0]?.text ?? ""}` : ""}`.slice(0, 280),
+          summary:
+            `${name}${result.isError ? ` failed: ${result.content[0]?.text ?? ""}` : ""}`.slice(
+              0,
+              280,
+            ),
           detail: { tool: name, args: cutArgs(args) },
           ms: Date.now() - started,
         }).catch(() => {});
@@ -269,7 +273,10 @@ export function registerCanvasTools(server: McpServer) {
           isError: true,
         };
       const restricted = new Set(
-        (rulebook.rulebook["access.restricted_columns"].params.columns as string[])
+        (
+          rulebook.rulebook["access.restricted_columns"].params
+            .columns as string[]
+        )
           .filter((name) => name.startsWith(`${table.name}.`))
           .map((name) => name.split(".")[1]),
       );
@@ -301,7 +308,9 @@ export function registerCanvasTools(server: McpServer) {
           .string()
           .max(80)
           .optional()
-          .describe("A few words on what this checks, shown under Show the work"),
+          .describe(
+            "A few words on what this checks, shown under Show the work",
+          ),
       }),
       readOnly: true,
     },
@@ -473,152 +482,6 @@ export function registerCanvasTools(server: McpServer) {
     },
   );
 
-  // Boards ---------------------------------------------------------------------------------
-
-  tool(
-    "list_boards",
-    {
-      title: "List Boards",
-      description: "The Owner's Boards: pinned, arranged, named sets of Views.",
-      inputSchema: z.object({}),
-      readOnly: true,
-    },
-    async (_args, caller) => {
-      const boards = await listBoards(caller);
-      return said(
-        boards.length === 0
-          ? "No Boards yet."
-          : boards
-              .map((board) => `${board.id} — "${board.name}", ${board.views} Views`)
-              .join("\n"),
-        { boards },
-      );
-    },
-  );
-
-  tool(
-    "get_board",
-    {
-      title: "Get a Board",
-      description: "A Board's Views in order, and its latest Refreshes with what changed.",
-      inputSchema: z.object({ boardId: z.string().uuid() }),
-      readOnly: true,
-    },
-    async (args, caller) => {
-      const board = await getBoard(caller, args.boardId);
-      return said(
-        `"${board.name}": ${board.items
-          .map((item) => `${item.view.id} "${item.view.spec.title}" (${item.view.status})`)
-          .join("; ") || "no Views"}.`,
-        {
-          id: board.id,
-          name: board.name,
-          views: board.items.map((item) => ({
-            id: item.view.id,
-            title: item.view.spec.title,
-            status: item.view.status,
-            span: item.span,
-          })),
-          refreshes: board.refreshes,
-        },
-      );
-    },
-  );
-
-  tool(
-    "create_board",
-    {
-      title: "Make a Board",
-      description: "Makes a Board, optionally with Views pinned to it in the order given.",
-      inputSchema: z.object({
-        name: z.string().min(1).max(80),
-        viewIds: z.array(z.string().uuid()).max(LIMITS.viewsPerBoard).optional(),
-      }),
-    },
-    async (args, caller) => {
-      const board = await createBoard(caller, args);
-      return said(`Made Board "${board.name}" (${board.id}).`, board);
-    },
-  );
-
-  tool(
-    "pin_view",
-    {
-      title: "Pin a View to a Board",
-      description: "Adds a View to the end of a Board.",
-      inputSchema: z.object({
-        boardId: z.string().uuid(),
-        viewId: z.string().uuid(),
-      }),
-    },
-    async (args, caller) => {
-      await pinView(caller, args.boardId, args.viewId);
-      return said("Pinned.", { ok: true });
-    },
-  );
-
-  tool(
-    "arrange_board",
-    {
-      title: "Arrange a Board",
-      description: "Sets the order of a Board's Views and how wide each is (span 1 or 2 columns).",
-      inputSchema: z.object({
-        boardId: z.string().uuid(),
-        items: z
-          .array(
-            z.object({
-              viewId: z.string().uuid(),
-              span: z.union([z.literal(1), z.literal(2)]).optional(),
-            }),
-          )
-          .max(LIMITS.viewsPerBoard),
-      }),
-    },
-    async (args, caller) => {
-      await arrangeBoard(caller, args.boardId, args.items);
-      return said("Arranged.", { ok: true });
-    },
-  );
-
-  tool(
-    "refresh_board",
-    {
-      title: "Refresh a Board",
-      description:
-        "Starts a Refresh: a durable workflow that runs every View's Query again, with no model, and reports what changed. Returns at once with a refreshId; read it with get_refresh.",
-      inputSchema: z.object({ boardId: z.string().uuid() }),
-    },
-    async (args, caller) => {
-      const refresh = await startRefresh(caller, args.boardId);
-      return said(
-        `Refresh ${refresh.id} started. Call get_refresh in a few seconds.`,
-        refresh,
-      );
-    },
-  );
-
-  tool(
-    "get_refresh",
-    {
-      title: "Get a Refresh",
-      description: "A Refresh's status and, per View, what changed.",
-      inputSchema: z.object({ refreshId: z.string().uuid() }),
-      readOnly: true,
-    },
-    async (args, caller) => {
-      const refresh = await getRefresh(caller, args.refreshId);
-      return said(
-        `${refresh.status}. ${refresh.report
-          .map(
-            (item) =>
-              `"${item.title}": ${item.ok ? (item.changes.join("; ") || "no change") : `failed: ${item.error}`}`,
-          )
-          .join(" | ")}`,
-        refresh,
-      );
-    },
-  );
-
   // Rules, Skills, Trail -------------------------------------------------------------------
 
   tool(
@@ -678,7 +541,11 @@ export function registerCanvasTools(server: McpServer) {
       said(
         SKILLS.map((skill) => `${skill.id}: ${skill.description}`).join("\n"),
         {
-          skills: SKILLS.map(({ id, name, description }) => ({ id, name, description })),
+          skills: SKILLS.map(({ id, name, description }) => ({
+            id,
+            name,
+            description,
+          })),
         },
       ),
   );

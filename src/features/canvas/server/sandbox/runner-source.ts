@@ -21,8 +21,8 @@ import base64, datetime, decimal, json, math, os, re, shutil, subprocess, sys, t
 
 import duckdb
 
-DATA_DB = "/data/meridia.duckdb"
-UPLOADS_DB = "/data/uploads.duckdb"
+DATA_DB = os.environ.get("CANVAS_DATA_DB", "/data/meridia.duckdb")
+UPLOADS_DB = os.environ.get("CANVAS_UPLOADS_DB", "/data/uploads.duckdb")
 WORK = "/work"
 NAME = re.compile(r"^[a-z][a-z0-9_]{0,62}$")
 PARAM = re.compile(r"\$([a-z][a-z0-9_]*)")

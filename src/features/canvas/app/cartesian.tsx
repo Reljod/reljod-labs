@@ -88,7 +88,7 @@ export function Cartesian(props: ChartProps<Kind>) {
   if (frame.xs.length === 0 || frame.series.length === 0)
     return <Empty>The Query returned no rows to draw.</Empty>;
   if (enc.kind === "bar" && enc.horizontal)
-    return <Horizontal {...props} frame={frame} />;
+    return <Horizontal {...(props as ChartProps<"bar">)} frame={frame} />;
   return <Vertical {...props} frame={frame} />;
 }
 
@@ -207,7 +207,9 @@ function Vertical({
       Math.max(...full.map((label) => textWidth(label))),
     );
     const every = thinEvery(n, widest + 12, x1 - x0);
-    const kept = frame.xs.map((_, index) => index).filter((i) => i % every === 0);
+    const kept = frame.xs
+      .map((_, index) => index)
+      .filter((i) => i % every === 0);
     const labels =
       frame.xType === "time"
         ? timeTickLabels(
@@ -488,12 +490,12 @@ function Vertical({
           />
         ) : null}
       </PlotTop>
-      {/* biome-ignore lint/a11y/noNoninteractiveTabindex: the arrow keys walk the chart's values, like hover does. */}
       <div
         class={brush ? "chart can-brush" : "chart"}
-        role="group"
+        role="application"
         aria-roledescription="chart"
         aria-label={`${view.spec.title}. ${n} points${m > 1 ? `, ${m} series` : ""}. Arrow keys read the values.`}
+        // biome-ignore lint/a11y/noNoninteractiveTabindex: the arrow keys walk the chart's values, like hover does.
         tabIndex={0}
         onKeyDown={(event) => {
           if (event.key === "Escape" && dragging.current) cancel();
@@ -525,7 +527,8 @@ function Vertical({
           }}
           onPointerUp={(event) => {
             const held = dragging.current;
-            if (held?.moved) commit(clamp(held.start, x0, x1), clamp(pointerX(event), x0, x1));
+            if (held?.moved)
+              commit(clamp(held.start, x0, x1), clamp(pointerX(event), x0, x1));
             cancel();
           }}
           onPointerCancel={cancel}
@@ -812,15 +815,17 @@ function Horizontal({
     <>
       <PlotTop title={axisTitle(enc.y)}>
         {m > 1 ? (
-          <Legend items={names.map((name) => ({ name, color: colorOf(name) }))} />
+          <Legend
+            items={names.map((name) => ({ name, color: colorOf(name) }))}
+          />
         ) : null}
       </PlotTop>
-      {/* biome-ignore lint/a11y/noNoninteractiveTabindex: the arrow keys walk the chart's values, like hover does. */}
       <div
         class="chart"
-        role="group"
+        role="application"
         aria-roledescription="chart"
         aria-label={`${view.spec.title}. ${n} bars. Arrow keys read the values.`}
+        // biome-ignore lint/a11y/noNoninteractiveTabindex: the arrow keys walk the chart's values, like hover does.
         tabIndex={0}
         onKeyDown={onKeyDown}
         onBlur={() => setActive(null)}
@@ -832,7 +837,11 @@ function Horizontal({
           onPointerMove={(event) => {
             const box = event.currentTarget.getBoundingClientRect();
             setActive(
-              clamp(Math.floor((event.clientY - box.top - top) / step), 0, n - 1),
+              clamp(
+                Math.floor((event.clientY - box.top - top) / step),
+                0,
+                n - 1,
+              ),
             );
           }}
           onPointerLeave={() => setActive(null)}

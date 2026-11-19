@@ -1,11 +1,6 @@
 import { PALETTE, worstAdjacentPair } from "./palette";
 import type { CheckFinding, RuleSettings } from "./rules";
-import {
-  columnIndex,
-  fieldsOf,
-  type QueryResult,
-  type ViewSpec,
-} from "./view";
+import { columnIndex, fieldsOf, type QueryResult, type ViewSpec } from "./view";
 
 /**
  * The chart Rules, applied by code to every View spec and its rows. Each

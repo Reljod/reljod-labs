@@ -208,6 +208,24 @@ export const projects: Project[] = [
       "An editable, versioned rulebook and a full audit trail with cost",
     ],
   },
+  {
+    slug: "canvas",
+    icon: "chart",
+    title: "Canvas",
+    sector: "Data analysis",
+    summary:
+      "Ask a question about a million rows of open data and get back a working chart, not a paragraph: it has controls you can move, shows the query behind it, and every number in it is recomputed by code before it is marked verified.",
+    outcome: "Answers you can adjust and check",
+    tags: ["Agents", "MCP Apps", "Sandbox", "Generative UI", "Rules"],
+    status: "Live",
+    href: "/demos/canvas",
+    marks: ["New"],
+    features: [
+      "An analyst that queries a million rows in a sandbox with no network",
+      "Charts as MCP Apps: the same interface on this page and inside Claude",
+      "Controls re-run the saved query with no model call; code verifies every number",
+    ],
+  },
 ];
 
 /**

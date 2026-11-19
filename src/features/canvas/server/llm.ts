@@ -26,7 +26,8 @@ export function visibleThinking(model: string): ProviderOptions | undefined {
     return {
       anthropic: { thinking: { type: "adaptive", display: "summarized" } },
     };
-  if (model.startsWith("openai/")) return { openai: { reasoningSummary: "auto" } };
+  if (model.startsWith("openai/"))
+    return { openai: { reasoningSummary: "auto" } };
   if (model.startsWith("google/"))
     return { google: { thinkingConfig: { includeThoughts: true } } };
   return undefined;
@@ -47,7 +48,9 @@ const isRecord = (value: unknown): value is Record<string, unknown> =>
 
 /** The price the gateway charged, from `providerMetadata.gateway.cost`, or null. */
 function gatewayCost(providerMetadata: unknown): number | null {
-  const meta = isRecord(providerMetadata) ? providerMetadata.gateway : undefined;
+  const meta = isRecord(providerMetadata)
+    ? providerMetadata.gateway
+    : undefined;
   if (!isRecord(meta)) return null;
   for (const value of [meta.cost, meta.marketCost]) {
     const number = typeof value === "string" ? Number(value) : value;

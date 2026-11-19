@@ -8,6 +8,7 @@ import { BUCKET, env } from "../env";
 import { SandboxUnavailable } from "../errors";
 import { storage } from "../supabase";
 import { ensureImage, forgetImage, IMAGE_KEY } from "./image";
+import { localPython, runLocal } from "./local";
 import { INBOX_DIR, RUNNER_PATH } from "./runner-source";
 
 /*
@@ -202,6 +203,22 @@ export async function runJob(
   seconds: number,
 ): Promise<Ran> {
   const started = Date.now();
+  const python = localPython();
+  if (python) {
+    // Development and e2e only: the same runner on this machine (`local.ts`).
+    try {
+      const answer = (await runLocal(python, job, seconds)) as JobAnswer;
+      return { answer, ms: Date.now() - started, sandboxCreated: false };
+    } catch (error) {
+      console.error(
+        "[canvas] local runner failed",
+        error instanceof Error ? error.message.slice(0, 300) : error,
+      );
+      throw new SandboxUnavailable(
+        "Sandbox unavailable: the local runner failed. Try again.",
+      );
+    }
+  }
   let sandboxCreated = false;
   for (let attempt = 0; ; attempt++) {
     const opened = await open(owner);
@@ -210,7 +227,11 @@ export async function runJob(
       let answer = await command(opened.sandbox, job, seconds);
       if (Array.isArray(answer.missing) && answer.missing.length > 0) {
         await restoreUploads(owner, opened.sandbox, answer.missing);
-        answer = await command(opened.sandbox, { ...job, uploads: [] }, seconds);
+        answer = await command(
+          opened.sandbox,
+          { ...job, uploads: [] },
+          seconds,
+        );
       }
       return { answer, ms: Date.now() - started, sandboxCreated };
     } catch (error) {
@@ -243,7 +264,11 @@ async function removeIfBroken(owner: Owner) {
 }
 
 /** Copies a file into the Sandbox's inbox and returns its path there. */
-export async function putInbox(owner: Owner, content: Buffer, extension: string) {
+export async function putInbox(
+  owner: Owner,
+  content: Buffer,
+  extension: string,
+) {
   const { sandbox } = await open(owner);
   const path = `${INBOX_DIR}/${randomUUID()}.${extension}`;
   await sandbox.writeFiles([{ path, content }]);

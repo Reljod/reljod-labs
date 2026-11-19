@@ -31,6 +31,7 @@ describe("featuredProjects", () => {
       "process-transfer",
       "bank-harness",
       "name-extraction",
+      "canvas",
     ]);
   });
 
@@ -43,6 +44,7 @@ describe("featuredProjects", () => {
       "client-manager",
       "process-transfer",
       "name-extraction",
+      "canvas",
     ]);
   });
 
@@ -53,6 +55,7 @@ describe("featuredProjects", () => {
       "process-transfer",
       "bank-harness",
       "name-extraction",
+      "canvas",
     ]);
     expect(marked("Beta")).toEqual(["bank-harness"]);
     expect(liveDemos[0]?.slug).toBe("bank-harness");

@@ -206,7 +206,10 @@ const cleanColumns = (value: unknown): ResultColumn[] =>
     : [];
 
 /** The message a failed Run shows: DuckDB's own words help the Analyst fix the SQL. */
-const failureOf = (answer: { error?: string; kind?: string }, seconds: number) =>
+const failureOf = (
+  answer: { error?: string; kind?: string },
+  seconds: number,
+) =>
   answer.kind === "timeout"
     ? `Stopped after ${seconds} s (Rule "query.max_seconds"). Aggregate more, or filter to fewer rows.`
     : (answer.error ?? "The Run failed.");
@@ -228,7 +231,12 @@ export async function runGuardedQuery(
   await trailStrict(caller, {
     action: "query.started",
     summary: `${label}: ${statement.sql.replace(/\s+/g, " ").slice(0, 160)}`,
-    detail: { label, sql: statement.sql, params, guarded: statement.ast !== null },
+    detail: {
+      label,
+      sql: statement.sql,
+      params,
+      guarded: statement.ast !== null,
+    },
   });
   const job: Job = {
     op: "query",
@@ -319,7 +327,10 @@ export async function runGuardedCode(
   const tables = new Set(inputs.flatMap((input) => input.tables));
   const job: Job = {
     op: "code",
-    inputs: inputs.map((input) => ({ name: input.name, ...jobStatement(input) })),
+    inputs: inputs.map((input) => ({
+      name: input.name,
+      ...jobStatement(input),
+    })),
     code,
     params,
     seconds,
@@ -387,7 +398,12 @@ export async function runGuardedCode(
 /** `run_query`: one SELECT, guarded and run. */
 export async function runQuery(
   caller: Caller,
-  input: { sql: string; params?: ParamValues; label?: string; maxRows?: number },
+  input: {
+    sql: string;
+    params?: ParamValues;
+    label?: string;
+    maxRows?: number;
+  },
 ) {
   const context = await runContext(caller);
   const params = input.params ?? {};

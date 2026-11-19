@@ -332,7 +332,9 @@ export function applyRuleEdits(
         errors.push({ id: def.id, param: name, message: checked.error });
         continue;
       }
-      if (JSON.stringify(state.params[name]) !== JSON.stringify(checked.value)) {
+      if (
+        JSON.stringify(state.params[name]) !== JSON.stringify(checked.value)
+      ) {
         state.params[name] = checked.value;
         changed.add(def.id);
       }
@@ -425,11 +427,7 @@ export function settings(rulebook: Rulebook) {
     tolerancePct: number(rulebook, "verify.tolerance", "percent"),
     flagUnbackedFigures: rulebook["verify.unbacked_figures"].enabled,
     restricted,
-    minGroupSize: number(
-      rulebook,
-      "access.restricted_columns",
-      "minGroupSize",
-    ),
+    minGroupSize: number(rulebook, "access.restricted_columns", "minGroupSize"),
     deniedTables: new Set(
       rulebook["access.denied_tables"].enabled
         ? list(rulebook, "access.denied_tables", "tables")
@@ -467,7 +465,9 @@ export function sentenceOf(def: RuleDef, state: RuleState) {
 
 /** The Rules as text the Analyst reads at the start of every Question. */
 export function rulebookText(rulebook: Rulebook, version: number) {
-  const lines = [`Rulebook v${version}. Code enforces these; you cannot waive them.`];
+  const lines = [
+    `Rulebook v${version}. Code enforces these; you cannot waive them.`,
+  ];
   for (const def of RULE_DEFS) {
     const state = rulebook[def.id];
     if (!state.enabled) continue;

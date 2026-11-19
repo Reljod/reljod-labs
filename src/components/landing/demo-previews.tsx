@@ -1,4 +1,5 @@
 import type { ReactNode } from "react";
+import { CanvasPreview } from "@/components/showcase/previews/canvas-preview";
 import { CaseworkPreview } from "@/components/showcase/previews/casework-preview";
 import { ClientManagerPreview } from "@/components/showcase/previews/client-manager-preview";
 import { DocumentCompliancePreview } from "@/components/showcase/previews/document-compliance-preview";
@@ -19,4 +20,5 @@ export const demoPreviews: Record<string, (project: Project) => ReactNode> = {
   "process-transfer": () => <ProcessTransferPreview />,
   "bank-harness": () => <HarnessPreview />,
   "name-extraction": () => <SievePreview />,
+  canvas: () => <CanvasPreview />,
 };

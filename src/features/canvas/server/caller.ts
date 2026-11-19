@@ -1,6 +1,6 @@
 import "server-only";
 import type { Owner } from "@/features/access/domain/owner";
-import { requireOwner } from "@/features/access/server/gate";
+import { type Access, requireOwner } from "@/features/access/server/gate";
 import type { ActorKind } from "../domain/trail";
 import { type Visitor, visitor } from "./rate";
 import { ensureWorkspace } from "./workspace";
@@ -26,7 +26,18 @@ export type Caller = {
  * Access gate once, and makes the Owner's Workspace on first use.
  */
 export async function requireCaller(): Promise<Caller> {
-  const [{ owner }, who] = await Promise.all([requireOwner(), visitor()]);
+  return (await requireCallerAccess()).caller;
+}
+
+/** The same, with the Access it passed on: what a token for the MCP server is minted from. */
+export async function requireCallerAccess(): Promise<{
+  caller: Caller;
+  access: Access;
+}> {
+  const [{ owner, access }, who] = await Promise.all([
+    requireOwner(),
+    visitor(),
+  ]);
   await ensureWorkspace(owner);
-  return { owner, visitor: who, actor: "person" };
+  return { caller: { owner, visitor: who, actor: "person" }, access };
 }

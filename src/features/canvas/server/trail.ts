@@ -1,4 +1,5 @@
 import "server-only";
+import { LIMITS } from "../domain/limits";
 import {
   type ActorKind,
   isTrailAction,
@@ -7,7 +8,6 @@ import {
   type TrailEvent,
   type TrailUsage,
 } from "../domain/trail";
-import { LIMITS } from "../domain/limits";
 import type { Caller } from "./caller";
 import { type Db, isUuid, jsonb, sql } from "./db";
 

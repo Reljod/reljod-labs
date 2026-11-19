@@ -120,7 +120,10 @@ const lower = (value: unknown) =>
 const isSelect = (node: Node) => node.type === "SELECT_NODE";
 
 /** Visits every node under `root`; `enter` returns false to skip a subtree. */
-function walk(root: unknown, enter: (node: Node, key: string) => boolean | undefined) {
+function walk(
+  root: unknown,
+  enter: (node: Node, key: string) => boolean | undefined,
+) {
   const visit = (value: unknown, key: string) => {
     if (Array.isArray(value)) {
       for (const item of value) visit(item, key);
@@ -133,10 +136,7 @@ function walk(root: unknown, enter: (node: Node, key: string) => boolean | undef
   visit(root, "");
 }
 
-function refuse(
-  rule: GuardRefusal["rule"],
-  message: string,
-): GuardRefusal {
+function refuse(rule: GuardRefusal["rule"], message: string): GuardRefusal {
   return { ok: false, rule, message };
 }
 
@@ -273,11 +273,8 @@ export function minimumGroupTemplate(minGroupSize: number) {
 
 /** The `count(*) >= k` condition and the AND around it, from the parsed template. */
 function templateParts(template: unknown) {
-  const select = (
-    ((template as Node)?.statements as Node[] | undefined)?.[0]?.node as
-      | Node
-      | undefined
-  );
+  const select = ((template as Node)?.statements as Node[] | undefined)?.[0]
+    ?.node as Node | undefined;
   const having = select?.having as Node | undefined;
   const children = having?.children;
   if (!having || !Array.isArray(children) || children.length !== 2) return null;
@@ -440,8 +437,7 @@ export function guardStatement(input: {
           }),
         );
         const covers = [...names].every((name) => excluded.has(name));
-        if (!covers || value.columns === true || value.expr)
-          wholeRow = "*";
+        if (!covers || value.columns === true || value.expr) wholeRow = "*";
         return;
       }
       if (value.class === "POSITIONAL_REFERENCE") {

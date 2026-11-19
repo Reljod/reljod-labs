@@ -5,8 +5,8 @@ import {
   DEFAULT_RULEBOOK_VERSION,
   defaultRulebook,
   normaliseRulebook,
-  type RuleEdit,
   type Rulebook,
+  type RuleEdit,
   ruleDef,
 } from "../domain/rules";
 import type { Caller } from "./caller";

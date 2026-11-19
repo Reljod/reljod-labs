@@ -123,7 +123,11 @@ export async function fileQuestion(
       summary: input.text.replace(/\s+/g, " ").slice(0, 200),
       detail: { text: input.text },
     });
-    return { conversationId: conversationId as string, questionId: message.id, title };
+    return {
+      conversationId: conversationId as string,
+      questionId: message.id,
+      title,
+    };
   });
 }
 

@@ -81,7 +81,9 @@ export function DataTable({
     const param = act.defaults[drill.param];
     act.set({
       [drill.param]:
-        typeof param === "number" ? (toNumber(value as string) ?? 0) : String(value),
+        typeof param === "number"
+          ? (toNumber(value as string) ?? 0)
+          : String(value),
     });
   };
 
@@ -129,7 +131,9 @@ export function DataTable({
             {visible.map((row, index) => {
               const value = drillAt >= 0 ? row[drillAt] : null;
               const on =
-                drill && chosen !== undefined && String(value) === String(chosen);
+                drill &&
+                chosen !== undefined &&
+                String(value) === String(chosen);
               return (
                 <tr
                   // biome-ignore lint/suspicious/noArrayIndexKey: rows have no identity of their own.
@@ -230,5 +234,7 @@ export function RowsTable({
       })),
     [result],
   );
-  return <DataTable result={result} columns={columns} theme={theme} page={50} />;
+  return (
+    <DataTable result={result} columns={columns} theme={theme} page={50} />
+  );
 }

@@ -98,7 +98,9 @@ export function redactDetail(
         ? `${value.slice(0, DETAIL_TEXT)}… [${value.length - DETAIL_TEXT} more characters]`
         : value;
     if (Array.isArray(value))
-      return depth > 5 ? "[…]" : value.slice(0, 200).map((item) => clean(item, depth + 1));
+      return depth > 5
+        ? "[…]"
+        : value.slice(0, 200).map((item) => clean(item, depth + 1));
     if (value && typeof value === "object") {
       if (depth > 5) return "{…}";
       const out: Record<string, unknown> = {};

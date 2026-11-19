@@ -78,7 +78,10 @@ function oklab([r, g, b]: Rgb): Rgb {
 function simulated(rgb: Rgb, kind: keyof typeof MACHADO): Rgb {
   const matrix = MACHADO[kind];
   return matrix.map((row) =>
-    Math.max(0, Math.min(1, row[0] * rgb[0] + row[1] * rgb[1] + row[2] * rgb[2])),
+    Math.max(
+      0,
+      Math.min(1, row[0] * rgb[0] + row[1] * rgb[1] + row[2] * rgb[2]),
+    ),
   ) as Rgb;
 }
 

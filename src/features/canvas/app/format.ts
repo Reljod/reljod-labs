@@ -207,7 +207,10 @@ export function formatValue(
     case "currency":
       return `${compact ? formatCompact(value) : formatNumber(value, Math.abs(value) >= 1000 ? 0 : 2)} ${unit || "MDC"}`;
     default:
-      return withUnit(compact ? formatCompact(value) : formatNumber(value), unit);
+      return withUnit(
+        compact ? formatCompact(value) : formatNumber(value),
+        unit,
+      );
   }
 }
 

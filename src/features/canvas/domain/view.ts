@@ -220,9 +220,7 @@ export const encodingSchema = z.discriminatedUnion("kind", [
       .object({ field: FIELD, descending: z.boolean().optional() })
       .optional(),
     /** Drill-down: clicking a row sets this Parameter to the row's value of `field`. */
-    drill: z
-      .object({ param: z.string().regex(NAME), field: FIELD })
-      .optional(),
+    drill: z.object({ param: z.string().regex(NAME), field: FIELD }).optional(),
   }),
   z.object({
     kind: z.literal("map"),
@@ -465,7 +463,10 @@ export type QueryResult = {
   ms: number;
 };
 
-export function columnIndex(result: Pick<QueryResult, "columns">, name: string) {
+export function columnIndex(
+  result: Pick<QueryResult, "columns">,
+  name: string,
+) {
   return result.columns.findIndex((column) => column.name === name);
 }
 

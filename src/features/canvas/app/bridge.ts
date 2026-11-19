@@ -111,33 +111,34 @@ export function createBridge(
     };
   };
 
-  const notifications: Record<string, (params: Record<string, unknown>) => void> =
-    {
-      "ui/notifications/tool-input-partial": (params) =>
-        emit({
-          type: "input",
-          args: isObject(params.arguments) ? params.arguments : {},
-          partial: true,
-        }),
-      "ui/notifications/tool-input": (params) =>
-        emit({
-          type: "input",
-          args: isObject(params.arguments) ? params.arguments : {},
-          partial: false,
-        }),
-      "ui/notifications/tool-result": (params) =>
-        emit({ type: "result", result: params as ToolResult }),
-      "ui/notifications/tool-cancelled": (params) =>
-        emit({
-          type: "cancelled",
-          reason:
-            typeof params.reason === "string" ? params.reason : "cancelled",
-        }),
-      "ui/notifications/host-context-changed": (params) => {
-        merge(params as HostContext);
-        emit({ type: "context", changed: params as HostContext, context });
-      },
-    };
+  const notifications: Record<
+    string,
+    (params: Record<string, unknown>) => void
+  > = {
+    "ui/notifications/tool-input-partial": (params) =>
+      emit({
+        type: "input",
+        args: isObject(params.arguments) ? params.arguments : {},
+        partial: true,
+      }),
+    "ui/notifications/tool-input": (params) =>
+      emit({
+        type: "input",
+        args: isObject(params.arguments) ? params.arguments : {},
+        partial: false,
+      }),
+    "ui/notifications/tool-result": (params) =>
+      emit({ type: "result", result: params as ToolResult }),
+    "ui/notifications/tool-cancelled": (params) =>
+      emit({
+        type: "cancelled",
+        reason: typeof params.reason === "string" ? params.reason : "cancelled",
+      }),
+    "ui/notifications/host-context-changed": (params) => {
+      merge(params as HostContext);
+      emit({ type: "context", changed: params as HostContext, context });
+    },
+  };
 
   return {
     /** Sends `ui/initialize`; on the answer, `ui/notifications/initialized`. */
@@ -152,7 +153,9 @@ export function createBridge(
           capabilities = isObject(init.hostCapabilities)
             ? (init.hostCapabilities as HostCapabilities)
             : {};
-          merge(isObject(init.hostContext) ? (init.hostContext as HostContext) : {});
+          merge(
+            isObject(init.hostContext) ? (init.hostContext as HostContext) : {},
+          );
           ready = true;
           emit({
             type: "ready",
@@ -217,8 +220,13 @@ export function createBridge(
     /** `tools/call`, proxied by the Host to the MCP server. */
     callTool(name: string, args: Record<string, unknown>) {
       if (!capabilities.serverTools)
-        return Promise.reject(new Error("This Host cannot run Queries from a View."));
-      return request("tools/call", { name, arguments: args }) as Promise<ToolResult>;
+        return Promise.reject(
+          new Error("This Host cannot run Queries from a View."),
+        );
+      return request("tools/call", {
+        name,
+        arguments: args,
+      }) as Promise<ToolResult>;
     },
 
     updateModelContext(text: string) {
@@ -292,7 +300,10 @@ export function modelContextText(view: ViewRecord, params: ParamValues) {
       `${claim.label}: ${
         claim.actual === null
           ? "could not be computed"
-          : formatValue(claim.actual, { format: claim.format, unit: claim.unit })
+          : formatValue(claim.actual, {
+              format: claim.format,
+              unit: claim.unit,
+            })
       }`,
   );
   return [

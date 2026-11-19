@@ -27,7 +27,12 @@ function claimsFor(
   const base = { via, owner: caller.owner, visitor: caller.visitor.hash, exp };
   switch (access.kind) {
     case "guest":
-      return { ...base, kind: "guest", user: access.userId, pass: access.passId };
+      return {
+        ...base,
+        kind: "guest",
+        user: access.userId,
+        pass: access.passId,
+      };
     case "host":
       return { ...base, kind: "host", email: access.email };
     case "e2e":
@@ -49,7 +54,9 @@ export function shortToken(
         via,
         Math.floor(Date.now() / 1000) + SHORT_SECONDS,
       ),
-      ...(caller.conversationId ? { conversationId: caller.conversationId } : {}),
+      ...(caller.conversationId
+        ? { conversationId: caller.conversationId }
+        : {}),
       ...(caller.questionId ? { questionId: caller.questionId } : {}),
     },
     env.rateLimitSalt(),
@@ -117,7 +124,11 @@ export async function callerOfBearer(bearer: string): Promise<Caller | null> {
     owner: claims.owner,
     visitor,
     actor:
-      claims.via === "chat" ? "analyst" : claims.via === "host" ? "person" : "client",
+      claims.via === "chat"
+        ? "analyst"
+        : claims.via === "host"
+          ? "person"
+          : "client",
     ...(claims.conversationId ? { conversationId: claims.conversationId } : {}),
     ...(claims.questionId ? { questionId: claims.questionId } : {}),
   };

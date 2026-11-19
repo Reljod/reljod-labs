@@ -59,7 +59,11 @@ const sameCell = (cell: Cell, wanted: string | number) => {
   if (typeof wanted === "number") return asNumber(cell) === wanted;
   const text = String(cell);
   // A timestamp matches its date, so `where: { day: "2025-02-12" }` reads naturally.
-  return text === wanted || text.startsWith(`${wanted} `) || text.startsWith(`${wanted}T`);
+  return (
+    text === wanted ||
+    text.startsWith(`${wanted} `) ||
+    text.startsWith(`${wanted}T`)
+  );
 };
 
 /** The value a Claim points at, computed from the rows. */
@@ -155,7 +159,10 @@ export function figuresIn(text: string): Figure[] {
       " ",
     )
     .replace(/\b\d+(?:st|nd|rd|th)\b/gi, " ")
-    .replace(/\b(?:FY|fiscal year|year|in|since|during)\s*(?:19|20)\d{2}\b/gi, " ")
+    .replace(
+      /\b(?:FY|fiscal year|year|in|since|during)\s*(?:19|20)\d{2}\b/gi,
+      " ",
+    )
     .replace(/\b(?:19|20)\d{2}\b(?=\s*(?:–|-|to)\s*(?:19|20)\d{2}\b)/g, " ")
     .replace(/(?<=\b(?:19|20)\d{2}\s*(?:–|-|to)\s*)(?:19|20)\d{2}\b/g, " ");
   const figures: Figure[] = [];
@@ -187,7 +194,8 @@ function backs(figure: Figure, claim: Claim, tolerancePct: number) {
   if (Math.abs(claim.value) <= 1) candidates.push(Math.abs(claim.value) * 100);
   return candidates.some(
     (value) =>
-      Math.abs(Math.abs(figure.value) - Math.abs(value)) <= figure.slack + 1e-9 ||
+      Math.abs(Math.abs(figure.value) - Math.abs(value)) <=
+        figure.slack + 1e-9 ||
       within(Math.abs(figure.value), Math.abs(value), tolerancePct),
   );
 }

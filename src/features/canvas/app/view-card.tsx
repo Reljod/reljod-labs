@@ -227,7 +227,11 @@ function BrushRange({
   const type = (name: string) =>
     spec.params.find((param) => param.name === name)?.type ?? "text";
   const input = (name: string) =>
-    type(name) === "date" ? "date" : type(name) === "number" ? "number" : "text";
+    type(name) === "date"
+      ? "date"
+      : type(name) === "number"
+        ? "number"
+        : "text";
   const read = (name: string, text: string): ParamValue | null => {
     if (type(name) === "number")
       return text.trim() !== "" && Number.isFinite(Number(text))
@@ -272,7 +276,7 @@ function BrushRange({
       <div class="pair">
         <input
           class="field"
-          type={input(brush.from)}
+          type={input(brush.from) as "text"}
           aria-label="Range from"
           value={from}
           onInput={(event) => setFrom(event.currentTarget.value)}
@@ -280,7 +284,7 @@ function BrushRange({
         <span aria-hidden="true">to</span>
         <input
           class="field"
-          type={input(brush.to)}
+          type={input(brush.to) as "text"}
           aria-label="Range to"
           value={to}
           onInput={(event) => setTo(event.currentTarget.value)}
@@ -337,11 +341,7 @@ function Controls({
       ))}
       {brush ? <BrushRange brush={brush} spec={spec} act={act} /> : null}
       {changed.length > 0 && act.enabled ? (
-        <button
-          type="button"
-          class="btn"
-          onClick={() => act.set(act.defaults)}
-        >
+        <button type="button" class="btn" onClick={() => act.set(act.defaults)}>
           Reset
         </button>
       ) : null}
@@ -401,7 +401,13 @@ function Finding({ view }: { view: ViewRecord }) {
   );
 }
 
-function Code({ text, language }: { text: string; language: "sql" | "python" }) {
+function Code({
+  text,
+  language,
+}: {
+  text: string;
+  language: "sql" | "python";
+}) {
   const tokens = useMemo(() => tokenize(text, language), [text, language]);
   return (
     <pre>
@@ -459,12 +465,16 @@ function Work({ view, theme }: { view: ViewRecord; theme: Theme }) {
   const sql =
     query.kind === "sql"
       ? query.sql
-      : query.inputs.map((input) => `-- ${input.name}\n${input.sql}`).join("\n\n");
+      : query.inputs
+          .map((input) => `-- ${input.name}\n${input.sql}`)
+          .join("\n\n");
   const guarded = [...work.runs]
     .reverse()
     .find((run) => run.guardedSql && run.guardedSql !== run.text);
-  const fmtClaim = (value: number | null, claim: { format?: ViewSpec["claims"][number]["format"]; unit?: string }) =>
-    value === null ? "not computed" : formatValue(value, claim);
+  const fmtClaim = (
+    value: number | null,
+    claim: { format?: ViewSpec["claims"][number]["format"]; unit?: string },
+  ) => (value === null ? "not computed" : formatValue(value, claim));
   const updated = parseTime(view.updatedAt);
   return (
     <div class="work">
@@ -671,7 +681,10 @@ export function ViewCard({
     id: payload.view.id,
     slots: {},
   });
-  const first = useRef({ id: payload.view.id, revision: payload.view.revision });
+  const first = useRef({
+    id: payload.view.id,
+    revision: payload.view.revision,
+  });
   const plot = useRef<HTMLDivElement>(null);
   const details = useRef<HTMLDetailsElement>(null);
   const [measure, width] = useWidth();
@@ -742,12 +755,18 @@ export function ViewCard({
         if (read && "payload" in read) {
           setError(null);
           apply(read.payload);
-          host.tell(modelContextText(read.payload.view, read.payload.view.params));
+          host.tell(
+            modelContextText(read.payload.view, read.payload.view.params),
+          );
         } else fail(read?.error ?? "The Host answered without a View.");
       },
       (reason: unknown) => {
         if (!done()) return;
-        fail(reason instanceof Error ? reason.message : "The Query could not be run.");
+        fail(
+          reason instanceof Error
+            ? reason.message
+            : "The Query could not be run.",
+        );
       },
     );
   };
@@ -790,7 +809,13 @@ export function ViewCard({
       aria-busy={loading}
       aria-label={spec.title}
     >
-      {loading ? <div class="progress" role="progressbar" aria-label="Running the Query" /> : null}
+      {loading ? (
+        <div
+          class="progress"
+          role="progressbar"
+          aria-label="Running the Query"
+        />
+      ) : null}
       <header class="head">
         <div>
           <p class="eyebrow">{eyebrowOf(view)}</p>
@@ -855,8 +880,9 @@ export function ViewCard({
         <summary>
           Show the work
           <span>
-            {view.work.runs.length} {view.work.runs.length === 1 ? "Run" : "Runs"} ·
-            Rulebook v{view.rulebookVersion}
+            {view.work.runs.length}{" "}
+            {view.work.runs.length === 1 ? "Run" : "Runs"} · Rulebook v
+            {view.rulebookVersion}
           </span>
         </summary>
         {open ? <Work view={view} theme={theme} /> : null}

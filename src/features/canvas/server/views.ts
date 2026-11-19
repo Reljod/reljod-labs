@@ -22,12 +22,7 @@ import {
 } from "../domain/view";
 import type { Caller } from "./caller";
 import { type Db, isUuid, jsonb, sql } from "./db";
-import {
-  InvalidError,
-  LimitError,
-  NotFoundError,
-  RuleRefusal,
-} from "./errors";
+import { InvalidError, LimitError, NotFoundError, RuleRefusal } from "./errors";
 import {
   type Guarded,
   guardAll,
@@ -86,7 +81,10 @@ const MAP_REGIONS: MapRegion[] = REGIONS.map((region) => ({
 }));
 
 /** What the App draws from: the View, and the map when it is one. */
-export function payloadOf(view: ViewRecord, linked?: ViewRecord[]): ViewPayload {
+export function payloadOf(
+  view: ViewRecord,
+  linked?: ViewRecord[],
+): ViewPayload {
   return {
     kind: VIEW_PAYLOAD_KIND,
     view,
@@ -141,7 +139,13 @@ async function compute(
         );
   const ran =
     query.kind === "sql"
-      ? await runGuardedQuery(caller, context, passed.statements[0], params, label)
+      ? await runGuardedQuery(
+          caller,
+          context,
+          passed.statements[0],
+          params,
+          label,
+        )
       : await runGuardedCode(
           caller,
           context,
@@ -194,7 +198,9 @@ const workOf = (
     ...new Set(guarded.statements.flatMap((item) => item.restrictedUsed)),
   ].sort();
   return {
-    tables: [...new Set(guarded.statements.flatMap((item) => item.tables))].sort(),
+    tables: [
+      ...new Set(guarded.statements.flatMap((item) => item.tables)),
+    ].sort(),
     restrictedUsed,
     minGroupSize: guarded.statements.some((item) => item.guardedSelects > 0)
       ? context.rules.minGroupSize
@@ -263,7 +269,9 @@ export async function createView(
 ): Promise<ViewRecord> {
   const spec = parseSpec(input.spec);
   const db = sql();
-  const replaced = input.replaces ? await load(db, caller, input.replaces) : null;
+  const replaced = input.replaces
+    ? await load(db, caller, input.replaces)
+    : null;
   if (!replaced && isUuid(caller.conversationId)) {
     const [count] = await db<{ n: number }[]>`
       select count(*)::int as n from canvas.views
@@ -277,7 +285,15 @@ export async function createView(
   const params = defaultParams(spec);
   let computed: Computed;
   try {
-    computed = await compute(caller, context, spec, params, null, "View Query", null);
+    computed = await compute(
+      caller,
+      context,
+      spec,
+      params,
+      null,
+      "View Query",
+      null,
+    );
   } catch (error) {
     if (error instanceof InvalidError)
       await trail(caller, {
@@ -464,7 +480,8 @@ export async function updateViewParams(
       }),
     );
     for (const result of results)
-      if (result.status === "fulfilled" && result.value) linked.push(result.value);
+      if (result.status === "fulfilled" && result.value)
+        linked.push(result.value);
   }
   return { view, linked };
 }
@@ -522,21 +539,22 @@ export async function refreshView(
     if (computed.status !== row.status)
       changes.push(`${row.status} → ${computed.status}`);
     if (computed.result.rowCount !== row.result.rowCount)
-      changes.push(
-        `${row.result.rowCount} → ${computed.result.rowCount} rows`,
-      );
+      changes.push(`${row.result.rowCount} → ${computed.result.rowCount} rows`);
     for (const claim of computed.verification.claims) {
-      const old = before.verification.claims.find((item) => item.id === claim.id);
+      const old = before.verification.claims.find(
+        (item) => item.id === claim.id,
+      );
       if (old && old.actual !== claim.actual)
-        changes.push(`${claim.label}: ${show(old.actual)} → ${show(claim.actual)}`);
+        changes.push(
+          `${claim.label}: ${show(old.actual)} → ${show(claim.actual)}`,
+        );
     }
     if (context.rulebookVersion !== row.rulebook_version)
       changes.push(
         `checked under Rulebook v${context.rulebookVersion} (was v${row.rulebook_version})`,
       );
     const newFindings = computed.findings.filter(
-      (finding) =>
-        !row.findings.some((old) => old.rule === finding.rule),
+      (finding) => !row.findings.some((old) => old.rule === finding.rule),
     );
     for (const finding of newFindings) changes.push(finding.message);
     await sql().begin(async (tx) => {
@@ -563,7 +581,11 @@ export async function refreshView(
       throw error;
     await trail(caller, {
       action: "view.refreshed",
-      summary: `"${row.spec.title}" could not be refreshed: ${error.message}`.slice(0, 280),
+      summary:
+        `"${row.spec.title}" could not be refreshed: ${error.message}`.slice(
+          0,
+          280,
+        ),
       viewId: row.id,
       detail: { ok: false, error: error.message },
       ms: Date.now() - started,

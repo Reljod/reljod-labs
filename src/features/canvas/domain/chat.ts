@@ -140,7 +140,9 @@ export function partsOf(events: readonly ChatEvent[]): MessagePart[] {
 /** A Conversation's title from its first Question. */
 export function titleOf(question: string) {
   const text = question.replace(/\s+/g, " ").trim();
-  return text.length <= 70 ? text || "Question" : `${text.slice(0, 67).trimEnd()}…`;
+  return text.length <= 70
+    ? text || "Question"
+    : `${text.slice(0, 67).trimEnd()}…`;
 }
 
 const ARG_TEXT = 1200;
@@ -153,7 +155,9 @@ export function cutArgs(input: unknown): Record<string, unknown> {
         ? `${value.slice(0, ARG_TEXT)}… [${value.length - ARG_TEXT} more]`
         : value;
     if (Array.isArray(value))
-      return depth > 4 ? "[…]" : value.slice(0, 30).map((item) => cut(item, depth + 1));
+      return depth > 4
+        ? "[…]"
+        : value.slice(0, 30).map((item) => cut(item, depth + 1));
     if (value && typeof value === "object") {
       if (depth > 4) return "{…}";
       return Object.fromEntries(

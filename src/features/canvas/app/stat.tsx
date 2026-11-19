@@ -43,9 +43,7 @@ export function StatView({ view, encoding }: ChartProps<"stat">) {
               {unit && text !== MISSING ? <small>{unit}</small> : null}
             </p>
             {change !== null ? (
-              <p
-                class={`delta ${good === null ? "flat" : good ? "ok" : "no"}`}
-              >
+              <p class={`delta ${good === null ? "flat" : good ? "ok" : "no"}`}>
                 <span aria-hidden="true">
                   {change > 0 ? "▲" : change < 0 ? "▼" : "■"}
                 </span>

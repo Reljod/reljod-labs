@@ -46,7 +46,7 @@ const DUCK_TYPE: Record<ColumnType, string> = {
 };
 
 /** The Python that loads every CSV into the DuckDB file, typed as the Catalog says. */
-function loadScript() {
+export function loadScript(dataDb: string = DATA_DB, loadDir: string = LOAD_DIR) {
   const tables = CATALOG.map((table) => ({
     name: table.name,
     columns: table.columns.map(
@@ -57,10 +57,10 @@ function loadScript() {
   return `
 import json, duckdb
 tables = json.loads(${JSON.stringify(JSON.stringify(tables))})
-con = duckdb.connect("${DATA_DB}")
+con = duckdb.connect("${dataDb}")
 for table in tables:
     con.execute('create table "' + table["name"] + '" (' + ", ".join(table["columns"]) + ")")
-    con.execute('copy "' + table["name"] + '" from \\'${LOAD_DIR}/' + table["name"] + ".csv.gz' (format csv, header true, nullstr '')")
+    con.execute('copy "' + table["name"] + '" from \\'${loadDir}/' + table["name"] + ".csv.gz' (format csv, header true, nullstr '')")
     rows = con.execute('select count(*) from "' + table["name"] + '"').fetchone()[0]
     if rows != table["rows"]:
         raise SystemExit(table["name"] + ": loaded " + str(rows) + " rows, the Catalog says " + str(table["rows"]))

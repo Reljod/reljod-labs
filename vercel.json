@@ -25,6 +25,9 @@
     },
     "src/app/api/name-extraction/runs/[runId]/events/route.ts": {
       "supportsCancellation": true
+    },
+    "src/app/api/canvas/chat/route.ts": {
+      "supportsCancellation": true
     }
   }
 }
