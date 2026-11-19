@@ -889,7 +889,7 @@ export function HoodPanel({ controller }: { controller: CallController }) {
                     {voice ? (
                       <td className="p-2 font-mono">
                         {item.latency
-                          ? `${item.latency.firstAudioMs + VAD_SILENCE_MS} ms`
+                          ? `${item.latency.firstAudioMs + (item.latency.detectMs ?? VAD_SILENCE_MS)} ms`
                           : "–"}
                       </td>
                     ) : null}

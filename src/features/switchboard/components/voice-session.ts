@@ -76,6 +76,25 @@ function floatToPcm(samples: Float32Array) {
   return new Uint8Array(out.buffer);
 }
 
+function resampleLinear(
+  samples: Float32Array,
+  fromRate: number,
+  toRate: number,
+): Float32Array {
+  if (fromRate === toRate || samples.length === 0) return samples;
+  const length = Math.max(1, Math.round((samples.length * toRate) / fromRate));
+  const out = new Float32Array(length);
+  const ratio = fromRate / toRate;
+  for (let index = 0; index < length; index++) {
+    const pos = index * ratio;
+    const low = Math.floor(pos);
+    const high = Math.min(samples.length - 1, low + 1);
+    const frac = pos - low;
+    out[index] = samples[low] * (1 - frac) + samples[high] * frac;
+  }
+  return out;
+}
+
 export class VoiceSession {
   private ws: WebSocket | null = null;
   private ctx: AudioContext | null = null;
@@ -94,16 +113,27 @@ export class VoiceSession {
   private started = performance.now();
   private closed = false;
 
+  // Turn detection: sample callers use manual commits when supported so
+  // natural pauses inside a pre-recorded clip never split a line in two.
+  private vadEnabled = true;
+
   // The Agent's current Turn.
   private nextPlayAt = 0;
-  private turnStartedAt = 0; // ctx time the Turn's first audio plays
+  private turnStartedAt = 0; // ctx time the current audio batch started playing
   private turnAudioMs = 0;
   private turnText = "";
   private turnInterrupted = false;
   private turnPlayedMs: number | undefined;
   private turnLatency: TurnLatency | undefined;
   private currentItem = "";
+  private activeResponseId: string | null = null;
+  private cancelledResponseId: string | null = null;
   private responseActive = false;
+  private greeted = false;
+  private callerSpeaking = false;
+  private awaitingResponse = false;
+  private awaitingToolResponse = false;
+  private turnSeq = 0;
   private pendingTools = 0;
   private toolMs = 0;
 
@@ -121,6 +151,7 @@ export class VoiceSession {
   private clips: Float32Array[] = [];
   private clipIndex = 0;
   private clipOffset = -1;
+  private startingLine = false;
   private typed: string[] = [];
 
   mode: VoiceMode = "listen";
@@ -145,7 +176,7 @@ export class VoiceSession {
   }
 
   private async send(event: Record<string, unknown>) {
-    if (this.ws?.readyState !== WebSocket.OPEN) return;
+    if (this.closed || this.ws?.readyState !== WebSocket.OPEN) return;
     this.ws.send(
       JSON.stringify(await this.codec.serializeClientEvent(event as never)),
     );
@@ -165,7 +196,7 @@ export class VoiceSession {
   }
 
   private playedMs() {
-    if (!this.ctx || !this.turnStartedAt) return 0;
+    if (!this.ctx || !this.turnStartedAt || this.turnAudioMs <= 0) return 0;
     return Math.max(
       0,
       Math.min(
@@ -176,7 +207,15 @@ export class VoiceSession {
   }
 
   private agentSpeaking() {
-    return this.turnAudioMs > 0 && this.playedMs() < this.turnAudioMs - 20;
+    return (
+      this.sources.size > 0 &&
+      this.turnAudioMs > 0 &&
+      this.playedMs() < this.turnAudioMs - 20
+    );
+  }
+
+  private audioClockRunning() {
+    return this.ctx?.state === "running";
   }
 
   /**
@@ -212,7 +251,11 @@ export class VoiceSession {
           const decoded = await (this.ctx as AudioContext).decodeAudioData(
             await response.arrayBuffer(),
           );
-          return decoded.getChannelData(0);
+          return resampleLinear(
+            decoded.getChannelData(0),
+            decoded.sampleRate,
+            rate,
+          );
         }),
       );
     } else if (wantMic) {
@@ -221,6 +264,7 @@ export class VoiceSession {
           audio: {
             echoCancellation: true,
             noiseSuppression: true,
+            autoGainControl: true,
             channelCount: 1,
           },
         });
@@ -230,6 +274,10 @@ export class VoiceSession {
         mic = "refused";
       }
     }
+
+    // OpenAI realtime models support manual turn control (`disabled`), so a
+    // sample clip with natural mid-sentence pauses is never split in half.
+    this.vadEnabled = !this.sample || this.grant.model.startsWith("google/");
 
     const connectStarted = performance.now();
     const socket = await this.codec.getWebSocketConfig?.({
@@ -271,16 +319,19 @@ export class VoiceSession {
         outputAudioFormat: { type: "audio/pcm", rate },
         inputAudioTranscription: {},
         outputAudioTranscription: {},
-        turnDetection: {
-          type: "server-vad",
-          threshold: 0.5,
-          silenceDurationMs: VAD_SILENCE_MS,
-          prefixPaddingMs: 300,
-        },
+        turnDetection: this.vadEnabled
+          ? {
+              type: "server-vad",
+              threshold: 0.5,
+              silenceDurationMs: this.sample ? 1200 : VAD_SILENCE_MS,
+              prefixPaddingMs: 300,
+            }
+          : { type: "disabled" },
         tools: this.grant.config.tools,
       },
     });
     // The Agent greets first.
+    this.awaitingResponse = true;
     await this.send({ type: "response-create" });
 
     if (this.micStream) this.startMic();
@@ -291,13 +342,18 @@ export class VoiceSession {
 
   private startMic() {
     const ctx = this.ctx as AudioContext;
+    const rate = this.grant.config.sampleRate;
     const source = ctx.createMediaStreamSource(this.micStream as MediaStream);
     source.connect(this.analyserIn as AnalyserNode);
     // ScriptProcessor is old but everywhere, and a worklet needs a second file.
     this.micNode = ctx.createScriptProcessor(2048, 1, 1);
     this.micNode.onaudioprocess = (event) => {
-      const samples = event.inputBuffer.getChannelData(0);
-      this.audioInMs += (samples.length / ctx.sampleRate) * 1000;
+      const raw = event.inputBuffer.getChannelData(0);
+      const samples =
+        ctx.sampleRate === rate
+          ? raw
+          : resampleLinear(raw, ctx.sampleRate, rate);
+      this.audioInMs += (samples.length / rate) * 1000;
       void this.send({
         type: "input-audio-append",
         audio: toBase64(floatToPcm(samples)),
@@ -309,61 +365,108 @@ export class VoiceSession {
     this.micNode.connect(mute).connect(ctx.destination);
   }
 
-  /** No microphone: the line still carries audio, a Sample caller's clip or silence, so turn detection works. */
+  /** No microphone: feeds a Sample caller's clip (or silence when VAD is on). */
   private startFeeder() {
     const rate = this.grant.config.sampleRate;
     const chunk = Math.round((rate * CHUNK_MS) / 1000);
     this.feeder = setInterval(() => {
-      const out = new Float32Array(chunk);
+      if (this.closed) return;
       if (this.clipOffset >= 0) {
         const clip = this.clips[this.clipIndex];
+        const out = new Float32Array(chunk);
         out.set(clip.subarray(this.clipOffset, this.clipOffset + chunk));
         this.clipOffset += chunk;
         this.audioInMs += CHUNK_MS;
+        void this.send({
+          type: "input-audio-append",
+          audio: toBase64(floatToPcm(out)),
+        });
         if (this.clipOffset >= clip.length) {
           this.clipOffset = -1;
           this.clipIndex++;
+          this.callerSpeaking = false;
           this.lastActivity = performance.now();
           this.handlers.onSampleLine(null);
+          if (!this.vadEnabled) {
+            this.awaitingResponse = true;
+            this.speechStoppedAt = performance.now();
+            this.awaitingFirstAudio = true;
+            void this.commitSampleTurn();
+          } else {
+            this.awaitingResponse = true;
+          }
         }
+        return;
       }
-      void this.send({
-        type: "input-audio-append",
-        audio: toBase64(floatToPcm(out)),
-      });
+      if (this.vadEnabled) {
+        const silence = new Float32Array(chunk);
+        void this.send({
+          type: "input-audio-append",
+          audio: toBase64(floatToPcm(silence)),
+        });
+      }
     }, CHUNK_MS);
   }
 
-  private startLine() {
-    const ctx = this.ctx as AudioContext;
+  private async commitSampleTurn() {
+    await this.send({ type: "input-audio-commit" });
+    await this.send({ type: "response-create" });
+  }
+
+  private async startLine(bargeIn = false) {
+    if (this.closed || this.startingLine || this.clipOffset >= 0) return;
     const clip = this.clips[this.clipIndex];
     if (!clip) return;
-    this.handlers.onSampleLine(this.clipIndex);
-    this.log("sample.line", `line ${this.clipIndex + 1}`);
-    // Heard in the room too, so the visitor follows the Call.
-    const buffer = ctx.createBuffer(1, clip.length, ctx.sampleRate);
-    buffer.copyToChannel(clip as Float32Array<ArrayBuffer>, 0);
-    const source = ctx.createBufferSource();
-    source.buffer = buffer;
-    const gain = ctx.createGain();
-    gain.gain.value = 0.9;
-    source.connect(gain);
-    gain.connect(this.analyserIn as AnalyserNode);
-    gain.connect(ctx.destination);
-    source.start();
-    this.clipSources.add(source);
-    source.onended = () => this.clipSources.delete(source);
-    this.clipOffset = 0;
+    this.startingLine = true;
+    this.callerSpeaking = true;
+    try {
+      if (bargeIn) await this.interruptAgent();
+      if (!this.vadEnabled) await this.send({ type: "input-audio-clear" });
+      if (this.closed) return;
+      const ctx = this.ctx as AudioContext;
+      this.handlers.onSampleLine(this.clipIndex);
+      this.handlers.onSpeaking("caller");
+      this.log("sample.line", `line ${this.clipIndex + 1}`);
+      // Heard in the room too, so the visitor follows the Call.
+      const buffer = ctx.createBuffer(1, clip.length, ctx.sampleRate);
+      buffer.copyToChannel(clip as Float32Array<ArrayBuffer>, 0);
+      const source = ctx.createBufferSource();
+      source.buffer = buffer;
+      const gain = ctx.createGain();
+      gain.gain.value = 0.9;
+      source.connect(gain);
+      gain.connect(this.analyserIn as AnalyserNode);
+      gain.connect(ctx.destination);
+      source.start();
+      this.clipSources.add(source);
+      source.onended = () => {
+        this.clipSources.delete(source);
+        if (!this.agentSpeaking() && !this.callerSpeaking)
+          this.handlers.onSpeaking(null);
+      };
+      this.clipOffset = 0;
+    } finally {
+      this.startingLine = false;
+    }
   }
 
   /** The Sample caller's script: the next line when the line is quiet, or a Barge-in. */
   private startDirector() {
     this.director = setInterval(() => {
-      if (this.closed || this.clipOffset >= 0 || !this.sample) return;
-      const idle =
-        !this.responseActive &&
-        this.pendingTools === 0 &&
-        !this.agentSpeaking();
+      if (
+        this.closed ||
+        this.startingLine ||
+        this.clipOffset >= 0 ||
+        !this.sample
+      )
+        return;
+      const waitingForAgent =
+        this.responseActive ||
+        this.pendingTools > 0 ||
+        this.awaitingToolResponse ||
+        this.awaitingResponse ||
+        this.callerSpeaking;
+      const idle = !waitingForAgent && !this.agentSpeaking();
       const quietFor = performance.now() - this.lastActivity;
       if (this.clipIndex >= this.clips.length) {
         if (idle && quietFor > 2500)
@@ -373,13 +476,16 @@ export class VoiceSession {
       const next = this.sample.lines[this.clipIndex];
       if (
         next.bargeAfterMs &&
+        this.pendingTools === 0 &&
+        !this.awaitingToolResponse &&
+        !this.awaitingResponse &&
         this.agentSpeaking() &&
         this.playedMs() >= next.bargeAfterMs
       ) {
-        this.startLine();
+        void this.startLine(true);
         return;
       }
-      if (idle && quietFor > 900 && this.turnStartedAt > 0) this.startLine();
+      if (idle && this.greeted && quietFor > 900) void this.startLine(false);
     }, 50);
   }
 
@@ -390,7 +496,17 @@ export class VoiceSession {
       pcm.byteOffset,
       Math.floor(pcm.byteLength / 2),
     );
-    const buffer = ctx.createBuffer(1, samples.length, ctx.sampleRate);
+    if (samples.length === 0) return;
+    if (this.sources.size === 0) {
+      this.turnAudioMs = 0;
+      this.nextPlayAt = 0;
+      this.turnStartedAt = 0;
+    }
+    const buffer = ctx.createBuffer(
+      1,
+      samples.length,
+      this.grant.config.sampleRate,
+    );
     const channel = buffer.getChannelData(0);
     for (let index = 0; index < samples.length; index++)
       channel[index] = samples[index] / 0x8000;
@@ -406,29 +522,92 @@ export class VoiceSession {
     this.sources.add(source);
     source.onended = () => {
       this.sources.delete(source);
-      if (!this.agentSpeaking()) this.handlers.onSpeaking(null);
+      if (this.sources.size === 0) {
+        this.turnAudioMs = 0;
+        this.turnStartedAt = 0;
+        this.nextPlayAt = 0;
+        this.lastActivity = performance.now();
+        if (!this.callerSpeaking) this.handlers.onSpeaking(null);
+        if (
+          !this.responseActive &&
+          this.pendingTools === 0 &&
+          !this.awaitingToolResponse &&
+          !this.awaitingResponse
+        ) {
+          this.closeTurn();
+        }
+      }
     };
   }
 
   private stopAgentAudio() {
     // A Sample caller's own clip keeps playing: only the Agent is cut.
     for (const source of this.sources) {
+      source.onended = null;
       try {
         source.stop();
       } catch {
         // Already ended.
       }
     }
+    this.sources.clear();
     this.nextPlayAt = 0;
+    this.turnAudioMs = 0;
+    this.turnStartedAt = 0;
   }
 
-  private closeTurn() {
+  /** Cuts off the Agent's current speech and records the Barge-in. */
+  private async interruptAgent() {
+    const played = Math.round(this.playedMs());
+    const audioTotal = Math.floor(this.turnAudioMs);
+    const wasResponseActive = this.responseActive;
+    const itemId = this.currentItem;
+
+    // Update turn state synchronously before any await so late chunks from the
+    // cancelled response cannot sneak in during the microtask yield.
+    this.turnSeq++;
+    this.stopAgentAudio();
+    this.turnPlayedMs = played;
+    this.awaitingToolResponse = false;
+    this.awaitingResponse = false;
+    if (wasResponseActive) {
+      this.turnInterrupted = true;
+      this.cancelledResponseId = this.activeResponseId;
+    }
+    if (played > 0) {
+      this.closeTurn(true);
+      this.log("barge_in", `cut at ${played} ms`);
+      this.handlers.onBargeIn(played);
+      this.handlers.report([
+        { type: "barge_in", atMs: this.ms(), playedMs: played },
+      ]);
+    } else {
+      // Audio was only scheduled in the future and had not reached the speaker yet.
+      this.turnText = "";
+      this.turnPlayedMs = undefined;
+      this.turnLatency = undefined;
+      this.toolMs = 0;
+    }
+    if (!wasResponseActive) this.turnInterrupted = false;
+
+    if (wasResponseActive) await this.send({ type: "response-cancel" });
+    if (itemId) {
+      await this.send({
+        type: "conversation-item-truncate",
+        itemId,
+        contentIndex: 0,
+        audioEndMs: Math.max(0, Math.min(played, audioTotal || played)),
+      });
+    }
+  }
+
+  private closeTurn(interrupted = this.turnInterrupted) {
     const text = this.turnText.trim();
     if (text) {
       const turn = {
         text,
-        interrupted: this.turnInterrupted,
-        playedMs: this.turnPlayedMs,
+        interrupted,
+        playedMs: interrupted ? this.turnPlayedMs : undefined,
         latency: this.turnLatency
           ? {
               ...this.turnLatency,
@@ -447,6 +626,7 @@ export class VoiceSession {
   }
 
   private async onMessage(raw: string) {
+    if (this.closed) return;
     let parsed: unknown;
     try {
       parsed = await this.codec.parseServerEvent(JSON.parse(raw));
@@ -457,42 +637,28 @@ export class VoiceSession {
       string,
       unknown
     >[]) {
+      if (this.closed) return;
       const type = String(event.type);
       switch (type) {
         case "speech-started": {
           this.log(type);
+          this.callerSpeaking = true;
           this.handlers.onSpeaking("caller");
-          if (this.agentSpeaking()) {
-            // Barge-in: the Caller spoke over the Agent. Stop the speaker now
-            // and tell the model how much of its answer was really heard.
-            const played = Math.round(this.playedMs());
-            this.stopAgentAudio();
-            if (this.currentItem)
-              await this.send({
-                type: "conversation-item-truncate",
-                itemId: this.currentItem,
-                contentIndex: 0,
-                audioEndMs: Math.max(
-                  0,
-                  Math.min(played, Math.floor(this.turnAudioMs)),
-                ),
-              });
-            this.turnAudioMs = played;
-            this.turnInterrupted = true;
-            this.turnPlayedMs = played;
-            this.log("barge_in", `cut at ${played} ms`);
-            this.handlers.onBargeIn(played);
-            this.handlers.report([
-              { type: "barge_in", atMs: this.ms(), playedMs: played },
-            ]);
+          if (
+            this.agentSpeaking() ||
+            (this.responseActive && this.turnAudioMs > 0)
+          ) {
+            await this.interruptAgent();
           }
           break;
         }
         case "speech-stopped":
+          this.callerSpeaking = false;
           this.speechStoppedAt = performance.now();
           this.awaitingFirstAudio = true;
+          this.awaitingResponse = true;
           this.log(type);
-          this.handlers.onSpeaking(null);
+          if (!this.agentSpeaking()) this.handlers.onSpeaking(null);
           break;
         case "input-transcription-completed": {
           const text = String(event.transcript ?? "").trim();
@@ -507,29 +673,37 @@ export class VoiceSession {
           break;
         }
         case "response-created":
+          this.activeResponseId = String(event.responseId ?? "") || null;
+          this.cancelledResponseId = null;
           this.responseActive = true;
+          this.awaitingResponse = false;
+          this.awaitingToolResponse = false;
+          this.turnInterrupted = false;
+          this.greeted = true;
+          this.turnSeq++;
           this.log(type);
           break;
         case "output-item-added":
           this.currentItem = String(event.itemId ?? "");
           break;
         case "audio-delta": {
-          if (this.turnInterrupted) break;
+          if (
+            this.turnInterrupted ||
+            (event.responseId && event.responseId === this.cancelledResponseId)
+          )
+            break;
           if (this.awaitingFirstAudio && this.speechStoppedAt) {
             const firstAudioMs = Math.round(
               performance.now() - this.speechStoppedAt,
             );
-            this.turnLatency = { firstAudioMs, detectMs: VAD_SILENCE_MS };
+            this.turnLatency = {
+              firstAudioMs,
+              detectMs: this.vadEnabled ? VAD_SILENCE_MS : 0,
+            };
             this.log(
               "first-audio",
               `${firstAudioMs} ms after the Caller's Turn ended`,
             );
-          }
-          if (this.awaitingFirstAudio || !this.agentSpeaking()) {
-            if (!this.agentSpeaking()) {
-              this.turnAudioMs = 0;
-              this.nextPlayAt = 0;
-            }
           }
           this.awaitingFirstAudio = false;
           if (event.itemId) this.currentItem = String(event.itemId);
@@ -538,12 +712,18 @@ export class VoiceSession {
           break;
         }
         case "audio-transcript-delta":
+          if (
+            this.turnInterrupted ||
+            (event.responseId && event.responseId === this.cancelledResponseId)
+          )
+            break;
           this.turnText += String(event.delta ?? "");
           this.handlers.onAgentPartial(this.turnText);
           break;
         case "function-call-arguments-done": {
           const name = String(event.name ?? "");
           const callId = String(event.callId ?? "");
+          const myTurnSeq = this.turnSeq;
           this.pendingTools++;
           this.log("tool.call", name);
           this.handlers.onTool(name, "start");
@@ -576,10 +756,16 @@ export class VoiceSession {
           }
           this.toolMs += Math.round(performance.now() - before);
           this.pendingTools--;
+          if (this.closed) break;
           if (over) {
             this.handlers.onOver("The server ended the Call.");
             break;
           }
+          const shouldContinue =
+            this.pendingTools === 0 &&
+            myTurnSeq === this.turnSeq &&
+            !this.callerSpeaking;
+          if (shouldContinue) this.awaitingToolResponse = true;
           await this.send({
             type: "conversation-item-create",
             item: {
@@ -589,15 +775,36 @@ export class VoiceSession {
               output: JSON.stringify(output),
             },
           });
-          await this.send({ type: "response-create" });
+          if (
+            shouldContinue &&
+            this.pendingTools === 0 &&
+            myTurnSeq === this.turnSeq &&
+            !this.callerSpeaking
+          ) {
+            await this.send({ type: "response-create" });
+          } else if (shouldContinue) {
+            this.awaitingToolResponse = false;
+          }
           break;
         }
         case "response-done": {
+          const responseId = String(event.responseId ?? "") || null;
           this.responseActive = false;
           this.lastActivity = performance.now();
           this.log(type, String(event.status ?? ""));
-          // A Turn that only called a tool carries on in the next response.
-          if (this.pendingTools === 0) this.closeTurn();
+          if (responseId && responseId === this.cancelledResponseId) {
+            this.cancelledResponseId = null;
+            this.turnInterrupted = false;
+          }
+          // A Turn that only called a tool carries on in the next response;
+          // otherwise close once buffered audio has finished playing.
+          if (
+            this.pendingTools === 0 &&
+            !this.awaitingToolResponse &&
+            (!this.agentSpeaking() || !this.audioClockRunning())
+          ) {
+            this.closeTurn();
+          }
           const usage = event.usage as RealtimeUsage | undefined;
           if (usage) {
             this.handlers.onUsage(usage);
@@ -611,6 +818,8 @@ export class VoiceSession {
           const message = String(
             event.message ?? "The line reported an error.",
           );
+          this.awaitingResponse = false;
+          this.awaitingToolResponse = false;
           this.log("error", message.slice(0, 150));
           // A truncate that lost a race with the audio's end is not worth showing.
           if (!/already shorter|no active response|not found/i.test(message))
@@ -631,7 +840,7 @@ export class VoiceSession {
       this.typed.push(text);
       return;
     }
-    if (this.agentSpeaking()) this.stopAgentAudio();
+    if (this.agentSpeaking()) await this.interruptAgent();
     this.heardCaller += `\n${text}`;
     this.handlers.onCaller(text, "text");
     this.handlers.report([
@@ -639,6 +848,7 @@ export class VoiceSession {
     ]);
     this.speechStoppedAt = performance.now();
     this.awaitingFirstAudio = true;
+    this.awaitingResponse = true;
     await this.send({
       type: "conversation-item-create",
       item: { type: "text-message", role: "user", text },
@@ -663,12 +873,15 @@ export class VoiceSession {
     this.micNode?.disconnect();
     for (const track of this.micStream?.getTracks() ?? []) track.stop();
     for (const source of [...this.sources, ...this.clipSources]) {
+      source.onended = null;
       try {
         source.stop();
       } catch {
         // Already ended.
       }
     }
+    this.sources.clear();
+    this.clipSources.clear();
     try {
       this.ws?.close();
     } catch {
