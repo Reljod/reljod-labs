@@ -432,8 +432,8 @@ export async function bankGrow(message: Message, requestId: string) {
       await finish(message, id, "completed", filed.note);
       return filed;
     }
-    // Up to about a week of looks, a few minutes apart at first.
-    for (let look = 0; look < 400; look += 1) {
+    // About a week of looks: a few minutes apart at first, then backing off to an hour.
+    for (let look = 0; look < 190; look += 1) {
       const state = await watch(message.owner, id, requestId);
       if (state.done) {
         const told = state.live
@@ -442,7 +442,8 @@ export async function bankGrow(message: Message, requestId: string) {
         await finish(message, id, "completed", told);
         return state;
       }
-      await sleep(new Date(Date.now() + state.againInMs));
+      const wait = Math.min(3_600_000, state.againInMs * Math.max(1, look - 8));
+      await sleep(new Date(Date.now() + wait));
     }
     await finish(message, id, "completed", "Stopped watching after a week");
   } catch (error) {

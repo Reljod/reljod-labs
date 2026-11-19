@@ -110,7 +110,9 @@ export async function dispatchOutbox(owner: Owner): Promise<number> {
 export async function wakeSleepers(owner: Owner): Promise<number> {
   const runs = await sql()<{ runId: string | null }[]>`
     select run_id from bank.workflow_runs
-    where owner = ${owner} and status in ('sleeping', 'waiting') and run_id is not null`;
+    where owner = ${owner} and status in ('sleeping', 'waiting') and run_id is not null
+      -- A Growth run waits on GitHub, not on the bank's clock: waking it only spends API calls.
+      and kind <> 'growth'`;
   let woken = 0;
   await Promise.all(
     runs.map(async (run) => {

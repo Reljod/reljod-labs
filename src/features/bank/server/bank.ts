@@ -1,4 +1,5 @@
 import "server-only";
+import { after } from "next/server";
 import type { Actor } from "../core/actor";
 import { runRead, runWrite } from "../core/engine";
 import type { WriteOutcome } from "../domain/commands";
@@ -36,7 +37,15 @@ export async function read(
     return growthView(actor.owner);
   }
   const result = await runRead(sql(), actor, name, input);
-  if (KICKS.has(name)) void kick(actor.owner);
+  if (KICKS.has(name)) {
+    try {
+      // After the response: a bare promise may be frozen once it is sent.
+      after(() => kick(actor.owner));
+    } catch {
+      // Not in a request (a script, a test): run it now.
+      void kick(actor.owner);
+    }
+  }
   return result;
 }
 

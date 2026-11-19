@@ -37,7 +37,8 @@ export type Block =
 /** An address a link may carry: http(s), mailto, or a path or anchor on this site. */
 export function safeHref(raw: string): string | null {
   const href = raw.trim();
-  if (!href || /[\s<>"]/.test(href)) return null;
+  // A backslash too: a browser reads `/\\host` as `//host`, another site.
+  if (!href || /[\s<>"\\]/.test(href)) return null;
   if (/^(https?:\/\/|mailto:)/i.test(href)) return href;
   if (/^\/(?!\/)/.test(href) || href.startsWith("#")) return href;
   return null;

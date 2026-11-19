@@ -193,16 +193,15 @@ export function ChatTab() {
       setError(messageOf(caught));
     }
   }, []);
+  const openId = useRef(current);
+  openId.current = current;
+  const [armed, setArmed] = useState<string | null>(null);
+  const [removing, setRemoving] = useState<string | null>(null);
   const loadDetail = useCallback(async (id: string) => {
     try {
       const next = await chatApi.session(id);
-      setDetail((before) =>
-        before &&
-        before.session.id !== id &&
-        before.session.id !== next.session.id
-          ? before
-          : next,
-      );
+      // An answer for a conversation that is no longer open is dropped.
+      if (openId.current === id) setDetail(next);
       return next;
     } catch (caught) {
       setError(messageOf(caught));
@@ -261,6 +260,7 @@ export function ChatTab() {
         if (!made.ok) throw new Error(made.error);
         id = made.session.id;
         setSessions((before) => [made.session, ...before]);
+        openId.current = id;
         setCurrent(id);
         openTab("chat", { session: id });
       }
@@ -333,10 +333,19 @@ export function ChatTab() {
   };
 
   const remove = async (id: string) => {
-    const done = await deleteSessionAction(id);
-    if (!done.ok) return setError(done.error);
-    setSessions((before) => before.filter((item) => item.id !== id));
-    if (current === id) open(null);
+    if (removing) return;
+    setRemoving(id);
+    try {
+      const done = await deleteSessionAction(id);
+      if (!done.ok) return setError(done.error);
+      setSessions((before) => before.filter((item) => item.id !== id));
+      if (current === id) open(null);
+    } catch (caught) {
+      setError(messageOf(caught));
+    } finally {
+      setRemoving(null);
+      setArmed(null);
+    }
   };
 
   const confirmations = detail?.confirmations ?? [];
@@ -351,6 +360,7 @@ export function ChatTab() {
       <aside className="hidden w-64 shrink-0 flex-col gap-2 overflow-y-auto border-ink border-r-2 p-3 md:flex">
         <Button
           data-testid="bank-chat-new"
+          disabled={Boolean(live)}
           variant="secondary"
           onClick={() => open(null)}
         >
@@ -362,6 +372,8 @@ export function ChatTab() {
               <button
                 type="button"
                 onClick={() => open(session.id)}
+                // Not while a reply streams: it would draw into the other conversation.
+                disabled={Boolean(live)}
                 aria-current={session.id === current}
                 className={`outline-box press min-w-0 flex-1 truncate rounded-sm px-2 py-1.5 text-left text-xs ${session.id === current ? "bg-ink text-paper" : "bg-paper"}`}
               >
@@ -369,18 +381,27 @@ export function ChatTab() {
               </button>
               <button
                 type="button"
-                aria-label={`Delete ${session.title}`}
-                className="press px-1 text-ink/60 text-xs"
-                onClick={() => {
-                  if (
-                    window.confirm(
-                      "Delete this conversation? Its messages go; the bank keeps its Audit trail.",
-                    )
-                  )
-                    void remove(session.id);
-                }}
+                aria-label={
+                  armed === session.id
+                    ? `Confirm deleting ${session.title}`
+                    : `Delete ${session.title}`
+                }
+                aria-busy={removing === session.id}
+                disabled={Boolean(live) || removing !== null}
+                className="press px-1 text-ink/60 text-xs disabled:opacity-40"
+                onBlur={() => setArmed(null)}
+                onClick={() =>
+                  // Two clicks: the first asks, the second deletes.
+                  armed === session.id
+                    ? void remove(session.id)
+                    : setArmed(session.id)
+                }
               >
-                ×
+                {removing === session.id
+                  ? "…"
+                  : armed === session.id
+                    ? "Delete?"
+                    : "×"}
               </button>
             </li>
           ))}
