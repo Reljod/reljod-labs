@@ -44,6 +44,7 @@ export async function putFrame(runId: string, n: number, png: Buffer) {
   });
   if (error)
     throw new Error(`Frame ${n} could not be stored: ${error.message}`);
+  remember(framePath(runId, n), png);
 }
 
 export async function getFrame(runId: string, n: number) {
