@@ -105,7 +105,10 @@ export async function guardAll(
       throw new InvalidError(
         `A Query may be at most ${LIMITS.queryChars} characters.`,
       );
-  const { answer } = await runJob(
+  // Parsing is Sandbox work too: a refused statement never reaches
+  // `runGuarded*`, so the Run is taken here, before the Sandbox is asked.
+  await admit(caller);
+  const { answer, ms: parseMs } = await runJob(
     caller.owner,
     {
       op: "serialize",
@@ -116,6 +119,7 @@ export async function guardAll(
     },
     LIMITS.runSeconds,
   );
+  await spend(caller, parseMs);
   const asts = answer.asts as Parsed[] | undefined;
   if (!Array.isArray(asts) || asts.length !== statements.length + 1)
     throw new InvalidError(answer.error ?? "The Query could not be parsed.");
@@ -225,8 +229,10 @@ export async function runGuardedQuery(
   params: ParamValues,
   label: string,
   maxRows = context.rules.maxRows,
+  /** True when `guardAll` already took this Run from the allowance. */
+  admitted = false,
 ): Promise<Ran> {
-  await admit(caller);
+  if (!admitted) await admit(caller);
   const seconds = context.rules.maxSeconds;
   await trailStrict(caller, {
     action: "query.started",
@@ -307,12 +313,14 @@ export async function runGuardedCode(
   params: ParamValues,
   label: string,
   needsTable: boolean,
+  /** True when `guardAll` already took this Run from the allowance. */
+  admitted = false,
 ): Promise<Ran> {
   if (code.length > LIMITS.queryChars)
     throw new InvalidError(
       `Code may be at most ${LIMITS.queryChars} characters.`,
     );
-  await admit(caller);
+  if (!admitted) await admit(caller);
   const seconds = context.rules.maxSeconds;
   await trailStrict(caller, {
     action: "code.started",
@@ -416,6 +424,7 @@ export async function runQuery(
     params,
     input.label ?? "Query",
     Math.min(input.maxRows ?? context.rules.maxRows, context.rules.maxRows),
+    true,
   );
   return { ...ran, statement, context };
 }
@@ -441,6 +450,7 @@ export async function runCode(
     params,
     input.label ?? "Code",
     false,
+    true,
   );
   return { ...ran, statements: guarded.statements, context };
 }

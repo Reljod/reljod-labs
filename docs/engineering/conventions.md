@@ -10,6 +10,13 @@ Demos that call a paid model guard the work with limits (documents per run, runs
 - When you add a path that feeds work into an existing run, check it against the same limits as the path that started it.
 - Reads count too. A search that embeds its query calls a paid model on every request: the Harness first shipped `searchKnowledge` with no cap on either the route or the MCP tool. Where refusing would break a chat turn, fall back to the unpaid path (words alone) once the cap is reached.
 
+## Take the cap before the first paid step, not the main one
+
+A request that is refused partway through still spent whatever ran before the refusal. In Canvas, `run_query` sent the SQL to the Sandbox to be parsed for the Guard, and only took a Run from the hourly allowance afterwards, in `runGuardedQuery`. A statement the Guard refused never got there, so an MCP client could send refused SQL in a loop: a Sandbox job and a Trail row each time, with no cap.
+
+- Take the rate (and check any per-Question budget) before the first call to a model, a Sandbox or any other metered service in the request, including validation steps such as parsing.
+- When a later step also takes the rate, pass along that it was already taken, so one Run counts once.
+
 ## Make the escape hatch work when the thing it escapes is broken
 
 A stop, cancel or cleanup path exists for when something went wrong, so it must not depend on the broken part. Treat calls to the external system (workflow cancel, stream close, provider abort) as best effort, and always write the local state change. In Casework, `stopRun` awaited `workflow.cancel()` before marking the Run stopped. Cancel throws on a workflow that already ended, which is exactly the Run that needed stopping, so the row stayed `running` and the one-active-run gate blocked the desk for 45 minutes.

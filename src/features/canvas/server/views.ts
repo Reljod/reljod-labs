@@ -128,8 +128,11 @@ async function compute(
   atOrigin: { status: "verified" | "flagged" } | null,
 ): Promise<Computed> {
   const query = spec.query;
+  // A fresh Guard verdict took the Run from the allowance already.
+  const reused =
+    guarded !== null && guarded.rulebookVersion === context.rulebookVersion;
   const passed =
-    guarded && guarded.rulebookVersion === context.rulebookVersion
+    reused && guarded
       ? guarded
       : await guardAll(
           caller,
@@ -145,6 +148,8 @@ async function compute(
           passed.statements[0],
           params,
           label,
+          context.rules.maxRows,
+          !reused,
         )
       : await runGuardedCode(
           caller,
@@ -154,6 +159,7 @@ async function compute(
           params,
           label,
           true,
+          !reused,
         );
   // A Control may filter a View down to nothing: that is an answer ("no days
   // above the threshold"), and the App says so. A new View with no rows is not.
