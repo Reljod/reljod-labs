@@ -156,6 +156,23 @@ describe("runInSandbox", () => {
     expect(result.exitCode).toBe(0);
   });
 
+  it("writes the pages again when a stopped Sandbox resumes with an empty disk", async () => {
+    mocks.getOrCreate.mockResolvedValue(fakeSandbox());
+    await runInSandbox(input);
+    const options = mocks.getOrCreate.mock.calls[0][0] as {
+      onCreate: (box: unknown) => Promise<void>;
+      onResume: (box: unknown) => Promise<void>;
+    };
+    const created = fakeSandbox();
+    const resumed = fakeSandbox();
+    await options.onCreate(created);
+    await options.onResume(resumed);
+    expect(created.writeFiles).toHaveBeenCalled();
+    expect(resumed.writeFiles.mock.calls).toEqual(
+      created.writeFiles.mock.calls,
+    );
+  });
+
   it("creates the Sandbox with a short lifetime", async () => {
     mocks.getOrCreate.mockResolvedValue(fakeSandbox());
     await runInSandbox(input);

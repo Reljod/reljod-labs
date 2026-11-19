@@ -14,8 +14,8 @@ async function main() {
     networkPolicy: "deny-all",
   });
   try {
-    // getOrCreate may return an existing sandbox created with another policy.
-    await sandbox.update({ networkPolicy: "deny-all" });
+    // getOrCreate may return an existing sandbox created with other settings.
+    await sandbox.update({ networkPolicy: "deny-all", persistent: false });
 
     await sandbox.writeFiles([
       { path: "/vercel/generated.mjs", content: GENERATED },
@@ -27,7 +27,9 @@ async function main() {
     if (stderr) process.stderr.write(stderr);
     if (result.exitCode !== 0) process.exitCode = result.exitCode ?? 1;
   } finally {
-    await sandbox.stop();
+    // Nothing is kept between runs: delete it, and any snapshot it left.
+    await sandbox.stop().catch(() => {});
+    await sandbox.delete({ deleteOrphanSnapshots: true });
   }
 }
 

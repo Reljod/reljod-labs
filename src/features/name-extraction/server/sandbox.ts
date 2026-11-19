@@ -17,8 +17,9 @@ import {
  *
  * Not persistent: a persistent Sandbox (the SDK's default) snapshots its whole
  * disk (~800 MB) every time it stops, and those snapshots live for 30 days
- * and count against the plan's Sandbox quota. A Run's files are rewritten on
- * every `run_code`, so nothing on the disk is worth keeping.
+ * and count against the plan's Sandbox quota. Nothing on the disk is worth
+ * keeping: the state files and the code are written on every `run_code`, and
+ * the pages whenever a session starts (made, or resumed after a timeout).
  */
 export const SANDBOX_LIMITS = {
   /** Wall time of one run_code. */
@@ -135,6 +136,8 @@ export async function runInSandbox(input: {
   // A Run stopped while the Analyst was deciding must not get a new Sandbox.
   if (await runIsOver(input.runId))
     return refused("The Run is over; the code was not run.");
+  const seed = async (box: Sandbox) =>
+    writeAll(box, documentFiles(await input.document()));
   let sandbox: Sandbox;
   try {
     sandbox = await Sandbox.getOrCreate({
@@ -142,9 +145,11 @@ export async function runInSandbox(input: {
       persistent: false,
       networkPolicy: "deny-all",
       timeout: SANDBOX_LIMITS.sandboxMs,
-      onCreate: async (created) => {
-        await writeAll(created, documentFiles(await input.document()));
-      },
+      // A Sandbox that timed out between two calls comes back as a new
+      // session with an empty disk (it is not persistent), so the pages go
+      // in again whenever a session starts, not only when the Sandbox is made.
+      onCreate: seed,
+      onResume: seed,
     });
   } catch (error) {
     return refused(`The Sandbox could not be started: ${message(error)}`);
