@@ -307,6 +307,47 @@ it.skipIf(!base)(
     expect(tool?.summary).toMatch(/confirmation/i);
     expect(stubbed.at(-1)?.type).toBe("done");
 
+    // BANK_SMOKE_GROW="<what to ask for>": one real turn that should raise a
+    // Growth request, then the request is followed until it is triaged and
+    // (when the server has BANK_GITHUB_TOKEN and BANK_GROWTH_E2E_LIVE=1) filed.
+    const wish = process.env.BANK_SMOKE_GROW;
+    if (wish) {
+      const live = await turn(wish, {});
+      const raised = live.find(
+        (event) =>
+          event.type === "tool.finished" && event.name === "raise_request",
+      );
+      console.log(`growth: raise_request -> ${raised?.ok} ${raised?.summary}`);
+      expect(
+        raised?.ok,
+        live.find((event) => event.type === "error")?.message,
+      ).toBe(true);
+      let last = "";
+      for (let attempt = 0; attempt < 40; attempt += 1) {
+        const response = await fetch(`${base}/api/bank/read/list_growth`, {
+          headers,
+        });
+        const view = (await response.json()) as {
+          githubReady: boolean;
+          requests: {
+            title: string;
+            status: string;
+            statusNote: string;
+            issueUrl: string | null;
+          }[];
+        };
+        const request = view.requests[0];
+        const line = `${request?.status}: ${request?.title} | ${request?.statusNote} | ${request?.issueUrl ?? "no issue"} | github ${view.githubReady}`;
+        if (line !== last) console.log(`growth: ${line}`);
+        last = line;
+        if (request && !["requested", "triaged"].includes(request.status))
+          break;
+        if (request?.status === "triaged" && attempt > 15) break;
+        await new Promise((resolve) => setTimeout(resolve, 3_000));
+      }
+      expect(last).not.toMatch(/^requested/);
+    }
+
     if (process.env.BANK_SMOKE_LIVE === "1") {
       const live = await turn(
         "What is Mara Voss's current account balance? One short sentence.",

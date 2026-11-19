@@ -81,6 +81,8 @@
 /* Strips that scroll sideways on a phone without showing a bar. */
 .hx-scroll-x,
 .tb-scroll-x {
+  /* Positioned, so an sr-only child cannot widen the page. */
+  position: relative;
   overflow-x: auto;
   scrollbar-width: none;
 }
@@ -101,6 +103,7 @@
 /* A wide table scrolls inside its own box, never the page. */
 .hx-table-wrap,
 .tb-table-wrap {
+  position: relative;
   overflow-x: auto;
   scrollbar-width: thin;
 }

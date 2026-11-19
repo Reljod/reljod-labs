@@ -138,7 +138,7 @@ export function BankApp() {
 
       <NoticeStrip overview={data} />
 
-      <main className="flex min-h-0 flex-1 flex-col">
+      <main className="flex min-h-0 min-w-0 flex-1 flex-col overflow-x-clip">
         {TABS.filter((item) => visited.includes(item)).map((item) => {
           const View = TAB_VIEW[item];
           return (

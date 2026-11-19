@@ -67,7 +67,7 @@ export function NoticeStrip({
       className="flex shrink-0 flex-wrap items-center gap-x-3 gap-y-1 border-ink border-b-2 bg-limestone/60 px-3 py-1 sm:px-4"
       data-testid="bank-notice"
     >
-      <p className="min-w-0 flex-1 text-[0.7rem] text-ink-muted">
+      <p className="min-w-0 flex-1 basis-full text-[0.7rem] text-ink-muted sm:basis-0">
         <span className="eyebrow mr-1.5 text-[0.6rem] font-bold text-ink">
           Play money
         </span>
