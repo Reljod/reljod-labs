@@ -62,12 +62,33 @@ async function sh(sandbox: Sandbox, script: string, sudo = false) {
     );
 }
 
+/**
+ * A named Sandbox is persistent unless told otherwise, and a persistent one
+ * writes a snapshot of its whole disk (about 1 GB) every time it stops. Only
+ * the base may: forks need its snapshot to start from. It keeps one, for a
+ * bounded time; when that is gone the next Run rebuilds the base. Never `0`
+ * (no expiry): snapshots count against the team's quota for as long as they live.
+ */
+export const BASE_OPTIONS = {
+  persistent: true,
+  snapshotExpiration: 7 * 24 * 60 * 60_000,
+  keepLastSnapshots: { count: 1 },
+} as const;
+
+/** A Run's own sandbox never resumes a disk, so it never snapshots one. */
+export const RUN_OPTIONS = {
+  persistent: false,
+  networkPolicy: "deny-all",
+} as const;
+
+/** Deleting a Sandbox keeps its snapshots unless asked: always ask. */
+export const DISPOSE_OPTIONS = { deleteOrphanSnapshots: true } as const;
+
 /** Builds the base once: about half a minute, with the network on. */
 async function buildBase() {
   const base = await Sandbox.create({
     name: BASE_NAME,
-    persistent: true,
-    snapshotExpiration: 0,
+    ...BASE_OPTIONS,
     timeout: 10 * 60_000,
   });
   try {
@@ -83,7 +104,7 @@ async function buildBase() {
   } catch (error) {
     // A half-built base must not be forked: remove it so the next Run rebuilds.
     await base.stop().catch(() => {});
-    await base.delete().catch(() => {});
+    await base.delete(DISPOSE_OPTIONS).catch(() => {});
     throw error;
   }
   // Stopping a persistent sandbox snapshots its disk; forks start from that.
@@ -113,20 +134,44 @@ async function ensureBase() {
   throw new Error("the base sandbox did not become ready");
 }
 
+/**
+ * Removes the base, with its snapshots, and builds it again. For a base that
+ * is there but cannot be forked: its snapshot expired or was deleted.
+ */
+async function rebuildBase() {
+  try {
+    const stale = await Sandbox.get({ name: BASE_NAME });
+    await stale.delete(DISPOSE_OPTIONS);
+  } catch {
+    // Already gone.
+  }
+  await buildBase();
+}
+
+/**
+ * Forks the base for a Run. The base's snapshot is not assumed to exist: if
+ * the fork fails, the base is waited for or built; if it still fails (a base
+ * with no snapshot left), the base is rebuilt once. A third failure is thrown,
+ * and the Run is refused with "Screen sandbox unavailable".
+ */
 async function fork(runId: string) {
   const params = {
     sourceSandbox: BASE_NAME,
     name: screenName(runId),
-    persistent: false,
-    networkPolicy: "deny-all" as const,
+    ...RUN_OPTIONS,
     timeout: LIMITS.sandboxMinutes * 60_000,
   };
   try {
     return await Sandbox.fork(params);
   } catch {
     await ensureBase();
-    return Sandbox.fork(params);
   }
+  try {
+    return await Sandbox.fork(params);
+  } catch {
+    await rebuildBase();
+  }
+  return Sandbox.fork(params);
 }
 
 async function control<T>(
@@ -177,7 +222,7 @@ export async function bootScreen(input: {
   try {
     const sandbox = await fork(input.runId);
     // Forks copy the source's policy; say it again so it never depends on the base.
-    await sandbox.update({ networkPolicy: "deny-all" });
+    await sandbox.update(RUN_OPTIONS);
     const config: ScreenConfig = {
       fixture: input.fixture,
       rulebook: input.rulebook,
@@ -276,9 +321,9 @@ export async function disposeScreen(runId: string) {
   try {
     const sandbox = await Sandbox.get({ name: screenName(runId) });
     // Deleting a running sandbox ends it; waiting for a clean stop first takes far longer.
-    await sandbox.delete().catch(async () => {
+    await sandbox.delete(DISPOSE_OPTIONS).catch(async () => {
       await sandbox.stop().catch(() => {});
-      await sandbox.delete();
+      await sandbox.delete(DISPOSE_OPTIONS);
     });
   } catch {
     // None was made, or it is already gone.

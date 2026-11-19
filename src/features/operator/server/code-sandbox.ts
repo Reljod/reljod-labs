@@ -21,6 +21,18 @@ export const CODE_LIMITS = {
   outputFileBlocks: 20_000,
 } as const;
 
+/**
+ * Never persistent: a named Sandbox is persistent by default, and a
+ * persistent one writes a snapshot of its whole disk every time it stops.
+ * Nothing here ever resumes a disk.
+ */
+export const CODE_OPTIONS = {
+  persistent: false,
+  networkPolicy: "deny-all",
+} as const;
+
+export const CODE_DISPOSE = { deleteOrphanSnapshots: true } as const;
+
 const DIR = "/vercel/sandbox/work";
 
 export const codeSandboxName = (runId: string) => `operator-code-${runId}`;
@@ -113,12 +125,12 @@ export async function runCode(input: {
   try {
     sandbox = await Sandbox.getOrCreate({
       name: codeSandboxName(input.ctx.runId),
-      networkPolicy: "deny-all",
-      persistent: false,
+      ...CODE_OPTIONS,
       timeout: CODE_LIMITS.sandboxMs,
     });
-    // getOrCreate may hand back a sandbox made with another policy: enforce it.
-    await sandbox.update({ networkPolicy: "deny-all" });
+    // getOrCreate may hand back a sandbox made with other settings: an
+    // existing one keeps its own until told.
+    await sandbox.update(CODE_OPTIONS);
   } catch (error) {
     console.error("[operator] code sandbox:", error);
     return refused("Code sandbox unavailable.");
@@ -173,9 +185,10 @@ export async function disposeCode(runId: string) {
   try {
     const sandbox = await Sandbox.get({ name: codeSandboxName(runId) });
     // Deleting a running sandbox ends it; waiting for a clean stop first takes far longer.
-    await sandbox.delete().catch(async () => {
+    // Deleting keeps a Sandbox's snapshots unless asked.
+    await sandbox.delete(CODE_DISPOSE).catch(async () => {
       await sandbox.stop().catch(() => {});
-      await sandbox.delete();
+      await sandbox.delete(CODE_DISPOSE);
     });
   } catch {
     // None was made, or it is already gone.
