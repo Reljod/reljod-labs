@@ -93,8 +93,8 @@ describe("createStepValidator", () => {
 
   it("drops a piece inside one already placed, and one around it", () => {
     const validate = createStepValidator();
-    expect(validate(step({ source: sourcePath.project(1) }))).not.toBeNull();
-    expect(validate(step({ source: sourcePath.projectOutcome(1) }))).toBeNull();
+    expect(validate(step({ source: sourcePath.service(1) }))).not.toBeNull();
+    expect(validate(step({ source: sourcePath.serviceSummary(1) }))).toBeNull();
     expect(
       validate(step({ source: KYC_POINT, excerpt: "+7 pts approval rate" })),
     ).not.toBeNull();

@@ -14,11 +14,13 @@ import { BrowserFrame } from "@/components/showcase/browser-frame";
 import { Icon, IconTile } from "@/components/ui/icon";
 import { LiveBadge } from "@/components/ui/live-badge";
 import { demoProblems, sceneNumber } from "@/content/landing";
-import { liveDemos } from "@/content/projects";
+import { demoCount, liveDemos } from "@/content/projects";
 import { demoPreviews } from "./demo-previews";
 import "./landing.css";
 
 const COUNT = liveDemos.length;
+/** "Twelve problems", counted from the live demos. */
+const TITLE = `${demoCount.Word} problems`;
 /** The drum turns over this part of the chapter. */
 const TURN = [0.06, 0.92] as const;
 
@@ -35,12 +37,12 @@ function near(active: number) {
     .reverse();
 }
 
-/** Seven problems: the live demos on a Rolodex that turns as you scroll. */
+/** The live demos on a Rolodex that turns as you scroll. */
 export function RolodexChapter() {
   return (
     <Chapter
       id="demos"
-      label="Seven problems I've built for"
+      label={`${TITLE} I've built for`}
       length={4.5}
       overlap
       className="bg-limestone"
@@ -84,7 +86,7 @@ function Drum() {
           {sceneNumber("demos")} · The projects
         </p>
         <h2 className="font-mono text-[clamp(1.35rem,min(5vw,5svh),2.25rem)] leading-[1.1] font-bold uppercase">
-          Seven problems I&apos;ve built for.
+          {TITLE} I&apos;ve built for.
         </h2>
 
         <div className="relative mt-3 min-h-[3.25rem] sm:min-h-[4.5rem] lg:mt-8 lg:min-h-[9rem]">

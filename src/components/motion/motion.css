@@ -75,20 +75,6 @@
   transform-origin: 50% 100%;
 }
 
-/* On a moving page (`data-moving`), a job's dates stay put while its story scrolls. */
-@media (min-width: 768px) {
-  [data-moving] .stick-on-move {
-    position: sticky;
-    top: 6rem;
-    align-self: start;
-  }
-}
-
-/* Unfilled "[Client sector]"-style fields stay out of the moving About page. */
-[data-moving] [data-placeholder] {
-  display: none;
-}
-
 /*
  * Reduced motion: the tour still plays, because nothing in it moves unless the
  * visitor scrolls. What runs on its own (the print-in, the loops in

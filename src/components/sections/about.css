@@ -1,0 +1,244 @@
+/*
+ * The About page's Experience file and its door to the demos. Motion here is
+ * transforms and opacity only, driven by `--q` (0..1, how far a card has
+ * risen into place) and `--depth` (how many cards lie on it), which
+ * `CareerFile` writes on each card. Without them (Ledger's Ask copy, or before
+ * the script runs) every card shows finished: `--q` is 1, `--depth` 0.
+ */
+
+.career-stack {
+  display: flex;
+  flex-direction: column;
+  gap: 4rem;
+  /* Room for the first card's tab. */
+  padding-top: 1.85rem;
+}
+
+.career-card {
+  position: relative;
+  scroll-margin-top: 7rem;
+  --e: calc(1 - (1 - var(--q, 1)) * (1 - var(--q, 1)));
+  --lean: 0.45deg;
+}
+
+.career-card:nth-child(even) {
+  --lean: -0.45deg;
+}
+
+/* A folder tab on each card, stepped along so a pile shows every tab. */
+.career-tab {
+  position: absolute;
+  bottom: 100%;
+  left: calc(1.25rem + var(--i, 0) * min(9%, 6rem));
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  height: 1.85rem;
+  padding: 0 0.75rem;
+  border: 2px solid var(--color-ink);
+  border-bottom: 0;
+  background: var(--color-paper);
+  font-family: var(--font-mono);
+  font-size: 0.75rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  white-space: nowrap;
+}
+
+/* Ruled like an index card: faint blue lines on white, or haze for a highlight. */
+.career-sheet {
+  background-color: var(--color-paper);
+  background-image: repeating-linear-gradient(
+    to bottom,
+    transparent 0 1.95rem,
+    rgb(111 160 220 / 0.16) 1.95rem 2rem
+  );
+}
+
+.career-card-highlight .career-sheet,
+.career-card-highlight .career-tab {
+  background-color: var(--color-morning-haze);
+}
+
+/* The start year, set huge in outline with a brass offset like the site's hard shadows. */
+.career-year {
+  display: flex;
+  font-family: var(--font-mono);
+  font-size: clamp(3.25rem, 8vw, 5.25rem);
+  font-weight: 700;
+  line-height: 1;
+  letter-spacing: -0.04em;
+  color: transparent;
+  -webkit-text-stroke: 2px var(--color-ink);
+  text-shadow: 0.06em 0.06em 0 var(--color-brass);
+}
+
+/*
+ * One face of the reel shows at a time. A face is a little taller than the
+ * glyph, so the brass offset fits inside it and no neighbouring digit peeks
+ * in at rest.
+ */
+.odo {
+  --face: 1.14em;
+  display: inline-block;
+  height: var(--face);
+  overflow: hidden;
+}
+
+.odo-reel {
+  display: flex;
+  flex-direction: column;
+  /* Later digits start later, so the year settles left to right. */
+  --roll: clamp(0, var(--q, 1) * 1.6 - var(--k, 0) * 0.14, 1);
+  transform: translateY(
+    calc(
+      var(--digit, 0) *
+      -1 *
+      var(--face) *
+      (1 - (1 - var(--roll)) * (1 - var(--roll)))
+    )
+  );
+}
+
+.odo-reel > span {
+  height: var(--face);
+  line-height: var(--face);
+}
+
+/* The dates thump on like a rubber stamp once the card has nearly risen. */
+.career-stamp {
+  --s: clamp(0, (var(--q, 1) - 0.5) / 0.3, 1);
+  display: inline-block;
+  padding: 0.25rem 0.5rem;
+  border: 3px solid var(--color-federal-blue);
+  color: var(--color-federal-blue);
+  font-family: var(--font-mono);
+  font-size: 0.875rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  white-space: nowrap;
+  mix-blend-mode: multiply;
+  transform-origin: left center;
+  transform: rotate(-3deg) scale(calc(1 + 1.3 * (1 - var(--s))));
+  opacity: var(--s);
+}
+
+/* The red rule under the company, as on an index card, drawn left to right. */
+.career-rule {
+  display: block;
+  height: 2px;
+  margin-top: 1rem;
+  background: var(--color-seal-red);
+  transform-origin: left center;
+  transform: scaleX(clamp(0, (var(--q, 1) - 0.2) / 0.45, 1));
+}
+
+.career-point {
+  --p: clamp(0, (var(--q, 1) - 0.35 - var(--k, 0) * 0.12) / 0.3, 1);
+  opacity: var(--p);
+  transform: translateX(calc((1 - var(--p)) * 1.5rem));
+}
+
+.career-shade {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: var(--color-ink);
+  opacity: calc(min(var(--depth, 0), 3) * 0.1);
+}
+
+/* On the moving page, a card rises in, tilting off the hinge of its top edge. */
+[data-animated] .career-card {
+  transform-origin: 50% 0;
+  transform: translateY(calc((1 - var(--e)) * 5rem))
+    rotate(calc((1 - var(--e)) * var(--lean) * 6));
+  opacity: calc(0.2 + 0.8 * var(--e));
+}
+
+/*
+ * On a screen tall enough to hold a card, the cards pile up: each sticks a
+ * step below the last, so the tabs of the cards under it stay in view, and a
+ * covered card sinks back and darkens as more land on it. The pile leaves
+ * together at the end of the list.
+ */
+@media (min-width: 768px) and (min-height: 700px) {
+  [data-animated] .career-card {
+    position: sticky;
+    top: calc(6.5rem + var(--i, 0) * 1.25rem);
+    transform: translateY(calc((1 - var(--e)) * 5rem))
+      rotate(
+        calc(
+          (1 - var(--e)) *
+          var(--lean) *
+          6 +
+          min(var(--depth, 0), 3) *
+          var(--lean)
+        )
+      )
+      scale(calc(1 - min(var(--depth, 0), 4) * 0.03));
+  }
+
+  [data-animated] .career-stack {
+    padding-bottom: 10rem;
+  }
+}
+
+/* The ruler: each job a segment; hovering one inks it in. */
+.career-seg {
+  transition:
+    background-color 150ms,
+    color 150ms;
+}
+
+.career-seg:hover,
+.career-seg:focus-visible {
+  background-color: var(--color-ink);
+  color: var(--color-paper);
+}
+
+.career-seg:focus-visible {
+  outline: 2px solid var(--color-federal-blue);
+  outline-offset: 2px;
+}
+
+/* The door to the demos: a reel of every demo's name runs along its foot. */
+.demo-reel {
+  display: flex;
+  width: max-content;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  [data-animated] .demo-reel {
+    animation: demo-reel 48s linear infinite;
+  }
+}
+
+@keyframes demo-reel {
+  to {
+    transform: translateX(-50%);
+  }
+}
+
+/* The big count: outline numerals that fill with brass on hover. */
+.demos-figure {
+  color: transparent;
+  -webkit-text-stroke: 2px var(--color-brass);
+  text-shadow: 0.05em 0.05em 0 rgb(217 168 78 / 0.35);
+  transition: color 250ms;
+}
+
+.demos-door:hover .demos-figure,
+.demos-door:focus-visible .demos-figure {
+  color: var(--color-brass);
+}
+
+.demos-arrow {
+  transition: transform 200ms;
+}
+
+.demos-door:hover .demos-arrow,
+.demos-door:focus-visible .demos-arrow {
+  transform: translateX(0.35rem);
+}

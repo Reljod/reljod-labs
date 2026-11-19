@@ -1,42 +1,12 @@
 import { describe, expect, it } from "vitest";
-import {
-  FEATURED_PROJECT_LIMIT,
-  featuredProjects,
-  liveDemos,
-  projects,
-} from "./projects";
+import { demoCount, demosPitch, liveDemos, projects } from "./projects";
 
-describe("featuredProjects", () => {
-  it("shows every live demo on the About page", () => {
-    for (const demo of liveDemos) {
-      expect(featuredProjects).toContain(demo);
-    }
-  });
-
-  it("keeps the first entries in place so Ledger's source paths stay stable", () => {
-    expect(featuredProjects.slice(0, FEATURED_PROJECT_LIMIT)).toEqual(
-      projects.slice(0, FEATURED_PROJECT_LIMIT),
-    );
-  });
-
-  it("ends with the live demos past the first entries, in list order", () => {
-    expect(
-      featuredProjects
-        .slice(FEATURED_PROJECT_LIMIT)
-        .map((project) => project.slug),
-    ).toEqual([
-      "ledger",
-      "casework-desk",
-      "client-manager",
-      "process-transfer",
-      "bank-harness",
-      "name-extraction",
-      "operator",
-      "tidewater-bank",
-      "loupe",
-      "switchboard",
-      "canvas",
-    ]);
+describe("projects", () => {
+  it("counts the live demos in words for the copy", () => {
+    expect(demoCount.value).toBe(liveDemos.length);
+    expect(demoCount.Word).toMatch(/^[A-Z]/);
+    expect(demosPitch.figure).toBe(String(liveDemos.length));
+    expect(demosPitch.body.startsWith(demoCount.Word)).toBe(true);
   });
 
   it("leads the landing page with the Harness, the rest in list order", () => {
@@ -74,7 +44,7 @@ describe("featuredProjects", () => {
   });
 
   it("lists each project once", () => {
-    const slugs = featuredProjects.map((project) => project.slug);
+    const slugs = projects.map((project) => project.slug);
     expect(new Set(slugs).size).toBe(slugs.length);
   });
 });

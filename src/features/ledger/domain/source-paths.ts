@@ -19,9 +19,7 @@ export const sourcePath = {
   jobPoint: (index: number, point: number) =>
     `experience.${index}.points.${point}`,
   credential: (index: number) => `credentials.${index}`,
-  project: (index: number) => `projects.${index}`,
-  projectSummary: (index: number) => `projects.${index}.summary`,
-  projectOutcome: (index: number) => `projects.${index}.outcome`,
+  demos: "demos",
   contact: "contact",
 } as const;
 

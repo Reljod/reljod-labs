@@ -1,4 +1,5 @@
 import "server-only";
+import { demosPitch } from "@/content/projects";
 import type { RawBuildPlan } from "../domain/build-plan";
 import { PRESET_QUESTIONS } from "../domain/presets";
 import { sourcePath } from "../domain/source-paths";
@@ -57,7 +58,6 @@ const PLANS: Record<string, RawBuildPlan> = {
       ),
       fetch(KYC_POINT, ",", "Approvals up!", "+7 pts approval rate"),
       fetch(KYC_POINT, "and", "More automated!", "+8 pts automation rate"),
-      fetch(sourcePath.project(1), "in", "The project file."),
     ],
   },
   [PRESET_QUESTIONS[2]]: {
@@ -74,14 +74,16 @@ const PLANS: Record<string, RawBuildPlan> = {
   },
   [PRESET_QUESTIONS[3]]: {
     verdict: "answer",
-    title: "Selected AI systems",
+    title: "What Reljod has built",
     layout: "cards",
-    answer:
-      "Highlights include the live document compliance checks demo, in-house KYC automation and a name matching engine.",
+    answer: `${demosPitch.figure} live demos you can open and try, and in-house KYC automation that cut a digital bank's KYC operating cost by 90%.`,
     steps: [
-      fetch(sourcePath.project(0), "His systems include", "This one's live!"),
-      fetch(sourcePath.project(1), ",", "Ninety percent cheaper."),
-      fetch(sourcePath.project(2), "and", "Names, matched."),
+      fetch(sourcePath.demos, "He has", "All of them live!"),
+      fetch(
+        sourcePath.jobPoint(MAYA, 0),
+        "and, at the bank,",
+        "Ninety percent cheaper.",
+      ),
     ],
   },
   [PRESET_QUESTIONS[4]]: {
