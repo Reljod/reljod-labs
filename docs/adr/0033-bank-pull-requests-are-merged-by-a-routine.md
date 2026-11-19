@@ -11,17 +11,18 @@ ADR 0024 left merging a growth pull request to the Hermes PR pipeline, which rev
 A third routine, `bank-merge` (`docs/routines/bank-merge.md`, created from that file and reading it from `main` on every run), merges a bank pull request when:
 
 1. it stays inside the growth allowlist (`scripts/bank-growth-guard.mjs`), touches the bank, was opened by the owner's account, and is not labelled to hold;
-2. the review exists and every finding of Medium or higher (or marked Blocker or exploitable) is fixed **in the code at the newest head**, checked by the routine itself, not taken from a reply;
-3. commits after the reviewed head only fix findings or add tests;
-4. CI is green on the head (`ci`, the growth guard, Vercel; `e2e-changed` skips growth pull requests, whose end-to-end tests run on `main` after the merge);
-5. its own pattern checks on the whole diff find nothing (environment reads, network, processes, raw HTML or SQL, money written around `post()`, a removed gate or audit call, a skipped test, a migration).
+2. the reviewer's label `review:passed` is on it and was given at the newest head (the review comment names that head);
+3. CI is green on the head (`ci`, the growth guard, Vercel; `e2e-changed` skips growth pull requests, whose end-to-end tests run on `main` after the merge);
+4. its own pattern checks on the whole diff find nothing (environment reads, network, processes, raw HTML or SQL, money written around `post()`, a removed gate or audit call, a skipped test, a migration).
 
-Otherwise it waits (comments once per head with what is still open, for the build session) or holds (`bank:held`, for Reljod). It runs on every pushed commit and hourly as a sweep. It never pushes, approves or reviews.
+Otherwise it waits or holds (`bank:held`, for Reljod), and says which on the pull request, once per head. It runs when a label is added and hourly as a sweep. It never pushes, approves or reviews.
+
+The reviewer ("PR Code + Security Review") reviews on open and on every push, and records its result as a label, `review:passed` or `review:changes`, with the head it reviewed in its comment. The label is the hand-off: the reviewer judges, the merge routine only reads the status.
 
 ## Why this shape
 
 - **The reviewer, the fixer and the merger are three sessions.** Nobody approves their own work: the builder fixes, a different session judges the fixes.
-- **The merge routine re-checks the code, not the conversation.** The build session and the reviewer post under the same GitHub account, so a review comment proves nothing about who wrote it. The fixes are verified in the code, and step 5's checks do not read any comment, so a forged "no blockers" cannot merge a pull request that reaches for secrets, the network or the ledger.
+- **The status is a label, checked against the head.** A label alone could be stale after a push, so it counts only with a review comment that names the current head. The build session, the reviewer and this routine act as the same GitHub account, so a label or comment proves nothing about who wrote it: the merge routine's own pattern checks read neither, so a forged `review:passed` cannot merge a pull request that reaches for secrets, the network or the ledger.
 - **Fail closed.** A missing review, a running check, a moved head or an ambiguous diff means wait or hold, never merge.
 
 ## Consequences

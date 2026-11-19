@@ -9,11 +9,10 @@ The prompt of the scheduled cloud agent (a Claude routine) that builds the Tidew
 
 ## How a growth pull request gets merged
 
-The Hermes PR pipeline is off. The "PR Code + Security Review" routine reviews the pull request once when it opens; this routine's session watches the pull request and fixes what the review finds; `docs/routines/bank-merge.md` checks those fixes in the code at the newest head, waits for CI and merges (`docs/adr/0033-bank-pull-requests-are-merged-by-a-routine.md`). Three things in that routine shape this prompt:
+The Hermes PR pipeline is off. The "PR Code + Security Review" routine reviews the pull request when it opens and again on every push, and labels it `review:passed` or `review:changes`. This routine's session watches the pull request: on `review:changes` it fixes what the review found and pushes, which starts the next review. `docs/routines/bank-merge.md` merges once `review:passed` is on the newest head and CI is green (`docs/adr/0033-bank-pull-requests-are-merged-by-a-routine.md`). Two things in that routine shape this prompt:
 
-- It holds a pull request whose commits after the review do more than fix findings or add tests, or that passes 200 changed lines after the review: fix only what the review asks.
 - It holds on a migration, an environment read, a network call, a process, raw HTML or SQL, money written around `post()`, a removed gate or audit call, or a skipped test, whatever the review said.
-- It comments on the pull request, once per head, with anything still open: treat that comment like a review finding.
+- It comments on the pull request, once per head, when it waits or holds: treat a comment that names an open item like a review finding.
 
 ## Prompt
 
