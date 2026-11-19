@@ -84,6 +84,17 @@ export function amortise(
   return schedule;
 }
 
+/**
+ * A deposit's annual rate as a daily rate: the annual percentage over 365,
+ * shown to at most four decimal places ("0.0089%"). An account with no
+ * interest rate has no daily rate, so it reads "Not available".
+ */
+export function formatDailyRate(rateBps: number): string {
+  if (!Number.isFinite(rateBps) || rateBps <= 0) return "Not available";
+  const daily = (rateBps / 100 / 365).toFixed(4).replace(/\.?0+$/, "");
+  return daily === "0" ? "<0.0001%" : `${daily}%`;
+}
+
 /** Interest accrued on a deposit for one day, carrying the fraction of a cent. */
 export const DAILY_DIVISOR = 3_650_000;
 

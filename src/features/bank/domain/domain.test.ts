@@ -16,6 +16,7 @@ import { addDays, addMonths, datesAfter, isMonthEnd, monthEnd } from "./dates";
 import {
   amortise,
   dailyInterest,
+  formatDailyRate,
   monthlyInterest,
   monthlyPayment,
   termInterest,
@@ -117,6 +118,19 @@ describe("lending arithmetic", () => {
       "2026-02-28",
     );
     expect(monthlyInterest(8_000_00, 790)).toBe(52_67);
+  });
+
+  it("shows a deposit's annual rate per day, to four decimal places", () => {
+    expect(formatDailyRate(325)).toBe("0.0089%");
+    expect(formatDailyRate(365)).toBe("0.01%");
+    expect(formatDailyRate(1_000)).toBe("0.0274%");
+    expect(formatDailyRate(1)).toBe("<0.0001%");
+  });
+
+  it("refuses a daily rate for an account with no interest rate", () => {
+    expect(formatDailyRate(0)).toBe("Not available");
+    expect(formatDailyRate(-50)).toBe("Not available");
+    expect(formatDailyRate(Number.NaN)).toBe("Not available");
   });
 
   it("carries the fraction of a cent of daily interest, losing nothing", () => {
