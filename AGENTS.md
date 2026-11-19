@@ -2,9 +2,12 @@
 
 ## Testing
 
-- Verify changes with `pnpm test` (unit tests), `pnpm lint`, `pnpm typecheck` and `pnpm build`. The `ci` workflow runs the first three on every pull request.
+- Keep every check loop fast. A pull request's CI, an agent's own verification and a review session never run the whole end-to-end suite; only the merge to `main` does.
+- **Your loop (an agent or a review session):** `pnpm test` (start with `pnpm exec vitest run <the files you touched>`), `pnpm lint` and `pnpm typecheck`; `pnpm build` once before you push. When you add or change an end-to-end test, run only that test by its location (`pnpm test:e2e e2e/<name>.spec.ts:<line>`), and only when the user asks in the current conversation: it calls the paid model through Vercel AI Gateway and writes to the live Supabase project. Otherwise the pull request's `e2e-changed` check runs it.
+- **Pull request CI** (fast, never a required check for e2e): `.github/workflows/ci.yml` runs `test`, `lint` and `typecheck` in parallel, with no secrets and no build (the Vercel preview builds the pull request). `.github/workflows/e2e-changed.yml` runs only the end-to-end tests the pull request adds or changes (`scripts/e2e-select.mjs`: a test is picked when the diff touches its lines; a change to a helper alone picks nothing) against a production build, for a branch of this repository by the owner or a collaborator. So a change worth an end-to-end test carries the test in the same pull request.
+- **After the merge** (asynchronous, never in front of a deployment): `.github/workflows/e2e.yml` runs the whole suite on every push to `main`, beside the Vercel production deployment; only the newest commit is tested. A failure there is fixed forward in a new pull request. Run it by hand from the Actions tab for another branch.
+- Both e2e workflows read the app's environment from one repository secret, `E2E_ENV` (the contents of `.env.local`; every value is masked in the logs). They turn on the opt-in suites (`E2E_BANK`, `E2E_CANVAS`, `E2E_HARNESS`, `E2E_OPERATOR`, `E2E_SWITCHBOARD`) and leave every `*_LIVE` switch off. A new opt-in suite adds its switch to both. In CI the suite runs against a production build (`next start`); locally against `next dev` unless `E2E_SERVER=prod`.
 - Conventions learned in review (read before adding a paid model call, a GitHub workflow, a user-facing limit, a demo read, or a section to this file: new sections go above the `BEGIN:nextjs-agent-rules` marker): `docs/engineering/conventions.md`.
-- Run the Playwright end-to-end suite (`pnpm test:e2e`) only when the user explicitly asks for it in the current conversation. It calls the paid model through Vercel AI Gateway, writes to the live Supabase project and takes several minutes per run. In CI it runs against a production build (`next start`); locally against `next dev` unless `E2E_SERVER=prod`.
 
 ## Document compliance
 

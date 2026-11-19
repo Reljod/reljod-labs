@@ -1,0 +1,39 @@
+name: ci
+
+# The fast checks on every pull request: unit tests, lint and typecheck, in
+# parallel, with no secrets. No build (the Vercel preview builds the pull
+# request) and no end-to-end tests (e2e-changed.yml runs only the ones a pull
+# request touches; e2e.yml runs the whole suite after a merge to main).
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.event.pull_request.number || github.sha }}
+  cancel-in-progress: true
+
+jobs:
+  check:
+    name: ${{ matrix.task }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    strategy:
+      fail-fast: false
+      matrix:
+        task: [test, lint, typecheck]
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm ${{ matrix.task }}

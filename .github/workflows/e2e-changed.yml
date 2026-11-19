@@ -1,0 +1,125 @@
+name: e2e-changed
+
+# Runs only the end-to-end tests a pull request adds or changes, against a
+# production build of the pull request. The whole suite runs after the merge
+# (e2e.yml), so this stays a few minutes and never a required check.
+#
+# The tests need the app's secrets, so this runs on `pull_request_target`:
+# the workflow file and the selector (scripts/e2e-select.mjs) come from the
+# BASE branch, and a pull request cannot rewrite either to read the secrets.
+# The pull request's own code still runs with them (that is what an
+# end-to-end test is), so it runs only for a branch of this repository
+# opened by the owner or a collaborator, with a read-only token.
+
+on:
+  pull_request_target:
+    types: [opened, reopened, synchronize, ready_for_review]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: e2e-changed-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
+jobs:
+  select:
+    name: pick the changed e2e tests
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    if: >-
+      !github.event.pull_request.draft &&
+      github.event.pull_request.head.repo.full_name == github.repository &&
+      contains(fromJSON('["OWNER","MEMBER","COLLABORATOR"]'), github.event.pull_request.author_association)
+    outputs:
+      tests: ${{ steps.pick.outputs.tests }}
+    steps:
+      - name: Check out the base branch (the selector comes from here)
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.base.sha }}
+          fetch-depth: 0
+          persist-credentials: false
+      - name: Fetch the pull request's commits (read as text, never run)
+        env:
+          PR: ${{ github.event.pull_request.number }}
+        run: git fetch --no-tags origin "+refs/pull/$PR/head:refs/remotes/pr/head"
+      - name: Pick the tests
+        id: pick
+        env:
+          BASE: ${{ github.event.pull_request.base.sha }}
+          HEAD: ${{ github.event.pull_request.head.sha }}
+        run: |
+          set -euo pipefail
+          tests=$(node scripts/e2e-select.mjs "$BASE" "$HEAD" | tr '\n' ' ')
+          echo "tests=$tests" >> "$GITHUB_OUTPUT"
+          if [ -z "$tests" ]; then
+            echo "No e2e test added or changed: nothing to run here (the full suite runs after the merge)." | tee -a "$GITHUB_STEP_SUMMARY"
+          else
+            echo "Running: $tests" | tee -a "$GITHUB_STEP_SUMMARY"
+          fi
+
+  e2e:
+    name: changed e2e tests
+    needs: select
+    if: needs.select.outputs.tests != ''
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    env:
+      # Opt-in suites run when a pull request changes one of their tests. The
+      # *_LIVE switches (a real model turn) stay off.
+      E2E_BANK: "1"
+      E2E_CANVAS: "1"
+      E2E_HARNESS: "1"
+      E2E_OPERATOR: "1"
+      E2E_SWITCHBOARD: "1"
+    steps:
+      - name: Check out the pull request
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+          persist-credentials: false
+      - name: Write .env.local from the E2E_ENV secret (every value masked)
+        id: env
+        env:
+          E2E_ENV: ${{ secrets.E2E_ENV }}
+        run: |
+          set -euo pipefail
+          if [ -z "$E2E_ENV" ]; then
+            echo "::warning::The E2E_ENV secret is not set, so the changed e2e tests were skipped."
+            echo "ready=false" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          printf '%s\n' "$E2E_ENV" > .env.local
+          while IFS= read -r line || [ -n "$line" ]; do
+            case "$line" in ''|\#*) continue ;; esac
+            value="${line#*=}"; value="${value%\"}"; value="${value#\"}"
+            if [ -n "$value" ]; then echo "::add-mask::$value"; fi
+          done < .env.local
+          echo "ready=true" >> "$GITHUB_OUTPUT"
+      - uses: pnpm/action-setup@v4
+        if: steps.env.outputs.ready == 'true'
+      # No dependency cache: a cache saved here would be saved in the base
+      # branch's scope, where a pull request could poison it for main.
+      - uses: actions/setup-node@v4
+        if: steps.env.outputs.ready == 'true'
+        with:
+          node-version: 24
+      - if: steps.env.outputs.ready == 'true'
+        run: pnpm install --frozen-lockfile
+      - if: steps.env.outputs.ready == 'true'
+        run: pnpm exec playwright install --with-deps chromium
+      - name: Run the changed tests (CI builds and starts production)
+        if: steps.env.outputs.ready == 'true'
+        env:
+          TESTS: ${{ needs.select.outputs.tests }}
+        run: |
+          set -euo pipefail
+          read -r -a locations <<< "$TESTS"
+          pnpm exec playwright test "${locations[@]}"
+      - if: always() && steps.env.outputs.ready == 'true'
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-report-changed
+          path: playwright-report
+          retention-days: 7
