@@ -604,10 +604,17 @@ function VerdictCard({
               <ul className="mt-1 flex flex-wrap gap-1">
                 {score.perTamper.map((item, index) => (
                   <li key={`${item.type}-${index}`}>
-                    <Tag tone={item.caught ? "green" : "red"}>
+                    <span
+                      className={cx(
+                        "inline-block rounded-sm border px-1.5 py-px font-mono text-[0.68rem]",
+                        item.caught
+                          ? "border-ivy/30 bg-ivy/10 text-ivy"
+                          : "border-seal-red/30 bg-seal-red/10 text-seal-red",
+                      )}
+                    >
                       {item.caught ? "caught" : "missed"}:{" "}
                       {TAMPER_TYPES[item.type]}
-                    </Tag>
+                    </span>
                   </li>
                 ))}
               </ul>

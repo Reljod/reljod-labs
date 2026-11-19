@@ -13,8 +13,7 @@
  *   node --experimental-strip-types scripts/build-loupe-data.mts
  *
  * `pnpm render:loupe-corpus` runs it after rendering. Deterministic:
- * re-running changes nothing. `toolkit-contract.test.ts` fails when either
- * file is stale.
+ * re-running changes nothing. Run it after changing the Toolkit or the Corpus.
  */
 import { createHash } from "node:crypto";
 import { readdir, readFile, stat, writeFile } from "node:fs/promises";

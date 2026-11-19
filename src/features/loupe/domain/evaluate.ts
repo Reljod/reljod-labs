@@ -347,6 +347,25 @@ export function decide(findings: Finding[], rulebook: Rulebook): VerdictResult {
   };
 }
 
+/**
+ * Whether the Examiner tested a Finding's place itself: a Measurement of its
+ * own (or a client's) on the same page touching the Finding's box, or, for a
+ * Finding about the whole file, under the same Metric. Reviewing a decisive
+ * Sweep Finding needs one, so "agree" is a second measurement, not an echo.
+ */
+export function testedByExaminer(
+  finding: Finding,
+  measurements: Measurement[],
+) {
+  return measurements.some(
+    (item) =>
+      item.finder !== "sweep" &&
+      (finding.box === null || item.box === null
+        ? item.metric === finding.metric
+        : item.page === finding.page && touches(item.box, finding.box)),
+  );
+}
+
 // The Done gate ------------------------------------------------------------------
 
 /** The Sweep Findings the Examiner must review: the ones that count toward the Verdict. */

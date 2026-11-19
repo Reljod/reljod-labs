@@ -4,7 +4,7 @@
  * server, the UI) builds on these types; change them here first.
  *
  * The Python Toolkit (../toolkit/loupe) writes Measurements in the shape of
- * `RawMeasurement`; `toolkit-contract.test.ts` keeps the two lists of Metrics
+ * `RawMeasurement`; `server/mcp-token.test.ts` keeps the two lists of Metrics
  * and Checks equal.
  */
 import { z } from "zod";

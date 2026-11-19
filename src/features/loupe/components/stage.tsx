@@ -75,7 +75,9 @@ export const Stage = memo(function Stage({
                 finding.layer &&
                 (selected
                   ? finding.id === selected
-                  : finding.weight !== "context"),
+                  : // Maps lie flat on the page; cards and marks wait for their Finding to be opened.
+                    finding.weight !== "context" &&
+                    finding.layerKind === "heatmap"),
             )
             .map((finding) => [finding.layer as string, finding]),
         ).values(),

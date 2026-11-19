@@ -19,7 +19,13 @@ import {
   type VerdictResult,
 } from "../domain/contract";
 import { RECORDED } from "../domain/corpus";
-import { decide, doneGate, evaluate, trips } from "../domain/evaluate";
+import {
+  decide,
+  doneGate,
+  evaluate,
+  testedByExaminer,
+  trips,
+} from "../domain/evaluate";
 import { LIMITS, RUN_LIMITS } from "../domain/limits";
 import { formatThreshold } from "../domain/rules";
 import { asMeasurements } from "../domain/score";
@@ -885,6 +891,14 @@ export async function reviewFinding(
         if (!finding)
           return {
             refusal: `review_finding refused: no Finding ${input.findingId}. Findings: ${before.findings.map((item) => item.id).join(", ") || "none"}.`,
+          };
+        if (
+          finding.weight === "decisive" &&
+          !current.state.stub &&
+          !testedByExaminer(finding, current.state.measurements)
+        )
+          return {
+            refusal: `review_finding refused: ${finding.id} is decisive, so test it yourself first. Run run_check${finding.check ? ` ${finding.check}` : ""} (or run_code) on page ${finding.page || 1}${finding.box ? ` with box [${finding.box.map((n) => n.toFixed(3)).join(", ")}]` : ""}, then review it with what you measured.`,
           };
         const state: ExaminationState = {
           ...current.state,

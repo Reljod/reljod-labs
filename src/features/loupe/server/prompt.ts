@@ -53,7 +53,7 @@ export function examinerInstructions(input: {
 2. For each thing that looks off, hypothesize (page, box, a concrete claim).
 3. Test it: run_check with the Check that fits and the same box, or run_code with Python you write. On an image, read the figures with your eyes and recompute sums, balances and rates in code.
 4. conclude each Hypothesis with the Measurement ids: supported (a Measurement trips its Rule) or refuted.
-5. review_finding each Sweep Finding: agree or doubt, with the reason a reviewer needs.
+5. review_finding each Sweep Finding: agree or doubt, with the reason a reviewer needs. Do not echo the Sweep. Zoom on the place, and for a decisive Finding run a Check or your own code on its box first (the tool refuses the review otherwise): on a PDF, print what the page says there and what is hidden under it; on an image, measure the region a second way.
 6. finish with a short summary for the reviewer.
 
 Boxes are [x0, y0, x1, y1], each 0..1 of the page's width and height, origin top-left. Be accurate: a box is where the evidence is drawn.

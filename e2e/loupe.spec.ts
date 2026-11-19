@@ -337,6 +337,13 @@ test.describe("with the real model", () => {
     expect(
       detail.events.some((e) => e.type === "tool" && e.tool === "look"),
     ).toBe(true);
+    // It proved what it saw: a Check or its own code ran in the Sandbox.
+    expect(
+      detail.events.some(
+        (e) =>
+          e.type === "tool" && (e.tool === "run_check" || e.tool === "run_code"),
+      ),
+    ).toBe(true);
     console.log(
       `live Examination ${id}: $${detail.costUsd}, tools: ${detail.events
         .filter((e) => e.type === "tool")
