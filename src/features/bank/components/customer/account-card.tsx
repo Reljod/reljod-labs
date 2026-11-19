@@ -2,6 +2,7 @@
 
 import { motion, useReducedMotion } from "motion/react";
 import { formatDate } from "../../domain/dates";
+import { formatDailyRate } from "../../domain/lending";
 import { formatMoney } from "../../domain/money";
 import { formatAccountNumber } from "../../domain/numbers";
 import type { AccountView } from "../../domain/views";
@@ -102,6 +103,13 @@ export function AccountCard({
             {account.maturesOn
               ? ` · matures ${formatDate(account.maturesOn)}`
               : ""}
+          </span>
+        ) : null}
+        {account.kind === "current" ||
+        account.kind === "savings" ||
+        account.kind === "term" ? (
+          <span data-testid="bank-account-daily-rate">
+            Daily rate {formatDailyRate(account.rateBps)}
           </span>
         ) : null}
         {account.closedOn ? (
