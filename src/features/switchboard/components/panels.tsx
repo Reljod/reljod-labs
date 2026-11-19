@@ -819,7 +819,7 @@ export function HoodPanel({ controller }: { controller: CallController }) {
             <dd className="font-mono text-xs">{call.model}</dd>
             <dt className="text-ink-muted">Cost so far</dt>
             <dd>
-              {usd(state.costUsd)} of {usd(LIMITS.usdPerCall)}
+              {usd(state.costUsd)} of ${LIMITS.usdPerCall.toFixed(2)}
             </dd>
             {voice ? (
               <>

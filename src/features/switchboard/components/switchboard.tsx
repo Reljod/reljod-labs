@@ -233,9 +233,9 @@ function CallTab({
                 Call by typing
               </Button>
               <span className="text-xs text-ink-muted">
-                Up to {LIMITS.callSeconds / 60} minutes and{" "}
-                {usd(LIMITS.usdPerCall)} a call, {LIMITS.callsPerHour} calls an
-                hour.
+                Up to {LIMITS.callSeconds / 60} minutes and $
+                {LIMITS.usdPerCall.toFixed(2)} a call, {LIMITS.callsPerHour}{" "}
+                calls an hour.
               </span>
             </div>
             {state.error ? <ErrorNote>{state.error}</ErrorNote> : null}

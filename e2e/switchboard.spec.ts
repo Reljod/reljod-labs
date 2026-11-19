@@ -179,7 +179,7 @@ test.describe("stubbed", () => {
       },
     });
     try {
-      const tools = (await client.tools()) as Record<
+      const tools = (await client.tools()) as unknown as Record<
         string,
         { execute: (args: unknown, options: unknown) => Promise<unknown> }
       >;
