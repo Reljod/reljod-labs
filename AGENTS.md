@@ -198,6 +198,13 @@
 - Tests: `e2e/canvas.spec.ts` is skipped unless `E2E_CANVAS=1`; the Analyst's turn is stubbed (`x-canvas-stub` with the e2e bypass token), the tools are real. `E2E_CANVAS_LIVE=1` adds one Question to the real model. Run it only when asked.
 - Not built yet (tables exist): Boards with a Refresh workflow, export, and bring-your-own CSV.
 
+## Prism (single-forward-pass Decision Models)
+
+- A live demo at `/demos/prism` in four places (Prism, Tribunal, Cascade, Lab): showcases November 2026 non-generative Decision Models (`experimental_decide` via Vercel AI Gateway: `microsoft/decision-1.1`, `liquid/d1.2-ultra`, `perplexity/pplx-decider-v1.3`, `nace-ai/drex-max-finance`, `google/gemini-decision-1`, `baseten/joey-1`) returning calibrated probabilities in one forward pass with zero output tokens. Domain language: `src/features/prism/GLOSSARY.md`.
+- Pure decision physics (`domain/routing.ts`): `shannonEntropy`, `compositeRisk`, `routeChute`, and `tribunalConsensus` run deterministically in code, so threshold sliders re-route Slips and Cascade bins at 60fps with zero extra model calls.
+- Three gated routes under `/api/prism/` (`refract`, `tribunal`, `cascade`, all matched in `src/proxy.ts` and guarded with `requireAccess()`). Hourly caps live in `LIMITS` (`domain/limits.ts`) and are taken before the first model call (`server/rate.ts`, in-process sliding window keyed on salted visitor hash; skipped for trusted `e2e` visitor).
+- Env: optional `PRISM_AI_GATEWAY_API_KEY` (falls back to `DOCUMENT_COMPLIANCE_AI_GATEWAY_API_KEY`); shares `RATE_LIMIT_SALT` and `E2E_BYPASS_TOKEN`. No database migration required.
+
 <!-- BEGIN:nextjs-agent-rules -->
 
 ## This is NOT the Next.js you know

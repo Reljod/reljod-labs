@@ -8,6 +8,7 @@ import { HarnessPreview } from "@/components/showcase/previews/harness-preview";
 import { LedgerPreview } from "@/components/showcase/previews/ledger-preview";
 import { LoupePreview } from "@/components/showcase/previews/loupe-preview";
 import { OperatorPreview } from "@/components/showcase/previews/operator-preview";
+import { PrismPreview } from "@/components/showcase/previews/prism-preview";
 import { ProcessTransferPreview } from "@/components/showcase/previews/process-transfer-preview";
 import { SievePreview } from "@/components/showcase/previews/sieve-preview";
 import { SwitchboardPreview } from "@/components/showcase/previews/switchboard-preview";
@@ -29,4 +30,5 @@ export const demoPreviews: Record<string, (project: Project) => ReactNode> = {
   loupe: () => <LoupePreview />,
   switchboard: () => <SwitchboardPreview />,
   canvas: () => <CanvasPreview />,
+  prism: () => <PrismPreview />,
 };
