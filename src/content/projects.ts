@@ -294,6 +294,24 @@ export const projects: Project[] = [
       "Controls re-run the saved query with no model call; code verifies every number",
     ],
   },
+  {
+    slug: "floorwalk",
+    icon: "scan",
+    title: "Floorwalk",
+    sector: "Operations",
+    summary:
+      "Walk a warehouse or a shop once with a body camera. Gemini 4 Neon watches the whole video and calls out every blocked exit, open chiller and unmarked spill, with the second and the spot. Code checks each one against your Standard, scores the site and writes the Fix list.",
+    outcome: "A site audit before you reach the door",
+    tags: ["Video", "Gemini 4 Neon", "Streaming", "Rules"],
+    status: "Live",
+    href: "/demos/floorwalk",
+    marks: ["New"],
+    features: [
+      "Two sample walks with problems planted on purpose, and decoys, scored against the answer key",
+      "Boxes snap onto the footage, pins drop on the floor plan, Findings arrive as the model writes them",
+      "Switch a Rule off or change its weight and the site re-scores without calling the model",
+    ],
+  },
 ];
 
 /**

@@ -1,0 +1,184 @@
+{
+  "cold-store": {
+    "seconds": 34,
+    "fps": 24,
+    "items": [
+      {
+        "id": "p-exit",
+        "rule": "exits-clear",
+        "decoy": false,
+        "note": "A pallet stands in front of the north fire exit.",
+        "spans": [[0, 13.292]],
+        "best": {
+          "at": 13,
+          "box": [0.394, 0, 1, 0.383]
+        }
+      },
+      {
+        "id": "p-spill",
+        "rule": "spill-marked",
+        "decoy": false,
+        "note": "A spill in Aisle 1 has no sign.",
+        "spans": [[0, 4.917]],
+        "best": {
+          "at": 4.625,
+          "box": [0.799, 0.296, 1, 0.644]
+        }
+      },
+      {
+        "id": "p-lean",
+        "rule": "stock-square",
+        "decoy": false,
+        "note": "Cartons lean out over the top beam of rack B.",
+        "spans": [[0, 7.625]],
+        "best": {
+          "at": 7.333,
+          "box": [0, 0.411, 0.287, 0.623]
+        }
+      },
+      {
+        "id": "p-chiller",
+        "rule": "cold-door-shut",
+        "decoy": false,
+        "note": "Chiller C's door is wedged open with a carton.",
+        "spans": [[13.5, 22.75]],
+        "best": {
+          "at": 21.958,
+          "box": [0, 0, 1, 0.445]
+        }
+      },
+      {
+        "id": "p-vest",
+        "rule": "hi-vis-worn",
+        "decoy": false,
+        "note": "A worker crosses Aisle 3 without a vest.",
+        "spans": [[14.333, 20.333], [22.792, 26]],
+        "best": {
+          "at": 25.75,
+          "box": [0.338, 0.575, 1, 1]
+        }
+      },
+      {
+        "id": "p-extinguisher",
+        "rule": "extinguisher-reachable",
+        "decoy": false,
+        "note": "Crates are stacked in front of the extinguisher on the pillar.",
+        "spans": [[15.917, 28.917]],
+        "best": {
+          "at": 28.792,
+          "box": [0.455, 0.036, 1, 0.429]
+        }
+      },
+      {
+        "id": "d-spill",
+        "rule": "spill-marked",
+        "decoy": true,
+        "note": "A spill in Aisle 3, but it has its wet-floor sign.",
+        "spans": [[18, 23.333]],
+        "best": {
+          "at": 22.667,
+          "box": [0.754, 0.478, 1, 0.731]
+        }
+      },
+      {
+        "id": "d-vest",
+        "rule": "hi-vis-worn",
+        "decoy": true,
+        "note": "A worker at Dispatch, wearing a vest.",
+        "spans": [[28.542, 33.958]],
+        "best": {
+          "at": 33.75,
+          "box": [0.285, 0.502, 1, 0.85]
+        }
+      }
+    ]
+  },
+  "grocer": {
+    "seconds": 37,
+    "fps": 24,
+    "items": [
+      {
+        "id": "p-gap",
+        "rule": "shelves-stocked",
+        "decoy": false,
+        "note": "A whole bay of Aisle 1 is empty on two shelves.",
+        "spans": [[0, 7.333]],
+        "best": {
+          "at": 7.292,
+          "box": [0.347, 0, 0.85, 0.327]
+        }
+      },
+      {
+        "id": "p-labels",
+        "rule": "price-labelled",
+        "decoy": false,
+        "note": "One shelf edge in Aisle 1 has stock but no price labels.",
+        "spans": [[0, 4.708], [8.167, 9.708]],
+        "best": {
+          "at": 8.292,
+          "box": [0.599, 0.64, 0.94, 1]
+        }
+      },
+      {
+        "id": "p-jar",
+        "rule": "spill-marked",
+        "decoy": false,
+        "note": "A smashed jar of sauce in Aisle 2, no sign.",
+        "spans": [[14.667, 20.042]],
+        "best": {
+          "at": 19.875,
+          "box": [0.408, 0.323, 0.991, 0.708]
+        }
+      },
+      {
+        "id": "p-carton",
+        "rule": "aisle-clear",
+        "decoy": false,
+        "note": "An open carton left in Aisle 2.",
+        "spans": [[14.792, 19.333], [20.042, 20.958]],
+        "best": {
+          "at": 20.417,
+          "box": [0.678, 0.546, 0.992, 0.754]
+        }
+      },
+      {
+        "id": "p-fridge",
+        "rule": "cold-door-shut",
+        "decoy": false,
+        "note": "One chiller door stands open.",
+        "spans": [[23.833, 30.958]],
+        "best": {
+          "at": 30.917,
+          "box": [0.101, 0.725, 0.929, 1]
+        }
+      },
+      {
+        "id": "p-exit",
+        "rule": "exits-clear",
+        "decoy": false,
+        "note": "Boxes are stacked against the fire exit.",
+        "spans": [
+          [10.333, 14.792],
+          [26.708, 27.458],
+          [28.25, 28.958],
+          [31.042, 36.958]
+        ],
+        "best": {
+          "at": 36.958,
+          "box": [0.319, 0.44, 1, 0.899]
+        }
+      },
+      {
+        "id": "d-puddle",
+        "rule": "spill-marked",
+        "decoy": true,
+        "note": "Water by the produce, already signed.",
+        "spans": [[23.667, 27.75]],
+        "best": {
+          "at": 27.542,
+          "box": [0.522, 0.034, 1, 0.376]
+        }
+      }
+    ]
+  }
+}

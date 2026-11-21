@@ -180,6 +180,8 @@ export const demoProblems: Record<string, string> = {
     "Answer my phone line at 2am, in the caller's language, without breaking our rules.",
   canvas:
     "Ask a question about a million rows and get a chart you can adjust and check.",
+  floorwalk:
+    "Walk my warehouse once with a camera and tell me what to fix before we open.",
 };
 
 /**
@@ -222,6 +224,11 @@ export const demoShelves = [
       "tidewater-bank",
       "loupe",
     ],
+  },
+  {
+    id: "watching",
+    label: "Watches video",
+    slugs: ["floorwalk", "process-transfer", "operator"],
   },
 ] as const;
 

@@ -1,0 +1,207 @@
+/* Floorwalk's motion. Transforms and opacity only; looping motion honours reduced motion. */
+
+.fw-beam {
+  background: linear-gradient(
+    90deg,
+    transparent,
+    rgb(217 168 78 / 0.28) 45%,
+    rgb(255 236 190 / 0.55) 50%,
+    rgb(217 168 78 / 0.28) 55%,
+    transparent
+  );
+  mix-blend-mode: screen;
+  animation: fw-sweep 2.4s cubic-bezier(0.45, 0, 0.55, 1) infinite;
+}
+@keyframes fw-sweep {
+  from {
+    transform: translateX(-110%);
+  }
+  to {
+    transform: translateX(330%);
+  }
+}
+.fw-scanlines {
+  background: repeating-linear-gradient(
+    0deg,
+    rgb(20 33 61 / 0.08) 0 1px,
+    transparent 1px 3px
+  );
+}
+.fw-rec {
+  width: 8px;
+  height: 8px;
+  border-radius: 999px;
+  background: #b23a2b;
+  animation: fw-blink 1s steps(2) infinite;
+}
+@keyframes fw-blink {
+  50% {
+    opacity: 0.2;
+  }
+}
+
+/* Corner brackets that snap around a problem. */
+.fw-bracket span {
+  position: absolute;
+  width: 18%;
+  height: 18%;
+  min-width: 10px;
+  min-height: 10px;
+  border: 0 solid currentColor;
+  filter: drop-shadow(0 0 2px rgb(0 0 0 / 0.6));
+}
+.fw-bracket span:nth-child(1) {
+  top: 0;
+  left: 0;
+  border-top-width: 4px;
+  border-left-width: 4px;
+}
+.fw-bracket span:nth-child(2) {
+  top: 0;
+  right: 0;
+  border-top-width: 4px;
+  border-right-width: 4px;
+}
+.fw-bracket span:nth-child(3) {
+  bottom: 0;
+  left: 0;
+  border-bottom-width: 4px;
+  border-left-width: 4px;
+}
+.fw-bracket span:nth-child(4) {
+  bottom: 0;
+  right: 0;
+  border-bottom-width: 4px;
+  border-right-width: 4px;
+}
+.fw-bracket-fill {
+  opacity: 0.12;
+  animation: fw-flash 0.9s ease-out 1;
+}
+@keyframes fw-flash {
+  0% {
+    opacity: 0.55;
+  }
+  100% {
+    opacity: 0.12;
+  }
+}
+
+/* The Walker's read head on the timeline. */
+.fw-readhead {
+  background: #d9a84e;
+  box-shadow: 0 0 10px 3px rgb(217 168 78 / 0.7);
+}
+
+/* Floor plan. */
+.fw-zone {
+  opacity: 0.25;
+  transition: opacity 0.6s ease;
+}
+.fw-zone[data-lit] {
+  opacity: 0.9;
+}
+.fw-pin-drop {
+  animation: fw-drop 0.55s cubic-bezier(0.3, 1.6, 0.5, 1) both;
+  transform-box: fill-box;
+  transform-origin: 50% 100%;
+}
+@keyframes fw-drop {
+  from {
+    transform: translateY(-6px) scale(0.4);
+    opacity: 0;
+  }
+  to {
+    transform: none;
+    opacity: 1;
+  }
+}
+.fw-pin-pulse {
+  transform-box: fill-box;
+  transform-origin: center;
+  animation: fw-pulse 1.2s ease-out infinite;
+}
+@keyframes fw-pulse {
+  from {
+    transform: scale(0.6);
+    opacity: 1;
+  }
+  to {
+    transform: scale(2.4);
+    opacity: 0;
+  }
+}
+
+/* A frame developing like a print. */
+.fw-develop {
+  animation: fw-develop 0.9s ease-out both;
+}
+@keyframes fw-develop {
+  from {
+    opacity: 0;
+    filter: sepia(1) brightness(1.8) blur(2px);
+  }
+  to {
+    opacity: 1;
+    filter: none;
+  }
+}
+.fw-shimmer {
+  background: linear-gradient(
+    100deg,
+    transparent 30%,
+    rgb(255 255 255 / 0.18) 50%,
+    transparent 70%
+  );
+  background-size: 200% 100%;
+  animation: fw-shimmer 1.1s linear infinite;
+}
+@keyframes fw-shimmer {
+  from {
+    background-position: 150% 0;
+  }
+  to {
+    background-position: -50% 0;
+  }
+}
+.fw-filmstrip {
+  background-image: repeating-linear-gradient(
+    90deg,
+    rgb(20 33 61 / 0.05) 0 18px,
+    transparent 18px 36px
+  );
+  animation: fw-strip 1.6s linear infinite;
+}
+@keyframes fw-strip {
+  to {
+    background-position: 36px 0;
+  }
+}
+
+/* Under the hood: the loop's steps light up in turn while a Walk runs. */
+.fw-step-live {
+  animation: fw-step 1.75s ease-in-out infinite;
+}
+@keyframes fw-step {
+  0%,
+  100% {
+    transform: none;
+    box-shadow: var(--shadow-hard-md);
+  }
+  20% {
+    transform: translate(-2px, -2px);
+    box-shadow: var(--shadow-hard-hover);
+    background: var(--color-morning-haze);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .fw-beam,
+  .fw-rec,
+  .fw-pin-pulse,
+  .fw-shimmer,
+  .fw-filmstrip,
+  .fw-step-live {
+    animation: none;
+  }
+}
