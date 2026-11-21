@@ -5,13 +5,12 @@ import type {
   CompareStreamEvent,
   HelioModelTier,
 } from "@/features/helio/domain/types";
-import { takeRate } from "@/features/helio/server/rate";
+import { takeRate, visitor } from "@/features/helio/server/rate";
 import {
   failure,
   isStubRequest,
   json,
   NO_STORE,
-  visitorKeyOf,
 } from "@/features/helio/server/respond";
 import {
   imageModelIdForTier,
@@ -45,11 +44,8 @@ export async function POST(request: Request) {
     const stub = isStubRequest(request);
 
     if (!stub) {
-      takeRate({
-        visitorKey: visitorKeyOf(access),
-        bucket: "image",
-        units: 2,
-      });
+      const who = await visitor();
+      await takeRate(who, "image", 2);
     }
 
     const encoder = new TextEncoder();

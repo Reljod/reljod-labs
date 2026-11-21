@@ -1,50 +1,56 @@
-import { beforeEach, describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 import { LIMITS } from "../domain/limits";
-import {
-  _resetRateBucketsForTests,
-  hashVisitor,
-  RateLimitError,
-  takeRate,
-} from "./rate";
 
-describe("helio rate limiter", () => {
-  beforeEach(() => {
-    _resetRateBucketsForTests();
-  });
+vi.mock("server-only", () => ({}));
 
+const { bucketLimits, evaluateRateBudget } = await import("./rate");
+
+describe("helio Postgres rate budget evaluation", () => {
   it("enforces per-visitor hourly caps with multi-unit shoots", () => {
-    const now = 1_700_000_000_000;
-    const visitorKey = hashVisitor("guest:pass-1", "test-salt");
+    const { hourLimit } = bucketLimits("image");
 
-    // Exhaust hourly image quota in 3-market bursts
-    const bursts = Math.floor(LIMITS.imageCallsPerHour / 3);
-    for (let i = 0; i < bursts; i++) {
-      takeRate({ visitorKey, bucket: "image", units: 3, now: now + i * 1000 });
-    }
-
-    expect(() =>
-      takeRate({
-        visitorKey,
-        bucket: "image",
-        units: 1,
-        now: now + bursts * 1000,
-      }),
-    ).toThrow(RateLimitError);
-
-    // Another visitor is still allowed
-    const otherKey = hashVisitor("guest:pass-2", "test-salt");
-    expect(() =>
-      takeRate({ visitorKey: otherKey, bucket: "image", units: 3, now }),
-    ).not.toThrow();
-
-    // After 1 hour window passes, original visitor recovers
-    expect(() =>
-      takeRate({
-        visitorKey,
+    expect(
+      evaluateRateBudget({
         bucket: "image",
         units: 3,
-        now: now + 61 * 60 * 1000,
+        visitorUsedHour: hourLimit - 3,
+        globalUsedDay: 10,
       }),
-    ).not.toThrow();
+    ).toEqual({ ok: true });
+
+    const overVisitor = evaluateRateBudget({
+      bucket: "image",
+      units: 3,
+      visitorUsedHour: hourLimit - 2,
+      globalUsedDay: 10,
+    });
+    expect(overVisitor.ok).toBe(false);
+    if (!overVisitor.ok) {
+      expect(overVisitor.message).toContain(`${LIMITS.imageCallsPerHour}/hr`);
+    }
+  });
+
+  it("enforces global 24-hour caps across all visitors", () => {
+    const { dayLimit } = bucketLimits("director");
+
+    expect(
+      evaluateRateBudget({
+        bucket: "director",
+        units: 1,
+        visitorUsedHour: 0,
+        globalUsedDay: dayLimit - 1,
+      }),
+    ).toEqual({ ok: true });
+
+    const overGlobal = evaluateRateBudget({
+      bucket: "director",
+      units: 1,
+      visitorUsedHour: 0,
+      globalUsedDay: dayLimit,
+    });
+    expect(overGlobal.ok).toBe(false);
+    if (!overGlobal.ok) {
+      expect(overGlobal.message).toContain("Daily studio quota");
+    }
   });
 });

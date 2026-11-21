@@ -17,6 +17,7 @@ import {
   SPECIMENS,
 } from "./samples";
 import {
+  checkCombinedImageBytes,
   decodeImageDataUrl,
   inspectImageBytes,
   shootRequestSchema,
@@ -94,6 +95,22 @@ describe("helio magic-byte image validation & schemas", () => {
     );
     const spoofedUrl = `data:image/png;base64,${Buffer.from(spoofedSvg).toString("base64")}`;
     expect(decodeImageDataUrl(spoofedUrl).ok).toBe(false);
+
+    // Combined multi-image byte cap keeps edit payloads under Vercel's 4.5 MB limit
+    expect(
+      checkCombinedImageBytes([
+        new Uint8Array(900_000),
+        new Uint8Array(900_000),
+        new Uint8Array(900_000),
+      ]).ok,
+    ).toBe(true);
+    expect(
+      checkCombinedImageBytes([
+        new Uint8Array(1_000_000),
+        new Uint8Array(1_000_000),
+        new Uint8Array(1_000_000),
+      ]).ok,
+    ).toBe(false);
   });
 
   it("enforces market cap and rejects duplicate or unknown markets", () => {

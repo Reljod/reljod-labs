@@ -1,6 +1,7 @@
 import { accessOrDenied } from "@/features/access/server/gate";
 import { findMarket } from "@/features/helio/domain/samples";
 import {
+  checkCombinedImageBytes,
   decodeImageDataUrl,
   shootRequestSchema,
 } from "@/features/helio/domain/schemas";
@@ -9,13 +10,12 @@ import type {
   HelioMarket,
   ShootStreamEvent,
 } from "@/features/helio/domain/types";
-import { takeRate } from "@/features/helio/server/rate";
+import { takeRates, visitor } from "@/features/helio/server/rate";
 import {
   failure,
   isStubRequest,
   json,
   NO_STORE,
-  visitorKeyOf,
 } from "@/features/helio/server/respond";
 import {
   directCampaign,
@@ -57,14 +57,27 @@ export async function POST(request: Request) {
       moodRef = decoded.image;
     }
 
-    // Validate product image BEFORE taking rate.
+    // Validate product image and combined request size BEFORE taking rate.
     const product = await resolveProductSource(data.product);
+    if (data.product.kind === "custom") {
+      const sizeCheck = checkCombinedImageBytes([
+        product.bytes,
+        moodRef?.bytes,
+      ]);
+      if (!sizeCheck.ok) {
+        return json({ error: sizeCheck.error }, 413);
+      }
+    }
+
     const stub = isStubRequest(request);
 
+    // Atomically check & record both director and image buckets in one transaction.
     if (!stub) {
-      const visitorKey = visitorKeyOf(access);
-      takeRate({ visitorKey, bucket: "director", units: 1 });
-      takeRate({ visitorKey, bucket: "image", units: markets.length });
+      const who = await visitor();
+      await takeRates(who, [
+        { bucket: "director", units: 1 },
+        { bucket: "image", units: markets.length },
+      ]);
     }
 
     const encoder = new TextEncoder();

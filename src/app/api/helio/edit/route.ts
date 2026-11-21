@@ -1,16 +1,12 @@
 import { accessOrDenied } from "@/features/access/server/gate";
 import { findMarket } from "@/features/helio/domain/samples";
 import {
+  checkCombinedImageBytes,
   decodeImageDataUrl,
   editRequestSchema,
 } from "@/features/helio/domain/schemas";
-import { takeRate } from "@/features/helio/server/rate";
-import {
-  failure,
-  isStubRequest,
-  json,
-  visitorKeyOf,
-} from "@/features/helio/server/respond";
+import { takeRate, visitor } from "@/features/helio/server/rate";
+import { failure, isStubRequest, json } from "@/features/helio/server/respond";
 import {
   editCampaignFrame,
   resolveProductSource,
@@ -47,14 +43,18 @@ export async function POST(request: Request) {
     }
 
     const product = await resolveProductSource(data.product);
+    const combined = checkCombinedImageBytes([
+      baseDecoded.image.bytes,
+      data.product.kind === "custom" ? product.bytes : undefined,
+      extraReferenceBytes,
+    ]);
+    if (!combined.ok) return json({ error: combined.error }, 413);
+
     const stub = isStubRequest(request);
 
     if (!stub) {
-      takeRate({
-        visitorKey: visitorKeyOf(access),
-        bucket: "image",
-        units: 1,
-      });
+      const who = await visitor();
+      await takeRate(who, "image", 1);
     }
 
     const edited = await editCampaignFrame({

@@ -2,30 +2,16 @@ import "server-only";
 import { timingSafeEqual } from "node:crypto";
 import { unstable_rethrow } from "next/navigation";
 import { NextResponse } from "next/server";
-import {
-  type Access,
-  AccessDeniedError,
-  denied,
-} from "@/features/access/server/gate";
+import { AccessDeniedError, denied } from "@/features/access/server/gate";
 import { E2E_HEADER } from "@/features/document-compliance/constants";
 import { env } from "./env";
-import { hashVisitor, RateLimitError } from "./rate";
+import { RateLimitError } from "./rate";
 
 export const NO_STORE = { "cache-control": "private, no-store" } as const;
 export const HELIO_STUB_HEADER = "x-helio-stub";
 
 export function json<T>(data: T, status = 200) {
   return NextResponse.json(data, { status, headers: NO_STORE });
-}
-
-export function visitorKeyOf(access: Access): string {
-  const raw =
-    access.kind === "host"
-      ? `host:${access.userId}`
-      : access.kind === "guest"
-        ? `guest:${access.passId}`
-        : "e2e";
-  return hashVisitor(raw, env.rateLimitSalt());
 }
 
 function sameSecret(a: string, b: string): boolean {
@@ -65,7 +51,6 @@ export function failure(error: unknown) {
     error instanceof Error && error.message
       ? error.message
       : "The studio request could not be completed.";
-  // Never leak stack traces or internal provider secrets.
   const safeMessage =
     message.length > 260 ? `${message.slice(0, 260)}…` : message;
   return NextResponse.json(

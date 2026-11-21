@@ -1,5 +1,6 @@
 "use client";
 
+import { LIMITS } from "../domain/limits";
 import { analyzeRgbaPixels } from "../domain/telemetry";
 import type {
   BrandAuditResult,
@@ -18,6 +19,91 @@ export type ProductPayload =
       materialNotes: string;
       imageDataUrl: string;
     };
+
+function approxDataUrlBytes(dataUrl: string): number {
+  const comma = dataUrl.indexOf(",");
+  if (comma === -1) return dataUrl.length;
+  return Math.floor(((dataUrl.length - comma - 1) * 3) / 4);
+}
+
+/**
+ * Downscales and re-encodes any image data URL in the browser so single images
+ * stay well under `LIMITS.maxUploadBytes` (~1 MB) and multi-image payloads
+ * (`edit` carries up to 3 images) always fit comfortably inside Vercel's 4.5 MB cap.
+ */
+export async function compressImageDataUrl(
+  dataUrl: string,
+  options: { maxDim?: number; preserveAlpha?: boolean } = {},
+): Promise<string> {
+  const maxDim = options.maxDim ?? 1024;
+  const preserveAlpha = options.preserveAlpha ?? false;
+
+  // Already compact and no forced re-encode needed
+  if (!preserveAlpha && approxDataUrlBytes(dataUrl) <= 320_000) {
+    return dataUrl;
+  }
+
+  const img = await new Promise<HTMLImageElement>((resolve, reject) => {
+    const el = new Image();
+    el.onload = () => resolve(el);
+    el.onerror = () => reject(new Error("Could not decode image for upload."));
+    el.src = dataUrl;
+  });
+
+  const srcW = img.naturalWidth || maxDim;
+  const srcH = img.naturalHeight || maxDim;
+  const scale = Math.min(1, maxDim / Math.max(srcW, srcH));
+  const targetW = Math.max(1, Math.round(srcW * scale));
+  const targetH = Math.max(1, Math.round(srcH * scale));
+
+  const canvas = document.createElement("canvas");
+  canvas.width = targetW;
+  canvas.height = targetH;
+  const ctx = canvas.getContext("2d");
+  if (!ctx) return dataUrl;
+
+  if (!preserveAlpha) {
+    ctx.fillStyle = "#ffffff";
+    ctx.fillRect(0, 0, targetW, targetH);
+  } else {
+    ctx.clearRect(0, 0, targetW, targetH);
+  }
+  ctx.drawImage(img, 0, 0, targetW, targetH);
+
+  // For alpha plates try WebP with alpha first (typically 10x smaller than PNG).
+  const mime = preserveAlpha ? "image/webp" : "image/jpeg";
+  for (const quality of [0.86, 0.74, 0.62]) {
+    const encoded = canvas.toDataURL(mime, quality);
+    // Safari fallback: if browser returned PNG instead of WebP, check size too.
+    if (approxDataUrlBytes(encoded) <= LIMITS.maxUploadBytes - 40_000) {
+      return encoded;
+    }
+  }
+
+  // Final safeguard: shrink dimensions further to guarantee it fits under cap.
+  const smallCanvas = document.createElement("canvas");
+  smallCanvas.width = Math.max(1, Math.round(targetW * 0.65));
+  smallCanvas.height = Math.max(1, Math.round(targetH * 0.65));
+  const sCtx = smallCanvas.getContext("2d");
+  if (!sCtx) return dataUrl;
+  if (!preserveAlpha) {
+    sCtx.fillStyle = "#ffffff";
+    sCtx.fillRect(0, 0, smallCanvas.width, smallCanvas.height);
+  }
+  sCtx.drawImage(canvas, 0, 0, smallCanvas.width, smallCanvas.height);
+  return smallCanvas.toDataURL(mime, 0.78);
+}
+
+async function compressProductPayload(
+  product: ProductPayload,
+): Promise<ProductPayload> {
+  if (product.kind !== "custom") return product;
+  const compressed = await compressImageDataUrl(product.imageDataUrl, {
+    maxDim: 896,
+    preserveAlpha: true,
+  });
+  return { ...product, imageDataUrl: compressed };
+}
 
 async function readErrorMessage(response: Response): Promise<string> {
   const text = await response.text().catch(() => "");
@@ -72,10 +158,20 @@ export async function postExtractPlate(
   latencyMs: number;
   costUsd: number;
 }> {
+  const payload =
+    body.mode === "isolate"
+      ? {
+          ...body,
+          imageDataUrl: await compressImageDataUrl(body.imageDataUrl, {
+            maxDim: 1024,
+            preserveAlpha: false,
+          }),
+        }
+      : body;
   const response = await fetch("/api/helio/extract", {
     method: "POST",
     headers: { "content-type": "application/json" },
-    body: JSON.stringify(body),
+    body: JSON.stringify(payload),
     signal,
   });
   if (!response.ok) {
@@ -100,10 +196,19 @@ export async function streamCampaignShoot(
   onEvent: (event: ShootStreamEvent) => void,
   signal?: AbortSignal,
 ): Promise<void> {
+  const [product, moodReferenceDataUrl] = await Promise.all([
+    compressProductPayload(body.product),
+    body.moodReferenceDataUrl
+      ? compressImageDataUrl(body.moodReferenceDataUrl, {
+          maxDim: 896,
+          preserveAlpha: false,
+        })
+      : Promise.resolve(undefined),
+  ]);
   const response = await fetch("/api/helio/shoot", {
     method: "POST",
     headers: { "content-type": "application/json" },
-    body: JSON.stringify(body),
+    body: JSON.stringify({ ...body, product, moodReferenceDataUrl }),
     signal,
   });
   if (!response.ok) {
@@ -128,10 +233,28 @@ export async function postSurgicalEdit(
   latencyMs: number;
   costUsd: number;
 }> {
+  const [product, baseImageDataUrl, referenceImageDataUrl] = await Promise.all([
+    compressProductPayload(body.product),
+    compressImageDataUrl(body.baseImageDataUrl, {
+      maxDim: 1024,
+      preserveAlpha: false,
+    }),
+    body.referenceImageDataUrl
+      ? compressImageDataUrl(body.referenceImageDataUrl, {
+          maxDim: 896,
+          preserveAlpha: false,
+        })
+      : Promise.resolve(undefined),
+  ]);
   const response = await fetch("/api/helio/edit", {
     method: "POST",
     headers: { "content-type": "application/json" },
-    body: JSON.stringify(body),
+    body: JSON.stringify({
+      ...body,
+      product,
+      baseImageDataUrl,
+      referenceImageDataUrl,
+    }),
     signal,
   });
   if (!response.ok) {
@@ -154,10 +277,17 @@ export async function postBrandAudit(
   },
   signal?: AbortSignal,
 ): Promise<BrandAuditResult> {
+  const [product, stagedImageDataUrl] = await Promise.all([
+    compressProductPayload(body.product),
+    compressImageDataUrl(body.stagedImageDataUrl, {
+      maxDim: 1024,
+      preserveAlpha: false,
+    }),
+  ]);
   const response = await fetch("/api/helio/audit", {
     method: "POST",
     headers: { "content-type": "application/json" },
-    body: JSON.stringify(body),
+    body: JSON.stringify({ ...body, product, stagedImageDataUrl }),
     signal,
   });
   if (!response.ok) {
@@ -175,10 +305,11 @@ export async function streamTierCompare(
   onEvent: (event: CompareStreamEvent) => void,
   signal?: AbortSignal,
 ): Promise<void> {
+  const product = await compressProductPayload(body.product);
   const response = await fetch("/api/helio/compare", {
     method: "POST",
     headers: { "content-type": "application/json" },
-    body: JSON.stringify(body),
+    body: JSON.stringify({ ...body, product }),
     signal,
   });
   if (!response.ok) {

@@ -1,15 +1,11 @@
 import { accessOrDenied } from "@/features/access/server/gate";
 import {
   auditRequestSchema,
+  checkCombinedImageBytes,
   decodeImageDataUrl,
 } from "@/features/helio/domain/schemas";
-import { takeRate } from "@/features/helio/server/rate";
-import {
-  failure,
-  isStubRequest,
-  json,
-  visitorKeyOf,
-} from "@/features/helio/server/respond";
+import { takeRate, visitor } from "@/features/helio/server/rate";
+import { failure, isStubRequest, json } from "@/features/helio/server/respond";
 import {
   auditStagedFrame,
   resolveProductSource,
@@ -36,14 +32,17 @@ export async function POST(request: Request) {
     if (!stagedDecoded.ok) return json({ error: stagedDecoded.error }, 400);
 
     const product = await resolveProductSource(data.product);
+    const combined = checkCombinedImageBytes([
+      stagedDecoded.image.bytes,
+      data.product.kind === "custom" ? product.bytes : undefined,
+    ]);
+    if (!combined.ok) return json({ error: combined.error }, 413);
+
     const stub = isStubRequest(request);
 
     if (!stub) {
-      takeRate({
-        visitorKey: visitorKeyOf(access),
-        bucket: "director",
-        units: 1,
-      });
+      const who = await visitor();
+      await takeRate(who, "director", 1);
     }
 
     const audit = await auditStagedFrame({

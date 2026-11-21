@@ -221,8 +221,8 @@ export function HelioStudio() {
     const file = e.target.files?.[0];
     e.target.value = "";
     if (!file || plateBusyRef.current) return;
-    if (file.size > LIMITS.maxUploadBytes) {
-      setErrorMessage("Image exceeds the 6 MB upload limit.");
+    if (file.size > LIMITS.maxBrowserFileBytes) {
+      setErrorMessage("Source photo exceeds the 15 MB browser limit.");
       return;
     }
     plateBusyRef.current = true;
@@ -886,8 +886,8 @@ export function HelioStudio() {
                         const file = e.target.files?.[0];
                         e.target.value = "";
                         if (!file) return;
-                        if (file.size > LIMITS.maxUploadBytes) {
-                          setErrorMessage("Mood reference exceeds 6 MB.");
+                        if (file.size > LIMITS.maxBrowserFileBytes) {
+                          setErrorMessage("Mood reference exceeds 15 MB.");
                           return;
                         }
                         const url = await fileToDataUrl(file);
@@ -1115,6 +1115,10 @@ export function HelioStudio() {
                           const file = e.target.files?.[0];
                           e.target.value = "";
                           if (!file) return;
+                          if (file.size > LIMITS.maxBrowserFileBytes) {
+                            setErrorMessage("Reference image exceeds 15 MB.");
+                            return;
+                          }
                           const url = await fileToDataUrl(file);
                           setEditRefDataUrl(url);
                         }}

@@ -3,13 +3,8 @@ import {
   decodeImageDataUrl,
   extractRequestSchema,
 } from "@/features/helio/domain/schemas";
-import { takeRate } from "@/features/helio/server/rate";
-import {
-  failure,
-  isStubRequest,
-  json,
-  visitorKeyOf,
-} from "@/features/helio/server/respond";
+import { takeRate, visitor } from "@/features/helio/server/rate";
+import { failure, isStubRequest, json } from "@/features/helio/server/respond";
 import { generateRgbaPlate } from "@/features/helio/server/studio";
 
 export const maxDuration = 60;
@@ -39,13 +34,10 @@ export async function POST(request: Request) {
       sourceImage = decoded.image.bytes;
     }
 
-    // Take rate BEFORE the paid model call.
+    // Take Postgres advisory-locked rate BEFORE the paid model call.
     if (!stub) {
-      takeRate({
-        visitorKey: visitorKeyOf(access),
-        bucket: "image",
-        units: 1,
-      });
+      const who = await visitor();
+      await takeRate(who, "image", 1);
     }
 
     const result = await generateRgbaPlate({

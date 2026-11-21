@@ -28,7 +28,7 @@ export function inspectImageBytes(
   if (bytes.byteLength > LIMITS.maxUploadBytes) {
     return {
       ok: false,
-      error: `Image exceeds the ${Math.round(LIMITS.maxUploadBytes / (1024 * 1024))} MB limit.`,
+      error: `Image exceeds the ${(LIMITS.maxUploadBytes / 1_000_000).toFixed(1)} MB per-image limit (requests must stay under Vercel's 4.5 MB body cap).`,
     };
   }
   // PNG: 89 50 4E 47 0D 0A 1A 0A
@@ -81,7 +81,7 @@ export function decodeImageDataUrl(
   if (estimatedBytes > LIMITS.maxUploadBytes + 1024) {
     return {
       ok: false,
-      error: `Image exceeds the ${Math.round(LIMITS.maxUploadBytes / (1024 * 1024))} MB limit.`,
+      error: `Image exceeds the ${(LIMITS.maxUploadBytes / 1_000_000).toFixed(1)} MB per-image limit (requests must stay under Vercel's 4.5 MB body cap).`,
     };
   }
   const bytes = new Uint8Array(Buffer.from(b64, "base64"));
@@ -91,6 +91,23 @@ export function decodeImageDataUrl(
     ok: true,
     image: { bytes, mediaType: checked.mediaType },
   };
+}
+
+/** Verifies combined raw image bytes across all image fields stay under Vercel's 4.5 MB body cap. */
+export function checkCombinedImageBytes(
+  images: ReadonlyArray<Uint8Array | undefined>,
+): { ok: true; totalBytes: number } | { ok: false; error: string } {
+  let totalBytes = 0;
+  for (const img of images) {
+    if (img) totalBytes += img.byteLength;
+  }
+  if (totalBytes > LIMITS.maxRequestImagesBytes) {
+    return {
+      ok: false,
+      error: `Combined images exceed ${(LIMITS.maxRequestImagesBytes / 1_000_000).toFixed(1)} MB (total request body must stay under Vercel's 4.5 MB cap).`,
+    };
+  }
+  return { ok: true, totalBytes };
 }
 
 export const modelTierSchema = z.enum(["flash", "flagship"]).default("flash");
