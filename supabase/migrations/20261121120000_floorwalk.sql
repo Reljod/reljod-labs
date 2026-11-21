@@ -3,7 +3,8 @@
 -- lives in the visitor's browser), so the only table is the rate limiter's.
 -- It holds no Owner and is not in access.owned_tables; rows older than a day
 -- are deleted as new ones come in. Uploaded footage goes to the private
--- `floorwalk` bucket, in the Owner's folder, and is deleted after six hours.
+-- `floorwalk` bucket under uploads/<UTC hour>/<owner>/; the app sweeps hour folders
+-- older than six hours after the next visit, Walk, Ask or upload.
 
 create schema if not exists floorwalk;
 

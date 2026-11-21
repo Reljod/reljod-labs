@@ -68,7 +68,7 @@ test("refuses an upload path outside the caller's own folder before anything is 
     data: {
       source: {
         kind: "upload",
-        path: "uploads/guest-someone-else/00000000-0000-4000-8000-000000000000.mp4",
+        path: "uploads/2026112106/guest-someone-else/00000000-0000-4000-8000-000000000000.mp4",
       },
     },
   });

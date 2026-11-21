@@ -1,7 +1,7 @@
 "use client";
 
 import { motion } from "motion/react";
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Button } from "@/features/harness/components/ui";
 import type { AskAnswer, Source } from "../domain/api";
 import { LIMITS } from "../domain/limits";
@@ -16,16 +16,27 @@ export function AskFootage({
   source,
   suggestions,
   onAnswer,
+  onAsked,
   onSeek,
   disabled,
 }: {
   source: Source;
   suggestions: string[];
   onAnswer: (answer: AskAnswer | null) => void;
+  /** Any question that reached the server, answered or refused: the allowance moved. */
+  onAsked: () => void;
   onSeek: (t: number) => void;
   disabled: boolean;
 }) {
   const [question, setQuestion] = useState("");
+  const latest = useRef(0);
+  const alive = useRef(true);
+  useEffect(
+    () => () => {
+      alive.current = false;
+    },
+    [],
+  );
   const [pending, setPending] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [answer, setAnswer] = useState<AskAnswer | null>(null);
@@ -36,8 +47,11 @@ export function AskFootage({
     setQuestion(q);
     setPending(true);
     setError(null);
+    const asked = ++latest.current;
     try {
       const reply = await askFootage(source, q);
+      // A reply for footage that is no longer open, or an older question, is dropped.
+      if (asked !== latest.current || !alive.current) return;
       setAnswer(reply);
       onAnswer(reply);
       if (reply.moments[0]) onSeek(Math.max(0, reply.moments[0].at - 0.5));
@@ -46,7 +60,8 @@ export function AskFootage({
         e instanceof Error ? e.message : "The question could not be asked.",
       );
     } finally {
-      setPending(false);
+      if (alive.current) setPending(false);
+      onAsked();
     }
   };
 

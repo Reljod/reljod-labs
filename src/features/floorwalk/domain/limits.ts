@@ -15,7 +15,9 @@ export const LIMITS = {
   uploadSeconds: 90,
   /** Uploads one visitor may start in an hour. */
   uploadsPerHour: 6,
-  /** An upload is deleted once it is this old (it is never kept for longer). */
+  /** Uploads every visitor together may start in a day. */
+  uploadsPerDay: 100,
+  /** Uploads filed under an hour older than this are swept on the next visit, Walk, Ask or upload. */
   uploadHours: 6,
   /** Output tokens for one Walk. */
   walkOutputTokens: 12_000,

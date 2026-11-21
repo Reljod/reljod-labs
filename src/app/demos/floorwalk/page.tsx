@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { unstable_rethrow } from "next/navigation";
+import { after } from "next/server";
 import { Suspense } from "react";
 import { requireAccess } from "@/features/access/server/gate";
 import { Floorwalk } from "@/features/floorwalk/components/floorwalk";
@@ -8,6 +9,7 @@ import type { Allowance } from "@/features/floorwalk/domain/api";
 import { LIMITS } from "@/features/floorwalk/domain/limits";
 import { env } from "@/features/floorwalk/server/env";
 import { used, visitor } from "@/features/floorwalk/server/rate";
+import { sweepUploads } from "@/features/floorwalk/server/storage";
 
 export const metadata: Metadata = {
   title: "Floorwalk · Demo",
@@ -33,6 +35,7 @@ async function FloorwalkWithData() {
   try {
     const [, who] = await Promise.all([requireAccess(), visitor()]);
     const count = await used(who);
+    after(sweepUploads);
     initial = {
       walksUsed: count.walks,
       walksPerHour: LIMITS.walksPerHour,

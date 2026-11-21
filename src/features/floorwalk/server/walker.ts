@@ -94,6 +94,8 @@ export async function* walk(
 
   const gateway = createGateway({ apiKey: env.aiGatewayApiKey() });
   const timeout = AbortSignal.timeout(LIMITS.walkSeconds * 1000);
+  // A failed or cut-short call must never read as a clean Walk.
+  let failed: unknown = null;
   const result = streamText({
     model: gateway(model),
     system: walkInstructions(),
@@ -115,16 +117,41 @@ export async function* walk(
     abortSignal: options.signal
       ? AbortSignal.any([options.signal, timeout])
       : timeout,
+    onError: ({ error }) => {
+      failed = error;
+    },
   });
-
   let buffer = "";
+  let lines = 0;
   for await (const delta of result.textStream) {
     buffer += delta;
     const parts = buffer.split("\n");
     buffer = parts.pop() ?? "";
-    for (const raw of parts) yield* take(raw);
+    for (const raw of parts) {
+      if (raw.trim()) lines++;
+      yield* take(raw);
+    }
   }
+  if (buffer.trim()) lines++;
   yield* take(buffer);
+  if (failed) throw failed;
+  const finish = await result.finishReason;
+  if (finish === "length") {
+    yield {
+      t: "error",
+      message:
+        "The Walker ran out of room before the end of the footage. Try a shorter clip.",
+    };
+    return;
+  }
+  if (finish !== "stop" || lines === 0) {
+    yield {
+      t: "error",
+      message:
+        "The Walker stopped before it finished watching. Try the Walk again.",
+    };
+    return;
+  }
   const [usage, metadata] = await Promise.all([
     result.usage,
     result.providerMetadata,

@@ -176,7 +176,8 @@ export function Floorwalk({
   }, [state.phase, state.runId, state.findings.length, seek]);
 
   const takeFile = async (file: File | undefined) => {
-    if (!file) return;
+    // One upload at a time; a second drop waits for the first to finish.
+    if (!file || (upload && !upload.error)) return;
     if (!(VIDEO_TYPES as readonly string[]).includes(file.type)) {
       setUpload({ share: 0, error: "Upload an MP4 or MOV video." });
       return;
@@ -465,10 +466,8 @@ export function Floorwalk({
                       key={footage.src}
                       source={source}
                       suggestions={SUGGESTIONS[site?.slug ?? "upload"] ?? []}
-                      onAnswer={(a) => {
-                        setAnswer(a);
-                        refreshAllowance();
-                      }}
+                      onAnswer={setAnswer}
+                      onAsked={refreshAllowance}
                       onSeek={seek}
                       disabled={watching}
                     />
@@ -725,8 +724,8 @@ function Picker({
             Walk your own footage
           </span>
           <span className="text-[12px] text-ink-muted">
-            An MP4 or MOV up to {LIMITS.uploadSeconds} s and 25 MB. Deleted
-            within {LIMITS.uploadHours} hours.
+            An MP4 or MOV up to {LIMITS.uploadSeconds} s and 25 MB. Kept
+            private, and cleared after {LIMITS.uploadHours} hours.
           </span>
           {upload && !upload.error ? (
             <span className="mt-1 h-2 w-full overflow-hidden rounded-sm border border-ink bg-paper">

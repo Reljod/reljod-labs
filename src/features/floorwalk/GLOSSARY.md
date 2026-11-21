@@ -4,7 +4,7 @@ Floorwalk watches body-camera footage of one walk through a workplace and says w
 
 - **Site**: a workplace that is walked. The Sample Sites (`domain/sites.ts`) are fictional premises in the Republic of Meridia, each with a Floor plan in metres. An upload has no Site.
 - **Walk**: one pass of the Walker over the whole Footage, and what code made of it. A Walk lives in the visitor's browser; nothing is saved.
-- **Footage**: the video walked. A Sample's is rendered from its Site (`fixtures/floorwalk/scene.html`); an upload's is the visitor's MP4 or MOV, kept for at most six hours.
+- **Footage**: the video walked. A Sample's is rendered from its Site (`fixtures/floorwalk/scene.html`); an upload's is the visitor's MP4 or MOV, swept six hours after the hour it was uploaded in, on the next visit.
 - **Walker**: the model (Gemini 4 Neon). It watches the Footage and writes Lines. It never scores and never decides.
 - **Line**: one NDJSON object the Walker writes: a **zone** line (it entered an area) or a **sighting** line.
 - **Sighting**: what the Walker says it saw: a Rule it cites, a second, a box, a sentence, a confidence.

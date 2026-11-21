@@ -1,6 +1,7 @@
 import "server-only";
 import { createClient } from "@supabase/supabase-js";
-import { BUCKET, LIMITS } from "../domain/limits";
+import { BUCKET } from "../domain/limits";
+import { expiredHours } from "../domain/uploads";
 import { env } from "./env";
 
 let client: ReturnType<typeof createServiceClient> | undefined;
@@ -29,23 +30,35 @@ export async function download(path: string): Promise<Uint8Array | null> {
   return new Uint8Array(await data.arrayBuffer());
 }
 
+let lastSweep = 0;
+
 /**
- * Uploads are kept only while they are being walked and asked about: each
- * new upload deletes the same folder's files older than `LIMITS.uploadHours`.
- * Best effort; a failure here never blocks an upload.
+ * Deletes every upload filed under an hour older than `LIMITS.uploadHours`,
+ * whoever's it is. Uploads live under `uploads/<hour>/<owner>/`, so expired
+ * footage goes in whole hours. Run (after the response) on every page view,
+ * Walk, Ask and upload, at most once a minute per instance. Best effort: a
+ * failure is logged and blocks nothing.
  */
-export async function pruneFolder(folder: string) {
+export async function sweepUploads() {
+  if (Date.now() - lastSweep < 60_000) return;
+  lastSweep = Date.now();
   try {
-    const { data } = await bucket().list(folder, { limit: 100 });
-    const cutoff = Date.now() - LIMITS.uploadHours * 3600 * 1000;
-    const old = (data ?? [])
-      .filter(
-        (file) =>
-          file.created_at && new Date(file.created_at).getTime() < cutoff,
-      )
-      .map((file) => `${folder}/${file.name}`);
-    if (old.length) await bucket().remove(old);
+    const { data: hours } = await bucket().list("uploads", { limit: 1000 });
+    for (const hour of expiredHours((hours ?? []).map((h) => h.name)).slice(
+      0,
+      24,
+    )) {
+      const { data: owners } = await bucket().list(`uploads/${hour}`, {
+        limit: 1000,
+      });
+      for (const owner of owners ?? []) {
+        const folder = `uploads/${hour}/${owner.name}`;
+        const { data: files } = await bucket().list(folder, { limit: 1000 });
+        const paths = (files ?? []).map((file) => `${folder}/${file.name}`);
+        if (paths.length) await bucket().remove(paths);
+      }
+    }
   } catch (error) {
-    console.error("[floorwalk] prune", error);
+    console.error("[floorwalk] sweep", error);
   }
 }

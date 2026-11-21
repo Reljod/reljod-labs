@@ -240,7 +240,6 @@ export function useWalk(onLiveDone?: () => void) {
         await streamWalk(source, controller.signal, (event) =>
           dispatch({ type: "event", event }),
         );
-        onLiveDone?.();
       } catch (error) {
         if (!controller.signal.aborted)
           dispatch({
@@ -248,6 +247,9 @@ export function useWalk(onLiveDone?: () => void) {
             message:
               error instanceof Error ? error.message : "The Walk stopped.",
           });
+      } finally {
+        // A refused Walk (429) changes the allowance too.
+        onLiveDone?.();
       }
     },
     [stop, onLiveDone],

@@ -43,7 +43,7 @@ const CAPS: Record<
   },
   upload: {
     hour: LIMITS.uploadsPerHour,
-    day: LIMITS.walksPerDay,
+    day: LIMITS.uploadsPerDay,
     hourWords: `That's ${LIMITS.uploadsPerHour} uploads this hour.`,
     dayWords: "No more uploads today.",
   },

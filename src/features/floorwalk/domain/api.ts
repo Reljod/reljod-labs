@@ -18,7 +18,7 @@ export const STUB_HEADER = "x-floorwalk-stub";
 const uploadPath = z
   .string()
   .regex(
-    /^uploads\/[a-z0-9-]{1,80}\/[0-9a-f-]{36}\.(mp4|mov)$/,
+    /^uploads\/\d{10}\/[a-z0-9-]{1,80}\/[0-9a-f-]{36}\.(mp4|mov)$/,
     "That upload is not one of yours.",
   );
 

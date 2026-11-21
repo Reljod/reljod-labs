@@ -13,7 +13,7 @@ Gemini 4 Neon (on AI Gateway from 18 November 2026) takes video natively with a 
 - **The Standard decides.** Severity, weight and deadline come from `domain/rules.ts` and the visitor's edits. `scoreWalk` reads only Findings and the Standard, so changing a Rule re-scores the Walk with no model call.
 - **Samples come with an answer key.** The Sample Footage is rendered from the same Site data the page draws the Floor plan from (Three.js in headless Chromium, deterministic). The render records where every planted problem and decoy is on screen, frame by frame, and `measureWalk` scores a Walk against it. The recorded Walks are shown with their misses (the grocer's missing price labels).
 - **Replays are free and real.** Each Sample has a Recording of a real Walk with its timings; the page plays it without a call. "Walk it live" calls the model.
-- **No saved data.** Only rate hits are stored. Uploads go to a private bucket in the Owner's folder, are checked again (type, size, length) before the call, and are deleted after six hours.
+- **No saved data.** Only rate hits are stored. Uploads go to a private bucket under `uploads/<UTC hour>/<owner>/`, are checked again (owner, type, size, length) before the call, and hour folders older than six hours are swept after the next visit, Walk, Ask or upload (there is no cron, so an idle demo keeps the last uploads until someone comes back).
 
 ## Why not generated video
 

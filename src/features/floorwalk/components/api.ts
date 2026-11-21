@@ -37,16 +37,24 @@ export async function streamWalk(
   if (!response.ok || !response.body) throw new Error(await errorOf(response));
   const reader = response.body.pipeThrough(new TextDecoderStream()).getReader();
   let buffer = "";
+  let ended = false;
+  const emit = (line: string) => {
+    if (!line.trim()) return;
+    const event = JSON.parse(line) as WalkEvent;
+    if (event.t === "done" || event.t === "error") ended = true;
+    onEvent(event);
+  };
   for (;;) {
     const { value, done } = await reader.read();
     if (done) break;
     buffer += value;
     const lines = buffer.split("\n");
     buffer = lines.pop() ?? "";
-    for (const line of lines)
-      if (line.trim()) onEvent(JSON.parse(line) as WalkEvent);
+    for (const line of lines) emit(line);
   }
-  if (buffer.trim()) onEvent(JSON.parse(buffer) as WalkEvent);
+  emit(buffer);
+  // A dropped connection or a function timeout closes the stream quietly.
+  if (!ended) throw new Error("The Walk ended early. Try it again.");
 }
 
 /** PUTs the file to its one-time signed URL, reporting progress from 0 to 1. */

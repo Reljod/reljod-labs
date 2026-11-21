@@ -6,6 +6,7 @@ import { mp4DurationSeconds } from "@/features/process-transfer/domain/uploads";
 import type { Source } from "../domain/api";
 import { LIMITS } from "../domain/limits";
 import { type Site, siteBySlug } from "../domain/sites";
+import { ownerSlug, ownsUpload, uploadHour } from "../domain/uploads";
 import { InvalidError } from "./errors";
 import { download } from "./storage";
 
@@ -16,9 +17,18 @@ export type Footage = {
   site: Site | null;
 };
 
-/** The Storage folder an Owner's uploads live in. Owners are `host:…`, `guest:…` or `e2e`. */
-export function uploadFolder(owner: Owner): string {
-  return `uploads/${owner.toLowerCase().replace(/[^a-z0-9-]+/g, "-")}`;
+/** Where a new upload goes: `uploads/<hour>/<owner>/`. */
+export function uploadFolder(owner: Owner, now = new Date()): string {
+  return `uploads/${uploadHour(now)}/${ownerSlug(owner)}`;
+}
+
+/**
+ * Refuses an upload that is not in the caller's own folder. Cheap, so the
+ * routes run it before they take the rate, and `loadFootage` runs it again.
+ */
+export function assertOwnSource(source: Source, owner: Owner) {
+  if (source.kind === "upload" && !ownsUpload(source.path, owner))
+    throw new InvalidError("That upload is not one of yours.");
 }
 
 /**
@@ -49,8 +59,7 @@ export async function loadFootage(
       site,
     };
   }
-  if (!source.path.startsWith(`${uploadFolder(owner)}/`))
-    throw new InvalidError("That upload is not one of yours.");
+  assertOwnSource(source, owner);
   const bytes = await download(source.path);
   if (!bytes) throw new InvalidError("That upload has gone. Upload it again.");
   if (bytes.byteLength > LIMITS.uploadBytes)
