@@ -29,7 +29,8 @@ type DemoSlug =
   | "tidewater-bank"
   | "loupe"
   | "switchboard"
-  | "canvas";
+  | "canvas"
+  | "prism";
 
 /** A place inside a demo: a page (`href`) or a view the demo swaps itself (`onSelect`). */
 export type DemoTab =
