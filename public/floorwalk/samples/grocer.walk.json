@@ -1,0 +1,206 @@
+{
+  "slug": "grocer",
+  "model": "google/gemini-4-neon",
+  "recordedAt": "2026-11-21T15:04:00.150Z",
+  "events": [
+    {
+      "ms": 179,
+      "event": {
+        "t": "start",
+        "model": "google/gemini-4-neon",
+        "seconds": 37,
+        "rules": [
+          "exits-clear",
+          "extinguisher-reachable",
+          "spill-marked",
+          "cold-door-shut",
+          "aisle-clear",
+          "shelves-stocked",
+          "price-labelled"
+        ]
+      }
+    },
+    {
+      "ms": 14234,
+      "event": {
+        "t": "raw",
+        "line": "{\"type\":\"zone\",\"at\":0,\"zone\":\"Aisle 1 · Tins & pasta\"}"
+      }
+    },
+    {
+      "ms": 14234,
+      "event": { "t": "zone", "at": 0, "zone": "Aisle 1 · Tins & pasta" }
+    },
+    {
+      "ms": 14870,
+      "event": {
+        "t": "raw",
+        "line": "{\"type\":\"sighting\",\"at\":6,\"rule\":\"shelves-stocked\",\"zone\":\"Aisle 1 · Tins & pasta\",\"box\":[415,270,560,545],\"saw\":\"An entire shelf bay in Aisle 1 is empty and needs restocking.\",\"confidence\":0.9}"
+      }
+    },
+    {
+      "ms": 14870,
+      "event": {
+        "t": "finding",
+        "finding": {
+          "id": "f1",
+          "rule": "shelves-stocked",
+          "at": 6,
+          "zone": "Aisle 1 · Tins & pasta",
+          "box": [0.415, 0.27, 0.56, 0.545],
+          "saw": "An entire shelf bay in Aisle 1 is empty and needs restocking.",
+          "confidence": 0.9,
+          "alsoAt": []
+        }
+      }
+    },
+    {
+      "ms": 15070,
+      "event": {
+        "t": "raw",
+        "line": "{\"type\":\"zone\",\"at\":10,\"zone\":\"Back aisle\"}"
+      }
+    },
+    { "ms": 15070, "event": { "t": "zone", "at": 10, "zone": "Back aisle" } },
+    {
+      "ms": 15275,
+      "event": {
+        "t": "raw",
+        "line": "{\"type\":\"zone\",\"at\":15,\"zone\":\"Aisle 2 · Jars & sauces\"}"
+      }
+    },
+    {
+      "ms": 15275,
+      "event": { "t": "zone", "at": 15, "zone": "Aisle 2 · Jars & sauces" }
+    },
+    {
+      "ms": 15873,
+      "event": {
+        "t": "raw",
+        "line": "{\"type\":\"sighting\",\"at\":18,\"rule\":\"spill-marked\",\"zone\":\"Aisle 2 · Jars & sauces\",\"box\":[560,370,775,595],\"saw\":\"A red spill with broken glass on the floor is unmarked with no wet-floor sign.\",\"confidence\":0.98}"
+      }
+    },
+    {
+      "ms": 15873,
+      "event": {
+        "t": "finding",
+        "finding": {
+          "id": "f2",
+          "rule": "spill-marked",
+          "at": 18,
+          "zone": "Aisle 2 · Jars & sauces",
+          "box": [0.56, 0.37, 0.775, 0.595],
+          "saw": "A red spill with broken glass on the floor is unmarked with no wet-floor sign.",
+          "confidence": 0.98,
+          "alsoAt": []
+        }
+      }
+    },
+    {
+      "ms": 16478,
+      "event": {
+        "t": "raw",
+        "line": "{\"type\":\"sighting\",\"at\":20,\"rule\":\"aisle-clear\",\"zone\":\"Aisle 2 · Jars & sauces\",\"box\":[740,550,995,735],\"saw\":\"An open cardboard carton is left on the floor in the aisle, creating a trip hazard.\",\"confidence\":0.96}"
+      }
+    },
+    {
+      "ms": 16478,
+      "event": {
+        "t": "finding",
+        "finding": {
+          "id": "f3",
+          "rule": "aisle-clear",
+          "at": 20,
+          "zone": "Aisle 2 · Jars & sauces",
+          "box": [0.74, 0.55, 0.995, 0.735],
+          "saw": "An open cardboard carton is left on the floor in the aisle, creating a trip hazard.",
+          "confidence": 0.96,
+          "alsoAt": []
+        }
+      }
+    },
+    {
+      "ms": 16681,
+      "event": {
+        "t": "raw",
+        "line": "{\"type\":\"zone\",\"at\":23,\"zone\":\"Produce\"}"
+      }
+    },
+    { "ms": 16681, "event": { "t": "zone", "at": 23, "zone": "Produce" } },
+    {
+      "ms": 16681,
+      "event": {
+        "t": "raw",
+        "line": "{\"type\":\"zone\",\"at\":28,\"zone\":\"Chillers\"}"
+      }
+    },
+    { "ms": 16682, "event": { "t": "zone", "at": 28, "zone": "Chillers" } },
+    {
+      "ms": 17306,
+      "event": {
+        "t": "raw",
+        "line": "{\"type\":\"sighting\",\"at\":30,\"rule\":\"cold-door-shut\",\"zone\":\"Chillers\",\"box\":[195,420,745,670],\"saw\":\"A chiller door is left open with nobody using it.\",\"confidence\":0.95}"
+      }
+    },
+    {
+      "ms": 17306,
+      "event": {
+        "t": "finding",
+        "finding": {
+          "id": "f4",
+          "rule": "cold-door-shut",
+          "at": 30,
+          "zone": "Chillers",
+          "box": [0.195, 0.42, 0.745, 0.67],
+          "saw": "A chiller door is left open with nobody using it.",
+          "confidence": 0.95,
+          "alsoAt": []
+        }
+      }
+    },
+    {
+      "ms": 17505,
+      "event": {
+        "t": "raw",
+        "line": "{\"type\":\"zone\",\"at\":32,\"zone\":\"Back aisle\"}"
+      }
+    },
+    { "ms": 17505, "event": { "t": "zone", "at": 32, "zone": "Back aisle" } },
+    {
+      "ms": 17903,
+      "event": {
+        "t": "raw",
+        "line": "{\"type\":\"sighting\",\"at\":35,\"rule\":\"exits-clear\",\"zone\":\"Back aisle\",\"box\":[260,330,950,580],\"saw\":\"A tall pallet of stacked boxes is blocking the fire exit door.\",\"confidence\":0.99}"
+      }
+    },
+    {
+      "ms": 17903,
+      "event": {
+        "t": "finding",
+        "finding": {
+          "id": "f5",
+          "rule": "exits-clear",
+          "at": 35,
+          "zone": "Back aisle",
+          "box": [0.26, 0.33, 0.95, 0.58],
+          "saw": "A tall pallet of stacked boxes is blocking the fire exit door.",
+          "confidence": 0.99,
+          "alsoAt": []
+        }
+      }
+    },
+    {
+      "ms": 17904,
+      "event": {
+        "t": "done",
+        "ms": 17757,
+        "usage": {
+          "inputTokens": 3349,
+          "outputTokens": 1932,
+          "costUsd": 0.0354132
+        },
+        "skipped": 0
+      }
+    }
+  ]
+}
