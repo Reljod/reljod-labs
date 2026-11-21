@@ -44,6 +44,7 @@ export function CompareShootout({
   });
 
   const abortRef = useRef<AbortController | null>(null);
+  const runningRef = useRef(false);
 
   useEffect(() => {
     if (!running) return;
@@ -57,7 +58,8 @@ export function CompareShootout({
   }, []);
 
   async function startRace() {
-    if (running) return;
+    if (runningRef.current) return;
+    runningRef.current = true;
     abortRef.current?.abort();
     const controller = new AbortController();
     abortRef.current = controller;
@@ -124,6 +126,7 @@ export function CompareShootout({
         );
       }
     } finally {
+      runningRef.current = false;
       setRunning(false);
     }
   }

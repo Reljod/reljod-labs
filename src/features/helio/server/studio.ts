@@ -185,19 +185,19 @@ export async function directCampaign(input: {
 
   const userContent: Array<
     | { type: "text"; text: string }
-    | { type: "image"; image: Uint8Array; mediaType: string }
+    | { type: "file"; data: Uint8Array; mediaType: string }
   > = [
     { type: "text", text: promptText },
     {
-      type: "image",
-      image: input.product.bytes,
+      type: "file",
+      data: input.product.bytes,
       mediaType: input.product.mediaType,
     },
   ];
   if (input.moodReference) {
     userContent.push({
-      type: "image",
-      image: input.moodReference.bytes,
+      type: "file",
+      data: input.moodReference.bytes,
       mediaType: input.moodReference.mediaType,
     });
   }
@@ -582,13 +582,13 @@ export async function auditStagedFrame(input: {
             }\n\nImage 1 is the original studio product plate. Image 2 is the staged campaign shot. Evaluate faithfully and return the structured brand integrity audit.`,
           },
           {
-            type: "image",
-            image: input.product.bytes,
+            type: "file",
+            data: input.product.bytes,
             mediaType: input.product.mediaType,
           },
           {
-            type: "image",
-            image: input.stagedBytes,
+            type: "file",
+            data: input.stagedBytes,
             mediaType: input.stagedMediaType,
           },
         ],

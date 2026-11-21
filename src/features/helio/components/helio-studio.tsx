@@ -114,6 +114,10 @@ export function HelioStudio() {
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
   const shootAbortRef = useRef<AbortController | null>(null);
+  const shootingRef = useRef(false);
+  const editingRef = useRef(false);
+  const auditingRef = useRef(false);
+  const plateBusyRef = useRef(false);
   const uploadInputRef = useRef<HTMLInputElement>(null);
   const moodInputRef = useRef<HTMLInputElement>(null);
   const editRefInputRef = useRef<HTMLInputElement>(null);
@@ -216,11 +220,12 @@ export function HelioStudio() {
   async function handleUploadProduct(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
     e.target.value = "";
-    if (!file || plateBusy) return;
+    if (!file || plateBusyRef.current) return;
     if (file.size > LIMITS.maxUploadBytes) {
       setErrorMessage("Image exceeds the 6 MB upload limit.");
       return;
     }
+    plateBusyRef.current = true;
     setErrorMessage(null);
     setPlateBusy(true);
     setPlateBusyLabel("MAI 2.7-Flash Isolating Native RGBA Cutout…");
@@ -259,6 +264,7 @@ export function HelioStudio() {
         err instanceof Error ? err.message : "Could not isolate product.",
       );
     } finally {
+      plateBusyRef.current = false;
       setPlateBusy(false);
     }
   }
@@ -266,7 +272,8 @@ export function HelioStudio() {
   async function handleSynthesizeProduct(e: React.FormEvent) {
     e.preventDefault();
     const concept = synthConcept.trim();
-    if (!concept || plateBusy) return;
+    if (!concept || plateBusyRef.current) return;
+    plateBusyRef.current = true;
     setErrorMessage(null);
     setPlateBusy(true);
     setPlateBusyLabel("MAI 2.7-Flash Synthesizing Transparent RGBA SKU…");
@@ -305,12 +312,21 @@ export function HelioStudio() {
         err instanceof Error ? err.message : "Could not synthesize product.",
       );
     } finally {
+      plateBusyRef.current = false;
       setPlateBusy(false);
     }
   }
 
+  function handleCancelShoot() {
+    shootAbortRef.current?.abort();
+    shootingRef.current = false;
+    setShooting(false);
+    setShootPhaseText("Shoot cancelled.");
+  }
+
   async function handleShootCampaign() {
-    if (shooting || selectedMarkets.length === 0) return;
+    if (shootingRef.current || selectedMarkets.length === 0) return;
+    shootingRef.current = true;
     shootAbortRef.current?.abort();
     const controller = new AbortController();
     shootAbortRef.current = controller;
@@ -409,6 +425,7 @@ export function HelioStudio() {
         );
       }
     } finally {
+      shootingRef.current = false;
       setShooting(false);
     }
   }
@@ -425,9 +442,10 @@ export function HelioStudio() {
     instructionText: string,
     passLabel: string,
   ) {
-    if (!activeFrame || !activeVersion || editing) return;
+    if (!activeFrame || !activeVersion || editingRef.current) return;
     const trimmed = instructionText.trim();
     if (!trimmed) return;
+    editingRef.current = true;
     setEditing(true);
     setErrorMessage(null);
 
@@ -486,12 +504,14 @@ export function HelioStudio() {
         err instanceof Error ? err.message : "Surgical edit failed.",
       );
     } finally {
+      editingRef.current = false;
       setEditing(false);
     }
   }
 
   async function handleRunAudit() {
-    if (!activeFrame || !activeVersion || auditing) return;
+    if (!activeFrame || !activeVersion || auditingRef.current) return;
+    auditingRef.current = true;
     setAuditing(true);
     setErrorMessage(null);
     try {
@@ -525,6 +545,7 @@ export function HelioStudio() {
         err instanceof Error ? err.message : "Brand audit failed.",
       );
     } finally {
+      auditingRef.current = false;
       setAuditing(false);
     }
   }
@@ -545,7 +566,7 @@ export function HelioStudio() {
         name="Helio"
         titleAs="h1"
         current={tab}
-        panelsId="helio-panel"
+        panelsId="helio"
         rowFrom="xl"
         badge={<DemoBarBadge>MAI 2.7 + Gemini 4 Neon</DemoBarBadge>}
         tabs={[
@@ -639,6 +660,8 @@ export function HelioStudio() {
         {/* TAB 1: STUDIO (kept mounted once visited) */}
         <section
           id="helio-panel-studio"
+          role="tabpanel"
+          aria-labelledby="helio-tab-studio"
           hidden={tab !== "studio"}
           className="space-y-5"
         >
@@ -893,26 +916,37 @@ export function HelioStudio() {
                   </div>
                 </div>
 
-                {/* Primary Launch Shoot Trigger */}
-                <button
-                  type="button"
-                  disabled={shooting || plateBusy}
-                  aria-busy={shooting}
-                  onClick={handleShootCampaign}
-                  data-testid="helio-shoot-button"
-                  className="press mt-4 flex w-full items-center justify-center gap-2 rounded-sm border-2 border-ink bg-brass px-4 py-3 font-mono text-xs font-black tracking-[0.08em] text-ink uppercase disabled:opacity-60"
-                >
+                {/* Primary Launch Shoot Trigger + Stop Escape Hatch */}
+                <div className="mt-4 flex items-center gap-2">
+                  <button
+                    type="button"
+                    disabled={shooting || plateBusy}
+                    aria-busy={shooting}
+                    onClick={handleShootCampaign}
+                    data-testid="helio-shoot-button"
+                    className="press flex flex-1 items-center justify-center gap-2 rounded-sm border-2 border-ink bg-brass px-4 py-3 font-mono text-xs font-black tracking-[0.08em] text-ink uppercase disabled:opacity-60"
+                  >
+                    {shooting ? (
+                      <>
+                        <span className="helio-aperture-orbit inline-block size-4 rounded-full border-2 border-dashed border-ink" />
+                        <span>Shooting {selectedMarkets.length} Markets…</span>
+                      </>
+                    ) : (
+                      <span>
+                        Shoot {selectedMarkets.length}-Market Global Campaign →
+                      </span>
+                    )}
+                  </button>
                   {shooting ? (
-                    <>
-                      <span className="helio-aperture-orbit inline-block size-4 rounded-full border-2 border-dashed border-ink" />
-                      <span>Shooting {selectedMarkets.length} Markets…</span>
-                    </>
-                  ) : (
-                    <span>
-                      Shoot {selectedMarkets.length}-Market Global Campaign →
-                    </span>
-                  )}
-                </button>
+                    <button
+                      type="button"
+                      onClick={handleCancelShoot}
+                      className="press rounded-sm border-2 border-ink bg-paper px-3 py-3 font-mono text-xs font-bold text-seal-red uppercase"
+                    >
+                      Stop
+                    </button>
+                  ) : null}
+                </div>
                 <p className="mt-2 text-center font-mono text-[10px] text-ink-muted">
                   Gemini 4 Neon directs → MAI Image 2.7{" "}
                   {tier === "flagship" ? "Pro" : "Flash"} shoots in parallel
@@ -1174,7 +1208,12 @@ export function HelioStudio() {
 
         {/* TAB 2: PLACEMENTS */}
         {visitedTabs.has("placements") ? (
-          <section id="helio-panel-placements" hidden={tab !== "placements"}>
+          <section
+            id="helio-panel-placements"
+            role="tabpanel"
+            aria-labelledby="helio-tab-placements"
+            hidden={tab !== "placements"}
+          >
             <PlacementsWall
               productName={activeProductMeta.name}
               brand={activeProductMeta.brand}
@@ -1189,7 +1228,12 @@ export function HelioStudio() {
 
         {/* TAB 3: COMPARE FLASH VS FLAGSHIP 2.7 */}
         {visitedTabs.has("compare") ? (
-          <section id="helio-panel-compare" hidden={tab !== "compare"}>
+          <section
+            id="helio-panel-compare"
+            role="tabpanel"
+            aria-labelledby="helio-tab-compare"
+            hidden={tab !== "compare"}
+          >
             <CompareShootout
               product={productPayload}
               productName={activeProductMeta.name}
@@ -1200,7 +1244,12 @@ export function HelioStudio() {
 
         {/* TAB 4: UNDER THE HOOD */}
         {visitedTabs.has("hood") ? (
-          <section id="helio-panel-hood" hidden={tab !== "hood"}>
+          <section
+            id="helio-panel-hood"
+            role="tabpanel"
+            aria-labelledby="helio-tab-hood"
+            hidden={tab !== "hood"}
+          >
             <UnderTheHoodPanel ledger={ledger} />
           </section>
         ) : null}
