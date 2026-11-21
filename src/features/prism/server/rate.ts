@@ -1,9 +1,11 @@
 import "server-only";
 import { timingSafeEqual } from "node:crypto";
 import { headers } from "next/headers";
+import type { Owner } from "@/features/access/domain/owner";
 import { E2E_HEADER } from "@/features/document-compliance/constants";
 import { hashVisitor } from "@/features/document-compliance/server/rate-limit";
 import { LIMITS } from "../domain/limits";
+import { sql } from "./db";
 import { env } from "./env";
 import { LimitError } from "./errors";
 
@@ -51,46 +53,52 @@ const RATES = {
       `That's ${n} refractions this hour. Try again in a bit.`,
   },
   tribunal: {
-    perHour: LIMITS.tribunalsPerHour,
+    perHour: LIMITS.tribunalCallsPerHour,
     refusal: (n: number) =>
-      `That's ${n} tribunals this hour. Try again in a bit.`,
+      `That's ${n} tribunal model calls this hour. Try again in a bit.`,
   },
   cascade: {
-    perHour: LIMITS.cascadesPerHour,
+    perHour: LIMITS.cascadeCallsPerHour,
     refusal: (n: number) =>
-      `That's ${n} cascades this hour. Try again in a bit.`,
+      `That's ${n} cascade model calls this hour. Try again in a bit.`,
   },
 } as const;
 
 export type RateKind = keyof typeof RATES;
 
-const HOUR_MS = 60 * 60 * 1000;
-const MAX_BUCKETS = 2_000;
-const hits = new Map<string, number[]>();
-
 /**
- * In-process sliding-window hourly rate limiter keyed on the visitor's salted
- * IP hash. Taken BEFORE the first model call at every entry point.
+ * Counts `units` Decision Model calls against the visitor in Postgres under a
+ * transaction-scoped advisory lock, or throws LimitError when this hour's
+ * allowance would be exceeded. Awaited BEFORE the first model call at every
+ * entry point so concurrent serverless instances share one durable cap.
  */
-export function takeRate(who: Visitor, kind: RateKind): void {
+export async function takeRate(
+  who: Visitor,
+  owner: Owner,
+  kind: RateKind,
+  units = 1,
+): Promise<void> {
   if (who.trusted) return;
-  const now = Date.now();
-  const cutoff = now - HOUR_MS;
-  const key = `${kind}:${who.hash}`;
-  const existing = (hits.get(key) ?? []).filter((ts) => ts > cutoff);
-  const rule = RATES[kind];
-  if (existing.length >= rule.perHour) {
-    hits.set(key, existing);
-    throw new LimitError(rule.refusal(rule.perHour));
-  }
-  existing.push(now);
-  hits.set(key, existing);
-  // Prune stale buckets if the map grows large.
-  if (hits.size > MAX_BUCKETS) {
-    for (const [bucketKey, timestamps] of hits) {
-      const fresh = timestamps.filter((ts) => ts > cutoff);
-      if (fresh.length === 0) hits.delete(bucketKey);
-      else hits.set(bucketKey, fresh);
-    }
-  }
+  const count = Math.max(1, Math.trunc(units));
+  const rate = RATES[kind];
+  const taken = await sql().begin(async (tx) => {
+    await tx`select pg_advisory_xact_lock(hashtextextended(${`prism:${who.hash}:${kind}`}, 0))`;
+    const [row] = await tx<{ taken: boolean }[]>`
+      with recent as (
+        select coalesce(sum(units), 0)::int as used
+        from prism.rate_hits
+        where visitor_hash = ${who.hash}
+          and kind = ${kind}
+          and created_at > now() - interval '1 hour'
+      ),
+      hit as (
+        insert into prism.rate_hits (owner, visitor_hash, kind, units)
+        select ${owner}, ${who.hash}, ${kind}, ${count}
+        where (select used from recent) + ${count} <= ${rate.perHour}
+        returning id
+      )
+      select exists (select 1 from hit) as taken`;
+    return row?.taken ?? false;
+  });
+  if (!taken) throw new LimitError(rate.refusal(rate.perHour));
 }

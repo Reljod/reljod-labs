@@ -174,12 +174,9 @@ export async function runDecision({
       answers: normalizeAnswers(result.answers as Record<string, unknown>),
     };
   } catch (error) {
-    const msg =
-      error instanceof Error
-        ? error.message
-        : "Decision model call did not succeed.";
+    console.error("[prism] decision model failed", modelId, error);
     throw new ProviderUnavailableError(
-      `${modelId} could not evaluate this slip (${msg.slice(0, 140)}).`,
+      `${modelId} could not evaluate this slip.`,
     );
   }
 }

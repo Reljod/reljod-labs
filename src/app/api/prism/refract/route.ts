@@ -1,4 +1,4 @@
-import { requireAccess } from "@/features/access/server/gate";
+import { requireOwner } from "@/features/access/server/gate";
 import { refractRequestSchema } from "@/features/prism/domain/api";
 import { MERIDIAN_QUESTIONS } from "@/features/prism/domain/questions";
 import { runDecision } from "@/features/prism/server/decide";
@@ -7,13 +7,13 @@ import { bodyOf, failure, json } from "@/features/prism/server/respond";
 
 export async function POST(request: Request) {
   try {
-    const [, who, raw] = await Promise.all([
-      requireAccess(),
+    const [{ owner }, who, raw] = await Promise.all([
+      requireOwner(),
       visitor(),
       bodyOf(request),
     ]);
     const input = refractRequestSchema.parse(raw);
-    takeRate(who, "refract");
+    await takeRate(who, owner, "refract", 1);
 
     const result = await runDecision({
       modelId: input.modelId,

@@ -1,9 +1,10 @@
-import { requireAccess } from "@/features/access/server/gate";
+import { requireOwner } from "@/features/access/server/gate";
 import {
   type CascadeStreamEvent,
   cascadeRequestSchema,
 } from "@/features/prism/domain/api";
 import { runMeridianDecision } from "@/features/prism/server/decide";
+import { ProviderUnavailableError } from "@/features/prism/server/errors";
 import { takeRate, visitor } from "@/features/prism/server/rate";
 import {
   bodyOf,
@@ -15,13 +16,13 @@ const CONCURRENCY = 3;
 
 export async function POST(request: Request) {
   try {
-    const [, who, raw] = await Promise.all([
-      requireAccess(),
+    const [{ owner }, who, raw] = await Promise.all([
+      requireOwner(),
       visitor(),
       bodyOf(request),
     ]);
     const input = cascadeRequestSchema.parse(raw);
-    takeRate(who, "cascade");
+    await takeRate(who, owner, "cascade", input.items.length);
 
     const started = performance.now();
     const encoder = new TextEncoder();
@@ -69,12 +70,15 @@ export async function POST(request: Request) {
                 answers: res.answers,
               });
             } catch (err) {
+              if (!(err instanceof ProviderUnavailableError)) {
+                console.error("[prism] cascade item failed", item.id, err);
+              }
               emit({
                 type: "item.error",
                 id: item.id,
                 index,
                 error:
-                  err instanceof Error
+                  err instanceof ProviderUnavailableError
                     ? err.message
                     : "Slip could not be sorted.",
               });

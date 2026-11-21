@@ -16,6 +16,7 @@ A request that is refused partway through still spent whatever ran before the re
 
 - Take the rate (and check any per-Question budget) before the first call to a model, a Sandbox or any other metered service in the request, including validation steps such as parsing.
 - When a later step also takes the rate, pass along that it was already taken, so one Run counts once.
+- Store paid rate limits in Postgres behind a transaction-scoped advisory lock (never an in-process `Map`, which resets per serverless instance), and count actual billable units (e.g. items or jurors) rather than one flat unit per batch request.
 
 ## Make the escape hatch work when the thing it escapes is broken
 

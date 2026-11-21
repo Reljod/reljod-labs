@@ -1,9 +1,10 @@
-import { requireAccess } from "@/features/access/server/gate";
+import { requireOwner } from "@/features/access/server/gate";
 import {
   type TribunalStreamEvent,
   tribunalRequestSchema,
 } from "@/features/prism/domain/api";
 import { runMeridianDecision } from "@/features/prism/server/decide";
+import { ProviderUnavailableError } from "@/features/prism/server/errors";
 import { takeRate, visitor } from "@/features/prism/server/rate";
 import {
   bodyOf,
@@ -13,13 +14,13 @@ import {
 
 export async function POST(request: Request) {
   try {
-    const [, who, raw] = await Promise.all([
-      requireAccess(),
+    const [{ owner }, who, raw] = await Promise.all([
+      requireOwner(),
       visitor(),
       bodyOf(request),
     ]);
     const input = tribunalRequestSchema.parse(raw);
-    takeRate(who, "tribunal");
+    await takeRate(who, owner, "tribunal", input.modelIds.length);
 
     const started = performance.now();
     const encoder = new TextEncoder();
@@ -53,11 +54,16 @@ export async function POST(request: Request) {
                 answers: res.answers,
               });
             } catch (err) {
+              if (!(err instanceof ProviderUnavailableError)) {
+                console.error("[prism] tribunal juror failed", modelId, err);
+              }
               emit({
                 type: "juror.error",
                 modelId,
                 error:
-                  err instanceof Error ? err.message : "Juror did not respond.",
+                  err instanceof ProviderUnavailableError
+                    ? err.message
+                    : "Juror did not respond.",
               });
             }
           }),
