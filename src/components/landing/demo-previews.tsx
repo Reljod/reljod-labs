@@ -5,6 +5,7 @@ import { CaseworkPreview } from "@/components/showcase/previews/casework-preview
 import { ClientManagerPreview } from "@/components/showcase/previews/client-manager-preview";
 import { DocumentCompliancePreview } from "@/components/showcase/previews/document-compliance-preview";
 import { HarnessPreview } from "@/components/showcase/previews/harness-preview";
+import { HelioPreview } from "@/components/showcase/previews/helio-preview";
 import { LedgerPreview } from "@/components/showcase/previews/ledger-preview";
 import { LoupePreview } from "@/components/showcase/previews/loupe-preview";
 import { OperatorPreview } from "@/components/showcase/previews/operator-preview";
@@ -29,4 +30,5 @@ export const demoPreviews: Record<string, (project: Project) => ReactNode> = {
   loupe: () => <LoupePreview />,
   switchboard: () => <SwitchboardPreview />,
   canvas: () => <CanvasPreview />,
+  helio: () => <HelioPreview />,
 };

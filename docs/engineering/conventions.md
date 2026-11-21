@@ -129,6 +129,14 @@ A step that runs on a schedule and retries the same work until it succeeds (end-
 - When an item truly cannot be processed, mark it and move on, so the rest of the batch still runs.
 - A path that skips a check for scheduled work (`scheduled: true` skips Approvals) must apply that check when the schedule is created, or it becomes a way around it.
 
+## A rate limit lives in the database, never in process memory
+
+Vercel runs multiple function instances in parallel and restarts them on cold starts and deploys, so a module-level `Map` never holds a shared per-visitor or global ceiling across routes or instances. In Helio, an initial in-memory rate limiter let concurrent requests spread across instances and reset on cold starts.
+
+- Count paid calls in Postgres (`<schema>.rate_hits`) under transaction-scoped advisory locks (`pg_advisory_xact_lock`), keyed by the salted visitor IP hash (`hashVisitor`).
+- When one request spends from multiple buckets (e.g. director + image), check every bucket inside one transaction before inserting any hit so a 429 on the second bucket never consumes the first.
+- Require `RATE_LIMIT_SALT` loudly via `env` rather than falling back to a hardcoded constant.
+
 ## Visitor text never starts an agent
 
 Bank Growth issues (`bank:growth`) quote a visitor's words verbatim and are opened with the Owner's GitHub token, so GitHub sees a trusted author. Any automation that starts an agent from issue or pull request text (an `@claude` mention, a label, a keyword) must exclude `bank:growth` issues in its trigger condition (for the Claude action in `.github/workflows/claude.yml`: `!contains(github.event.issue.labels.*.name, 'bank:growth')` on the `issues` clause). Otherwise a visitor can type the trigger into the Teller and have an agent with write access act on their words, skipping the Growth Rules and the allowlist guard. A person who comments on such an issue chooses to bring the quote in; the issue itself never does.
