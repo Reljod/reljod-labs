@@ -73,6 +73,7 @@ export const config = {
     "/api/loupe/:path*",
     "/api/switchboard/:path*",
     "/api/canvas/:path*",
+    "/api/helio/:path*",
     "/access/:path*",
   ],
 };

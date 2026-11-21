@@ -198,6 +198,14 @@
 - Tests: `e2e/canvas.spec.ts` is skipped unless `E2E_CANVAS=1`; the Analyst's turn is stubbed (`x-canvas-stub` with the e2e bypass token), the tools are real. `E2E_CANVAS_LIVE=1` adds one Question to the real model. Run it only when asked.
 - Not built yet (tables exist): Boards with a Refresh workflow, export, and bring-your-own CSV.
 
+## Helio (autonomous global product shoot & campaign studio)
+
+- A live demo at `/demos/helio` in four tabs (Studio, Placements, Flash vs 2.7, Under the hood; `?tab=`): turns one product photo into a 3-market global launch campaign using November 2026 **Microsoft MAI Image 2.7 / 2.7-Flash** (native transparent RGBA plates via `providerOptions.azure.background: "transparent"` and multi-reference reasoning-based scene transplanting/editing) paired with **Google Gemini 4 Neon** (configurable-thinking Executive Creative Director and side-by-side Vision Brand-Integrity Auditor).
+- Stateless and requires no database migration. Every route under `/api/helio/*` (`extract`, `shoot`, `edit`, `audit`, `compare`) is gated in `src/proxy.ts` and again via `accessOrDenied()`; uploads pass magic-byte inspection (`domain/schemas.ts`) before hourly per-visitor and global 24-hour rate caps (`server/rate.ts`, `LIMITS` in `domain/limits.ts`) are taken.
+- Pure-code pixel telemetry (`domain/telemetry.ts`, `analyzeRgbaPixels`) measures RGBA alpha coverage, dominant hex swatches, 16-bin luminance histograms, contrast and Sobel sharpness directly in the browser Canvas; Neon provides vision scores and spatial callout pins.
+- Env: optional `HELIO_AI_GATEWAY_API_KEY` (falls back to `DOCUMENT_COMPLIANCE_AI_GATEWAY_API_KEY`), `HELIO_IMAGE_MODEL` (default `microsoft/mai-image-2.7-flash`), `HELIO_FLAGSHIP_IMAGE_MODEL` (default `microsoft/mai-image-2.7`), `HELIO_DIRECTOR_MODEL` (default `google/gemini-4-neon`); shares `RATE_LIMIT_SALT` and `E2E_BYPASS_TOKEN`.
+- Specimen RGBA studio plates live in `public/helio/samples/` (`scripts/generate-helio-samples.mts`). `e2e/helio.spec.ts` runs stubbed (`x-helio-stub: 1` with `E2E_BYPASS_TOKEN`, zero model spend).
+
 <!-- BEGIN:nextjs-agent-rules -->
 
 ## This is NOT the Next.js you know
