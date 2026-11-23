@@ -725,7 +725,7 @@ function Picker({
           </span>
           <span className="text-[12px] text-ink-muted">
             An MP4 or MOV up to {LIMITS.uploadSeconds} s and 25 MB. Kept
-            private, and cleared after {LIMITS.uploadHours} hours.
+            private, and cleared about {LIMITS.uploadHours} hours later.
           </span>
           {upload && !upload.error ? (
             <span className="mt-1 h-2 w-full overflow-hidden rounded-sm border border-ink bg-paper">

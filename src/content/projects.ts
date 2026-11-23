@@ -295,6 +295,49 @@ export const projects: Project[] = [
     ],
   },
   {
+    slug: "prism",
+    icon: "compass",
+    title: "Prism",
+    sector: "Decision models & calibrated triage",
+    summary:
+      "Single-forward-pass Decision Models (Nov 2026) split incoming bank paperwork into calibrated probabilities with zero output tokens. Watch five probability rays refract live, race four labs head-to-head in a Tribunal, and run a 12-slip sorting Cascade that screens out routine volume before paying for a generative LLM.",
+    outcome:
+      "Zero output tokens, calibrated probabilities, live threshold gates",
+    tags: ["Decision models", "Calibration", "Routing", "AI Gateway", "Motion"],
+    status: "Live",
+    href: "/demos/prism",
+    marks: ["New"],
+    features: [
+      "Microsoft Decision-1.1, Liquid d1.2 Ultra, Perplexity Decider v1.3 & Drex Finance live",
+      "Drag threshold sliders to physically re-route chutes and Cascade bins with zero API calls",
+      "Race four models in parallel on one Polar Constellation to spot unanimous vs split juries",
+    ],
+  },
+  {
+    slug: "helio",
+    icon: "scan",
+    title: "Helio",
+    sector: "Global retail & product campaigns",
+    summary:
+      "Turn one product photo into a three-market launch campaign in fifteen seconds. Native transparent RGBA cutouts, physics-coherent relit environments and surgical packaging edits via MAI Image 2.7, directed and vision-audited by Gemini 4 Neon.",
+    outcome: "$68,000 multi-city shoot compressed into 4 cents and 15 seconds",
+    tags: [
+      "MAI Image 2.7",
+      "Gemini 4 Neon",
+      "RGBA Layers",
+      "Multi-Reference",
+      "Vision Audit",
+    ],
+    status: "Live",
+    href: "/demos/helio",
+    marks: ["New"],
+    features: [
+      "Interactive 3D transparent RGBA product plates with live Alpha X-Ray inspection",
+      "Parallel 3-market campaign shoots, surgical relighting & live billboard mockups",
+      "Gemini 4 Neon pinned brand-integrity audits + live Flash vs Flagship 2.7 pixel race",
+    ],
+  },
+  {
     slug: "floorwalk",
     icon: "scan",
     title: "Floorwalk",

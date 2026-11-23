@@ -23,6 +23,8 @@ describe("projects", () => {
       "loupe",
       "switchboard",
       "canvas",
+      "prism",
+      "helio",
       "floorwalk",
     ]);
   });
@@ -39,6 +41,8 @@ describe("projects", () => {
       "loupe",
       "switchboard",
       "canvas",
+      "prism",
+      "helio",
       "floorwalk",
     ]);
     expect(marked("Beta")).toEqual(["bank-harness"]);
