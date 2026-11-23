@@ -1,0 +1,189 @@
+/*
+ * Firebreak's stage. One-shot motion (a card landing, a stamp, a hex being
+ * doused) always plays; looping motion (flames, embers, the ticker) runs only
+ * for visitors who have not asked for reduced motion.
+ */
+
+.fb-table {
+  background-color: var(--color-ink);
+  background-image:
+    radial-gradient(
+      circle at 50% 46%,
+      rgb(178 58 43 / var(--fb-glow, 0.18)) 0%,
+      transparent 62%
+    ),
+    linear-gradient(rgb(255 255 255 / 0.035) 1px, transparent 1px),
+    linear-gradient(90deg, rgb(255 255 255 / 0.035) 1px, transparent 1px);
+  background-size:
+    100% 100%,
+    22px 22px,
+    22px 22px;
+  transition: --fb-glow 1.2s ease;
+}
+
+.fb-hex {
+  transition:
+    fill 700ms ease,
+    stroke 700ms ease;
+}
+
+.fb-flame {
+  transform-box: fill-box;
+  transform-origin: 50% 100%;
+}
+
+.fb-ember {
+  transform-box: fill-box;
+  opacity: 0;
+}
+
+.fb-hq-ring {
+  transform-box: fill-box;
+  transform-origin: center;
+}
+
+.fb-marquee {
+  display: flex;
+  width: max-content;
+}
+
+.fb-caret::after {
+  content: "▍";
+  margin-left: 1px;
+  color: var(--color-seal-red);
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .fb-flame {
+    animation: fb-flicker 0.9s ease-in-out infinite;
+  }
+  .fb-ember {
+    animation: fb-rise 3.4s linear infinite;
+  }
+  .fb-hq-ring {
+    animation: fb-pulse 2.4s ease-out infinite;
+  }
+  .fb-marquee {
+    animation: fb-marquee 48s linear infinite;
+  }
+  .fb-marquee:hover {
+    animation-play-state: paused;
+  }
+  .fb-caret::after {
+    animation: fb-blink 1s steps(2) infinite;
+  }
+  .fb-lobby-ember {
+    animation: fb-lobby-rise var(--fb-dur, 7s) linear infinite;
+    animation-delay: var(--fb-delay, 0s);
+  }
+}
+
+@keyframes fb-flicker {
+  0%,
+  100% {
+    transform: scale(1, 1);
+    opacity: 0.95;
+  }
+  25% {
+    transform: scale(0.92, 1.18);
+  }
+  50% {
+    transform: scale(1.05, 0.88);
+    opacity: 0.8;
+  }
+  75% {
+    transform: scale(0.96, 1.1);
+  }
+}
+
+@keyframes fb-rise {
+  0% {
+    transform: translate(0, 0);
+    opacity: 0;
+  }
+  15% {
+    opacity: 0.9;
+  }
+  100% {
+    transform: translate(5px, -46px);
+    opacity: 0;
+  }
+}
+
+@keyframes fb-pulse {
+  0% {
+    transform: scale(1);
+    opacity: 0.7;
+  }
+  100% {
+    transform: scale(1.9);
+    opacity: 0;
+  }
+}
+
+@keyframes fb-marquee {
+  from {
+    transform: translateX(0);
+  }
+  to {
+    transform: translateX(-50%);
+  }
+}
+
+@keyframes fb-blink {
+  to {
+    visibility: hidden;
+  }
+}
+
+@keyframes fb-lobby-rise {
+  0% {
+    transform: translateY(0) translateX(0);
+    opacity: 0;
+  }
+  10% {
+    opacity: 0.85;
+  }
+  100% {
+    transform: translateY(-420px) translateX(var(--fb-drift, 20px));
+    opacity: 0;
+  }
+}
+
+@keyframes fb-stamp {
+  0% {
+    transform: scale(2.6) rotate(-16deg);
+    opacity: 0;
+  }
+  60% {
+    transform: scale(0.94) rotate(-7deg);
+    opacity: 1;
+  }
+  100% {
+    transform: scale(1) rotate(-8deg);
+    opacity: 1;
+  }
+}
+
+.fb-stamp {
+  animation: fb-stamp 520ms cubic-bezier(0.2, 0.9, 0.3, 1.2) both;
+}
+
+@keyframes fb-strike {
+  from {
+    background-size: 0 2px;
+  }
+  to {
+    background-size: 100% 2px;
+  }
+}
+
+.fb-gone {
+  background-image: linear-gradient(
+    var(--color-seal-red),
+    var(--color-seal-red)
+  );
+  background-repeat: no-repeat;
+  background-position: 0 55%;
+  animation: fb-strike 600ms ease-out both;
+}

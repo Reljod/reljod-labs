@@ -180,6 +180,8 @@ export const demoProblems: Record<string, string> = {
     "Answer my phone line at 2am, in the caller's language, without breaking our rules.",
   canvas:
     "Ask a question about a million rows and get a chart you can adjust and check.",
+  firebreak:
+    "Rehearse the worst morning of my career before it happens, with everyone shouting at once.",
 };
 
 /**
@@ -221,6 +223,7 @@ export const demoShelves = [
       "operator",
       "tidewater-bank",
       "loupe",
+      "firebreak",
     ],
   },
 ] as const;
@@ -230,7 +233,15 @@ export const catalog = {
   title: "Every demo, filed.",
   intro: `${demoCount.Word} working demos: real AI over made-up paperwork. Hover a card to watch it work. They open with a guest code, so ask me for one.`,
   /** The search box types these as hints; each must find at least one demo. */
-  searchHints: ["MCP", "pension", "slides", "video", "cat banker", "500 pages"],
+  searchHints: [
+    "MCP",
+    "pension",
+    "slides",
+    "video",
+    "cat banker",
+    "500 pages",
+    "crisis",
+  ],
   surprise: "Surprise me",
   drawer: "Pull a card at random",
   picked: "Picked for you",

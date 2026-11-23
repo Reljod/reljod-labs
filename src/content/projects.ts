@@ -294,6 +294,24 @@ export const projects: Project[] = [
       "Controls re-run the saved query with no model call; code verifies every number",
     ],
   },
+  {
+    slug: "firebreak",
+    icon: "gauge",
+    title: "Firebreak",
+    sector: "Leadership",
+    summary:
+      "A crisis drill for the people at the top. Take the chair of an airline, a food maker or a mobile network on its worst morning and decide, in a click or in your own words. The newest Qwen model plays the regulator, the press, your staff and your board; code keeps the score, the clock and the law, and grades you at the end.",
+    outcome: "Practise the worst 72 hours before they happen",
+    tags: ["Agents", "Qwen4-Max", "Simulation", "Rules", "Self-correcting"],
+    status: "Live",
+    href: "/demos/firebreak",
+    marks: ["New"],
+    features: [
+      "A fire map that burns towards the company as each stakeholder loses patience",
+      "Type your own decision: the model reads it into actions, code decides what they do",
+      "A public statement drafted, checked by code and sent back until it is fit to publish",
+    ],
+  },
 ];
 
 /**
