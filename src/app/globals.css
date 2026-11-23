@@ -38,6 +38,32 @@
   --animate-haul: haul 5.6s cubic-bezier(0.45, 0.05, 0.25, 1) infinite both;
   --animate-walk: walk 5.6s ease-in-out infinite;
   --animate-bloom: bloom 5.6s ease-out infinite both;
+  --animate-burn: burn 5.6s linear infinite both;
+
+  /* Firebreak's preview: a hex catches, burns, chars, and is put out. */
+  @keyframes burn {
+    0%,
+    12% {
+      fill: #f5f1e8;
+    }
+    22% {
+      fill: #d9a84e;
+    }
+    34%,
+    52% {
+      fill: #b23a2b;
+    }
+    64%,
+    80% {
+      fill: #2b211c;
+    }
+    88% {
+      fill: #6fa0dc;
+    }
+    100% {
+      fill: #f5f1e8;
+    }
+  }
 
   /* Client Manager's preview: a walk draws across the graph, Nodes bloom in. */
   @keyframes walk {

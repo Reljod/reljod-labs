@@ -15,3 +15,4 @@ Each context keeps its own language.
 - **Loupe**: a forensic examiner for documents: one Examiner looks, tests what it suspects with code, and Rules decide whether a document was tampered with. `src/features/loupe/GLOSSARY.md`
 - **Switchboard**: a railway's phone line answered by one voice Agent the Caller can interrupt, with Rules checked at every tool call. `src/features/switchboard/GLOSSARY.md`
 - **Canvas**: one Analyst answers a Question about data with Views (charts with Controls, drawn by an MCP App) whose numbers code verifies. `src/features/canvas/GLOSSARY.md`
+- **Firebreak**: a crisis drill for executives: the model voices the Stakeholders around a company's worst 72 hours, the Engine keeps every number and Rules grade the response. `src/features/firebreak/GLOSSARY.md`

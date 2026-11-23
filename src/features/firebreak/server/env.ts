@@ -1,0 +1,36 @@
+import "server-only";
+
+function required(name: string): string {
+  const value = process.env[name];
+  if (!value) throw new Error(`Missing environment variable ${name}`);
+  return value;
+}
+
+/** Alibaba's Qwen4-Max, released 16 November 2026: built for long agentic work and for revising a first draft from feedback. */
+export const DEFAULT_MODEL = "alibaba/qwen4-max";
+
+const REASONING = ["low", "high"] as const;
+export type Reasoning = (typeof REASONING)[number];
+
+/** Read lazily so `next build` works without secrets. Values are never logged. */
+export const env = {
+  /** Supabase transaction pooler; falls back to the Client Manager's, the same database. */
+  databaseUrl: () =>
+    process.env.FIREBREAK_DATABASE_URL ??
+    required("CLIENT_MANAGER_DATABASE_URL"),
+  /** Hashes visitors for rate limits. */
+  rateLimitSalt: () => required("RATE_LIMIT_SALT"),
+  e2eBypassToken: () => process.env.E2E_BYPASS_TOKEN ?? "",
+  /** Falls back to the document compliance key, like the other demos. */
+  aiGatewayApiKey: () =>
+    process.env.FIREBREAK_AI_GATEWAY_API_KEY ??
+    required("DOCUMENT_COMPLIANCE_AI_GATEWAY_API_KEY"),
+  model: () => process.env.FIREBREAK_MODEL || DEFAULT_MODEL,
+  /** The Room answers in seconds at low effort; set `high` to trade speed for depth. */
+  reasoning: (): Reasoning => {
+    const value = process.env.FIREBREAK_REASONING;
+    return REASONING.includes(value as Reasoning)
+      ? (value as Reasoning)
+      : "low";
+  },
+};

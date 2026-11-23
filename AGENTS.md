@@ -198,6 +198,16 @@
 - Tests: `e2e/canvas.spec.ts` is skipped unless `E2E_CANVAS=1`; the Analyst's turn is stubbed (`x-canvas-stub` with the e2e bypass token), the tools are real. `E2E_CANVAS_LIVE=1` adds one Question to the real model. Run it only when asked.
 - Not built yet (tables exist): Boards with a Refresh workflow, export, and bring-your-own CSV.
 
+## Firebreak (a crisis drill for executives)
+
+- A live demo at `/demos/firebreak` in two places (Drill, Under the hood): the visitor takes the chair of a fictional Meridia company (an airline, a food maker, a mobile network) for 72 hours; Qwen4-Max voices the Stakeholders and code keeps the score. Domain language: `src/features/firebreak/GLOSSARY.md`. Decision: `docs/adr/0037-firebreak-the-model-voices-code-decides.md`.
+- Only the Engine (`domain/engine.ts`, pure: `play(scenario, rounds)`) moves a number. The model's three roles (Reader, Room, Comms lead) are in `domain/brief.ts`, which writes every sentence the model reads and cleans everything it returns; the Room may pick the next Inject only from `eligibleInjects`.
+- Scenarios are data (`domain/scenarios.ts`); Rules are `by` / `before` / `never`, checked in `domain/rules.ts`; the Statement's checks are `domain/statement.ts`. A new Lever, Inject or Rule is a Scenario edit; `scenarios.test.ts` checks every id resolves and that the careful path grades A or B and the reckless one D or E, so re-balance when it fails.
+- Nothing is saved: the browser holds the Rounds and the server replays them on every request (`prepareTurn`, `prepareDebrief`). Two routes spend (`POST /api/firebreak/turns`, `POST /api/firebreak/debrief`, NDJSON); both check the gate, the request and the replay before `take()`. Caps are `LIMITS` in `domain/limits.ts`. The only table is `firebreak.rate_hits` (`supabase/migrations/20261123120000_firebreak.sql`, added with `git add -f`; apply it before deploying).
+- The recorded drill (`components/recorded.ts`) plays the same events in the browser from the Scenario's recorded path and Stakeholders' lines, with no model.
+- Env: `FIREBREAK_AI_GATEWAY_API_KEY` (falls back to `DOCUMENT_COMPLIANCE_AI_GATEWAY_API_KEY`), optional `FIREBREAK_MODEL` (default `alibaba/qwen4-max`), `FIREBREAK_REASONING` (`low` or `high`; default `low`), `FIREBREAK_DATABASE_URL` (falls back to `CLIENT_MANAGER_DATABASE_URL`); shares `RATE_LIMIT_SALT` and `E2E_BYPASS_TOKEN`.
+- Tests: `e2e/firebreak.spec.ts` runs stubbed by default (`x-firebreak-stub` with the e2e token: canned Room, Reader and Comms lead through the real routes, Engine and checks; no database write). `E2E_FIREBREAK_LIVE=1` asks the real model (about ten cents a drill); run it only when asked.
+
 <!-- BEGIN:nextjs-agent-rules -->
 
 ## This is NOT the Next.js you know
