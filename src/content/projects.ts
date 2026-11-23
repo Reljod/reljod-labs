@@ -295,6 +295,25 @@ export const projects: Project[] = [
     ],
   },
   {
+    slug: "prism",
+    icon: "compass",
+    title: "Prism",
+    sector: "Decision models & calibrated triage",
+    summary:
+      "Single-forward-pass Decision Models (Nov 2026) split incoming bank paperwork into calibrated probabilities with zero output tokens. Watch five probability rays refract live, race four labs head-to-head in a Tribunal, and run a 12-slip sorting Cascade that screens out routine volume before paying for a generative LLM.",
+    outcome:
+      "Zero output tokens, calibrated probabilities, live threshold gates",
+    tags: ["Decision models", "Calibration", "Routing", "AI Gateway", "Motion"],
+    status: "Live",
+    href: "/demos/prism",
+    marks: ["New"],
+    features: [
+      "Microsoft Decision-1.1, Liquid d1.2 Ultra, Perplexity Decider v1.3 & Drex Finance live",
+      "Drag threshold sliders to physically re-route chutes and Cascade bins with zero API calls",
+      "Race four models in parallel on one Polar Constellation to spot unanimous vs split juries",
+    ],
+  },
+  {
     slug: "helio",
     icon: "scan",
     title: "Helio",
