@@ -49,18 +49,18 @@ export async function visitor(): Promise<Visitor> {
 const RATES = {
   refract: {
     perHour: LIMITS.refractionsPerHour,
-    refusal: (n: number) =>
-      `That's ${n} refractions this hour. Try again in a bit.`,
+    refusal: (n: number, left: number) =>
+      `That would go over your ${n} refractions this hour (${left} left). Try again in a bit.`,
   },
   tribunal: {
     perHour: LIMITS.tribunalCallsPerHour,
-    refusal: (n: number) =>
-      `That's ${n} tribunal model calls this hour. Try again in a bit.`,
+    refusal: (n: number, left: number) =>
+      `That would go over your ${n} tribunal model calls this hour (${left} left). Try again in a bit.`,
   },
   cascade: {
     perHour: LIMITS.cascadeCallsPerHour,
-    refusal: (n: number) =>
-      `That's ${n} cascade model calls this hour. Try again in a bit.`,
+    refusal: (n: number, left: number) =>
+      `That would go over your ${n} cascade model calls this hour (${left} left). Try again in a bit.`,
   },
 } as const;
 
@@ -83,7 +83,7 @@ export async function takeRate(
   const rate = RATES[kind];
   const taken = await sql().begin(async (tx) => {
     await tx`select pg_advisory_xact_lock(hashtextextended(${`prism:${who.hash}:${kind}`}, 0))`;
-    const [row] = await tx<{ taken: boolean }[]>`
+    const [row] = await tx<{ taken: boolean; used: number }[]>`
       with recent as (
         select coalesce(sum(units), 0)::int as used
         from prism.rate_hits
@@ -97,8 +97,11 @@ export async function takeRate(
         where (select used from recent) + ${count} <= ${rate.perHour}
         returning id
       )
-      select exists (select 1 from hit) as taken`;
-    return row?.taken ?? false;
+      select exists (select 1 from hit) as taken, (select used from recent) as used`;
+    return row ?? { taken: false, used: rate.perHour };
   });
-  if (!taken) throw new LimitError(rate.refusal(rate.perHour));
+  if (!taken.taken) {
+    const left = Math.max(0, rate.perHour - taken.used);
+    throw new LimitError(rate.refusal(rate.perHour, left));
+  }
 }
