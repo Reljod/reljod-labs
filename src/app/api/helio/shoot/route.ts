@@ -59,14 +59,12 @@ export async function POST(request: Request) {
 
     // Validate product image and combined request size BEFORE taking rate.
     const product = await resolveProductSource(data.product);
-    if (data.product.kind === "custom") {
-      const sizeCheck = checkCombinedImageBytes([
-        product.bytes,
-        moodRef?.bytes,
-      ]);
-      if (!sizeCheck.ok) {
-        return json({ error: sizeCheck.error }, 413);
-      }
+    const sizeCheck = checkCombinedImageBytes([
+      data.product.kind === "custom" ? product.bytes : undefined,
+      moodRef?.bytes,
+    ]);
+    if (!sizeCheck.ok) {
+      return json({ error: sizeCheck.error }, 413);
     }
 
     const stub = isStubRequest(request);

@@ -80,18 +80,29 @@ export async function compressImageDataUrl(
     }
   }
 
-  // Final safeguard: shrink dimensions further to guarantee it fits under cap.
-  const smallCanvas = document.createElement("canvas");
-  smallCanvas.width = Math.max(1, Math.round(targetW * 0.65));
-  smallCanvas.height = Math.max(1, Math.round(targetH * 0.65));
-  const sCtx = smallCanvas.getContext("2d");
-  if (!sCtx) return dataUrl;
-  if (!preserveAlpha) {
-    sCtx.fillStyle = "#ffffff";
-    sCtx.fillRect(0, 0, smallCanvas.width, smallCanvas.height);
+  // Final safeguard: keep shrinking until it fits (older Safari may return PNG
+  // for WebP, which is much larger), and refuse clearly if it never does.
+  let source: HTMLCanvasElement = canvas;
+  for (let attempt = 0; attempt < 5; attempt++) {
+    const smallCanvas = document.createElement("canvas");
+    smallCanvas.width = Math.max(1, Math.round(source.width * 0.65));
+    smallCanvas.height = Math.max(1, Math.round(source.height * 0.65));
+    const sCtx = smallCanvas.getContext("2d");
+    if (!sCtx) break;
+    if (!preserveAlpha) {
+      sCtx.fillStyle = "#ffffff";
+      sCtx.fillRect(0, 0, smallCanvas.width, smallCanvas.height);
+    }
+    sCtx.drawImage(source, 0, 0, smallCanvas.width, smallCanvas.height);
+    const encoded = smallCanvas.toDataURL(mime, 0.78);
+    if (approxDataUrlBytes(encoded) <= LIMITS.maxUploadBytes - 40_000) {
+      return encoded;
+    }
+    source = smallCanvas;
   }
-  sCtx.drawImage(canvas, 0, 0, smallCanvas.width, smallCanvas.height);
-  return smallCanvas.toDataURL(mime, 0.78);
+  throw new Error(
+    "That image is too large to send, even after shrinking it. Try a smaller JPEG or PNG.",
+  );
 }
 
 async function compressProductPayload(

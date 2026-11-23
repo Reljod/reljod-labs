@@ -41,6 +41,8 @@ begin
       '17 4 * * *',
       $cron$delete from helio.rate_hits where created_at < now() - interval '2 days'$cron$
     );
+  else
+    raise notice 'pg_cron is not available: helio.rate_hits will not be pruned. Delete rows older than 2 days by hand.';
   end if;
 end;
 $$;
