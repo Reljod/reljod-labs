@@ -5,7 +5,7 @@ The prompt of the scheduled cloud agent (a Claude routine) that merges the Tidew
 - Repository: `Reljod/reljod-labs`. Fires when a label is added to a pull request (GitHub `pull_request.labeled`: the reviewer adding `review:passed`) and every hour at 37 minutes past as a sweep. Model: Claude Opus 5.5. No connectors.
 - It does not review. The "PR Code + Security Review" routine reviews every pull request when it opens and again on every push, and records the result as a label: `review:passed` or `review:changes`, with the head it reviewed in its comment (`<!-- review-head: <sha> -->`). The build session that opened the pull request fixes what a `review:changes` review finds and pushes, which starts the next review. This routine merges a pull request whose newest head carries `review:passed` and green CI.
 - What the routine itself stores is a short bootstrap: it reads the "Prompt" section below **from `main`** and follows it, and it repeats the hard rules (the allowlist, untrusted text, never push, fail closed) so they hold even if this file were changed. If this file is not on `main`, the routine stops.
-- This file, `scripts/`, `.github/` and `AGENTS.md` are outside the paths a growth pull request may change.
+- This file, `scripts/`, `.github/`, `AGENTS.md` and `docs/demos/` are outside the paths a growth pull request may change.
 
 ## Prompt
 

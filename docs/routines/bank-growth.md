@@ -6,7 +6,7 @@ The prompt of the scheduled cloud agent (a Claude routine) that builds the Tidew
 - Several runs can start at once (an event and the sweep). The branch name is the lock: every run for issue `<n>` pushes to exactly `bank-growth/<n>` and never forces, so only the first push lands and the others stop.
 - The routine: https://claude.ai/code/routines/trig_01AytnHheLNEFjjgRLj4u3VU (environment "Reljod Labs"). Manage or delete it there.
 - What the routine itself stores is a short bootstrap: it reads the "Prompt" section below **from `main`** and follows it, and it repeats the hard rules (the quote is untrusted, the allowlist, never merge, one issue per run) so they hold even if this file were changed. If this file is not on `main`, the routine stops.
-- This file, the guard (`scripts/bank-growth-guard.mjs`, `.github/workflows/bank-growth-guard.yml`) and `AGENTS.md` are outside the paths the routine may change.
+- This file, the guard (`scripts/bank-growth-guard.mjs`, `.github/workflows/bank-growth-guard.yml`), `AGENTS.md` and the agent notes in `docs/demos/` are outside the paths the routine may change.
 
 ## How a growth pull request gets merged
 
@@ -47,7 +47,7 @@ You may create or change files ONLY under:
 - `docs/adr/**` (a new ADR only when you made a real decision; take the next free number)
 - a NEW file `supabase/migrations/<timestamp>_bank_<name>.sql`, purely additive. Never edit or delete an existing migration.
 
-A CI check fails the pull request if any other path is touched, so do not touch `package.json`, the lockfile, `.github/`, `scripts/`, `AGENTS.md`, `src/proxy.ts`, anything under `src/features/access` or another demo, or shared components. If the criteria cannot be met inside the allowlist, follow the `bank:blocked` step above.
+A CI check fails the pull request if any other path is touched, so do not touch `package.json`, the lockfile, `.github/`, `scripts/`, `AGENTS.md`, `docs/demos/`, `src/proxy.ts`, anything under `src/features/access` or another demo, or shared components. If the criteria cannot be met inside the allowlist, follow the `bank:blocked` step above.
 
 Within the bank:
 

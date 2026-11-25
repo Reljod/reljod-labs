@@ -1,0 +1,12 @@
+# Handover (process transfer): agent notes
+
+Read this before you change `src/features/process-transfer/`, `/demos/process-transfer`, `/api/process-transfer/*` or `fixtures/process-transfer/`. The rules for every demo are in the root `AGENTS.md`.
+
+- A live demo at `/demos/process-transfer`: a Recording of a handover call becomes a Process, a workflow document (DOCX) and a Deck (PPTX) that is approved only when its Checks pass. Domain language: `src/features/process-transfer/GLOSSARY.md`. Decision: `docs/adr/0020-a-deck-is-laid-out-by-code-and-approved-by-checks.md`.
+- `domain/run.ts` is the contract: the workflow writes a `RunView`, the row stores it, the screen shows it. A Stage changes a Run by emitting a `patch`, which is also written to the row.
+- Rules are data in `domain/rules.ts`; the Checks that apply them are in `domain/process-checks.ts` and `domain/deck-checks.ts`, keyed by Rule id. A new Rule needs both, and a test that it can fail.
+- The preview, the Checks and the PPTX all come from the laid-out `Deck` (`domain/deck-layout.ts`). Never position anything in `pptx.ts` or `slide-view.tsx` that is not in the Deck. Layout spacing comes from the Rules' Parameters, and a deck the engine lays out from a plan within the content limits must pass every default Rule.
+- DOCX and PPTX are built in the browser (`domain/docx.ts`, `domain/pptx.ts`, hand-written OOXML zipped with `fflate`); the server stores no generated files, only uploaded Recordings. After changing either, render it (LibreOffice in Docker) and run the Open XML SDK validator; neither is part of CI.
+- Samples: `fixtures/process-transfer/` (README there; HyperFrames compositions and local Kokoro voices, Meridia, SPECIMEN), rendered to `public/process-transfer/samples/` with `pnpm render:process-transfer-samples`. `expected/<slug>.json` is the ground truth for each.
+- Env: `PROCESS_TRANSFER_AI_GATEWAY_API_KEY` (required, no fallback); `PROCESS_TRANSFER_DATABASE_URL` (falls back to `CLIENT_MANAGER_DATABASE_URL`); shares `SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY`, `RATE_LIMIT_SALT` and `E2E_BYPASS_TOKEN`. Data lives in the `process_transfer` schema (`supabase/migrations/20261118120000_process_transfer.sql`), reached directly like Client Manager's; uploads go to the private `process-transfer` bucket through signed upload URLs.
+- Watch needs a model that takes video (`MODELS[id].video`). Limits are `LIMITS` in `domain/limits.ts`.

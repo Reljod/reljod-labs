@@ -16,4 +16,4 @@ We chose a text Owner over foreign keys to `auth.users` and `access.guest_passes
 - Client Manager MCP tokens carry the Owner. Tokens minted before this change are refused. A Guest token stops working when the pass ends, is deleted, or gets a new code.
 - Each demo's own expiry (`expires_at`, 30 days; 90 for Ledger) still applies on top of the Guest pass purge.
 - Purging by SQL leaves files in the `client-manager` and `casework` buckets, as the existing expiry jobs already do.
-- A new demo that saves data must add `owner`, scope by it, and register its table (AGENTS.md, "Saved data belongs to an Owner").
+- A new demo that saves data must add `owner`, scope by it, and register its table (`docs/engineering/access.md`, "Saved data belongs to an Owner").
