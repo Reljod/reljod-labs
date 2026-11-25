@@ -1,0 +1,90 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Meridia Rail e-ticket (SPECIMEN)</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { width: 390px; height: 844px; overflow: hidden; }
+  body { background: #eef1ec; font-family: system-ui, -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; color: #14231c; }
+  .status { height: 44px; display: flex; justify-content: space-between; align-items: center; padding: 0 24px; font-size: 14px; font-weight: 600; background: #0f5b3f; color: #ffffff; }
+  .header { background: #0f5b3f; color: #ffffff; padding: 8px 24px 64px; }
+  .brand { display: flex; align-items: center; gap: 10px; }
+  .logo { width: 32px; height: 32px; border-radius: 8px; background: #f2c230; }
+  .brand-name { font-size: 20px; font-weight: 800; letter-spacing: -0.01em; }
+  .header-sub { margin-top: 18px; font-size: 13px; opacity: 0.8; text-transform: uppercase; letter-spacing: 0.08em; font-weight: 600; }
+  .header-title { margin-top: 4px; font-size: 26px; font-weight: 700; }
+  .card { margin: -44px 16px 0; background: #ffffff; border-radius: 18px; padding: 22px 20px; position: relative; }
+  .journey { display: flex; justify-content: space-between; align-items: flex-start; }
+  .stop .time { font-size: 30px; font-weight: 800; letter-spacing: -0.02em; }
+  .stop .station { margin-top: 2px; font-size: 14px; color: #4b5a52; font-weight: 500; }
+  .stop.right { text-align: right; }
+  .line { flex: 1; margin: 18px 12px 0; position: relative; height: 2px; background: #0f5b3f; }
+  .line::before, .line::after { content: ""; position: absolute; top: -5px; width: 12px; height: 12px; border-radius: 50%; background: #ffffff; border: 3px solid #0f5b3f; }
+  .line::before { left: -6px; }
+  .line::after { right: -6px; background: #0f5b3f; }
+  .duration { text-align: center; font-size: 12px; color: #4b5a52; margin-top: 6px; font-weight: 600; }
+  .divider { margin: 18px -20px; border-top: 2px dashed #d5dcd6; }
+  .facts { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+  .fact .k { font-size: 11px; text-transform: uppercase; letter-spacing: 0.08em; color: #7b8a82; font-weight: 600; }
+  .fact .v { font-size: 20px; font-weight: 700; margin-top: 2px; }
+  .qr-wrap { display: flex; gap: 16px; align-items: center; }
+  .qr { width: 132px; height: 132px; padding: 8px; background: #ffffff; border: 2px solid #14231c; border-radius: 6px; }
+  .qr-side .ref { font-family: ui-monospace, Menlo, Consolas, monospace; font-size: 15px; font-weight: 600; }
+  .qr-side .note { margin-top: 6px; font-size: 12px; color: #4b5a52; line-height: 1.4; }
+  .chip { display: inline-block; margin-top: 10px; padding: 4px 10px; border-radius: 999px; background: #e3f2ea; color: #0f5b3f; font-size: 12px; font-weight: 700; }
+  .price-row { margin: 18px 16px 0; display: flex; justify-content: space-between; align-items: baseline; padding: 0 4px; }
+  .price-row .k { font-size: 14px; color: #4b5a52; font-weight: 500; }
+  .price-row .v { font-size: 28px; font-weight: 800; }
+  .button { margin: 16px 16px 0; height: 54px; border-radius: 14px; background: #14231c; color: #ffffff; display: flex; align-items: center; justify-content: center; font-size: 17px; font-weight: 700; }
+  .secondary { margin: 12px 16px 0; text-align: center; font-size: 14px; font-weight: 600; color: #0f5b3f; }
+  .tabs { position: absolute; left: 0; bottom: 0; width: 390px; height: 84px; background: #ffffff; border-top: 1px solid #d5dcd6; display: flex; justify-content: space-around; padding-top: 14px; font-size: 11px; font-weight: 600; color: #7b8a82; }
+  .tab { display: flex; flex-direction: column; align-items: center; gap: 6px; }
+  .tab i { width: 22px; height: 22px; border-radius: 6px; background: #c9d2cc; }
+  .tab.on { color: #0f5b3f; } .tab.on i { background: #0f5b3f; }
+  .specimen { position: absolute; bottom: 100px; left: 50%; transform: translateX(-50%); font-size: 9px; letter-spacing: 0.14em; font-weight: 700; color: #b0453a; border: 1px solid #b0453a; padding: 1px 4px; border-radius: 3px; }
+</style>
+</head>
+<body>
+  <div class="status"><span>9:41</span><span>100%</span></div>
+  <div class="header">
+    <div class="brand"><div class="logo"></div><div class="brand-name">Meridia Rail</div></div>
+    <div class="header-sub">Thursday 19 November</div>
+    <div class="header-title">Your e-ticket</div>
+  </div>
+  <div class="card">
+    <div class="journey">
+      <div class="stop"><div class="time">07:45</div><div class="station">Port Calder</div></div>
+      <div class="line"></div>
+      <div class="stop right"><div class="time">10:12</div><div class="station">Vessa Central</div></div>
+    </div>
+    <div class="duration">2 h 27 min · Direct · Train MR 214</div>
+    <div class="divider"></div>
+    <div class="facts">
+      <div class="fact"><div class="k">Coach</div><div class="v">C</div></div>
+      <div class="fact"><div class="k">Seat</div><div class="v">42A</div></div>
+      <div class="fact"><div class="k">Class</div><div class="v">First</div></div>
+    </div>
+    <div class="divider"></div>
+    <div class="qr-wrap">
+      <svg class="qr" viewBox="0 0 21 21" shape-rendering="crispEdges" xmlns="http://www.w3.org/2000/svg">
+        <title>Ticket code</title>
+        <rect x="0" y="0" width="7" height="7" fill="#14231c"/><rect x="1" y="1" width="5" height="5" fill="#fff"/><rect x="2" y="2" width="3" height="3" fill="#14231c"/>
+        <rect x="14" y="0" width="7" height="7" fill="#14231c"/><rect x="15" y="1" width="5" height="5" fill="#fff"/><rect x="16" y="2" width="3" height="3" fill="#14231c"/>
+        <rect x="0" y="14" width="7" height="7" fill="#14231c"/><rect x="1" y="15" width="5" height="5" fill="#fff"/><rect x="2" y="16" width="3" height="3" fill="#14231c"/>
+        <path fill="#14231c" d="M8 0h2v1H8zM11 1h2v2h-2zM8 3h1v2H8zM10 4h2v1h-2zM12 5h1v2h-1zM8 6h1v1H8zM10 7h1v1h-1zM0 8h2v1H0zM3 8h3v1H3zM8 8h3v2H8zM13 8h2v1h-2zM17 8h1v2h-1zM19 8h2v1h-2zM1 10h2v1H1zM5 10h1v2H5zM12 10h1v1h-1zM14 10h2v2h-2zM18 10h1v1h-1zM0 12h1v1H0zM2 12h2v1H2zM7 12h3v1H7zM11 12h1v2h-1zM16 12h1v1h-1zM19 12h2v2h-2zM8 14h2v1H8zM13 14h3v1h-3zM17 14h1v2h-1zM9 16h1v2H9zM11 16h2v1h-2zM14 16h2v2h-2zM19 16h2v1h-2zM8 18h1v3H8zM10 19h3v1h-3zM16 19h2v2h-2zM12 20h2v1h-2zM19 18h1v3h-1z"/>
+      </svg>
+      <div class="qr-side">
+        <div class="ref">MR-7K4-2219</div>
+        <div class="note">Show this code at the gate. Valid on this train only.</div>
+        <div class="chip">Checked in</div>
+      </div>
+    </div>
+  </div>
+  <div class="price-row"><span class="k">Fare paid</span><span class="v">ƒ 38.50</span></div>
+  <div class="button">Add to wallet</div>
+  <div class="secondary">Change or refund journey</div>
+  <div class="specimen">SPECIMEN</div>
+  <div class="tabs"><div class="tab"><i></i>Plan</div><div class="tab on"><i></i>Tickets</div><div class="tab"><i></i>Live</div><div class="tab"><i></i>Account</div></div>
+</body>
+</html>

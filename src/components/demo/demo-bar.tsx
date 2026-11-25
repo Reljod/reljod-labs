@@ -30,6 +30,7 @@ type DemoSlug =
   | "loupe"
   | "switchboard"
   | "canvas"
+  | "vellum"
   | "prism";
 
 /** A place inside a demo: a page (`href`) or a view the demo swaps itself (`onSelect`). */

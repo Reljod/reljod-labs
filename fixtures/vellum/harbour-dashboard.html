@@ -1,0 +1,112 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Port Authority of Meridia — Berths (SPECIMEN)</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { width: 1280px; height: 800px; overflow: hidden; }
+  body { display: flex; background: #f4f6f9; font-family: system-ui, -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; color: #1a2433; }
+  .side { width: 232px; background: #13294b; color: #c9d4e6; padding: 24px 16px; display: flex; flex-direction: column; }
+  .brand { display: flex; align-items: center; gap: 10px; padding: 0 8px 28px; }
+  .mark { width: 30px; height: 30px; border-radius: 50%; background: #2fb3a6; }
+  .brand-name { color: #ffffff; font-weight: 700; font-size: 15px; line-height: 1.2; }
+  .nav a { display: block; padding: 10px 12px; border-radius: 8px; font-size: 14px; font-weight: 500; color: inherit; text-decoration: none; margin-bottom: 4px; }
+  .nav a.on { background: #24427a; color: #ffffff; font-weight: 600; }
+  .side .foot { margin-top: auto; padding: 0 8px; font-size: 12px; opacity: 0.7; }
+  .main { flex: 1; padding: 28px 32px; display: flex; flex-direction: column; gap: 22px; }
+  .top { display: flex; justify-content: space-between; align-items: center; }
+  .title { font-size: 26px; font-weight: 700; }
+  .subtitle { font-size: 14px; color: #5b6880; margin-top: 2px; }
+  .actions { display: flex; gap: 10px; align-items: center; }
+  .pill { padding: 8px 14px; border-radius: 8px; background: #ffffff; border: 1px solid #d7dde8; font-size: 13px; font-weight: 600; }
+  .primary { padding: 9px 16px; border-radius: 8px; background: #2fb3a6; color: #ffffff; font-size: 13px; font-weight: 700; }
+  .specimen { font-size: 10px; letter-spacing: 0.14em; font-weight: 700; color: #b0453a; border: 1px solid #b0453a; padding: 2px 5px; border-radius: 3px; }
+  .kpis { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; }
+  .kpi { background: #ffffff; border-radius: 12px; padding: 18px 20px; border: 1px solid #e3e8f0; }
+  .kpi .k { font-size: 12px; text-transform: uppercase; letter-spacing: 0.08em; color: #5b6880; font-weight: 600; }
+  .kpi .v { font-size: 32px; font-weight: 800; margin-top: 6px; letter-spacing: -0.02em; }
+  .kpi .d { font-size: 13px; margin-top: 4px; font-weight: 600; }
+  .up { color: #1f8a5b; } .down { color: #c2483d; }
+  .kpi.accent { background: #13294b; color: #ffffff; border-color: #13294b; }
+  .kpi.accent .k { color: #9fb2d3; }
+  .row { display: grid; grid-template-columns: 1.15fr 1fr; gap: 16px; flex: 1; }
+  .panel { background: #ffffff; border-radius: 12px; border: 1px solid #e3e8f0; padding: 20px; }
+  .panel h2 { font-size: 16px; font-weight: 700; }
+  .panel .hint { font-size: 12px; color: #5b6880; margin-top: 2px; }
+  table { width: 100%; border-collapse: collapse; margin-top: 14px; font-size: 13px; }
+  th { text-align: left; font-size: 11px; text-transform: uppercase; letter-spacing: 0.08em; color: #5b6880; padding: 8px 6px; border-bottom: 2px solid #e3e8f0; }
+  .more { margin-top: 18px; font-size: 13px; font-weight: 700; color: #1b7a6f; }
+  td { padding: 14px 6px; border-bottom: 1px solid #eef1f6; }
+  td.mono { font-family: ui-monospace, Menlo, Consolas, monospace; font-size: 12px; }
+  .tag { display: inline-block; padding: 3px 8px; border-radius: 6px; font-size: 11px; font-weight: 700; }
+  .t-in { background: #dff4ef; color: #1b7a6f; } .t-wait { background: #fdf0d5; color: #9a6a00; } .t-out { background: #e5ebf6; color: #2a4c8a; }
+</style>
+</head>
+<body>
+  <aside class="side">
+    <div class="brand"><div class="mark"></div><div class="brand-name">Port Authority<br>of Meridia</div></div>
+    <nav class="nav">
+      <a>Overview</a>
+      <a class="on">Berths</a>
+      <a>Vessels</a>
+      <a>Manifests</a>
+      <a>Tariffs</a>
+      <a>Reports</a>
+    </nav>
+    <div class="foot">Harbour Office · Port Calder</div>
+  </aside>
+  <main class="main">
+    <div class="top">
+      <div><div class="title">Berths</div><div class="subtitle">Week 47 · all quays</div></div>
+      <div class="actions"><span class="specimen">SPECIMEN</span><span class="pill">This week</span><span class="primary">Assign berth</span></div>
+    </div>
+    <div class="kpis">
+      <div class="kpi accent"><div class="k">Occupancy</div><div class="v">78%</div><div class="d" style="color:#7fe0d4">+6 pts on last week</div></div>
+      <div class="kpi"><div class="k">Vessels alongside</div><div class="v">14</div><div class="d up">+3 since Monday</div></div>
+      <div class="kpi"><div class="k">Avg. wait</div><div class="v">5.2 h</div><div class="d down">+0.8 h</div></div>
+      <div class="kpi"><div class="k">Berth dues</div><div class="v">ƒ 412k</div><div class="d up">+11%</div></div>
+    </div>
+    <div class="row">
+      <div class="panel">
+        <h2>Calls per quay</h2><div class="hint">Vessel calls, last 7 days</div>
+        <svg width="100%" viewBox="0 0 520 440" xmlns="http://www.w3.org/2000/svg">
+          <title>Calls per quay</title>
+          <g stroke="#eef1f6" stroke-width="1">
+            <line x1="40" y1="30" x2="510" y2="30"/><line x1="40" y1="122" x2="510" y2="122"/><line x1="40" y1="215" x2="510" y2="215"/><line x1="40" y1="307" x2="510" y2="307"/>
+          </g>
+          <line x1="40" y1="400" x2="510" y2="400" stroke="#c4ccd9" stroke-width="2"/>
+          <g font-family="system-ui, sans-serif" font-size="13" fill="#5b6880" text-anchor="end">
+            <text x="32" y="34">40</text><text x="32" y="126">30</text><text x="32" y="219">20</text><text x="32" y="311">10</text>
+          </g>
+          <rect x="62" y="178" width="48" height="222" rx="4" fill="#13294b"/>
+          <rect x="136" y="113" width="48" height="287" rx="4" fill="#13294b"/>
+          <rect x="210" y="252" width="48" height="148" rx="4" fill="#13294b"/>
+          <rect x="284" y="76" width="48" height="324" rx="4" fill="#2fb3a6"/>
+          <rect x="358" y="215" width="48" height="185" rx="4" fill="#13294b"/>
+          <rect x="432" y="289" width="48" height="111" rx="4" fill="#13294b"/>
+          <g font-family="system-ui, sans-serif" font-size="13" fill="#1a2433" text-anchor="middle" font-weight="600">
+            <text x="86" y="424">Q1</text><text x="160" y="424">Q2</text><text x="234" y="424">Q3</text><text x="308" y="424">Q4</text><text x="382" y="424">Q5</text><text x="456" y="424">Q6</text>
+          </g>
+        </svg>
+      </div>
+      <div class="panel">
+        <h2>Vessels today</h2><div class="hint">Next 24 hours</div>
+        <table>
+          <thead><tr><th>Vessel</th><th>Berth</th><th>ETA</th><th>Status</th></tr></thead>
+          <tbody>
+            <tr><td>Calder Star</td><td class="mono">Q4-02</td><td class="mono">06:30</td><td><span class="tag t-in">Alongside</span></td></tr>
+            <tr><td>Vessa Trader</td><td class="mono">Q2-01</td><td class="mono">09:15</td><td><span class="tag t-in">Alongside</span></td></tr>
+            <tr><td>Northwind Ore</td><td class="mono">Q1-03</td><td class="mono">13:40</td><td><span class="tag t-wait">At anchor</span></td></tr>
+            <tr><td>Meridian Dawn</td><td class="mono">Q5-01</td><td class="mono">17:05</td><td><span class="tag t-out">Departing</span></td></tr>
+            <tr><td>Saltmarsh</td><td class="mono">Q3-02</td><td class="mono">21:50</td><td><span class="tag t-wait">At anchor</span></td></tr>
+            <tr><td>Orra Packet</td><td class="mono">Q6-01</td><td class="mono">23:10</td><td><span class="tag t-out">Departing</span></td></tr>
+            <tr><td>Grey Heron</td><td class="mono">Q1-01</td><td class="mono">02:45</td><td><span class="tag t-wait">At anchor</span></td></tr>
+          </tbody>
+        </table>
+        <div class="more">View all 23 vessels</div>
+      </div>
+    </div>
+  </main>
+</body>
+</html>

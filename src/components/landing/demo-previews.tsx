@@ -12,6 +12,7 @@ import { PrismPreview } from "@/components/showcase/previews/prism-preview";
 import { ProcessTransferPreview } from "@/components/showcase/previews/process-transfer-preview";
 import { SievePreview } from "@/components/showcase/previews/sieve-preview";
 import { SwitchboardPreview } from "@/components/showcase/previews/switchboard-preview";
+import { VellumPreview } from "@/components/showcase/previews/vellum-preview";
 import type { Project } from "@/content/types";
 
 /** Each live demo's moving preview, by project slug. `landing.test.ts` checks every live demo has one. */
@@ -30,5 +31,6 @@ export const demoPreviews: Record<string, (project: Project) => ReactNode> = {
   loupe: () => <LoupePreview />,
   switchboard: () => <SwitchboardPreview />,
   canvas: () => <CanvasPreview />,
+  vellum: () => <VellumPreview />,
   prism: () => <PrismPreview />,
 };

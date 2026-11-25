@@ -180,6 +180,8 @@ export const demoProblems: Record<string, string> = {
     "Answer my phone line at 2am, in the caller's language, without breaking our rules.",
   canvas:
     "Ask a question about a million rows and get a chart you can adjust and check.",
+  vellum:
+    "Show it a picture of a screen and watch it draw the screen back, line by line.",
   prism:
     "Sort thousands of incoming bank items in milliseconds for pennies—and know exactly when the AI is uncertain.",
 };
@@ -227,6 +229,11 @@ export const demoShelves = [
       "prism",
     ],
   },
+  {
+    id: "pictures",
+    label: "Looks at pictures",
+    slugs: ["vellum", "operator", "loupe", "document-compliance-checks"],
+  },
 ] as const;
 
 /** Words for the catalog page (`/demos`). */
@@ -234,7 +241,15 @@ export const catalog = {
   title: "Every demo, filed.",
   intro: `${demoCount.Word} working demos: real AI over made-up paperwork. Hover a card to watch it work. They open with a guest code, so ask me for one.`,
   /** The search box types these as hints; each must find at least one demo. */
-  searchHints: ["MCP", "pension", "slides", "video", "cat banker", "500 pages"],
+  searchHints: [
+    "MCP",
+    "pension",
+    "slides",
+    "video",
+    "cat banker",
+    "500 pages",
+    "screenshot",
+  ],
   surprise: "Surprise me",
   drawer: "Pull a card at random",
   picked: "Picked for you",
