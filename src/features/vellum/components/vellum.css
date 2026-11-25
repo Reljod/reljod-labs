@@ -1,0 +1,145 @@
+/* Vellum's drafting table: a cutting mat, a sheet of vellum, a pen, a ruler. */
+
+.vellum-mat {
+  background-color: #23463a;
+  background-image:
+    linear-gradient(rgba(245, 241, 232, 0.16) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(245, 241, 232, 0.16) 1px, transparent 1px),
+    linear-gradient(rgba(245, 241, 232, 0.07) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(245, 241, 232, 0.07) 1px, transparent 1px);
+  background-size:
+    80px 80px,
+    80px 80px,
+    16px 16px,
+    16px 16px;
+  background-position: -1px -1px;
+}
+
+/* The frosted sheet laid over the screenshot. */
+.vellum-sheet-veil {
+  background:
+    radial-gradient(
+      120% 90% at 30% 20%,
+      rgba(255, 255, 255, 0.5),
+      transparent 60%
+    ),
+    rgba(248, 246, 238, 1);
+  backdrop-filter: blur(1.5px);
+  transition: opacity 300ms;
+}
+
+/* While the Draftsman reads: a brass beam sweeps the sheet. */
+.vellum-beam {
+  height: 22%;
+  background: linear-gradient(
+    to bottom,
+    transparent,
+    rgba(217, 168, 78, 0.28) 70%,
+    rgba(217, 168, 78, 0.9) 99%,
+    transparent
+  );
+  animation: vellum-beam 2.4s cubic-bezier(0.45, 0.05, 0.55, 0.95) infinite;
+}
+
+@keyframes vellum-beam {
+  0% {
+    transform: translateY(-100%);
+  }
+  100% {
+    transform: translateY(480%);
+  }
+}
+
+/* The Ruler: a steel rule with ticks that measures the sheet top to bottom. */
+.vellum-ruler {
+  height: 18px;
+  border-top: 2px solid var(--color-ink);
+  border-bottom: 2px solid var(--color-ink);
+  background-color: var(--color-brass);
+  background-image: repeating-linear-gradient(
+    90deg,
+    var(--color-ink) 0 1.5px,
+    transparent 1.5px 10px
+  );
+  background-size: 100% 55%;
+  background-repeat: no-repeat;
+  box-shadow: 0 4px 0 rgba(20, 33, 61, 0.35);
+  animation: vellum-ruler 1.3s cubic-bezier(0.6, 0, 0.3, 1) both;
+}
+
+@keyframes vellum-ruler {
+  0% {
+    top: 0;
+    opacity: 0;
+  }
+  8% {
+    opacity: 1;
+  }
+  92% {
+    opacity: 1;
+  }
+  100% {
+    top: calc(100% - 18px);
+    opacity: 0;
+  }
+}
+
+.vellum-pen-ring {
+  animation: vellum-ring 1.1s ease-out infinite;
+  transform-box: fill-box;
+  transform-origin: center;
+}
+
+@keyframes vellum-ring {
+  0% {
+    transform: scale(0.4);
+    opacity: 0.9;
+  }
+  100% {
+    transform: scale(1.6);
+    opacity: 0;
+  }
+}
+
+/* The likeness stamp, inked in seal red. */
+.vellum-stamp {
+  border: 3px solid var(--color-seal-red);
+  outline: 1px solid var(--color-seal-red);
+  outline-offset: 2px;
+  border-radius: 2px;
+  background: rgba(255, 255, 255, 0.86);
+  color: var(--color-seal-red);
+  padding: 0.35rem 0.75rem;
+  text-align: center;
+  font-family: var(--font-mono);
+  font-weight: 800;
+  mix-blend-mode: multiply;
+}
+
+/* A paint chip: it drops onto the table and settles. */
+.vellum-chip {
+  box-shadow:
+    inset 0 -10px 0 rgba(0, 0, 0, 0.06),
+    2px 2px 0 var(--color-ink);
+}
+
+/* An idle Sample card leans a little, like a print pinned to the board. */
+.vellum-card:nth-child(odd) {
+  rotate: -1.2deg;
+}
+.vellum-card:nth-child(even) {
+  rotate: 1deg;
+}
+.vellum-card:hover,
+.vellum-card:focus-visible,
+.vellum-card[aria-pressed="true"] {
+  rotate: 0deg;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .vellum-beam,
+  .vellum-ruler,
+  .vellum-pen-ring {
+    animation: none;
+  }
+}

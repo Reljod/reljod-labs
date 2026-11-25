@@ -23,6 +23,7 @@ describe("projects", () => {
       "loupe",
       "switchboard",
       "canvas",
+      "vellum",
       "prism",
       "helio",
     ]);
@@ -40,6 +41,7 @@ describe("projects", () => {
       "loupe",
       "switchboard",
       "canvas",
+      "vellum",
       "prism",
       "helio",
     ]);

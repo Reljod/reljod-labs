@@ -30,6 +30,7 @@ type DemoSlug =
   | "loupe"
   | "switchboard"
   | "canvas"
+  | "vellum"
   | "prism"
   | "helio";
 
