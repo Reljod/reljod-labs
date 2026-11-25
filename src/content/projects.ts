@@ -294,6 +294,85 @@ export const projects: Project[] = [
       "Controls re-run the saved query with no model call; code verifies every number",
     ],
   },
+  {
+    slug: "vellum",
+    icon: "grid",
+    title: "Vellum",
+    sector: "Vision",
+    summary:
+      "Hand it a screenshot and watch the newest vision model redraw the screen line by line, matching every colour, size and position. Code then lays the drawing over the original, scores how close it got and sends the worst spots back for another pass.",
+    outcome: "Watch a drawing get closer, pass by pass",
+    tags: ["Vision", "GPT-6.2 Astra", "Streaming", "Self-correcting"],
+    status: "Live",
+    href: "/demos/vellum",
+    marks: ["New"],
+    features: [
+      "Four sample screens, or drop in your own screenshot",
+      "Marks stream onto the sheet as the model writes them; corrections glide into place",
+      "A heat map shows, cell by cell, where the drawing still differs from the pixels",
+    ],
+  },
+  {
+    slug: "prism",
+    icon: "compass",
+    title: "Prism",
+    sector: "Decision models & calibrated triage",
+    summary:
+      "Single-forward-pass Decision Models (Nov 2026) split incoming bank paperwork into calibrated probabilities with zero output tokens. Watch five probability rays refract live, race four labs head-to-head in a Tribunal, and run a 12-slip sorting Cascade that screens out routine volume before paying for a generative LLM.",
+    outcome:
+      "Zero output tokens, calibrated probabilities, live threshold gates",
+    tags: ["Decision models", "Calibration", "Routing", "AI Gateway", "Motion"],
+    status: "Live",
+    href: "/demos/prism",
+    marks: ["New"],
+    features: [
+      "Microsoft Decision-1.1, Liquid d1.2 Ultra, Perplexity Decider v1.3 & Drex Finance live",
+      "Drag threshold sliders to physically re-route chutes and Cascade bins with zero API calls",
+      "Race four models in parallel on one Polar Constellation to spot unanimous vs split juries",
+    ],
+  },
+  {
+    slug: "helio",
+    icon: "scan",
+    title: "Helio",
+    sector: "Global retail & product campaigns",
+    summary:
+      "Turn one product photo into a three-market launch campaign in fifteen seconds. Native transparent RGBA cutouts, physics-coherent relit environments and surgical packaging edits via MAI Image 2.7, directed and vision-audited by Gemini 4 Neon.",
+    outcome: "$68,000 multi-city shoot compressed into 4 cents and 15 seconds",
+    tags: [
+      "MAI Image 2.7",
+      "Gemini 4 Neon",
+      "RGBA Layers",
+      "Multi-Reference",
+      "Vision Audit",
+    ],
+    status: "Live",
+    href: "/demos/helio",
+    marks: ["New"],
+    features: [
+      "Interactive 3D transparent RGBA product plates with live Alpha X-Ray inspection",
+      "Parallel 3-market campaign shoots, surgical relighting & live billboard mockups",
+      "Gemini 4 Neon pinned brand-integrity audits + live Flash vs Flagship 2.7 pixel race",
+    ],
+  },
+  {
+    slug: "floorwalk",
+    icon: "scan",
+    title: "Floorwalk",
+    sector: "Operations",
+    summary:
+      "Walk a warehouse or a shop once with a body camera. Gemini 4 Neon watches the whole video and calls out every blocked exit, open chiller and unmarked spill, with the second and the spot. Code checks each one against your Standard, scores the site and writes the Fix list.",
+    outcome: "A site audit before you reach the door",
+    tags: ["Video", "Gemini 4 Neon", "Streaming", "Rules"],
+    status: "Live",
+    href: "/demos/floorwalk",
+    marks: ["New"],
+    features: [
+      "Two sample walks with problems planted on purpose, and decoys, scored against the answer key",
+      "Boxes snap onto the footage, pins drop on the floor plan, Findings arrive as the model writes them",
+      "Switch a Rule off or change its weight and the site re-scores without calling the model",
+    ],
+  },
 ];
 
 /**

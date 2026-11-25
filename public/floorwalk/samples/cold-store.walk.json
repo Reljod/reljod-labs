@@ -1,0 +1,207 @@
+{
+  "slug": "cold-store",
+  "model": "google/gemini-4-neon",
+  "recordedAt": "2026-11-21T15:03:42.241Z",
+  "events": [
+    {
+      "ms": 276,
+      "event": {
+        "t": "start",
+        "model": "google/gemini-4-neon",
+        "seconds": 34,
+        "rules": [
+          "exits-clear",
+          "extinguisher-reachable",
+          "spill-marked",
+          "hi-vis-worn",
+          "cold-door-shut",
+          "stock-square",
+          "aisle-clear"
+        ]
+      }
+    },
+    {
+      "ms": 10627,
+      "event": {
+        "t": "raw",
+        "line": "{\"type\":\"zone\",\"at\":0,\"zone\":\"Aisle 1\"}"
+      }
+    },
+    { "ms": 10627, "event": { "t": "zone", "at": 0, "zone": "Aisle 1" } },
+    {
+      "ms": 11257,
+      "event": {
+        "t": "raw",
+        "line": "{\"type\":\"sighting\",\"at\":4,\"rule\":\"spill-marked\",\"zone\":\"Aisle 1\",\"box\":[778,376,976,606],\"saw\":\"Dark spill on the aisle floor with no wet-floor warning sign.\",\"confidence\":0.95}"
+      }
+    },
+    {
+      "ms": 11257,
+      "event": {
+        "t": "finding",
+        "finding": {
+          "id": "f1",
+          "rule": "spill-marked",
+          "at": 4,
+          "zone": "Aisle 1",
+          "box": [0.778, 0.376, 0.976, 0.606],
+          "saw": "Dark spill on the aisle floor with no wet-floor warning sign.",
+          "confidence": 0.95,
+          "alsoAt": []
+        }
+      }
+    },
+    {
+      "ms": 11862,
+      "event": {
+        "t": "raw",
+        "line": "{\"type\":\"sighting\",\"at\":5,\"rule\":\"stock-square\",\"zone\":\"Aisle 1\",\"box\":[0,444,286,562],\"saw\":\"Cartons on the top right rack are leaning out and overhanging the edge.\",\"confidence\":0.95}"
+      }
+    },
+    {
+      "ms": 11862,
+      "event": {
+        "t": "finding",
+        "finding": {
+          "id": "f2",
+          "rule": "stock-square",
+          "at": 5,
+          "zone": "Aisle 1",
+          "box": [0, 0.444, 0.286, 0.562],
+          "saw": "Cartons on the top right rack are leaning out and overhanging the edge.",
+          "confidence": 0.95,
+          "alsoAt": []
+        }
+      }
+    },
+    {
+      "ms": 12269,
+      "event": {
+        "t": "raw",
+        "line": "{\"type\":\"sighting\",\"at\":11,\"rule\":\"exits-clear\",\"zone\":\"Aisle 1\",\"box\":[300,441,801,577],\"saw\":\"A pallet of boxes is stacked directly in front of the fire exit door.\",\"confidence\":0.98}"
+      }
+    },
+    {
+      "ms": 12269,
+      "event": {
+        "t": "finding",
+        "finding": {
+          "id": "f3",
+          "rule": "exits-clear",
+          "at": 11,
+          "zone": "Aisle 1",
+          "box": [0.3, 0.441, 0.801, 0.577],
+          "saw": "A pallet of boxes is stacked directly in front of the fire exit door.",
+          "confidence": 0.98,
+          "alsoAt": []
+        }
+      }
+    },
+    {
+      "ms": 12465,
+      "event": {
+        "t": "raw",
+        "line": "{\"type\":\"zone\",\"at\":13,\"zone\":\"Cross aisle\"}"
+      }
+    },
+    { "ms": 12465, "event": { "t": "zone", "at": 13, "zone": "Cross aisle" } },
+    {
+      "ms": 13123,
+      "event": {
+        "t": "raw",
+        "line": "{\"type\":\"sighting\",\"at\":20,\"rule\":\"cold-door-shut\",\"zone\":\"Cross aisle\",\"box\":[226,405,814,703],\"saw\":\"Chiller C door is left open and propped by a cardboard box.\",\"confidence\":0.98}"
+      }
+    },
+    {
+      "ms": 13123,
+      "event": {
+        "t": "finding",
+        "finding": {
+          "id": "f4",
+          "rule": "cold-door-shut",
+          "at": 20,
+          "zone": "Cross aisle",
+          "box": [0.226, 0.405, 0.814, 0.703],
+          "saw": "Chiller C door is left open and propped by a cardboard box.",
+          "confidence": 0.98,
+          "alsoAt": []
+        }
+      }
+    },
+    {
+      "ms": 13123,
+      "event": {
+        "t": "raw",
+        "line": "{\"type\":\"zone\",\"at\":21,\"zone\":\"Aisle 3\"}"
+      }
+    },
+    { "ms": 13124, "event": { "t": "zone", "at": 21, "zone": "Aisle 3" } },
+    {
+      "ms": 13775,
+      "event": {
+        "t": "raw",
+        "line": "{\"type\":\"sighting\",\"at\":24,\"rule\":\"hi-vis-worn\",\"zone\":\"Aisle 3\",\"box\":[431,388,882,520],\"saw\":\"A worker is walking on the warehouse floor without a high-visibility vest.\",\"confidence\":0.98}"
+      }
+    },
+    {
+      "ms": 13775,
+      "event": {
+        "t": "finding",
+        "finding": {
+          "id": "f5",
+          "rule": "hi-vis-worn",
+          "at": 24,
+          "zone": "Aisle 3",
+          "box": [0.431, 0.388, 0.882, 0.52],
+          "saw": "A worker is walking on the warehouse floor without a high-visibility vest.",
+          "confidence": 0.98,
+          "alsoAt": []
+        }
+      }
+    },
+    {
+      "ms": 13973,
+      "event": {
+        "t": "raw",
+        "line": "{\"type\":\"zone\",\"at\":26,\"zone\":\"Dispatch\"}"
+      }
+    },
+    { "ms": 13973, "event": { "t": "zone", "at": 26, "zone": "Dispatch" } },
+    {
+      "ms": 14371,
+      "event": {
+        "t": "raw",
+        "line": "{\"type\":\"sighting\",\"at\":27,\"rule\":\"extinguisher-reachable\",\"zone\":\"Dispatch\",\"box\":[400,447,945,641],\"saw\":\"Blue crates are stacked directly in front of the fire extinguisher.\",\"confidence\":0.98}"
+      }
+    },
+    {
+      "ms": 14371,
+      "event": {
+        "t": "finding",
+        "finding": {
+          "id": "f6",
+          "rule": "extinguisher-reachable",
+          "at": 27,
+          "zone": "Dispatch",
+          "box": [0.4, 0.447, 0.945, 0.641],
+          "saw": "Blue crates are stacked directly in front of the fire extinguisher.",
+          "confidence": 0.98,
+          "alsoAt": []
+        }
+      }
+    },
+    {
+      "ms": 14372,
+      "event": {
+        "t": "done",
+        "ms": 14153,
+        "usage": {
+          "inputTokens": 3131,
+          "outputTokens": 1553,
+          "costUsd": 0.032688
+        },
+        "skipped": 0
+      }
+    }
+  ]
+}

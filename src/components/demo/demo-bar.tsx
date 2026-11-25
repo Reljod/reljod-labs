@@ -29,7 +29,11 @@ type DemoSlug =
   | "tidewater-bank"
   | "loupe"
   | "switchboard"
-  | "canvas";
+  | "canvas"
+  | "vellum"
+  | "prism"
+  | "helio"
+  | "floorwalk";
 
 /** A place inside a demo: a page (`href`) or a view the demo swaps itself (`onSelect`). */
 export type DemoTab =

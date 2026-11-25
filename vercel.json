@@ -40,6 +40,12 @@
     },
     "src/app/api/canvas/chat/route.ts": {
       "supportsCancellation": true
+    },
+    "src/app/api/floorwalk/walks/route.ts": {
+      "supportsCancellation": true
+    },
+    "src/app/api/floorwalk/asks/route.ts": {
+      "supportsCancellation": true
     }
   }
 }

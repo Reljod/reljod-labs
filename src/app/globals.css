@@ -220,3 +220,40 @@
     transform: scale(1) rotate(-8deg);
   }
 }
+
+/* Helio catalog preview: brass key-light sweep & darkroom frame develop. */
+@keyframes helio-preview-beam {
+  0%,
+  100% {
+    transform: translateX(-110%) skewX(-18deg);
+    opacity: 0;
+  }
+  18%,
+  55% {
+    opacity: 0.9;
+  }
+  70% {
+    transform: translateX(180%) skewX(-18deg);
+    opacity: 0;
+  }
+}
+
+@keyframes helio-preview-card {
+  0%,
+  12% {
+    opacity: 0.25;
+    transform: translateY(6px) scale(0.94);
+    filter: grayscale(1);
+  }
+  26%,
+  88% {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+    filter: grayscale(0);
+  }
+  100% {
+    opacity: 0.25;
+    transform: translateY(6px) scale(0.94);
+    filter: grayscale(1);
+  }
+}

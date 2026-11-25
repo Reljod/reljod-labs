@@ -37,6 +37,7 @@ jobs:
       E2E_CANVAS: "1"
       E2E_HARNESS: "1"
       E2E_OPERATOR: "1"
+      E2E_PRISM: "1"
       E2E_SWITCHBOARD: "1"
     steps:
       - name: Stop early when the E2E_ENV secret is missing
