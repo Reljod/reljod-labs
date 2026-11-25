@@ -53,6 +53,8 @@ describe("the Growth allowlist", () => {
     ["package.json"],
     ["pnpm-lock.yaml"],
     ["AGENTS.md"],
+    ["docs/demos/bank.md"],
+    ["docs/engineering/conventions.md"],
     ["docs/routines/bank-growth.md"],
     ["vercel.json"],
     ["next.config.ts"],
