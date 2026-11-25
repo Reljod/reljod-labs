@@ -16,6 +16,7 @@ A request that is refused partway through still spent whatever ran before the re
 
 - Take the rate (and check any per-Question budget) before the first call to a model, a Sandbox or any other metered service in the request, including validation steps such as parsing.
 - When a later step also takes the rate, pass along that it was already taken, so one Run counts once.
+- Store paid rate limits in Postgres behind a transaction-scoped advisory lock (never an in-process `Map`, which resets per serverless instance), and count actual billable units (e.g. items or jurors) rather than one flat unit per batch request.
 
 ## Make the escape hatch work when the thing it escapes is broken
 
@@ -128,6 +129,14 @@ A step that runs on a schedule and retries the same work until it succeeds (end-
 - Skip an entry whose amount is 0 rather than posting it; a Rule's minimum of 0 makes that reachable.
 - When an item truly cannot be processed, mark it and move on, so the rest of the batch still runs.
 - A path that skips a check for scheduled work (`scheduled: true` skips Approvals) must apply that check when the schedule is created, or it becomes a way around it.
+
+## A rate limit lives in the database, never in process memory
+
+Vercel runs multiple function instances in parallel and restarts them on cold starts and deploys, so a module-level `Map` never holds a shared per-visitor or global ceiling across routes or instances. In Helio, an initial in-memory rate limiter let concurrent requests spread across instances and reset on cold starts.
+
+- Count paid calls in Postgres (`<schema>.rate_hits`) under transaction-scoped advisory locks (`pg_advisory_xact_lock`), keyed by the salted visitor IP hash (`hashVisitor`).
+- When one request spends from multiple buckets (e.g. director + image), check every bucket inside one transaction before inserting any hit so a 429 on the second bucket never consumes the first.
+- Require `RATE_LIMIT_SALT` loudly via `env` rather than falling back to a hardcoded constant.
 
 ## Visitor text never starts an agent
 

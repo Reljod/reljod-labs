@@ -23,6 +23,10 @@ describe("projects", () => {
       "loupe",
       "switchboard",
       "canvas",
+      "vellum",
+      "prism",
+      "helio",
+      "floorwalk",
     ]);
   });
 
@@ -38,6 +42,10 @@ describe("projects", () => {
       "loupe",
       "switchboard",
       "canvas",
+      "vellum",
+      "prism",
+      "helio",
+      "floorwalk",
     ]);
     expect(marked("Beta")).toEqual(["bank-harness"]);
     expect(liveDemos[0]?.slug).toBe("bank-harness");

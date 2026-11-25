@@ -19,6 +19,8 @@
     "render:casework": "node fixtures/casework/render.mjs",
     "render:client-manager-samples": "node --experimental-strip-types scripts/render-client-manager-samples.mts",
     "render:process-transfer-samples": "node --experimental-strip-types scripts/render-process-transfer-samples.mts",
+    "render:vellum-samples": "node --experimental-strip-types scripts/render-vellum-samples.mts",
+    "render:floorwalk-samples": "node --experimental-strip-types scripts/render-floorwalk-samples.mts",
     "seed:client-manager": "node --env-file-if-exists=.env.local scripts/seed-client-manager.mts",
     "render:name-extraction-corpus": "node --experimental-strip-types scripts/render-name-extraction-corpus.mts",
     "eval:name-extraction": "node --env-file-if-exists=.env.local scripts/eval-name-extraction.mts",

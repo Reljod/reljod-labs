@@ -1,0 +1,76 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Tidewater Bank (SPECIMEN)</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { width: 1280px; height: 720px; overflow: hidden; }
+  body { background: #0b3d3a; color: #fbf6ea; font-family: system-ui, -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; position: relative; }
+  .nav { height: 84px; display: flex; align-items: center; justify-content: space-between; padding: 0 72px; }
+  .brand { display: flex; align-items: center; gap: 12px; font-family: Georgia, "Times New Roman", serif; font-size: 24px; font-weight: 700; }
+  .wave { width: 34px; height: 34px; border-radius: 50%; background: #ff7a4d; }
+  .links { display: flex; gap: 32px; font-size: 15px; font-weight: 500; color: #cfe3dd; }
+  .login { padding: 10px 20px; border: 2px solid #fbf6ea; border-radius: 999px; font-size: 14px; font-weight: 700; }
+  .hero { display: flex; padding: 56px 72px 0; gap: 40px; }
+  .copy { width: 600px; }
+  .eyebrow { font-size: 13px; text-transform: uppercase; letter-spacing: 0.16em; color: #ffb48f; font-weight: 700; }
+  h1 { margin-top: 18px; font-family: Georgia, "Times New Roman", serif; font-size: 72px; line-height: 1.02; font-weight: 700; letter-spacing: -0.02em; }
+  h1 em { color: #ff7a4d; font-style: italic; }
+  .sub { margin-top: 24px; font-size: 19px; line-height: 1.5; color: #cfe3dd; width: 500px; }
+  .ctas { margin-top: 36px; display: flex; gap: 14px; }
+  .btn { padding: 16px 28px; border-radius: 999px; font-size: 16px; font-weight: 700; }
+  .btn.solid { background: #ff7a4d; color: #0b3d3a; }
+  .btn.ghost { border: 2px solid #5f8f86; color: #fbf6ea; }
+  .fine { margin-top: 22px; font-size: 13px; color: #8fb3aa; }
+  .stage { position: relative; flex: 1; }
+  .disc { position: absolute; left: 90px; top: -40px; width: 440px; height: 440px; border-radius: 50%; background: #145a54; }
+  .block { position: absolute; left: 0; top: 330px; width: 110px; height: 110px; background: #f2c230; border-radius: 16px; }
+  .card { position: absolute; left: 30px; top: 10px; width: 420px; height: 264px; border-radius: 22px; background: #ff7a4d; color: #0b3d3a; padding: 28px 30px; transform: rotate(-8deg); }
+  .card .bank { font-family: Georgia, "Times New Roman", serif; font-size: 22px; font-weight: 700; }
+  .chip { margin-top: 34px; width: 54px; height: 40px; border-radius: 8px; background: #f2c230; border: 2px solid #c79a12; }
+  .number { margin-top: 24px; font-family: ui-monospace, Menlo, Consolas, monospace; font-size: 24px; letter-spacing: 0.08em; font-weight: 600; }
+  .card-foot { margin-top: 16px; display: flex; justify-content: space-between; font-size: 13px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.1em; }
+  .card2 { position: absolute; left: 160px; top: 330px; width: 340px; height: 210px; border-radius: 20px; background: #fbf6ea; transform: rotate(6deg); padding: 24px; color: #0b3d3a; }
+  .card2 .label { font-size: 12px; text-transform: uppercase; letter-spacing: 0.12em; font-weight: 700; color: #5f8f86; }
+  .card2 .bal { margin-top: 8px; font-family: Georgia, "Times New Roman", serif; font-size: 40px; font-weight: 700; }
+  .card2 .bar { margin-top: 22px; height: 10px; border-radius: 5px; background: #d9e6e1; }
+  .card2 .bar span { display: block; width: 62%; height: 100%; border-radius: 5px; background: #0b3d3a; }
+  .card2 .row { margin-top: 10px; display: flex; justify-content: space-between; font-size: 13px; font-weight: 600; }
+  .specimen { position: absolute; left: 72px; bottom: 24px; font-size: 10px; letter-spacing: 0.14em; font-weight: 700; color: #ffb48f; border: 1px solid #ffb48f; padding: 2px 5px; border-radius: 3px; }
+</style>
+</head>
+<body>
+  <div class="nav">
+    <div class="brand"><div class="wave"></div>Tidewater Bank</div>
+    <div class="links"><span>Accounts</span><span>Savings</span><span>Loans</span><span>Business</span></div>
+    <div class="login">Log in</div>
+  </div>
+  <div class="hero">
+    <div class="copy">
+      <div class="eyebrow">Banking for Meridia since 1897</div>
+      <h1>Money that moves <em>with the tide.</em></h1>
+      <div class="sub">One account for florins at home and abroad. No monthly fee, instant transfers, and a card that works in every port.</div>
+      <div class="ctas"><div class="btn solid">Open an account</div><div class="btn ghost">See how it works</div></div>
+      <div class="fine">Deposits protected up to ƒ 100,000 by the Meridia Deposit Fund.</div>
+    </div>
+    <div class="stage">
+      <div class="disc"></div>
+      <div class="block"></div>
+      <div class="card">
+        <div class="bank">Tidewater</div>
+        <div class="chip"></div>
+        <div class="number">4417 2093 •••• 5521</div>
+        <div class="card-foot"><span>A. Varenne</span><span>09/29</span></div>
+      </div>
+      <div class="card2">
+        <div class="label">Current account</div>
+        <div class="bal">ƒ 4,218.60</div>
+        <div class="bar"><span></span></div>
+        <div class="row"><span>Saved this month</span><span>62%</span></div>
+      </div>
+    </div>
+  </div>
+  <div class="specimen">SPECIMEN</div>
+</body>
+</html>
