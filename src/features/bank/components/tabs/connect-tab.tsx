@@ -4,7 +4,7 @@ import { useRef, useState } from "react";
 import type { McpTokenResponse } from "../../domain/api";
 import { HUMAN_ONLY, MCP_COMMANDS } from "../../domain/commands";
 import type { ConfirmationView } from "../../domain/views";
-import { mintTokenAction } from "../../server/actions";
+import { mintToken } from "../api";
 import { ConfirmationCard } from "../chat/confirmation-card";
 import { Button, ErrorNote, Panel } from "../ui";
 import { useBank, useRead } from "../use-bank";
@@ -61,8 +61,8 @@ export function ConnectTab() {
     setPending(true);
     setError(null);
     try {
-      const answer = await mintTokenAction();
-      if (answer.ok) setMinted(answer);
+      const answer = await mintToken();
+      if (answer.ok) setMinted(answer.value);
       else setError(answer.error);
     } catch {
       setError("The token could not be made. Try again.");

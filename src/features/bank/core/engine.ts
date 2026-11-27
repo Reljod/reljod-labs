@@ -138,7 +138,8 @@ function defOf(name: string): CommandDef {
   return def;
 }
 
-function assertAllowed(def: CommandDef, actor: Actor) {
+/** The Role check every command passes (and `list_growth`, read outside the engine). */
+export function assertAllowed(def: CommandDef, actor: Actor) {
   if (def.humanOnly && actor.via !== "app") {
     throw new ForbiddenError(
       `"${def.title}" is for a person in the app. No tool can do it.`,

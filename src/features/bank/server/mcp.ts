@@ -1,19 +1,21 @@
 import "server-only";
 import type { McpServer } from "@modelcontextprotocol/server";
 import { createMcpHandler, withMcpAuth } from "mcp-handler";
-import { z } from "zod";
+import { ZodError, z } from "zod";
+import { isAppError } from "@/platform/errors";
 import { type CommandDef, MCP_COMMANDS } from "../domain/commands";
 import { LIMITS } from "../domain/limits";
-import { read, write } from "./bank";
-import { type Caller, callerOf, verifyBearer } from "./mcp-auth";
-import { refusalOf } from "./respond";
+import { bank } from "./container";
+import { verifyBearer } from "./mcp-auth";
+import type { Caller } from "./ports";
 
 /*
  * The Tidewater Bank MCP server: the only way the Teller reaches the bank,
  * and the way outside clients (Claude) do. One tool per command, registered
  * from the same list the app uses (domain/commands.ts) and calling the same
- * two doors (server/bank.ts). No tool gives an Approval or confirms a
- * request: those commands are not in MCP_COMMANDS.
+ * command service the app's routes call (services/commands.ts). No tool
+ * gives an Approval or confirms a request: those commands are not in
+ * MCP_COMMANDS. Bearer-authenticated: no cookie, no same-origin check.
  */
 
 type ToolContext = {
@@ -39,6 +41,14 @@ function result(data: unknown) {
     content: [{ type: "text" as const, text: cut(JSON.stringify(data)) }],
     structuredContent: data as Record<string, unknown>,
   };
+}
+
+/** The words of a refusal a person may read, or null for anything else. */
+function refusalOf(error: unknown): string | null {
+  if (isAppError(error)) return error.message;
+  if (error instanceof ZodError)
+    return error.issues[0]?.message ?? "That input doesn't look right.";
+  return null;
 }
 
 function refusal(message: string) {
@@ -75,14 +85,15 @@ export function registerBankTools(server: McpServer) {
       },
       async (args: Record<string, unknown>, ctx: unknown) => {
         const caller = callerFrom(ctx);
+        // MCP tools reach no paid adapter, so they always use the live services.
+        const { commands } = bank();
         try {
           if (def.kind === "read")
-            return result(await read(caller.actor, def.name, args));
+            return result(await commands.read(caller.actor, def.name, args));
           const { idempotencyKey, ...input } = args;
           return result(
-            await write(
-              caller.actor,
-              caller.visitor,
+            await commands.write(
+              caller,
               def.name,
               input,
               typeof idempotencyKey === "string" ? idempotencyKey : null,
@@ -90,7 +101,7 @@ export function registerBankTools(server: McpServer) {
           );
         } catch (error) {
           const known = refusalOf(error);
-          if (known) return refusal(`Refused: ${known.message}`);
+          if (known) return refusal(`Refused: ${known}`);
           console.error("[bank] mcp", def.name, error);
           return refusal("The bank could not do that right now.");
         }
@@ -113,7 +124,7 @@ export const mcpHandler = withMcpAuth(
   async (_request, bearer) => {
     if (!bearer) return undefined;
     const claims = await verifyBearer(bearer);
-    const caller = claims ? await callerOf(claims) : null;
+    const caller = claims ? await bank().staff.caller(claims) : null;
     if (!claims || !caller) return undefined;
     return {
       token: bearer,

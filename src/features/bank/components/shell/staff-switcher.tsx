@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useId, useRef, useState } from "react";
-import { switchStaffAction } from "../../server/actions";
+import { switchStaff } from "../api";
 import { cx, ErrorNote, Initials, RoleBadge, Spinner, useWrite } from "../ui";
 import { useBank } from "../use-bank";
 import { useDismiss } from "./use-dismiss";
@@ -20,13 +20,13 @@ export function StaffSwitcher() {
   const menuId = useId();
   const write = useWrite(async (staffId: string) => {
     setTarget(staffId);
-    const answer = await switchStaffAction(staffId);
+    const answer = await switchStaff(staffId);
     if (!answer.ok) throw new Error(answer.error);
-    setActiveStaff(answer.staff);
+    setActiveStaff(answer.value);
     // Everything on screen was read as the Staff member before.
     refresh();
     setOpen(false);
-    return answer.staff;
+    return answer.value;
   });
   const close = useCallback(() => setOpen(false), []);
   useDismiss(root, open, close, write.pending);

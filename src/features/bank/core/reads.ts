@@ -174,36 +174,41 @@ async function getCustomer(
   owner: Owner,
   input: { customerId: string },
 ): Promise<CustomerDetail> {
-  const [customer] = await db<CustomerDetail["customer"][]>`
-    select ${customerColumns(db)}, c.phone, c.address, c.date_of_birth,
-           c.monthly_income, c.kyc_note
-    from bank.customers c
-    where c.owner = ${owner} and c.id = ${input.customerId}`;
+  const id = input.customerId;
+  // Every part is scoped to the Owner, so they run together; no customer, no answer.
+  const [[customer], accounts, cards, loans, payees, standingOrders] =
+    await Promise.all([
+      db<CustomerDetail["customer"][]>`
+        select ${customerColumns(db)}, c.phone, c.address, c.date_of_birth,
+               c.monthly_income, c.kyc_note
+        from bank.customers c
+        where c.owner = ${owner} and c.id = ${id}`,
+      accountsOf(db, owner, id),
+      db<CardView[]>`
+        select ${cardColumns(db)} from bank.cards k
+        join bank.accounts a on a.id = k.account_id
+        where k.owner = ${owner} and k.customer_id = ${id}
+        order by k.created_at`,
+      db<LoanView[]>`
+        select ${loanColumns(db)} from bank.loans l
+        join bank.customers c on c.id = l.customer_id
+        where l.owner = ${owner} and l.customer_id = ${id}
+        order by l.created_at desc`,
+      db<PayeeView[]>`
+        select id, customer_id, name, kind, bank_code, account_number, reference,
+               first_paid_on, created_on
+        from bank.payees
+        where owner = ${owner} and customer_id = ${id} and removed_at is null
+        order by created_at`,
+      db<StandingOrderView[]>`
+        select ${standingOrderColumns(db)} from bank.standing_orders s
+        join bank.accounts fa on fa.id = s.from_account_id
+        left join bank.accounts ta on ta.id = s.to_account_id
+        left join bank.payees p on p.id = s.payee_id
+        where s.owner = ${owner} and fa.customer_id = ${id}
+        order by s.status, s.next_run_on`,
+    ]);
   if (!customer) throw new NotFoundError("That customer is not in this bank.");
-  const accounts = await accountsOf(db, owner, customer.id);
-  const cards = await db<CardView[]>`
-    select ${cardColumns(db)} from bank.cards k
-    join bank.accounts a on a.id = k.account_id
-    where k.owner = ${owner} and k.customer_id = ${customer.id}
-    order by k.created_at`;
-  const loans = await db<LoanView[]>`
-    select ${loanColumns(db)} from bank.loans l
-    join bank.customers c on c.id = l.customer_id
-    where l.owner = ${owner} and l.customer_id = ${customer.id}
-    order by l.created_at desc`;
-  const payees = await db<PayeeView[]>`
-    select id, customer_id, name, kind, bank_code, account_number, reference,
-           first_paid_on, created_on
-    from bank.payees
-    where owner = ${owner} and customer_id = ${customer.id} and removed_at is null
-    order by created_at`;
-  const standingOrders = await db<StandingOrderView[]>`
-    select ${standingOrderColumns(db)} from bank.standing_orders s
-    join bank.accounts fa on fa.id = s.from_account_id
-    left join bank.accounts ta on ta.id = s.to_account_id
-    left join bank.payees p on p.id = s.payee_id
-    where s.owner = ${owner} and fa.customer_id = ${customer.id}
-    order by s.status, s.next_run_on`;
   return { customer, accounts, cards, loans, payees, standingOrders };
 }
 
@@ -253,19 +258,21 @@ async function getAccount(
   owner: Owner,
   input: { accountId: string },
 ): Promise<AccountDetail> {
-  const account = await accountById(db, owner, input.accountId);
-  const holds = await db<HoldView[]>`
-    select ${holdColumns(db)} from bank.holds h
-    where h.owner = ${owner} and h.account_id = ${account.id} and h.status = 'active'
-    order by h.created_at desc`;
-  const transactions = await transactionsOf(db, owner, {
-    accountId: account.id,
-  });
-  const cards = await db<CardView[]>`
-    select ${cardColumns(db)} from bank.cards k
-    join bank.accounts a on a.id = k.account_id
-    where k.owner = ${owner} and k.account_id = ${account.id}
-    order by k.created_at`;
+  const id = input.accountId;
+  // Every part is scoped to the Owner, so they run together; `accountById` refuses another's.
+  const [account, holds, transactions, cards] = await Promise.all([
+    accountById(db, owner, id),
+    db<HoldView[]>`
+      select ${holdColumns(db)} from bank.holds h
+      where h.owner = ${owner} and h.account_id = ${id} and h.status = 'active'
+      order by h.created_at desc`,
+    transactionsOf(db, owner, { accountId: id }),
+    db<CardView[]>`
+      select ${cardColumns(db)} from bank.cards k
+      join bank.accounts a on a.id = k.account_id
+      where k.owner = ${owner} and k.account_id = ${id}
+      order by k.created_at`,
+  ]);
   return { account, holds, transactions, cards };
 }
 
@@ -347,18 +354,20 @@ async function listCardActivity(
   owner: Owner,
   input: { cardId: string; limit?: number },
 ): Promise<{ card: CardView; activity: CardAuthView[] }> {
-  const [card] = await db<CardView[]>`
-    select ${cardColumns(db)} from bank.cards k
-    join bank.accounts a on a.id = k.account_id
-    where k.owner = ${owner} and k.id = ${input.cardId}`;
+  const [[card], activity] = await Promise.all([
+    db<CardView[]>`
+      select ${cardColumns(db)} from bank.cards k
+      join bank.accounts a on a.id = k.account_id
+      where k.owner = ${owner} and k.id = ${input.cardId}`,
+    db<CardAuthView[]>`
+      select id, card_id, merchant, category, channel, amount, status,
+             decline_code, decline_reason, authorised_on, settled_on, created_at
+      from bank.card_authorisations
+      where owner = ${owner} and card_id = ${input.cardId}
+      order by created_at desc
+      limit ${input.limit ?? LIMITS.pageSize}`,
+  ]);
   if (!card) throw new NotFoundError("That card is not in this bank.");
-  const activity = await db<CardAuthView[]>`
-    select id, card_id, merchant, category, channel, amount, status,
-           decline_code, decline_reason, authorised_on, settled_on, created_at
-    from bank.card_authorisations
-    where owner = ${owner} and card_id = ${card.id}
-    order by created_at desc
-    limit ${input.limit ?? LIMITS.pageSize}`;
   return { card, activity };
 }
 
@@ -381,17 +390,19 @@ async function getLoan(
   owner: Owner,
   input: { loanId: string },
 ): Promise<LoanDetail> {
-  const [loan] = await db<Omit<LoanDetail, "schedule">[]>`
-    select ${loanColumns(db)}, l.declared_income, l.declared_expenses, l.decision
-    from bank.loans l
-    join bank.customers c on c.id = l.customer_id
-    where l.owner = ${owner} and l.id = ${input.loanId}`;
+  const [[loan], schedule] = await Promise.all([
+    db<Omit<LoanDetail, "schedule">[]>`
+      select ${loanColumns(db)}, l.declared_income, l.declared_expenses, l.decision
+      from bank.loans l
+      join bank.customers c on c.id = l.customer_id
+      where l.owner = ${owner} and l.id = ${input.loanId}`,
+    db<LoanDetail["schedule"]>`
+      select n, due_on, principal, interest, payment, balance_after, status, paid_on
+      from bank.loan_instalments
+      where owner = ${owner} and loan_id = ${input.loanId}
+      order by n`,
+  ]);
   if (!loan) throw new NotFoundError("That loan is not in this bank.");
-  const schedule = await db<LoanDetail["schedule"]>`
-    select n, due_on, principal, interest, payment, balance_after, status, paid_on
-    from bank.loan_instalments
-    where owner = ${owner} and loan_id = ${loan.id}
-    order by n`;
   return { ...loan, schedule };
 }
 
@@ -472,29 +483,31 @@ export async function trialBalance(
   db: Db,
   owner: Owner,
 ): Promise<TrialBalanceView> {
-  const rows = await db<
-    {
-      accountId: string;
-      number: string;
-      name: string;
-      kind: TrialBalanceView["rows"][number]["kind"];
-      glCode: string | null;
-      normalSide: "D" | "C";
-      debits: number;
-      credits: number;
-    }[]
-  >`
-    select a.id as account_id, a.number, a.name, a.kind, a.gl_code,
-           a.normal_side, b.debits, b.credits
-    from bank.accounts a
-    join bank.account_balances b on b.account_id = a.id
-    where a.owner = ${owner}
-    order by coalesce(a.gl_code, case a.kind when 'loan' then '1300' else '2000' end), a.number`;
-  const reconciliation = await db<TrialBalanceView["reconciliation"]>`
-    select number, problem, materialised, ledger from bank.reconcile(${owner})`;
-  const [counts] = await db<{ entries: number; postings: number }[]>`
-    select (select count(*)::int from bank.journal_entries where owner = ${owner}) as entries,
-           (select count(*)::int from bank.postings where owner = ${owner}) as postings`;
+  const [rows, reconciliation, [counts]] = await Promise.all([
+    db<
+      {
+        accountId: string;
+        number: string;
+        name: string;
+        kind: TrialBalanceView["rows"][number]["kind"];
+        glCode: string | null;
+        normalSide: "D" | "C";
+        debits: number;
+        credits: number;
+      }[]
+    >`
+      select a.id as account_id, a.number, a.name, a.kind, a.gl_code,
+             a.normal_side, b.debits, b.credits
+      from bank.accounts a
+      join bank.account_balances b on b.account_id = a.id
+      where a.owner = ${owner}
+      order by coalesce(a.gl_code, case a.kind when 'loan' then '1300' else '2000' end), a.number`,
+    db<TrialBalanceView["reconciliation"]>`
+      select number, problem, materialised, ledger from bank.reconcile(${owner})`,
+    db<{ entries: number; postings: number }[]>`
+      select (select count(*)::int from bank.journal_entries where owner = ${owner}) as entries,
+             (select count(*)::int from bank.postings where owner = ${owner}) as postings`,
+  ]);
   const totalDebits = rows.reduce((sum, row) => sum + row.debits, 0);
   const totalCredits = rows.reduce((sum, row) => sum + row.credits, 0);
   return {
@@ -553,27 +566,29 @@ async function listLedger(
 }
 
 async function operations(db: Db, owner: Owner): Promise<OperationsView> {
-  const byTopic = await db<{ topic: string; status: string; count: number }[]>`
-    select topic, status, count(*)::int as count from bank.outbox
-    where owner = ${owner} group by topic, status`;
-  const recent = await db<OperationsView["outbox"]["recent"]>`
-    select id, topic, status, attempts, created_at from bank.outbox
-    where owner = ${owner} order by id desc limit 12`;
-  const workflows = await db<WorkflowRunView[]>`
-    select id, kind, subject, status, wake_at, steps, detail, started_at, ended_at
-    from bank.workflow_runs
-    where owner = ${owner}
-    order by (status in ('running', 'sleeping', 'waiting')) desc, started_at desc
-    limit 40`;
-  const holds = await db<OperationsView["holds"]>`
-    select ${holdColumns(db)}, a.number as account_number from bank.holds h
-    join bank.accounts a on a.id = h.account_id
-    where h.owner = ${owner} and h.status = 'active'
-    order by h.created_at desc limit 50`;
-  const clearing = await db<PaymentView[]>`
-    select ${paymentColumns(db)} from ${paymentFrom(db)}
-    where p.owner = ${owner} and p.status in ('clearing', 'held')
-    order by p.created_at desc limit 50`;
+  const [byTopic, recent, workflows, holds, clearing] = await Promise.all([
+    db<{ topic: string; status: string; count: number }[]>`
+      select topic, status, count(*)::int as count from bank.outbox
+      where owner = ${owner} group by topic, status`,
+    db<OperationsView["outbox"]["recent"]>`
+      select id, topic, status, attempts, created_at from bank.outbox
+      where owner = ${owner} order by id desc limit 12`,
+    db<WorkflowRunView[]>`
+      select id, kind, subject, status, wake_at, steps, detail, started_at, ended_at
+      from bank.workflow_runs
+      where owner = ${owner}
+      order by (status in ('running', 'sleeping', 'waiting')) desc, started_at desc
+      limit 40`,
+    db<OperationsView["holds"]>`
+      select ${holdColumns(db)}, a.number as account_number from bank.holds h
+      join bank.accounts a on a.id = h.account_id
+      where h.owner = ${owner} and h.status = 'active'
+      order by h.created_at desc limit 50`,
+    db<PaymentView[]>`
+      select ${paymentColumns(db)} from ${paymentFrom(db)}
+      where p.owner = ${owner} and p.status in ('clearing', 'held')
+      order by p.created_at desc limit 50`,
+  ]);
   const count = (status: string) =>
     byTopic
       .filter((row) => row.status === status)

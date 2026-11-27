@@ -33,8 +33,9 @@ vi.mock("./db", () => ({ sql: vi.fn() }));
 vi.mock("./env", () => ({ env: { sandboxConfigured: () => true } }));
 vi.mock("../core/engine", () => ({ runRead: vi.fn() }));
 
-const { chartOf, disposeSandbox, runCode, sandboxName, sdkReason } =
-  await import("./sandbox");
+const { disposeSandbox, runCode, sandboxName, sdkReason } = await import(
+  "./sandbox"
+);
 
 beforeEach(() => {
   vi.clearAllMocks();
@@ -83,24 +84,6 @@ describe("the Teller's Sandbox leaves no snapshots behind", () => {
     });
     get.mockRejectedValueOnce(new Error("not found"));
     await expect(disposeSandbox("gone")).resolves.toBeUndefined();
-  });
-});
-
-describe("a chart printed by the Sandbox", () => {
-  it("is read from its CHART line and held to a safe shape", () => {
-    const chart = chartOf(
-      'hello\nCHART:{"type":"line","title":"Spending","unit":"MRF","labels":["Sep","Oct"],"series":[{"name":"Out","values":[12.5,"x"]}]}\n',
-    );
-    expect(chart).toEqual({
-      type: "line",
-      title: "Spending",
-      unit: "MRF",
-      labels: ["Sep", "Oct"],
-      series: [{ name: "Out", values: [12.5, 0] }],
-    });
-    expect(chartOf("no chart here")).toBeNull();
-    expect(chartOf('CHART:{"type":"pie","labels":[],"series":[]}')).toBeNull();
-    expect(chartOf("CHART:{not json")).toBeNull();
   });
 });
 
