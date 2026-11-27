@@ -1,5 +1,7 @@
 import {
+  ACCESS_API,
   ACCESS_PATH,
+  DOOR_ROUTES,
   GUESTS_PATH,
   PROFILE_PATH,
   SIGN_IN_PATH,
@@ -51,6 +53,12 @@ export function decide(request: {
   access: "host" | "guest" | "e2e" | null;
 }): Decision {
   const { path, access } = request;
+  if (path === ACCESS_API || path.startsWith(`${ACCESS_API}/`)) {
+    // The door's routes are how a visitor gets Access, so they are open to
+    // everyone; every other Access route is a Host's, and fails closed.
+    const door = Object.values(DOOR_ROUTES).some((route) => path === route);
+    return door || access === "host" ? { kind: "pass" } : { kind: "refuse" };
+  }
   if (path === ACCESS_PATH || path.startsWith(`${ACCESS_PATH}/`)) {
     // The door is open to everyone; a Host's own pages only to a Host.
     const hostOnly =

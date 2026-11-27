@@ -14,8 +14,9 @@ import {
   LIMITS,
   purgeDate,
 } from "@/features/access/domain/guest-pass";
+import { accessServices } from "@/features/access/server/container";
 import { currentAccess } from "@/features/access/server/gate";
-import { listGuestPasses } from "@/features/access/server/repository";
+import type { ListedPass } from "@/features/access/server/ports";
 import { AccessShell, Card, Waiting } from "../shell";
 
 export const metadata: Metadata = {
@@ -39,8 +40,6 @@ const statusClass: Record<GuestPassStatus, string> = {
   revoked: "bg-seal-red text-paper",
   deleted: "bg-ink text-paper",
 };
-
-type ListedPass = Awaited<ReturnType<typeof listGuestPasses>>[number];
 
 function PassRow({ pass }: { pass: ListedPass }) {
   const status = guestPassStatus({
@@ -93,7 +92,7 @@ function PassRow({ pass }: { pass: ListedPass }) {
 async function GuestPasses() {
   const access = await currentAccess();
   if (access?.kind !== "host") redirect(SIGN_IN_PATH);
-  const passes = await listGuestPasses();
+  const passes = await accessServices().guestPasses.list(access);
   const issued = passes.filter((pass) => !pass.deleted_at);
   const deleted = passes.filter((pass) => pass.deleted_at);
 

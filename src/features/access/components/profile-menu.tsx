@@ -10,7 +10,8 @@ import {
   PROFILE_PATH,
   SIGN_IN_PATH,
 } from "../constants";
-import { currentProfile, type Profile } from "../server/actions";
+import type { Profile } from "../domain/api";
+import { getProfile } from "./api";
 import { LocalTime } from "./local-time";
 import { SignOutButton } from "./sign-out-button";
 
@@ -31,7 +32,7 @@ export function ProfileMenu() {
   useEffect(() => {
     if (!document.cookie.includes(`${PROFILE_HINT_COOKIE}=`)) return;
     let live = true;
-    currentProfile()
+    getProfile()
       .then((found) => {
         if (live) setProfile(found);
       })
