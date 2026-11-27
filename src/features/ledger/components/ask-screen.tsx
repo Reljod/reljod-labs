@@ -96,7 +96,11 @@ export function AskScreen({
   );
   const [placed, setPlaced] = useState<PlacedBlock[]>([]);
   const [live, setLive] = useState<Live | null>(null);
-  const [busy, setBusy] = useState(false);
+  // A new session asks its question as it mounts: busy from the first frame,
+  // so it never reads as idle before its Build starts.
+  const [busy, setBusy] = useState(
+    Boolean(initialQuestion) && session.builds.length === 0,
+  );
   const [sweep, setSweep] = useState(false);
   const [notice, setNotice] = useState<string | null>(
     limited ? LIMITED_NOTICE : null,
@@ -162,7 +166,7 @@ export function AskScreen({
 
   const ask = useCallback(
     async (question: string) => {
-      if (busy || busyRef.current) return;
+      if (busyRef.current) return;
       busyRef.current = true;
       setBusy(true);
       setNotice(null);
@@ -223,7 +227,7 @@ export function AskScreen({
       busyRef.current = false;
       setBusy(false);
     },
-    [busy, perform, session.id],
+    [perform, session.id],
   );
 
   const replay = useCallback(
