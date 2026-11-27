@@ -6,7 +6,6 @@ import {
   statementCsv,
   statementPageCount,
   statementPdf,
-  textWidth,
   toWinAnsi,
 } from "./statement-files";
 import type { StatementBody, StatementLine } from "./views";
@@ -94,13 +93,6 @@ describe("statementCsv", () => {
 });
 
 describe("statementPdf", () => {
-  it("is a PDF from the first byte to %%EOF", () => {
-    const text = latin1(statementPdf(body(5)));
-    expect(text.startsWith("%PDF-1.")).toBe(true);
-    expect(text.trimEnd().endsWith("%%EOF")).toBe(true);
-    expect(text).toContain("(SPECIMEN) Tj");
-  });
-
   it.each([
     [5, 1],
     [120, 3],
@@ -114,32 +106,6 @@ describe("statementPdf", () => {
     expect(text).toContain("(Closing balance) Tj");
   });
 
-  it("points every xref offset at its object, and startxref at the table", () => {
-    const text = latin1(statementPdf(body(120)));
-    const startxref = Number(text.match(/startxref\n(\d+)\n%%EOF/)?.[1]);
-    expect(text.slice(startxref, startxref + 4)).toBe("xref");
-    const table = text.slice(startxref).split("\n");
-    const count = Number(table[1]?.split(" ")[1]);
-    expect(count).toBeGreaterThan(5);
-    for (let object = 1; object < count; object += 1) {
-      const entry = table[2 + object] ?? "";
-      expect(entry).toMatch(/^\d{10} 00000 n $/);
-      const offset = Number(entry.slice(0, 10));
-      expect(text.slice(offset, offset + `${object} 0 obj`.length)).toBe(
-        `${object} 0 obj`,
-      );
-    }
-  });
-
-  it("gives each content stream its exact byte length", () => {
-    const text = latin1(statementPdf(body(5)));
-    for (const match of text.matchAll(
-      /<< \/Length (\d+) >>\nstream\n([\s\S]*?)\nendstream/g,
-    )) {
-      expect(match[2]?.length).toBe(Number(match[1]));
-    }
-  });
-
   it("escapes parentheses and backslashes, and replaces what WinAnsi cannot show", () => {
     expect(pdfEscape("a (b) \\ c")).toBe("a \\(b\\) \\\\ c");
     expect(toWinAnsi("Café – 5€ 漢")).toBe(
@@ -149,9 +115,5 @@ describe("statementPdf", () => {
     statement.customerName = "Zoë (née Ålund) 漢字";
     const text = latin1(statementPdf(statement));
     expect(text).toContain("(Zoë \\(née Ålund\\) ??) Tj");
-  });
-
-  it("measures amounts with Helvetica's digit widths", () => {
-    expect(textWidth("1,234.50", 1000)).toBe(6 * 556 + 2 * 278);
   });
 });

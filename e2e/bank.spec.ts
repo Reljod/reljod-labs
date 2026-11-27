@@ -30,6 +30,20 @@ test.use({
   },
 });
 
+test.beforeAll(async ({ request }) => {
+  // Every run leaves its conversations in the e2e Owner's bank, which keeps
+  // at most 30 (`LIMITS.sessionsPerBank`): delete all but the newest 20 first.
+  const response = await request.get("/api/bank/sessions");
+  expect(response.ok(), "list the e2e Owner's conversations").toBe(true);
+  const { sessions } = (await response.json()) as {
+    sessions: { id: string }[];
+  };
+  for (const session of sessions.slice(20)) {
+    const gone = await request.delete(`/api/bank/sessions/${session.id}`);
+    expect(gone.status(), "delete an old conversation").toBe(204);
+  }
+});
+
 const money = (text: string | null) =>
   Number((text ?? "").replace(/[^0-9.]/g, ""));
 
