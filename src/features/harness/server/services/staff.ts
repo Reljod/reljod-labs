@@ -5,6 +5,9 @@ import { defaultStaff, type Staff } from "../../domain/staff";
 import { isUuid } from "../db";
 import type { AuditLog, WorkspaceRepository } from "../ports";
 
+const STAFF_TTL_MS = 60_000;
+const STAFF_KEPT = 500;
+
 /** Who the visitor is in their Workspace, and everyone they may switch to. */
 export type Signed = { staff: Staff; everyone: Staff[] };
 
@@ -28,18 +31,41 @@ export function createStaffService(ports: {
   audit: AuditLog;
   /** Called when a Workspace was seeded just now (its Passages wait for embeddings). */
   seeded: (owner: Owner) => void;
+  now?: () => number;
 }): StaffService {
   const { workspace } = ports;
+  const now = ports.now ?? Date.now;
 
   const ensure = async (owner: Owner) => {
-    if (await workspace.ensure(owner)) ports.seeded(owner);
+    if (await workspace.ensure(owner)) {
+      kept.delete(owner);
+      ports.seeded(owner);
+    }
   };
+
+  /**
+   * A Workspace's Staff are written once, by its seed, and never edited, so
+   * an instance keeps each Owner's list for `STAFF_TTL_MS`. Every Harness
+   * request runs this gate; with the list kept, a read is one database
+   * round (its own query) instead of two. Bounded, and dropped whenever the
+   * Workspace is seeded again.
+   */
+  const kept = new Map<Owner, { staff: Staff[]; until: number }>();
 
   /**
    * The seed check and the Staff read start together: on a Workspace already
    * seeded (every visit after the first) that is one database round.
    */
   async function workspaceStaff(owner: Owner): Promise<Staff[]> {
+    const hit = kept.get(owner);
+    if (hit && hit.until > now()) return hit.staff;
+    const staff = await readStaff(owner);
+    if (kept.size >= STAFF_KEPT) kept.delete(kept.keys().next().value as Owner);
+    kept.set(owner, { staff, until: now() + STAFF_TTL_MS });
+    return staff;
+  }
+
+  async function readStaff(owner: Owner): Promise<Staff[]> {
     const [, staff] = await Promise.all([
       ensure(owner),
       workspace.staff(owner),
