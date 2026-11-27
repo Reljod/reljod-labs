@@ -218,10 +218,49 @@ export async function runCode(input: {
       files: input.files.map((item) => item.path.replace(`${ROOT}/`, "")),
     };
   } catch (error) {
-    return failed(
-      `The Sandbox could not run the code: ${error instanceof Error ? error.message : String(error)}`,
-    );
+    // The model and the page get the redacted reason; the log keeps the cause.
+    console.error("[bank] sandbox run", error);
+    return failed(`The Sandbox could not run the code: ${sdkReason(error)}`);
   }
+}
+
+const REASON_CHARS = 160;
+
+/**
+ * Why the SDK failed, safe to show the model and the page: the HTTP status
+ * and Vercel's error code and message, or a stream error's code. Anything
+ * token-shaped is cut, so a credential can never ride along. Unknown errors
+ * give only their name. (A copy of Harness's `sdkReason`: features do not
+ * import each other.)
+ */
+export function sdkReason(error: unknown): string {
+  if (!(error instanceof Error)) return "unknown error";
+  const e = error as Error & {
+    response?: { status?: number };
+    json?: { error?: { code?: unknown; message?: unknown } };
+    code?: unknown;
+  };
+  const parts: string[] = [];
+  if (typeof e.response?.status === "number")
+    parts.push(`HTTP ${e.response.status}`);
+  const code = e.json?.error?.code ?? e.code;
+  if (typeof code === "string" && code) parts.push(code);
+  const text =
+    typeof e.json?.error?.message === "string"
+      ? e.json.error.message
+      : parts.length > 0 || e.name === "StreamError"
+        ? e.message
+        : "";
+  const head = parts.length > 0 ? parts.join(" ") : e.name || "Error";
+  const said = text
+    .replace(/Bearer\s+\S+/gi, "[hidden]")
+    .replace(/[A-Za-z0-9_\-.]{32,}/g, "[hidden]")
+    .replace(/\s+/g, " ")
+    .trim();
+  const reason = said ? `${head}: ${said}` : head;
+  return reason.length > REASON_CHARS
+    ? `${reason.slice(0, REASON_CHARS)}…`
+    : reason;
 }
 
 /** Stops and deletes a Session's Sandbox, if it has one. Best effort. */

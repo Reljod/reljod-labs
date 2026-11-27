@@ -629,8 +629,9 @@ export async function tellLive(
         insert into bank.messages (session_id, owner, role, content, parts)
         select s.id, ${owner}, 'teller', ${words},
                ${tx.json([{ type: "growth", requestId: row.id, prNumber: row.prNumber, prUrl: row.prUrl }])}
-        from bank.sessions s where s.id = ${row.sessionId} and s.owner = ${owner}`;
-      await tx`update bank.sessions set updated_at = now() where id = ${row.sessionId} and owner = ${owner}`;
+        from bank.sessions s
+        where s.id = ${row.sessionId} and s.owner = ${owner} and s.deleted_at is null`;
+      await tx`update bank.sessions set updated_at = now() where id = ${row.sessionId} and owner = ${owner} and deleted_at is null`;
     }
     await notify(tx as never, owner, {
       customerId: null,
