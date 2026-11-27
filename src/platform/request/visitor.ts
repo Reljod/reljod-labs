@@ -10,6 +10,9 @@ import type { RequestMode } from "./mode";
  */
 export type Visitor = { hash: string; trusted: boolean };
 
+/** The visitor hash of every e2e request: rows it writes are told apart by it. */
+export const E2E_VISITOR_HASH = "e2e";
+
 export function hashVisitor(ip: string, salt: string) {
   return createHash("sha256").update(`${salt}:${ip}`).digest("hex");
 }
@@ -27,7 +30,7 @@ export function visitorOf(
   headers: Pick<Headers, "get">,
   mode: RequestMode,
 ): Visitor {
-  if (mode.e2e) return { hash: "e2e", trusted: true };
+  if (mode.e2e) return { hash: E2E_VISITOR_HASH, trusted: true };
   return {
     hash: hashVisitor(clientIp(headers), env.rateLimitSalt()),
     trusted: false,

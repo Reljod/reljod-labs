@@ -142,6 +142,19 @@ export async function readNdjson<E>(
   emit(buffer);
 }
 
+/** GETs an NDJSON stream (a Run's events) and hands each line to `onEvent`. */
+export async function followNdjson<E>(
+  path: string,
+  onEvent: (event: E) => void,
+  options: { query?: Query; signal?: AbortSignal } = {},
+): Promise<void> {
+  const response = await fetch(withQuery(path, options.query), {
+    signal: options.signal,
+    headers: { accept: "application/x-ndjson" },
+  });
+  await readNdjson(response, onEvent);
+}
+
 /** POSTs JSON and streams the NDJSON answer to `onEvent`. */
 export async function streamJson<E>(
   path: string,
