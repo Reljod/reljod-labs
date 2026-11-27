@@ -156,8 +156,12 @@ export type ClientCallResult = {
 export interface RunsService {
   /** The Owner's Runs, newest first; a Run that lost its workflow is closed on the way. */
   list(owner: Owner): Promise<RunSummary[]>;
-  /** One of the Owner's Runs with its Trail and Findings. */
-  detail(owner: Owner, runId: string): Promise<RunDetail>;
+  /** One of the Owner's Runs with its Findings, and its Trail unless `trail: false` (then `events` is empty). */
+  detail(
+    owner: Owner,
+    runId: string,
+    options?: { trail?: boolean },
+  ): Promise<RunDetail>;
   /** A page of a Run's Trail after `after`. */
   trail(
     owner: Owner,
@@ -391,12 +395,14 @@ export function createRunsService(ports: RunsPorts): RunsService {
     const run = await runs.get(runId);
     if (!run || run.status !== "running")
       throw new ConflictError(`The Run is ${run?.status ?? "gone"}.`);
-    const ctx = await loadContext(owner, run);
+    // Time spent waiting for a person is the harness's, not the client's.
+    const [ctx, pausedMs] = await Promise.all([
+      loadContext(owner, run),
+      approvals.pausedMs(run.id),
+    ]);
     let counters: Counters = countersOf(run);
     const startedAt = run.started_at.getTime();
     try {
-      // Time spent waiting for a person is the harness's, not the client's.
-      const pausedMs = await approvals.pausedMs(run.id);
       if (
         ports.now() - startedAt - pausedMs >
         (LIMITS.sandboxMinutes - 1) * 60_000
@@ -521,22 +527,22 @@ export function createRunsService(ports: RunsPorts): RunsService {
       return (await Promise.all(rows.map(closeIfStale))).map(toSummary);
     },
 
-    async detail(owner, runId) {
+    async detail(owner, runId, options = {}) {
       if (!isId(runId)) throw noSuchRun();
+      const withTrail = options.trail !== false;
+      const readTrail = async () =>
+        withTrail ? ports.trail.after(runId, 0, WHOLE_TRAIL) : [];
       // The Trail is read beside the row, and shown only if the row is the Owner's.
       const [found, events] = await Promise.all([
         runs.owned(owner, runId),
-        ports.trail.after(runId, 0, WHOLE_TRAIL),
+        readTrail(),
       ]);
       if (!found) throw noSuchRun();
       const run = await closeIfStale(found);
       return {
         ...toSummary(run),
         // Closing a stale Run wrote its `end`: read the Trail again for it.
-        events:
-          run === found
-            ? events
-            : await ports.trail.after(runId, 0, WHOLE_TRAIL),
+        events: run === found ? events : await readTrail(),
         findings: Array.isArray(run.findings) ? run.findings : [],
         expected: (expectedOf(run.task_id) ?? []).map((item) => item.label),
         rulebook: runRulebook(run),
@@ -573,17 +579,15 @@ export function createRunsService(ports: RunsPorts): RunsService {
         throw new ConflictError(
           "The Screen sandbox is not set up here, so no Run can start.",
         );
-      const resolved = await resolveTask(
-        caller.owner,
-        input.task,
-        input.manifestId ?? null,
-      );
+      const [resolved, current] = await Promise.all([
+        resolveTask(caller.owner, input.task, input.manifestId ?? null),
+        ports.rulebooks.current(caller.owner),
+      ]);
       const stubbed = ports.stub;
       const model =
         input.driver === "operator" && !stubbed
           ? (input.model ?? DEFAULT_MODEL)
           : null;
-      const current = await ports.rulebooks.current(caller.owner);
       const secret = randomBytes(24).toString("hex");
       const created = await runs.create({
         owner: caller.owner,

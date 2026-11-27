@@ -180,7 +180,9 @@ export function registerOperatorTools(server: McpServer) {
     "A Run's status, Verdict, Findings, cost, metrics and, while it is paused, the pending Approval.",
     z.object({ runId }),
     async (args, { caller, services }) => {
-      const detail = await services.runs.detail(caller.owner, args.runId);
+      const detail = await services.runs.detail(caller.owner, args.runId, {
+        trail: false,
+      });
       const { events: _events, rulebook: _rulebook, ...rest } = detail;
       return result(rest);
     },
