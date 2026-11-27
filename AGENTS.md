@@ -38,7 +38,7 @@ Most demos are built the same way. When a demo's notes say one of these, this is
 - **Audit trails are append-only.** The database refuses UPDATE and DELETE on audit and event tables; every write that needs an event records it, inside the same transaction when both must stand or fall together.
 - **Workflow and step names are replay keys.** Do not rename or move them; keep workflow files to pure imports.
 - **Sandboxes** are Vercel Sandbox with no network, authenticated by OIDC on Vercel or `VERCEL_OIDC_TOKEN` from `vercel env pull` locally.
-- **Env**: every demo reaches the one Supabase Postgres database through `DATABASE_URL` (transaction pooler, port 6543) with postgres.js, never through the Data API; AI Gateway keys fall back to `DOCUMENT_COMPLIANCE_AI_GATEWAY_API_KEY`. `RATE_LIMIT_SALT` also signs MCP tokens, so rotating it revokes them. A request carrying `E2E_BYPASS_TOKEN` passes the gates and lets e2e stub the model.
+- **Env**: every demo reaches the one Supabase Postgres database through `DATABASE_URL` (transaction pooler, port 6543) with postgres.js, never through the Data API, which exposes only `public` (a new schema is never added to Exposed schemas); AI Gateway keys fall back to `DOCUMENT_COMPLIANCE_AI_GATEWAY_API_KEY`. `RATE_LIMIT_SALT` also signs MCP tokens, so rotating it revokes them. A request carrying `E2E_BYPASS_TOKEN` passes the gates and lets e2e stub the model.
 - **Corpora** have train, validation and test splits. Tune on train and validation only.
 
 ## Demo notes

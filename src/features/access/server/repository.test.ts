@@ -1,112 +1,126 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { LIMITS } from "../domain/guest-pass";
 
-vi.mock("server-only", () => ({}));
+type Query = { text: string; values: unknown[] };
 
-const rpc = vi.fn();
-/** Every `from(...)` chain resolves to the next queued answer. */
-const answers: unknown[] = [];
-const calls: { table: string; ops: [string, unknown[]][] }[] = [];
-
-function chain(table: string) {
-  const call = { table, ops: [] as [string, unknown[]][] };
-  calls.push(call);
-  const target: Record<string, unknown> = {};
-  const proxy: unknown = new Proxy(target, {
-    get(_, prop: string) {
-      if (prop === "then") {
-        const answer = answers.shift() ?? { data: null, error: null };
-        return (resolve: (value: unknown) => void) => resolve(answer);
-      }
-      return (...args: unknown[]) => {
-        call.ops.push([prop, args]);
-        return proxy;
-      };
-    },
-  });
-  return proxy;
-}
-
-vi.mock("./supabase", () => ({
-  supabase: () => ({ rpc, from: (table: string) => chain(table) }),
+const state = vi.hoisted(() => ({
+  queries: [] as Query[],
+  /** Each statement takes the next answer: rows, or an error it throws. */
+  replies: [] as (unknown[] | Error)[],
 }));
 
-const { takeAttempt, settleAttempt, endGuestSession } = await import(
-  "./repository"
-);
+/* A stand-in for the postgres.js tagged template: it records each statement
+   (fragments flattened into it, parameters as $?) and answers in turn. */
+vi.mock("server-only", () => ({}));
+vi.mock("./supabase", () => ({ supabase: vi.fn() }));
+vi.mock("./db", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("./db")>();
+  const isFragment = (value: unknown): value is Query =>
+    Boolean(value && typeof value === "object" && "fragment" in value);
+  const tag = (strings: TemplateStringsArray, ...values: unknown[]) => {
+    let text = strings[0] ?? "";
+    const flat: unknown[] = [];
+    values.forEach((value, i) => {
+      if (isFragment(value)) {
+        text += value.text;
+        flat.push(...value.values);
+      } else {
+        text += "$?";
+        flat.push(value);
+      }
+      text += strings[i + 1] ?? "";
+    });
+    const query = { text: text.replace(/\s+/g, " ").trim(), values: flat };
+    return {
+      fragment: true,
+      ...query,
+      // biome-ignore lint/suspicious/noThenProperty: a postgres.js query is a thenable
+      then(resolve: (rows: unknown[]) => void, reject: (e: unknown) => void) {
+        state.queries.push(query);
+        const reply = state.replies.shift() ?? [];
+        if (reply instanceof Error) reject(reply);
+        else resolve(reply);
+      },
+    };
+  };
+  return { ...actual, sql: () => tag };
+});
+
+const { takeAttempt, settleAttempt, endGuestSession, codeLooksGood } =
+  await import("./repository");
+
+function pgError(code: string, message: string) {
+  return Object.assign(new Error(message), { code });
+}
 
 beforeEach(() => {
-  rpc.mockReset();
-  answers.length = 0;
-  calls.length = 0;
+  state.queries = [];
+  state.replies = [];
 });
 
 describe("takeAttempt", () => {
   it("asks the database to count and insert in one step, with the global cap for codes", async () => {
-    rpc.mockResolvedValue({ data: 41, error: null });
+    state.replies.push([{ id: 41 }]);
     expect(await takeAttempt("v", "code")).toBe(41);
-    expect(rpc).toHaveBeenCalledWith("take_attempt", {
-      p_visitor_hash: "v",
-      p_kind: "code",
-      p_window_minutes: LIMITS.attemptWindowMinutes,
-      p_max_failed: LIMITS.failedAttempts,
-      p_global_max_failed: LIMITS.globalFailedCodeAttempts,
-    });
+    expect(state.queries).toHaveLength(1);
+    expect(state.queries[0]?.text).toContain("access.take_attempt(");
+    expect(state.queries[0]?.values).toEqual([
+      "v",
+      "code",
+      LIMITS.attemptWindowMinutes,
+      LIMITS.failedAttempts,
+      LIMITS.globalFailedCodeAttempts,
+    ]);
   });
 
   it("never puts the Host's sign-in under the global cap", async () => {
-    rpc.mockResolvedValue({ data: 7, error: null });
+    state.replies.push([{ id: 7 }]);
     await takeAttempt("v", "sign_in");
-    expect(rpc.mock.calls[0][1]).toMatchObject({ p_global_max_failed: null });
+    expect(state.queries[0]?.values.at(-1)).toBeNull();
   });
 
   it("is refused when the database says so", async () => {
-    rpc.mockResolvedValue({ data: null, error: null });
+    state.replies.push([{ id: null }]);
     expect(await takeAttempt("v", "code")).toBeNull();
   });
 
   it("fails loudly on a database error", async () => {
-    rpc.mockResolvedValue({
-      data: null,
-      error: { code: "XX000", message: "down" },
-    });
+    state.replies.push(pgError("XX000", "down"));
     await expect(takeAttempt("v", "code")).rejects.toThrow("down");
   });
 
   describe("before the migration is applied", () => {
     beforeEach(() => {
-      rpc.mockResolvedValue({
-        data: null,
-        error: { code: "PGRST202", message: "missing" },
-      });
+      state.replies.push(pgError("42883", "function does not exist"));
     });
 
     it("refuses a visitor over the cap", async () => {
-      answers.push({ count: LIMITS.failedAttempts, error: null });
+      state.replies.push([{ mine: LIMITS.failedAttempts, everyone: 0 }]);
       expect(await takeAttempt("v", "code")).toBeNull();
     });
 
     it("refuses a code when everyone together is over the global cap", async () => {
-      answers.push(
-        { count: 0, error: null },
-        { count: LIMITS.globalFailedCodeAttempts, error: null },
-      );
+      state.replies.push([
+        { mine: 0, everyone: LIMITS.globalFailedCodeAttempts },
+      ]);
       expect(await takeAttempt("v", "code")).toBeNull();
     });
 
-    it("records the try as failed and returns its id", async () => {
-      answers.push(
-        { count: 0, error: null },
-        { count: 0, error: null },
-        { data: { id: 9 }, error: null },
+    it("never refuses the Host on the global count", async () => {
+      state.replies.push(
+        [{ mine: 0, everyone: LIMITS.globalFailedCodeAttempts }],
+        [{ id: 3 }],
       );
+      expect(await takeAttempt("v", "sign_in")).toBe(3);
+    });
+
+    it("records the try as failed and returns its id", async () => {
+      state.replies.push([{ mine: 0, everyone: 0 }], [{ id: 9 }]);
       expect(await takeAttempt("v", "code")).toBe(9);
-      const insert = calls[2].ops.find(([op]) => op === "insert");
-      expect(insert?.[1][0]).toEqual({
-        visitor_hash: "v",
-        kind: "code",
-        succeeded: false,
-      });
+      const insert = state.queries[2];
+      expect(insert?.text).toContain("insert into access.attempts");
+      expect(insert?.values).toEqual(["v", "code"]);
+      expect(insert?.text).toContain("false");
     });
   });
 });
@@ -114,20 +128,55 @@ describe("takeAttempt", () => {
 describe("settleAttempt", () => {
   it("marks that one try succeeded", async () => {
     await settleAttempt(5);
-    expect(calls[0].ops).toEqual([
-      ["update", [{ succeeded: true }]],
-      ["eq", ["id", 5]],
-    ]);
+    expect(state.queries[0]?.text).toBe(
+      "update access.attempts set succeeded = true where id = $?",
+    );
+    expect(state.queries[0]?.values).toEqual([5]);
   });
 });
 
 describe("endGuestSession", () => {
   it("deletes only that user's Guest session", async () => {
     await endGuestSession("u1");
-    expect(calls[0].table).toBe("guest_sessions");
-    expect(calls[0].ops).toEqual([
-      ["delete", []],
-      ["eq", ["user_id", "u1"]],
-    ]);
+    expect(state.queries[0]?.text).toBe(
+      "delete from access.guest_sessions where user_id = $?::uuid",
+    );
+    expect(state.queries[0]?.values).toEqual(["u1"]);
+  });
+});
+
+describe("codeLooksGood", () => {
+  const live = {
+    id: "p1",
+    expires_at: new Date(Date.now() + 60_000).toISOString(),
+    max_devices: 2,
+    revoked_at: null,
+    deleted_at: null,
+  };
+
+  it("refuses an unknown, revoked, deleted or ended code without counting", async () => {
+    for (const pass of [
+      undefined,
+      { ...live, revoked_at: "2026-11-27T00:00:00+00:00" },
+      { ...live, deleted_at: "2026-11-27T00:00:00+00:00" },
+      { ...live, expires_at: "2020-01-01T00:00:00+00:00" },
+    ]) {
+      state.queries = [];
+      state.replies.push(pass ? [pass] : []);
+      expect(await codeLooksGood("h", null)).toBe(false);
+      expect(state.queries).toHaveLength(1);
+    }
+  });
+
+  it("counts the other devices on the pass against its cap", async () => {
+    state.replies.push([live], [{ count: 1 }]);
+    expect(await codeLooksGood("h", "u1")).toBe(true);
+    expect(state.queries[1]?.text).toContain("and user_id <> $?::uuid");
+    expect(state.queries[1]?.values).toEqual(["p1", "u1"]);
+
+    state.queries = [];
+    state.replies.push([live], [{ count: 2 }]);
+    expect(await codeLooksGood("h", null)).toBe(false);
+    expect(state.queries[1]?.text).not.toContain("user_id");
   });
 });

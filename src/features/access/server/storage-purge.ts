@@ -1,4 +1,5 @@
 import "server-only";
+import { sql } from "./db";
 import { supabase } from "./supabase";
 
 /** One Storage object a purge left behind. */
@@ -49,16 +50,20 @@ export async function drainStoragePurge(
   return { removed, batches: maxBatches, done: false };
 }
 
-/** The real queue and Storage, through the service role. */
+/** The real queue (direct Postgres) and Storage (supabase-js, service role). */
 export const storagePurgeDeps: DrainDeps = {
   async next() {
-    const { data, error } = await supabase().rpc("storage_purge_batch", {
-      p_rows: 20,
-      p_objects: 500,
-    });
-    if (error)
-      throw new Error(`Could not read the purge queue: ${error.message}`);
-    return (data ?? []) as QueuedObject[];
+    try {
+      return await sql()<QueuedObject[]>`
+        select bucket, name from access.storage_purge_batch(
+          p_rows => 20, p_objects => 500
+        )`;
+    } catch (error) {
+      const message = error instanceof Error ? error.message : String(error);
+      throw new Error(`Could not read the purge queue: ${message}`, {
+        cause: error,
+      });
+    }
   },
   async remove(bucket, names) {
     const { error } = await supabase().storage.from(bucket).remove(names);
