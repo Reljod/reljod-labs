@@ -1,7 +1,7 @@
 import { ownerOf } from "@/features/access/domain/owner";
 import { accessOrDenied } from "@/features/access/server/gate";
 import { cleanQuestion } from "@/features/ledger/domain/presets";
-import { rateLimitMessage } from "@/features/ledger/server/rate-limit";
+import { takeBuildRate } from "@/features/ledger/server/rate-limit";
 import { loadAskSession } from "@/features/ledger/server/repository";
 import { runBuild } from "@/features/ledger/server/run-build";
 import { currentVisitor } from "@/features/ledger/server/visitor";
@@ -21,9 +21,10 @@ export async function POST(
   const question = cleanQuestion(String(body?.question ?? ""));
   if (!question) return new Response("Ask a question", { status: 400 });
 
-  // The rate limit is counted while the session loads; the stream reads it first.
+  // The rate hit is taken while the session loads, before any model call;
+  // the stream reads it first.
   const visiting = currentVisitor();
-  const limit = visiting.then(rateLimitMessage);
+  const limit = visiting.then(takeBuildRate);
   limit.catch(() => {}); // Read (and reported) by the stream; unread on a 404.
 
   // Another Owner's session is answered as if it did not exist.

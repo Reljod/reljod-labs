@@ -1,5 +1,6 @@
 import "server-only";
 import { headers } from "next/headers";
+import { isE2eToken } from "@/features/access/server/e2e";
 import { E2E_HEADER } from "@/features/document-compliance/constants";
 import {
   E2E_VISITOR,
@@ -22,8 +23,7 @@ export type Visitor = {
 
 export async function currentVisitor(): Promise<Visitor> {
   const requestHeaders = await headers();
-  const bypass = env.e2eBypassToken();
-  if (bypass && requestHeaders.get(E2E_HEADER) === bypass) {
+  if (isE2eToken(requestHeaders.get(E2E_HEADER))) {
     return {
       hash: E2E_VISITOR,
       limited: false,

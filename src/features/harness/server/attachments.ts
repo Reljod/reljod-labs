@@ -40,7 +40,7 @@ export async function sessionAttachments(
   const rows = await sql()<Row[]>`
     select s.id, s.title, s.kind, s.status, s.storage_path
     from harness.sources s
-    where s.owner = ${owner}
+    where s.owner = ${owner} and s.deleted_at is null
       and (
         s.session_id = ${sessionId}
         or s.id in (

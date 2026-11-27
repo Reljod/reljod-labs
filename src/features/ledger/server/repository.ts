@@ -86,20 +86,6 @@ export async function insertBuild(input: {
   return toBuild(data as BuildRow);
 }
 
-export async function countBuilds(filter: {
-  visitorHash?: string;
-  since: Date;
-}) {
-  let query = supabase()
-    .from("builds")
-    .select("id", { count: "exact", head: true })
-    .gte("created_at", filter.since.toISOString());
-  if (filter.visitorHash) query = query.eq("visitor_hash", filter.visitorHash);
-  const { count, error } = await query;
-  if (error) throw new Error(`Could not count Builds: ${error.message}`);
-  return count ?? 0;
-}
-
 /**
  * The Owner's newest Ask session that has an answer to show: where a limited
  * visitor lands. Null when they have none.
