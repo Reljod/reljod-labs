@@ -16,7 +16,7 @@ export function sql() {
   client ??= postgres(databaseUrl(), {
     prepare: false,
     max_pipeline: 1,
-    max: 3,
+    max: 4,
     idle_timeout: 20,
     connect_timeout: 15,
     onnotice: () => {},
