@@ -38,6 +38,7 @@ A file name, extension or type sent by the browser is untrusted. Before any of i
 
 - Use one shared helper; don't re-derive the extension at each call site.
 - Keep every key the browser can influence under the owning record's prefix (`clients/<id>/…`).
+- Deleting a row never deletes its file, and `access.purge_owner` once left every purged Owner's uploads in Storage. Put an Owner's files under a prefix derivable from the Owner or from one of their rows, and register the layout in `access.enqueue_owner_storage`; files of rows a demo purges itself go through `access.enqueue_storage_purge` (`docs/engineering/access.md`).
 
 ## Saved data is scoped to the Owner, never to the browser
 

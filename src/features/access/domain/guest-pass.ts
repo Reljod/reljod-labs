@@ -15,6 +15,11 @@ export const LIMITS = {
   passwordMaxLength: 72,
   /** Wrong codes or passwords one visitor may try before waiting. */
   failedAttempts: 8,
+  /**
+   * Wrong Guest codes from everyone together before the door waits, to blunt
+   * guessing from many addresses. Host sign-ins are not counted here.
+   */
+  globalFailedCodeAttempts: 200,
   attemptWindowMinutes: 15,
   /**
    * Days a deleted Guest pass, and every Client, Desk and run its Guests

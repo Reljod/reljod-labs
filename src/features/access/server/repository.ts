@@ -232,27 +232,98 @@ export async function restoreGuestPass(id: string) {
   if (error) fail("Could not restore the Guest pass", error);
 }
 
-export async function recordAttempt(
+/** PostgREST's answer when a function is not in its schema cache. */
+const NO_SUCH_FUNCTION = "PGRST202";
+
+/**
+ * Takes one try at the door, or refuses it: null when this visitor has been
+ * wrong `LIMITS.failedAttempts` times in the window, or (for Guest codes) when
+ * everyone together has been wrong `LIMITS.globalFailedCodeAttempts` times.
+ * The count and the insert are one step under a lock (`access.take_attempt`),
+ * so a burst cannot slip past the count. The try is recorded as failed; call
+ * `settleAttempt` when it succeeds. Host sign-ins carry no global cap, so a
+ * flood of wrong Guest codes never locks the Host out.
+ */
+export async function takeAttempt(
   visitorHash: string,
   kind: AttemptKind,
-  succeeded: boolean,
-) {
+): Promise<number | null> {
+  const { data, error } = await supabase().rpc("take_attempt", {
+    p_visitor_hash: visitorHash,
+    p_kind: kind,
+    p_window_minutes: LIMITS.attemptWindowMinutes,
+    p_max_failed: LIMITS.failedAttempts,
+    p_global_max_failed:
+      kind === "code" ? LIMITS.globalFailedCodeAttempts : null,
+  });
+  if (error?.code === NO_SUCH_FUNCTION) {
+    // The migration that adds it is not applied yet: count, then insert.
+    console.warn("[access] access.take_attempt is missing; counting unlocked");
+    if (await tooManyAttempts(visitorHash, kind)) return null;
+    return insertFailedAttempt(visitorHash, kind);
+  }
+  if (error) fail("Could not take the attempt", error);
+  return data === null || data === undefined ? null : Number(data);
+}
+
+async function insertFailedAttempt(visitorHash: string, kind: AttemptKind) {
+  const { data, error } = await supabase()
+    .from("attempts")
+    .insert({ visitor_hash: visitorHash, kind, succeeded: false })
+    .select("id")
+    .single();
+  if (error) fail("Could not record the attempt", error);
+  return Number((data as { id: number | string }).id);
+}
+
+/** The try worked: it no longer counts against anyone. */
+export async function settleAttempt(id: number) {
   const { error } = await supabase()
     .from("attempts")
-    .insert({ visitor_hash: visitorHash, kind, succeeded });
+    .update({ succeeded: true })
+    .eq("id", id);
   if (error) fail("Could not record the attempt", error);
 }
 
-/** Whether this visitor has been wrong too often lately to try again. */
-export async function tooManyAttempts(visitorHash: string, kind: AttemptKind) {
-  const since = new Date(Date.now() - LIMITS.attemptWindowMinutes * 60_000);
+/**
+ * The try never reached a guess (the door is not set up, or Auth is down),
+ * so it is not counted at all.
+ */
+export async function releaseAttempt(id: number) {
+  const { error } = await supabase().from("attempts").delete().eq("id", id);
+  if (error) console.error("[access] could not release an attempt", error);
+}
+
+/** Ends this anonymous user's Guest session, so its device is free again. */
+export async function endGuestSession(userId: string) {
+  const { error } = await supabase()
+    .from("guest_sessions")
+    .delete()
+    .eq("user_id", userId);
+  if (error) fail("Could not end the Guest session", error);
+}
+
+/** The unlocked fallback: whether this visitor (or everyone) was wrong too often. */
+async function tooManyAttempts(visitorHash: string, kind: AttemptKind) {
+  const since = new Date(
+    Date.now() - LIMITS.attemptWindowMinutes * 60_000,
+  ).toISOString();
   const { count, error } = await supabase()
     .from("attempts")
     .select("id", { count: "exact", head: true })
     .eq("visitor_hash", visitorHash)
     .eq("kind", kind)
     .eq("succeeded", false)
-    .gte("created_at", since.toISOString());
+    .gte("created_at", since);
   if (error) fail("Could not count attempts", error);
-  return (count ?? 0) >= LIMITS.failedAttempts;
+  if ((count ?? 0) >= LIMITS.failedAttempts) return true;
+  if (kind !== "code") return false;
+  const { count: everyone, error: globalError } = await supabase()
+    .from("attempts")
+    .select("id", { count: "exact", head: true })
+    .eq("kind", kind)
+    .eq("succeeded", false)
+    .gte("created_at", since);
+  if (globalError) fail("Could not count attempts", globalError);
+  return (everyone ?? 0) >= LIMITS.globalFailedCodeAttempts;
 }

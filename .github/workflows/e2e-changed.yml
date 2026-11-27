@@ -7,16 +7,29 @@ name: e2e-changed
 # The tests need the app's secrets, so this runs on `pull_request_target`:
 # the workflow file and the scripts it runs come from the default branch, and
 # a pull request cannot rewrite them to read the secrets. The pull request's
-# own code still runs with them (that is what an end-to-end test is), so it
-# runs only for code a person wrote: a branch of this repository, opened by
-# the owner or a collaborator, and never a Bank Growth pull request
-# (scripts/growth-pr.sh, the same check the growth guard uses). Growth pull
-# requests are written by an agent from a visitor's request (docs/adr/0024);
-# their tests run after the merge, on main. The growth check rests on the
-# label, the branch and the issue the pull request closes; a routine that
-# drops all three is caught by review, not here.
+# own code still runs with them (that is what an end-to-end test is), so a
+# run is opt-in, started by a person, for one commit:
 #
-# Secrets reach the job only in its last step: `.env.local` is written right
+# - The pull request is a branch of this repository, opened by the owner or a
+#   collaborator, and never a Bank Growth pull request (scripts/growth-pr.sh,
+#   the same check the growth guard uses). Growth pull requests are written by
+#   an agent from a visitor's request (docs/adr/0024); their tests run after
+#   the merge, on main.
+# - A person applies the `e2e:run` label. The job re-reads the pull request
+#   from the API at its start and refuses unless the label is still there, its
+#   most recent `labeled` event was by a human account listed in the
+#   E2E_LABELERS repository variable (default: the repository owner), and the
+#   head is still the commit that was labelled. Every push removes the label
+#   (job `unlabel`), so each new commit needs a new label.
+# - The secret lives only in the `e2e` GitHub Environment, which has a
+#   required reviewer: the job waits for the owner's approval in the Actions
+#   tab before its first step. The label, the branch and the closing issue are
+#   chosen by whoever wrote the pull request; the label's actor and the
+#   reviewer are not.
+#
+# One-time setup: docs/engineering/testing.md ("Secrets in the e2e workflows").
+#
+# Secrets reach the job only in its last steps: `.env.local` is written right
 # before the tests, after every third-party action and the install (actions
 # are pinned to commit SHAs). Nothing is uploaded: on a public repository an
 # artifact (a Playwright trace records request headers) is readable by
@@ -33,16 +46,42 @@ name: e2e-changed
 on:
   pull_request_target:
     branches: [main]
-    types: [opened, reopened, synchronize, ready_for_review]
+    types: [opened, reopened, synchronize, ready_for_review, labeled]
 
 permissions:
   contents: read
 
+# A new push or a new `e2e:run` label cancels a run in progress or waiting for
+# approval. Any other label gets a group of its own (and skips every job), so
+# labelling a pull request for another reason never cancels a run.
 concurrency:
-  group: e2e-changed-${{ github.event.pull_request.number }}
+  group: e2e-changed-${{ github.event.pull_request.number }}${{ (github.event.action == 'labeled' && github.event.label.name != 'e2e:run') && format('-other-{0}', github.run_id) || '' }}
   cancel-in-progress: true
 
 jobs:
+  # The label approves one commit, not the branch: every push drops it. Runs
+  # nothing from the pull request.
+  unlabel:
+    name: drop e2e:run on a new push
+    if: github.event.action == 'synchronize'
+    runs-on: ubuntu-latest
+    timeout-minutes: 2
+    permissions:
+      pull-requests: write
+      issues: write
+    steps:
+      - name: Remove the e2e:run label
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPO: ${{ github.repository }}
+          PR: ${{ github.event.pull_request.number }}
+        run: |
+          set -euo pipefail
+          if gh api "repos/$REPO/issues/$PR/labels" --jq '.[].name' | grep -qx 'e2e:run'; then
+            gh api -X DELETE "repos/$REPO/issues/$PR/labels/e2e%3Arun" >/dev/null
+            echo "Removed e2e:run: label the new head again to run its changed e2e tests." | tee -a "$GITHUB_STEP_SUMMARY"
+          fi
+
   select:
     name: pick the changed e2e tests
     runs-on: ubuntu-latest
@@ -52,13 +91,13 @@ jobs:
       pull-requests: read
       issues: read
     if: >-
+      (github.event.action != 'labeled' || github.event.label.name == 'e2e:run') &&
       github.event.pull_request.base.ref == github.event.repository.default_branch &&
       !github.event.pull_request.draft &&
       github.event.pull_request.head.repo.full_name == github.repository &&
       contains(fromJSON('["OWNER","MEMBER","COLLABORATOR"]'), github.event.pull_request.author_association)
     outputs:
       tests: ${{ steps.pick.outputs.tests }}
-      ready: ${{ steps.secret.outputs.ready }}
       growth: ${{ steps.growth.outputs.growth }}
     steps:
       - name: Check out the default branch (the scripts come from here)
@@ -85,36 +124,38 @@ jobs:
         env:
           BASE: ${{ github.event.pull_request.base.sha }}
           HEAD: ${{ github.event.pull_request.head.sha }}
+          ACTION: ${{ github.event.action }}
         run: |
           set -euo pipefail
           tests=$(node scripts/e2e-select.mjs "$BASE" "$HEAD" | tr '\n' ' ')
           echo "tests=$tests" >> "$GITHUB_OUTPUT"
           if [ -z "$tests" ]; then
             echo "No e2e test added or changed: nothing to run here (the full suite runs after the merge)." | tee -a "$GITHUB_STEP_SUMMARY"
+          elif [ "$ACTION" = "labeled" ]; then
+            echo "Running (once the e2e environment is approved): $tests" | tee -a "$GITHUB_STEP_SUMMARY"
           else
-            echo "Running: $tests" | tee -a "$GITHUB_STEP_SUMMARY"
-          fi
-      - name: Is the E2E_ENV secret set?
-        id: secret
-        env:
-          E2E_ENV: ${{ secrets.E2E_ENV }}
-        run: |
-          if [ -n "$E2E_ENV" ]; then
-            echo "ready=true" >> "$GITHUB_OUTPUT"
-          else
-            echo "ready=false" >> "$GITHUB_OUTPUT"
-            echo "::warning::The E2E_ENV secret is not set, so the changed e2e tests are skipped."
+            echo "Changed: $tests. The owner adds the e2e:run label to run them on this commit." | tee -a "$GITHUB_STEP_SUMMARY"
           fi
 
   e2e:
     name: changed e2e tests
     needs: select
+    # Only the run a person started by labelling this commit.
     if: >-
+      github.event.action == 'labeled' &&
+      github.event.label.name == 'e2e:run' &&
+      github.event.sender.type == 'User' &&
       needs.select.outputs.growth == 'false' &&
-      needs.select.outputs.tests != '' &&
-      needs.select.outputs.ready == 'true'
+      needs.select.outputs.tests != ''
     runs-on: ubuntu-latest
     timeout-minutes: 25
+    # E2E_ENV lives only in this environment. It has a required reviewer, so
+    # the job waits for the owner's approval before its first step.
+    environment: e2e
+    permissions:
+      contents: read
+      pull-requests: read
+      issues: read
     env:
       # Opt-in suites run when a pull request changes one of their tests. The
       # *_LIVE switches (a real model turn) stay off.
@@ -126,6 +167,54 @@ jobs:
       E2E_SWITCHBOARD: "1"
       E2E_KEEP_RUNS: "1"
     steps:
+      # Re-read from the API: the event payload is a snapshot, and the label
+      # may have been removed, or the branch pushed, while the job waited.
+      - name: Was e2e:run applied by a listed person to this exact head?
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPO: ${{ github.repository }}
+          PR: ${{ github.event.pull_request.number }}
+          HEAD: ${{ github.event.pull_request.head.sha }}
+          LABELERS: ${{ vars.E2E_LABELERS || github.repository_owner }}
+        run: |
+          set -euo pipefail
+          pr=$(gh api "repos/$REPO/pulls/$PR")
+          if [ "$(jq -r '.state' <<<"$pr")" != "open" ]; then
+            echo "::error::Pull request #$PR is not open."; exit 1
+          fi
+          if [ "$(jq -r '.head.sha' <<<"$pr")" != "$HEAD" ]; then
+            echo "::error::The head moved after the label was applied: label the new head again."; exit 1
+          fi
+          if ! jq -e '[.labels[].name] | index("e2e:run")' <<<"$pr" >/dev/null; then
+            echo "::error::The e2e:run label is no longer on the pull request."; exit 1
+          fi
+          last=$(gh api --paginate "repos/$REPO/issues/$PR/events" \
+            --jq '.[] | select(.event == "labeled" and .label.name == "e2e:run") | {login: .actor.login, type: .actor.type, at: .created_at}' \
+            | jq -s 'last // empty')
+          if [ -z "$last" ]; then
+            echo "::error::Found no labeled event for e2e:run."; exit 1
+          fi
+          login=$(jq -r '.login' <<<"$last")
+          type=$(jq -r '.type' <<<"$last")
+          if [ "$type" != "User" ] || [[ "$login" == *"[bot]" ]]; then
+            echo "::error::e2e:run was last applied by $login ($type), not a person."; exit 1
+          fi
+          allowed=false
+          for who in $LABELERS; do
+            if [ "${who,,}" = "${login,,}" ]; then allowed=true; fi
+          done
+          if [ "$allowed" != "true" ]; then
+            echo "::error::e2e:run was last applied by $login, who is not in E2E_LABELERS ($LABELERS)."; exit 1
+          fi
+          echo "e2e:run applied by $login at $(jq -r '.at' <<<"$last") on $HEAD." | tee -a "$GITHUB_STEP_SUMMARY"
+      - name: Stop early when the E2E_ENV secret is missing
+        env:
+          E2E_ENV: ${{ secrets.E2E_ENV }}
+        run: |
+          if [ -z "$E2E_ENV" ]; then
+            echo "::error::Set the E2E_ENV secret on the e2e environment to run the changed e2e tests."
+            exit 1
+          fi
       - name: Check out the pull request
         uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
         with:

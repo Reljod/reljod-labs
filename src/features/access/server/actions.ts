@@ -29,16 +29,18 @@ import {
   codeLooksGood,
   countLivePasses,
   deleteGuest,
+  endGuestSession,
   extendGuestPass as extendPass,
   guestPassById,
   insertGuestPass,
   markGuestPassDeleted,
-  recordAttempt,
   redeem,
+  releaseAttempt,
   replaceGuestCode,
   restoreGuestPass as restorePass,
   revokeGuestPass as revokePass,
-  tooManyAttempts,
+  settleAttempt,
+  takeAttempt,
 } from "./repository";
 import { authClient, sessionlessAuthClient } from "./supabase";
 
@@ -138,14 +140,14 @@ async function redeemCode(form: FormData): Promise<DoorState> {
   if (access && access.kind !== "guest") redirect(next);
 
   const visitor = await visitorHash();
-  if (await tooManyAttempts(visitor, "code")) return { error: WAIT };
+  // Counted as a wrong try from here on, unless it works (settleAttempt).
+  const attempt = await takeAttempt(visitor, "code");
+  if (attempt === null) return { error: WAIT };
   const code = normalizeGuestCode(String(form.get("code") ?? ""));
-  if (!code) {
-    await recordAttempt(visitor, "code", false);
-    return { error: BAD_CODE };
-  }
+  if (!code) return { error: BAD_CODE };
   if (!env.supabasePublishableKey()) {
     console.error("[access] SUPABASE_PUBLISHABLE_KEY is not set");
+    await releaseAttempt(attempt);
     return { error: "Guest access is not set up yet." };
   }
 
@@ -155,16 +157,14 @@ async function redeemCode(form: FormData): Promise<DoorState> {
   const returning = claims?.claims.is_anonymous ? claims.claims.sub : null;
 
   // Looked up before anything is created, so a wrong code makes no Auth user.
-  if (!(await codeLooksGood(codeHash, returning))) {
-    await recordAttempt(visitor, "code", false);
-    return { error: BAD_CODE };
-  }
+  if (!(await codeLooksGood(codeHash, returning))) return { error: BAD_CODE };
 
   let userId = returning;
   if (!userId) {
     const { data, error } = await client.auth.signInAnonymously();
     if (error || !data.user) {
       console.error("[access] anonymous sign-in failed", error);
+      await releaseAttempt(attempt);
       return {
         error: "Guest access is not available right now. Try again soon.",
       };
@@ -173,7 +173,7 @@ async function redeemCode(form: FormData): Promise<DoorState> {
   }
 
   const pass = await redeem({ codeHash, userId, visitorHash: visitor });
-  await recordAttempt(visitor, "code", pass !== null);
+  if (pass) await settleAttempt(attempt);
   if (!pass) {
     // Lost a race for the last device, or the pass ended a moment ago.
     if (!returning) {
@@ -209,13 +209,14 @@ async function signInHost(form: FormData): Promise<DoorState> {
   }
 
   const visitor = await visitorHash();
-  if (await tooManyAttempts(visitor, "sign_in")) return { error: WAIT };
+  const attempt = await takeAttempt(visitor, "sign_in");
+  if (attempt === null) return { error: WAIT };
 
   const client = authClient(requestCookies());
   const { error } = await client.auth.signInWithPassword({ email, password });
   // An account that is not a Host is told the same thing as a wrong password.
   const host = error ? null : await hostOf(client);
-  await recordAttempt(visitor, "sign_in", host !== null);
+  if (host) await settleAttempt(attempt);
   if (!host) {
     if (!error) await client.auth.signOut({ scope: "local" });
     return wrong;
@@ -230,7 +231,18 @@ async function signInHost(form: FormData): Promise<DoorState> {
 /** Ends this browser's session, Host or Guest, and says where to go next. */
 export async function signOut(): Promise<{ to: string }> {
   if (env.supabasePublishableKey()) {
-    await authClient(requestCookies()).auth.signOut({ scope: "local" });
+    const client = authClient(requestCookies());
+    // A Guest who leaves gives their device back to the pass. Their saved
+    // data stays: it belongs to the pass, not to this browser.
+    const { data: claims } = await client.auth.getClaims();
+    if (claims?.claims.is_anonymous && claims.claims.sub) {
+      try {
+        await endGuestSession(claims.claims.sub);
+      } catch (error) {
+        console.error("[access] could not free the Guest's device", error);
+      }
+    }
+    await client.auth.signOut({ scope: "local" });
   }
   await hintProfile(null);
   return { to: ACCESS_PATH };
@@ -276,13 +288,14 @@ export async function changePassword(
 
   // A stolen session must not be enough to take the account over.
   const visitor = await visitorHash();
-  if (await tooManyAttempts(visitor, "sign_in")) return { error: WAIT };
+  const attempt = await takeAttempt(visitor, "sign_in");
+  if (attempt === null) return { error: WAIT };
   const { error: wrong } =
     await sessionlessAuthClient().auth.signInWithPassword({
       email: host.email,
       password: current,
     });
-  await recordAttempt(visitor, "sign_in", !wrong);
+  if (!wrong) await settleAttempt(attempt);
   if (wrong) return { error: "The current password is wrong." };
 
   const { error } = await authClient(requestCookies()).auth.updateUser({
