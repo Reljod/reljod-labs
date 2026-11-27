@@ -3,7 +3,7 @@
 import { useQueryClient } from "@tanstack/react-query";
 import { useCallback, useRef, useState } from "react";
 import { LIMITS } from "../../domain/limits";
-import { ApiFailure, api, formatBytes, keys, messageOf } from "../api";
+import { ApiError, api, formatBytes, keys, messageOf } from "../api";
 import type { Attachment } from "./chat-state";
 
 let counter = 0;
@@ -101,7 +101,7 @@ export function useAttachments({
             const error = messageOf(caught);
             patch(key, item.localId, { state: "failed", error });
             failures.push(error);
-            if (caught instanceof ApiFailure && caught.status === 429) {
+            if (caught instanceof ApiError && caught.status === 429) {
               onLimitRef.current?.(caught.message);
             }
           }

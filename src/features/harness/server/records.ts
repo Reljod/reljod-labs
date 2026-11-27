@@ -232,11 +232,18 @@ export async function getEmployer(
   owner: Owner,
   idOrCode: string,
 ): Promise<EmployerResponse | null> {
-  const employer = await employerByIdOrCode(sql(), owner, idOrCode);
+  // By id, the Employer and its Schedules are read together; by code, the
+  // Schedules wait for the id.
+  const key = idOrCode.trim();
+  const [employer, early] = await Promise.all([
+    employerByIdOrCode(sql(), owner, key),
+    isUuid(key) ? listSchedules(owner, { employerId: key }) : null,
+  ]);
   if (!employer) return null;
   return {
     employer,
-    schedules: await listSchedules(owner, { employerId: employer.id }),
+    schedules:
+      early ?? (await listSchedules(owner, { employerId: employer.id })),
   };
 }
 

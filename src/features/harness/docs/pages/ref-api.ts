@@ -14,7 +14,7 @@ The app's browser client calls these routes and nothing else. The table is built
 ## Rules for every route
 
 - Every route passes the Access gate and resolves the Staff member first.
-- A write also checks the Role with §requirePermission()§.
+- A write also checks the Role: the route's §authorize(permits(action))§ policy, and the service again with §assertCan()§.
 - Errors are JSON, §{ "error": "<message for a person>" }§, with one of these statuses:
 
 | Status | Meaning |

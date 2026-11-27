@@ -3,13 +3,11 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { Suspense } from "react";
 import { callbackTrust } from "@/features/access/domain/mcp-clients";
-import { AccessDeniedError } from "@/features/access/server/gate";
 import { HarnessPageBar } from "@/features/harness/components/harness-bar";
 import { HARNESS_CONNECT_PATH } from "@/features/harness/domain/mcp-tools";
 import { parseAuthorizationRequest } from "@/features/harness/domain/oauth";
-import { requireStaff } from "@/features/harness/server/context";
 import { env } from "@/features/harness/server/env";
-import { listStaff } from "@/features/harness/server/staff";
+import { signedIn } from "@/features/harness/server/page";
 import { ConsentForm } from "./consent-form";
 import "@/features/harness/harness.css";
 
@@ -68,11 +66,8 @@ async function Consent({
   const parsed = parseAuthorizationRequest(params, env.rateLimitSalt());
   if (parsed.kind === "invalid")
     return <CannotConnect message={parsed.message} />;
-  const context = await requireStaff().catch((error: unknown) => {
-    if (error instanceof AccessDeniedError) return null;
-    throw error;
-  });
-  if (!context)
+  const signed = await signedIn();
+  if (!signed)
     return (
       <CannotConnect message="Open the demos first, then start again from the app." />
     );
@@ -80,7 +75,7 @@ async function Consent({
   // callback, so a visitor without Access is never redirected to one.
   if (parsed.kind === "error") redirect(parsed.redirect);
   const { request } = parsed;
-  const { access, owner, staff } = context;
+  const { access, staff } = signed.caller;
   return (
     <ConsentForm
       request={params.toString()}
@@ -94,7 +89,7 @@ async function Consent({
             ? `a guest (${access.label})`
             : "the test suite"
       }
-      staff={await listStaff(owner)}
+      staff={signed.everyone}
       current={staff.id}
     />
   );

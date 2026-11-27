@@ -26,7 +26,8 @@ import type { Staff } from "./staff";
  * calls them only through `components/api.ts`.
  *
  * Every route passes the Access gate and resolves the Staff member with
- * `staffOrDenied()` (or `requirePermission()` for a write). Errors are JSON
+ * `withStaff()` (`server/api.ts`), and a write checks the Role with
+ * `authorize(permits(action))`. Errors are JSON
  * `{ error: string }` with 400 (bad request), 401 (no Access), 403 (the Role
  * may not), 404, 409 (wrong state) or 429 (a limit).
  */
@@ -116,6 +117,8 @@ export const apiPath = {
 
   plugin: () => `${API_ROOT}/plugin`,
   mcpToken: () => `${API_ROOT}/mcp-token`,
+  /** The consent page's Allow or Deny for an MCP client's OAuth sign-in. */
+  consents: () => `${API_ROOT}/consents`,
   /** The Harness MCP server and its OAuth endpoints check their own bearer. */
   mcp: () => `${API_ROOT}/mcp`,
   oauth: (endpoint: "register" | "token") => `${API_ROOT}/oauth/${endpoint}`,
@@ -290,6 +293,18 @@ export type McpTokenResponse = {
   /** The Staff member the token acts as; fixed when it is minted (ADR 0013). */
   staff: Staff;
 };
+
+/** The consent page's answer. The authorization request is read again on the server, never trusted from the page. */
+export type ConsentRequest = {
+  /** The authorization request's query string. */
+  request: string;
+  answer: "allow" | "deny";
+  staffId: string;
+  /** The host ticked "I trust <host>" for, when the callback is neither loopback nor a known client's. */
+  trustHost: string | null;
+};
+/** Where to send the browser: the client's callback with a code, or with `access_denied`. */
+export type ConsentResponse = { redirect: string };
 
 // Route table --------------------------------------------------------------------
 
@@ -636,6 +651,15 @@ export const ROUTES: RouteSpec[] = [
     response: "McpTokenResponse",
     slice: "chat",
     summary: "A token for an MCP client that cannot sign in with OAuth.",
+  },
+  {
+    method: "POST",
+    path: "/consents",
+    request: "ConsentRequest",
+    response: "ConsentResponse",
+    slice: "chat",
+    summary:
+      "Allow or Deny an MCP client's OAuth sign-in: where to send the browser.",
   },
   {
     method: "POST",

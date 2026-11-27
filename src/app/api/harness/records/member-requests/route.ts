@@ -1,28 +1,21 @@
+import { z } from "zod";
 import type { MemberRequestListResponse } from "@/features/harness/domain/api";
-import {
-  MEMBER_REQUEST_KINDS,
-  type MemberRequestKind,
-} from "@/features/harness/domain/records";
-import { requireStaff } from "@/features/harness/server/context";
-import { listMemberRequests } from "@/features/harness/server/records";
-import { failure, json } from "@/features/harness/server/respond";
+import { MEMBER_REQUEST_KINDS } from "@/features/harness/domain/records";
+import { harnessApi } from "@/features/harness/server/api";
+import { query } from "@/platform/http/middleware";
 
-const isKind = (value: string | null): value is MemberRequestKind =>
-  value !== null && (MEMBER_REQUEST_KINDS as readonly string[]).includes(value);
+const schema = z.object({
+  // An unknown kind lists every kind, as it always has.
+  kind: z.enum(MEMBER_REQUEST_KINDS).optional().catch(undefined),
+  member: z.string().max(200).optional(),
+});
 
 /** Member requests, newest first; `?kind=` and `?member=` narrow them. */
-export async function GET(request: Request) {
-  try {
-    const { owner } = await requireStaff();
-    const search = new URL(request.url).searchParams;
-    const kind = search.get("kind");
-    return json<MemberRequestListResponse>({
-      requests: await listMemberRequests(owner, {
-        kind: isKind(kind) ? kind : null,
-        memberId: search.get("member"),
-      }),
-    });
-  } catch (error) {
-    return failure(error);
-  }
-}
+export const GET = harnessApi.use(query(schema)).handle(
+  async ({ services, caller, query }): Promise<MemberRequestListResponse> => ({
+    requests: await services.records.memberRequests(caller, {
+      kind: query.kind ?? null,
+      memberId: query.member ?? null,
+    }),
+  }),
+);

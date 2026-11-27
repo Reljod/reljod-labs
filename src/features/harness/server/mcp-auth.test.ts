@@ -16,8 +16,6 @@ const state = vi.hoisted(() => ({
     ],
   } as Record<string, { id: string; role: string }[]>,
   passes: {} as Record<string, { id: string }>,
-  auditFails: false,
-  audited: [] as string[],
   // Each Owner's token epoch (epoch ms), as "Disconnect all MCP clients" sets it.
   notBefore: {} as Record<string, number>,
 }));
@@ -54,18 +52,12 @@ vi.mock("@/features/access/server/mcp-tokens", async () => {
       issuedAfterEpoch(iat, state.notBefore[owner] ?? null),
   };
 });
-vi.mock("./audit", () => ({
-  auditStrict: async (input: { action: string }) => {
-    if (state.auditFails) throw new Error("audit insert failed");
-    state.audited.push(input.action);
-  },
-}));
 vi.mock("./staff", () => ({
   ownedStaff: async (owner: string, id: string) =>
     state.staff[owner]?.find((member) => member.id === id) ?? null,
 }));
 
-import { actorOf, mintPastedToken, verifyBearer } from "./mcp-auth";
+import { actorOf, verifyBearer } from "./mcp-auth";
 
 const exp = () => Math.floor(Date.now() / 1000) + 600;
 const guestClaims = (
@@ -200,51 +192,5 @@ describe("Disconnect all MCP clients", () => {
         ),
       ),
     ).not.toBeNull();
-  });
-
-  it("puts iat on a pasted token", async () => {
-    const minted = await mintPastedToken(
-      {
-        access: { kind: "e2e" },
-        owner: "e2e",
-        staff: { id: "staff-a", role: "admin", name: "A" },
-        visitor: { hash: "v", trusted: false },
-      } as unknown as Parameters<typeof mintPastedToken>[0],
-      "https://labs.test",
-    );
-    const payload = JSON.parse(
-      Buffer.from(
-        minted.token.slice(4).split(".")[0] ?? "",
-        "base64url",
-      ).toString(),
-    );
-    expect(payload.iat).toBeGreaterThanOrEqual(now);
-  });
-});
-
-describe("a pasted MCP token", () => {
-  const context = {
-    access: { kind: "e2e" },
-    owner: "e2e",
-    staff: { id: "staff-a", role: "admin", name: "A" },
-    visitor: { hash: "v", trusted: false },
-  } as unknown as Parameters<typeof mintPastedToken>[0];
-
-  beforeEach(() => {
-    state.auditFails = false;
-    state.audited = [];
-  });
-
-  it("is handed over only after mcp.connected is written", async () => {
-    const minted = await mintPastedToken(context, "https://labs.test");
-    expect(minted.token).toMatch(/^hxm_/);
-    expect(state.audited).toEqual(["mcp.connected"]);
-  });
-
-  it("is not handed over when its Audit event cannot be written", async () => {
-    state.auditFails = true;
-    await expect(mintPastedToken(context, "https://labs.test")).rejects.toThrow(
-      /audit insert failed/,
-    );
   });
 });

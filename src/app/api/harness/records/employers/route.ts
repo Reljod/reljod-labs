@@ -1,16 +1,9 @@
 import type { EmployerListResponse } from "@/features/harness/domain/api";
-import { requireStaff } from "@/features/harness/server/context";
-import { listEmployers } from "@/features/harness/server/records";
-import { failure, json } from "@/features/harness/server/respond";
+import { harnessApi } from "@/features/harness/server/api";
 
 /** The plan's Employers, by name. */
-export async function GET() {
-  try {
-    const { owner } = await requireStaff();
-    return json<EmployerListResponse>({
-      employers: await listEmployers(owner),
-    });
-  } catch (error) {
-    return failure(error);
-  }
-}
+export const GET = harnessApi.handle(
+  async ({ services, caller }): Promise<EmployerListResponse> => ({
+    employers: await services.records.employers(caller),
+  }),
+);

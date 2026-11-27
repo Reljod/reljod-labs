@@ -1,6 +1,13 @@
 "use client";
 
 import {
+  ApiError,
+  attempt,
+  errorOf,
+  getJson,
+  send as write,
+} from "@/platform/client/api";
+import {
   type ApprovalDecideRequest,
   type AuditListResponse,
   type AuditQuery,
@@ -10,6 +17,8 @@ import {
   type ConflictListResponse,
   type ConflictResolveRequest,
   type ConflictResponse,
+  type ConsentRequest,
+  type ConsentResponse,
   type EmployerListResponse,
   type EmployerResponse,
   type McpTokenResponse,
@@ -107,91 +116,35 @@ export const keys = {
     ] as const,
 };
 
-/** What a route answered when it refused: the message to show, and why. */
-export class ApiFailure extends Error {
-  constructor(
-    message: string,
-    /** 401 no Access, 403 the Role may not, 404, 409 wrong state, 429 a limit, 501 not built yet. */
-    readonly status: number,
-    /** For a refused Rule edit: one error per field at fault. */
-    readonly errors: RuleEditError[] = [],
-  ) {
-    super(message);
-    this.name = "ApiFailure";
-  }
-
-  /** The Staff member's Role may not do this: offer to switch Staff. */
-  get forbidden() {
-    return this.status === 403;
-  }
-}
-
-const FALLBACK: Record<number, string> = {
-  401: "Your access has ended. Open the demo again from the front door.",
-  403: "Your Role may not do that.",
-  404: "That is not in this Workspace.",
-  429: "That's the limit for now. Try again soon.",
-};
-
 /**
- * The refusal a response carries. Routes answer `{ error }` JSON, but the
- * Access gate in front of them answers its 401 in plain text: read the body
- * as text and parse it only if it is JSON, so a Guest whose pass just ended
- * reads the gate's reason, not a parse error or a bare status.
+ * What a route answered when it refused (`@/platform/client/api`): the
+ * message to show, the status (401 no Access, 403 the Role may not, 404, 409
+ * wrong state, 429 a limit) and the rest of the body.
  */
-export async function failureOf(response: Response): Promise<ApiFailure> {
-  const text = await response.text().catch(() => "");
-  type Body = { error?: unknown; errors?: RuleEditError[] };
-  let body: Body | null = null;
-  try {
-    body = JSON.parse(text) as Body | null;
-  } catch {
-    // Plain text: the gate's own answer.
-  }
-  const plain = body ? "" : text.trim();
-  const message =
-    typeof body?.error === "string" && body.error
-      ? body.error
-      : plain && plain.length < 300 && !plain.startsWith("<")
-        ? plain
-        : (FALLBACK[response.status] ?? "That didn't work. Try again.");
-  return new ApiFailure(
-    message,
-    response.status,
-    Array.isArray(body?.errors) ? body.errors : [],
-  );
+export { ApiError };
+
+/** For a refused Rule edit: one error per field at fault (the 400's `errors`). */
+export function ruleErrorsOf(error: unknown): RuleEditError[] {
+  return error instanceof ApiError && Array.isArray(error.body.errors)
+    ? (error.body.errors as RuleEditError[])
+    : [];
 }
 
 /** What a read takes besides its own arguments: the signal that cancels it. */
 export type ReadInit = { signal?: AbortSignal };
 
-async function get<T>(url: string, init: ReadInit = {}): Promise<T> {
-  const response = await fetch(url, {
-    cache: "no-store",
-    headers: { accept: "application/json" },
-    signal: init.signal,
-  });
-  if (!response.ok) throw await failureOf(response);
-  return response.json() as Promise<T>;
-}
+const get = <T>(url: string, init: ReadInit = {}): Promise<T> =>
+  getJson<T>(url, { signal: init.signal });
 
-async function send<T>(
+const send = <T>(
   url: string,
   method: "POST" | "PUT" | "PATCH" | "DELETE",
   body?: unknown,
-): Promise<T> {
-  const response = await fetch(url, {
-    method,
-    headers:
-      body === undefined ? undefined : { "content-type": "application/json" },
-    body: body === undefined ? undefined : JSON.stringify(body),
-  });
-  if (!response.ok) throw await failureOf(response);
-  return response.json() as Promise<T>;
-}
+): Promise<T> => write<T>(method, url, body);
 
 /** Reads a newline-delimited JSON response, one parsed value at a time. */
-export async function* readNdjson<T>(response: Response): AsyncGenerator<T> {
+async function* readNdjson<T>(response: Response): AsyncGenerator<T> {
+  if (!response.ok) throw await errorOf(response);
   if (!response.body) return;
   const reader = response.body.pipeThrough(new TextDecoderStream()).getReader();
   let buffer = "";
@@ -274,7 +227,6 @@ export const api = {
         body: JSON.stringify(body),
         signal,
       });
-      if (!response.ok) throw await failureOf(response);
       yield* readNdjson<ChatEvent>(response);
     },
   },
@@ -301,7 +253,6 @@ export const api = {
         cache: "no-store",
         signal,
       });
-      if (!response.ok) throw await failureOf(response);
       yield* readNdjson<RunEvent>(response);
     },
   },
@@ -402,10 +353,19 @@ export const api = {
   plugin: {
     /** Where the Plugin zip downloads from: use it as a link's `href`. */
     href: () => apiPath.plugin(),
+    /** The Plugin zip. Rejects with the route's message (a Role that may not, no Access). */
+    async download(): Promise<Blob> {
+      const response = await fetch(apiPath.plugin(), { cache: "no-store" });
+      if (!response.ok) throw await errorOf(response);
+      return response.blob();
+    },
   },
 
   mcp: {
     token: () => send<McpTokenResponse>(apiPath.mcpToken(), "POST"),
+    /** The consent page's Allow or Deny; the error is shown where it was clicked. */
+    consent: (body: ConsentRequest) =>
+      attempt(() => send<ConsentResponse>(apiPath.consents(), "POST", body)),
   },
 };
 

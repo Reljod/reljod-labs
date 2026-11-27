@@ -1,11 +1,10 @@
 import "server-only";
-import { createClient } from "@supabase/supabase-js";
 import type { Owner } from "@/features/access/domain/owner";
 import { readDocx, readXlsx } from "@/features/client-manager/domain/office";
+import { InvalidError } from "@/platform/errors";
 import { sql } from "../db";
-import { BUCKET, env } from "../env";
-import { InvalidError } from "../errors";
-import { readSourceText } from "../knowledge";
+import { download } from "../knowledge/storage";
+import { sourceTexts } from "../knowledge/text";
 
 /*
  * What a Pipeline reads from a Source: its row (scoped to the Owner), its
@@ -62,31 +61,20 @@ export async function sourcesOf(
   });
 }
 
-let storageClient: ReturnType<typeof createClient> | undefined;
-
-function storage() {
-  storageClient ??= createClient(
-    env.supabaseUrl(),
-    env.supabaseServiceRoleKey(),
-    {
-      auth: { persistSession: false, autoRefreshToken: false },
-    },
-  );
-  return storageClient.storage.from(BUCKET);
-}
-
 /**
  * The Source's file, or null when it has none (a pasted text, a web page).
  * `source` comes from `sourcesOf`, so it is already the Owner's; its key was
- * written by the server (`createUpload`), never by the browser.
+ * written by the server (the upload), never by the browser.
  */
 export async function sourceBytes(
   source: SourceMeta,
 ): Promise<Uint8Array | null> {
   if (!source.storagePath) return null;
-  const { data, error } = await storage().download(source.storagePath);
-  if (error) throw new Error(`Could not read the file of "${source.title}".`);
-  return new Uint8Array(await data.arrayBuffer());
+  try {
+    return await download(source.storagePath);
+  } catch {
+    throw new Error(`Could not read the file of "${source.title}".`);
+  }
 }
 
 const extension = (path: string | null) =>
@@ -124,7 +112,7 @@ export async function sourceText(
   source: SourceMeta,
 ): Promise<string> {
   try {
-    return (await readSourceText(owner, source.id))?.text ?? "";
+    return (await sourceTexts.read(owner, source.id))?.text ?? "";
   } catch (error) {
     if (error instanceof InvalidError) return "";
     throw error;

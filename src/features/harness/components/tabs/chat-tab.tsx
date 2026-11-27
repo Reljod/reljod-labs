@@ -15,7 +15,7 @@ import { LIMITS } from "../../domain/limits";
 import { isRunActive } from "../../domain/run";
 import { SAMPLES, type SampleFile } from "../../domain/samples";
 import type { MessageView, SessionSummary } from "../../domain/session";
-import { ApiFailure, api, keys, messageOf } from "../api";
+import { ApiError, api, keys, messageOf } from "../api";
 import {
   type Attachment,
   emptyTurn,
@@ -183,7 +183,7 @@ export default function ChatTab() {
       openSession(session.id);
       return session.id;
     } catch (caught) {
-      if (caught instanceof ApiFailure && caught.status === 429) {
+      if (caught instanceof ApiError && caught.status === 429) {
         setLimit(`${caught.message} Sending is paused for a moment.`);
       }
       throw caught;

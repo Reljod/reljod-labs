@@ -1,9 +1,8 @@
 import "server-only";
-import { strToU8, zipSync } from "fflate";
 import type { Owner } from "@/features/access/domain/owner";
+import { NotFoundError } from "@/platform/errors";
 import type { PipelineSpec } from "../domain/pipeline";
 import { pipelineOf } from "../domain/pipelines";
-import { PLUGIN_FILENAME, pluginFiles } from "../domain/plugin";
 import {
   defaultRuleState,
   type RuleView,
@@ -12,19 +11,14 @@ import {
 import {
   SKILL_DEFAULTS,
   type SkillDefault,
-  type SkillText,
   type SkillVersion,
   type SkillView,
-  sameSkillText,
-  skillProblems,
   skillView,
 } from "../domain/skills";
-import { latestOf, nextVersion, planRestore } from "../domain/skills/versions";
-import type { Actor } from "./actor";
+import { latestOf, nextVersion } from "../domain/skills/versions";
 import { auditIn } from "./audit";
-import { assertCan } from "./context";
 import { type Db, sql } from "./db";
-import { InvalidError, NotFoundError } from "./errors";
+import type { SkillRepository } from "./ports";
 import { listRules } from "./rules";
 
 /*
@@ -32,10 +26,8 @@ import { listRules } from "./rules";
  * Owner, else the Default in `SKILL_DEFAULTS`. A save never updates a row: it
  * adds Version n+1. A Rulebook has no stored body: it is rendered from the
  * current Rules with `renderRulebookMd`, so reading a Rulebook always says
- * what a Run enforces.
+ * what a Run enforces. What a save may say is the Skills service's.
  */
-
-const NOTE_CHARS = 500;
 
 type SkillRow = {
   skill_id: string;
@@ -169,23 +161,6 @@ export async function getSkill(
   return skillView(base, row ? latestOfRow(row) : null);
 }
 
-function cleanNote(note: string | null | undefined): string | null {
-  const text = note?.trim();
-  if (!text) return null;
-  if (text.length > NOTE_CHARS) {
-    throw new InvalidError(`The note is at most ${NOTE_CHARS} characters.`);
-  }
-  return text;
-}
-
-function refuseRulebook(base: SkillDefault) {
-  if (base.kind === "rulebook") {
-    throw new InvalidError(
-      "A Rulebook is edited as Rule cards, not as text. Change its Rules instead.",
-    );
-  }
-}
-
 async function versionRows(db: Db, owner: Owner, skillId: string) {
   return db<SkillRow[]>`
     select ${COLUMNS(db)}
@@ -195,192 +170,53 @@ async function versionRows(db: Db, owner: Owner, skillId: string) {
     order by sv.version desc`;
 }
 
-/** Inserts Version n+1 under the Skill's lock, so two saves at once get n+1 and n+2. */
-async function insertVersion(
-  tx: Db,
-  input: {
-    owner: Owner;
-    staffId: string;
-    skillId: string;
-    text: SkillText;
-    note: string | null;
+export const skillRepository: SkillRepository = {
+  list: listSkills,
+  get: getSkill,
+
+  /** A Skill's saved Versions, newest first. Empty while only the Default applies (and for a Rulebook, whose history is its Rules'). */
+  async history(owner, skillId) {
+    const base = defaultOf(skillId);
+    if (base.kind === "rulebook") return [];
+    const rows = await versionRows(sql(), owner, base.id);
+    return rows.map(versionOfRow);
   },
-): Promise<SkillRow> {
-  const [top] = await tx<{ top: number }[]>`
-    select coalesce(max(version), 0)::int as top
-    from harness.skill_versions
-    where owner = ${input.owner} and skill_id = ${input.skillId}`;
-  const version = nextVersion([top?.top ?? 0]);
-  await tx`
-    insert into harness.skill_versions
-      (owner, skill_id, version, name, description, body, saved_by, note)
-    values (
-      ${input.owner}, ${input.skillId}, ${version}, ${input.text.name},
-      ${input.text.description}, ${input.text.body}, ${input.staffId}, ${input.note}
-    )`;
-  const row = (await versionRows(tx, input.owner, input.skillId)).find(
-    (candidate) => candidate.version === version,
-  );
-  if (!row) throw new Error("The Skill Version was not saved.");
-  return row;
-}
 
-const lock = (tx: Db, owner: Owner, skillId: string) =>
-  tx`select pg_advisory_xact_lock(hashtextextended(${`harness:skill:${owner}:${skillId}`}, 0))`;
-
-/**
- * Saves an edit as the Skill's next Version. Needs `skill.edit`. A Rulebook
- * is refused (it is edited as Rule cards); so is text `skillProblems`
- * finds, and text that is the same as now. The Audit event is written in the
- * same transaction.
- */
-export async function saveSkill(
-  input: Actor & { skillId: string; text: SkillText; note?: string | null },
-): Promise<SkillView> {
-  assertCan(input.staff, "skill.edit");
-  const base = defaultOf(input.skillId);
-  refuseRulebook(base);
-  const text: SkillText = {
-    name: input.text.name.trim(),
-    description: input.text.description.trim(),
-    body: input.text.body.replace(/\r\n/g, "\n"),
-  };
-  const problems = skillProblems(text);
-  if (problems.length > 0) throw new InvalidError(problems[0]?.message ?? "");
-  const note = cleanNote(input.note);
-  const row = await sql().begin(async (tx) => {
-    await lock(tx, input.owner, base.id);
-    const rows = await versionRows(tx, input.owner, base.id);
-    const latest = latestOf(rows);
-    const current: SkillText = latest ?? base;
-    if (sameSkillText(current, text)) {
-      throw new InvalidError("Nothing changed: the Skill already says that.");
-    }
-    const saved = await insertVersion(tx, {
-      owner: input.owner,
-      staffId: input.staff.id,
-      skillId: base.id,
-      text,
-      note,
+  /**
+   * Under the Workspace's lock on the Skill (two saves at once get Versions
+   * n+1 and n+2): the saved Versions are read once, the plan decides,
+   * Version n+1 and its event go in the same transaction.
+   */
+  async saveVersion(owner, skillId, staffId, plan) {
+    const base = defaultOf(skillId);
+    const saved = await sql().begin(async (tx) => {
+      await tx`select pg_advisory_xact_lock(hashtextextended(${`harness:skill:${owner}:${base.id}`}, 0))`;
+      const rows = await versionRows(tx, owner, base.id);
+      const latest = latestOf(rows);
+      const decided = plan({
+        current: latest ?? { ...base, version: 0 },
+        versions: rows,
+      });
+      const version = nextVersion(rows.map((row) => row.version));
+      const [row] = await tx<SkillRow[]>`
+        with inserted as (
+          insert into harness.skill_versions
+            (owner, skill_id, version, name, description, body, saved_by, note)
+          values (
+            ${owner}, ${base.id}, ${version}, ${decided.text.name},
+            ${decided.text.description}, ${decided.text.body}, ${staffId},
+            ${decided.note}
+          )
+          returning *
+        )
+        select sv.skill_id, sv.version, sv.name, sv.description, sv.body,
+               sv.saved_by, st.name as saved_by_name, sv.note, sv.created_at
+        from inserted sv
+        join harness.staff st on st.id = sv.saved_by`;
+      if (!row) throw new Error("The Skill Version was not saved.");
+      await auditIn(tx, decided.event(version));
+      return row;
     });
-    await auditIn(tx, {
-      owner: input.owner,
-      actor: { kind: "staff", staff: input.staff },
-      action: "skill.saved",
-      summary: `Saved Skill ${base.id} as Version ${saved.version}`,
-      target: { kind: "skill", id: base.id },
-      detail: {
-        version: saved.version,
-        previousVersion: latest?.version ?? 0,
-        nameChanged: current.name !== text.name,
-        descriptionChanged: current.description !== text.description,
-        bodyChars: [current.body.length, text.body.length],
-        note,
-      },
-    });
-    return saved;
-  });
-  return skillView(base, latestOfRow(row));
-}
-
-/**
- * Puts a Skill back to its Default (`version` left out or 0) or to an
- * earlier Version, by saving that text as a new Version. Needs `skill.edit`.
- */
-export async function restoreSkill(
-  input: Actor & { skillId: string; version?: number | null },
-): Promise<SkillView> {
-  assertCan(input.staff, "skill.edit");
-  const base = defaultOf(input.skillId);
-  refuseRulebook(base);
-  const row = await sql().begin(async (tx) => {
-    await lock(tx, input.owner, base.id);
-    const rows = await versionRows(tx, input.owner, base.id);
-    const latest = latestOf(rows);
-    const current: SkillText = latest ?? base;
-    const plan = planRestore<SkillText>(
-      { name: base.name, description: base.description, body: base.body },
-      rows,
-      input.version,
-    );
-    if (!plan) throw new NotFoundError("That Version was never saved.");
-    if (sameSkillText(current, plan.state)) {
-      throw new InvalidError(
-        plan.from === null
-          ? "The Skill already says what the Default says."
-          : `The Skill already says what Version ${plan.from} says.`,
-      );
-    }
-    const saved = await insertVersion(tx, {
-      owner: input.owner,
-      staffId: input.staff.id,
-      skillId: base.id,
-      text: {
-        name: plan.state.name,
-        description: plan.state.description,
-        body: plan.state.body,
-      },
-      note: plan.note,
-    });
-    await auditIn(tx, {
-      owner: input.owner,
-      actor: { kind: "staff", staff: input.staff },
-      action: "skill.restored",
-      summary: `${plan.note} on Skill ${base.id} (now Version ${saved.version})`,
-      target: { kind: "skill", id: base.id },
-      detail: {
-        version: saved.version,
-        restoredFrom: plan.from === null ? "default" : plan.from,
-      },
-    });
-    return saved;
-  });
-  return skillView(base, latestOfRow(row));
-}
-
-/** A Skill's saved Versions, newest first. Empty while only the Default applies (and for a Rulebook, whose history is its Rules'). */
-export async function skillHistory(
-  owner: Owner,
-  skillId: string,
-): Promise<SkillVersion[]> {
-  const base = defaultOf(skillId);
-  if (base.kind === "rulebook") return [];
-  const rows = await versionRows(sql(), owner, base.id);
-  return rows.map(versionOfRow);
-}
-
-/**
- * The Claude Plugin as a zip: `.claude-plugin/plugin.json`, one
- * `skills/<name>/SKILL.md` per current Skill (Rulebooks rendered from the
- * current Rules), `.mcp.json` pointing at `<origin>/api/harness/mcp` and a
- * README. No token goes in it. The route checks `plugin.download` and writes
- * `plugin.downloaded`.
- */
-export async function buildPluginZip(
-  owner: Owner,
-  origin: string,
-): Promise<{
-  filename: string;
-  bytes: Uint8Array<ArrayBuffer>;
-  files: string[];
-}> {
-  const skills = await listSkills(owner);
-  const files = pluginFiles({
-    origin,
-    skills: skills.map((skill) => ({
-      id: skill.id,
-      name: skill.name,
-      description: skill.description,
-      body: skill.body,
-      version: skill.version,
-    })),
-  });
-  const entries = Object.fromEntries(
-    Object.entries(files).map(([path, text]) => [path, strToU8(text)]),
-  );
-  return {
-    filename: PLUGIN_FILENAME,
-    bytes: new Uint8Array(zipSync(entries)),
-    files: Object.keys(files),
-  };
-}
+    return skillView(base, latestOfRow(saved));
+  },
+};

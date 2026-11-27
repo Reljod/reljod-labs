@@ -1,18 +1,16 @@
 import "server-only";
-import type { Owner } from "@/features/access/domain/owner";
 import {
   type ActorKind,
   type AuditAction,
   type AuditEvent,
-  type AuditInput,
   actorLabel,
   isAuditAction,
   redactDetail,
 } from "../domain/audit";
-import { LIMITS } from "../domain/limits";
-import { can } from "../domain/permissions";
-import type { Staff } from "../domain/staff";
 import { type Db, isUuid, jsonb, sql } from "./db";
+import type { AuditLog, AuditRepository, OwnedAuditInput } from "./ports";
+
+export type { OwnedAuditInput };
 
 type AuditRow = {
   id: number;
@@ -53,8 +51,6 @@ const eventOf = (row: AuditRow): AuditEvent => ({
   costUsd: row.cost_usd === null ? null : Number(row.cost_usd),
   createdAt: row.created_at.toISOString(),
 });
-
-export type OwnedAuditInput = AuditInput & { owner: Owner };
 
 const SUMMARY_CHARS = 300;
 
@@ -135,47 +131,19 @@ export async function auditMany(
   return ids;
 }
 
-export type AuditFilter = {
-  owner: Owner;
-  /** Who is reading: decides how much of the trail they see. */
-  staff: Pick<Staff, "id" | "role">;
-  sessionId?: string | null;
-  actorKind?: ActorKind | null;
-  action?: AuditAction | null;
-  /** An admin's "My Sessions": only the events of the Sessions they own. */
-  mine?: boolean;
-  /** Events older than this event id. */
-  before?: number | null;
-  limit?: number | null;
-};
-
 /**
- * Reads the Audit trail, newest first. An admin reads the whole Workspace's;
- * a user reads only the events of Sessions that are theirs, whatever filter
- * they send. `nextBefore` is null at the end of the trail.
+ * One page of the Audit trail, newest first, for the scope the Audit
+ * service chose from the reader's Role: `workspace` reads every event,
+ * `own` only the events of the reader's own Sessions, whatever filter is
+ * sent. `nextBefore` is null at the end of the trail.
  */
-export async function listAudit(filter: AuditFilter): Promise<{
-  events: AuditEvent[];
-  nextBefore: number | null;
-  scope: "workspace" | "own";
-}> {
+const page: AuditRepository["page"] = async (filter) => {
   const db = sql();
-  const whole = can(filter.staff, "audit.read.workspace");
-  const scope = whole ? ("workspace" as const) : ("own" as const);
   if (filter.sessionId && !isUuid(filter.sessionId)) {
-    return { events: [], nextBefore: null, scope };
+    return { events: [], nextBefore: null };
   }
-  const limit = Math.max(
-    1,
-    Math.min(
-      Math.trunc(filter.limit ?? LIMITS.auditPageSize),
-      LIMITS.auditPageSize,
-    ),
-  );
-  const before =
-    typeof filter.before === "number" && Number.isFinite(filter.before)
-      ? Math.trunc(filter.before)
-      : null;
+  const whole = filter.scope === "workspace";
+  const { limit, before } = filter;
   const rows = await db<AuditRow[]>`
     select e.id, e.session_id, e.run_id, e.actor_kind, e.staff_id,
            e.actor_label, e.action, e.target_kind, e.target_id, e.summary,
@@ -190,14 +158,14 @@ export async function listAudit(filter: AuditFilter): Promise<{
           ? db``
           : db`and e.session_id in (
               select s.id from harness.sessions s
-              where s.owner = ${filter.owner} and s.staff_id = ${filter.staff.id}
+              where s.owner = ${filter.owner} and s.staff_id = ${filter.staffId}
             )`
       }
       ${
         whole && filter.mine
           ? db`and e.session_id in (
               select s.id from harness.sessions s
-              where s.owner = ${filter.owner} and s.staff_id = ${filter.staff.id}
+              where s.owner = ${filter.owner} and s.staff_id = ${filter.staffId}
             )`
           : db``
       }
@@ -207,13 +175,14 @@ export async function listAudit(filter: AuditFilter): Promise<{
       ${before !== null ? db`and e.id < ${before}` : db``}
     order by e.id desc
     limit ${limit + 1}`;
-  const page = rows.slice(0, limit);
+  const shown = rows.slice(0, limit);
   return {
-    events: page.map(eventOf),
-    nextBefore: rows.length > limit ? (page.at(-1)?.id ?? null) : null,
-    scope,
+    events: shown.map(eventOf),
+    nextBefore: rows.length > limit ? (shown.at(-1)?.id ?? null) : null,
   };
-}
+};
+
+export const auditRepository: AuditRepository = { page };
 
 /**
  * Writes one Audit event and throws if it cannot, in production too. For an
@@ -226,3 +195,6 @@ export async function auditStrict(
 ): Promise<void> {
   await insert(sql(), input);
 }
+
+/** The Audit trail as the services write it. */
+export const auditLog: AuditLog = { record: audit, strict: auditStrict };
