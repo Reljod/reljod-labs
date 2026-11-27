@@ -15,6 +15,8 @@ const url = process.env.DEMO_TEST_DATABASE_URL;
 const RUN = randomUUID().slice(0, 8);
 const OWNER = `host:${randomUUID()}` as Owner;
 const OTHER = `host:${randomUUID()}` as Owner;
+/** An Owner with two Desks, for the Owner-wide spend cap. */
+const SPENDER = `host:${randomUUID()}` as Owner;
 const VISITOR = `casework-db-test-${RUN}`;
 const SLUG = `casework-db-test-${RUN}`;
 const PURPOSE = `casework-db-test-${RUN}`;
@@ -24,15 +26,57 @@ const ISO_TZ = /^\d{4}-\d\d-\d\dT\d\d:\d\d:\d\d(\.\d+)?[+-]\d\d:\d\d$/;
 
 type Repository = typeof import("./repository");
 
+/** Caps that never bind; a test lowers the one it is about. */
+const OPEN = {
+  perVisitorPerHour: 1_000_000,
+  perDay: 1_000_000_000,
+  ownerSpendPerDay: 1_000_000,
+  sessionSpend: 1_000_000,
+};
+
 describe.skipIf(!url)("the Casework repository, on Postgres", () => {
   let repo: Repository;
   let db: ReturnType<typeof import("./db").sql>;
   let mcp: typeof import("./mcp") | undefined;
-  const since = new Date(Date.now() - 1000);
   let session = "";
   let otherSession = "";
   let seedDocument = "";
   let seedSpare = "";
+
+  /** A Run with no caps (as for the e2e suite); fails the test on a refusal. */
+  async function newRun(
+    sessionId: string,
+    jobs: string[] = [],
+    documentIds: string[] = [],
+  ) {
+    const made = await repo.createRun({
+      sessionId,
+      pipeline: null,
+      jobs: jobs as never,
+      documentIds,
+      visitorHash: VISITOR,
+      owner: OWNER,
+      limits: null,
+    });
+    if (!("runId" in made)) throw new Error(`Run refused: ${made.refusal}`);
+    return made.runId;
+  }
+
+  /** Records one model call of `costUsd` on a Desk. */
+  async function spend(sessionId: string, costUsd: number) {
+    await repo.recordModelCall({
+      sessionId,
+      runId: null,
+      purpose: "chat" as never,
+      model: "test/model",
+      inputTokens: 1,
+      outputTokens: 1,
+      reasoningTokens: 0,
+      cachedInputTokens: 0,
+      costUsd,
+      latencyMs: 1,
+    });
+  }
 
   beforeAll(async () => {
     process.env.DATABASE_URL = url;
@@ -65,7 +109,9 @@ describe.skipIf(!url)("the Casework repository, on Postgres", () => {
   afterAll(async () => {
     if (!db) return;
     await db`delete from casework.model_settings where purpose = ${PURPOSE}`;
-    await db`delete from casework.sessions where visitor_hash = ${VISITOR}`;
+    // Every Desk this run made has a visitor hash starting with VISITOR; Runs,
+    // Messages, uploads, chat turns and model calls cascade from the Desk.
+    await db`delete from casework.sessions where visitor_hash like ${`${VISITOR}%`}`;
     await db`delete from casework.case_files where slug = ${SLUG}`;
     await db.end();
   });
@@ -165,6 +211,7 @@ describe.skipIf(!url)("the Casework repository, on Postgres", () => {
       ],
       sizeBytes: 2048,
     });
+    if (!upload) throw new Error("upload not recorded");
     expect(upload).toMatchObject({
       session_id: session,
       case_file_slug: null,
@@ -186,8 +233,38 @@ describe.skipIf(!url)("the Casework repository, on Postgres", () => {
       pagePaths: [],
       sizeBytes: 10,
     });
+    if (!empty) throw new Error("upload not recorded");
     expect(empty.page_paths).toEqual([]);
     expect(repo.toRunDocument(empty).pageCount).toBe(1);
+
+    // The same Storage path twice records one Document (the unique index).
+    expect(
+      await repo.insertUpload({
+        sessionId: session,
+        name: `zzz-${RUN} again.jpg`,
+        mediaType: "image/jpeg",
+        sourceFormat: "image",
+        storagePath: `uploads/${session}/photo.jpg`,
+        pagePaths: [],
+        sizeBytes: 10,
+      }),
+    ).toBeNull();
+
+    expect(
+      await repo.recordedUploadPaths(session, [
+        `uploads/${session}/scan.pdf`,
+        `uploads/${session}/photo.jpg`,
+        `uploads/${session}/never.pdf`,
+      ]),
+    ).toEqual(
+      new Set([`uploads/${session}/scan.pdf`, `uploads/${session}/photo.jpg`]),
+    );
+    expect(
+      await repo.recordedUploadPaths(otherSession, [
+        `uploads/${session}/scan.pdf`,
+      ]),
+    ).toEqual(new Set());
+    expect(await repo.recordedUploadPaths(session, [])).toEqual(new Set());
 
     expect(await repo.countUploads(session)).toBe(2);
     expect(await repo.countUploads(otherSession)).toBe(0);
@@ -247,7 +324,7 @@ describe.skipIf(!url)("the Casework repository, on Postgres", () => {
     );
   });
 
-  it("keeps Messages with their arrays and tool calls, and counts them through the Desk", async () => {
+  it("keeps Messages with their arrays and tool calls", async () => {
     const first = await repo.addMessage({
       sessionId: session,
       role: "user",
@@ -285,29 +362,10 @@ describe.skipIf(!url)("the Casework repository, on Postgres", () => {
     const [kind] = await db<{ kind: string }[]>`
       select jsonb_typeof(tool_calls) as kind from casework.messages where id = ${second}`;
     expect(kind?.kind).toBe("array");
-
-    // Only the user's Messages, joined to the Desk for its visitor hash.
-    expect(await repo.countMessages({ visitorHash: VISITOR, since })).toBe(2);
-    expect(
-      await repo.countMessages({ visitorHash: `${VISITOR}-nobody`, since }),
-    ).toBe(0);
-    expect(
-      await repo.countMessages({
-        visitorHash: VISITOR,
-        since: new Date(Date.now() + 60_000),
-      }),
-    ).toBe(0);
-    expect(await repo.countMessages({ since })).toBeGreaterThanOrEqual(2);
   });
 
   it("runs Runs: arrays on insert and update, jsonb state, and the Job upsert", async () => {
-    const run = await repo.createRun({
-      sessionId: session,
-      pipeline: null,
-      jobs: ["sort", "read"],
-      documentIds: [seedDocument],
-      visitorHash: VISITOR,
-    });
+    const run = await newRun(session, ["sort", "read"], [seedDocument]);
     const created = await repo.getRun(run);
     expect(created).toMatchObject({
       session_id: session,
@@ -405,13 +463,7 @@ describe.skipIf(!url)("the Casework repository, on Postgres", () => {
       finished_at: null,
     });
 
-    const active = await repo.createRun({
-      sessionId: session,
-      pipeline: null,
-      jobs: [],
-      documentIds: [],
-      visitorHash: VISITOR,
-    });
+    const active = await newRun(session);
     expect((await repo.getRun(active))?.jobs).toEqual([]);
     const all = await repo.runsForSession(session);
     expect(all.map((row) => row.id)).toEqual([active, run]);
@@ -419,21 +471,12 @@ describe.skipIf(!url)("the Casework repository, on Postgres", () => {
       active,
     ]);
     expect(await repo.runsForSession(otherSession)).toHaveLength(0);
-    expect(await repo.countRuns({ visitorHash: VISITOR, since })).toBe(2);
-    expect(
-      await repo.countRuns({ visitorHash: `${VISITOR}-nobody`, since }),
-    ).toBe(0);
-    expect(await repo.countRuns({ since })).toBeGreaterThanOrEqual(2);
   });
 
   it("asks Questions: the token upsert, open ones and answers as jsonb", async () => {
-    const run = await repo.createRun({
-      sessionId: session,
-      pipeline: null,
-      jobs: ["decide"],
-      documentIds: [],
-      visitorHash: VISITOR,
-    });
+    // One Run going per Desk, so this one gets a Desk of its own.
+    const desk = await repo.createSession(VISITOR, OWNER);
+    const run = await newRun(desk, ["decide"]);
     const token = `token-${RUN}-${randomUUID()}`;
     const wants = {
       kinds: ["payslip"],
@@ -509,13 +552,10 @@ describe.skipIf(!url)("the Casework repository, on Postgres", () => {
   });
 
   it("records spend and adds it up by Run, Desk and purpose", async () => {
-    const run = await repo.createRun({
-      sessionId: session,
-      pipeline: null,
-      jobs: ["read"],
-      documentIds: [],
-      visitorHash: VISITOR,
+    await repo.updateRun((await repo.activeRuns(session))[0]?.id ?? "", {
+      status: "completed",
     });
+    const run = await newRun(session, ["read"]);
     const call = {
       sessionId: session,
       runId: run,
@@ -572,12 +612,154 @@ describe.skipIf(!url)("the Casework repository, on Postgres", () => {
     }
   });
 
-  it("deletes a visitor's Desks and everything under them", async () => {
-    const extra = `${VISITOR}-gone`;
-    const desk = await repo.createSession(extra, OWNER);
-    await repo.addMessage({ sessionId: desk, role: "user", text: "bye" });
-    await repo.deleteSessionsByVisitor(extra);
-    expect(await repo.getSession(desk)).toBeNull();
-    expect(await repo.getSession(session)).not.toBeNull();
+  it("creates a Run only within the caps, in one step", async () => {
+    // No caps (the e2e suite): created, with its arrays.
+    const desk = await repo.createSession(`${VISITOR}-runs`, OWNER);
+    const first = await repo.createRun({
+      sessionId: desk,
+      pipeline: null,
+      jobs: ["sort"] as never,
+      documentIds: [seedDocument],
+      visitorHash: `${VISITOR}-runs`,
+      owner: OWNER,
+      limits: null,
+    });
+    if (!("runId" in first)) throw new Error("refused");
+    expect(await repo.getRun(first.runId)).toMatchObject({
+      session_id: desk,
+      jobs: ["sort"],
+      document_ids: [seedDocument],
+      status: "queued",
+    });
+
+    const again = (limits: typeof OPEN | null, sessionId = desk) =>
+      repo.createRun({
+        sessionId,
+        pipeline: null,
+        jobs: [],
+        documentIds: [],
+        visitorHash: `${VISITOR}-runs`,
+        owner: OWNER,
+        limits,
+      });
+
+    // While one is going, the Desk gets no second, caps or not.
+    expect(await again(null)).toEqual({ refusal: "active" });
+    expect(await again(OPEN)).toEqual({ refusal: "active" });
+    await repo.updateRun(first.runId, { status: "completed" });
+
+    // The visitor's hourly allowance: one Run made in the hour already.
+    expect(await again({ ...OPEN, perVisitorPerHour: 1 })).toEqual({
+      refusal: "visitor",
+    });
+    // The demo's day: a cap of 0 refuses whatever else is in the database.
+    expect(await again({ ...OPEN, perDay: 0 })).toEqual({ refusal: "day" });
+
+    // The Desk's spend, then the Owner's across Desks.
+    await spend(desk, 0.4);
+    expect(await again({ ...OPEN, sessionSpend: 0.4 })).toEqual({
+      refusal: "session_spend",
+    });
+    const spenderA = await repo.createSession(`${VISITOR}-runs`, SPENDER);
+    const spenderB = await repo.createSession(`${VISITOR}-runs`, SPENDER);
+    await spend(spenderA, 0.3);
+    await spend(spenderB, 0.3);
+    const capped = await repo.createRun({
+      sessionId: spenderB,
+      pipeline: null,
+      jobs: [],
+      documentIds: [],
+      visitorHash: `${VISITOR}-runs`,
+      owner: SPENDER,
+      limits: { ...OPEN, ownerSpendPerDay: 0.5 },
+    });
+    expect(capped).toEqual({ refusal: "owner_spend" });
+    const under = await repo.createRun({
+      sessionId: spenderB,
+      pipeline: null,
+      jobs: [],
+      documentIds: [],
+      visitorHash: `${VISITOR}-runs`,
+      owner: SPENDER,
+      limits: { ...OPEN, ownerSpendPerDay: 0.7 },
+    });
+    expect("runId" in under).toBe(true);
+
+    // Within every cap: created.
+    const made = await again(OPEN);
+    expect("runId" in made).toBe(true);
+  });
+
+  it("takes a chat turn only within the caps", async () => {
+    const visitor = `${VISITOR}-chat`;
+    const deskId = await repo.createSession(visitor, OWNER);
+    const desk = await repo.getSession(deskId);
+    if (!desk) throw new Error("no session");
+
+    expect(await repo.takeChatTurn({ session: desk, limits: null })).toEqual({
+      taken: true,
+    });
+    expect(await repo.takeChatTurn({ session: desk, limits: OPEN })).toEqual({
+      taken: true,
+    });
+    const [turns] = await db<{ n: number }[]>`
+      select count(*)::int as n from casework.chat_turns
+      where session_id = ${deskId} and owner = ${OWNER} and visitor_hash = ${visitor}`;
+    expect(turns?.n).toBe(2);
+
+    expect(
+      await repo.takeChatTurn({
+        session: desk,
+        limits: { ...OPEN, perVisitorPerHour: 2 },
+      }),
+    ).toEqual({ refusal: "visitor" });
+    expect(
+      await repo.takeChatTurn({
+        session: desk,
+        limits: { ...OPEN, perDay: 0 },
+      }),
+    ).toEqual({ refusal: "day" });
+
+    await spend(deskId, 0.25);
+    expect(
+      await repo.takeChatTurn({
+        session: desk,
+        limits: { ...OPEN, sessionSpend: 0.25 },
+      }),
+    ).toEqual({ refusal: "session_spend" });
+
+    // The Owner's spend over all their Desks, here two Desks at 0.3 each.
+    const [spenderDesk] = await repo.sessionsOf(SPENDER, 1);
+    if (!spenderDesk) throw new Error("no spender desk");
+    expect(
+      await repo.takeChatTurn({
+        session: spenderDesk,
+        limits: { ...OPEN, ownerSpendPerDay: 0.6 },
+      }),
+    ).toEqual({ refusal: "owner_spend" });
+    expect(
+      await repo.takeChatTurn({
+        session: spenderDesk,
+        limits: { ...OPEN, ownerSpendPerDay: 0.61 },
+      }),
+    ).toEqual({ taken: true });
+    // Refused turns are not recorded.
+    const [after] = await db<{ n: number }[]>`
+      select count(*)::int as n from casework.chat_turns where session_id = ${deskId}`;
+    expect(after?.n).toBe(2);
+  });
+
+  it("sums an Owner's spend across their own Desks only", async () => {
+    const dayAgo = new Date(Date.now() - 86_400_000);
+    expect(await repo.ownerSpendUsd(SPENDER, dayAgo)).toBeCloseTo(0.6, 6);
+    expect(
+      await repo.ownerSpendUsd(`host:${randomUUID()}` as Owner, dayAgo),
+    ).toBe(0);
+    expect(
+      await repo.ownerSpendUsd(SPENDER, new Date(Date.now() + 60_000)),
+    ).toBe(0);
+    // OTHER spent nothing; OWNER's spend is not SPENDER's.
+    expect(await repo.ownerSpendUsd(OTHER, dayAgo)).toBe(0);
+    expect(await repo.ownerSpendUsd(OWNER, dayAgo)).toBeGreaterThan(0.5);
   });
 });

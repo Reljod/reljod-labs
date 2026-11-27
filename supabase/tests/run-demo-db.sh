@@ -45,7 +45,11 @@ for migration in \
   20261115120100_casework_owners \
   20261115120300_document_compliance_and_ledger_owners \
   20261117170000_document_compliance_rules_audit \
-  20261117200000_name_extraction; do
+  20261117200000_name_extraction \
+  20261127110000_ledger_rate_hits \
+  20261127130000_casework_caps \
+  20261127130100_casework_uploads \
+  20261127130200_document_compliance_take_run; do
   grep -vi "create extension.*pg_cron" "$root/supabase/migrations/$migration.sql" | psql
 done
 

@@ -29,7 +29,6 @@ const plan = (title: string): BuildPlan => ({
 describe.skipIf(!url)("the Ledger repository, on Postgres", () => {
   let repo: typeof import("./repository");
   let sql: typeof import("./db").sql;
-  const started = new Date(Date.now() - 1000);
 
   beforeAll(async () => {
     process.env.DATABASE_URL = url;
@@ -140,5 +139,4 @@ describe.skipIf(!url)("the Ledger repository, on Postgres", () => {
     expect(await repo.latestAnsweredSessionId(OTHER)).toBeNull();
     expect(empty).not.toBe(newer);
   });
-
 });

@@ -69,7 +69,7 @@ vi.mock("./db", () => {
   return { sql: () => db };
 });
 
-const { countRuns, listOwnerRuns, loadRun } = await import("./repository");
+const { listOwnerRuns, loadRun } = await import("./repository");
 
 const RUN_ID = "00000000-0000-4000-8000-000000000001";
 
@@ -144,20 +144,6 @@ describe("loadRun", () => {
     await expect(loadRun(RUN_ID, "guest:a")).rejects.toThrow(
       "permission denied",
     );
-  });
-});
-
-describe("countRuns", () => {
-  it("filters by visitor only when one is given", async () => {
-    state.respond = () => [{ count: 3 }];
-    const since = new Date("2026-11-27T00:00:00Z");
-    expect(await countRuns({ since })).toBe(3);
-    expect(await countRuns({ since, visitorHash: "v" })).toBe(3);
-    const [all, visitor] = state.statements;
-    expect(all?.text).not.toContain("visitor_hash");
-    expect(all?.values).toEqual([since.toISOString()]);
-    expect(visitor?.text).toContain("and visitor_hash = $2");
-    expect(visitor?.values).toEqual([since.toISOString(), "v"]);
   });
 });
 

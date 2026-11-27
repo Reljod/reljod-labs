@@ -166,7 +166,6 @@ describe.skipIf(!url)("Document compliance on Postgres", () => {
     packs: typeof import("../packs");
   };
   let runId: string;
-  const since = new Date(Date.now() - 60_000);
 
   beforeAll(async () => {
     process.env.DATABASE_URL = url;
@@ -184,23 +183,33 @@ describe.skipIf(!url)("Document compliance on Postgres", () => {
   afterAll(async () => {
     if (!mod) return;
     const sql = mod.db.sql();
-    await sql`delete from document_compliance.prescreen_runs where visitor_hash = ${VISITOR}`;
+    await sql`delete from document_compliance.prescreen_runs where owner = any(${[OWNER, OTHER, BUSY]})`;
     await sql`delete from document_compliance.rule_versions where owner = any(${[OWNER, OTHER, BUSY]})`;
     await sql`delete from document_compliance.audit_trails where owner = any(${[OWNER, OTHER, BUSY]})`;
     await sql.end();
   });
 
-  const startRun = async (owner: Owner = OWNER) => {
+  const tryRun = (
+    limits: { perVisitorPerHour: number; perDay: number } | null,
+    visitorHash = VISITOR,
+    owner: Owner = OWNER,
+  ) => {
     const pack = mod.packs.findPack("clean");
     if (!pack) throw new Error("clean pack missing");
     return mod.repository.createRun({
       packSlug: pack.slug,
       rulebook: mod.domainRules.resolveRulebook({}),
       declaration: pack.clientDeclaration,
-      visitorHash: VISITOR,
+      visitorHash,
       owner,
       model: "openai/test-model",
+      limits,
     });
+  };
+  const startRun = async (owner: Owner = OWNER) => {
+    const result = await tryRun(null, VISITOR, owner);
+    if (!("runId" in result)) throw new Error(`refused: ${result.refusal}`);
+    return result.runId;
   };
 
   it("creates a run and keeps its status and workflow id to its Owner", async () => {
@@ -410,15 +419,6 @@ describe.skipIf(!url)("Document compliance on Postgres", () => {
     expect(runs[0]?.costUsd).toBeCloseTo(0.015, 10);
     expect(runs[0]?.createdAt).toMatch(ISO);
     expect(await repository.listOwnerRuns(OTHER)).toEqual([]);
-
-    expect(await repository.countRuns({ since, visitorHash: VISITOR })).toBe(1);
-    expect(
-      await repository.countRuns({
-        since: new Date(Date.now() + 60_000),
-        visitorHash: VISITOR,
-      }),
-    ).toBe(0);
-    expect(await repository.countRuns({ since })).toBeGreaterThanOrEqual(1);
 
     expect(await repository.latestCompletedRunId("clean", OWNER)).toBe(runId);
     expect(await repository.latestCompletedRunId("clean", OTHER)).toBeNull();
@@ -915,13 +915,96 @@ describe.skipIf(!url)("Document compliance on Postgres", () => {
     });
   });
 
-  it("deletes a visitor's runs and everything under them", async () => {
-    const { repository } = mod;
-    await repository.deleteRunsByVisitor(VISITOR);
-    expect(await repository.countRuns({ since, visitorHash: VISITOR })).toBe(0);
-    expect(await repository.loadRun(runId, OWNER)).toBeNull();
+  describe("create_prescreen_run", () => {
+    const sql = () => mod.db.sql();
+
+    it("stores the declaration and the applied Rules as jsonb, not as strings", async () => {
+      const [row] = await sql()<
+        {
+          declaration: string;
+          rules: string;
+          full_name: string;
+          status: string;
+          owner: string;
+        }[]
+      >`
+        select jsonb_typeof(client_declaration) as declaration,
+          jsonb_typeof(rules_applied) as rules,
+          client_declaration->>'fullName' as full_name, status, owner
+        from document_compliance.prescreen_runs where id = ${runId}`;
+      expect(row).toEqual({
+        declaration: "object",
+        rules: "array",
+        full_name: "Amara Lucia Velasco",
+        status: "completed",
+        owner: OWNER,
+      });
+      const [applied] = await sql()<{ n: number; first: string }[]>`
+        select jsonb_array_length(rules_applied) as n,
+          jsonb_typeof(rules_applied->0) as first
+        from document_compliance.prescreen_runs where id = ${runId}`;
+      expect(applied?.n).toBe(
+        mod.domainRules.resolveRulebook({}).applied.length,
+      );
+      expect(applied?.first).toBe("object");
+    });
+
+    it("always creates with no limits", async () => {
+      const visitor = `test-${crypto.randomUUID()}`;
+      for (let n = 0; n < 3; n += 1) {
+        expect(await tryRun(null, visitor)).toEqual({
+          runId: expect.stringMatching(/^[0-9a-f-]{36}$/),
+        });
+      }
+    });
+
+    it("refuses a visitor's run past the hourly limit", async () => {
+      const visitor = `test-${crypto.randomUUID()}`;
+      const limits = { perVisitorPerHour: 2, perDay: 1_000_000 };
+      expect(await tryRun(limits, visitor)).toHaveProperty("runId");
+      expect(await tryRun(limits, visitor)).toHaveProperty("runId");
+      expect(await tryRun(limits, visitor)).toEqual({ refusal: "visitor" });
+      // Another visitor still has room.
+      expect(
+        await tryRun(limits, `test-${crypto.randomUUID()}`),
+      ).toHaveProperty("runId");
+      const [row] = await sql()<{ count: number }[]>`
+        select count(*)::int as count from document_compliance.prescreen_runs
+        where visitor_hash = ${visitor}`;
+      expect(row?.count).toBe(2);
+    });
+
+    it("refuses any run once the day's limit is reached", async () => {
+      // Other suites share this database, so the cap is whatever the day holds
+      // now; runs they add before the call only push the count further past it.
+      const [today] = await sql()<{ count: number }[]>`
+        select count(*)::int as count from document_compliance.prescreen_runs
+        where created_at > now() - interval '1 day'`;
+      const visitor = `test-${crypto.randomUUID()}`;
+      expect(
+        await tryRun(
+          { perVisitorPerHour: 1_000, perDay: today?.count ?? 0 },
+          visitor,
+        ),
+      ).toEqual({ refusal: "day" });
+      expect(
+        await tryRun(
+          { perVisitorPerHour: 1_000, perDay: (today?.count ?? 0) + 1_000 },
+          visitor,
+        ),
+      ).toHaveProperty("runId");
+    });
+  });
+
+  it("deleting a run takes everything under it", async () => {
+    await mod.db.sql()`
+      delete from document_compliance.prescreen_runs where id = ${runId} and owner = ${OWNER}`;
+    expect(await mod.repository.loadRun(runId, OWNER)).toBeNull();
     const [row] = await mod.db.sql()<{ count: number }[]>`
-      select count(*)::int as count from document_compliance.findings where run_id = ${runId}`;
-    expect(row?.count).toBe(0);
+      select
+        (select count(*) from document_compliance.findings where run_id = ${runId})
+        + (select count(*) from document_compliance.documents where run_id = ${runId})
+        as count`;
+    expect(Number(row?.count)).toBe(0);
   });
 });

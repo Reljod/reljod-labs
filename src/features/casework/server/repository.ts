@@ -415,7 +415,9 @@ export async function createRun(input: {
     sessionSpend: number;
   } | null;
 }): Promise<{ runId: string } | { refusal: RunRefusal }> {
-  const [row] = await sql()<{ run_id: string | null; refusal: string | null }[]>`
+  const [row] = await sql()<
+    { run_id: string | null; refusal: string | null }[]
+  >`
     select run_id, refusal from casework.create_run(
       p_session_id => ${input.sessionId}::uuid,
       p_pipeline => ${input.pipeline}::text,

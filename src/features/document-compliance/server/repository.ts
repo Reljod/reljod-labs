@@ -284,8 +284,6 @@ export async function latestCompletedRunId(packSlug: string, owner: Owner) {
   return latest?.id ?? null;
 }
 
-}
-
 /** What a Session list needs from each Document: its metrics, never its raw answer. */
 const METRIC_COLUMNS = [
   "run_id",

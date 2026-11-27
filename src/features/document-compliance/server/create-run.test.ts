@@ -5,15 +5,22 @@ const db = vi.hoisted(() => ({
   answer: [] as { run_id: string | null; refusal: string | null }[],
 }));
 
+/* A stand-in for the postgres.js tagged template: it reads the function's
+   name and each named argument (`p_x => $n`) off the statement. */
 vi.mock("server-only", () => ({}));
-vi.mock("./supabase", () => ({
-  supabase: () => ({
-    rpc: async (name: string, args: Record<string, unknown>) => {
-      db.calls.push({ name, args });
-      return { data: db.answer, error: null };
-    },
-  }),
-}));
+vi.mock("./db", () => {
+  const tag = async (strings: TemplateStringsArray, ...values: unknown[]) => {
+    const args: Record<string, unknown> = {};
+    values.forEach((value, i) => {
+      const name = /(p_\w+) => $/.exec(strings[i] ?? "")?.[1];
+      if (name) args[name] = value;
+    });
+    const name = /document_compliance\.(\w+)\(/.exec(strings.join(""))?.[1];
+    db.calls.push({ name: name ?? "", args });
+    return db.answer;
+  };
+  return { sql: () => Object.assign(tag, { json: (value: unknown) => value }) };
+});
 
 const { createRun } = await import("./repository");
 const { RATE_LIMITS, rateLimitMessage } = await import("./rate-limit");
