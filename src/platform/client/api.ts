@@ -80,11 +80,16 @@ export async function send<T = void>(
   method: Method,
   path: string,
   body?: unknown,
-  options: { signal?: AbortSignal } = {},
+  options: {
+    signal?: AbortSignal;
+    /** Outlive the page (a last report as the tab closes); bodies up to 64 KB. */
+    keepalive?: boolean;
+  } = {},
 ): Promise<T> {
   const response = await fetch(path, {
     method,
     signal: options.signal,
+    keepalive: options.keepalive,
     headers:
       body === undefined
         ? { accept: "application/json" }

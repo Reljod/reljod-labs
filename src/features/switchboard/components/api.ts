@@ -1,6 +1,6 @@
 "use client";
 
-import { errorOf, getJson, send, streamJson } from "@/platform/client/api";
+import { getJson, send, streamJson } from "@/platform/client/api";
 import {
   type CallResponse,
   type CallsResponse,
@@ -20,20 +20,9 @@ import type { ReportedEvent, TurnStreamPart } from "../domain/contract";
 
 /** Typed wrappers over Switchboard's routes (`domain/api.ts`); components never call `fetch` themselves. */
 
-/**
- * A POST that outlives the page (`keepalive`): the last transcript report and
- * the hang-up are sent as the tab closes. The shared `send` has no keepalive.
- */
-async function sendKeepalive<T>(path: string, body: unknown): Promise<T> {
-  const response = await fetch(path, {
-    method: "POST",
-    headers: { accept: "application/json", "content-type": "application/json" },
-    body: JSON.stringify(body),
-    keepalive: true,
-  });
-  if (!response.ok) throw await errorOf(response);
-  return (await response.json()) as T;
-}
+/** A POST that outlives the page: the last transcript report and the hang-up are sent as the tab closes. */
+const sendKeepalive = <T>(path: string, body: unknown) =>
+  send<T>("POST", path, body, { keepalive: true });
 
 export const api = {
   state: () => getJson<FirstView>(paths.state),

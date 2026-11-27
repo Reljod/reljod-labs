@@ -77,13 +77,18 @@ export function pgRateLimiter<K extends string>(
       if (who.trusted) return;
       const caps = config.caps[kind];
       const units = Math.max(1, Math.floor(options.units ?? 1));
-      // Kinds that share a cap must queue on one lock, or two of them could
-      // both take the last place.
-      const shared = caps.some((cap) => cap.across);
+      // Requests that could take the same last place queue on one lock:
+      // every kind that shares a cap together, a kind with an everyone-cap
+      // per kind, and otherwise only one visitor's requests of that kind.
+      const lock = caps.some((cap) => cap.across)
+        ? `${schema}:*`
+        : caps.some((cap) => cap.scope === "everyone")
+          ? `${schema}:${kind}`
+          : `${schema}:${kind}:${who.hash}`;
       const kindsOf = (cap: Cap<K>) => cap.across ?? [kind];
       const counted = [...new Set(caps.flatMap(kindsOf))] as string[];
       const refusal = await pool().begin(async (tx) => {
-        await tx`select pg_advisory_xact_lock(hashtextextended(${shared ? `${schema}:*` : `${schema}:${kind}`}, 0))`;
+        await tx`select pg_advisory_xact_lock(hashtextextended(${lock}, 0))`;
         if (Math.random() * SWEEP_EVERY < 1)
           await tx`delete from ${tx(config.table)} where created_at < now() - interval '1 day'`;
         const amount = (cap: Cap<K>) => {
