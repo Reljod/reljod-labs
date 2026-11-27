@@ -12,8 +12,9 @@ import {
  * Sandbox, so nothing is spent. The scripted Examiner walks the same tools
  * through the same MCP server over a Sample's recorded Sweep, so the Trail,
  * the Done gate, the Findings and the Verdict are real. The MCP journey's
- * token is minted by the stubbed suite, so its calls are stubbed too; with
- * `E2E_LIVE=1` its Sweep and Check run in a real Vercel Sandbox (no model).
+ * token is minted by the stubbed suite, so its calls are stubbed too.
+ * `E2E_LIVE=1` makes the whole spec live (the real Examiner, and a real
+ * Vercel Sandbox for the MCP journey's Sweep and Check).
  * One test, opt-in with `E2E_LOUPE_LIVE=1`, runs the real Examiner on a
  * small tampered Sample (`x-e2e-live: 1`).
  *
