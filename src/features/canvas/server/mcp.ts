@@ -3,6 +3,8 @@ import type { McpServer } from "@modelcontextprotocol/server";
 import { createMcpHandler, withMcpAuth } from "mcp-handler";
 import { unstable_rethrow } from "next/navigation";
 import { z } from "zod";
+import { isAppError } from "@/platform/errors";
+import type { RequestMode } from "@/platform/request/mode";
 import { VIEW_APP_HTML } from "../app/view-app.generated";
 import { cutArgs } from "../domain/chat";
 import { LIMITS } from "../domain/limits";
@@ -15,27 +17,16 @@ import {
 import { RULE_DEFS, rulebookText } from "../domain/rules";
 import { TRAIL_ACTIONS } from "../domain/trail";
 import { viewSpecSchema } from "../domain/view";
-import { SKILLS, skillOf } from "../skills";
-import type { Caller } from "./caller";
-import { catalogFor } from "./catalog";
-import { InvalidError, isSafeError } from "./errors";
-import { callerOfBearer } from "./mcp-token";
-import { currentRulebook, saveRules } from "./rules";
-import { runCode, runQuery } from "./runs";
-import { listTrail, trail } from "./trail";
-import {
-  createView,
-  getView,
-  listViews,
-  payloadOf,
-  updateViewParams,
-} from "./views";
+import type { Caller } from "./ports";
+import type { CanvasServices } from "./services";
+import { payloadOf } from "./services/views";
 
 /*
  * The Canvas MCP server (ADR 0031): the only way the Analyst reaches
  * anything, and the same server an outside client such as Claude connects
- * to. Every tool calls the server function the page calls, so the Owner
- * scope, the Rules, the limits and the Trail are the same from all three.
+ * to. Every tool calls the service the page's REST routes call, so the
+ * Owner scope, the Rules, the limits and the Trail are the same from all
+ * three.
  *
  * `create_view`, `show_view` and `update_view_params` are MCP Apps tools:
  * they point at the UI resource `ui://canvas/view.html` and return the
@@ -52,12 +43,15 @@ type ToolContext = {
   http?: { authInfo?: { extra?: Record<string, unknown> } };
 };
 
-function callerOf(ctx: unknown): Caller {
-  const caller = (ctx as ToolContext)?.http?.authInfo?.extra?.caller as
-    | Caller
-    | undefined;
-  if (!caller) throw new Error("Not authorised");
-  return caller;
+/** Who a tool call acts for, and the services (live or stubbed) its bearer runs on. */
+type Acting = { caller: Caller; services: CanvasServices };
+
+function actingOf(ctx: unknown): Acting {
+  const extra = (ctx as ToolContext)?.http?.authInfo?.extra;
+  const caller = extra?.caller as Caller | undefined;
+  const services = extra?.services as CanvasServices | undefined;
+  if (!caller || !services) throw new Error("Not authorised");
+  return { caller, services };
 }
 
 type ToolResult = {
@@ -162,7 +156,7 @@ export function registerCanvasTools(server: McpServer) {
       readOnly?: boolean;
       app?: boolean;
     },
-    handler: (args: z.infer<Schema>, caller: Caller) => Promise<ToolResult>,
+    handler: (args: z.infer<Schema>, acting: Acting) => Promise<ToolResult>,
   ) => {
     server.registerTool(
       name,
@@ -175,38 +169,39 @@ export function registerCanvasTools(server: McpServer) {
       } as never,
       (async (args: z.infer<Schema>, ctx: unknown) => {
         const started = Date.now();
-        let caller: Caller;
+        let acting: Acting;
         try {
-          caller = callerOf(ctx);
+          acting = actingOf(ctx);
         } catch {
           return { ...said("Not authorised."), isError: true };
         }
         let result: ToolResult;
         try {
-          result = await handler(args, caller);
+          result = await handler(args, acting);
         } catch (error) {
           unstable_rethrow(error);
-          if (!isSafeError(error))
-            console.error(`[canvas] tool ${name}`, error);
+          if (!isAppError(error)) console.error(`[canvas] tool ${name}`, error);
           result = {
             ...said(
-              isSafeError(error)
+              isAppError(error)
                 ? error.message
                 : "The tool failed on our side. Try again.",
             ),
             isError: true,
           };
         }
-        await trail(caller, {
-          action: result.isError ? "tool.failed" : "tool.called",
-          summary:
-            `${name}${result.isError ? ` failed: ${result.content[0]?.text ?? ""}` : ""}`.slice(
-              0,
-              280,
-            ),
-          detail: { tool: name, args: cutArgs(args) },
-          ms: Date.now() - started,
-        }).catch(() => {});
+        await acting.services.trail
+          .record(acting.caller, {
+            action: result.isError ? "tool.failed" : "tool.called",
+            summary:
+              `${name}${result.isError ? ` failed: ${result.content[0]?.text ?? ""}` : ""}`.slice(
+                0,
+                280,
+              ),
+            detail: { tool: name, args: cutArgs(args) },
+            ms: Date.now() - started,
+          })
+          .catch(() => {});
         return result;
       }) as never,
     );
@@ -221,21 +216,17 @@ export function registerCanvasTools(server: McpServer) {
       inputSchema: z.object({}),
       readOnly: true,
     },
-    async (_args, caller) => {
-      const [catalog, rulebook] = await Promise.all([
-        catalogFor(caller.owner),
-        currentRulebook(caller.owner),
-      ]);
-      const restricted = rulebook.rulebook["access.restricted_columns"];
-      const lines = catalog.tables.map(
+    async (_args, { caller, services }) => {
+      const { tables, restrictedColumns, minGroupSize } =
+        await services.catalog.tables(caller.owner);
+      const lines = tables.map(
         (table) =>
           `${table.name} (${table.rows.toLocaleString("en")} rows; ${table.grain}) — ${table.title}. Columns: ${table.columns.map((column) => `${column.name} ${column.type}`).join(", ")}`,
       );
-      const restrictedColumns = restricted.params.columns as string[];
       return said(
-        `${lines.join("\n")}\n\nRestricted columns (aggregate only, groups of at least ${restricted.params.minGroupSize}): ${restrictedColumns.join(", ") || "none"}.`,
+        `${lines.join("\n")}\n\nRestricted columns (aggregate only, groups of at least ${minGroupSize}): ${restrictedColumns.join(", ") || "none"}.`,
         {
-          tables: catalog.tables.map((table) => ({
+          tables: tables.map((table) => ({
             name: table.name,
             title: table.title,
             group: table.group,
@@ -259,39 +250,16 @@ export function registerCanvasTools(server: McpServer) {
       inputSchema: z.object({ table: z.string().min(1).max(64) }),
       readOnly: true,
     },
-    async (args, caller) => {
-      const [catalog, rulebook] = await Promise.all([
-        catalogFor(caller.owner),
-        currentRulebook(caller.owner),
-      ]);
-      const table = catalog.tables.find(
-        (item) => item.name === args.table.trim().toLowerCase(),
-      );
-      if (!table)
-        return {
-          ...said(`There is no Table "${args.table}". Call list_tables.`),
-          isError: true,
-        };
-      const restricted = new Set(
-        (
-          rulebook.rulebook["access.restricted_columns"].params
-            .columns as string[]
-        )
-          .filter((name) => name.startsWith(`${table.name}.`))
-          .map((name) => name.split(".")[1]),
-      );
-      const columns = table.columns.map((column) => ({
-        ...column,
-        restricted: restricted.has(column.name),
-      }));
+    async (args, { caller, services }) => {
+      const table = await services.catalog.describe(caller.owner, args.table);
       return said(
-        `${table.name}: ${table.description}\nGrain: ${table.grain} ${table.rows.toLocaleString("en")} rows.\n${columns
+        `${table.name}: ${table.description}\nGrain: ${table.grain} ${table.rows.toLocaleString("en")} rows.\n${table.columns
           .map(
             (column) =>
               `- ${column.name} ${column.type}${column.unit ? ` (${column.unit})` : ""}${column.restricted ? " [RESTRICTED: aggregate only]" : ""}: ${column.description}`,
           )
           .join("\n")}`,
-        { ...table, columns },
+        table,
       );
     },
   );
@@ -314,8 +282,8 @@ export function registerCanvasTools(server: McpServer) {
       }),
       readOnly: true,
     },
-    async (args, caller) => {
-      const ran = await runQuery(caller, {
+    async (args, { caller, services }) => {
+      const ran = await services.runs.query(caller, {
         sql: args.sql,
         params: args.params,
         label: args.purpose ?? "Exploration",
@@ -361,8 +329,8 @@ export function registerCanvasTools(server: McpServer) {
       }),
       readOnly: true,
     },
-    async (args, caller) => {
-      const ran = await runCode(caller, {
+    async (args, { caller, services }) => {
+      const ran = await services.runs.code(caller, {
         inputs: args.inputs,
         code: args.code,
         params: args.params,
@@ -400,8 +368,8 @@ export function registerCanvasTools(server: McpServer) {
       }),
       app: true,
     },
-    async (args, caller) => {
-      const view = await createView(caller, args);
+    async (args, { caller, services }) => {
+      const view = await services.views.create(caller, args);
       return said(viewText(view), payloadOf(view));
     },
   );
@@ -416,8 +384,8 @@ export function registerCanvasTools(server: McpServer) {
       readOnly: true,
       app: true,
     },
-    async (args, caller) => {
-      const view = await getView(caller, args.viewId);
+    async (args, { caller, services }) => {
+      const view = await services.views.get(caller.owner, args.viewId);
       return said(viewText(view), payloadOf(view));
     },
   );
@@ -434,8 +402,8 @@ export function registerCanvasTools(server: McpServer) {
       }),
       app: true,
     },
-    async (args, caller) => {
-      const { view, linked } = await updateViewParams(caller, args);
+    async (args, { caller, services }) => {
+      const { view, linked } = await services.views.updateParams(caller, args);
       const payload: ViewPayload = payloadOf(view, linked);
       return said(
         viewText(
@@ -458,8 +426,11 @@ export function registerCanvasTools(server: McpServer) {
       inputSchema: z.object({}),
       readOnly: true,
     },
-    async (_args, caller) => {
-      const views = await listViews(caller, caller.conversationId);
+    async (_args, { caller, services }) => {
+      const views = await services.views.list(
+        caller.owner,
+        caller.conversationId,
+      );
       return said(
         views.length === 0
           ? "No Views yet."
@@ -493,8 +464,8 @@ export function registerCanvasTools(server: McpServer) {
       inputSchema: z.object({}),
       readOnly: true,
     },
-    async (_args, caller) => {
-      const current = await currentRulebook(caller.owner);
+    async (_args, { caller, services }) => {
+      const current = await services.rules.current(caller.owner);
       return said(rulebookText(current.rulebook, current.version), {
         version: current.version,
         rules: current.rulebook,
@@ -520,14 +491,8 @@ export function registerCanvasTools(server: McpServer) {
           .max(RULE_DEFS.length),
       }),
     },
-    async (args, caller) => {
-      // The Rules bind the Analyst; it does not get to change them. A person
-      // edits them on the Rules place, or through a client they connected.
-      if (caller.actor === "analyst")
-        throw new InvalidError(
-          "The Analyst may not edit Rules. The person can, on the Rules place.",
-        );
-      const saved = await saveRules(caller, args.edits);
+    async (args, { caller, services }) => {
+      const saved = await services.rules.save(caller, args.edits);
       return said(
         `Rulebook v${saved.version}.\n${rulebookText(saved.rulebook, saved.version)}`,
         { version: saved.version, changed: saved.changed },
@@ -543,17 +508,19 @@ export function registerCanvasTools(server: McpServer) {
       inputSchema: z.object({}),
       readOnly: true,
     },
-    async () =>
-      said(
-        SKILLS.map((skill) => `${skill.id}: ${skill.description}`).join("\n"),
+    async (_args, { services }) => {
+      const skills = services.catalog.skills();
+      return said(
+        skills.map((skill) => `${skill.id}: ${skill.description}`).join("\n"),
         {
-          skills: SKILLS.map(({ id, name, description }) => ({
+          skills: skills.map(({ id, name, description }) => ({
             id,
             name,
             description,
           })),
         },
-      ),
+      );
+    },
   );
 
   tool(
@@ -565,20 +532,8 @@ export function registerCanvasTools(server: McpServer) {
       inputSchema: z.object({ skill: z.string().min(1).max(60) }),
       readOnly: true,
     },
-    async (args, caller) => {
-      const skill = skillOf(args.skill);
-      if (!skill)
-        return {
-          ...said(
-            `There is no Skill "${args.skill}". They are: ${SKILLS.map((item) => item.id).join(", ")}.`,
-          ),
-          isError: true,
-        };
-      await trail(caller, {
-        action: "skill.loaded",
-        summary: `Loaded the ${skill.name} Skill`,
-        detail: { skill: skill.id },
-      });
+    async (args, { caller, services }) => {
+      const skill = await services.catalog.loadSkill(caller, args.skill);
       return said(skill.body, { id: skill.id, name: skill.name });
     },
   );
@@ -595,8 +550,8 @@ export function registerCanvasTools(server: McpServer) {
       }),
       readOnly: true,
     },
-    async (args, caller) => {
-      const events = await listTrail(caller, {
+    async (args, { caller, services }) => {
+      const events = await services.trail.list(caller.owner, {
         viewId: args.viewId,
         boardId: args.boardId,
         limit: args.limit ?? 30,
@@ -626,7 +581,8 @@ export function registerCanvasTools(server: McpServer) {
     } as never,
     async (uri, ctx) => {
       try {
-        await trail(callerOf(ctx), {
+        const { caller, services } = actingOf(ctx);
+        await services.trail.record(caller, {
           action: "app.resource_read",
           summary: `App resource read: ${VIEW_APP_URI}`,
           detail: { uri: VIEW_APP_URI, bytes: VIEW_APP_HTML.length },
@@ -659,23 +615,46 @@ const handler = createMcpHandler(registerCanvasTools, {
   },
 } as never);
 
+/** Canvas's services in a mode: the container (`container.ts`). */
+export type CanvasContainer = (
+  mode?: Pick<RequestMode, "stub">,
+) => CanvasServices;
+
+/** The container each request's tools run on, for the auth wrapper to resolve. */
+const containerOf = new WeakMap<Request, CanvasContainer>();
+
 /**
  * Every request carries a Canvas token: a chat turn's, the page Host's, or
  * one a person took for an outside client. Its holder must still have
- * Access, checked on every call, so a token dies with its Guest pass.
+ * Access, checked on every call, so a token dies with its Guest pass. The
+ * token also says which adapters its tools run on: only one minted for the
+ * e2e suite without `x-e2e-live` asks for the canned ones.
  */
-export const mcpHandler = withMcpAuth(
+const authenticated = withMcpAuth(
   handler,
-  async (_request, bearer) => {
-    if (!bearer) return undefined;
-    const caller = await callerOfBearer(bearer);
-    if (!caller) return undefined;
+  async (request, bearer) => {
+    const services = containerOf.get(request);
+    if (!bearer || !services) return undefined;
+    const holder = await services().connect.bearer(bearer);
+    if (!holder) return undefined;
     return {
       token: bearer,
-      clientId: `canvas-${caller.actor}`,
+      clientId: `canvas-${holder.caller.actor}`,
       scopes: ["canvas"],
-      extra: { caller },
+      extra: {
+        caller: holder.caller,
+        services: services({ stub: holder.stub }),
+      },
     };
   },
   { required: true },
 );
+
+/** The Canvas MCP server's entry point: the route's, and the in-process clients' of the chat and the Host. */
+export function mcpHandler(
+  request: Request,
+  services: CanvasContainer,
+): Promise<Response> {
+  containerOf.set(request, services);
+  return authenticated(request);
+}

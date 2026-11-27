@@ -1,32 +1,17 @@
-import { getPublicOrigin } from "mcp-handler";
-import { z } from "zod";
-import { requireCallerAccess } from "@/features/canvas/server/caller";
-import { callFromApp } from "@/features/canvas/server/host";
-import { bodyOf, failure, json } from "@/features/canvas/server/respond";
+import { appCallSchema } from "@/features/canvas/domain/api";
+import { canvasApi } from "@/features/canvas/server/api";
+import { body } from "@/platform/http/middleware";
 
 // One Query in the Sandbox, plus a cold Sandbox start.
 export const maxDuration = 120;
-
-const bodySchema = z.object({
-  name: z.string().min(1).max(60),
-  arguments: z.record(z.string(), z.unknown()).default({}),
-});
 
 /**
  * An App's `tools/call`, proxied by the page's Host to the MCP server: a
  * Control changed, so the View's saved Query runs again. No model is
  * called. Answers the CallToolResult as the MCP server gave it.
  */
-export async function POST(request: Request) {
-  try {
-    const { caller, access } = await requireCallerAccess();
-    const body = bodySchema.parse(await bodyOf(request));
-    const result = await callFromApp(access, caller, getPublicOrigin(request), {
-      name: body.name,
-      arguments: body.arguments,
-    });
-    return json(result);
-  } catch (error) {
-    return failure(error);
-  }
-}
+export const POST = canvasApi
+  .use(body(appCallSchema))
+  .handle(({ services, access, caller, origin, body }) =>
+    services.host.call(access, caller, origin, body),
+  );

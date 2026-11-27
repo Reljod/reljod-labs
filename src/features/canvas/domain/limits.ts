@@ -1,7 +1,7 @@
 /**
  * Every cap on paid or unbounded work in Canvas, in one place
  * (docs/engineering/conventions.md, "Cap paid work at every entry point").
- * The harness applies them in the server function, at every entry point: the
+ * The harness applies them in the service, at every entry point: the
  * page, the chat and the MCP server. Hourly ones count against the visitor
  * hash; the rest against the Owner. A Rule may lower a per-Query cap, never
  * raise it past the number here.

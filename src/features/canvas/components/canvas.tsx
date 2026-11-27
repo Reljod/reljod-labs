@@ -3,13 +3,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { DemoBar, demoBarControlClass } from "@/components/demo/demo-bar";
 import "./canvas.css";
-import {
-  API,
-  type CatalogTableInfo,
-  type ConversationListResponse,
-  type ConversationResponse,
-  type RulesResponse,
-} from "../domain/api";
+import type { CatalogTableInfo, RulesResponse } from "../domain/api";
 import {
   type ChatEvent,
   type ConversationSummary,
@@ -20,8 +14,12 @@ import {
 } from "../domain/chat";
 import { LIMITS } from "../domain/limits";
 import type { ViewPayload } from "../domain/payload";
-import { deleteConversationAction } from "../server/actions";
-import { ask, getJson } from "./api";
+import {
+  ask,
+  deleteConversation,
+  conversation as loadConversation,
+  conversations as loadConversations,
+} from "./api";
 import { ConnectPanel } from "./connect-panel";
 import { DataPanel } from "./data-panel";
 import { RulesPanel } from "./rules-panel";
@@ -155,13 +153,10 @@ export function Canvas({
   catalog,
   initialConversations,
   initialRules,
-  stub = false,
 }: {
   catalog: CatalogTableInfo[];
   initialConversations: ConversationSummary[] | null;
   initialRules: RulesResponse | null;
-  /** The e2e suite's scripted Analyst (honoured by the server only with the bypass token). */
-  stub?: boolean;
 }) {
   const [tab, setTab] = useState<TabId>("ask");
   const [conversations, setConversations] = useState(
@@ -201,7 +196,7 @@ export function Canvas({
 
   const refreshConversations = useCallback(async () => {
     try {
-      const list = await getJson<ConversationListResponse>(API.conversations);
+      const list = await loadConversations();
       setConversations(list.conversations);
     } catch {
       // The list is a convenience; the open Conversation is unaffected.
@@ -222,7 +217,7 @@ export function Canvas({
     setViews([]);
     if (!id) return;
     try {
-      const loaded = await getJson<ConversationResponse>(API.conversation(id));
+      const loaded = await loadConversation(id);
       setMessages(loaded.messages);
       setViews(loaded.views);
     } catch (error) {
@@ -272,7 +267,7 @@ export function Canvas({
     let filedIn = conversationId;
     try {
       await ask(
-        { text: asked, conversationId, stub },
+        { text: asked, conversationId },
         (event) => {
           if (event.type === "question") {
             filedIn = event.conversationId;
@@ -318,7 +313,7 @@ export function Canvas({
     )
       return;
     setDeleting(true);
-    const result = await deleteConversationAction(conversationId);
+    const result = await deleteConversation(conversationId);
     setDeleting(false);
     if (!result.ok) {
       setLoadError(result.error);

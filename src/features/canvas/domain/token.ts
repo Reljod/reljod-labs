@@ -25,6 +25,8 @@ export type CanvasClaims = {
   /** A chat turn's Conversation and Question: its Views are filed there, its caps apply. */
   conversationId?: string;
   questionId?: string;
+  /** An e2e token minted without `x-e2e-live`: its requests run on the canned adapters. */
+  stub?: boolean;
   /** Expiry, epoch seconds. */
   exp: number;
 };
@@ -73,6 +75,11 @@ export function readCanvasToken(
     if (claims.kind === "host" && !claims.owner.startsWith("host:"))
       return null;
     if (claims.kind === "e2e" && claims.owner !== "e2e") return null;
+    if (
+      claims.stub !== undefined &&
+      (claims.stub !== true || claims.kind !== "e2e")
+    )
+      return null;
     if (
       !optionalText(claims.conversationId) ||
       !optionalText(claims.questionId) ||

@@ -1,26 +1,25 @@
-import type { RulesResponse } from "@/features/canvas/domain/api";
-import { requireCaller } from "@/features/canvas/server/caller";
-import { failure, json } from "@/features/canvas/server/respond";
 import {
-  currentRulebook,
-  rulebookHistory,
-} from "@/features/canvas/server/rules";
+  type RulesResponse,
+  ruleEditsSchema,
+} from "@/features/canvas/domain/api";
+import { canvasApi } from "@/features/canvas/server/api";
+import { body } from "@/platform/http/middleware";
 
 /** The Owner's Rulebook now, and its saved Versions. */
-export async function GET() {
-  try {
-    const caller = await requireCaller();
-    const [current, history] = await Promise.all([
-      currentRulebook(caller.owner),
-      rulebookHistory(caller.owner),
-    ]);
-    return json<RulesResponse>({
-      version: current.version,
-      rulebook: current.rulebook,
-      savedAt: current.savedAt,
-      history,
-    });
-  } catch (error) {
-    return failure(error);
-  }
-}
+export const GET = canvasApi.handle(
+  ({ services, owner }): Promise<RulesResponse> => services.rules.read(owner),
+);
+
+/**
+ * Saves Rule edits as a new Version of the Owner's Rulebook and answers the
+ * Rules as they now are. A bad value is a 400 with `errors`, one per field.
+ */
+export const POST = canvasApi
+  .use(body(ruleEditsSchema))
+  .handle(async ({ services, caller, body }): Promise<RulesResponse> => {
+    const { changed: _changed, ...rules } = await services.rules.save(
+      caller,
+      body.edits,
+    );
+    return rules;
+  });
