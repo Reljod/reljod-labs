@@ -2,10 +2,10 @@
 
 import { useQuery } from "@tanstack/react-query";
 import { motion } from "motion/react";
+import type { NodeLite, SourceSummary } from "../domain/api";
 import { categoryLabel, toneOf } from "../domain/categories";
 import { CERTAINTY_STYLE, certaintyOf } from "../domain/confidence";
 import { ROOT_KEY } from "../domain/graph";
-import type { NodeLite, SourceSummary } from "../server/service";
 import { fetchNode, keys } from "./api";
 import { CertaintyDot, CertaintyLine } from "./certainty";
 import { Icon } from "./icons";

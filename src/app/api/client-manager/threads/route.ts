@@ -1,32 +1,18 @@
-import type { ThreadsResponse } from "@/features/client-manager/domain/api";
-import { failure, json } from "@/features/client-manager/server/respond";
 import {
-  currentOwner,
-  visitor,
-} from "@/features/client-manager/server/session";
-import {
-  openThread,
-  threadsOf,
-} from "@/features/client-manager/server/threads";
+  type ThreadsResponse,
+  threadPatchSchema,
+} from "@/features/client-manager/domain/api";
+import { clientManagerApi } from "@/features/client-manager/server/api";
+import { body } from "@/platform/http/middleware";
 
-/** This browser's chats, newest first. */
-export async function GET() {
-  try {
-    return json<ThreadsResponse>({
-      threads: await threadsOf(await currentOwner()),
-    });
-  } catch (error) {
-    return failure(error);
-  }
-}
+/** The Owner's chats, newest first. */
+export const GET = clientManagerApi.handle(
+  async ({ services, owner }): Promise<ThreadsResponse> => ({
+    threads: await services.threads.list(owner),
+  }),
+);
 
 /** A new chat, about every client or one. */
-export async function POST(request: Request) {
-  try {
-    const owner = await currentOwner();
-    const body = await request.json().catch(() => ({}));
-    return json(await openThread(body, owner, await visitor()));
-  } catch (error) {
-    return failure(error);
-  }
-}
+export const POST = clientManagerApi
+  .use(body(threadPatchSchema, { limit: 4 * 1024 }))
+  .handle(({ services, caller, body }) => services.threads.open(caller, body));

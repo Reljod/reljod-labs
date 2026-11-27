@@ -1,31 +1,10 @@
-import { failure, notFound } from "@/features/client-manager/server/respond";
-import {
-  ownedClient,
-  startBuild,
-  viewableBuild,
-} from "@/features/client-manager/server/service";
-import {
-  currentOwner,
-  visitor,
-} from "@/features/client-manager/server/session";
+import { buildParamsSchema } from "@/features/client-manager/domain/api";
+import { clientManagerApi } from "@/features/client-manager/server/api";
+import { params } from "@/platform/http/middleware";
 
-/** Starts a Build's workflow, once its files are uploaded. */
-export async function POST(
-  _request: Request,
-  { params }: RouteContext<"/api/client-manager/builds/[buildId]/start">,
-) {
-  try {
-    const { buildId } = await params;
-    const owner = await currentOwner();
-    const who = await visitor();
-    const found = await viewableBuild(buildId, owner);
-    // Like Stop: only the session that owns the client may start its Builds.
-    if (!found || !(await ownedClient(found.client.id, owner, who))) {
-      return notFound();
-    }
-    await startBuild(found.build, who);
-    return Response.json({ started: true });
-  } catch (error) {
-    return failure(error);
-  }
-}
+/** Starts a Build's workflow, once its files are uploaded: the client's Owner only. */
+export const POST = clientManagerApi
+  .use(params(buildParamsSchema))
+  .handle(({ services, caller, path }) =>
+    services.builds.start(caller, path.buildId),
+  );

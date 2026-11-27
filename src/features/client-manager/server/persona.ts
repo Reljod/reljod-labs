@@ -5,6 +5,7 @@ import type { Persona, Usage } from "../domain/events";
 import { type DraftGraph, describeGraph } from "../domain/graph";
 import { EMBEDDING_DIMENSIONS, env } from "./env";
 import { type CallContext, gateway, gatewayCost, track } from "./llm";
+import type { Embedder, Painter, PersonaWriter } from "./ports";
 
 const personaSchema = z.object({
   archetype: z.string(),
@@ -97,20 +98,6 @@ export async function paintPortrait(input: {
   };
 }
 
-/** What a Node is embedded as: enough words for a question to find it. */
-export function nodeText(node: {
-  label: string;
-  category: string;
-  type: string;
-  summary: string;
-  attributes: Record<string, string>;
-}) {
-  const attributes = Object.entries(node.attributes ?? {})
-    .map(([name, value]) => `${name.replace(/_/g, " ")}: ${value}`)
-    .join("; ");
-  return `${node.label} (${node.type}, ${node.category.replace(".", " › ")}). ${node.summary} ${attributes}`.trim();
-}
-
 export async function embedTexts(
   context: CallContext,
   values: string[],
@@ -132,3 +119,10 @@ export async function embedTexts(
   });
   return { embeddings: result.embeddings, usage };
 }
+
+/** The models behind the Persona, the Portrait and the embeddings, as their ports. */
+export const modelPersona: PersonaWriter = { infer: inferPersona };
+export const modelPainter: Painter = {
+  paint: (context, prompt) => paintPortrait({ context, prompt }),
+};
+export const modelEmbedder: Embedder = { embed: embedTexts };

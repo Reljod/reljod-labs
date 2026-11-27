@@ -3,8 +3,10 @@ import { expect, test } from "@playwright/test";
 /*
  * Client Manager: add a client from the Intake and watch the Build on the
  * Map, read the Profile and a fact's sources, then ask the Desk in the Chat
- * tab and open a cited fact. Calls the real models and writes to the live
- * database and bucket, like the rest of the suite.
+ * tab and open a cited fact. Stubbed by default: the Build reads with the
+ * canned extractor, Critic and Persona and the Desk is a script, both over
+ * the real workflow, MCP server, caps, bucket and live database
+ * (`server/stubs.ts`). `E2E_LIVE=1` calls the real models (paid).
  */
 test.describe.configure({ mode: "serial" });
 test.setTimeout(300_000);

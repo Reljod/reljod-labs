@@ -3,7 +3,7 @@ import { Suspense } from "react";
 import { projects } from "@/content/projects";
 import { ClientManagerApp } from "@/features/client-manager/components/app";
 import { AppSkeleton } from "@/features/client-manager/components/app-skeleton";
-import { firstLoad } from "@/features/client-manager/server/first-load";
+import { firstLoad } from "@/features/client-manager/server/page";
 import { QueryProvider } from "@/features/document-compliance/components/query-provider";
 
 const project = projects.find((item) => item.slug === "client-manager");

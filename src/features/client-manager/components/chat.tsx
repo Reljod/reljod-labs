@@ -12,6 +12,7 @@ import {
   useRef,
   useState,
 } from "react";
+import type { CatalogCard } from "../domain/api";
 import {
   type AssistantEvent,
   type CitedFact,
@@ -25,11 +26,15 @@ import {
 import { handleOf, splitCitations } from "../domain/citations";
 import { ROOT_KEY } from "../domain/graph";
 import { describeStep } from "../domain/traversal";
-import type { CatalogCard } from "../server/service";
-import { keys, send, threadQuery } from "./api";
+import {
+  ask as askDesk,
+  createThread,
+  decideProposal,
+  keys,
+  threadQuery,
+} from "./api";
 import { CertaintyDot } from "./certainty";
 import { Icon, type IconName } from "./icons";
-import { readNdjson } from "./ndjson";
 import { Portrait } from "./portrait";
 import { MessagesSkeleton } from "./skeletons";
 
@@ -190,11 +195,7 @@ export function Chat({
       };
       try {
         if (!id) {
-          const created = await send<ThreadSummary>(
-            "/api/client-manager/threads",
-            "POST",
-            { clientId: scope },
-          );
+          const created = await createThread({ clientId: scope });
           id = created.id;
           queryClient.setQueryData(keys.thread(id), {
             thread: created,
@@ -203,22 +204,7 @@ export function Chat({
           update({ threadId: id }, true);
           onThreadCreated(created);
         }
-        const response = await fetch(
-          `/api/client-manager/threads/${id}/messages`,
-          {
-            method: "POST",
-            headers: { "content-type": "application/json" },
-            body: JSON.stringify({ text: question, research: asResearch }),
-            signal: controller.signal,
-          },
-        );
-        if (!response.ok) {
-          const body = (await response.json().catch(() => null)) as {
-            error?: string;
-          } | null;
-          throw new Error(body?.error ?? "The desk is unavailable right now.");
-        }
-        for await (const event of readNdjson<AssistantEvent>(response)) {
+        const onEvent = (event: AssistantEvent) => {
           switch (event.type) {
             case "thread":
               queryClient.setQueryData<ThreadSummary[]>(
@@ -278,7 +264,10 @@ export function Chat({
               update({ cited: event.cited, messageId: event.messageId });
               break;
           }
-        }
+        };
+        await askDesk(id, { text: question, research: asResearch }, onEvent, {
+          signal: controller.signal,
+        });
         update({ done: true }, true);
       } catch (failure) {
         update(
@@ -1123,11 +1112,10 @@ function ProposalCard({
     setBusy(action);
     setError(null);
     try {
-      const { proposal: next } = await send<{ proposal: Proposal }>(
-        `/api/client-manager/threads/${threadId}/proposals/${messageId}`,
-        "POST",
-        { action, factIds: [...picked] },
-      );
+      const { proposal: next } = await decideProposal(threadId, messageId, {
+        action,
+        factIds: [...picked],
+      });
       setProposal(next);
       void queryClient.invalidateQueries({ queryKey: keys.thread(threadId) });
       if (action === "add") {

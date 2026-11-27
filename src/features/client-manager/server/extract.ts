@@ -14,6 +14,7 @@ import {
 import { env } from "./env";
 import type { GatheredSource } from "./gather";
 import { type CallContext, gateway, gatewayCost, track } from "./llm";
+import type { Extractor } from "./ports";
 import { download } from "./storage";
 
 const entitySchema = z.object({
@@ -167,3 +168,6 @@ export async function extractSource(input: {
   });
   return { extraction: output, usage };
 }
+
+/** The extractor model, as its port. */
+export const modelExtractor: Extractor = { extract: extractSource };

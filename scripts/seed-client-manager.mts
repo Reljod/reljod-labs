@@ -37,6 +37,8 @@ async function post<T>(path: string, body: unknown): Promise<T> {
     headers: {
       "content-type": "application/json",
       "x-e2e-token": TOKEN as string,
+      // The e2e token alone gets the canned models; the Samples are read by the real ones.
+      "x-e2e-live": "1",
     },
     body: JSON.stringify(body),
   });

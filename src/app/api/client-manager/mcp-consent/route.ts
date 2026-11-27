@@ -1,5 +1,5 @@
 import { consentSchema } from "@/features/client-manager/domain/consent";
-import { consentApi } from "@/features/client-manager/server/consent-api";
+import { consentApi } from "@/features/client-manager/server/api";
 import { body } from "@/platform/http/middleware";
 
 /**
@@ -9,4 +9,6 @@ import { body } from "@/platform/http/middleware";
  */
 export const POST = consentApi
   .use(body(consentSchema, { limit: 16 * 1024 }))
-  .handle(({ services, access, body }) => services.answer(access, body));
+  .handle(({ services, access, visitor, body }) =>
+    services.connect.answer(access, visitor, body),
+  );
