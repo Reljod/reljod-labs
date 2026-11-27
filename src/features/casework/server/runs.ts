@@ -2,6 +2,7 @@ import "server-only";
 import { getRun as getWorkflowRun, resumeHook, start } from "workflow/api";
 import { E2E_VISITOR } from "@/features/document-compliance/server/rate-limit";
 import { isJobId, type JobId, planJobs } from "../domain/jobs";
+import { LIMITS } from "../domain/limits";
 import { resolveSettings } from "../domain/model-config";
 import { PIPELINES, type PipelineId } from "../domain/pipelines";
 import type { Answer, RunEvent } from "../domain/run-events";
@@ -24,22 +25,7 @@ import {
 } from "./repository";
 import { caseworkRun } from "./run-workflow";
 
-export const LIMITS = {
-  runsPerVisitorPerHour: 12,
-  runsPerDay: 250,
-  /** USD a session may spend on models before the desk stops starting work. */
-  spendPerSession: 2,
-  /**
-   * USD one Owner's Desks may spend on models in a day, all Desks together,
-   * so starting a new Desk never resets it.
-   */
-  spendPerOwnerPerDay: 5,
-  /** Messages to the Specialist per visitor per hour. */
-  messagesPerVisitorPerHour: 40,
-  /** Messages to the Specialist per day, across the whole demo. */
-  chatTurnsPerDay: 1500,
-  documentsPerRun: 12,
-};
+export { LIMITS };
 
 /** What the person is told when a cap refuses new model work. */
 export const LIMIT_MESSAGES = {
@@ -50,6 +36,8 @@ export const LIMIT_MESSAGES = {
   /** Only when the Owner still has room today: a new Desk then has its own cap. */
   sessionSpend: (spent: number) =>
     `This session has spent $${spent.toFixed(2)} on models, the demo's cap. Start a new desk to keep going.`,
+  /** A Run refused at the Desk's cap, without the spent amount at hand. */
+  sessionSpendReached: `This session has spent the demo's $${LIMITS.spendPerSession.toFixed(2)} cap on models. Start a new desk to keep going.`,
   visitorRuns: `That's ${LIMITS.runsPerVisitorPerHour} runs this hour. Give the desk a breather and try again later.`,
   dayRuns: "The desk has hit today's run limit. Try again tomorrow.",
   activeRun:
@@ -213,11 +201,18 @@ export async function takeChatTurn(session: SessionRow) {
 
 /** The words for a refused Run. */
 export function runRefusalMessage(refusal: RunRefusal) {
-  return refusal === "active"
-    ? LIMIT_MESSAGES.activeRun
-    : refusal === "visitor"
-      ? LIMIT_MESSAGES.visitorRuns
-      : LIMIT_MESSAGES.dayRuns;
+  switch (refusal) {
+    case "active":
+      return LIMIT_MESSAGES.activeRun;
+    case "visitor":
+      return LIMIT_MESSAGES.visitorRuns;
+    case "owner_spend":
+      return LIMIT_MESSAGES.ownerSpend;
+    case "session_spend":
+      return LIMIT_MESSAGES.sessionSpendReached;
+    default:
+      return LIMIT_MESSAGES.dayRuns;
+  }
 }
 
 export type StartedRun = {
@@ -270,12 +265,15 @@ export async function startRun(
     jobs,
     documentIds,
     visitorHash: session.visitor_hash,
+    owner: session.owner ?? null,
     limits:
       session.visitor_hash === E2E_VISITOR
         ? null
         : {
             perVisitorPerHour: LIMITS.runsPerVisitorPerHour,
             perDay: LIMITS.runsPerDay,
+            ownerSpendPerDay: LIMITS.spendPerOwnerPerDay,
+            sessionSpend: LIMITS.spendPerSession,
           },
   });
   if ("refusal" in created) {

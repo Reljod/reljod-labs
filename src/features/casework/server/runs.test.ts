@@ -133,8 +133,21 @@ describe("startRun", () => {
       limits: {
         perVisitorPerHour: LIMITS.runsPerVisitorPerHour,
         perDay: LIMITS.runsPerDay,
+        ownerSpendPerDay: LIMITS.spendPerOwnerPerDay,
+        sessionSpend: LIMITS.spendPerSession,
       },
     });
+  });
+
+  it("refuses when the spend caps, taken under the Run lock, are reached", async () => {
+    db.run = { refusal: "owner_spend" };
+    await expect(startRun(session, { documentIds: ["a"] })).rejects.toThrow(
+      /Your desks have spent/,
+    );
+    db.run = { refusal: "session_spend" };
+    await expect(startRun(session, { documentIds: ["a"] })).rejects.toThrow(
+      /Start a new desk/,
+    );
   });
 
   it("refuses when the database says a limit is reached", async () => {

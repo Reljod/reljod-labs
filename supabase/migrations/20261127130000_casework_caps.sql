@@ -57,6 +57,12 @@ $$;
 
 -- Takes one chat turn, or says which cap refused it --------------------------
 
+-- The spend caps count model calls already recorded, which land when a
+-- model answers: turns running at the same moment can each pass a cap with
+-- the last cents left, so an Owner can overshoot by at most the turns they
+-- have in flight, each one turn's cost (the visitor's hourly cap bounds how
+-- many). The turn counts themselves are exact.
+--
 -- Returns `taken` and, when not taken, a refusal code the app turns into
 -- words: 'visitor', 'day', 'owner_spend' or 'session_spend'. The limits are
 -- passed in from LIMITS in server/runs.ts; a trusted visitor (the e2e suite)
@@ -139,7 +145,10 @@ create function casework.create_run(
   p_document_ids uuid[],
   p_visitor_hash text,
   p_per_visitor_per_hour integer,
-  p_per_day integer
+  p_per_day integer,
+  p_owner text,
+  p_owner_spend_per_day numeric,
+  p_session_spend numeric
 )
 returns table (run_id uuid, refusal text)
 language plpgsql
@@ -148,6 +157,7 @@ set search_path = ''
 as $$
 declare
   used integer;
+  spent numeric;
   created uuid;
 begin
   perform pg_advisory_xact_lock(hashtextextended('casework:runs', 0));
@@ -185,6 +195,27 @@ begin
     end if;
   end if;
 
+  -- The spend caps, under the same lock, so two Runs cannot both start on
+  -- the last dollar. Spend lands as model calls finish, so a Run already
+  -- going may still take a little past a cap (at most one Run per Desk).
+  if p_owner_spend_per_day is not null and p_owner is not null then
+    spent := casework.owner_spend_usd(p_owner, now() - interval '1 day');
+    if spent >= p_owner_spend_per_day then
+      return query select null::uuid, 'owner_spend'::text;
+      return;
+    end if;
+  end if;
+
+  if p_session_spend is not null then
+    select coalesce(sum(c.cost_usd), 0) into spent
+    from casework.model_calls c
+    where c.session_id = p_session_id;
+    if spent >= p_session_spend then
+      return query select null::uuid, 'session_spend'::text;
+      return;
+    end if;
+  end if;
+
   insert into casework.runs (session_id, pipeline, jobs, document_ids, visitor_hash)
   values (p_session_id, p_pipeline, p_jobs, p_document_ids, p_visitor_hash)
   returning id into created;
@@ -195,7 +226,7 @@ $$;
 
 revoke all on function casework.owner_spend_usd(text, timestamptz) from public, anon, authenticated;
 revoke all on function casework.take_chat_turn(uuid, text, text, integer, integer, numeric, numeric) from public, anon, authenticated;
-revoke all on function casework.create_run(uuid, text, text[], uuid[], text, integer, integer) from public, anon, authenticated;
+revoke all on function casework.create_run(uuid, text, text[], uuid[], text, integer, integer, text, numeric, numeric) from public, anon, authenticated;
 grant execute on function casework.owner_spend_usd(text, timestamptz) to service_role;
 grant execute on function casework.take_chat_turn(uuid, text, text, integer, integer, numeric, numeric) to service_role;
-grant execute on function casework.create_run(uuid, text, text[], uuid[], text, integer, integer) to service_role;
+grant execute on function casework.create_run(uuid, text, text[], uuid[], text, integer, integer, text, numeric, numeric) to service_role;

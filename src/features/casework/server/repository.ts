@@ -395,7 +395,20 @@ export type RunRow = {
 };
 
 /** Why a Run was not created: the Desk has one going, or a rate limit. */
-export type RunRefusal = "active" | "visitor" | "day";
+export type RunRefusal =
+  | "active"
+  | "visitor"
+  | "day"
+  | "owner_spend"
+  | "session_spend";
+
+const RUN_REFUSALS: readonly RunRefusal[] = [
+  "active",
+  "visitor",
+  "day",
+  "owner_spend",
+  "session_spend",
+];
 
 /**
  * Creates a Run, counted against the rate limits and the one-Run-per-Desk
@@ -408,7 +421,13 @@ export async function createRun(input: {
   jobs: JobId[];
   documentIds: string[];
   visitorHash: string;
-  limits: { perVisitorPerHour: number; perDay: number } | null;
+  owner: string | null;
+  limits: {
+    perVisitorPerHour: number;
+    perDay: number;
+    ownerSpendPerDay: number;
+    sessionSpend: number;
+  } | null;
 }): Promise<{ runId: string } | { refusal: RunRefusal }> {
   const [row] = rows<{ run_id: string | null; refusal: string | null }[]>(
     await supabase().rpc("create_run", {
@@ -419,13 +438,14 @@ export async function createRun(input: {
       p_visitor_hash: input.visitorHash,
       p_per_visitor_per_hour: input.limits?.perVisitorPerHour ?? null,
       p_per_day: input.limits?.perDay ?? null,
+      p_owner: input.owner,
+      p_owner_spend_per_day: input.limits?.ownerSpendPerDay ?? null,
+      p_session_spend: input.limits?.sessionSpend ?? null,
     }),
   );
   if (row?.run_id) return { runId: row.run_id };
-  const refusal = row?.refusal;
-  return {
-    refusal: refusal === "active" || refusal === "visitor" ? refusal : "day",
-  };
+  const refusal = RUN_REFUSALS.find((known) => known === row?.refusal);
+  return { refusal: refusal ?? "day" };
 }
 
 /** Which cap refused a chat turn. */
