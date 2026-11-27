@@ -6,6 +6,11 @@ import {
   PROFILE_PATH,
   SIGN_IN_PATH,
 } from "../constants";
+import {
+  GUEST_ACCESS_CONNECT_PATH,
+  GUEST_ACCESS_MCP_PATH,
+  GUEST_ACCESS_OAUTH_PATH,
+} from "./guest-access-mcp";
 
 /** Routes under the gated paths that browser code fetches, never visits. */
 const NOT_A_PAGE = /^\/api\/|\/(events|builds)$|\/packs\//;
@@ -24,6 +29,9 @@ const BEARER_ROUTES = [
   "/api/loupe/mcp",
   "/api/switchboard/mcp",
   "/api/canvas/mcp",
+  // The Guest access MCP server: a Host's OAuth bearer, never a cookie.
+  GUEST_ACCESS_MCP_PATH,
+  GUEST_ACCESS_OAUTH_PATH,
 ];
 
 /**
@@ -61,11 +69,17 @@ export function decide(request: {
   }
   if (path === ACCESS_PATH || path.startsWith(`${ACCESS_PATH}/`)) {
     // The door is open to everyone; a Host's own pages only to a Host.
+    const mcp = path.startsWith(GUEST_ACCESS_CONNECT_PATH);
     const hostOnly =
-      path.startsWith(GUESTS_PATH) || path.startsWith(PROFILE_PATH);
-    return !hostOnly || access === "host"
-      ? { kind: "pass" }
-      : { kind: "redirect", to: SIGN_IN_PATH };
+      mcp || path.startsWith(GUESTS_PATH) || path.startsWith(PROFILE_PATH);
+    if (!hostOnly || access === "host") return { kind: "pass" };
+    // An MCP client's sign-in comes back to its consent page after the Host's.
+    return {
+      kind: "redirect",
+      to: mcp
+        ? `${SIGN_IN_PATH}?next=${encodeURIComponent(path + request.search)}`
+        : SIGN_IN_PATH,
+    };
   }
   if (access) return { kind: "pass" };
   const visiting =

@@ -5,12 +5,19 @@ import { CODE_LENGTH, guestCodeFrom } from "../domain/guest-code";
 import { trackAccess } from "./analytics";
 import { sessionlessPasswords } from "./browser";
 import { env } from "./env";
-import { disconnectMcpClientsOf } from "./mcp-tokens";
+import { hostById } from "./gate";
+import { createGuestAccessMcp } from "./mcp";
+import {
+  disconnectMcpClientsOf,
+  issuedSinceDisconnect,
+  redeemCodeOnce,
+} from "./mcp-tokens";
 import type { AccessPorts } from "./ports";
 import * as repository from "./repository";
 import { createDoorService } from "./services/door";
 import { createGuestPassService } from "./services/guest-passes";
 import { createMcpClientService } from "./services/mcp-clients";
+import { createMcpConnectService } from "./services/mcp-connect";
 import { createProfileService } from "./services/profile";
 
 const ports: AccessPorts = {
@@ -46,11 +53,27 @@ const ports: AccessPorts = {
  * Access's composition root. Nothing here is paid, so the stubbed e2e suite
  * gets the same services: the real door, its caps and the database.
  */
-export const accessServices = container(() => ({
-  door: createDoorService(ports),
-  profile: createProfileService(ports),
-  guestPasses: createGuestPassService(ports),
-  mcpClients: createMcpClientService(ports),
-}));
+export const accessServices = container(() => {
+  const guestPasses = createGuestPassService(ports);
+  const mcpConnect = createMcpConnectService({
+    secret: env.rateLimitSalt,
+    now: Date.now,
+    hostById,
+    issuedSinceDisconnect,
+    redeemCodeOnce,
+  });
+  return {
+    door: createDoorService(ports),
+    profile: createProfileService(ports),
+    guestPasses,
+    mcpClients: createMcpClientService(ports),
+    mcpConnect,
+    /** The Guest access MCP server, over the same Guest pass service. */
+    mcp: createGuestAccessMcp({
+      passes: guestPasses,
+      verify: mcpConnect.verify,
+    }),
+  };
+});
 
 export type AccessServices = ReturnType<typeof accessServices>;

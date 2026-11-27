@@ -126,6 +126,13 @@ describe("safeNextPath", () => {
     expect(safeNextPath("/ask/abc?ask=hi")).toBe("/ask/abc?ask=hi");
   });
 
+  it("keeps the Guest access MCP pages, for a Host signing in for an MCP client", () => {
+    const consent = "/access/mcp/authorize?client_id=gac_x&state=s";
+    expect(safeNextPath(consent)).toBe(consent);
+    expect(safeNextPath("/access/mcp")).toBe("/access/mcp");
+    expect(safeNextPath("/access/mcpx")).toBe("/#demos");
+  });
+
   it("falls back for anything else", () => {
     for (const next of [
       undefined,

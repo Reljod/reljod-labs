@@ -42,7 +42,7 @@ Architecture: `docs/engineering/architecture.md`. The services are in `server/se
 - `RATE_LIMIT_SALT` shorter than 32 characters logs a warning once per process.
 - On `/access/guests` a Host can extend or renew a pass, give it a new Guest code (signs out the devices on the old one, keeps the data), revoke, delete (marks it, purged after 30 days) and restore. A pass that ended 30 days ago is deleted by cron, so purged 30 days after that.
 
-## MCP tokens (Client Manager, Harness)
+## MCP tokens (Client Manager, Harness, Guest access)
 
 Decision: `docs/adr/0012-mcp-clients-sign-in-with-oauth.md` (amended). Shared code: `src/features/access/domain/mcp-clients.ts` and `src/features/access/server/mcp-tokens.ts`; tables in `20261127120000_access_mcp_tokens.sql`.
 
@@ -53,6 +53,17 @@ Decision: `docs/adr/0012-mcp-clients-sign-in-with-oauth.md` (amended). Shared co
 - The authorize page and the consent route send the browser to a callback only for a request with Access, or to a loopback or known callback; anything else is shown on the page, so they are no open redirect.
 - `RATE_LIMIT_SALT` signs every token, and the readable payload carries the visitor hash `sha256(salt + ":" + ip)`, so a weak salt could be guessed offline from one token and a known IP. Keep it 32 or more random bytes. Deriving the signing keys with HKDF or keying the visitor hash would not raise the cost of a guess (both are as fast as the hash), and the visitor hash must stay what the rate limits count, so the tokens were left as they are.
 - Before the migration is applied, a missing table reads as "no epoch, no code used yet" (as before it existed); any other database error fails closed.
+
+## Guest access MCP server (Hosts only)
+
+Decision: `docs/adr/0037-hosts-manage-guest-passes-over-mcp.md`. Code: `domain/guest-access-mcp.ts` (paths, tool list), `domain/guest-access-oauth.ts`, `server/mcp.ts` (the MCP server), `server/services/mcp-connect.ts` (consent, registration, tokens, the bearer check), both wired in `server/container.ts`.
+
+- `/api/access/mcp` lets a Host manage Guest passes from Claude, Claude Code or any MCP client that signs in with OAuth. How to connect: `/access/mcp`, linked as "Connect Claude" from `/access/guests`. The tools (`list_guest_passes`, `issue_guest_pass`, `extend_guest_pass`, `new_guest_code`, `revoke_guest_pass`, `delete_guest_pass`, `restore_guest_pass`) call the same `GuestPassService` (`server/services/guest-passes.ts`) as the REST routes, with the Host the bearer acts for. A new pass action goes there first, then gets a route and a tool.
+- OAuth is stateless, built from the shared `statelessOAuth` in `domain/mcp-oauth.ts`: issuer `/api/access` (metadata at `/.well-known/oauth-authorization-server/api/access`), resource metadata at `/.well-known/oauth-protected-resource/api/access/mcp`, `/api/access/oauth/register` and `/token` (on `openApi`, which the proxy lets through as `BEARER_ROUTES`), consent at `/access/mcp/authorize`, whose Allow and Deny post to `POST /api/access/mcp-consent` (on `hostApi`) and answer where the browser goes. Blobs carry the `ga` prefix and the `guest-access` HMAC context, so no Client Manager or Harness blob verifies here, and none of these verifies there.
+- Only a Host can allow a client. The proxy sends anyone else from `/access/mcp*` to the Host sign-in with `next`, and `safeNextPath` lets `/access/mcp*` through. The consent service checks for a Host again and redirects nowhere for anyone else.
+- A Grant lasts 30 days (`HOST_GRANT_DAYS`), and access tokens last an hour. Every MCP request and every token minted checks the account with the Auth admin API (`hostById`: not deleted, banned or anonymous, email confirmed and on `ACCESS_HOST_EMAILS`, the same email as at consent) and the Host's token epoch, so "Disconnect all MCP clients" covers this server too. A code is redeemed once (`redeemCodeOnce`).
+- Guest codes come back in the client's chat when a pass is issued or given a new code. They are shown once there, as on the page.
+- Guests and the e2e suite cannot connect.
 
 ## Saved data belongs to an Owner
 

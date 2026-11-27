@@ -68,10 +68,10 @@ async function Profile() {
       <Card>
         <h2 className={headingClass}>MCP clients</h2>
         <p>
-          Apps you connected to the Client Manager or the Harness MCP server
-          (Claude Code, Claude, ChatGPT) keep working until their sign-in ends,
-          30 days after you allowed them. Disconnect them all if one should not
-          have been allowed, or a token was seen.
+          Apps you connected to the Client Manager, the Harness or the Guest
+          access MCP server (Claude Code, Claude, ChatGPT) keep working until
+          their sign-in ends, 30 days after you allowed them. Disconnect them
+          all if one should not have been allowed, or a token was seen.
         </p>
         <DisconnectMcpClients />
       </Card>

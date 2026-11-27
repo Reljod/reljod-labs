@@ -8,6 +8,7 @@ import { PassActions } from "@/features/access/components/pass-actions";
 import { SignOutButton } from "@/features/access/components/sign-out-button";
 import { quietButtonClass } from "@/features/access/components/styles";
 import { PROFILE_PATH, SIGN_IN_PATH } from "@/features/access/constants";
+import { GUEST_ACCESS_CONNECT_PATH } from "@/features/access/domain/guest-access-mcp";
 import {
   type GuestPassStatus,
   guestPassStatus,
@@ -101,6 +102,13 @@ async function GuestPasses() {
       <div className="flex flex-wrap items-center justify-between gap-4">
         <p className="text-sm text-ink-muted">Signed in as {access.email}</p>
         <div className="flex items-center gap-3">
+          <ButtonLink
+            href={GUEST_ACCESS_CONNECT_PATH}
+            variant="secondary"
+            className="min-h-9"
+          >
+            Connect Claude
+          </ButtonLink>
           <ButtonLink
             href={PROFILE_PATH}
             variant="secondary"

@@ -119,6 +119,35 @@ describe("decide", () => {
     }
   });
 
+  it("keeps the Guest access MCP pages to a Host, and brings a Host back to the consent page", () => {
+    const query = "?client_id=gac_x&state=s";
+    expect(
+      decide({
+        path: "/access/mcp/authorize",
+        search: query,
+        method: "GET",
+        access: "host",
+      }),
+    ).toEqual({ kind: "pass" });
+    for (const access of [null, "guest", "e2e"] as const) {
+      expect(
+        decide({
+          path: "/access/mcp/authorize",
+          search: query,
+          method: "GET",
+          access,
+        }),
+      ).toEqual({
+        kind: "redirect",
+        to: `/access/sign-in?next=${encodeURIComponent(`/access/mcp/authorize${query}`)}`,
+      });
+      expect(visit("/access/mcp", access)).toEqual({
+        kind: "redirect",
+        to: "/access/sign-in?next=%2Faccess%2Fmcp",
+      });
+    }
+  });
+
   it("does not mistake a look-alike path for the door", () => {
     expect(visit("/accessories", null).kind).toBe("redirect");
   });
@@ -141,5 +170,10 @@ describe("checksItsOwnBearer", () => {
     expect(checksItsOwnBearer("/api/harness/mcp-token")).toBe(false);
     expect(checksItsOwnBearer("/api/harness/sessions")).toBe(false);
     expect(checksItsOwnBearer("/api/harness/plugin")).toBe(false);
+    expect(checksItsOwnBearer("/api/access/mcp")).toBe(true);
+    expect(checksItsOwnBearer("/api/access/oauth/token")).toBe(true);
+    expect(checksItsOwnBearer("/api/access/oauth/register")).toBe(true);
+    expect(checksItsOwnBearer("/api/access/mcpx")).toBe(false);
+    expect(checksItsOwnBearer("/access/mcp/authorize")).toBe(false);
   });
 });

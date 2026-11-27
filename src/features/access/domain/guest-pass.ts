@@ -120,11 +120,17 @@ export function passwordProblem(input: {
   return null;
 }
 
-const GATED = [/^\/demos(\/|$)/, /^\/ask(\/|$)/];
+const GATED = [
+  /^\/demos(\/|$)/,
+  /^\/ask(\/|$)/,
+  // The Guest access MCP pages: a Host signing in for an MCP client.
+  /^\/access\/mcp(\/|$)/,
+];
 
 /**
- * Where to go after the door: a demo on this site, never another site.
- * Anything else falls back to the list of demos.
+ * Where to go after the door or the Host sign-in: a demo on this site (or
+ * the Guest access MCP pages), never another site. Anything else falls back
+ * to the list of demos.
  */
 export function safeNextPath(next: unknown) {
   const fallback = "/#demos";

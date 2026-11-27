@@ -15,12 +15,15 @@ export function CallbackWarning({
   checked,
   onChange,
   disabled,
+  stakes = "your demo data",
 }: {
   host: string;
   clientName: string;
   checked: boolean;
   onChange: (checked: boolean) => void;
   disabled?: boolean;
+  /** What allowing hands over, for the warning's last sentence. */
+  stakes?: string;
 }) {
   const box = useId();
   return (
@@ -36,7 +39,7 @@ export function CallbackWarning({
         site knows. The name "{clientName}" is only what the app calls itself:
         anyone can register any name and any address. If you did not just start
         this from an app you trust at that address, choose Deny. Allowing it
-        hands it your demo data for up to 30 days.
+        hands it {stakes} for up to 30 days.
       </p>
       <label htmlFor={box} className="flex items-start gap-2 text-sm font-bold">
         <input

@@ -5,7 +5,7 @@ import type { Access } from "../gate";
 import type { AccessPorts } from "../ports";
 import { asHost } from "./common";
 
-/** The MCP clients a Host connected to the Client Manager and the Harness. */
+/** The MCP clients a Host connected to the Client Manager, the Harness and Guest access. */
 export interface McpClientService {
   /**
    * "Disconnect all MCP clients": every MCP token the Host was issued (OAuth
