@@ -2,10 +2,12 @@ import { createMCPClient } from "@ai-sdk/mcp";
 import { expect, type Page, request, test } from "@playwright/test";
 
 /*
- * Switchboard, the main path a person takes on the text Line, stubbed: the
- * Agent's Turns are canned (`x-switchboard-stub`, `domain/stub.ts`) so nothing
- * is spent, but every tool call goes through the real Back office, its Rules,
- * the trail and the Call's Workflow. It writes to the `e2e` Workspace.
+ * Switchboard, the main path a person takes on the text Line, stubbed: with
+ * the e2e token alone the container answers with the canned Agent
+ * (`domain/stub.ts`) so nothing is spent, but every tool call goes through the
+ * real Back office, its Rules, the trail and the Call's Workflow. An MCP token
+ * minted on a stubbed page keeps the canned Agent. It writes to the `e2e`
+ * Workspace.
  *
  * Opt-in with `E2E_SWITCHBOARD=1`; needs
  * `supabase/migrations/20261119150000_switchboard.sql` applied. The live
@@ -61,9 +63,7 @@ async function hangUp(page: Page) {
 }
 
 test.describe("stubbed", () => {
-  test.use({
-    extraHTTPHeaders: { "x-e2e-token": TOKEN, "x-switchboard-stub": "1" },
-  });
+  test.use({ extraHTTPHeaders: { "x-e2e-token": TOKEN } });
 
   test("a typed call changes the Back office, a Rule refuses, and the Workflow writes the wrap-up", async ({
     page,
@@ -202,7 +202,7 @@ test.describe("stubbed", () => {
           "save_rule",
         ]),
       );
-      const started = await call("start_call", { stub: true });
+      const started = await call("start_call", {});
       expect(String(started.agent)).toContain("Meridia Rail");
 
       // As the Caller: the line's Agent refuses the pushy caller.
@@ -273,7 +273,10 @@ test.describe("live", () => {
     process.env.E2E_SWITCHBOARD_LIVE !== "1",
     "Set E2E_SWITCHBOARD_LIVE=1 to spend a few cents on the real models.",
   );
-  test.use({ extraHTTPHeaders: { "x-e2e-token": TOKEN } });
+  // `x-e2e-live: 1`: the container's live adapters, so the real models answer.
+  test.use({
+    extraHTTPHeaders: { "x-e2e-token": TOKEN, "x-e2e-live": "1" },
+  });
 
   test("the real Agent on the text Line looks up a delay and gets a wrap-up", async ({
     page,

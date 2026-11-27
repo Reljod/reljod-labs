@@ -1,23 +1,24 @@
 import "server-only";
 import postgres from "postgres";
-import { env } from "./env";
+import { databaseUrl, dbStats } from "@/server/postgres";
 
 let client: postgres.Sql | undefined;
 
 /**
- * One small pool per function instance, set up for Supabase's transaction
- * pooler (Supavisor) exactly as the Client Manager's is: prepared statements
- * off, and one query per connection at a time. postgres.js pipelines up to
- * 100 queries on one connection by default, and Supavisor stalls on that.
+ * Switchboard's own pool, built once per function instance. Not the shared
+ * `db()`: its rows keep `timestamptz` as `Date`s (the Call's clock does
+ * arithmetic on them), where the shared pool answers ISO strings. Otherwise
+ * set up for Supabase's transaction pooler exactly as `createPool` is.
  */
 export function sql() {
-  client ??= postgres(env.databaseUrl(), {
+  client ??= postgres(databaseUrl(), {
     prepare: false,
     max_pipeline: 1,
     max: 4,
     idle_timeout: 20,
     connect_timeout: 15,
     onnotice: () => {},
+    debug: dbStats.enabled ? dbStats.count : undefined,
     // Event ids are identity columns; they fit a JS number for good.
     types: {
       bigint: {

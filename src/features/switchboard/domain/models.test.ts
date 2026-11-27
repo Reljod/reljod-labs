@@ -1,26 +1,8 @@
 import { describe, expect, it } from "vitest";
-import {
-  addUsage,
-  DEFAULT_REALTIME_MODEL,
-  REALTIME_MODELS,
-  realtimeCost,
-  realtimeModel,
-  usd,
-} from "./models";
+import { addUsage, realtimeCost } from "./models";
 
 const GPT = "openai/gpt-realtime-2.1";
 const M = 1_000_000;
-
-describe("realtimeModel", () => {
-  it("finds the default and nothing else", () => {
-    expect(DEFAULT_REALTIME_MODEL).toBe(GPT);
-    expect(realtimeModel(GPT)?.label).toBe("GPT-Realtime 2.1");
-    expect(realtimeModel("nope")).toBeUndefined();
-    expect(new Set(REALTIME_MODELS.map((model) => model.id)).size).toBe(
-      REALTIME_MODELS.length,
-    );
-  });
-});
 
 describe("realtimeCost", () => {
   it("prices each kind of token at its own rate", () => {
@@ -124,19 +106,5 @@ describe("addUsage", () => {
     const total = { inputTokens: 1 };
     addUsage(total, { inputTokens: 1 });
     expect(total).toEqual({ inputTokens: 1 });
-  });
-});
-
-describe("usd", () => {
-  it("shows four decimals under a cent, three under a dollar, two above", () => {
-    expect(usd(0.0042)).toBe("$0.0042");
-    expect(usd(0.012)).toBe("$0.012");
-    expect(usd(0.5)).toBe("$0.500");
-    expect(usd(1)).toBe("$1.00");
-    expect(usd(12.345)).toMatch(/^\$12\.3[45]$/);
-  });
-
-  it("shows nothing spent as $0.000", () => {
-    expect(usd(0)).toBe("$0.000");
   });
 });

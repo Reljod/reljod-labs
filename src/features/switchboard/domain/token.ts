@@ -19,6 +19,8 @@ export type SwitchboardClaims = {
   email?: string;
   /** Expiry, epoch seconds. */
   exp: number;
+  /** An e2e token minted by the stubbed suite: its calls keep the canned Agent. */
+  stub?: true;
 };
 
 const PREFIX = "swb_";
@@ -59,6 +61,11 @@ export function readMcpToken(
     if (claims.kind === "host" && !claims.owner.startsWith("host:"))
       return null;
     if (claims.kind === "e2e" && claims.owner !== "e2e") return null;
+    if (
+      claims.stub !== undefined &&
+      (claims.stub !== true || claims.kind !== "e2e")
+    )
+      return null;
     return claims;
   } catch {
     return null;

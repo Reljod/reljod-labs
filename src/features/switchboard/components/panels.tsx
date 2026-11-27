@@ -24,13 +24,6 @@ import {
 } from "../domain/rules";
 import { SWITCHBOARD_MCP_PATH } from "../domain/tools";
 import { RECORD_KINDS, RECORD_LABEL } from "../domain/world";
-import {
-  callbackNowAction,
-  mintMcpTokenAction,
-  resetBackOfficeAction,
-  restoreRuleAction,
-  saveRuleAction,
-} from "../server/actions";
 import { api } from "./api";
 import type { CallController } from "./use-call";
 import { VAD_SILENCE_MS } from "./voice-session";
@@ -143,8 +136,7 @@ export function BackOfficePanel({
           danger
           onClose={() => setConfirming(false)}
           onConfirm={async () => {
-            const result = await resetBackOfficeAction();
-            if (!result.ok) throw new Error(result.error);
+            await api.resetBackOffice();
             await onChanged();
           }}
         >
@@ -170,8 +162,7 @@ export function WrapupView({
 }) {
   const wrapup = call.wrapup;
   const callback = useWrite(async () => {
-    const result = await callbackNowAction(call.id);
-    if (!result.ok) throw new Error(result.error);
+    await api.callbackNow(call.id);
     await new Promise((resolve) => setTimeout(resolve, 2500));
     onChanged();
     return true;
@@ -611,16 +602,14 @@ function RuleCard({
     setParams(rule.params);
   }, [rule]);
   const save = useWrite(async () => {
-    const result = await saveRuleAction({ ruleId: rule.id, enabled, params });
-    if (!result.ok) throw new Error(result.error);
+    const saved = await api.saveRule(rule.id, { enabled, params });
     await onChanged();
-    return result.version;
+    return saved.version;
   });
   const restore = useWrite(async () => {
-    const result = await restoreRuleAction(rule.id);
-    if (!result.ok) throw new Error(result.error);
+    const saved = await api.restoreRule(rule.id);
     await onChanged();
-    return result.version;
+    return saved.version;
   });
   if (!definition) return null;
   return (
@@ -977,11 +966,7 @@ export function HoodPanel({ controller }: { controller: CallController }) {
 // Connect -----------------------------------------------------------------------------------
 
 export function ConnectPanel() {
-  const mint = useWrite(async () => {
-    const result = await mintMcpTokenAction();
-    if (!result.ok) throw new Error(result.error);
-    return result;
-  });
+  const mint = useWrite(() => api.mintToken());
   const [origin, setOrigin] = useState("");
   useEffect(() => setOrigin(window.location.origin), []);
   const url = `${origin}${SWITCHBOARD_MCP_PATH}`;

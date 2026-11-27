@@ -4,7 +4,9 @@ import { Sandbox } from "@vercel/sandbox";
 import type { Owner } from "@/features/access/domain/owner";
 import { SANDBOX_LIMITS } from "../domain/limits";
 import { env } from "./env";
-import { messageOf } from "./errors";
+
+const messageOf = (error: unknown) =>
+  error instanceof Error ? error.message : String(error);
 
 /**
  * The coding Sandbox, as Sieve and the Harness run it: a Vercel Sandbox with

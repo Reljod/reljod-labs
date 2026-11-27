@@ -1,19 +1,15 @@
-import type { CallResponse } from "@/features/switchboard/domain/api";
-import { loadCall } from "@/features/switchboard/server/calls";
-import { requireWorkspace } from "@/features/switchboard/server/context";
-import { failure, json } from "@/features/switchboard/server/respond";
+import {
+  type CallResponse,
+  callQuerySchema,
+} from "@/features/switchboard/domain/api";
+import { callPath, switchboardApi } from "@/features/switchboard/server/api";
+import { params, query } from "@/platform/http/middleware";
 
 /** One Call with its Events; `?after=<event id>` for only what is new. */
-export async function GET(
-  request: Request,
-  { params }: RouteContext<"/api/switchboard/calls/[id]">,
-) {
-  try {
-    const { owner } = await requireWorkspace();
-    const { id } = await params;
-    const after = Number(new URL(request.url).searchParams.get("after")) || 0;
-    return json<CallResponse>(await loadCall(owner, id, after));
-  } catch (error) {
-    return failure(error);
-  }
-}
+export const GET = switchboardApi
+  .use(params(callPath))
+  .use(query(callQuerySchema))
+  .handle(
+    ({ services, owner, path, query }): Promise<CallResponse> =>
+      services.calls.get(owner, path.id, query.after),
+  );
