@@ -4,11 +4,11 @@ import { cookies, headers } from "next/headers";
 import { type Owner, parseOwner } from "@/features/access/domain/owner";
 import { isE2eToken } from "@/features/access/server/e2e";
 import { requireOwner } from "@/features/access/server/gate";
-import { E2E_HEADER } from "@/features/document-compliance/constants";
 import {
   E2E_VISITOR,
   hashVisitor,
 } from "@/features/document-compliance/server/rate-limit";
+import { E2E_HEADER } from "@/platform/request/headers";
 import { env } from "./env";
 import {
   createSession,

@@ -2,11 +2,11 @@ import "server-only";
 import { headers } from "next/headers";
 import type { Owner } from "@/features/access/domain/owner";
 import { isE2eToken } from "@/features/access/server/e2e";
-import { E2E_HEADER } from "@/features/document-compliance/constants";
 import {
   E2E_VISITOR,
   hashVisitor,
 } from "@/features/document-compliance/server/rate-limit";
+import { E2E_HEADER } from "@/platform/request/headers";
 import { LimitError } from "../core/errors";
 import { LIMITS } from "../domain/limits";
 import { sql } from "./db";

@@ -3,8 +3,8 @@ import { headers } from "next/headers";
 import type { Owner } from "@/features/access/domain/owner";
 import { isE2eToken } from "@/features/access/server/e2e";
 import { requireOwner } from "@/features/access/server/gate";
-import { E2E_HEADER } from "@/features/document-compliance/constants";
 import { hashVisitor } from "@/features/document-compliance/server/rate-limit";
+import { E2E_HEADER } from "@/platform/request/headers";
 import { env } from "./env";
 
 /** Visitors tagged this way (the e2e suite and the seed script) skip limits. */
