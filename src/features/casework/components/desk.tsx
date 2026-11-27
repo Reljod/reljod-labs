@@ -12,15 +12,15 @@ import { JOBS } from "../domain/jobs";
 import type { ModelSettingsByPurpose } from "../domain/model-config";
 import { PIPELINE_IDS, PIPELINES } from "../domain/pipelines";
 import type { Answer } from "../domain/run-events";
+import type { DeskView, DocView, RunSummary, SpendView } from "../view";
 import {
   answer,
+  getDeskStatus,
   newDesk,
   openDesk,
-  openEarlierDesk,
+  sendMessage,
   stop,
-} from "../server/actions";
-import type { DeskView, DocView, RunSummary, SpendView } from "../view";
-import { getDeskStatus } from "./api";
+} from "./api";
 import { Cabinet, SCENARIO_TONE } from "./cabinet";
 import "./casework.css";
 import {
@@ -332,26 +332,9 @@ export function Desk({ initial }: { initial: DeskView | null }) {
     const controller = new AbortController();
     chatAbort.current = controller;
     try {
-      const response = await fetch("/api/casework/chat", {
-        method: "POST",
-        headers: { "content-type": "application/json" },
-        body: JSON.stringify({ text, documentIds }),
-        signal: controller.signal,
-      });
-      if (!response.body) throw new Error("No response");
-      const reader = response.body
-        .pipeThrough(new TextDecoderStream())
-        .getReader();
-      let buffer = "";
-      for (;;) {
-        const { value, done } = await reader.read();
-        if (done) break;
-        buffer += value;
-        const lines = buffer.split("\n");
-        buffer = lines.pop() ?? "";
-        for (const line of lines) {
-          if (!line.trim()) continue;
-          const event = JSON.parse(line) as ChatEvent;
+      await sendMessage(
+        { text, documentIds },
+        (event: ChatEvent) => {
           if (event.type === "delta") {
             patch((item) => ({ ...item, text: item.text + event.text }));
           } else if (event.type === "reasoning") {
@@ -423,8 +406,9 @@ export function Desk({ initial }: { initial: DeskView | null }) {
             patch((item) => ({ ...item, text: event.message }));
             log("error", event.message);
           }
-        }
-      }
+        },
+        controller.signal,
+      );
     } catch (error) {
       if (controller.signal.aborted) {
         patch((item) => ({
@@ -650,8 +634,8 @@ export function Desk({ initial }: { initial: DeskView | null }) {
   async function changeDesk(id: string | null) {
     chatAbort.current?.abort();
     setDesksOpen(false);
-    const view = id ? await openEarlierDesk(id) : await newDesk();
-    if (!view) throw new Error("That desk is not yours to open.");
+    // An earlier Desk that is not the Owner's answers 404 with why.
+    const view = id ? await openDesk(id) : await newDesk();
     setTray([]);
     setChatLines([]);
     show(view);

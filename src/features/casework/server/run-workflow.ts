@@ -1,6 +1,6 @@
 import { createHook, getWritable, sleep } from "workflow";
 import { kindLabel } from "../domain/document-kinds";
-import { applyRuleJob, isRuleJob } from "../domain/execute";
+import { isRuleJob } from "../domain/execute";
 import { describeWant, JOBS, type JobId, unmet } from "../domain/jobs";
 import {
   inferPipeline,
@@ -9,29 +9,19 @@ import {
   type PipelineId,
 } from "../domain/pipelines";
 import { wantsInWords } from "../domain/rules/decision";
-import { screeningCheck } from "../domain/rules/screening";
 import type { Answer, RunEventInput } from "../domain/run-events";
-import {
-  type RunDocument,
-  type RunState,
-  withChecks,
-} from "../domain/run-state";
-import { WATCHLIST } from "../domain/watchlist";
+import type { RunDocument, RunState } from "../domain/run-state";
 import { emit, emitAll } from "./emit";
 import type { RunContext } from "./jobs/context";
-import { adjudicateWithModel, decideWithModel } from "./jobs/judge";
-import { readDocument } from "./jobs/read";
-import { sortDocument } from "./jobs/sort";
-import {
-  asOfFor,
-  candidateDocuments,
-  createQuestion,
-  documentsByIds,
-  markAnswered,
-  recordJobRun,
-  toRunDocument,
-  updateRun,
-} from "./repository";
+import { runWork } from "./work-container";
+
+/*
+ * Step and workflow names (and this file's path) are replay keys: never
+ * rename or move them. A step's body does its work through the Run work
+ * service (`services/work.ts`) and streams the events; the stubbed e2e
+ * suite's Runs (`ctx.stub`) get the labelled Reader from the same container.
+ */
+const work = (ctx: RunContext) => runWork({ stub: ctx.stub === true });
 
 /** How long a Question waits for a person before the Run goes on without it. */
 const ANSWER_TIMEOUT = "30m";
@@ -53,9 +43,8 @@ export type RunInput = {
 
 async function beginStep(input: RunInput): Promise<RunState> {
   "use step";
-  const rows = await documentsByIds(input.documentIds, input.ctx.sessionId);
-  const asOf = await asOfFor(rows);
-  await updateRun(input.ctx.runId, { status: "running" });
+  const state = await work(input.ctx).begin(input);
+  const count = state.documents.length;
   await emitAll([
     {
       type: "plan",
@@ -66,18 +55,10 @@ async function beginStep(input: RunInput): Promise<RunState> {
     {
       type: "log",
       level: "info",
-      text: `run ${input.ctx.runId.slice(0, 8)} · ${rows.length} document${rows.length === 1 ? "" : "s"} · as of ${asOf}`,
+      text: `run ${input.ctx.runId.slice(0, 8)} · ${count} document${count === 1 ? "" : "s"} · as of ${state.asOf}`,
     },
   ]);
-  return {
-    runId: input.ctx.runId,
-    asOf,
-    pipeline: input.pipeline ?? undefined,
-    documents: rows.map(toRunDocument),
-    checks: [],
-    gaps: [],
-    answers: [],
-  };
+  return state;
 }
 
 async function planStep(
@@ -87,7 +68,7 @@ async function planStep(
   inferred: boolean,
 ) {
   "use step";
-  await updateRun(ctx.runId, { pipeline, jobs });
+  await work(ctx).plan(ctx, pipeline, jobs);
   await emitAll([
     { type: "plan", pipeline, jobs, inferred },
     {
@@ -107,20 +88,19 @@ async function markJobStep(
   ms?: number,
 ) {
   "use step";
-  await recordJobRun({
-    runId: ctx.runId,
-    position: index,
+  await work(ctx).markJob(
+    ctx,
+    index,
     job,
-    status:
-      state === "start"
-        ? "running"
-        : state === "error"
-          ? "failed"
-          : state === "waiting"
-            ? "waiting"
-            : state,
+    state === "start"
+      ? "running"
+      : state === "error"
+        ? "failed"
+        : state === "waiting"
+          ? "waiting"
+          : state,
     summary,
-  });
+  );
   const events: RunEventInput[] = [
     { type: "job", index, job, state, summary, ms },
   ];
@@ -138,7 +118,7 @@ async function markJobStep(
 
 async function sortStep(ctx: RunContext, document: RunDocument) {
   "use step";
-  const { kind, gist, cost } = await sortDocument(ctx, document);
+  const { kind, gist, cost } = await work(ctx).sort(ctx, document);
   await emitAll([
     {
       type: "document",
@@ -164,7 +144,7 @@ async function readStep(ctx: RunContext, document: RunDocument) {
     return { id: document.id, fields: {}, evidence: {}, parser: undefined };
   const kind = document.kind;
   const started = Date.now();
-  const result = await readDocument(ctx, document, kind, (name, value) =>
+  const result = await work(ctx).read(ctx, document, kind, (name, value) =>
     emit({ type: "field", documentId: document.id, name, value }),
   );
   // Evidence arrives with the finished reading; send it so the page can box each field.
@@ -214,44 +194,27 @@ function patchEvents(before: RunState, after: RunState): RunEventInput[] {
   return events;
 }
 
-async function ruleStep(_ctx: RunContext, job: JobId, state: RunState) {
+async function ruleStep(ctx: RunContext, job: JobId, state: RunState) {
   "use step";
-  const { state: next, outcome } = applyRuleJob(state, job, WATCHLIST);
+  const { state: next, outcome } = work(ctx).rule(job, state);
   await emitAll(patchEvents(state, next));
   return { state: next, summary: outcome.summary, question: outcome.question };
 }
 
 async function adjudicateStep(ctx: RunContext, state: RunState) {
   "use step";
-  const ruled = applyRuleJob(state, "adjudicate", WATCHLIST);
-  if (!ruled.state.hits?.length) {
-    await emitAll(patchEvents(state, ruled.state));
-    return {
-      state: ruled.state,
-      summary: ruled.outcome.summary,
-      question: ruled.outcome.question,
-    };
-  }
-  const { hits, cost } = await adjudicateWithModel(ctx, state, WATCHLIST);
-  const next = withChecks({ ...ruled.state, hits }, [screeningCheck(hits)]);
+  const { cost, ...result } = await work(ctx).adjudicate(ctx, state);
   await emitAll([
-    ...patchEvents(state, next),
+    ...patchEvents(state, result.state),
     ...(cost ? [{ type: "cost" as const, ...cost }] : []),
   ]);
-  const cleared = hits.filter(
-    (hit) => hit.disposition === "false_positive",
-  ).length;
-  return {
-    state: next,
-    summary: `${hits.length} hit${hits.length === 1 ? "" : "s"} weighed, ${cleared} discounted`,
-    question: ruled.outcome.question,
-  };
+  return result;
 }
 adjudicateStep.maxRetries = 2;
 
 async function decideStep(ctx: RunContext, state: RunState) {
   "use step";
-  const { decision, cost } = await decideWithModel(ctx, state);
+  const { decision, cost } = await work(ctx).decide(ctx, state);
   await emitAll([
     { type: "decision", decision },
     ...(cost ? [{ type: "cost" as const, ...cost }] : []),
@@ -268,11 +231,7 @@ async function candidatesStep(
   have: string[],
 ): Promise<Suggestion[]> {
   "use step";
-  return candidateDocuments(
-    ctx.sessionId,
-    have,
-    kinds.filter(Boolean) as string[],
-  );
+  return work(ctx).candidates(ctx, kinds, have);
 }
 
 async function noteStep(text: string) {
@@ -291,20 +250,14 @@ async function askStep(
   suggestions: Suggestion[],
 ) {
   "use step";
-  const questionId = await createQuestion({
-    runId: ctx.runId,
+  const questionId = await work(ctx).ask(ctx, {
+    index,
     job,
     token,
     prompt,
-    wants: { kinds: kinds.filter(Boolean) as string[], options, suggestions },
-  });
-  await updateRun(ctx.runId, { status: "waiting" });
-  await recordJobRun({
-    runId: ctx.runId,
-    position: index,
-    job,
-    status: "waiting",
-    summary: prompt,
+    kinds: kinds.filter(Boolean) as string[],
+    options,
+    suggestions,
   });
   await emitAll([
     { type: "job", index, job, state: "waiting", summary: prompt },
@@ -328,13 +281,13 @@ async function answeredStep(
   answer: Answer,
 ) {
   "use step";
-  await markAnswered(questionId, answer);
-  await updateRun(ctx.runId, { status: "running" });
-  const rows = answer.documentIds?.length
-    ? await documentsByIds(answer.documentIds, ctx.sessionId)
-    : [];
-  const summary = rows.length
-    ? `Added ${rows.map((row) => row.name).join(", ")}`
+  const { documents, names } = await work(ctx).answered(
+    ctx,
+    questionId,
+    answer,
+  );
+  const summary = names.length
+    ? `Added ${names.join(", ")}`
     : answer.choice
       ? `Chose ${answer.choice}`
       : answer.text
@@ -344,29 +297,19 @@ async function answeredStep(
     { type: "answer", questionId, summary },
     { type: "log", level: "info", text: `↩ answered: ${summary}` },
   ]);
-  return rows.map(toRunDocument);
+  return documents;
 }
 
 async function finishStep(ctx: RunContext, state: RunState) {
   "use step";
-  await updateRun(ctx.runId, {
-    status: "completed",
-    state,
-    pipeline: state.pipeline ?? null,
-    recommendation: state.decision?.recommendation ?? null,
-    document_ids: state.documents.map((document) => document.id),
-    completed_at: new Date().toISOString(),
-  });
+  await work(ctx).finish(ctx, state);
   await emit({ type: "end", status: "completed" });
   await getWritable().close();
 }
 
 async function failStep(ctx: RunContext, message: string) {
   "use step";
-  await updateRun(ctx.runId, {
-    status: "failed",
-    error: message.slice(0, 1000),
-  });
+  await work(ctx).fail(ctx, message);
   await emitAll([
     { type: "log", level: "error", text: message },
     { type: "end", status: "failed", error: message },

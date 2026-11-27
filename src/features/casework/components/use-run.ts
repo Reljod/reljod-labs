@@ -1,8 +1,8 @@
 "use client";
 
 import { useEffect, useReducer, useRef } from "react";
-import { apiPath } from "../domain/api";
 import type { RunEvent } from "../domain/run-events";
+import { followRun } from "./api";
 import { emptyRun, type RunView, reduceRun } from "./run-reducer";
 
 type Action = { type: "event"; event: RunEvent } | { type: "reset" };
@@ -85,25 +85,10 @@ export function useRun(runId: string | null, instant = false): RunView {
         attempt++
       ) {
         try {
-          const response = await fetch(apiPath.runEvents(id, seen.current), {
-            signal: controller.signal,
-            cache: "no-store",
-          });
-          if (!response.ok || !response.body)
-            throw new Error(String(response.status));
-          const reader = response.body
-            .pipeThrough(new TextDecoderStream())
-            .getReader();
-          let buffer = "";
-          for (;;) {
-            const { value, done } = await reader.read();
-            if (done) break;
-            buffer += value;
-            const lines = buffer.split("\n");
-            buffer = lines.pop() ?? "";
-            for (const line of lines) {
-              if (!line.trim()) continue;
-              const event = JSON.parse(line) as RunEvent;
+          await followRun(
+            id,
+            seen.current,
+            (event) => {
               seen.current += 1;
               received.push(event);
               queue.push(event);
@@ -112,8 +97,9 @@ export function useRun(runId: string | null, instant = false): RunView {
                 ended = true;
                 remember(id, [...received]);
               }
-            }
-          }
+            },
+            controller.signal,
+          );
         } catch {
           if (controller.signal.aborted) return;
         }
