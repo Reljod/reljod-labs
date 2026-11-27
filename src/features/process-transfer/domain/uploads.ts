@@ -121,3 +121,210 @@ export function mp4DurationSeconds(bytes: Uint8Array): number | null {
   };
   return walk(0, bytes.byteLength);
 }
+
+/** How far the movie header may sit from its longest track: 2 s, or 5% of it. */
+const LENGTH_TOLERANCE = { seconds: 2, share: 0.05 };
+
+/**
+ * The lowest average bitrate a real Recording is taken at, in bits per
+ * second. A call with speech alone, in the leanest codec, runs above this;
+ * a file whose declared length implies less is not a real recording of that
+ * length, so its headers are not trusted.
+ */
+export const MIN_RECORDING_BITS_PER_SECOND = 8_000;
+
+type Track = {
+  /** From `tkhd`, in the movie's time scale. */
+  header: number | null;
+  /** From `mdhd`, in the track's own time scale. */
+  media: number | null;
+  /** The sample table (`stts`) summed, in the track's time scale. */
+  samples: number | null;
+  /** Samples counted by `stts`, and declared by `stsz`. */
+  timedSamples: number | null;
+  sizedSamples: number | null;
+};
+
+type Boxes = {
+  movie: { scale: number; duration: number } | null;
+  tracks: Track[];
+  fragmented: boolean;
+};
+
+/** The boxes of an MP4 or MOV that declare how long it is, or null when it has no `moov`. */
+function readBoxes(bytes: Uint8Array): Boxes | null {
+  const view = new DataView(bytes.buffer, bytes.byteOffset, bytes.byteLength);
+  const type = (at: number) =>
+    String.fromCharCode(bytes[at], bytes[at + 1], bytes[at + 2], bytes[at + 3]);
+  const u32 = (at: number) => view.getUint32(at);
+  const u64 = (at: number) => Number(view.getBigUint64(at));
+  const found: Boxes = { movie: null, tracks: [], fragmented: false };
+  let sawMoov = false;
+  /** Thrown by the walk on a box that runs past its parent. */
+  const BROKEN = new Error("A box runs past its parent");
+  let track: Track | null = null;
+  let mediaScale = 0;
+
+  const walk = (start: number, end: number, depth: number) => {
+    let at = start;
+    while (at + 8 <= end) {
+      let size = u32(at);
+      let header = 8;
+      if (size === 1) {
+        if (at + 16 > end) throw BROKEN;
+        size = u64(at + 8);
+        header = 16;
+      } else if (size === 0) {
+        size = end - at;
+      }
+      if (size < header || at + size > end) throw BROKEN;
+      const kind = type(at + 4);
+      const body = at + header;
+      const stop = at + size;
+      const has = (bytesNeeded: number) => body + bytesNeeded <= stop;
+      if (kind === "moof" || kind === "mvex") found.fragmented = true;
+      if (kind === "moov" && depth === 0) {
+        sawMoov = true;
+        walk(body, stop, depth + 1);
+      } else if (kind === "trak") {
+        track = {
+          header: null,
+          media: null,
+          samples: null,
+          timedSamples: null,
+          sizedSamples: null,
+        };
+        mediaScale = 0;
+        walk(body, stop, depth + 1);
+        found.tracks.push(track);
+        track = null;
+      } else if (
+        kind === "mdia" ||
+        kind === "minf" ||
+        kind === "stbl" ||
+        kind === "edts"
+      ) {
+        walk(body, stop, depth + 1);
+      } else if (kind === "mvhd") {
+        const v1 = bytes[body] === 1;
+        if (!has(v1 ? 32 : 20)) throw BROKEN;
+        found.movie = v1
+          ? { scale: u32(body + 20), duration: u64(body + 24) }
+          : { scale: u32(body + 12), duration: u32(body + 16) };
+      } else if (kind === "tkhd" && track) {
+        const v1 = bytes[body] === 1;
+        if (!has(v1 ? 36 : 24)) throw BROKEN;
+        const duration = v1 ? u64(body + 28) : u32(body + 20);
+        // All ones means "unknown".
+        const unknown = v1 ? duration >= 2 ** 64 - 1 : duration === 0xffffffff;
+        track.header = unknown ? null : duration;
+      } else if (kind === "mdhd" && track) {
+        const v1 = bytes[body] === 1;
+        if (!has(v1 ? 32 : 20)) throw BROKEN;
+        mediaScale = v1 ? u32(body + 20) : u32(body + 12);
+        const duration = v1 ? u64(body + 24) : u32(body + 16);
+        track.media = mediaScale > 0 ? duration / mediaScale : null;
+      } else if (kind === "stts" && track) {
+        if (!has(8)) throw BROKEN;
+        const entries = u32(body + 4);
+        if (!has(8 + entries * 8)) throw BROKEN;
+        let ticks = 0;
+        let count = 0;
+        for (let entry = 0; entry < entries; entry++) {
+          const samples = u32(body + 8 + entry * 8);
+          count += samples;
+          ticks += samples * u32(body + 12 + entry * 8);
+        }
+        track.timedSamples = count;
+        // The track's time scale comes from `mdhd`, which precedes `minf`.
+        track.samples = mediaScale > 0 ? ticks / mediaScale : null;
+      } else if (kind === "stsz" && track) {
+        if (!has(12)) throw BROKEN;
+        track.sizedSamples = u32(body + 8);
+      }
+      at = stop;
+    }
+  };
+  try {
+    walk(0, bytes.byteLength, 0);
+  } catch (error) {
+    if (error === BROKEN) return null;
+    throw error;
+  }
+  return sawMoov ? found : null;
+}
+
+export type RecordingLength = { seconds: number } | { refusal: string };
+
+/**
+ * How long a Recording is, read from every box that declares it, or why its
+ * length is not trusted. The movie header (`mvhd`) alone is one number a file
+ * can set to anything, so this also reads each track's header (`tkhd`), its
+ * media header (`mdhd`) and its sample table (`stts`), each in its own time
+ * scale, and takes the longest. It refuses a file whose movie header and
+ * longest track disagree by more than the tolerance, whose sample tables
+ * disagree on the number of samples, that is fragmented (its samples live in
+ * fragments this does not read), or whose length implies a bitrate under
+ * `MIN_RECORDING_BITS_PER_SECOND`.
+ */
+export function recordingLength(bytes: Uint8Array): RecordingLength {
+  const unreadable = {
+    refusal: "The Recording's length cannot be read; upload an MP4 or MOV.",
+  };
+  const boxes = readBoxes(bytes);
+  if (!boxes) return unreadable;
+  if (boxes.fragmented) {
+    return {
+      refusal:
+        "The Recording is a fragmented MP4, whose length cannot be checked; export it as a regular MP4 or MOV.",
+    };
+  }
+  const positive = (value: number | null): value is number =>
+    value !== null && Number.isFinite(value) && value > 0;
+  const movieScale = boxes.movie?.scale ?? 0;
+  const movie =
+    boxes.movie && movieScale > 0 && boxes.movie.duration > 0
+      ? boxes.movie.duration / movieScale
+      : null;
+  const trackLengths: number[] = [];
+  for (const track of boxes.tracks) {
+    if (
+      track.timedSamples !== null &&
+      track.sizedSamples !== null &&
+      track.timedSamples !== track.sizedSamples
+    ) {
+      return {
+        refusal:
+          "The Recording's sample tables disagree, so its length cannot be trusted.",
+      };
+    }
+    const header =
+      track.header !== null && movieScale > 0
+        ? track.header / movieScale
+        : null;
+    trackLengths.push(...[header, track.media, track.samples].filter(positive));
+  }
+  const declared = [movie, ...trackLengths].filter(positive);
+  if (declared.length === 0) return unreadable;
+  const seconds = Math.max(...declared);
+  if (movie !== null && trackLengths.length > 0) {
+    const longestTrack = Math.max(...trackLengths);
+    const tolerance = Math.max(
+      LENGTH_TOLERANCE.seconds,
+      LENGTH_TOLERANCE.share * longestTrack,
+    );
+    if (Math.abs(movie - longestTrack) > tolerance) {
+      return {
+        refusal:
+          "The Recording's headers disagree about how long it is, so its length cannot be trusted.",
+      };
+    }
+  }
+  if ((bytes.byteLength * 8) / seconds < MIN_RECORDING_BITS_PER_SECOND) {
+    return {
+      refusal:
+        "The Recording is too small for the length it declares, so its length cannot be trusted.",
+    };
+  }
+  return { seconds };
+}

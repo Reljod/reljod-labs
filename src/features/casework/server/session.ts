@@ -2,6 +2,7 @@ import "server-only";
 import { createHmac, timingSafeEqual } from "node:crypto";
 import { cookies, headers } from "next/headers";
 import type { Owner } from "@/features/access/domain/owner";
+import { isE2eToken } from "@/features/access/server/e2e";
 import { requireOwner } from "@/features/access/server/gate";
 import { E2E_HEADER } from "@/features/document-compliance/constants";
 import {
@@ -104,8 +105,7 @@ export function verifySessionToken(token: string) {
 
 export async function visitorHash() {
   const requestHeaders = await headers();
-  const bypass = env.e2eBypassToken();
-  if (bypass && requestHeaders.get(E2E_HEADER) === bypass) {
+  if (isE2eToken(requestHeaders.get(E2E_HEADER))) {
     return { hash: E2E_VISITOR, limited: false };
   }
   const ip =

@@ -96,7 +96,8 @@ async function renderPdf(file: File) {
 async function put(url: string, body: Blob, contentType: string) {
   const response = await fetch(url, {
     method: "PUT",
-    headers: { "content-type": contentType, "x-upsert": "true" },
+    // No upsert: each slot's path is fresh and written once.
+    headers: { "content-type": contentType },
     body,
   });
   if (!response.ok) throw new Error(`Storage said ${response.status}`);

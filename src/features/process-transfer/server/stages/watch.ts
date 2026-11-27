@@ -10,7 +10,7 @@ import {
   watchSchema,
 } from "../../domain/process";
 import { sampleBySlug } from "../../domain/samples";
-import { mp4DurationSeconds } from "../../domain/uploads";
+import { mp4DurationSeconds, recordingLength } from "../../domain/uploads";
 import { RunError } from "../errors";
 import { generate, type RunContext } from "../llm";
 import { WATCH_INSTRUCTIONS, watchPrompt } from "../prompts";
@@ -106,13 +106,16 @@ export async function watchRecording(
       `The Recording is larger than ${Math.round(LIMITS.uploadBytes / 1024 / 1024)} MB.`,
     );
   }
-  const seconds = mp4DurationSeconds(recording.bytes);
-  // An upload's length is the only bound on what the model is sent; one that
-  // cannot be read is refused before any call.
-  if (seconds === null && row.source_kind === "upload") {
-    throw new RunError(
-      "The Recording's length cannot be read; upload an MP4 or MOV.",
-    );
+  // An upload's length is the only bound on what the model is sent, so it is
+  // read from every box that declares it (`recordingLength`), and one that
+  // cannot be read or trusted is refused before any call. A Sample is ours.
+  let seconds: number | null;
+  if (row.source_kind === "upload") {
+    const length = recordingLength(recording.bytes);
+    if ("refusal" in length) throw new RunError(length.refusal);
+    seconds = length.seconds;
+  } else {
+    seconds = mp4DurationSeconds(recording.bytes);
   }
   if (seconds !== null && seconds > LIMITS.uploadSeconds) {
     throw new RunError(
@@ -133,7 +136,7 @@ export async function watchRecording(
         mediaType: recording.mediaType,
       },
     ],
-    maxOutputTokens: 32_000,
+    maxOutputTokens: LIMITS.watchOutputTokens,
   });
   return cleanWatch(call, seconds);
 }
