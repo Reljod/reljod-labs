@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 import { Suspense } from "react";
 import { ButtonLink } from "@/components/ui/button-link";
+import { DisconnectMcpClients } from "@/features/access/components/disconnect-mcp-clients";
 import {
   PasswordForm,
   ProfileForm,
@@ -63,6 +64,17 @@ async function Profile() {
           <PasswordForm />
         </Card>
       </div>
+
+      <Card>
+        <h2 className={headingClass}>MCP clients</h2>
+        <p>
+          Apps you connected to the Client Manager or the Harness MCP server
+          (Claude Code, Claude, ChatGPT) keep working until their sign-in ends,
+          30 days after you allowed them. Disconnect them all if one should not
+          have been allowed, or a token was seen.
+        </p>
+        <DisconnectMcpClients />
+      </Card>
 
       <SignOutButton className={quietButtonClass} />
     </>

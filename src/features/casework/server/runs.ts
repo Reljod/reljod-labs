@@ -2,32 +2,49 @@ import "server-only";
 import { getRun as getWorkflowRun, resumeHook, start } from "workflow/api";
 import { E2E_VISITOR } from "@/features/document-compliance/server/rate-limit";
 import { isJobId, type JobId, planJobs } from "../domain/jobs";
+import { LIMITS } from "../domain/limits";
 import { resolveSettings } from "../domain/model-config";
 import { PIPELINES, type PipelineId } from "../domain/pipelines";
 import type { Answer, RunEvent } from "../domain/run-events";
 import {
   activeRuns,
+  type ChatRefusal,
   closeStoppedRun,
-  countRuns,
   createRun,
   documentsByIds,
   getQuestion,
   getRun,
   orgModelSettings,
+  ownerSpendUsd,
+  type RunRefusal,
   type RunRow,
   type SessionRow,
   sessionSpend,
+  takeChatTurn as takeTurn,
   updateRun,
 } from "./repository";
 import { caseworkRun } from "./run-workflow";
 
-export const LIMITS = {
-  runsPerVisitorPerHour: 12,
-  runsPerDay: 250,
-  /** USD a session may spend on models before the desk stops starting work. */
-  spendPerSession: 2,
-  documentsPerRun: 12,
+export { LIMITS };
+
+/** What the person is told when a cap refuses new model work. */
+export const LIMIT_MESSAGES = {
+  visitorMessages: `That's ${LIMITS.messagesPerVisitorPerHour} messages this hour. The Specialist needs a coffee; try again soon.`,
+  dayMessages:
+    "The desk has answered all the messages it takes today. Try again tomorrow.",
+  ownerSpend: `Your desks have spent $${LIMITS.spendPerOwnerPerDay.toFixed(2)} on models in the last day, the demo's daily cap. Try again tomorrow.`,
+  /** Only when the Owner still has room today: a new Desk then has its own cap. */
+  sessionSpend: (spent: number) =>
+    `This session has spent $${spent.toFixed(2)} on models, the demo's cap. Start a new desk to keep going.`,
+  /** A Run refused at the Desk's cap, without the spent amount at hand. */
+  sessionSpendReached: `This session has spent the demo's $${LIMITS.spendPerSession.toFixed(2)} cap on models. Start a new desk to keep going.`,
+  visitorRuns: `That's ${LIMITS.runsPerVisitorPerHour} runs this hour. Give the desk a breather and try again later.`,
+  dayRuns: "The desk has hit today's run limit. Try again tomorrow.",
+  activeRun:
+    "This desk already has a run going. Stop it or let it finish before starting another.",
 };
+
+const DAY_MS = 86_400_000;
 
 export class LimitError extends Error {}
 
@@ -58,10 +75,13 @@ export async function activeRun(sessionId: string): Promise<RunRow | null> {
  * it starts anything.
  */
 export async function readiness(session: SessionRow, ids: string[]) {
-  const [documents, running, spend] = await Promise.all([
+  const [documents, running, spend, ownerSpent] = await Promise.all([
     documentsByIds([...new Set(ids)], session.id),
     activeRun(session.id),
     sessionSpend(session.id),
+    session.owner
+      ? ownerSpendUsd(session.owner, new Date(Date.now() - DAY_MS))
+      : 0,
   ]);
   const spent = spend.reduce((sum, row) => sum + row.costUsd, 0);
   const found = new Set(documents.map((document) => document.id));
@@ -80,7 +100,12 @@ export async function readiness(session: SessionRow, ids: string[]) {
     problems.push(
       `Run ${running.id} is ${running.status === "waiting" ? "waiting on a question" : "still running"}. Stop it or let it finish first.`,
     );
-  if (spent >= LIMITS.spendPerSession)
+  const ownerOver =
+    session.visitor_hash !== E2E_VISITOR &&
+    ownerSpent >= LIMITS.spendPerOwnerPerDay;
+  if (ownerOver)
+    problems.push("This Owner's desks have reached today's spend cap.");
+  else if (spent >= LIMITS.spendPerSession)
     problems.push("This session has reached its spend cap.");
   return {
     ready: problems.length === 0,
@@ -91,7 +116,13 @@ export async function readiness(session: SessionRow, ids: string[]) {
     })),
     activeRunId: running?.id ?? null,
     spendLeftUsd: Number(
-      Math.max(0, LIMITS.spendPerSession - spent).toFixed(4),
+      Math.max(
+        0,
+        Math.min(
+          LIMITS.spendPerSession - spent,
+          LIMITS.spendPerOwnerPerDay - ownerSpent,
+        ),
+      ).toFixed(4),
     ),
   };
 }
@@ -101,38 +132,86 @@ export async function settingsFor(session: SessionRow) {
   return resolveSettings(org, session.model_overrides ?? {});
 }
 
-/** Stops new model work once a session has spent the demo's cap. */
+/**
+ * Stops new model work once the Owner's Desks have spent the daily cap
+ * together, or this Desk has spent its own. The Owner's cap is checked first,
+ * so the Desk's message (start a new desk) is given only when a new Desk
+ * would really have room.
+ */
 export async function checkSpend(session: SessionRow) {
   if (session.visitor_hash === E2E_VISITOR) return;
-  const spend = await sessionSpend(session.id);
+  const [ownerSpent, spend] = await Promise.all([
+    session.owner
+      ? ownerSpendUsd(session.owner, new Date(Date.now() - DAY_MS))
+      : 0,
+    sessionSpend(session.id),
+  ]);
+  if (ownerSpent >= LIMITS.spendPerOwnerPerDay) {
+    throw new LimitError(LIMIT_MESSAGES.ownerSpend);
+  }
   const spent = spend.reduce((sum, row) => sum + row.costUsd, 0);
   if (spent >= LIMITS.spendPerSession) {
-    throw new LimitError(
-      `This session has spent $${spent.toFixed(2)} on models, the demo's cap. Start a new desk to keep going.`,
-    );
+    throw new LimitError(LIMIT_MESSAGES.sessionSpend(spent));
   }
 }
 
-export async function checkLimits(session: SessionRow) {
-  if (session.visitor_hash === E2E_VISITOR) return;
-  const now = Date.now();
-  await checkSpend(session);
-  const [visitorRuns, dailyRuns] = await Promise.all([
-    countRuns({
-      visitorHash: session.visitor_hash,
-      since: new Date(now - 3_600_000),
-    }),
-    countRuns({ since: new Date(now - 86_400_000) }),
-  ]);
-  if (visitorRuns >= LIMITS.runsPerVisitorPerHour) {
-    throw new LimitError(
-      `That's ${LIMITS.runsPerVisitorPerHour} runs this hour. Give the desk a breather and try again later.`,
-    );
+/** The words for a refused chat turn. */
+export function chatRefusalMessage(refusal: ChatRefusal, sessionSpent = 0) {
+  switch (refusal) {
+    case "visitor":
+      return LIMIT_MESSAGES.visitorMessages;
+    case "owner_spend":
+      return LIMIT_MESSAGES.ownerSpend;
+    case "session_spend":
+      return LIMIT_MESSAGES.sessionSpend(sessionSpent);
+    default:
+      return LIMIT_MESSAGES.dayMessages;
   }
-  if (dailyRuns >= LIMITS.runsPerDay) {
-    throw new LimitError(
-      "The desk has hit today's run limit. Try again tomorrow.",
-    );
+}
+
+/**
+ * Takes one message to the Specialist, before its model is called: the
+ * visitor's hourly allowance, the demo's daily turns, the Owner's daily spend
+ * across all their Desks and this Desk's spend, checked and counted in one
+ * transaction under an advisory lock. Throws a LimitError when one refuses.
+ */
+export async function takeChatTurn(session: SessionRow) {
+  const trusted = session.visitor_hash === E2E_VISITOR;
+  const result = await takeTurn({
+    session,
+    limits: trusted
+      ? null
+      : {
+          perVisitorPerHour: LIMITS.messagesPerVisitorPerHour,
+          perDay: LIMITS.chatTurnsPerDay,
+          ownerSpendPerDay: LIMITS.spendPerOwnerPerDay,
+          sessionSpend: LIMITS.spendPerSession,
+        },
+  });
+  if ("taken" in result) return;
+  const spent =
+    result.refusal === "session_spend"
+      ? (await sessionSpend(session.id)).reduce(
+          (sum, row) => sum + row.costUsd,
+          0,
+        )
+      : 0;
+  throw new LimitError(chatRefusalMessage(result.refusal, spent));
+}
+
+/** The words for a refused Run. */
+export function runRefusalMessage(refusal: RunRefusal) {
+  switch (refusal) {
+    case "active":
+      return LIMIT_MESSAGES.activeRun;
+    case "visitor":
+      return LIMIT_MESSAGES.visitorRuns;
+    case "owner_spend":
+      return LIMIT_MESSAGES.ownerSpend;
+    case "session_spend":
+      return LIMIT_MESSAGES.sessionSpendReached;
+    default:
+      return LIMIT_MESSAGES.dayRuns;
   }
 }
 
@@ -155,7 +234,7 @@ export async function startRun(
     documentIds: string[];
   },
 ): Promise<StartedRun> {
-  await checkLimits(session);
+  await checkSpend(session);
   const running = await activeRun(session.id);
   if (running) {
     throw new LimitError(
@@ -179,13 +258,28 @@ export async function startRun(
     );
   }
   const documentIds = documents.map((document) => document.id);
-  const runId = await createRun({
+  // The rate limits and the one-Run rule are taken here, with the insert.
+  const created = await createRun({
     sessionId: session.id,
     pipeline,
     jobs,
     documentIds,
     visitorHash: session.visitor_hash,
+    owner: session.owner ?? null,
+    limits:
+      session.visitor_hash === E2E_VISITOR
+        ? null
+        : {
+            perVisitorPerHour: LIMITS.runsPerVisitorPerHour,
+            perDay: LIMITS.runsPerDay,
+            ownerSpendPerDay: LIMITS.spendPerOwnerPerDay,
+            sessionSpend: LIMITS.spendPerSession,
+          },
   });
+  if ("refusal" in created) {
+    throw new LimitError(runRefusalMessage(created.refusal));
+  }
+  const { runId } = created;
   try {
     const run = await start(caseworkRun, [
       {

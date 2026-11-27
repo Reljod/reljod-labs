@@ -12,7 +12,9 @@ import type {
 } from "../domain/events";
 import { safeExtension } from "../domain/file-name";
 import { slugify } from "../domain/graph";
+import { LIMITS, type LimitKind, refusalFor } from "../domain/limits";
 import { buildWorkflow } from "./build-workflow";
+import { sql } from "./db";
 import { kindOf, mediaTypeFor } from "./gather";
 import {
   addMessage,
@@ -22,9 +24,11 @@ import {
   canView,
   claimBuild,
   clientStats,
+  clientsToPurge,
   createBuild,
   createClientRow,
   createSources,
+  type Db,
   deleteClient,
   type EdgeScope,
   edgesInScope,
@@ -35,12 +39,13 @@ import {
   listCatalog,
   nodeDetail,
   nodesLite,
+  purgeClient,
   setClientStatus,
   setPortrait,
   sourceDetail,
   sourcesOfClient,
   updateBuild,
-  usageSince,
+  usageFor,
 } from "./repository";
 import { currentOwner, type Visitor } from "./session";
 import {
@@ -52,17 +57,7 @@ import {
   uploadUrl,
 } from "./storage";
 
-export const LIMITS = {
-  files: 8,
-  fileBytes: 10 * 1024 * 1024,
-  noteChars: 20_000,
-  buildsPerHour: 6,
-  asksPerHour: 40,
-  /** Research turns search the web several times each. */
-  researchPerHour: 8,
-  buildsPerDay: 150,
-  spendPerVisitorPerDay: 2,
-};
+export { LIMITS };
 
 export class LimitError extends Error {}
 
@@ -85,34 +80,49 @@ export const additionSchema = z.object({
   files: z.array(fileSchema).max(LIMITS.files).default([]),
 });
 
-export async function checkLimits(visitor: Visitor, kind: "build" | "ask") {
+/**
+ * Checks the caps without taking a place: for paid work that adds no Build
+ * or question row (painting a portrait), where spend is the cap that counts.
+ */
+export async function checkLimits(
+  visitor: Visitor,
+  kind: LimitKind,
+  owner: string | null,
+) {
   if (visitor.trusted) return;
-  const [hour, day] = await Promise.all([
-    usageSince(visitor.hash, new Date(Date.now() - 3_600_000)),
-    usageSince(visitor.hash, new Date(Date.now() - 86_400_000)),
-  ]);
-  if (day.cost >= LIMITS.spendPerVisitorPerDay) {
-    throw new LimitError(
-      "You've used today's model budget for this demo. Come back tomorrow.",
-    );
-  }
-  if (kind === "build") {
-    if (hour.builds >= LIMITS.buildsPerHour) {
-      throw new LimitError(
-        `That's ${LIMITS.buildsPerHour} graph builds this hour. Try again soon.`,
-      );
-    }
-    const everyone = await usageSince(null, new Date(Date.now() - 86_400_000));
-    if (everyone.builds >= LIMITS.buildsPerDay) {
-      throw new LimitError(
-        "The demo has reached today's limit of graph builds.",
-      );
-    }
-  } else if (hour.messages >= LIMITS.asksPerHour) {
-    throw new LimitError(
-      `That's ${LIMITS.asksPerHour} questions this hour. Try again soon.`,
-    );
-  }
+  const usage = await usageFor(sql(), {
+    visitorHash: visitor.hash,
+    owner,
+  });
+  const refusal = refusalFor(kind, usage);
+  if (refusal) throw new LimitError(refusal);
+}
+
+/**
+ * Takes one place under the caps and writes the row that holds it (a Build,
+ * a question) in the same transaction, or throws a LimitError. The count and
+ * the insert run under advisory locks on the visitor, the Owner and the
+ * kind's global cap, always taken in that order, so two requests at once
+ * cannot both take the last place. Called before any model call.
+ */
+export async function takeLimit<T>(
+  visitor: Visitor,
+  owner: string | null,
+  kind: LimitKind,
+  work: (db: Db) => Promise<T>,
+): Promise<T> {
+  if (visitor.trusted) return work(sql());
+  const global = kind === "build" ? "build" : "ask";
+  return (await sql().begin(async (tx) => {
+    await tx`select pg_advisory_xact_lock(hashtextextended(${`cm:visitor:${visitor.hash}`}, 0))`;
+    if (owner)
+      await tx`select pg_advisory_xact_lock(hashtextextended(${`cm:owner:${owner}`}, 0))`;
+    await tx`select pg_advisory_xact_lock(hashtextextended(${`cm:all:${global}`}, 0))`;
+    const usage = await usageFor(tx, { visitorHash: visitor.hash, owner });
+    const refusal = refusalFor(kind, usage);
+    if (refusal) throw new LimitError(refusal);
+    return work(tx);
+  })) as T;
 }
 
 type Upload = { sourceId: string; name: string; url: string };
@@ -143,22 +153,22 @@ function fileSources(
   });
 }
 
+function assertSomething(note: string, files: unknown[]) {
+  if (!note.trim() && files.length === 0) {
+    throw new LimitError("Add a note or at least one file.");
+  }
+}
+
+/** The Build's Sources and their upload links; the Build row is already in (`takeLimit`). */
 async function prepareBuild(input: {
   clientId: string;
+  buildId: string;
   trigger: "intake" | "addition";
   note: string;
   files: z.infer<typeof fileSchema>[];
-  visitor: Visitor;
 }): Promise<{ buildId: string; uploads: Upload[] }> {
   const note = input.note.trim();
-  if (!note && input.files.length === 0) {
-    throw new LimitError("Add a note or at least one file.");
-  }
-  const buildId = await createBuild({
-    clientId: input.clientId,
-    trigger: input.trigger,
-    visitorHash: input.visitor.hash,
-  });
+  const { buildId } = input;
   const rows = [
     ...(note
       ? [
@@ -195,20 +205,31 @@ export async function createIntake(
   owner: Owner,
 ) {
   const input = intakeSchema.parse(raw);
-  await checkLimits(visitor, "build");
+  assertSomething(input.note, input.files);
   const isSample = input.sample && visitor.trusted;
-  const clientId = await createClientRow({
-    name: input.name,
-    owner: isSample ? null : owner,
-    isSample,
-    visitorHash: visitor.hash,
+  const created = await takeLimit(visitor, owner, "build", async (db) => {
+    const clientId = await createClientRow(
+      {
+        name: input.name,
+        owner: isSample ? null : owner,
+        isSample,
+        visitorHash: visitor.hash,
+      },
+      db,
+    );
+    const buildId = await createBuild(
+      { clientId, trigger: "intake", visitorHash: visitor.hash },
+      db,
+    );
+    return { clientId, buildId };
   });
+  const { clientId } = created;
   const { buildId, uploads } = await prepareBuild({
     clientId,
+    buildId: created.buildId,
     trigger: "intake",
     note: input.note,
     files: input.files,
-    visitor,
   });
   let portraitUpload: { url: string } | null = null;
   if (input.portrait) {
@@ -248,13 +269,20 @@ export async function createAddition(
   announce = true,
 ) {
   const input = additionSchema.parse(raw);
+  assertSomething(input.note, input.files);
   await assertAddable(client, visitor);
+  const created = await takeLimit(visitor, owner, "build", (db) =>
+    createBuild(
+      { clientId: client.id, trigger: "addition", visitorHash: visitor.hash },
+      db,
+    ),
+  );
   const { buildId, uploads } = await prepareBuild({
     clientId: client.id,
+    buildId: created,
     trigger: "addition",
     note: input.note,
     files: input.files,
-    visitor,
   });
   if (!announce) return { buildId, uploads };
   const parts = [
@@ -289,7 +317,6 @@ async function assertAddable(client: ClientRow, visitor: Visitor) {
   } else if (running && ["queued", "running"].includes(running.status)) {
     throw new LimitError("A build is already running for this client.");
   }
-  await checkLimits(visitor, "build");
 }
 
 const httpUrl = z
@@ -327,11 +354,12 @@ export async function addFacts(
 ): Promise<{ buildId: string }> {
   const { facts } = factsSchema.parse(raw);
   await assertAddable(client, visitor);
-  const buildId = await createBuild({
-    clientId: client.id,
-    trigger: "addition",
-    visitorHash: visitor.hash,
-  });
+  const buildId = await takeLimit(visitor, client.owner, "build", (db) =>
+    createBuild(
+      { clientId: client.id, trigger: "addition", visitorHash: visitor.hash },
+      db,
+    ),
+  );
   const linked = facts.some((fact) => fact.sourceUrl);
   const date = new Date().toLocaleDateString("en-GB", {
     day: "numeric",
@@ -399,18 +427,38 @@ function isAbandoned(build: BuildRow) {
 }
 
 /**
- * Deletes a Client: stops a Build still going, removes their files and
- * portraits from Storage, then the rows (everything else cascades).
+ * Deletes a Client: stops a Build still going and marks the client deleted,
+ * so no read sees it again. Their rows and Storage files stay for 30 days
+ * and go in `purgeDeletedClients`; a person's delete never removes data on
+ * the spot.
  */
 export async function removeClient(client: ClientRow) {
   const build = await latestBuild(client.id);
   if (build && ["queued", "running"].includes(build.status)) {
     await stopBuild(build).catch(() => {});
   }
-  await removeFolder(`clients/${client.id}`).catch(() => {
-    // Storage clean-up never blocks the delete; the bucket is private.
-  });
   await deleteClient(client.id);
+}
+
+/**
+ * Purges clients deleted more than 30 days ago (or about to expire anyway):
+ * their Storage folder first, then the rows, which cascade. Storage cannot
+ * be emptied from SQL, so this runs from the app after a catalog read, a few
+ * clients at a time; it never fails the request that started it.
+ */
+export async function purgeDeletedClients(limit = 5) {
+  const due = await clientsToPurge(limit).catch(() => []);
+  for (const { id } of due) {
+    try {
+      await removeFolder(`clients/${id}`);
+      await purgeClient(id);
+    } catch (error) {
+      console.error(
+        "[client-manager] purge failed",
+        error instanceof Error ? error.message : "",
+      );
+    }
+  }
 }
 
 /**

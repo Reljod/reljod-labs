@@ -37,9 +37,10 @@ export async function listConversations(
     { id: string; title: string; views: number; updated_at: Date }[]
   >`
     select c.id, c.title, c.updated_at,
-           (select count(*)::int from canvas.views v where v.conversation_id = c.id) as views
+           (select count(*)::int from canvas.views v
+            where v.conversation_id = c.id and v.deleted_at is null) as views
     from canvas.conversations c
-    where c.owner = ${caller.owner}
+    where c.owner = ${caller.owner} and c.deleted_at is null
     order by c.updated_at desc
     limit ${LIMITS.conversationsPerOwner}`;
   return rows.map((row) => ({
@@ -58,7 +59,8 @@ export async function conversationMessages(
   if (!isUuid(id)) throw new NotFoundError("No such Conversation.");
   const db = sql();
   const [found] = await db`
-    select 1 from canvas.conversations where id = ${id} and owner = ${caller.owner}`;
+    select 1 from canvas.conversations
+    where id = ${id} and owner = ${caller.owner} and deleted_at is null`;
   if (!found) throw new NotFoundError("No such Conversation.");
   const rows = await db<MessageRow[]>`
     select id, role, content, parts, usage, created_at
@@ -84,14 +86,15 @@ export async function fileQuestion(
     if (isUuid(conversationId)) {
       const [row] = await tx<{ title: string }[]>`
         update canvas.conversations set updated_at = now()
-        where id = ${conversationId} and owner = ${caller.owner}
+        where id = ${conversationId} and owner = ${caller.owner} and deleted_at is null
         returning title`;
       if (!row) throw new NotFoundError("No such Conversation.");
       title = row.title;
     } else {
       await tx`select pg_advisory_xact_lock(hashtextextended(${`canvas:conversations:${caller.owner}`}, 0))`;
       const [count] = await tx<{ n: number }[]>`
-        select count(*)::int as n from canvas.conversations where owner = ${caller.owner}`;
+        select count(*)::int as n from canvas.conversations
+        where owner = ${caller.owner} and deleted_at is null`;
       if ((count?.n ?? 0) >= LIMITS.conversationsPerOwner)
         throw new LimitError(
           `You can keep ${LIMITS.conversationsPerOwner} Conversations. Delete one first.`,
@@ -166,20 +169,25 @@ export async function questionSandboxMs(caller: Caller) {
 
 /**
  * Deletes a Conversation, its messages and its Views. A View pinned to a
- * Board stays, without its Conversation.
+ * Board stays, without its Conversation. The delete is soft: every read stops
+ * seeing them at once, and the purge cron removes the rows after 30 days.
  */
 export async function deleteConversation(caller: Caller, id: string) {
   if (!isUuid(id)) throw new NotFoundError("No such Conversation.");
   await sql().begin(async (tx) => {
     const [row] = await tx<{ title: string }[]>`
       select title from canvas.conversations
-      where id = ${id} and owner = ${caller.owner}`;
+      where id = ${id} and owner = ${caller.owner} and deleted_at is null
+      for update`;
     if (!row) throw new NotFoundError("No such Conversation.");
     await tx`
-      delete from canvas.views v
+      update canvas.views v set deleted_at = now()
       where v.conversation_id = ${id} and v.owner = ${caller.owner}
+        and v.deleted_at is null
         and not exists (select 1 from canvas.board_items i where i.view_id = v.id)`;
-    await tx`delete from canvas.conversations where id = ${id} and owner = ${caller.owner}`;
+    await tx`
+      update canvas.conversations set deleted_at = now()
+      where id = ${id} and owner = ${caller.owner}`;
     await trailIn(tx, caller, {
       action: "conversation.deleted",
       summary: `Deleted Conversation "${row.title}"`,

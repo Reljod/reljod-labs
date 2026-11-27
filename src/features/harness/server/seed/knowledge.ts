@@ -67,6 +67,7 @@ export async function backfillKnowledge(owner: Owner): Promise<void> {
       from harness.passages p
       join harness.sources s on s.id = p.source_id
       where p.owner = ${owner} and p.embedding is null and s.status = 'ready'
+        and s.deleted_at is null
       order by p.id
       limit ${PAGE}`;
     if (rows.length === 0) return;

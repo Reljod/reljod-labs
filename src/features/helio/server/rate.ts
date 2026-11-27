@@ -1,6 +1,6 @@
 import "server-only";
-import { timingSafeEqual } from "node:crypto";
 import { headers } from "next/headers";
+import { isE2eToken } from "@/features/access/server/e2e";
 import { E2E_HEADER } from "@/features/document-compliance/constants";
 import { hashVisitor } from "@/features/document-compliance/server/rate-limit";
 import { LIMITS } from "../domain/limits";
@@ -20,18 +20,10 @@ export const TRUSTED_VISITOR = "e2e";
 /** Who is spending: a salted hash of the client IP, never an Owner (AGENTS.md). */
 export type Visitor = { hash: string; trusted: boolean };
 
-function sameSecret(a: string, b: string): boolean {
-  const ba = Buffer.from(a);
-  const bb = Buffer.from(b);
-  return ba.length === bb.length && timingSafeEqual(ba, bb);
-}
-
 /** Resolves the visitor hash from request headers, matching Harness and Canvas. */
 export async function visitor(): Promise<Visitor> {
   const requestHeaders = await headers();
-  const bypass = env.e2eBypassToken();
-  const given = requestHeaders.get(E2E_HEADER);
-  if (bypass && given && sameSecret(given, bypass)) {
+  if (isE2eToken(requestHeaders.get(E2E_HEADER))) {
     return { hash: TRUSTED_VISITOR, trusted: true };
   }
   const ip =

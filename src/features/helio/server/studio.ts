@@ -22,6 +22,7 @@ import type {
   MarketDirection,
 } from "../domain/types";
 import { env } from "./env";
+import { HelioInputError } from "./errors";
 
 function getGateway() {
   const apiKey = env.aiGatewayApiKey();
@@ -81,7 +82,7 @@ export async function resolveProductSource(
   if (source.kind === "specimen") {
     const specimen = findSpecimen(source.slug);
     if (!specimen) {
-      throw new Error(`Unknown specimen product: ${source.slug}`);
+      throw new HelioInputError("That Sample product is not in the studio.");
     }
     let bytes = specimenBytesCache.get(specimen.slug);
     if (!bytes) {
@@ -107,7 +108,7 @@ export async function resolveProductSource(
 
   const decoded = decodeImageDataUrl(source.imageDataUrl);
   if (!decoded.ok) {
-    throw new Error(decoded.error);
+    throw new HelioInputError(decoded.error);
   }
   return {
     name: source.name,

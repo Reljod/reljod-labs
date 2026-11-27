@@ -180,7 +180,7 @@ export async function* chat(
     transport: {
       type: "http",
       url: `${input.origin}/api/casework/mcp`,
-      headers: { authorization: `Bearer ${sessionToken(session.id)}` },
+      headers: { authorization: `Bearer ${sessionToken(session)}` },
       fetch: (url, init) => mcpHandler(new Request(url, init)),
     },
   });

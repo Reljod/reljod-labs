@@ -1,11 +1,11 @@
 import "server-only";
-import { timingSafeEqual } from "node:crypto";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { cookies, headers } from "next/headers";
 import { E2E_HEADER } from "@/features/document-compliance/constants";
 import { DENIED_MESSAGE } from "../constants";
 import { guestPassStatus } from "../domain/guest-pass";
 import { type Owner, ownerOf } from "../domain/owner";
+import { isE2eToken } from "./e2e";
 import { env } from "./env";
 import { guestPassOf } from "./repository";
 import { type AuthCookies, authClient } from "./supabase";
@@ -28,12 +28,6 @@ export class AccessDeniedError extends Error {
     super(DENIED_MESSAGE);
     this.name = "AccessDeniedError";
   }
-}
-
-function sameSecret(given: string, expected: string) {
-  const a = Buffer.from(given);
-  const b = Buffer.from(expected);
-  return a.length === b.length && timingSafeEqual(a, b);
 }
 
 /** The signed-in account, if it is a Host: confirmed, and on the Host list. */
@@ -65,8 +59,7 @@ export async function accessThrough(door: {
   e2eToken: string | null;
   cookies: AuthCookies;
 }): Promise<Access | null> {
-  const bypass = env.e2eBypassToken();
-  if (bypass && door.e2eToken && sameSecret(door.e2eToken, bypass)) {
+  if (isE2eToken(door.e2eToken)) {
     return { kind: "e2e" };
   }
   if (!env.supabasePublishableKey()) return null;

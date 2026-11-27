@@ -1,5 +1,7 @@
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 import { readOperatorToken, signOperatorToken } from "./mcp-token";
+
+vi.mock("server-only", () => ({}));
 
 const SECRET = "test-salt";
 const PASS = "0b8f3c1e-6f7e-4f9a-9a77-1f2d3c4b5a69";

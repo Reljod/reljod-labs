@@ -50,6 +50,15 @@ function ok(result: { error: { message: string } | null }) {
   if (result.error) throw new Error(result.error.message);
 }
 
+/** Which rate limit refused a run: the visitor's hourly one, or the demo's daily one. */
+export type RunRefusal = "visitor" | "day";
+
+/**
+ * Creates a queued run, counted against the rate limits and inserted in one
+ * transaction under an advisory lock (`create_prescreen_run`), so two
+ * requests at once cannot both take the last place. `limits` null skips the
+ * check (the e2e suite).
+ */
 export async function createRun(input: {
   packSlug: string;
   rulebook: Rulebook;
@@ -57,25 +66,24 @@ export async function createRun(input: {
   visitorHash: string;
   owner: Owner;
   model: string;
-}) {
-  const run = rows<{ id: string }>(
-    await supabase()
-      .from("prescreen_runs")
-      .insert({
-        pack_slug: input.packSlug,
-        rulebook_id: input.rulebook.id,
-        rulebook_version: input.rulebook.version,
-        client_declaration: input.declaration,
-        rules_applied: input.rulebook.applied,
-        visitor_hash: input.visitorHash,
-        owner: input.owner,
-        model: input.model,
-        status: "queued",
-      })
-      .select("id")
-      .single(),
+  limits: { perVisitorPerHour: number; perDay: number } | null;
+}): Promise<{ runId: string } | { refusal: RunRefusal }> {
+  const [row] = rows<{ run_id: string | null; refusal: string | null }[]>(
+    await supabase().rpc("create_prescreen_run", {
+      p_owner: input.owner,
+      p_visitor_hash: input.visitorHash,
+      p_pack_slug: input.packSlug,
+      p_rulebook_id: input.rulebook.id,
+      p_rulebook_version: input.rulebook.version,
+      p_client_declaration: input.declaration,
+      p_rules_applied: input.rulebook.applied,
+      p_model: input.model,
+      p_per_visitor_per_hour: input.limits?.perVisitorPerHour ?? null,
+      p_per_day: input.limits?.perDay ?? null,
+    }),
   );
-  return run.id;
+  if (row?.run_id) return { runId: row.run_id };
+  return { refusal: row?.refusal === "visitor" ? "visitor" : "day" };
 }
 
 export async function setRunStatus(runId: string, status: RunStatus) {
@@ -279,17 +287,6 @@ export async function saveFindings(
   );
 }
 
-export async function countRuns(filter: { visitorHash?: string; since: Date }) {
-  let query = supabase()
-    .from("prescreen_runs")
-    .select("id", { count: "exact", head: true })
-    .gte("created_at", filter.since.toISOString());
-  if (filter.visitorHash) query = query.eq("visitor_hash", filter.visitorHash);
-  const { count, error } = await query;
-  if (error) throw new Error(error.message);
-  return count ?? 0;
-}
-
 /** The Owner's newest finished run of a pack: where a limited visitor lands. */
 export async function latestCompletedRunId(packSlug: string, owner: Owner) {
   const latest = rows<{ id: string }[]>(
@@ -303,15 +300,6 @@ export async function latestCompletedRunId(packSlug: string, owner: Owner) {
       .limit(1),
   );
   return latest[0]?.id ?? null;
-}
-
-export async function deleteRunsByVisitor(visitorHash: string) {
-  ok(
-    await supabase()
-      .from("prescreen_runs")
-      .delete()
-      .eq("visitor_hash", visitorHash),
-  );
 }
 
 async function selectIn<

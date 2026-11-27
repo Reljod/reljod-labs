@@ -38,6 +38,7 @@ A file name, extension or type sent by the browser is untrusted. Before any of i
 
 - Use one shared helper; don't re-derive the extension at each call site.
 - Keep every key the browser can influence under the owning record's prefix (`clients/<id>/…`).
+- Deleting a row never deletes its file, and `access.purge_owner` once left every purged Owner's uploads in Storage. Put an Owner's files under a prefix derivable from the Owner or from one of their rows, and register the layout in `access.enqueue_owner_storage`; files of rows a demo purges itself go through `access.enqueue_storage_purge` (`docs/engineering/access.md`).
 
 ## Saved data is scoped to the Owner, never to the browser
 
@@ -141,3 +142,10 @@ Vercel runs multiple function instances in parallel and restarts them on cold st
 ## Visitor text never starts an agent
 
 Bank Growth issues (`bank:growth`) quote a visitor's words verbatim and are opened with the Owner's GitHub token, so GitHub sees a trusted author. Any automation that starts an agent from issue or pull request text (an `@claude` mention, a label, a keyword) must exclude `bank:growth` issues in its trigger condition (for the Claude action in `.github/workflows/claude.yml`: `!contains(github.event.issue.labels.*.name, 'bank:growth')` on the `issues` clause). Otherwise a visitor can type the trigger into the Teller and have an agent with write access act on their words, skipping the Growth Rules and the allowlist guard. A person who comments on such an issue chooses to bring the quote in; the issue itself never does.
+
+## A sealed token used as a key is parsed strictly
+
+When a signed token's string is a key (a hash recorded for single use, a cache key, a dedupe key), the parser must refuse anything but the exact form it mints. Client Manager's OAuth `unseal` kept only the first two `.`-parts, so `<code>.x` still verified while hashing to a new value, and a single-use authorization code could be traded again within its two minutes.
+
+- Split `payload.signature` with a rest element and refuse when anything is left (`const [payload, signature, ...rest] = ...; if (rest.length) return null`).
+- Or key on the canonical form (the verified `payload.signature`), never the raw string the client sent.

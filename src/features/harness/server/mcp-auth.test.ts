@@ -18,6 +18,8 @@ const state = vi.hoisted(() => ({
   passes: {} as Record<string, { id: string }>,
   auditFails: false,
   audited: [] as string[],
+  // Each Owner's token epoch (epoch ms), as "Disconnect all MCP clients" sets it.
+  notBefore: {} as Record<string, number>,
 }));
 
 vi.mock("server-only", () => ({}));
@@ -43,6 +45,15 @@ vi.mock("@/features/access/server/repository", () => ({
       : null;
   },
 }));
+vi.mock("@/features/access/server/mcp-tokens", async () => {
+  const { issuedAfterEpoch } = await import(
+    "@/features/access/domain/mcp-clients"
+  );
+  return {
+    issuedSinceDisconnect: async (owner: string, iat: number | undefined) =>
+      issuedAfterEpoch(iat, state.notBefore[owner] ?? null),
+  };
+});
 vi.mock("./audit", () => ({
   auditStrict: async (input: { action: string }) => {
     if (state.auditFails) throw new Error("audit insert failed");
@@ -143,6 +154,71 @@ describe("an MCP token reaches only its own Owner's Workspace", () => {
         ),
       ),
     ).toBeNull();
+  });
+});
+
+describe("Disconnect all MCP clients", () => {
+  beforeEach(() => {
+    state.passes = { "user-a": { id: PASS_A } };
+    state.notBefore = {};
+  });
+  const owner = `guest:${PASS_A}`;
+  const now = Math.floor(Date.now() / 1000);
+
+  it("refuses a token issued before the Owner disconnected, and keeps a newer one", async () => {
+    const before = signHarnessToken(
+      { ...guestClaims(PASS_A, "user-a", "staff-a"), iat: now - 120 },
+      SECRET,
+    );
+    expect(await verifyBearer(before)).not.toBeNull();
+    state.notBefore[owner] = (now - 60) * 1000;
+    expect(await verifyBearer(before)).toBeNull();
+    const after = signHarnessToken(
+      { ...guestClaims(PASS_A, "user-a", "staff-a"), iat: now },
+      SECRET,
+    );
+    expect(await verifyBearer(after)).not.toBeNull();
+  });
+
+  it("keeps a token without iat only while the Owner never disconnected", async () => {
+    const old = signHarnessToken(
+      guestClaims(PASS_A, "user-a", "staff-a"),
+      SECRET,
+    );
+    expect(await verifyBearer(old)).not.toBeNull();
+    state.notBefore[owner] = (now - 3600) * 1000;
+    expect(await verifyBearer(old)).toBeNull();
+  });
+
+  it("does not touch another Owner's tokens", async () => {
+    state.notBefore[`guest:${PASS_B}`] = Date.now();
+    expect(
+      await verifyBearer(
+        signHarnessToken(
+          { ...guestClaims(PASS_A, "user-a", "staff-a"), iat: now - 120 },
+          SECRET,
+        ),
+      ),
+    ).not.toBeNull();
+  });
+
+  it("puts iat on a pasted token", async () => {
+    const minted = await mintPastedToken(
+      {
+        access: { kind: "e2e" },
+        owner: "e2e",
+        staff: { id: "staff-a", role: "admin", name: "A" },
+        visitor: { hash: "v", trusted: false },
+      } as unknown as Parameters<typeof mintPastedToken>[0],
+      "https://labs.test",
+    );
+    const payload = JSON.parse(
+      Buffer.from(
+        minted.token.slice(4).split(".")[0] ?? "",
+        "base64url",
+      ).toString(),
+    );
+    expect(payload.iat).toBeGreaterThanOrEqual(now);
   });
 });
 

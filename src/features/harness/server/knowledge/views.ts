@@ -72,11 +72,17 @@ export async function loadSources(
               from harness.conflicts c
               join harness.passages p
                 on p.id in (c.new_passage_id, c.old_passage_id)
-             where p.source_id = s.id and c.status = 'open') as open_conflicts,
+             where p.source_id = s.id and c.status = 'open'
+               and exists (
+                 select 1 from harness.passages cp
+                 join harness.sources cs on cs.id = cp.source_id
+                 where cp.id in (c.new_passage_id, c.old_passage_id)
+                   and cp.id <> p.id and cs.deleted_at is null
+               )) as open_conflicts,
            s.created_at
     from harness.sources s
     left join harness.staff st on st.id = s.added_by
-    where s.owner = ${owner}
+    where s.owner = ${owner} and s.deleted_at is null
       ${id !== undefined ? db`and s.id = ${id}` : db``}
     order by s.is_seed, s.created_at desc, s.title`;
   return rows.map(sourceOf);
@@ -112,6 +118,10 @@ export async function loadPassages(
     select id, source_id, ordinal, heading, body, superseded_by, superseded_at
     from harness.passages
     where owner = ${owner} and source_id = ${sourceId}
+      and exists (
+        select 1 from harness.sources s
+        where s.id = ${sourceId} and s.owner = ${owner} and s.deleted_at is null
+      )
     order by ordinal`;
   return rows.map((row) => ({
     id: row.id,
@@ -259,6 +269,7 @@ export async function loadConflicts(
     join harness.sources os on os.id = op.source_id
     left join harness.staff st on st.id = c.decided_by
     where c.owner = ${owner}
+      and ns.deleted_at is null and os.deleted_at is null
       ${filter.id !== undefined ? db`and c.id = ${filter.id}` : db``}
       ${filter.status ? db`and c.status = ${filter.status}` : db``}
       ${

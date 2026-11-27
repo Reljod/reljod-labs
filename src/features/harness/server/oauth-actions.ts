@@ -1,7 +1,11 @@
 "use server";
 
 import { redirect } from "next/navigation";
-import { AccessDeniedError } from "@/features/access/server/gate";
+import { callbackVouched } from "@/features/access/domain/mcp-clients";
+import {
+  AccessDeniedError,
+  currentAccess,
+} from "@/features/access/server/gate";
 import {
   approvedRedirect,
   errorRedirect,
@@ -17,16 +21,22 @@ import { ownedStaff } from "./staff";
 
 export type ConsentState = { error: string } | null;
 
+const ENDED = "Your access has ended. Sign in again, then retry.";
+
 /**
  * The consent page's Allow and Deny. The authorization request is read again
  * from the form, never trusted from the page. Allow mints the code from the
  * Access of whoever is signed in now, acting as the Staff member they chose,
  * who must be in their own Workspace (ADR 0013: fixed at mint time).
+ * Nothing is redirected anywhere for a visitor without Access, so a posted
+ * form is no open redirect. A callback that is neither loopback nor a known
+ * client's needs the person to have ticked "I trust" its host.
  */
 export async function answerHarnessClient(
   _previous: ConsentState,
   form: FormData,
 ): Promise<ConsentState> {
+  if (!(await currentAccess())) return { error: ENDED };
   const secret = env.rateLimitSalt();
   const parsed = parseAuthorizationRequest(
     new URLSearchParams(String(form.get("request") ?? "")),
@@ -45,6 +55,10 @@ export async function answerHarnessClient(
       ),
     );
   }
+  if (!callbackVouched(request.redirectUri, form.get("trustHost")))
+    return {
+      error: `Tick "I trust ${new URL(request.redirectUri).host}" first, or Deny.`,
+    };
   let grant: Grant;
   try {
     const context = await requireStaff();
@@ -69,8 +83,7 @@ export async function answerHarnessClient(
       },
     });
   } catch (error) {
-    if (error instanceof AccessDeniedError)
-      return { error: "Your access has ended. Sign in again, then retry." };
+    if (error instanceof AccessDeniedError) return { error: ENDED };
     throw error;
   }
   redirect(approvedRedirect(request, grant, secret, Date.now()));

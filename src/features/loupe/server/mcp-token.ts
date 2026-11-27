@@ -1,3 +1,5 @@
+import "server-only";
+
 /**
  * A Loupe MCP token: which Owner the bearer acts for, the visitor it spends
  * against, and until when. Signed with RATE_LIMIT_SALT, not stored. Two

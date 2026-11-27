@@ -33,7 +33,7 @@ export function runBuild(input: {
   owner: Owner;
   question: string;
   visitor: Visitor;
-  /** The visitor's rate-limit message (`rateLimitMessage`), already on its way. */
+  /** The rate hit (`takeBuildRate`), taken before the model is called and already on its way. */
   limit: Promise<string | null>;
 }): ReadableStream<Uint8Array> {
   const encoder = new TextEncoder();

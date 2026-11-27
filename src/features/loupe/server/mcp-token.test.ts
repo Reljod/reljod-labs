@@ -1,9 +1,11 @@
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 import { applyEvents, assetUrl, emptyView } from "../components/view";
 import { CHECK_IDS, METRIC_IDS, type StoredEvent } from "../domain/contract";
 import { type LoupeClaims, readLoupeToken, signLoupeToken } from "./mcp-token";
+
+vi.mock("server-only", () => ({}));
 
 const SECRET = "test-salt";
 const HOST = "host:11111111-1111-4111-8111-111111111111";

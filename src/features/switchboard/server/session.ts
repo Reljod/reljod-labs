@@ -46,6 +46,11 @@ export type SessionGrant = {
 export async function grantSession(call: CallView): Promise<SessionGrant> {
   const started = Date.now();
   const gateway = createGateway({ apiKey: env.aiGatewayApiKey() });
+  // The mint pins the model (the secret and its URL are bound to it) and the
+  // secret's lifetime. It takes no session config and no maximum duration:
+  // the instructions and tools below reach the model as the browser's
+  // `session-update`, so the daily voice caps (taken in `startCall`, before
+  // this) bound the cost instead (ADR 0029).
   const { token, url } = await gateway.experimental_realtime.getToken({
     model: call.model,
     expiresAfterSeconds: SECRET_SECONDS,

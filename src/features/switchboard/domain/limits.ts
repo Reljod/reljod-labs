@@ -11,6 +11,14 @@ export const LIMITS = {
   /** One live Call per Owner at a time. */
   liveCalls: 1,
   callsPerHour: 12,
+  /**
+   * Voice Calls per Owner per day, whatever IP they come from, and for
+   * everyone per day. A voice Session is billed by the provider for as long
+   * as the browser keeps its socket open, which the server cannot close
+   * (ADR 0029), so these bound the spend the per-IP hourly cap cannot.
+   */
+  voiceCallsPerOwnerPerDay: 20,
+  voiceCallsPerDay: 150,
   /** Caller Turns on the text Line, and tool calls on either, per hour. */
   turnsPerHour: 240,
   /** Spend on one Call before the harness ends it. */
@@ -45,3 +53,15 @@ export const SANDBOX_LIMITS = {
   outputFileBlocks: 20_000,
   codeChars: 20_000,
 } as const;
+
+/** What the daily voice caps have used, for `voiceRefusal`. */
+export type VoiceUse = { ownerToday: number; everyoneToday: number };
+
+/** The refusal for one more voice Call, or null when there is room. Pure. */
+export function voiceRefusal(use: VoiceUse): string | null {
+  if (use.ownerToday >= LIMITS.voiceCallsPerOwnerPerDay)
+    return `That's ${LIMITS.voiceCallsPerOwnerPerDay} voice Calls today. Try the text Line, or come back tomorrow.`;
+  if (use.everyoneToday >= LIMITS.voiceCallsPerDay)
+    return "The voice Line has reached today's limit for everyone. Try the text Line, or come back tomorrow.";
+  return null;
+}

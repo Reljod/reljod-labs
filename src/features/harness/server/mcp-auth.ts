@@ -3,6 +3,7 @@ import { guestPassStatus } from "@/features/access/domain/guest-pass";
 import type { Owner } from "@/features/access/domain/owner";
 import { env as accessEnv } from "@/features/access/server/env";
 import type { Access } from "@/features/access/server/gate";
+import { issuedSinceDisconnect } from "@/features/access/server/mcp-tokens";
 import { guestPassOf } from "@/features/access/server/repository";
 import type { McpTokenResponse } from "../domain/api";
 import { HARNESS_MCP_PATH } from "../domain/mcp-tools";
@@ -39,7 +40,7 @@ export function grantOf(
   now = Date.now(),
 ): Grant {
   const seconds = Math.floor(now / 1000);
-  const base = { owner, staffId: staff.id, visitor: who.hash };
+  const base = { owner, staffId: staff.id, visitor: who.hash, iat: seconds };
   switch (access.kind) {
     case "guest":
       return {
@@ -126,14 +127,25 @@ export function chatToken(input: {
 
 /**
  * The claims of a bearer, if it may still be used: signed here, not expired,
- * and its holder still has Access (a Guest still on that live Guest pass, a
- * Host still on the Host list, the e2e token still configured).
+ * its holder still has Access (a Guest still on that live Guest pass, a Host
+ * still on the Host list, the e2e token still configured), and issued after
+ * its Owner last pressed "Disconnect all MCP clients". The token endpoint
+ * checks every token it mints here too, so a refresh token or code from
+ * before a disconnect mints nothing.
  */
 export async function verifyBearer(
   bearer: string,
 ): Promise<HarnessClaims | null> {
   const claims = readHarnessToken(bearer, env.rateLimitSalt());
   if (!claims) return null;
+  const [standing, holder] = await Promise.all([
+    issuedSinceDisconnect(claims.owner, claims.iat),
+    holderOf(claims),
+  ]);
+  return standing ? holder : null;
+}
+
+async function holderOf(claims: HarnessClaims): Promise<HarnessClaims | null> {
   switch (claims.kind) {
     case "e2e":
       return claims.owner === "e2e" && env.e2eBypassToken() ? claims : null;

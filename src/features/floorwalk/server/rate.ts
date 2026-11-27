@@ -1,5 +1,6 @@
 import "server-only";
 import { headers } from "next/headers";
+import { isE2eToken } from "@/features/access/server/e2e";
 import { E2E_HEADER } from "@/features/document-compliance/constants";
 import { hashVisitor } from "@/features/document-compliance/server/rate-limit";
 import { LIMITS } from "../domain/limits";
@@ -12,8 +13,7 @@ export type Visitor = { hash: string; trusted: boolean };
 
 export async function visitor(): Promise<Visitor> {
   const requestHeaders = await headers();
-  const bypass = env.e2eBypassToken();
-  if (bypass && requestHeaders.get(E2E_HEADER) === bypass)
+  if (isE2eToken(requestHeaders.get(E2E_HEADER)))
     return { hash: "e2e", trusted: true };
   const ip =
     requestHeaders.get("x-forwarded-for")?.split(",")[0]?.trim() ??

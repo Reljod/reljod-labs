@@ -6,8 +6,14 @@ export const LIMITS = {
   spendPerOwnerPerDay: 1.5,
   /** A Recording larger than this is refused: the model takes it inline. */
   uploadBytes: 18 * 1024 * 1024,
-  /** Longer calls are refused; the demo is for a short handover. */
+  /**
+   * Longer calls are refused; the demo is for a short handover. Read from
+   * every box that declares a length, not the movie header alone
+   * (`recordingLength` in `domain/uploads.ts`).
+   */
   uploadSeconds: 10 * 60,
+  /** The most the Watch model may write back about one Recording. */
+  watchOutputTokens: 32_000,
   /** Deck redos allowed on one Run. */
   redosPerRun: 3,
   /** Recordings one Owner may have stored in the last day, counted from the objects under their prefix. */

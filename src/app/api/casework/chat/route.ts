@@ -5,13 +5,10 @@ import {
   MAX_MESSAGE_LENGTH,
 } from "@/features/casework/domain/chat-events";
 import { chat } from "@/features/casework/server/chat";
-import { countMessages } from "@/features/casework/server/repository";
-import { checkSpend, LimitError } from "@/features/casework/server/runs";
-import { E2E_VISITOR, ensureSession } from "@/features/casework/server/session";
+import { LimitError, takeChatTurn } from "@/features/casework/server/runs";
+import { ensureSession } from "@/features/casework/server/session";
 
 export const maxDuration = 120;
-
-const MESSAGES_PER_HOUR = 40;
 
 const bodySchema = z.object({
   text: z.string().max(MAX_MESSAGE_LENGTH),
@@ -38,25 +35,11 @@ export async function POST(request: Request) {
   const line = (event: ChatEvent) =>
     encoder.encode(`${JSON.stringify(event)}\n`);
 
-  if (session.visitor_hash !== E2E_VISITOR) {
-    const recent = await countMessages({
-      visitorHash: session.visitor_hash,
-      since: new Date(Date.now() - 3_600_000),
-    });
-    if (recent >= MESSAGES_PER_HOUR) {
-      return new Response(
-        line({
-          type: "error",
-          message: `That's ${MESSAGES_PER_HOUR} messages this hour. The Specialist needs a coffee; try again soon.`,
-        }),
-        { headers: { "content-type": "application/x-ndjson" } },
-      );
-    }
-  }
-
-  // Every message calls the model, so the session's spend cap applies here too.
+  // Every message calls the model, so the caps are taken before it: the
+  // visitor's hour, the demo's day, the Owner's spend across all their Desks
+  // and this Desk's own spend (LIMITS in server/runs.ts).
   try {
-    await checkSpend(session);
+    await takeChatTurn(session);
   } catch (error) {
     if (!(error instanceof LimitError)) throw error;
     return new Response(line({ type: "error", message: error.message }), {
@@ -77,11 +60,16 @@ export async function POST(request: Request) {
           controller.enqueue(line(event));
         }
       } catch (error) {
+        if (!(error instanceof LimitError)) {
+          console.error("[casework] chat turn failed", error);
+        }
         controller.enqueue(
           line({
             type: "error",
             message:
-              error instanceof Error ? error.message : "Something went wrong",
+              error instanceof LimitError
+                ? error.message
+                : "Something went wrong. Try again in a moment.",
           }),
         );
       } finally {

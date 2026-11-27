@@ -20,6 +20,8 @@ describe("a Pass's images", () => {
     expect(decodeImage(PNG).mediaType).toBe("image/png");
     const lying = `data:image/jpeg;base64,${PNG.split(",")[1]}`;
     expect(() => decodeImage(lying)).toThrow("isn't the image it says");
+    const halfPng = `data:image/png;base64,${Buffer.from([0x89, 0x50, 0x4e, 0x47, 0, 0, 0, 0]).toString("base64")}`;
+    expect(() => decodeImage(halfPng)).toThrow("isn't the image it says");
   });
 
   it("are all checked before anything is spent", () => {

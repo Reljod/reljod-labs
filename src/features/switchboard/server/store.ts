@@ -73,7 +73,13 @@ export async function ensureWorkspace(owner: Owner) {
   });
 }
 
-/** Puts the Back office back to its seed. Calls, Rules and the trail stay. */
+/**
+ * Puts the Back office back to its seed. Calls, Rules and the trail stay.
+ * The Records it replaces are not destroyed: they move to
+ * `switchboard.records_archive`, marked with when they were set aside, and
+ * the purge cron removes them after 30 days. (Refs restart from the seed, so
+ * the old rows cannot stay in `records` under the same keys.)
+ */
 export async function resetRecords(owner: Owner) {
   await sql().begin(async (tx) => {
     await tx`select 1 from switchboard.workspaces where owner = ${owner} for update`;
@@ -86,6 +92,11 @@ export async function resetRecords(owner: Owner) {
       throw new StateError(
         "A Call is live. Hang up before resetting the Back office.",
       );
+    await tx`
+      insert into switchboard.records_archive
+        (id, owner, kind, ref, data, call_id, created_at, updated_at, deleted_at)
+      select id, owner, kind, ref, data, call_id, created_at, updated_at, now()
+      from switchboard.records where owner = ${owner}`;
     await tx`delete from switchboard.records where owner = ${owner}`;
     await tx`update switchboard.workspaces set ref_seq = 0 where owner = ${owner}`;
     await seed(tx, owner);

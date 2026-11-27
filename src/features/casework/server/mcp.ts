@@ -27,7 +27,7 @@ import {
   stopActiveRun,
   stopRun,
 } from "./runs";
-import { verifySessionToken } from "./session";
+import { ownerMatches, verifySessionToken } from "./session";
 import { supabase } from "./supabase";
 
 const EXTERNAL_VISITOR = "mcp-external";
@@ -42,11 +42,19 @@ type ToolContext = {
   http?: { authInfo?: { extra?: Record<string, unknown> } };
 };
 
+/**
+ * The Desk a call acts for: the token's, and only while the Desk still
+ * belongs to the Owner the token was minted for (null only for the outside
+ * client's desk).
+ */
 async function sessionOf(ctx: unknown): Promise<SessionRow> {
-  const sessionId = (ctx as ToolContext).http?.authInfo?.extra?.sessionId;
+  const extra = (ctx as ToolContext).http?.authInfo?.extra;
+  const sessionId = extra?.sessionId;
   if (typeof sessionId !== "string") throw new Error("Not authorised");
   const session = await getSession(sessionId);
   if (!session) throw new Error("Session expired");
+  if (!ownerMatches(session.owner, extra?.owner))
+    throw new Error("Not authorised");
   return session;
 }
 
@@ -385,13 +393,14 @@ export const mcpHandler = withMcpAuth(
   handler,
   async (_request, bearer) => {
     if (!bearer) return undefined;
-    const sessionId = verifySessionToken(bearer);
-    if (sessionId) {
+    const claims = verifySessionToken(bearer);
+    if (claims) {
       return {
         token: bearer,
         clientId: "casework-desk",
         scopes: ["casework"],
-        extra: { sessionId },
+        expiresAt: claims.exp,
+        extra: { sessionId: claims.sessionId, owner: claims.owner },
       };
     }
     const external = env.mcpToken();
@@ -400,7 +409,7 @@ export const mcpHandler = withMcpAuth(
         token: bearer,
         clientId: "casework-external",
         scopes: ["casework"],
-        extra: { sessionId: await externalSession() },
+        extra: { sessionId: await externalSession(), owner: null },
       };
     }
     return undefined;

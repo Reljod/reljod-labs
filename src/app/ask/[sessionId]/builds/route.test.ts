@@ -26,7 +26,7 @@ vi.mock("@/features/ledger/server/visitor", () => ({
   }),
 }));
 vi.mock("@/features/ledger/server/rate-limit", () => ({
-  rateLimitMessage: async () => {
+  takeBuildRate: async () => {
     state.limitStarted = true;
     state.onLimitStarted();
     if (state.limitFails) throw new Error("count failed");

@@ -30,6 +30,13 @@ export type McpClaims = {
   via?: "oauth";
   /** Narrows the token to one client (a Thread's scope). */
   client?: string;
+  /**
+   * When the access it carries was given, epoch seconds: a pasted or chat
+   * token's mint time, an OAuth token's consent time. Checked against the
+   * Owner's token epoch ("Disconnect all MCP clients"). Absent on tokens
+   * minted before it existed.
+   */
+  iat?: number;
   /** Expiry, epoch seconds. */
   exp: number;
 };
@@ -54,8 +61,8 @@ export function readMcpToken(
   now = Date.now(),
 ): McpClaims | null {
   if (!token.startsWith(PREFIX)) return null;
-  const [payload, signature] = token.slice(PREFIX.length).split(".");
-  if (!payload || !signature) return null;
+  const [payload, signature, ...rest] = token.slice(PREFIX.length).split(".");
+  if (!payload || !signature || rest.length > 0) return null;
   const expected = Buffer.from(sign(payload, secret));
   const given = Buffer.from(signature);
   if (expected.length !== given.length || !timingSafeEqual(expected, given))
@@ -65,6 +72,7 @@ export function readMcpToken(
       Buffer.from(payload, "base64url").toString("utf8"),
     ) as McpClaims;
     if (typeof claims.exp !== "number" || claims.exp * 1000 <= now) return null;
+    if (claims.iat !== undefined && typeof claims.iat !== "number") return null;
     if (!parseOwner(claims.owner) || typeof claims.visitor !== "string")
       return null;
     if (!["host", "guest", "e2e", "desk"].includes(claims.kind)) return null;

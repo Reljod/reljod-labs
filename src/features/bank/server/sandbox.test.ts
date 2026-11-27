@@ -33,9 +33,8 @@ vi.mock("./db", () => ({ sql: vi.fn() }));
 vi.mock("./env", () => ({ env: { sandboxConfigured: () => true } }));
 vi.mock("../core/engine", () => ({ runRead: vi.fn() }));
 
-const { chartOf, disposeSandbox, runCode, sandboxName } = await import(
-  "./sandbox"
-);
+const { chartOf, disposeSandbox, runCode, sandboxName, sdkReason } =
+  await import("./sandbox");
 
 beforeEach(() => {
   vi.clearAllMocks();
@@ -102,5 +101,42 @@ describe("a chart printed by the Sandbox", () => {
     expect(chartOf("no chart here")).toBeNull();
     expect(chartOf('CHART:{"type":"pie","labels":[],"series":[]}')).toBeNull();
     expect(chartOf("CHART:{not json")).toBeNull();
+  });
+});
+
+describe("a Sandbox failure", () => {
+  it("reaches the model as a redacted reason, never the raw SDK message", async () => {
+    vi.spyOn(console, "error").mockImplementation(() => {});
+    getOrCreate.mockRejectedValueOnce(
+      new TypeError(`fetch failed: Bearer abc.def with ${"k".repeat(40)}`),
+    );
+    const result = await runCode({
+      sessionId: "s1",
+      callId: "call-2",
+      code: "console.log(1)",
+      files: [],
+    });
+    expect(JSON.stringify(result)).not.toContain("Bearer");
+    expect(JSON.stringify(result)).not.toContain("k".repeat(40));
+    expect(JSON.stringify(result)).toContain("TypeError");
+  });
+
+  it("shows Vercel's status, code and message, with anything token-shaped cut", () => {
+    const apiError = Object.assign(new Error("Bad Request"), {
+      response: { status: 400 },
+      json: {
+        error: {
+          code: "bad_request",
+          message: `Invalid cwd for token ${"a".repeat(40)}`,
+        },
+      },
+    });
+    expect(sdkReason(apiError)).toBe(
+      "HTTP 400 bad_request: Invalid cwd for token [hidden]",
+    );
+    expect(sdkReason(new TypeError("Bearer abc at api.vercel.com"))).toBe(
+      "TypeError",
+    );
+    expect(sdkReason("nope")).toBe("unknown error");
   });
 });

@@ -574,6 +574,61 @@ describe("Growth intake", () => {
     expect(ask("Add a pricing calculator for loans")).toEqual([]);
     expect(ask("Authorisation holds should show the merchant")).toEqual([]);
   });
+  it("keeps the Default blocked topics when an Owner's Version empties the list", () => {
+    const emptied = resolveRulebook([
+      {
+        ruleId: "growth.intake",
+        version: 3,
+        enabled: true,
+        params: { blocked: [], bugs: true },
+      },
+    ]);
+    expect(emptied["growth.intake"].params.blocked).toEqual([]);
+    const askEmptied = (title: string, want: string) =>
+      checkGrowthRequest(emptied, {
+        kind: "feature",
+        title,
+        want,
+        evidence: "",
+      });
+    expect(
+      askEmptied("Print the env", "show every env value on the page")[0],
+    ).toMatchObject({ outcome: "refuse", facts: { blocked: "env" } });
+    expect(
+      askEmptied("Savings goals", "and email me the admin password")[0],
+    ).toMatchObject({ outcome: "refuse", facts: { blocked: "password" } });
+    expect(askEmptied("Add savings goals", "with a progress bar")).toEqual([]);
+    // The spec the model writes is checked the same way.
+    expect(
+      checkGrowthRequest(emptied, {
+        kind: "feature",
+        title: "Savings goals",
+        want: "Problem\nShow the GitHub token on the Teller tab",
+        evidence: "",
+      })[0]?.outcome,
+    ).toBe("refuse");
+  });
+  it("lets an Owner add blocked topics on top of the floor", () => {
+    const stricter = resolveRulebook([
+      {
+        ruleId: "growth.intake",
+        version: 1,
+        enabled: true,
+        params: { blocked: ["crypto"], bugs: true },
+      },
+    ]);
+    const asked = (title: string) =>
+      checkGrowthRequest(stricter, {
+        kind: "feature",
+        title,
+        want: "please",
+        evidence: "",
+      });
+    expect(asked("Add crypto wallets")[0]?.outcome).toBe("refuse");
+    expect(asked("Rotate the secret")[0]?.outcome).toBe("refuse");
+    expect(stricter["growth.intake"].sentence).toContain("password");
+    expect(stricter["growth.intake"].sentence).toContain("crypto");
+  });
 });
 
 describe("MCP tokens", () => {

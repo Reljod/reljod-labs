@@ -31,6 +31,28 @@ export function assertOwnSource(source: Source, owner: Owner) {
     throw new InvalidError("That upload is not one of yours.");
 }
 
+const LOCAL = /^http:\/\/(localhost|127\.0\.0\.1|\[::1\])(:\d+)?$/;
+
+/**
+ * Where a Sample's file may be fetched from when it is not on disk: this
+ * deployment's own address (`VERCEL_URL` first), never a host the request
+ * named. The request's origin is used only in development, and only when it
+ * is a local server. With neither, there is nowhere to fetch from.
+ */
+export function sampleOrigin(
+  origin: string,
+): { base: string; own: boolean } | null {
+  const own = [
+    process.env.VERCEL_URL,
+    process.env.VERCEL_BRANCH_URL,
+    process.env.VERCEL_PROJECT_PRODUCTION_URL,
+  ].find((host): host is string => Boolean(host));
+  if (own) return { base: `https://${own}`, own: true };
+  if (process.env.NODE_ENV !== "production" && LOCAL.test(origin))
+    return { base: origin, own: false };
+  return null;
+}
+
 /**
  * The bytes the Walker watches. A Sample is a static file; an upload must sit
  * in the caller's own folder, be an MP4 or MOV the server can read the length
@@ -48,7 +70,20 @@ export async function loadFootage(
     const bytes = await readFile(path.join(process.cwd(), "public", file))
       .then((buffer) => new Uint8Array(buffer))
       .catch(async () => {
-        const response = await fetch(new URL(file, origin));
+        const target = sampleOrigin(origin);
+        if (!target) throw new Error("The Sample's file could not be read.");
+        // The protection bypass goes to this deployment only.
+        const bypass = target.own
+          ? process.env.VERCEL_AUTOMATION_BYPASS_SECRET
+          : undefined;
+        const response = await fetch(new URL(file, target.base), {
+          headers: bypass
+            ? { "x-vercel-protection-bypass": bypass }
+            : undefined,
+          signal: AbortSignal.timeout(20_000),
+          // The bypass header must never follow a redirect elsewhere.
+          redirect: "error",
+        });
         if (!response.ok) throw new Error(`Sample fetch ${response.status}`);
         return new Uint8Array(await response.arrayBuffer());
       });
