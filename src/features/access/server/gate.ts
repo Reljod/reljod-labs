@@ -1,12 +1,14 @@
 import "server-only";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { cookies, headers } from "next/headers";
-import { E2E_HEADER } from "@/features/document-compliance/constants";
+import { UnauthorizedError } from "@/platform/errors";
+import { E2E_HEADER } from "@/platform/request/mode";
 import { DENIED_MESSAGE } from "../constants";
 import { guestPassStatus } from "../domain/guest-pass";
 import { type Owner, ownerOf } from "../domain/owner";
 import { isE2eToken } from "./e2e";
 import { env } from "./env";
+import { FORWARDED_ACCESS_HEADER, forwardedAccess } from "./forwarded";
 import { guestPassOf } from "./repository";
 import { type AuthCookies, authClient } from "./supabase";
 
@@ -23,10 +25,10 @@ export type Access =
   /** The Playwright suite, carrying `E2E_BYPASS_TOKEN`. */
   | { kind: "e2e" };
 
-export class AccessDeniedError extends Error {
+/** No Access. An UnauthorizedError, so every REST route answers it 401. */
+export class AccessDeniedError extends UnauthorizedError {
   constructor() {
     super(DENIED_MESSAGE);
-    this.name = "AccessDeniedError";
   }
 }
 
@@ -109,12 +111,20 @@ export function requestCookies(): AuthCookies {
   };
 }
 
-/** The Access of the current request, or null. */
+/**
+ * The Access of the current request, or null. The proxy's own answer, when it
+ * forwarded one (`forwarded.ts`), saves the JWT check and the Host or Guest
+ * pass lookup a second time.
+ */
 export async function currentAccess() {
-  return accessThrough({
-    e2eToken: (await headers()).get(E2E_HEADER),
-    cookies: requestCookies(),
-  });
+  const requestHeaders = await headers();
+  return (
+    forwardedAccess(requestHeaders.get(FORWARDED_ACCESS_HEADER)) ??
+    accessThrough({
+      e2eToken: requestHeaders.get(E2E_HEADER),
+      cookies: requestCookies(),
+    })
+  );
 }
 
 /**

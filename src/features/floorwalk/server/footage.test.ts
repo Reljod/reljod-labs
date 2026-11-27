@@ -1,7 +1,6 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 
 vi.mock("server-only", () => ({}));
-vi.mock("./storage", () => ({ download: async () => null }));
 
 import { sampleOrigin } from "./footage";
 

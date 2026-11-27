@@ -2,10 +2,11 @@ import { expect, test } from "@playwright/test";
 
 /*
  * Floorwalk: replay a recorded Walk, then walk a Sample through the real
- * route with the scripted Walker (`x-floorwalk-stub` with the bypass token:
- * the answer key's planted problems, no model call, no database write, the
- * e2e visitor skips the rate limit). `E2E_FLOORWALK_LIVE=1` walks one Sample
- * on the real model (about four cents); run it only when asked.
+ * route with the scripted Walker (the default for the e2e suite: the
+ * container swaps in the answer key's planted problems, no model call, no
+ * database write, the e2e visitor skips the rate limit).
+ * `E2E_FLOORWALK_LIVE=1` walks one Sample on the real model (about four
+ * cents); run it only when asked.
  */
 const live = process.env.E2E_FLOORWALK_LIVE === "1";
 const token = process.env.E2E_BYPASS_TOKEN ?? "";
@@ -14,7 +15,7 @@ test.setTimeout(live ? 300_000 : 120_000);
 test.use({
   extraHTTPHeaders: {
     "x-e2e-token": token,
-    ...(live ? {} : { "x-floorwalk-stub": token }),
+    ...(live ? { "x-e2e-live": "1" } : {}),
   },
 });
 

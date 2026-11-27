@@ -1,25 +1,33 @@
 "use client";
 
 import {
+  attempt,
+  getJson,
+  type Outcome,
+  send,
+  streamJson,
+} from "@/platform/client/api";
+import {
   type Allowance,
   type AskAnswer,
   ROUTES,
   type Source,
+  type UploadTicket,
   type WalkEvent,
 } from "../domain/api";
 
-async function errorOf(response: Response): Promise<string> {
-  if (response.status === 401)
-    return "Your guest access has ended. Sign in again to walk.";
-  const body = (await response.json().catch(() => null)) as {
-    error?: string;
-  } | null;
-  return body?.error ?? "Something went wrong on our side.";
-}
+/** Typed wrappers over the Floorwalk routes; components never call `fetch` themselves. */
 
 export async function getAllowance(): Promise<Allowance | null> {
-  const response = await fetch(ROUTES.allowance, { cache: "no-store" });
-  return response.ok ? ((await response.json()) as Allowance) : null;
+  return getJson<Allowance>(ROUTES.allowance).catch(() => null);
+}
+
+/** A one-time upload URL for the visitor's own footage. */
+export function prepareUpload(file: {
+  type: string;
+  size: number;
+}): Promise<Outcome<UploadTicket>> {
+  return attempt(() => send<UploadTicket>("POST", ROUTES.uploads, file));
 }
 
 /** Starts a live Walk and hands each NDJSON event over as it arrives. */
@@ -28,31 +36,16 @@ export async function streamWalk(
   signal: AbortSignal,
   onEvent: (event: WalkEvent) => void,
 ) {
-  const response = await fetch(ROUTES.walks, {
-    method: "POST",
-    headers: { "content-type": "application/json" },
-    body: JSON.stringify({ source }),
-    signal,
-  });
-  if (!response.ok || !response.body) throw new Error(await errorOf(response));
-  const reader = response.body.pipeThrough(new TextDecoderStream()).getReader();
-  let buffer = "";
   let ended = false;
-  const emit = (line: string) => {
-    if (!line.trim()) return;
-    const event = JSON.parse(line) as WalkEvent;
-    if (event.t === "done" || event.t === "error") ended = true;
-    onEvent(event);
-  };
-  for (;;) {
-    const { value, done } = await reader.read();
-    if (done) break;
-    buffer += value;
-    const lines = buffer.split("\n");
-    buffer = lines.pop() ?? "";
-    for (const line of lines) emit(line);
-  }
-  emit(buffer);
+  await streamJson<WalkEvent>(
+    ROUTES.walks,
+    { source },
+    (event) => {
+      if (event.t === "done" || event.t === "error") ended = true;
+      onEvent(event);
+    },
+    { signal },
+  );
   // A dropped connection or a function timeout closes the stream quietly.
   if (!ended) throw new Error("The Walk ended early. Try it again.");
 }
@@ -82,15 +75,9 @@ export function putFile(
   });
 }
 
-export async function askFootage(
+export function askFootage(
   source: Source,
   question: string,
 ): Promise<AskAnswer> {
-  const response = await fetch(ROUTES.asks, {
-    method: "POST",
-    headers: { "content-type": "application/json" },
-    body: JSON.stringify({ source, question }),
-  });
-  if (!response.ok) throw new Error(await errorOf(response));
-  return (await response.json()) as AskAnswer;
+  return send<AskAnswer>("POST", ROUTES.asks, { source, question });
 }

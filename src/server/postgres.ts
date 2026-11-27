@@ -31,6 +31,7 @@ export function createPool(max = 4) {
     idle_timeout: 20,
     connect_timeout: 15,
     onnotice: () => {},
+    debug: dbStats.enabled ? dbStats.count : undefined,
     types: {
       bigint: {
         to: 20,
@@ -75,6 +76,41 @@ export function isoTimestamp(value: string): string {
 }
 
 export type Pool = ReturnType<typeof createPool>;
+
+let shared: Pool | undefined;
+
+/**
+ * The one pool of this function instance, shared by every feature whose rows
+ * come back in the default shape. A pool per feature held up to 4
+ * connections each, so one warm instance serving several demos kept a dozen
+ * pooler connections open; one pool of 6 serves them all.
+ */
+export function db(): Pool {
+  shared ??= createPool(6);
+  return shared;
+}
+
+/**
+ * Statement counts for the benchmark (`scripts/bench-api.mts`), on only with
+ * `DB_STATS=1`. The count is per process, so it is exact for a benchmark
+ * that sends one request at a time; each REST answer carries the statements
+ * it ran in `x-db-queries`.
+ */
+export const dbStats = {
+  enabled: process.env.DB_STATS === "1",
+  total: 0,
+  count: () => {
+    dbStats.total += 1;
+  },
+  snapshot: () => dbStats.total,
+  annotate(response: Response, since: number) {
+    try {
+      response.headers.set("x-db-queries", String(dbStats.total - since));
+    } catch {
+      // A redirect's headers are immutable; it ran no query worth counting.
+    }
+  },
+};
 
 /** The pool, or a transaction on it: what a function takes when it may run inside either. */
 export type Db =

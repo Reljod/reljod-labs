@@ -1,6 +1,5 @@
 /**
- * The HTTP contract between the Floorwalk page and its routes. Reads and the
- * streaming Walk are routes; preparing an upload is a server action.
+ * The HTTP contract between the Floorwalk page and its REST routes.
  */
 import { z } from "zod";
 import { LIMITS } from "./limits";
@@ -10,10 +9,8 @@ export const ROUTES = {
   allowance: "/api/floorwalk/allowance",
   walks: "/api/floorwalk/walks",
   asks: "/api/floorwalk/asks",
+  uploads: "/api/floorwalk/uploads",
 } as const;
-
-/** Request header that swaps the model for a scripted Walker (e2e, with the bypass token). */
-export const STUB_HEADER = "x-floorwalk-stub";
 
 const uploadPath = z
   .string()
