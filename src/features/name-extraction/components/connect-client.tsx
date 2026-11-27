@@ -1,10 +1,11 @@
 "use client";
 
 import { useState } from "react";
-import { mintMcpToken } from "../server/actions";
+import type { TokenResponse } from "../domain/api";
+import { writes } from "./api";
 import { Button, ErrorNote, useWrite } from "./ui";
 
-type Minted = { token: string; expiresAt: string };
+type Minted = TokenResponse;
 
 /**
  * "Connect a client": mints a bearer token for an outside MCP client (Claude
@@ -18,11 +19,9 @@ export function ConnectClient({ endpoint }: { endpoint: string }) {
   const mint = useWrite(async () => {
     setError(null);
     setCopied(null);
-    try {
-      setMinted(await mintMcpToken());
-    } catch {
-      setError("The token could not be made. Try again.");
-    }
+    const minted = await writes.mintToken();
+    if (minted.ok) setMinted(minted.value);
+    else setError(minted.error || "The token could not be made. Try again.");
   });
   const command = minted
     ? `claude mcp add --transport http sieve ${endpoint} --header "Authorization: Bearer ${minted.token}"`

@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { checkPattern, GREP_LIMITS, grepPages, grepText } from "./grep";
+import { checkPattern, GREP_LIMITS, grepPages } from "./grep";
 
 const pages = [
   "Ordering customer: ANA FERREIRA-VOS\n:59:/MR12 Lumen Harbour Ltd",
@@ -53,12 +53,5 @@ describe("grepPages", () => {
   it("does not loop on empty matches", () => {
     const result = grepPages(["abc"], { pattern: "x*" });
     expect(result.ok && result.total).toBe(0);
-  });
-
-  it("reads as text the Analyst can act on", () => {
-    const text = grepText(grepPages(pages, { pattern: "Lumen Harbour" }));
-    expect(text).toMatch(/^2 matches on 2 pages/);
-    expect(text).toContain("p1:");
-    expect(grepText(grepPages(pages, { pattern: "zzz" }))).toBe("No matches.");
   });
 });

@@ -13,8 +13,7 @@ import {
   type RulebookVersion,
   type RunSummary,
 } from "../domain/contract";
-import { startRun, stopRun } from "../server/actions";
-import { api } from "./api";
+import { api, writes } from "./api";
 import { Hero } from "./hero";
 import { isRulebookPreview, PREVIEW_MAX_AGE_MS, reads } from "./read-cache";
 import { isOver } from "./run-view";
@@ -163,25 +162,20 @@ export function Sieve({
   };
 
   const start = async (doc: OpenDoc) => {
-    try {
-      const result = await startRun({ source: doc.source, models });
-      if ("error" in result) return result.error;
-      setStage({ kind: "doc", doc, runId: result.runId });
-      setTab("documents");
-      void refreshRuns();
-      return null;
-    } catch (error) {
-      return friendly(error, "Sieve couldn't start a run.");
-    }
+    const result = await writes.startRun({ source: doc.source, models });
+    if (!result.ok)
+      return friendly(result.error, "Sieve couldn't start a run.");
+    setStage({ kind: "doc", doc, runId: result.value.runId });
+    setTab("documents");
+    void refreshRuns();
+    return null;
   };
 
   const stop = async () => {
     if (!runId) return null;
-    const result: unknown = await stopRun(runId);
+    const result = await writes.stopRun(runId);
     void refreshRuns();
-    if (result && typeof result === "object" && "error" in result)
-      return String((result as { error: unknown }).error);
-    return null;
+    return result.ok ? null : result.error;
   };
 
   const openRun = (summary: RunSummary) => {
@@ -341,12 +335,11 @@ export function Sieve({
             onRulesSaved={(saved) => {
               // Previews mark names under the current Rulebook: drop the old ones.
               reads.forget(isRulebookPreview);
-              // The saved version shows at once; the list then comes from the server.
+              // The save answered with the version it wrote: no second read.
               setRulebooks((list) => [
                 saved,
                 ...list.filter((item) => item.version !== saved.version),
               ]);
-              api.rulebooks().then(setRulebooks, () => undefined);
             }}
           />
         ) : null}

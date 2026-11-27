@@ -21,6 +21,8 @@ export type SieveClaims = {
   email?: string;
   /** Expiry, epoch seconds. */
   exp: number;
+  /** Minted by the stubbed e2e suite: its MCP calls reach the stubbed services. Only on `e2e` tokens. */
+  stub?: boolean;
 };
 
 const PREFIX = "sieve_";
@@ -61,6 +63,11 @@ export function readSieveToken(
     if (claims.kind === "host" && !claims.owner.startsWith("host:"))
       return null;
     if (claims.kind === "e2e" && claims.owner !== "e2e") return null;
+    if (
+      claims.stub !== undefined &&
+      (claims.kind !== "e2e" || claims.stub !== true)
+    )
+      return null;
     return claims;
   } catch {
     return null;

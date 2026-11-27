@@ -1,5 +1,5 @@
 import "server-only";
-import { generateText, type ModelMessage } from "ai";
+import type { ModelMessage } from "ai";
 import {
   CODE_PENDING,
   type DocumentText,
@@ -18,9 +18,8 @@ import { sweep } from "../domain/sweep";
 import { SKILLS } from "../skills";
 import { loadDocument } from "./document";
 import { emit, emitStrict, runSink } from "./emit";
-import { callOptions, trackCall } from "./llm";
-import { type ReaderJob, type ReaderResult, runReader } from "./reader";
-import { disposeSandbox, runInSandbox } from "./sandbox";
+import type { AnalystModel, CodeSandbox, ReaderModel, ToolCall } from "./ports";
+import type { ReaderJob, ReaderResult } from "./reader";
 import { grepPages, grepText } from "./toolkit/grep";
 import { compactHistory } from "./toolkit/history";
 import { outlineText, readPages } from "./toolkit/pages";
@@ -48,17 +47,23 @@ import {
   type SweepCandidate,
   unreadRanges,
 } from "./toolkit/state";
-import {
-  analystTools,
-  isToolId,
-  summarise,
-  TOOL_SCHEMAS,
-} from "./toolkit/tools";
+import { isToolId, summarise, TOOL_SCHEMAS } from "./toolkit/tools";
 
 /** The Analyst's ledger: its state without the conversation, which only turns need. */
 export type Ledger = Omit<AnalystState, "messages">;
 
-export type ToolCall = { toolCallId: string; toolName: string; input: unknown };
+export type { ToolCall };
+
+/**
+ * The paid work a Run does: the Analyst's model, its Readers and its
+ * Sandbox. The work container (`work-container.ts`) hands in the real ones,
+ * or the stubbed e2e suite's script (`stubs.ts`).
+ */
+export type AnalystPorts = {
+  analyst: AnalystModel;
+  reader: ReaderModel;
+  sandbox: CodeSandbox;
+};
 
 // The Document and its Sweep, once per function instance ---------------------------------
 
@@ -107,7 +112,7 @@ function isOver(status: RunStatus | null) {
 
 // Begin ------------------------------------------------------------------------------------
 
-export async function begin(ctx: RunContext): Promise<AnalystState> {
+async function begin(ctx: RunContext): Promise<AnalystState> {
   const { document, candidates } = await prepare(ctx);
   await runSink().update(ctx.runId, { status: "running" });
   const state = initialState();
@@ -155,7 +160,8 @@ export type TurnResult =
     };
 
 /** One Analyst model call, with tools that come back unexecuted. */
-export async function analystTurn(
+async function analystTurn(
+  ports: AnalystPorts,
   ctx: RunContext,
   messages: ModelMessage[],
 ): Promise<TurnResult> {
@@ -163,42 +169,22 @@ export async function analystTurn(
   const status = await runSink().status(ctx.runId);
   if (isOver(status)) return { kind: "over", status };
   const history = compactHistory(messages);
-  const started = Date.now();
-  const result = await generateText({
-    ...callOptions(ctx.models.analyst, "analyst"),
+  const reply = await ports.analyst.turn({
+    ctx,
     instructions: analystInstructions(ctx.rulebook, ctx.rulebookVersion),
     messages: history,
-    tools: analystTools(),
-    maxOutputTokens: RUN_LIMITS.analystOutputTokens,
-  });
-  const cost = await trackCall({
-    runId: ctx.runId,
-    purpose: "analyst",
-    model: ctx.models.analyst,
-    usage: result.usage,
-    providerMetadata: result.providerMetadata,
-    started,
+    prepared: () => prepare(ctx),
   });
   const events: RunEventInput[] = [];
-  if (result.text.trim())
-    events.push({ type: "thought", text: result.text.trim() });
-  events.push(cost);
-  await emit(ctx.runId, ...events);
-  const toolCalls = result.toolCalls.map((call) => {
-    const invalid = call as { invalid?: boolean; error?: unknown };
-    return {
-      toolCallId: call.toolCallId,
-      toolName: call.toolName,
-      input: invalid.invalid
-        ? { __invalid: String(invalid.error ?? "invalid input") }
-        : call.input,
-    };
-  });
+  if (reply.text.trim())
+    events.push({ type: "thought", text: reply.text.trim() });
+  if (reply.cost) events.push(reply.cost);
+  if (events.length) await emit(ctx.runId, ...events);
   return {
     kind: "turn",
-    messages: [...history, ...(result.response.messages as ModelMessage[])],
-    toolCalls,
-    costUsd: cost.costUsd,
+    messages: [...history, ...reply.responseMessages],
+    toolCalls: reply.toolCalls,
+    costUsd: reply.cost?.costUsd ?? 0,
   };
 }
 
@@ -237,7 +223,8 @@ function parseInput<T extends ToolId>(toolId: T, input: unknown) {
  * workflow). Emits the tool's start and done events around it, and the
  * events of what it changed.
  */
-export async function runTool(
+async function runTool(
+  ports: AnalystPorts,
   ctx: RunContext,
   ledger: Ledger,
   call: ToolCall,
@@ -335,7 +322,7 @@ export async function runTool(
         failed = true;
         break;
       }
-      const result = await runInSandbox({
+      const result = await ports.sandbox.run({
         runId: ctx.runId,
         callId: call.toolCallId,
         code: input.code,
@@ -437,7 +424,7 @@ export type ReaderPlan =
   | { kind: "jobs"; jobs: ReaderJob[]; notes: string[] };
 
 /** Checks a spawn_readers call against the caps and turns it into Reader jobs. */
-export async function planReaders(
+async function planReaders(
   ctx: RunContext,
   ledger: Ledger,
   call: ToolCall,
@@ -505,7 +492,8 @@ export async function planReaders(
 }
 
 /** Runs one Reader and tells the trail. Called as its own step, many in parallel. */
-export async function readOneRange(
+async function readOneRange(
+  ports: AnalystPorts,
   ctx: RunContext,
   job: ReaderJob,
 ): Promise<ReaderResult> {
@@ -522,7 +510,7 @@ export async function readOneRange(
       error: "The Run is over; this Reader was not started.",
       ms: 0,
     };
-  const { document } = await prepare(ctx);
+  const { document, candidates } = await prepare(ctx);
   await emit(ctx.runId, {
     type: "reader",
     readerId: job.readerId,
@@ -530,7 +518,12 @@ export async function readOneRange(
     to: job.to,
     state: "start",
   });
-  const result = await runReader(ctx, document.pages, job);
+  const result = await ports.reader.read({
+    ctx,
+    pages: document.pages,
+    candidates,
+    job,
+  });
   const events: RunEventInput[] = [];
   if (result.cost) events.push(result.cost);
   if (result.dropped > 0)
@@ -559,7 +552,7 @@ export async function readOneRange(
 }
 
 /** Folds the Readers' names into the Register and marks their pages read. */
-export async function mergeReaders(
+async function mergeReaders(
   ctx: RunContext,
   ledger: Ledger,
   call: ToolCall,
@@ -677,7 +670,8 @@ export type EndOutcome =
  * already over (stopped by its Owner, failed elsewhere) keeps its status and
  * gets no second end event.
  */
-export async function end(
+async function end(
+  ports: AnalystPorts,
   ctx: RunContext,
   ledger: Ledger,
   outcome: EndOutcome,
@@ -735,7 +729,48 @@ export async function end(
     });
     return { status: outcome.status, ...(score ? { score } : {}) };
   } finally {
-    await disposeSandbox(ctx.runId);
+    await ports.sandbox.dispose(ctx.runId);
     prepared.delete(ctx.runId);
   }
+}
+
+// The Run's work, for the workflow's steps ---------------------------------------------
+
+/**
+ * What a Run's workflow steps do (`run-workflow.ts`), over the paid ports it
+ * is given. The Done gate, the caps and the Audit trail are here, whatever
+ * plays the Analyst: a model, or the stubbed e2e suite's script.
+ */
+export type AnalystWork = {
+  begin(ctx: RunContext): Promise<AnalystState>;
+  turn(ctx: RunContext, messages: ModelMessage[]): Promise<TurnResult>;
+  runTool(
+    ctx: RunContext,
+    ledger: Ledger,
+    call: ToolCall,
+  ): Promise<ToolOutcome>;
+  planReaders(
+    ctx: RunContext,
+    ledger: Ledger,
+    call: ToolCall,
+  ): Promise<ReaderPlan>;
+  readOneRange(ctx: RunContext, job: ReaderJob): Promise<ReaderResult>;
+  mergeReaders: typeof mergeReaders;
+  end(
+    ctx: RunContext,
+    ledger: Ledger,
+    outcome: EndOutcome,
+  ): Promise<{ status: "completed" | "failed" | "stopped"; score?: Score }>;
+};
+
+export function createAnalystWork(ports: AnalystPorts): AnalystWork {
+  return {
+    begin,
+    turn: (ctx, messages) => analystTurn(ports, ctx, messages),
+    runTool: (ctx, ledger, call) => runTool(ports, ctx, ledger, call),
+    planReaders,
+    readOneRange: (ctx, job) => readOneRange(ports, ctx, job),
+    mergeReaders,
+    end: (ctx, ledger, outcome) => end(ports, ctx, ledger, outcome),
+  };
 }

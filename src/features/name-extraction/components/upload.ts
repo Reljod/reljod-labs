@@ -1,9 +1,10 @@
 "use client";
 
-import { createUpload } from "../server/actions";
+import { LIMITS } from "../domain/limits";
+import { writes } from "./api";
 
 /** The longest Document Sieve takes. The server checks it again. */
-export const MAX_PAGES = 500;
+export const MAX_PAGES = LIMITS.maxPages;
 
 export type UploadProgress =
   | { stage: "reading"; done: number; total: number }
@@ -74,8 +75,10 @@ export async function uploadPdf(
   const pages = await readPdfText(file, onProgress);
   onProgress({ stage: "uploading" });
   const title = file.name.replace(/\.pdf$/i, "").slice(0, 120) || "Upload";
-  const slot = await createUpload({ title, pages: pages.length });
-  if ("error" in slot) throw new Error(slot.error);
+  const opened = await writes.createUpload({ title, pages: pages.length });
+  if (!opened.ok) throw new Error(opened.error);
+  const slot = opened.value;
+  // Storage's signed URL, not a Sieve route: the pages never pass through the app.
   const response = await fetch(slot.signedUrl, {
     method: "PUT",
     headers: { "content-type": "application/json" },
