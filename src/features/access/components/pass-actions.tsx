@@ -1,12 +1,9 @@
 "use client";
 
-import {
-  type ReactNode,
-  useActionState,
-  useEffect,
-  useRef,
-  useState,
-} from "react";
+import { useRouter } from "next/navigation";
+import { type ReactNode, useEffect, useRef, useState } from "react";
+import type { Outcome } from "@/platform/client/api";
+import type { PassChange } from "../domain/api";
 import {
   durationLabel,
   type GuestPassStatus,
@@ -15,18 +12,16 @@ import {
 import {
   deleteGuestPass,
   extendGuestPass,
-  type PassActionState,
   regenerateGuestCode,
   restoreGuestPass,
   revokeGuestPass,
-} from "../server/actions";
+} from "./api";
 import { LocalTime } from "./local-time";
 import { fieldClass, quietButtonClass, submitClass } from "./styles";
+import { useWrite } from "./use-write";
 
-type PassAction = (
-  previous: PassActionState,
-  form: FormData,
-) => Promise<PassActionState>;
+/** One confirmed write: the dialog's form fields in, what changed (or the error) out. */
+type Write = (form: FormData) => Promise<Outcome<PassChange>>;
 
 type Kind = "extend" | "code" | "revoke" | "delete" | "restore";
 
@@ -53,6 +48,9 @@ export function PassActions({
   };
   const close = () => setOpen(null);
   const renew = status !== "live";
+  const router = useRouter();
+  // The list on the page shows the pass's new state.
+  const refresh = () => router.refresh();
 
   const buttons: { kind: Kind; text: string; danger?: boolean }[] =
     status === "deleted"
@@ -88,7 +86,8 @@ export function PassActions({
           title={
             renew ? `Renew the pass for ${label}` : `Extend ${label}'s pass`
           }
-          action={extendGuestPass}
+          write={(form) => extendGuestPass(id, Number(form.get("hours")))}
+          onDone={refresh}
           confirm={renew ? "Renew" : "Extend"}
           pending={renew ? "Renewing…" : "Extending…"}
           onClose={close}
@@ -123,7 +122,8 @@ export function PassActions({
           key={opened}
           id={id}
           title={`New code for ${label}`}
-          action={regenerateGuestCode}
+          write={() => regenerateGuestCode(id)}
+          onDone={refresh}
           confirm="Make a new code"
           pending="Making…"
           onClose={close}
@@ -138,7 +138,8 @@ export function PassActions({
           key={opened}
           id={id}
           title={`Revoke ${label}'s pass`}
-          action={revokeGuestPass}
+          write={() => revokeGuestPass(id)}
+          onDone={refresh}
           confirm="Revoke"
           pending="Revoking…"
           danger
@@ -154,7 +155,8 @@ export function PassActions({
           key={opened}
           id={id}
           title={`Delete ${label}'s pass`}
-          action={deleteGuestPass}
+          write={() => deleteGuestPass(id)}
+          onDone={refresh}
           confirm="Delete"
           pending="Deleting…"
           danger
@@ -170,7 +172,8 @@ export function PassActions({
           key={opened}
           id={id}
           title={`Restore ${label}'s pass`}
-          action={restoreGuestPass}
+          write={() => restoreGuestPass(id)}
+          onDone={refresh}
           confirm="Restore"
           pending="Restoring…"
           onClose={close}
@@ -193,7 +196,8 @@ export function ConfirmDialog({
   title,
   children,
   fields,
-  action,
+  write,
+  onDone,
   confirm,
   pending: pendingText,
   danger = false,
@@ -203,16 +207,18 @@ export function ConfirmDialog({
   title: string;
   children: ReactNode;
   fields?: ReactNode;
-  action: PassAction;
+  write: Write;
+  /** After the write worked, while the dialog says what changed. */
+  onDone?: () => void;
   confirm: string;
   pending: string;
   danger?: boolean;
   onClose: () => void;
 }) {
   const dialog = useRef<HTMLDialogElement>(null);
-  const [state, send, pending] = useActionState(action, null);
+  const { run, pending, outcome } = useWrite<PassChange>();
   const [copied, setCopied] = useState(false);
-  const done = state && "done" in state ? state : null;
+  const done = outcome?.ok ? outcome.value : null;
 
   useEffect(() => {
     const element = dialog.current;
@@ -288,13 +294,20 @@ export function ConfirmDialog({
             </button>
           </div>
         ) : (
-          <form action={send} className="flex flex-col gap-4">
-            <input type="hidden" name="id" value={id} />
+          <form
+            onSubmit={async (event) => {
+              event.preventDefault();
+              const form = new FormData(event.currentTarget);
+              const result = await run(() => write(form));
+              if (result?.ok) onDone?.();
+            }}
+            className="flex flex-col gap-4"
+          >
             <p className="text-sm">{children}</p>
             {fields}
-            {state && "error" in state ? (
+            {outcome && !outcome.ok ? (
               <p role="alert" className="text-sm text-seal-red">
-                {state.error}
+                {outcome.error}
               </p>
             ) : null}
             <div className="flex flex-wrap items-center gap-3">

@@ -11,8 +11,8 @@ import { SignOutButton } from "@/features/access/components/sign-out-button";
 import { quietButtonClass } from "@/features/access/components/styles";
 import { GUESTS_PATH, SIGN_IN_PATH } from "@/features/access/constants";
 import { LIMITS } from "@/features/access/domain/guest-pass";
+import { accessServices } from "@/features/access/server/container";
 import { currentAccess } from "@/features/access/server/gate";
-import { countLivePasses } from "@/features/access/server/repository";
 import { AccessShell, Card, Waiting } from "../shell";
 
 export const metadata: Metadata = {
@@ -35,7 +35,7 @@ const headingClass = "font-mono text-lg font-bold uppercase";
 async function Profile() {
   const access = await currentAccess();
   if (access?.kind !== "host") redirect(SIGN_IN_PATH);
-  const live = await countLivePasses();
+  const live = await accessServices().guestPasses.liveCount(access);
 
   return (
     <>

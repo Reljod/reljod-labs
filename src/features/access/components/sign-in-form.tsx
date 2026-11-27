@@ -1,22 +1,30 @@
 "use client";
 
-import { useActionState } from "react";
-import { useSubmitGuard } from "@/components/ui/use-submit-guard";
-import { type DoorState, signIn } from "../server/actions";
+import type { Destination } from "../domain/api";
+import { signIn } from "./api";
 import { fieldClass, submitClass } from "./styles";
 import { useLeave } from "./use-leave";
+import { useWrite } from "./use-write";
 
 /** Where a Host signs in with their account, then goes on to `next` if given. */
 export function SignInForm({ next }: { next?: string | null }) {
-  const [state, action, pending] = useActionState<DoorState, FormData>(
-    signIn,
-    null,
-  );
-  const guard = useSubmitGuard(pending, state);
-  const busy = useLeave(state) || pending;
+  const { run, pending, outcome } = useWrite<Destination>();
+  const busy = useLeave(outcome?.ok ? outcome.value : null) || pending;
   return (
-    <form action={action} onSubmit={guard} className="flex flex-col gap-3">
-      {next ? <input type="hidden" name="next" value={next} /> : null}
+    <form
+      onSubmit={(event) => {
+        event.preventDefault();
+        const form = new FormData(event.currentTarget);
+        void run(() =>
+          signIn({
+            email: String(form.get("email") ?? ""),
+            password: String(form.get("password") ?? ""),
+            next: next ?? null,
+          }),
+        );
+      }}
+      className="flex flex-col gap-3"
+    >
       <label htmlFor="host-email" className="eyebrow">
         Email
       </label>
@@ -47,9 +55,9 @@ export function SignInForm({ next }: { next?: string | null }) {
       >
         {busy ? "Signing in…" : "Sign in"}
       </button>
-      {state && "error" in state ? (
+      {outcome && !outcome.ok ? (
         <p role="alert" className="text-sm text-seal-red">
-          {state.error}
+          {outcome.error}
         </p>
       ) : null}
     </form>

@@ -1,22 +1,26 @@
 "use client";
 
-import { useActionState } from "react";
-import { useSubmitGuard } from "@/components/ui/use-submit-guard";
-import { type DoorState, redeemGuestCode } from "../server/actions";
+import type { Destination } from "../domain/api";
+import { redeemGuestCode } from "./api";
 import { fieldClass, submitClass } from "./styles";
 import { useLeave } from "./use-leave";
+import { useWrite } from "./use-write";
 
 /** Where a Guest types the code their Host gave them. */
 export function CodeForm({ next }: { next: string }) {
-  const [state, action, pending] = useActionState<DoorState, FormData>(
-    redeemGuestCode,
-    null,
-  );
-  const guard = useSubmitGuard(pending, state);
-  const busy = useLeave(state) || pending;
+  const { run, pending, outcome } = useWrite<Destination>();
+  const busy = useLeave(outcome?.ok ? outcome.value : null) || pending;
   return (
-    <form action={action} onSubmit={guard} className="flex flex-col gap-3">
-      <input type="hidden" name="next" value={next} />
+    <form
+      onSubmit={(event) => {
+        event.preventDefault();
+        const form = new FormData(event.currentTarget);
+        void run(() =>
+          redeemGuestCode({ code: String(form.get("code") ?? ""), next }),
+        );
+      }}
+      className="flex flex-col gap-3"
+    >
       <label htmlFor="guest-code" className="eyebrow">
         Guest code
       </label>
@@ -40,9 +44,9 @@ export function CodeForm({ next }: { next: string }) {
       >
         {busy ? "Checking…" : "Open the demos"}
       </button>
-      {state && "error" in state ? (
+      {outcome && !outcome.ok ? (
         <p role="alert" className="text-sm text-seal-red">
-          {state.error}
+          {outcome.error}
         </p>
       ) : null}
     </form>

@@ -1,17 +1,12 @@
 import "server-only";
-import { createPool, type Pool } from "@/server/postgres";
-
-let client: Pool | undefined;
+import { db } from "@/server/postgres";
 
 /**
- * One small pool per function instance, on the shared `DATABASE_URL`: the
- * `access` schema is reached directly, not through the Data API. The proxy
- * runs on the Node.js runtime, so it uses this pool too.
+ * The `access` schema is reached directly on the shared pool of this
+ * function instance (`db()`), not through the Data API. The proxy runs on
+ * the Node.js runtime, so it uses the same pool.
  */
-export function sql() {
-  client ??= createPool();
-  return client;
-}
+export const sql = db;
 
 /** Postgres's codes for a table or a function that is not there yet. */
 export const UNDEFINED_TABLE = "42P01";

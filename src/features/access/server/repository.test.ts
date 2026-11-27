@@ -43,11 +43,23 @@ vi.mock("./db", async (importOriginal) => {
       },
     };
   };
-  return { ...actual, sql: () => tag };
+  // A transaction runs its statements on the same stand-in, between markers.
+  const begin = async (work: (tx: typeof tag) => Promise<unknown>) => {
+    state.queries.push({ text: "begin", values: [] });
+    const result = await work(tag);
+    state.queries.push({ text: "commit", values: [] });
+    return result;
+  };
+  return { ...actual, sql: () => Object.assign(tag, { begin }) };
 });
 
-const { takeAttempt, settleAttempt, endGuestSession, codeLooksGood } =
-  await import("./repository");
+const {
+  takeAttempt,
+  settleAttempt,
+  endGuestSession,
+  codeLooksGood,
+  replaceGuestCode,
+} = await import("./repository");
 
 function pgError(code: string, message: string) {
   return Object.assign(new Error(message), { code });
@@ -145,16 +157,30 @@ describe("endGuestSession", () => {
   });
 });
 
+describe("replaceGuestCode", () => {
+  it("signs out every device on the old code in the same transaction", async () => {
+    await replaceGuestCode("p1", "new-hash");
+    expect(state.queries.map((query) => query.text)).toEqual([
+      "begin",
+      "update access.guest_passes set code_hash = $? where id = $?::uuid and deleted_at is null",
+      "delete from access.guest_sessions where guest_pass_id = $?::uuid",
+      "commit",
+    ]);
+    expect(state.queries[1]?.values).toEqual(["new-hash", "p1"]);
+    expect(state.queries[2]?.values).toEqual(["p1"]);
+  });
+});
+
 describe("codeLooksGood", () => {
   const live = {
-    id: "p1",
     expires_at: new Date(Date.now() + 60_000).toISOString(),
     max_devices: 2,
     revoked_at: null,
     deleted_at: null,
+    others: 0,
   };
 
-  it("refuses an unknown, revoked, deleted or ended code without counting", async () => {
+  it("refuses an unknown, revoked, deleted or ended code in one query", async () => {
     for (const pass of [
       undefined,
       { ...live, revoked_at: "2026-11-27T00:00:00+00:00" },
@@ -169,14 +195,15 @@ describe("codeLooksGood", () => {
   });
 
   it("counts the other devices on the pass against its cap", async () => {
-    state.replies.push([live], [{ count: 1 }]);
+    state.replies.push([{ ...live, others: 1 }]);
     expect(await codeLooksGood("h", "u1")).toBe(true);
-    expect(state.queries[1]?.text).toContain("and user_id <> $?::uuid");
-    expect(state.queries[1]?.values).toEqual(["p1", "u1"]);
+    expect(state.queries).toHaveLength(1);
+    expect(state.queries[0]?.text).toContain("and s.user_id <> $?::uuid");
+    expect(state.queries[0]?.values).toEqual(["u1", "h"]);
 
     state.queries = [];
-    state.replies.push([live], [{ count: 2 }]);
+    state.replies.push([{ ...live, others: 2 }]);
     expect(await codeLooksGood("h", null)).toBe(false);
-    expect(state.queries[1]?.text).not.toContain("user_id");
+    expect(state.queries[0]?.text).not.toContain("user_id");
   });
 });

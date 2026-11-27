@@ -83,6 +83,42 @@ describe("decide", () => {
     }
   });
 
+  it("opens the door's routes to everyone and the rest of Access's routes only to a Host", () => {
+    for (const access of [null, "guest", "host", "e2e"] as const) {
+      for (const method of ["GET", "POST", "DELETE"]) {
+        expect(
+          decide({ path: "/api/access/session", search: "", method, access }),
+        ).toEqual({ kind: "pass" });
+      }
+      expect(
+        decide({
+          path: "/api/access/guest-session",
+          search: "",
+          method: "POST",
+          access,
+        }),
+      ).toEqual({ kind: "pass" });
+    }
+    for (const path of [
+      "/api/access/guest-passes",
+      "/api/access/guest-passes/1/code",
+      "/api/access/profile",
+      "/api/access/password",
+      "/api/access/mcp-clients",
+      "/api/access/session/extra",
+      "/api/access/something-new",
+    ]) {
+      expect(
+        decide({ path, search: "", method: "POST", access: "host" }),
+      ).toEqual({ kind: "pass" });
+      for (const access of [null, "guest", "e2e"] as const) {
+        expect(decide({ path, search: "", method: "POST", access })).toEqual({
+          kind: "refuse",
+        });
+      }
+    }
+  });
+
   it("does not mistake a look-alike path for the door", () => {
     expect(visit("/accessories", null).kind).toBe("redirect");
   });
