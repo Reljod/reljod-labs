@@ -11,7 +11,9 @@ import {
 } from "@/features/loupe/domain/corpus";
 import { DEFAULT_RULEBOOK } from "@/features/loupe/domain/rules";
 import { type Calibration, calibrate } from "@/features/loupe/domain/score";
-import { initialView } from "@/features/loupe/server/reads";
+import { loupe } from "@/features/loupe/server/container";
+import type { LoupeServices } from "@/features/loupe/server/services";
+import { currentRequest } from "@/platform/request/current";
 
 export const metadata: Metadata = {
   title: "Loupe · Demo",
@@ -23,9 +25,9 @@ export const metadata: Metadata = {
  * The Samples and the Default Rulebook's Calibration are seed data, built
  * into the static shell. The Owner's Examinations and Rulebook versions come
  * from the request's cookies, so they are read behind Suspense
- * (`cacheComponents` is on) and handed to Loupe, which does not ask for them
- * again on mount. The Access gate runs in `src/proxy.ts`, here, and again in
- * every route and server action.
+ * (`cacheComponents` is on), through the same service the REST routes use,
+ * and handed to Loupe, which does not ask for them again on mount. The
+ * Access gate runs in `src/proxy.ts`, here, and again in every route.
  */
 export default function LoupeDemoPage() {
   const samples = sampleCards();
@@ -37,6 +39,10 @@ export default function LoupeDemoPage() {
   );
 }
 
+type FirstView = Awaited<
+  ReturnType<LoupeServices["examinations"]["firstView"]>
+>;
+
 async function LoupeWithData({
   samples,
   calibration,
@@ -44,15 +50,13 @@ async function LoupeWithData({
   samples: SampleCard[];
   calibration: Calibration;
 }) {
-  let view: {
-    examinations:
-      | Awaited<ReturnType<typeof initialView>>["examinations"]
-      | null;
-    rulebooks: Awaited<ReturnType<typeof initialView>>["rulebooks"] | null;
-  } = { examinations: null, rulebooks: null };
+  let view: FirstView | null = null;
   try {
-    const { owner } = await requireOwner();
-    view = await initialView(owner);
+    const [{ owner }, { mode }] = await Promise.all([
+      requireOwner(),
+      currentRequest(),
+    ]);
+    view = await loupe(mode).examinations.firstView(owner);
   } catch (error) {
     // Next's own signals pass; without Access the client's reads say why.
     unstable_rethrow(error);
@@ -61,8 +65,8 @@ async function LoupeWithData({
     <Loupe
       samples={samples}
       calibration={calibration}
-      initialExaminations={view.examinations}
-      initialRulebooks={view.rulebooks}
+      initialExaminations={view?.examinations ?? null}
+      initialRulebooks={view?.rulebooks ?? null}
     />
   );
 }

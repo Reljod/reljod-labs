@@ -7,12 +7,15 @@ import {
 } from "@playwright/test";
 
 /*
- * Loupe, the main journey. Under the e2e bypass the Examiner is scripted
- * (no model, no spend): it walks the same tools through the same MCP server
- * over a Sample's recorded Sweep, so the Trail, the Done gate, the Findings
- * and the Verdict are real. The MCP journey runs the Sweep for real in a
- * Vercel Sandbox (no model). One test, opt-in with `E2E_LOUPE_LIVE=1`, runs
- * the real Examiner on a small tampered Sample.
+ * Loupe, the main journey. Stubbed by default (the e2e token alone): the
+ * container's scripted Examiner and recorded Sandbox, no model and no
+ * Sandbox, so nothing is spent. The scripted Examiner walks the same tools
+ * through the same MCP server over a Sample's recorded Sweep, so the Trail,
+ * the Done gate, the Findings and the Verdict are real. The MCP journey's
+ * token is minted by the stubbed suite, so its calls are stubbed too; with
+ * `E2E_LIVE=1` its Sweep and Check run in a real Vercel Sandbox (no model).
+ * One test, opt-in with `E2E_LOUPE_LIVE=1`, runs the real Examiner on a
+ * small tampered Sample (`x-e2e-live: 1`).
  *
  * Needs `supabase/migrations/20261119140000_loupe.sql` applied. Writes to the
  * `e2e` Owner's rows in the `loupe` schema.
@@ -196,7 +199,7 @@ async function tool(
   };
 }
 
-test("an outside client examines a document through the MCP server, with the Sweep run in the Sandbox", async ({
+test("an outside client examines a document through the MCP server, Sweep and Check included", async ({
   page,
   baseURL,
 }) => {
@@ -274,8 +277,9 @@ test("an outside client examines a document through the MCP server, with the Swe
     "falsePositiveRate",
   );
 
-  // A Check run again on the finished Examination really runs (a fresh
-  // Sandbox), is put on record, and leaves the Verdict as it was given.
+  // A Check run again on the finished Examination runs (a fresh Sandbox when
+  // live, the recording when stubbed), is put on record, and leaves the
+  // Verdict as it was given.
   const again = await tool(api, token, "run_check", {
     examinationId,
     check: "pdf_structure",
@@ -337,7 +341,7 @@ test.describe("with the real model", () => {
   test.use({
     extraHTTPHeaders: {
       "x-e2e-token": process.env.E2E_BYPASS_TOKEN ?? "",
-      "x-loupe-live": "1",
+      "x-e2e-live": "1",
     },
   });
   test.setTimeout(420_000);

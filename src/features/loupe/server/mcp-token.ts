@@ -17,6 +17,12 @@ export type LoupeClaims = {
   visitor: string;
   /** Whether the visitor skips rate limits (the e2e suite). */
   trusted?: boolean;
+  /**
+   * Minted by the stubbed e2e suite, or for an Examination it started: the
+   * calls reach the stubbed services (scripted Examiner, recorded Sandbox).
+   * Honoured only on an `e2e` or `examiner` token.
+   */
+  stub?: boolean;
   /** The Auth user a Guest token was minted for. */
   user?: string;
   /** The Guest pass it was minted on. */
