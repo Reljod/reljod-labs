@@ -14,11 +14,11 @@ import type { AskSessionView, StoredBuild } from "../domain/build-events";
 import { cutBlock, type Layout, type PlanStep } from "../domain/build-plan";
 import { contentTree } from "../domain/content-tree";
 import { AnswerPage } from "./answer-page";
+import { requestBuild } from "./api";
 import { BuildBoard } from "./build-board";
 import { type ChatMessage, ChatPanel } from "./chat-panel";
 import { LedgerStage } from "./ledger-stage";
 import type { PlacedBlock } from "./placed-block";
-import { requestBuild } from "./request-build";
 import { StepQueue } from "./step-queue";
 import { useDirector } from "./use-director";
 

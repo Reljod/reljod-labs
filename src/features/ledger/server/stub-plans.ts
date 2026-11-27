@@ -3,6 +3,7 @@ import { demosPitch } from "@/content/projects";
 import type { RawBuildPlan } from "../domain/build-plan";
 import { PRESET_QUESTIONS } from "../domain/presets";
 import { sourcePath } from "../domain/source-paths";
+import type { PartialPlan, Planner, PlanStream } from "./ports";
 
 /*
  * Canned Build plans for the stubbed e2e suite: the same validation, storage
@@ -146,3 +147,40 @@ const NOT_FOUND: RawBuildPlan = {
 export function stubPlan(question: string): RawBuildPlan {
   return PLANS[question] ?? NOT_FOUND;
 }
+
+const pause = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
+
+/** Grows a canned plan the way the model would: frame, answer in chunks, then each step. */
+function streamStub(plan: RawBuildPlan): PlanStream {
+  async function* partials(): AsyncIterable<PartialPlan> {
+    const frame = {
+      verdict: plan.verdict,
+      title: plan.title,
+      layout: plan.layout,
+    };
+    yield frame;
+    const words = plan.answer.split(" ");
+    for (let count = 4; count < words.length + 4; count += 4) {
+      await pause(60);
+      yield { ...frame, answer: words.slice(0, count).join(" ") };
+    }
+    for (let count = 1; count <= plan.steps.length; count++) {
+      await pause(150);
+      // Like the model's stream: the last step may still be half-written.
+      yield {
+        ...frame,
+        answer: plan.answer,
+        steps: [
+          ...plan.steps.slice(0, count),
+          { action: plan.steps[count]?.action },
+        ],
+      };
+    }
+  }
+  return { partials: partials(), plan: Promise.resolve(plan), model: "stub" };
+}
+
+/** The stubbed e2e suite's planner: the canned plans, no model call. */
+export const cannedPlanner: Planner = {
+  plan: ({ question }) => streamStub(stubPlan(question)),
+};

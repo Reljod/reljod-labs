@@ -1,9 +1,8 @@
 import "server-only";
 import type { Owner } from "@/features/access/domain/owner";
-import { jsonb } from "@/server/postgres";
+import { jsonb, db as sql } from "@/server/postgres";
 import type { AskSessionView, StoredBuild } from "../domain/build-events";
 import { type BuildPlan, finalizePlan } from "../domain/build-plan";
-import { sql } from "./db";
 
 type BuildRow = {
   id: string;

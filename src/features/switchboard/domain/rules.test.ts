@@ -4,11 +4,9 @@ import {
   RULE_IDS,
   RULES,
   type RuleVersionRow,
-  renderRule,
   resolveRulebook,
   ruleDefinition,
   ruleOf,
-  ruleTag,
   validateRuleEdit,
 } from "./rules";
 
@@ -284,68 +282,5 @@ describe("validateRuleEdit", () => {
         1,
       ).sort(),
     ).toEqual(["bogus", "cancelPercent", "delayPercent", "enabled"]);
-  });
-});
-
-describe("renderRule", () => {
-  it("fills the sentence with the Parameter values", () => {
-    const text = renderRule(ruleOf(DEFAULT_RULEBOOK, "refund.limits"));
-    expect(text).toContain("cancelled train (100% of the fare)");
-    expect(text).toContain("delay of 60 minutes or more (50% of the fare)");
-    expect(text).not.toMatch(/[{}]/);
-  });
-
-  it("renders every default Rule without a placeholder left", () => {
-    for (const rule of DEFAULT_RULEBOOK)
-      expect(renderRule(rule)).not.toMatch(/[{}]/);
-  });
-
-  it("shows choices by their labels and phrases by their first way of saying them", () => {
-    expect(renderRule(ruleOf(DEFAULT_RULEBOOK, "identity.verify"))).toContain(
-      "one of: Postcode on the booking; Last four digits of the card. After 3 wrong answers",
-    );
-    expect(renderRule(ruleOf(DEFAULT_RULEBOOK, "human.required"))).toContain(
-      "above 200 MRD needs a person. Once the Caller mentions any of injur, lawyer, harass,",
-    );
-  });
-
-  it("says 'nothing' for an empty choice", () => {
-    const [rule] = resolveRulebook([
-      row("topics.refused", 2, { topics: [] }),
-    ]).filter((item) => item.id === "topics.refused");
-    expect(renderRule(rule)).toBe(
-      "The Agent does not read out or discuss: nothing.",
-    );
-  });
-
-  it("adds the disruption clause only when the switch is on", () => {
-    expect(renderRule(ruleOf(DEFAULT_RULEBOOK, "goodwill.limits"))).toBe(
-      "The Agent may add a goodwill voucher of at most 25 MRD in one Call, and only when the Caller's train was delayed or cancelled.",
-    );
-    const book = resolveRulebook([
-      row("goodwill.limits", 2, { maxPerCall: 40, requiresDisruption: false }),
-    ]);
-    expect(renderRule(ruleOf(book, "goodwill.limits"))).toBe(
-      "The Agent may add a goodwill voucher of at most 40 MRD in one Call.",
-    );
-  });
-
-  it("returns the id of a Rule it does not know", () => {
-    expect(
-      renderRule({
-        id: "ghost" as never,
-        version: 1,
-        enabled: true,
-        params: {},
-      }),
-    ).toBe("ghost");
-  });
-});
-
-describe("ruleTag", () => {
-  it("names a Rule with its Version", () => {
-    expect(ruleTag({ id: "identity.verify", version: 3 })).toBe(
-      "identity.verify v3",
-    );
   });
 });

@@ -7,7 +7,8 @@ import { ownerOf } from "@/features/access/domain/owner";
 import { currentAccess } from "@/features/access/server/gate";
 import { AskScreen } from "@/features/ledger/components/ask-screen";
 import { AskScreenSkeleton } from "@/features/ledger/components/ask-screen-skeleton";
-import { loadAskSession } from "@/features/ledger/server/repository";
+import { ledger } from "@/features/ledger/server/container";
+import { NotFoundError } from "@/platform/errors";
 
 export const metadata: Metadata = {
   title: "Ask Ledger",
@@ -40,9 +41,14 @@ async function Session({
   if (!access) {
     redirect(`${ACCESS_PATH}?next=${encodeURIComponent(`/ask/${sessionId}`)}`);
   }
-  // Only its Owner may open an Ask session; anyone else gets a 404.
-  const session = await loadAskSession(sessionId, ownerOf(access));
-  if (!session) notFound();
+  // Only its Owner may open an Ask session; anyone else gets a 404. A read
+  // spends nothing, so the live service serves e2e requests too.
+  const session = await ledger()
+    .session(ownerOf(access), sessionId)
+    .catch((error: unknown) => {
+      if (error instanceof NotFoundError) notFound();
+      throw error;
+    });
   return (
     <AskScreen
       session={session}

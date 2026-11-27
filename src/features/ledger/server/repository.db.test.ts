@@ -28,12 +28,12 @@ const plan = (title: string): BuildPlan => ({
 
 describe.skipIf(!url)("the Ledger repository, on Postgres", () => {
   let repo: typeof import("./repository");
-  let sql: typeof import("./db").sql;
+  let sql: typeof import("@/server/postgres").db;
 
   beforeAll(async () => {
     process.env.DATABASE_URL = url;
     repo = await import("./repository");
-    ({ sql } = await import("./db"));
+    ({ db: sql } = await import("@/server/postgres"));
   });
 
   afterAll(async () => {

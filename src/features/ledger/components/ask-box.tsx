@@ -3,8 +3,9 @@
 import { animate, useReducedMotion } from "motion/react";
 import { useRouter } from "next/navigation";
 import { type FormEvent, useEffect, useRef, useState } from "react";
+import type { StartAskResult } from "../domain/api";
 import { cleanQuestion, MAX_QUESTION_LENGTH } from "../domain/presets";
-import { type StartAskResult, startAskSession } from "../server/actions";
+import { startAskSession } from "./api";
 import { Cat, type CatPose } from "./cat";
 import { PresetChips } from "./preset-chips";
 

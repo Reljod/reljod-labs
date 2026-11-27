@@ -17,7 +17,8 @@ test.setTimeout(live ? 300_000 : 180_000);
 test.use({
   extraHTTPHeaders: {
     "x-e2e-token": process.env.E2E_BYPASS_TOKEN ?? "",
-    ...(live ? {} : { "x-ledger-stub": "1" }),
+    // Without `x-e2e-live: 1` the container plans from the canned Build plans.
+    ...(live ? { "x-e2e-live": "1" } : {}),
   },
 });
 
@@ -260,7 +261,6 @@ test.describe("Ledger", () => {
     const stored = page.url().split("?")[0];
     await page.setExtraHTTPHeaders({
       "x-e2e-token": process.env.E2E_BYPASS_TOKEN ?? "",
-      "x-ledger-stub": "1",
       "x-ledger-force-limit": "1",
     });
     await page.goto("/demos/ledger");

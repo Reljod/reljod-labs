@@ -1,22 +1,10 @@
 import "server-only";
 import { createGateway, Output, streamText } from "ai";
 import type { StoredBuild } from "../domain/build-events";
-import { buildPlanSchema, type RawBuildPlan } from "../domain/build-plan";
+import { buildPlanSchema } from "../domain/build-plan";
 import { describeContentTree } from "../domain/content-tree";
 import { env } from "./env";
-import { stubPlan } from "./stub-plans";
-
-type DeepPartial<T> = T extends object
-  ? { [K in keyof T]?: DeepPartial<T[K]> }
-  : T;
-export type PartialPlan = DeepPartial<RawBuildPlan>;
-
-export type PlanStream = {
-  /** The plan as it grows: each value replaces the last. */
-  partials: AsyncIterable<PartialPlan>;
-  plan: PromiseLike<RawBuildPlan>;
-  model: string;
-};
+import type { Planner } from "./ports";
 
 const INSTRUCTIONS = `You are Ledger, a ginger tabby cat banker in a navy suit who runs the front desk of Reljod Oreta's website. A visitor asks a question. You answer by rebuilding the site: you run to pieces of the page, cut out the ones that answer the question, carry them to your Build board in the order they should be read, and Reform them into one answer page.
 
@@ -49,62 +37,26 @@ function describeHistory(history: StoredBuild[]) {
   return `Earlier in this session:\n${turns.join("\n\n")}\n\n`;
 }
 
-/** Streams a Build plan from the model, or from a canned plan in stubbed e2e runs. */
-export function streamPlan(input: {
-  question: string;
-  history: StoredBuild[];
-  stubbed: boolean;
-}): PlanStream {
-  if (input.stubbed) return streamStub(stubPlan(input.question));
-
-  const gateway = createGateway({ apiKey: env.aiGatewayApiKey() });
-  const result = streamText({
-    model: gateway(env.model()),
-    instructions: INSTRUCTIONS,
-    output: Output.object({ schema: buildPlanSchema }),
-    reasoning: "low",
-    messages: [
-      {
-        role: "user",
-        content: `${describeHistory(input.history)}Visitor's question: ${input.question}`,
-      },
-    ],
-  });
-  return {
-    partials: result.partialOutputStream,
-    plan: result.output,
-    model: env.model(),
-  };
-}
-
-const pause = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
-
-/** Grows a canned plan the way the model would: frame, answer in chunks, then each step. */
-function streamStub(plan: RawBuildPlan): PlanStream {
-  async function* partials(): AsyncIterable<PartialPlan> {
-    const frame = {
-      verdict: plan.verdict,
-      title: plan.title,
-      layout: plan.layout,
+/** The model planning a Build through AI Gateway, streamed as a structured object. */
+export const modelPlanner: Planner = {
+  plan({ question, history }) {
+    const gateway = createGateway({ apiKey: env.aiGatewayApiKey() });
+    const result = streamText({
+      model: gateway(env.model()),
+      instructions: INSTRUCTIONS,
+      output: Output.object({ schema: buildPlanSchema }),
+      reasoning: "low",
+      messages: [
+        {
+          role: "user",
+          content: `${describeHistory(history)}Visitor's question: ${question}`,
+        },
+      ],
+    });
+    return {
+      partials: result.partialOutputStream,
+      plan: result.output,
+      model: env.model(),
     };
-    yield frame;
-    const words = plan.answer.split(" ");
-    for (let count = 4; count < words.length + 4; count += 4) {
-      await pause(60);
-      yield { ...frame, answer: words.slice(0, count).join(" ") };
-    }
-    for (let count = 1; count <= plan.steps.length; count++) {
-      await pause(150);
-      // Like the model's stream: the last step may still be half-written.
-      yield {
-        ...frame,
-        answer: plan.answer,
-        steps: [
-          ...plan.steps.slice(0, count),
-          { action: plan.steps[count]?.action },
-        ],
-      };
-    }
-  }
-  return { partials: partials(), plan: Promise.resolve(plan), model: "stub" };
-}
+  },
+};
