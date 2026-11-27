@@ -1,14 +1,8 @@
-import { requireOwner } from "@/features/access/server/gate";
 import type { AuditResponse } from "@/features/loupe/domain/api";
-import { listAudit } from "@/features/loupe/server/repository";
-import { failure, json } from "@/features/loupe/server/respond";
+import { loupeApi } from "@/features/loupe/server/api";
 
 /** The Owner's Audit trail, newest first. */
-export async function GET() {
-  try {
-    const { owner } = await requireOwner();
-    return json<AuditResponse>(await listAudit(owner));
-  } catch (error) {
-    return failure(error);
-  }
-}
+export const GET = loupeApi.handle(
+  ({ services, owner }): Promise<AuditResponse> =>
+    services.examinations.audit(owner),
+);

@@ -12,13 +12,14 @@ import {
 } from "../domain/contract";
 import { LIMITS } from "../domain/limits";
 import { env } from "./env";
+import { isOver } from "./examination";
 import {
   examinationStatus,
   forgetSnapshot,
-  isOver,
   saveSnapshot,
   snapshotFor,
 } from "./repository";
+import { SandboxUnavailable } from "./toolkit";
 import toolkit from "./toolkit.generated.json";
 
 /**
@@ -75,12 +76,7 @@ export function sandboxName(examinationId: string) {
   return `loupe-${examinationId}`;
 }
 
-export class SandboxUnavailable extends Error {
-  constructor(message = "Sandbox unavailable: it is not set up here.") {
-    super(message);
-    this.name = "SandboxUnavailable";
-  }
-}
+export { SandboxUnavailable };
 
 const message = (error: unknown) =>
   error instanceof Error ? error.message : String(error);
@@ -591,18 +587,6 @@ export async function prepareDocument(
 }
 
 const boxArg = (box: Box) => box.map((n) => n.toFixed(5)).join(",");
-
-/** The Python a Toolkit command stands for, as shown on the Trail and re-runnable in `run_code`. */
-export function checkCode(check: CheckId, page?: number, box?: Box | null) {
-  const args = [
-    ...(page ? [`page=${page}`] : []),
-    ...(box ? [`box=(${box.map((n) => n.toFixed(4)).join(", ")})`] : []),
-  ].join(", ");
-  return `import loupe\nfor m in loupe.checks.${check}(${args}):\n    loupe.report(**m)`;
-}
-
-export const SWEEP_CODE =
-  "python3 -m loupe sweep  # every Check that fits the Document";
 
 type Seed = () => Promise<DocumentFile>;
 

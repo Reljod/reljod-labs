@@ -5,12 +5,12 @@ import { z } from "zod";
 import { guestPassStatus } from "@/features/access/domain/guest-pass";
 import { env as accessEnv } from "@/features/access/server/env";
 import { guestPassOf } from "@/features/access/server/repository";
+import { isAppError } from "@/platform/errors";
 import {
   DOCUMENT_KINDS,
   DRIVERS,
   type Driver,
   METRIC_IDS,
-  METRICS,
   type MetricId,
   MODEL_IDS,
   type ModelId,
@@ -18,70 +18,46 @@ import {
   type ToolId,
   WEIGHTS,
 } from "../domain/contract";
-import { MANIFEST, RECORDED, sampleCards } from "../domain/corpus";
+import { sampleCards } from "../domain/corpus";
 import { UPLOAD_TYPES } from "../domain/limits";
-import { policySchema, ruleSentence, withRule } from "../domain/rules";
-import { calibrate, overall } from "../domain/score";
+import { policySchema } from "../domain/rules";
 import { skillIndex } from "../skills";
-import { endExamination } from "./ending";
 import { env } from "./env";
-import {
-  reevaluate,
-  startExamination,
-  stopExamination,
-  type Who,
-} from "./examinations";
 import { type LoupeClaims, readLoupeToken } from "./mcp-token";
-import { examinationDetail } from "./reads";
-import {
-  currentRulebook,
-  eventsAfter,
-  listAudit,
-  listExaminations,
-  ownedExamination,
-} from "./repository";
-import { saveRulebookFor } from "./rulebooks";
-import { assetPath, download, isAssetKey } from "./storage";
+import type { Caller, Who } from "./ports";
+import type { LoupeServices } from "./services";
+import type { ToolOutcome } from "./services/tools";
 import { MCP_INPUTS, toolDescription } from "./tool-schemas";
-import {
-  type Caller,
-  conclude,
-  finish,
-  hypothesize,
-  loadSkill,
-  look,
-  reviewFinding,
-  runCheck,
-  runCode,
-  type ToolOutcome,
-} from "./tools";
-import { openUpload } from "./uploads";
 
 /*
  * The Loupe MCP server (ADR 0028): the one way to Loupe's capabilities. The
  * in-app Examiner calls it in process with a token bound to its Examination;
  * an outside client (Claude) with a token minted for its Owner under
- * "Connect a client". Every tool scopes to the token's Owner and goes through
- * the same server functions, caps, Rules and Trail as the app.
+ * "Connect a client". Every tool scopes to the token's Owner and calls the
+ * same services as the REST routes, so the caps, Rules, Trail and Audit
+ * trail hold whoever calls.
  */
 
 type ToolContext = {
-  http?: { authInfo?: { extra?: Record<string, unknown> } };
+  http?: {
+    authInfo?: {
+      extra?: { caller?: Caller; services?: LoupeServices };
+    };
+  };
 };
 
 /**
- * Who is calling. The in-app Examiner's token is for the Examiner's own tools
- * on its own Examination and nothing else: every other tool refuses it, so a
- * leaked one cannot start, stop, read or re-decide the Owner's Examinations.
+ * Who is calling, and the services the token reaches. The in-app
+ * Examiner's token is for the Examiner's own tools on its own Examination
+ * and nothing else: every other tool refuses it, so a leaked one cannot
+ * start, stop, read or re-decide the Owner's Examinations.
  */
-function callerOf(ctx: unknown, examinerTool = false): Caller {
-  const caller = (ctx as ToolContext).http?.authInfo?.extra?.caller as
-    | Caller
-    | undefined;
-  if (!caller) throw new Error("Not authorised");
-  if (caller.role.kind === "examiner" && !examinerTool)
+function contextOf(ctx: unknown, examinerTool = false) {
+  const extra = (ctx as ToolContext).http?.authInfo?.extra;
+  if (!extra?.caller || !extra.services) throw new Error("Not authorised");
+  if (extra.caller.role.kind === "examiner" && !examinerTool)
     throw new Error("Not authorised: this token is for the Examiner's tools.");
-  return caller;
+  return { caller: extra.caller, services: extra.services };
 }
 
 const whoOf = (caller: Caller): Who => ({
@@ -91,10 +67,10 @@ const whoOf = (caller: Caller): Who => ({
   via: "mcp",
 });
 
-function result(data: Record<string, unknown>, text?: string) {
+function result(data: object, text?: string) {
   return {
     content: [{ type: "text" as const, text: text ?? JSON.stringify(data) }],
-    structuredContent: data,
+    structuredContent: data as Record<string, unknown>,
   };
 }
 
@@ -103,11 +79,31 @@ function failure(message: string) {
 }
 
 /**
+ * Runs a tool: a service's refusal (an AppError) is answered with its
+ * message for the caller to act on; anything else is logged and answered
+ * plainly.
+ */
+async function guarded<T>(
+  id: string,
+  work: () => Promise<T>,
+): Promise<T | ReturnType<typeof failure>> {
+  try {
+    return await work();
+  } catch (error) {
+    if (isAppError(error)) return failure(error.message);
+    if (error instanceof Error && error.message.startsWith("Not authorised"))
+      return failure(error.message);
+    console.error(`[loupe] mcp ${id}`, error);
+    return failure(`${id} failed on our side. Try again.`);
+  }
+}
+
+/**
  * A tool's outcome as an MCP result. The in-app Examiner gets the image's
  * asset key (it loads the bytes itself, so they never travel through the
  * workflow's history); an outside client gets the image inline.
  */
-function answer(caller: Caller, outcome: ToolOutcome & { finished?: boolean }) {
+function answer(caller: Caller, outcome: ToolOutcome) {
   const inline = outcome.image && caller.role.kind === "client";
   return {
     content: [
@@ -132,15 +128,16 @@ function answer(caller: Caller, outcome: ToolOutcome & { finished?: boolean }) {
   };
 }
 
-/** Registers one of the Examiner's tools: the same function for the Examiner and a client. */
+/** Registers one of the Examiner's tools: the same service for the Examiner and a client. */
 function examinerTool<S extends z.ZodObject>(
   server: McpServer,
   id: ToolId,
   schema: S,
   work: (
+    services: LoupeServices,
     caller: Caller,
     input: z.infer<S>,
-  ) => Promise<ToolOutcome & { finished?: boolean }>,
+  ) => Promise<ToolOutcome>,
 ) {
   server.registerTool(
     id,
@@ -149,15 +146,11 @@ function examinerTool<S extends z.ZodObject>(
       description: toolDescription(id),
       inputSchema: schema as z.ZodObject,
     },
-    async (args: unknown, ctx: unknown) => {
-      try {
-        const caller = callerOf(ctx, true);
-        return answer(caller, await work(caller, args as z.infer<S>));
-      } catch (error) {
-        console.error(`[loupe] mcp ${id}`, error);
-        return failure(`${id} failed on our side. Try again.`);
-      }
-    },
+    async (args: unknown, ctx: unknown) =>
+      guarded(id, async () => {
+        const { caller, services } = contextOf(ctx, true);
+        return answer(caller, await work(services, caller, args as z.infer<S>));
+      }),
   );
 }
 
@@ -165,37 +158,33 @@ const metricSchema = z.enum(METRIC_IDS as [MetricId, ...MetricId[]]);
 
 export function registerLoupeTools(server: McpServer) {
   // The Examiner's tools ---------------------------------------------------------
-  examinerTool(server, "look", MCP_INPUTS.look, (caller, input) =>
-    look(caller, input),
+  examinerTool(server, "look", MCP_INPUTS.look, (s, caller, input) =>
+    s.tools.look(caller, input),
   );
-  examinerTool(server, "run_check", MCP_INPUTS.run_check, (caller, input) =>
-    runCheck(caller, input),
+  examinerTool(server, "run_check", MCP_INPUTS.run_check, (s, caller, input) =>
+    s.tools.runCheck(caller, input),
   );
-  examinerTool(server, "run_code", MCP_INPUTS.run_code, (caller, input) =>
-    runCode(caller, input),
+  examinerTool(server, "run_code", MCP_INPUTS.run_code, (s, caller, input) =>
+    s.tools.runCode(caller, input),
   );
-  examinerTool(server, "hypothesize", MCP_INPUTS.hypothesize, (caller, input) =>
-    hypothesize(caller, input),
+  examinerTool(
+    server,
+    "hypothesize",
+    MCP_INPUTS.hypothesize,
+    (s, caller, input) => s.tools.hypothesize(caller, input),
   );
-  examinerTool(server, "conclude", MCP_INPUTS.conclude, (caller, input) =>
-    conclude(caller, input),
+  examinerTool(server, "conclude", MCP_INPUTS.conclude, (s, caller, input) =>
+    s.tools.conclude(caller, input),
   );
   examinerTool(
     server,
     "review_finding",
     MCP_INPUTS.review_finding,
-    (caller, input) => reviewFinding(caller, input),
+    (s, caller, input) => s.tools.reviewFinding(caller, input),
   );
-  examinerTool(server, "finish", MCP_INPUTS.finish, async (caller, input) => {
-    const outcome = await finish(caller, input);
-    // A client's own Examination has no workflow waiting to end it.
-    if (outcome.finished && caller.role.kind === "client")
-      await endExamination(input.examinationId, {
-        status: "completed",
-        summary: input.summary,
-      });
-    return outcome;
-  });
+  examinerTool(server, "finish", MCP_INPUTS.finish, (s, caller, input) =>
+    s.tools.finish(caller, input),
+  );
   server.registerTool(
     "load_skill",
     {
@@ -207,10 +196,11 @@ export function registerLoupeTools(server: McpServer) {
       }),
       annotations: { readOnlyHint: true },
     },
-    async (args, ctx) => {
-      const caller = callerOf(ctx, true);
-      return answer(caller, await loadSkill(caller, args));
-    },
+    async (args, ctx) =>
+      guarded("load_skill", async () => {
+        const { caller, services } = contextOf(ctx, true);
+        return answer(caller, await services.tools.loadSkill(caller, args));
+      }),
   );
 
   // Documents and Examinations ----------------------------------------------------
@@ -223,15 +213,16 @@ export function registerLoupeTools(server: McpServer) {
       inputSchema: z.object({}),
       annotations: { readOnlyHint: true },
     },
-    async (_args, ctx) => {
-      callerOf(ctx);
-      return result({
-        samples: sampleCards().map(({ pages, file: _file, ...card }) => ({
-          ...card,
-          pages: pages.length,
-        })),
-      });
-    },
+    async (_args, ctx) =>
+      guarded("list_samples", async () => {
+        contextOf(ctx);
+        return result({
+          samples: sampleCards().map(({ pages, file: _file, ...card }) => ({
+            ...card,
+            pages: pages.length,
+          })),
+        });
+      }),
   );
 
   server.registerTool(
@@ -246,10 +237,11 @@ export function registerLoupeTools(server: McpServer) {
         kind: z.enum(DOCUMENT_KINDS).optional(),
       }),
     },
-    async (args, ctx) => {
-      const opened = await openUpload(whoOf(callerOf(ctx)), args);
-      return "error" in opened ? failure(opened.error) : result(opened);
-    },
+    async (args, ctx) =>
+      guarded("create_upload", async () => {
+        const { caller, services } = contextOf(ctx);
+        return result(await services.uploads.open(whoOf(caller), args));
+      }),
   );
 
   server.registerTool(
@@ -270,22 +262,23 @@ export function registerLoupeTools(server: McpServer) {
         model: z.enum(MODEL_IDS as [ModelId, ...ModelId[]]).optional(),
       }),
     },
-    async (args, ctx) => {
-      if (Boolean(args.sampleId) === Boolean(args.uploadId))
-        return failure("Give exactly one of sampleId or uploadId.");
-      const started = await startExamination(whoOf(callerOf(ctx)), {
-        source: args.sampleId
-          ? { kind: "sample", sampleId: args.sampleId }
-          : { kind: "upload", uploadId: args.uploadId as string },
-        driver: args.mode,
-        model: args.model,
-      });
-      if ("error" in started) return failure(started.error);
-      return result(
-        { examinationId: started.examinationId, status: "running" },
-        `Started Examination ${started.examinationId}. Poll get_examination.`,
-      );
-    },
+    async (args, ctx) =>
+      guarded("start_examination", async () => {
+        if (Boolean(args.sampleId) === Boolean(args.uploadId))
+          return failure("Give exactly one of sampleId or uploadId.");
+        const { caller, services } = contextOf(ctx);
+        const started = await services.examinations.start(whoOf(caller), {
+          source: args.sampleId
+            ? { kind: "sample", sampleId: args.sampleId }
+            : { kind: "upload", uploadId: args.uploadId as string },
+          driver: args.mode,
+          model: args.model,
+        });
+        return result(
+          { examinationId: started.examinationId, status: "running" },
+          `Started Examination ${started.examinationId}. Poll get_examination.`,
+        );
+      }),
   );
 
   server.registerTool(
@@ -295,15 +288,13 @@ export function registerLoupeTools(server: McpServer) {
       description: "Stops one of your Examinations that is still going.",
       inputSchema: z.object({ examinationId: z.string().uuid() }),
     },
-    async (args, ctx) => {
-      const stopped = await stopExamination(
-        whoOf(callerOf(ctx)),
-        args.examinationId,
-      );
-      return "error" in stopped
-        ? failure(stopped.error ?? "It could not be stopped.")
-        : result(stopped);
-    },
+    async (args, ctx) =>
+      guarded("stop_examination", async () => {
+        const { caller, services } = contextOf(ctx);
+        return result(
+          await services.examinations.stop(whoOf(caller), args.examinationId),
+        );
+      }),
   );
 
   server.registerTool(
@@ -315,7 +306,12 @@ export function registerLoupeTools(server: McpServer) {
       annotations: { readOnlyHint: true },
     },
     async (_args, ctx) =>
-      result({ examinations: await listExaminations(callerOf(ctx).owner) }),
+      guarded("list_examinations", async () => {
+        const { caller, services } = contextOf(ctx);
+        return result({
+          examinations: await services.examinations.list(caller.owner),
+        });
+      }),
   );
 
   server.registerTool(
@@ -327,15 +323,19 @@ export function registerLoupeTools(server: McpServer) {
       inputSchema: z.object({ examinationId: z.string().uuid() }),
       annotations: { readOnlyHint: true },
     },
-    async (args, ctx) => {
-      const detail = await examinationDetail(
-        callerOf(ctx).owner,
-        args.examinationId,
-      );
-      if (!detail) return failure("No such Examination.");
-      const { events: _events, measurements, ...rest } = detail;
-      return result({ ...rest, measurements: measurements.length });
-    },
+    async (args, ctx) =>
+      guarded("get_examination", async () => {
+        const { caller, services } = contextOf(ctx);
+        const {
+          events: _events,
+          measurements,
+          ...rest
+        } = await services.examinations.detail(
+          caller.owner,
+          args.examinationId,
+        );
+        return result({ ...rest, measurements: measurements.length });
+      }),
   );
 
   server.registerTool(
@@ -351,39 +351,26 @@ export function registerLoupeTools(server: McpServer) {
       }),
       annotations: { readOnlyHint: true },
     },
-    async (args, ctx) => {
-      const caller = callerOf(ctx);
-      const row = await ownedExamination(caller.owner, args.examinationId);
-      if (!row) return failure("No such Examination.");
-      const ref = args.findingId
-        ? row.state.measurements.find((item) => item.id === args.findingId)
-            ?.layer
-        : row.pages[(args.page ?? 1) - 1]?.image;
-      if (!ref)
-        return failure(
-          args.findingId
-            ? "That Finding has no Evidence layer."
-            : "No such page.",
-        );
-      if (ref.startsWith("/"))
-        return result(
-          { url: `${caller.origin}${ref}` },
-          `A Sample's static file: ${caller.origin}${ref}`,
-        );
-      if (!isAssetKey(ref)) return failure("No such image.");
-      const bytes = await download(assetPath(row.owner, row.id, ref));
-      if (!bytes) return failure("The image is gone.");
-      return {
-        content: [
-          { type: "text" as const, text: ref },
-          {
-            type: "image" as const,
-            data: bytes.toString("base64"),
-            mimeType: ref.endsWith(".png") ? "image/png" : "image/jpeg",
-          },
-        ],
-      };
-    },
+    async (args, ctx) =>
+      guarded("get_evidence", async () => {
+        const { caller, services } = contextOf(ctx);
+        const evidence = await services.examinations.evidence(caller, args);
+        if (evidence.kind === "url")
+          return result(
+            { url: evidence.url },
+            `A Sample's static file: ${evidence.url}`,
+          );
+        return {
+          content: [
+            { type: "text" as const, text: evidence.ref },
+            {
+              type: "image" as const,
+              data: evidence.bytes.toString("base64"),
+              mimeType: evidence.mediaType,
+            },
+          ],
+        };
+      }),
   );
 
   server.registerTool(
@@ -399,22 +386,22 @@ export function registerLoupeTools(server: McpServer) {
       }),
       annotations: { readOnlyHint: true },
     },
-    async (args, ctx) => {
-      const caller = callerOf(ctx);
-      if (!args.examinationId)
-        return result({ audit: await listAudit(caller.owner) });
-      const row = await ownedExamination(caller.owner, args.examinationId);
-      if (!row) return failure("No such Examination.");
-      const events = await eventsAfter(
-        row.id,
-        args.after ?? 0,
-        args.limit ?? 60,
-      );
-      return result({
-        events,
-        next: events.at(-1)?.seq ?? args.after ?? 0,
-      });
-    },
+    async (args, ctx) =>
+      guarded("read_trail", async () => {
+        const { caller, services } = contextOf(ctx);
+        if (!args.examinationId)
+          return result({
+            audit: await services.examinations.audit(caller.owner),
+          });
+        return result(
+          await services.examinations.trailPage(
+            caller.owner,
+            args.examinationId,
+            args.after ?? 0,
+            args.limit ?? 60,
+          ),
+        );
+      }),
   );
 
   // Rules -------------------------------------------------------------------------
@@ -427,19 +414,11 @@ export function registerLoupeTools(server: McpServer) {
       inputSchema: z.object({}),
       annotations: { readOnlyHint: true },
     },
-    async (_args, ctx) => {
-      const current = await currentRulebook(callerOf(ctx).owner);
-      return result({
-        version: current.version,
-        rules: METRIC_IDS.map((id) => ({
-          id,
-          label: METRICS[id].label,
-          sentence: ruleSentence(id, current.rulebook.rules[id].threshold),
-          ...current.rulebook.rules[id],
-        })),
-        policy: current.rulebook.policy,
-      });
-    },
+    async (_args, ctx) =>
+      guarded("list_rules", async () => {
+        const { caller, services } = contextOf(ctx);
+        return result(await services.rulebooks.rules(caller.owner));
+      }),
   );
 
   server.registerTool(
@@ -458,28 +437,11 @@ export function registerLoupeTools(server: McpServer) {
         note: z.string().max(500).optional(),
       }),
     },
-    async (args, ctx) => {
-      const who = whoOf(callerOf(ctx));
-      const current = await currentRulebook(who.owner);
-      let next = current.rulebook;
-      if (args.rule) {
-        next = withRule(next, args.rule, {
-          ...(args.threshold !== undefined
-            ? { threshold: args.threshold }
-            : {}),
-          ...(args.weight ? { weight: args.weight } : {}),
-          ...(args.enabled !== undefined ? { enabled: args.enabled } : {}),
-          ...(args.kinds ? { kinds: args.kinds } : {}),
-        });
-      }
-      if (args.policy)
-        next = { ...next, policy: { ...next.policy, ...args.policy } };
-      const saved = await saveRulebookFor(who, {
-        rulebook: next,
-        note: args.note,
-      });
-      return "error" in saved ? failure(saved.error) : result(saved);
-    },
+    async (args, ctx) =>
+      guarded("edit_rule", async () => {
+        const { caller, services } = contextOf(ctx);
+        return result(await services.rulebooks.edit(whoOf(caller), args));
+      }),
   );
 
   server.registerTool(
@@ -490,10 +452,16 @@ export function registerLoupeTools(server: McpServer) {
         "Decides a completed Examination again under your current Rulebook, from its stored Measurements. No model call and no Sandbox. Returns the Verdict before and after.",
       inputSchema: z.object({ examinationId: z.string().uuid() }),
     },
-    async (args, ctx) => {
-      const done = await reevaluate(whoOf(callerOf(ctx)), args.examinationId);
-      return "error" in done ? failure(done.error) : result(done);
-    },
+    async (args, ctx) =>
+      guarded("reevaluate", async () => {
+        const { caller, services } = contextOf(ctx);
+        return result(
+          await services.examinations.reevaluate(
+            whoOf(caller),
+            args.examinationId,
+          ),
+        );
+      }),
   );
 
   server.registerTool(
@@ -505,21 +473,13 @@ export function registerLoupeTools(server: McpServer) {
       inputSchema: z.object({}),
       annotations: { readOnlyHint: true },
     },
-    async (_args, ctx) => {
-      const current = await currentRulebook(callerOf(ctx).owner);
-      const calibration = calibrate(MANIFEST, RECORDED, current.rulebook);
-      return result({
-        rulebookVersion: current.version,
-        overall: overall(calibration),
-        ...calibration,
-      });
-    },
+    async (_args, ctx) =>
+      guarded("get_calibration", async () => {
+        const { caller, services } = contextOf(ctx);
+        return result(await services.rulebooks.calibration(caller.owner));
+      }),
   );
 }
-
-const handler = createMcpHandler(registerLoupeTools, {
-  serverInfo: { name: "loupe", version: "1.0.0" },
-});
 
 /** Whether a signed token's holder still has Access: a live Guest pass, a Host still on the list. */
 async function stillAllowed(claims: LoupeClaims) {
@@ -550,37 +510,50 @@ async function stillAllowed(claims: LoupeClaims) {
 }
 
 /**
- * The Loupe MCP server. The only bearers are tokens this server signed: an
- * Owner's (from "Connect a client"), checked against the Owner's Access on
- * every call, or the in-app Examiner's, bound to one Examination.
+ * The Loupe MCP server on the services a token reaches. The only bearers
+ * are tokens this server signed: an Owner's (from "Connect a client"),
+ * checked against the Owner's Access on every call, or the in-app
+ * Examiner's, bound to one Examination. Only the e2e suite's tokens and the
+ * Examiner's tokens of an Examination it started reach the stubbed
+ * services; the stub flag is part of the signed claims.
  */
-export const mcpHandler = withMcpAuth(
-  handler,
-  async (request, bearer) => {
-    if (!bearer) return undefined;
-    const claims = readLoupeToken(bearer, env.rateLimitSalt());
-    if (!claims || !(await stillAllowed(claims))) return undefined;
-    const caller: Caller = {
-      owner: claims.owner,
-      visitor: {
-        hash: claims.visitor,
-        trusted: claims.kind === "e2e" || claims.trusted === true,
-      },
-      role:
-        claims.kind === "examiner" && claims.examinationId
-          ? { kind: "examiner", examinationId: claims.examinationId }
-          : { kind: "client" },
-      origin:
-        claims.kind === "examiner"
-          ? (claims.origin ?? "")
-          : getPublicOrigin(request),
-    };
-    return {
-      token: bearer,
-      clientId: `loupe-${claims.kind}`,
-      scopes: ["loupe"],
-      extra: { caller },
-    };
-  },
-  { required: true },
-);
+export function createLoupeMcpHandler(
+  servicesFor: (stub: boolean) => LoupeServices,
+) {
+  const handler = createMcpHandler(registerLoupeTools, {
+    serverInfo: { name: "loupe", version: "1.0.0" },
+  });
+  return withMcpAuth(
+    handler,
+    async (request, bearer) => {
+      if (!bearer) return undefined;
+      const claims = readLoupeToken(bearer, env.rateLimitSalt());
+      if (!claims || !(await stillAllowed(claims))) return undefined;
+      const stub =
+        claims.stub === true &&
+        (claims.kind === "e2e" || claims.kind === "examiner");
+      const caller: Caller = {
+        owner: claims.owner,
+        visitor: {
+          hash: claims.visitor,
+          trusted: claims.kind === "e2e" || claims.trusted === true,
+        },
+        role:
+          claims.kind === "examiner" && claims.examinationId
+            ? { kind: "examiner", examinationId: claims.examinationId }
+            : { kind: "client" },
+        origin:
+          claims.kind === "examiner"
+            ? (claims.origin ?? "")
+            : getPublicOrigin(request),
+      };
+      return {
+        token: bearer,
+        clientId: `loupe-${claims.kind}`,
+        scopes: ["loupe"],
+        extra: { caller, services: servicesFor(stub) },
+      };
+    },
+    { required: true },
+  );
+}
