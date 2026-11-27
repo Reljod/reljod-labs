@@ -117,8 +117,9 @@ export function eager<E>(source: AsyncIterator<E>): AsyncIterable<E> {
   const state: {
     failure: { error: unknown } | null;
     wake: (() => void) | null;
-  } = { failure: null, wake: null };
-  let done = false;
+    /** The reader has stopped: nothing more is handed over. */
+    closed: boolean;
+  } = { failure: null, wake: null, closed: false };
   void (async () => {
     try {
       for (;;) {
@@ -128,6 +129,8 @@ export function eager<E>(source: AsyncIterator<E>): AsyncIterable<E> {
         if (next.done) break;
       }
     } catch (error) {
+      // Nobody is left to tell (and log) it once the reader has gone.
+      if (state.closed) console.error("[bank] chat turn", error);
       state.failure = { error };
       state.wake?.();
     }
@@ -136,14 +139,14 @@ export function eager<E>(source: AsyncIterator<E>): AsyncIterable<E> {
     [Symbol.asyncIterator]: () => ({
       async next(): Promise<IteratorResult<E>> {
         for (;;) {
-          if (done) return { value: undefined, done: true };
+          if (state.closed) return { value: undefined, done: true };
           const next = buffered.shift();
           if (next) {
-            if (next.done) done = true;
+            if (next.done) state.closed = true;
             return next;
           }
           if (state.failure) {
-            done = true;
+            state.closed = true;
             throw state.failure.error;
           }
           await new Promise<void>((resolve) => {
@@ -153,7 +156,7 @@ export function eager<E>(source: AsyncIterator<E>): AsyncIterable<E> {
         }
       },
       async return(): Promise<IteratorResult<E>> {
-        done = true;
+        state.closed = true;
         return { value: undefined, done: true };
       },
     }),

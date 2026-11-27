@@ -6,7 +6,6 @@ import { auditIn } from "../core/audit";
 import { runRead, runWrite } from "../core/engine";
 import { BANK_MCP_PATH } from "../domain/api";
 import { LIMITS } from "../domain/limits";
-import { createLiveTeller, createStubTeller } from "./chat";
 import { sql } from "./db";
 import { growthView } from "./growth";
 import { tokenSigner } from "./mcp-auth";
@@ -17,8 +16,8 @@ import type {
   Later,
   Sandboxes,
   SpendKind,
+  Teller,
 } from "./ports";
-import { disposeSandbox } from "./sandbox";
 import { createChatService } from "./services/chat";
 import { createCommandService } from "./services/commands";
 import { createSessionService } from "./services/sessions";
@@ -80,8 +79,26 @@ const later: Later = (work) => {
   }
 };
 
-const sandboxes: Sandboxes = { dispose: disposeSandbox };
+/*
+ * The Teller (the AI SDK, the MCP client and server) and the Sandbox SDK are
+ * loaded on first use, so the read and write routes, which never need them,
+ * do not load them on a cold start.
+ */
+const sandboxes: Sandboxes = {
+  dispose: async (sessionId) =>
+    (await import("./sandbox")).disposeSandbox(sessionId),
+};
 const noSandboxes: Sandboxes = { dispose: async () => {} };
+
+function lazyTeller(make: (chat: typeof import("./chat")) => Teller): Teller {
+  let teller: Teller | undefined;
+  return {
+    async *answer(turn, signal) {
+      teller ??= make(await import("./chat"));
+      yield* teller.answer(turn, signal);
+    },
+  };
+}
 
 /**
  * The bank's composition root. `stub` (the e2e suite, unless it sends
@@ -114,9 +131,11 @@ export const bank = container(({ stub }) => {
     chat: createChatService({
       sessions: sessionRepository,
       rate,
-      teller: stub
-        ? createStubTeller(tellerPorts)
-        : createLiveTeller(tellerPorts),
+      teller: lazyTeller((chat) =>
+        stub
+          ? chat.createStubTeller(tellerPorts)
+          : chat.createLiveTeller(tellerPorts),
+      ),
     }),
   };
 });
