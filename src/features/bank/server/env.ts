@@ -8,9 +8,8 @@ function required(name: string): string {
 
 /** Read lazily so `next build` works without secrets. Values are never logged. */
 export const env = {
-  /** Supabase transaction pooler (port 6543). Falls back to the Client Manager's: the same database. */
-  databaseUrl: () =>
-    process.env.BANK_DATABASE_URL ?? required("CLIENT_MANAGER_DATABASE_URL"),
+  /** The Supabase Postgres database, shared by every demo (transaction pooler, port 6543). */
+  databaseUrl: () => required("DATABASE_URL"),
   /** Shared; it also signs every bank MCP token, so rotating it revokes them. */
   rateLimitSalt: () => required("RATE_LIMIT_SALT"),
   e2eBypassToken: () => process.env.E2E_BYPASS_TOKEN ?? "",

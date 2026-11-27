@@ -14,9 +14,8 @@ export type Reasoning = (typeof REASONING)[number];
 
 /** Read lazily so `next build` works without secrets. Values are never logged. */
 export const env = {
-  /** Supabase transaction pooler; falls back to the Client Manager's, the same database. */
-  databaseUrl: () =>
-    process.env.VELLUM_DATABASE_URL ?? required("CLIENT_MANAGER_DATABASE_URL"),
+  /** The Supabase Postgres database, shared by every demo (transaction pooler, port 6543). */
+  databaseUrl: () => required("DATABASE_URL"),
   /** Hashes visitors for rate limits. */
   rateLimitSalt: () => required("RATE_LIMIT_SALT"),
   e2eBypassToken: () => process.env.E2E_BYPASS_TOKEN ?? "",

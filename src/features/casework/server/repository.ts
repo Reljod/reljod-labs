@@ -1,26 +1,24 @@
 import "server-only";
 import type { Owner } from "@/features/access/domain/owner";
+import { jsonb } from "@/server/postgres";
 import type { Scenario } from "../domain/case-file";
 import type { JobId } from "../domain/jobs";
 import type { ModelSettings, Purpose } from "../domain/model-config";
 import type { PipelineId } from "../domain/pipelines";
 import type { Answer } from "../domain/run-events";
 import type { RunDocument, RunState, SourceFormat } from "../domain/run-state";
-import { supabase } from "./supabase";
+import { sql } from "./db";
 
-function rows<T>(result: {
-  data: unknown;
-  error: { message: string } | null;
-}): T {
-  if (result.error) throw new Error(result.error.message);
-  if (result.data === null || result.data === undefined) {
-    throw new Error("Query returned no data");
-  }
-  return result.data as T;
+/** The one row an `insert ... returning` gives back. */
+function one<T>(found: readonly T[]): T {
+  const [row] = found;
+  if (row === undefined) throw new Error("Query returned no data");
+  return row;
 }
 
-function ok(result: { error: { message: string } | null }) {
-  if (result.error) throw new Error(result.error.message);
+/** A nullable `jsonb` value: SQL null for null, the JSON otherwise. */
+function jsonbOrNull(value: unknown) {
+  return value === null || value === undefined ? null : jsonb(sql(), value);
 }
 
 // Sessions ---------------------------------------------------------------------
@@ -37,70 +35,63 @@ export type SessionRow = {
 };
 
 export async function createSession(visitorHash: string, owner: Owner | null) {
-  return rows<{ id: string }>(
-    await supabase()
-      .from("sessions")
-      .insert({ visitor_hash: visitorHash, owner })
-      .select("id")
-      .single(),
+  return one(
+    await sql()<{ id: string }[]>`
+      insert into casework.sessions (visitor_hash, owner)
+      values (${visitorHash}, ${owner})
+      returning id`,
   ).id;
 }
 
 export async function getSession(id: string) {
   if (!/^[0-9a-f-]{36}$/i.test(id)) return null;
-  const [session] = rows<SessionRow[]>(
-    await supabase().from("sessions").select("*").eq("id", id).limit(1),
-  );
+  const [session] = await sql()<SessionRow[]>`
+    select * from casework.sessions where id = ${id} limit 1`;
   return session ?? null;
 }
 
 /** An Owner's Desks, newest activity first: the ones they can go back to. */
 export async function sessionsOf(owner: Owner, limit: number) {
-  return rows<SessionRow[]>(
-    await supabase()
-      .from("sessions")
-      .select("*")
-      .eq("owner", owner)
-      .order("last_active_at", { ascending: false })
-      .limit(limit),
-  );
+  return sql()<SessionRow[]>`
+    select * from casework.sessions
+    where owner = ${owner}
+    order by last_active_at desc
+    limit ${limit}`;
 }
 
 /** Marks a desk as used now, and names it after its first request. */
 export async function touchSession(session: SessionRow, title?: string) {
-  ok(
-    await supabase()
-      .from("sessions")
-      .update({
-        last_active_at: new Date().toISOString(),
-        ...(!session.title && title ? { title: title.slice(0, 80) } : {}),
-      })
-      .eq("id", session.id),
-  );
+  const db = sql();
+  const now = new Date().toISOString();
+  await db`
+    update casework.sessions
+    set last_active_at = ${now}
+      ${!session.title && title ? db`, title = ${title.slice(0, 80)}` : db``}
+    where id = ${session.id}`;
 }
 
 export async function setModelOverrides(
   sessionId: string,
   overrides: SessionRow["model_overrides"],
 ) {
-  ok(
-    await supabase()
-      .from("sessions")
-      .update({ model_overrides: overrides })
-      .eq("id", sessionId),
-  );
+  const db = sql();
+  await db`
+    update casework.sessions
+    set model_overrides = ${jsonb(db, overrides)}
+    where id = ${sessionId}`;
 }
 
 export async function orgModelSettings() {
-  const settings = rows<
+  const settings = await sql()<
     {
       purpose: Purpose;
       model: string;
       reasoning: ModelSettings["reasoning"];
-      temperature: number | null;
+      /** `numeric`: a string from Postgres. */
+      temperature: string | number | null;
       max_output_tokens: number | null;
     }[]
-  >(await supabase().from("model_settings").select("*"));
+  >`select * from casework.model_settings`;
   return Object.fromEntries(
     settings.map((row) => [
       row.purpose,
@@ -142,57 +133,63 @@ export type CaseFileRow = {
   position: number;
 };
 
-const DOCUMENT_COLUMNS =
-  "id, case_file_slug, session_id, name, media_type, source_format, storage_path, page_paths, size_bytes, label_kind, created_at";
+/** Every Document column but `label`; a fixed list, quoted as identifiers. */
+const DOCUMENT_COLUMNS = [
+  "id",
+  "case_file_slug",
+  "session_id",
+  "name",
+  "media_type",
+  "source_format",
+  "storage_path",
+  "page_paths",
+  "size_bytes",
+  "label_kind",
+  "created_at",
+];
+const LABELLED_DOCUMENT_COLUMNS = [...DOCUMENT_COLUMNS, "label"];
 
 export async function loadCaseFiles() {
-  return rows<CaseFileRow[]>(
-    await supabase()
-      .from("case_files")
-      .select("slug, scenario, title, summary, as_of, split, position")
-      .order("position"),
-  );
+  return sql()<CaseFileRow[]>`
+    select slug, scenario, title, summary, as_of, split, position
+    from casework.case_files
+    order by position`;
 }
 
 export async function loadCabinetDocuments(sessionId: string) {
-  return rows<DocumentRow[]>(
-    await supabase()
-      .from("documents")
-      .select(`${DOCUMENT_COLUMNS}, label`)
-      .or(`case_file_slug.not.is.null,session_id.eq.${sessionId}`)
-      .order("name"),
-  );
+  const db = sql();
+  return db<DocumentRow[]>`
+    select ${db(LABELLED_DOCUMENT_COLUMNS)} from casework.documents
+    where case_file_slug is not null or session_id = ${sessionId}
+    order by name`;
 }
 
 /** The Case files' synthetic Documents: shared seed data, the same for everyone. */
 export async function loadSeedDocuments() {
-  return rows<DocumentRow[]>(
-    await supabase()
-      .from("documents")
-      .select(`${DOCUMENT_COLUMNS}, label`)
-      .not("case_file_slug", "is", null)
-      .order("name"),
-  );
+  const db = sql();
+  return db<DocumentRow[]>`
+    select ${db(LABELLED_DOCUMENT_COLUMNS)} from casework.documents
+    where case_file_slug is not null
+    order by name`;
 }
 
 /** One desk's own uploads. */
 export async function loadUploads(sessionId: string) {
-  return rows<DocumentRow[]>(
-    await supabase()
-      .from("documents")
-      .select(`${DOCUMENT_COLUMNS}, label`)
-      .eq("session_id", sessionId)
-      .order("name"),
-  );
+  const db = sql();
+  return db<DocumentRow[]>`
+    select ${db(LABELLED_DOCUMENT_COLUMNS)} from casework.documents
+    where session_id = ${sessionId}
+    order by name`;
 }
 
 /** Documents by id that this session may use: the Cabinet's, or its own uploads. */
 export async function documentsByIds(ids: string[], sessionId: string | null) {
   const valid = ids.filter((id) => /^[0-9a-f-]{36}$/i.test(id));
   if (valid.length === 0) return [];
-  const found = rows<DocumentRow[]>(
-    await supabase().from("documents").select(DOCUMENT_COLUMNS).in("id", valid),
-  );
+  const db = sql();
+  const found = await db<DocumentRow[]>`
+    select ${db(DOCUMENT_COLUMNS)} from casework.documents
+    where id = any(${valid}::uuid[])`;
   return found.filter(
     (document) => document.case_file_slug || document.session_id === sessionId,
   );
@@ -214,23 +211,22 @@ export async function candidateDocuments(
       inRun.flatMap((row) => (row.case_file_slug ? [row.case_file_slug] : [])),
     ),
   ];
+  const db = sql();
   const [filed, uploaded] = await Promise.all([
     slugs.length > 0 && kinds.length > 0
-      ? supabase()
-          .from("documents")
-          .select(DOCUMENT_COLUMNS)
-          .in("case_file_slug", slugs)
-          .in("label_kind", kinds)
-      : Promise.resolve({ data: [], error: null }),
+      ? db<DocumentRow[]>`
+          select ${db(DOCUMENT_COLUMNS)} from casework.documents
+          where case_file_slug = any(${slugs}::text[])
+            and label_kind = any(${kinds}::text[])`
+      : Promise.resolve([] as DocumentRow[]),
     sessionId
-      ? supabase()
-          .from("documents")
-          .select(DOCUMENT_COLUMNS)
-          .eq("session_id", sessionId)
-      : Promise.resolve({ data: [], error: null }),
+      ? db<DocumentRow[]>`
+          select ${db(DOCUMENT_COLUMNS)} from casework.documents
+          where session_id = ${sessionId}`
+      : Promise.resolve([] as DocumentRow[]),
   ]);
   const taken = new Set(runDocumentIds);
-  return [...rows<DocumentRow[]>(filed), ...rows<DocumentRow[]>(uploaded)]
+  return [...filed, ...uploaded]
     .filter((row) => !taken.has(row.id))
     .slice(0, 6)
     .map((row) => ({ id: row.id, name: row.name }));
@@ -258,9 +254,8 @@ export async function asOfFor(documents: DocumentRow[]) {
     ),
   ];
   if (slugs.length === 0) return new Date().toISOString().slice(0, 10);
-  const dates = rows<{ as_of: string }[]>(
-    await supabase().from("case_files").select("as_of").in("slug", slugs),
-  );
+  const dates = await sql()<{ as_of: string }[]>`
+    select as_of from casework.case_files where slug = any(${slugs}::text[])`;
   return (
     dates
       .map((row) => row.as_of)
@@ -278,23 +273,24 @@ export async function insertUpload(input: {
   pagePaths: string[];
   sizeBytes: number;
 }): Promise<DocumentRow | null> {
-  const result = await supabase()
-    .from("documents")
-    .insert({
-      session_id: input.sessionId,
-      name: input.name,
-      media_type: input.mediaType,
-      source_format: input.sourceFormat,
-      storage_path: input.storagePath,
-      page_paths: input.pagePaths,
-      size_bytes: input.sizeBytes,
-    })
-    .select(DOCUMENT_COLUMNS)
-    .single();
-  // An upload's path is recorded once (a unique index): a ticket used twice
-  // at the same moment records nothing the second time.
-  if (result.error?.code === "23505") return null;
-  return rows<DocumentRow>(result);
+  const db = sql();
+  try {
+    return one(
+      await db<DocumentRow[]>`
+        insert into casework.documents
+          (session_id, name, media_type, source_format, storage_path, page_paths, size_bytes)
+        values (
+          ${input.sessionId}, ${input.name}, ${input.mediaType}, ${input.sourceFormat},
+          ${input.storagePath}, ${input.pagePaths}::text[], ${input.sizeBytes}
+        )
+        returning ${db(DOCUMENT_COLUMNS)}`,
+    );
+  } catch (error) {
+    // An upload's path is recorded once (a unique index): a ticket used twice
+    // at the same moment records nothing the second time.
+    if ((error as { code?: string }).code === "23505") return null;
+    throw error;
+  }
 }
 
 /** Which of these Storage paths are already recorded as uploads of the Desk. */
@@ -303,23 +299,18 @@ export async function recordedUploadPaths(
   paths: string[],
 ): Promise<Set<string>> {
   if (paths.length === 0) return new Set();
-  const found = rows<{ storage_path: string }[]>(
-    await supabase()
-      .from("documents")
-      .select("storage_path")
-      .eq("session_id", sessionId)
-      .in("storage_path", paths),
-  );
+  const found = await sql()<{ storage_path: string }[]>`
+    select storage_path from casework.documents
+    where session_id = ${sessionId}::uuid
+      and storage_path = any(${paths}::text[])`;
   return new Set(found.map((row) => row.storage_path));
 }
 
 export async function countUploads(sessionId: string) {
-  const { count, error } = await supabase()
-    .from("documents")
-    .select("id", { count: "exact", head: true })
-    .eq("session_id", sessionId);
-  if (error) throw new Error(error.message);
-  return count ?? 0;
+  const [row] = await sql()<{ count: number }[]>`
+    select count(*)::int as count from casework.documents
+    where session_id = ${sessionId}`;
+  return row?.count ?? 0;
 }
 
 // Messages ------------------------------------------------------------------------
@@ -349,32 +340,27 @@ export async function addMessage(input: {
   runId?: string | null;
   toolCalls?: MessageRow["tool_calls"];
 }) {
-  return rows<{ id: number }>(
-    await supabase()
-      .from("messages")
-      .insert({
-        session_id: input.sessionId,
-        role: input.role,
-        text: input.text,
-        document_ids: input.documentIds ?? [],
-        run_id: input.runId ?? null,
-        tool_calls: input.toolCalls ?? [],
-      })
-      .select("id")
-      .single(),
+  const db = sql();
+  return one(
+    await db<{ id: number }[]>`
+      insert into casework.messages
+        (session_id, role, text, document_ids, run_id, tool_calls)
+      values (
+        ${input.sessionId}, ${input.role}, ${input.text},
+        ${input.documentIds ?? []}::uuid[], ${input.runId ?? null},
+        ${jsonb(db, input.toolCalls ?? [])}
+      )
+      returning id`,
   ).id;
 }
 
 export async function loadMessages(sessionId: string, limit = 40) {
-  const recent = rows<MessageRow[]>(
-    await supabase()
-      .from("messages")
-      .select("*")
-      .eq("session_id", sessionId)
-      .order("id", { ascending: false })
-      .limit(limit),
-  );
-  return recent.reverse();
+  const recent = await sql()<MessageRow[]>`
+    select * from casework.messages
+    where session_id = ${sessionId}
+    order by id desc
+    limit ${limit}`;
+  return [...recent].reverse();
 }
 
 // Runs ----------------------------------------------------------------------------
@@ -429,20 +415,19 @@ export async function createRun(input: {
     sessionSpend: number;
   } | null;
 }): Promise<{ runId: string } | { refusal: RunRefusal }> {
-  const [row] = rows<{ run_id: string | null; refusal: string | null }[]>(
-    await supabase().rpc("create_run", {
-      p_session_id: input.sessionId,
-      p_pipeline: input.pipeline,
-      p_jobs: input.jobs,
-      p_document_ids: input.documentIds,
-      p_visitor_hash: input.visitorHash,
-      p_per_visitor_per_hour: input.limits?.perVisitorPerHour ?? null,
-      p_per_day: input.limits?.perDay ?? null,
-      p_owner: input.owner,
-      p_owner_spend_per_day: input.limits?.ownerSpendPerDay ?? null,
-      p_session_spend: input.limits?.sessionSpend ?? null,
-    }),
-  );
+  const [row] = await sql()<{ run_id: string | null; refusal: string | null }[]>`
+    select run_id, refusal from casework.create_run(
+      p_session_id => ${input.sessionId}::uuid,
+      p_pipeline => ${input.pipeline}::text,
+      p_jobs => ${input.jobs}::text[],
+      p_document_ids => ${input.documentIds}::uuid[],
+      p_visitor_hash => ${input.visitorHash}::text,
+      p_per_visitor_per_hour => ${input.limits?.perVisitorPerHour ?? null}::integer,
+      p_per_day => ${input.limits?.perDay ?? null}::integer,
+      p_owner => ${input.owner}::text,
+      p_owner_spend_per_day => ${input.limits?.ownerSpendPerDay ?? null}::numeric,
+      p_session_spend => ${input.limits?.sessionSpend ?? null}::numeric
+    )`;
   if (row?.run_id) return { runId: row.run_id };
   const refusal = RUN_REFUSALS.find((known) => known === row?.refusal);
   return { refusal: refusal ?? "day" };
@@ -465,17 +450,16 @@ export async function takeChatTurn(input: {
     sessionSpend: number;
   } | null;
 }): Promise<{ taken: true } | { refusal: ChatRefusal }> {
-  const [row] = rows<{ taken: boolean; refusal: string | null }[]>(
-    await supabase().rpc("take_chat_turn", {
-      p_session_id: input.session.id,
-      p_owner: input.session.owner,
-      p_visitor_hash: input.session.visitor_hash,
-      p_per_visitor_per_hour: input.limits?.perVisitorPerHour ?? null,
-      p_turns_per_day: input.limits?.perDay ?? null,
-      p_owner_spend_per_day: input.limits?.ownerSpendPerDay ?? null,
-      p_session_spend: input.limits?.sessionSpend ?? null,
-    }),
-  );
+  const [row] = await sql()<{ taken: boolean; refusal: string | null }[]>`
+    select taken, refusal from casework.take_chat_turn(
+      p_session_id => ${input.session.id}::uuid,
+      p_owner => ${input.session.owner}::text,
+      p_visitor_hash => ${input.session.visitor_hash}::text,
+      p_per_visitor_per_hour => ${input.limits?.perVisitorPerHour ?? null}::integer,
+      p_turns_per_day => ${input.limits?.perDay ?? null}::integer,
+      p_owner_spend_per_day => ${input.limits?.ownerSpendPerDay ?? null}::numeric,
+      p_session_spend => ${input.limits?.sessionSpend ?? null}::numeric
+    )`;
   if (row?.taken) return { taken: true };
   const refusal = row?.refusal;
   return {
@@ -490,63 +474,82 @@ export async function takeChatTurn(input: {
 
 /** USD the Owner's Desks have spent on models since a time, all Desks together. */
 export async function ownerSpendUsd(owner: Owner, since: Date) {
-  const { data, error } = await supabase().rpc("owner_spend_usd", {
-    p_owner: owner,
-    p_since: since.toISOString(),
-  });
-  if (error) throw new Error(error.message);
-  return Number(data ?? 0);
+  const [row] = await sql()<{ spend: string | null }[]>`
+    select casework.owner_spend_usd(
+      p_owner => ${owner}::text,
+      p_since => ${since.toISOString()}::timestamptz
+    ) as spend`;
+  return Number(row?.spend ?? 0);
 }
 
-export async function updateRun(
-  runId: string,
-  patch: Partial<
-    Pick<
-      RunRow,
-      | "status"
-      | "workflow_run_id"
-      | "state"
-      | "recommendation"
-      | "error"
-      | "completed_at"
-      | "pipeline"
-      | "jobs"
-      | "document_ids"
-    >
-  >,
-) {
-  ok(await supabase().from("runs").update(patch).eq("id", runId));
+type RunPatch = Partial<
+  Pick<
+    RunRow,
+    | "status"
+    | "workflow_run_id"
+    | "state"
+    | "recommendation"
+    | "error"
+    | "completed_at"
+    | "pipeline"
+    | "jobs"
+    | "document_ids"
+  >
+>;
+
+/** The columns `updateRun` may set: a fixed list, never the caller's keys. */
+const RUN_PATCH_COLUMNS = [
+  "status",
+  "workflow_run_id",
+  "state",
+  "recommendation",
+  "error",
+  "completed_at",
+  "pipeline",
+  "jobs",
+  "document_ids",
+] as const satisfies readonly (keyof RunPatch)[];
+
+export async function updateRun(runId: string, patch: RunPatch) {
+  // Like the JSON body supabase-js sent: a key left undefined is not written.
+  const columns = RUN_PATCH_COLUMNS.filter(
+    (column) => patch[column] !== undefined,
+  );
+  if (columns.length === 0) return;
+  const db = sql();
+  const values = {
+    ...patch,
+    ...("state" in patch ? { state: jsonbOrNull(patch.state) } : {}),
+  };
+  // `jobs` and `document_ids` go as array literals; Postgres types them from the column.
+  await db`
+    update casework.runs
+    set ${db(values as Record<string, unknown>, columns)}
+    where id = ${runId}`;
 }
 
 export async function getRun(runId: string) {
   if (!/^[0-9a-f-]{36}$/i.test(runId)) return null;
-  const [run] = rows<RunRow[]>(
-    await supabase().from("runs").select("*").eq("id", runId).limit(1),
-  );
+  const [run] = await sql()<RunRow[]>`
+    select * from casework.runs where id = ${runId} limit 1`;
   return run ?? null;
 }
 
 export async function runsForSession(sessionId: string) {
-  return rows<RunRow[]>(
-    await supabase()
-      .from("runs")
-      .select("*")
-      .eq("session_id", sessionId)
-      .order("created_at", { ascending: false })
-      .limit(20),
-  );
+  return sql()<RunRow[]>`
+    select * from casework.runs
+    where session_id = ${sessionId}
+    order by created_at desc
+    limit 20`;
 }
 
 /** Runs of a session that are still going: queued, running or waiting on the person. */
 export async function activeRuns(sessionId: string) {
-  return rows<RunRow[]>(
-    await supabase()
-      .from("runs")
-      .select("*")
-      .eq("session_id", sessionId)
-      .in("status", ["queued", "running", "waiting"])
-      .order("created_at", { ascending: false }),
-  );
+  return sql()<RunRow[]>`
+    select * from casework.runs
+    where session_id = ${sessionId}
+      and status in ('queued', 'running', 'waiting')
+    order by created_at desc`;
 }
 
 export async function recordJobRun(input: {
@@ -557,25 +560,23 @@ export async function recordJobRun(input: {
   summary?: string;
   output?: unknown;
 }) {
-  ok(
-    await supabase()
-      .from("job_runs")
-      .upsert(
-        {
-          run_id: input.runId,
-          position: input.position,
-          job: input.job,
-          status: input.status,
-          summary: input.summary ?? null,
-          output: input.output ?? null,
-          finished_at:
-            input.status === "running" || input.status === "waiting"
-              ? null
-              : new Date().toISOString(),
-        },
-        { onConflict: "run_id,position" },
-      ),
-  );
+  const finishedAt =
+    input.status === "running" || input.status === "waiting"
+      ? null
+      : new Date().toISOString();
+  await sql()`
+    insert into casework.job_runs
+      (run_id, position, job, status, summary, output, finished_at)
+    values (
+      ${input.runId}, ${input.position}, ${input.job}, ${input.status},
+      ${input.summary ?? null}, ${jsonbOrNull(input.output)}, ${finishedAt}
+    )
+    on conflict (run_id, position) do update set
+      job = excluded.job,
+      status = excluded.status,
+      summary = excluded.summary,
+      output = excluded.output,
+      finished_at = excluded.finished_at`;
 }
 
 // Questions -----------------------------------------------------------------------
@@ -604,52 +605,44 @@ export async function createQuestion(input: {
   prompt: string;
   wants: QuestionRow["wants"];
 }) {
-  return rows<{ id: string }>(
-    await supabase()
-      .from("questions")
-      .upsert(
-        {
-          run_id: input.runId,
-          job: input.job,
-          token: input.token,
-          prompt: input.prompt,
-          wants: input.wants,
-        },
-        { onConflict: "token" },
+  const db = sql();
+  return one(
+    await db<{ id: string }[]>`
+      insert into casework.questions (run_id, job, token, prompt, wants)
+      values (
+        ${input.runId}, ${input.job}, ${input.token}, ${input.prompt},
+        ${jsonb(db, input.wants)}
       )
-      .select("id")
-      .single(),
+      on conflict (token) do update set
+        run_id = excluded.run_id,
+        job = excluded.job,
+        prompt = excluded.prompt,
+        wants = excluded.wants
+      returning id`,
   ).id;
 }
 
 export async function getQuestion(id: string) {
   if (!/^[0-9a-f-]{36}$/i.test(id)) return null;
-  const [question] = rows<QuestionRow[]>(
-    await supabase().from("questions").select("*").eq("id", id).limit(1),
-  );
+  const [question] = await sql()<QuestionRow[]>`
+    select * from casework.questions where id = ${id} limit 1`;
   return question ?? null;
 }
 
 export async function openQuestions(runIds: string[]) {
   if (runIds.length === 0) return [];
-  return rows<QuestionRow[]>(
-    await supabase()
-      .from("questions")
-      .select("*")
-      .in("run_id", runIds)
-      .is("answered_at", null)
-      .order("created_at"),
-  );
+  return sql()<QuestionRow[]>`
+    select * from casework.questions
+    where run_id = any(${runIds}::uuid[]) and answered_at is null
+    order by created_at`;
 }
 
 export async function markAnswered(questionId: string, answer: Answer) {
-  ok(
-    await supabase()
-      .from("questions")
-      .update({ answer, answered_at: new Date().toISOString() })
-      .eq("id", questionId)
-      .is("answered_at", null),
-  );
+  const db = sql();
+  await db`
+    update casework.questions
+    set answer = ${jsonb(db, answer)}, answered_at = ${new Date().toISOString()}
+    where id = ${questionId} and answered_at is null`;
 }
 
 // Spend ---------------------------------------------------------------------------
@@ -666,22 +659,16 @@ export async function recordModelCall(input: {
   costUsd: number;
   latencyMs: number;
 }) {
-  ok(
-    await supabase()
-      .from("model_calls")
-      .insert({
-        session_id: input.sessionId,
-        run_id: input.runId,
-        purpose: input.purpose,
-        model: input.model,
-        input_tokens: input.inputTokens,
-        output_tokens: input.outputTokens,
-        reasoning_tokens: input.reasoningTokens,
-        cached_input_tokens: input.cachedInputTokens,
-        cost_usd: Number(input.costUsd.toFixed(6)),
-        latency_ms: input.latencyMs,
-      }),
-  );
+  await sql()`
+    insert into casework.model_calls (
+      session_id, run_id, purpose, model, input_tokens, output_tokens,
+      reasoning_tokens, cached_input_tokens, cost_usd, latency_ms
+    )
+    values (
+      ${input.sessionId}, ${input.runId}, ${input.purpose}, ${input.model},
+      ${input.inputTokens}, ${input.outputTokens}, ${input.reasoningTokens},
+      ${input.cachedInputTokens}, ${Number(input.costUsd.toFixed(6))}, ${input.latencyMs}
+    )`;
 }
 
 export type SpendRow = {
@@ -695,33 +682,26 @@ export type SpendRow = {
 
 /** Closes whatever a stopped Run left open: its unfinished jobs and unanswered questions. */
 export async function closeStoppedRun(runId: string) {
+  const db = sql();
   const now = new Date().toISOString();
-  ok(
-    await supabase()
-      .from("job_runs")
-      .update({ status: "stopped", finished_at: now })
-      .eq("run_id", runId)
-      .in("status", ["running", "waiting"]),
-  );
-  ok(
-    await supabase()
-      .from("questions")
-      .update({ answer: { skip: true, text: "Stopped" }, answered_at: now })
-      .eq("run_id", runId)
-      .is("answered_at", null),
-  );
+  await db`
+    update casework.job_runs
+    set status = 'stopped', finished_at = ${now}
+    where run_id = ${runId} and status in ('running', 'waiting')`;
+  await db`
+    update casework.questions
+    set answer = ${jsonb(db, { skip: true, text: "Stopped" })}, answered_at = ${now}
+    where run_id = ${runId} and answered_at is null`;
 }
 
 /** What each Run cost, for the Runs given. */
 export async function runCosts(runIds: string[]) {
   const totals = new Map<string, { costUsd: number; calls: number }>();
   if (runIds.length === 0) return totals;
-  const calls = rows<{ run_id: string; cost_usd: number }[]>(
-    await supabase()
-      .from("model_calls")
-      .select("run_id, cost_usd")
-      .in("run_id", runIds),
-  );
+  // `cost_usd` is `numeric`, which Postgres sends as a string.
+  const calls = await sql()<{ run_id: string; cost_usd: string }[]>`
+    select run_id, cost_usd from casework.model_calls
+    where run_id = any(${runIds}::uuid[])`;
   for (const call of calls) {
     const total = totals.get(call.run_id) ?? { costUsd: 0, calls: 0 };
     total.costUsd += Number(call.cost_usd);
@@ -735,12 +715,9 @@ export async function runCosts(runIds: string[]) {
 export async function spendBySession(sessionIds: string[]) {
   const totals = new Map<string, number>();
   if (sessionIds.length === 0) return totals;
-  const calls = rows<{ session_id: string; cost_usd: number }[]>(
-    await supabase()
-      .from("model_calls")
-      .select("session_id, cost_usd")
-      .in("session_id", sessionIds),
-  );
+  const calls = await sql()<{ session_id: string; cost_usd: string }[]>`
+    select session_id, cost_usd from casework.model_calls
+    where session_id = any(${sessionIds}::uuid[])`;
   for (const call of calls)
     totals.set(
       call.session_id,
@@ -751,20 +728,18 @@ export async function spendBySession(sessionIds: string[]) {
 
 /** A session's spend, by purpose and model. */
 export async function sessionSpend(sessionId: string): Promise<SpendRow[]> {
-  const calls = rows<
+  const calls = await sql()<
     {
       purpose: Purpose;
       model: string;
       input_tokens: number;
       output_tokens: number;
-      cost_usd: number;
+      cost_usd: string;
     }[]
-  >(
-    await supabase()
-      .from("model_calls")
-      .select("purpose, model, input_tokens, output_tokens, cost_usd")
-      .eq("session_id", sessionId),
-  );
+  >`
+    select purpose, model, input_tokens, output_tokens, cost_usd
+    from casework.model_calls
+    where session_id = ${sessionId}`;
   const grouped = new Map<string, SpendRow>();
   for (const call of calls) {
     const key = `${call.purpose}|${call.model}`;

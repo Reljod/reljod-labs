@@ -1,6 +1,7 @@
 import "server-only";
 import type { Owner } from "@/features/access/domain/owner";
 import type { Access } from "@/features/access/server/gate";
+import { jsonb } from "@/server/postgres";
 import {
   ACTOR_KINDS,
   type ActorKind,
@@ -13,7 +14,7 @@ import {
   trimDetails,
 } from "../domain/audit";
 import { asNumber } from "../metrics";
-import { supabase } from "./supabase";
+import { sql } from "./db";
 
 /** Who a person is in the trail. A Host's name is their own to edit, so it is shown, never trusted. */
 export function actorOf(access: Access): AuditActor {
@@ -43,21 +44,26 @@ export type AuditInput = {
  * must land with its row, use the database function that writes both.
  */
 export async function audit(input: AuditInput): Promise<void> {
-  const { error } = await supabase().rpc("append_audit_event", {
-    p_owner: input.owner,
-    p_run_id: input.runId,
-    p_actor_kind: input.actor.kind,
-    p_actor_label: input.actor.label,
-    p_action: input.action,
-    p_summary: input.summary,
-    p_details: trimDetails(input.details ?? {}),
-    p_model: input.usage?.model ?? null,
-    p_input_tokens: input.usage?.inputTokens ?? null,
-    p_output_tokens: input.usage?.outputTokens ?? null,
-    p_cost_usd: input.usage?.costUsd ?? null,
-  });
-  if (error)
-    throw new Error(`Could not write the Audit event: ${error.message}`);
+  const db = sql();
+  try {
+    await db`
+      select document_compliance.append_audit_event(
+        p_owner => ${input.owner},
+        p_run_id => ${input.runId}::uuid,
+        p_actor_kind => ${input.actor.kind},
+        p_actor_label => ${input.actor.label},
+        p_action => ${input.action},
+        p_summary => ${input.summary},
+        p_details => ${jsonb(db, trimDetails(input.details ?? {}))},
+        p_model => ${input.usage?.model ?? null}::text,
+        p_input_tokens => ${input.usage?.inputTokens ?? null}::integer,
+        p_output_tokens => ${input.usage?.outputTokens ?? null}::integer,
+        p_cost_usd => ${input.usage?.costUsd ?? null}::numeric
+      )`;
+  } catch (error) {
+    const message = error instanceof Error ? error.message : String(error);
+    throw new Error(`Could not write the Audit event: ${message}`);
+  }
 }
 
 /** Appends an event about work that stands either way: a failure is logged, not thrown. */
@@ -126,20 +132,17 @@ export async function listAuditEvents(
   } = {},
 ): Promise<AuditPage> {
   const limit = Math.min(Math.max(filter.limit ?? AUDIT_PAGE_SIZE, 1), 500);
-  let query = supabase()
-    .from("audit_events")
-    .select(
-      "id, run_id, actor_kind, actor_label, action, summary, details, model, input_tokens, output_tokens, cost_usd, created_at",
-    )
-    .eq("owner", owner)
-    .order("id", { ascending: false })
-    .limit(limit + 1);
-  if (filter.runId) query = query.eq("run_id", filter.runId);
-  if (filter.action) query = query.eq("action", filter.action);
-  if (filter.before) query = query.lt("id", filter.before);
-  const { data, error } = await query;
-  if (error) throw new Error(error.message);
-  const rows = (data ?? []) as EventRow[];
+  const db = sql();
+  const rows = await db<EventRow[]>`
+    select id, run_id, actor_kind, actor_label, action, summary, details,
+      model, input_tokens, output_tokens, cost_usd, created_at
+    from document_compliance.audit_events
+    where owner = ${owner}
+    ${filter.runId ? db`and run_id = ${filter.runId}` : db``}
+    ${filter.action ? db`and action = ${filter.action}` : db``}
+    ${filter.before ? db`and id < ${filter.before}` : db``}
+    order by id desc
+    limit ${limit + 1}`;
   const page = rows.slice(0, limit);
   return {
     events: page.flatMap((row) => eventView(row) ?? []),

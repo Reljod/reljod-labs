@@ -23,11 +23,7 @@ it.skipIf(!base)(
   "the running bank: MCP, outbox, Workflows and the clock",
   async () => {
     const owner = "e2e" as const;
-    const pool = makePool(
-      process.env.BANK_DATABASE_URL ??
-        (process.env.CLIENT_MANAGER_DATABASE_URL as string),
-      2,
-    );
+    const pool = makePool(process.env.DATABASE_URL as string, 2);
     const e2e = { "x-e2e-token": process.env.E2E_BYPASS_TOKEN ?? "" };
 
     const read = async (name: string, input: unknown = {}) => {
@@ -267,11 +263,7 @@ it.skipIf(!base)(
   "the running bank: a Teller turn",
   async () => {
     const owner = "e2e" as const;
-    const pool = makePool(
-      process.env.BANK_DATABASE_URL ??
-        (process.env.CLIENT_MANAGER_DATABASE_URL as string),
-      1,
-    );
+    const pool = makePool(process.env.DATABASE_URL as string, 1);
     const headers = {
       "x-e2e-token": process.env.E2E_BYPASS_TOKEN ?? "",
       "content-type": "application/json",

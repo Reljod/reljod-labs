@@ -18,22 +18,7 @@ import {
   type Score,
   type StopReason,
 } from "../domain/contract";
-import { supabase } from "./supabase";
-
-function rows<T>(result: {
-  data: unknown;
-  error: { message: string } | null;
-}): T {
-  if (result.error) throw new Error(result.error.message);
-  if (result.data === null || result.data === undefined) {
-    throw new Error("Query returned no data");
-  }
-  return result.data as T;
-}
-
-function ok(result: { error: { message: string } | null }) {
-  if (result.error) throw new Error(result.error.message);
-}
+import { sql } from "./db";
 
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 export const isUuid = (value: unknown): value is string =>
@@ -109,23 +94,59 @@ export async function createRun(input: {
     activePerOwner: number;
   } | null;
 }): Promise<{ runId: string } | { refusal: string }> {
-  const [row] = rows<{ run_id: string | null; refusal: string | null }[]>(
-    await supabase().rpc("create_run", {
-      p_owner: input.owner,
-      p_visitor_hash: input.visitorHash,
-      p_title: input.title.slice(0, 200),
-      p_pages: input.pages,
-      p_source: input.source,
-      p_models: input.models,
-      p_rulebook_version: input.rulebookVersion,
-      p_rulebook: input.rulebook,
-      p_per_owner_per_day: input.limits?.perOwnerPerDay ?? null,
-      p_per_visitor_per_hour: input.limits?.perVisitorPerHour ?? null,
-      p_active_per_owner: input.limits?.activePerOwner ?? null,
-    }),
-  );
+  const db = sql();
+  const [row] = await db<{ run_id: string | null; refusal: string | null }[]>`
+    select run_id, refusal from name_extraction.create_run(
+      p_owner => ${input.owner}::text,
+      p_visitor_hash => ${input.visitorHash}::text,
+      p_title => ${input.title.slice(0, 200)}::text,
+      p_pages => ${input.pages}::integer,
+      p_source => ${db.json(input.source as never)}::jsonb,
+      p_models => ${db.json(input.models as never)}::jsonb,
+      p_rulebook_version => ${input.rulebookVersion}::integer,
+      p_rulebook => ${db.json(input.rulebook as never)}::jsonb,
+      p_per_owner_per_day => ${input.limits?.perOwnerPerDay ?? null}::integer,
+      p_per_visitor_per_hour => ${input.limits?.perVisitorPerHour ?? null}::integer,
+      p_active_per_owner => ${input.limits?.activePerOwner ?? null}::integer
+    )
+  `;
   if (row?.run_id) return { runId: row.run_id };
   return { refusal: row?.refusal ?? "The run could not be started." };
+}
+
+/** The columns a patch may set on a Run: a fixed list, so no other key reaches the SQL. */
+const RUN_PATCH_COLUMNS = [
+  "status",
+  "workflow_run_id",
+  "names",
+  "score",
+  "error",
+  "ended_at",
+  "cost_usd",
+  "gate_passed",
+  "stopped_by",
+] as const;
+
+type RunPatch = Partial<Pick<RunRow, (typeof RUN_PATCH_COLUMNS)[number]>>;
+
+/**
+ * A patch as column values for `set ${db(values)}`: only the allowlisted
+ * columns, undefined keys dropped (as the Data API's JSON body dropped them),
+ * and the jsonb columns sent as JSON (an array would otherwise go as a
+ * Postgres array). A null stays SQL null, not JSON `null`.
+ */
+function runSetValues(patch: RunPatch) {
+  const db = sql();
+  const values: Record<string, unknown> = {};
+  for (const column of RUN_PATCH_COLUMNS) {
+    const value = patch[column];
+    if (value === undefined) continue;
+    values[column] =
+      (column === "names" || column === "score") && value !== null
+        ? db.json(value as never)
+        : value;
+  }
+  return values;
 }
 
 export async function updateRun(
@@ -143,7 +164,13 @@ export async function updateRun(
     >
   >,
 ) {
-  ok(await supabase().from("runs").update(patch).eq("id", runId));
+  const values = runSetValues(patch);
+  if (Object.keys(values).length === 0) return;
+  const db = sql();
+  await db`
+    update name_extraction.runs set ${db(values as never)}
+    where id = ${runId}
+  `;
 }
 
 /**
@@ -166,23 +193,25 @@ export async function endRunIfGoing(
     >
   >,
 ): Promise<boolean> {
-  const ended = rows<{ id: string }[]>(
-    await supabase()
-      .from("runs")
-      .update({ ...patch, ended_at: new Date().toISOString() })
-      .eq("id", runId)
-      .in("status", ["queued", "running"])
-      .select("id"),
-  );
+  const db = sql();
+  const values = runSetValues({
+    ...patch,
+    ended_at: new Date().toISOString(),
+  });
+  const ended = await db<{ id: string }[]>`
+    update name_extraction.runs set ${db(values as never)}
+    where id = ${runId} and status in ('queued', 'running')
+    returning id
+  `;
   return ended.length > 0;
 }
 
 /** A Run by id, with no Owner check: for the workflow and the stream only. */
 export async function getRunRow(runId: string): Promise<RunRow | null> {
   if (!isUuid(runId)) return null;
-  const [run] = rows<RunRow[]>(
-    await supabase().from("runs").select("*").eq("id", runId).limit(1),
-  );
+  const [run] = await sql()<RunRow[]>`
+    select * from name_extraction.runs where id = ${runId} limit 1
+  `;
   return run ?? null;
 }
 
@@ -192,33 +221,30 @@ export async function ownedRun(
   runId: string,
 ): Promise<RunRow | null> {
   if (!isUuid(runId)) return null;
-  const [run] = rows<RunRow[]>(
-    await supabase()
-      .from("runs")
-      .select("*")
-      .eq("id", runId)
-      .eq("owner", owner)
-      .limit(1),
-  );
+  const [run] = await sql()<RunRow[]>`
+    select * from name_extraction.runs
+    where id = ${runId} and owner = ${owner}
+    limit 1
+  `;
   return run ?? null;
 }
 
 export async function runsOf(owner: Owner, limit = 50): Promise<RunRow[]> {
-  return rows<RunRow[]>(
-    await supabase()
-      .from("runs")
-      .select("*")
-      .eq("owner", owner)
-      .order("started_at", { ascending: false })
-      .limit(limit),
-  );
+  return [
+    ...(await sql()<RunRow[]>`
+      select * from name_extraction.runs
+      where owner = ${owner}
+      order by started_at desc
+      limit ${limit}
+    `),
+  ];
 }
 
 /** Whether a Run was stopped: the workflow checks it between turns. */
 export async function runStatus(runId: string): Promise<RunStatus | null> {
-  const [row] = rows<{ status: RunStatus }[]>(
-    await supabase().from("runs").select("status").eq("id", runId).limit(1),
-  );
+  const [row] = await sql()<{ status: RunStatus }[]>`
+    select status from name_extraction.runs where id = ${runId} limit 1
+  `;
   return row?.status ?? null;
 }
 
@@ -247,18 +273,18 @@ export async function insertEvents(
   events: (RunEventInput & { at?: number })[],
 ) {
   if (events.length === 0) return;
-  ok(
-    await supabase()
-      .from("run_events")
-      .insert(
-        events.map(({ type, at, ...payload }) => ({
-          run_id: runId,
-          type,
-          at: new Date(at ?? Date.now()).toISOString(),
-          payload,
-        })),
-      ),
-  );
+  const db = sql();
+  // One multi-row insert: the rows take their seqs in this order.
+  const values = events.map(({ type, at, ...payload }) => ({
+    run_id: runId,
+    type,
+    at: new Date(at ?? Date.now()).toISOString(),
+    payload: db.json(payload as never),
+  }));
+  await db`
+    insert into name_extraction.run_events
+    ${db(values as never, "run_id", "type", "at", "payload")}
+  `;
 }
 
 /** A Run's events after a cursor, in order. */
@@ -267,18 +293,16 @@ export async function eventsAfter(
   afterSeq: number,
   limit = 500,
 ): Promise<StoredEvent[]> {
-  return rows<EventRow[]>(
-    await supabase()
-      .from("run_events")
-      .select("seq, at, type, payload")
-      .eq("run_id", runId)
-      .gt("seq", afterSeq)
-      .order("seq", { ascending: true })
-      .limit(limit),
-  ).map(toEvent);
+  const page = await sql()<EventRow[]>`
+    select seq, at, type, payload from name_extraction.run_events
+    where run_id = ${runId} and seq > ${afterSeq}
+    order by seq asc
+    limit ${limit}
+  `;
+  return page.map(toEvent);
 }
 
-/** Every event of a Run, in pages of 1000 (the Data API's cap per request). */
+/** Every event of a Run, in pages of 1000 (keeps each read bounded). */
 export async function allEvents(runId: string, max = 20_000) {
   const events: StoredEvent[] = [];
   let after = 0;
@@ -295,15 +319,12 @@ export async function allEvents(runId: string, max = 20_000) {
 export async function latestNames(
   runId: string,
 ): Promise<ExtractedName[] | null> {
-  const [row] = rows<EventRow[]>(
-    await supabase()
-      .from("run_events")
-      .select("seq, at, type, payload")
-      .eq("run_id", runId)
-      .eq("type", "names")
-      .order("seq", { ascending: false })
-      .limit(1),
-  );
+  const [row] = await sql()<EventRow[]>`
+    select seq, at, type, payload from name_extraction.run_events
+    where run_id = ${runId} and type = 'names'
+    order by seq desc
+    limit 1
+  `;
   if (!row) return null;
   const event = toEvent(row);
   return event.type === "names" && Array.isArray(event.names)
@@ -323,27 +344,28 @@ export async function recordModelCall(input: {
   costUsd: number;
   latencyMs: number;
 }) {
-  ok(
-    await supabase()
-      .from("model_calls")
-      .insert({
-        run_id: input.runId,
-        purpose: input.purpose,
-        model: input.model,
-        input_tokens: Math.max(0, Math.round(input.inputTokens)),
-        output_tokens: Math.max(0, Math.round(input.outputTokens)),
-        cached_input_tokens: Math.max(0, Math.round(input.cachedInputTokens)),
-        cost_usd: Math.max(0, input.costUsd),
-        latency_ms: Math.max(0, Math.round(input.latencyMs)),
-      }),
-  );
+  await sql()`
+    insert into name_extraction.model_calls (
+      run_id, purpose, model, input_tokens, output_tokens,
+      cached_input_tokens, cost_usd, latency_ms
+    ) values (
+      ${input.runId},
+      ${input.purpose},
+      ${input.model},
+      ${Math.max(0, Math.round(input.inputTokens))},
+      ${Math.max(0, Math.round(input.outputTokens))},
+      ${Math.max(0, Math.round(input.cachedInputTokens))},
+      ${Math.max(0, input.costUsd)},
+      ${Math.max(0, Math.round(input.latencyMs))}
+    )
+  `;
 }
 
 /** What a Run's model calls cost so far, in USD. */
 export async function runSpend(runId: string) {
-  const calls = rows<{ cost_usd: string | number }[]>(
-    await supabase().from("model_calls").select("cost_usd").eq("run_id", runId),
-  );
+  const calls = await sql()<{ cost_usd: string | number }[]>`
+    select cost_usd from name_extraction.model_calls where run_id = ${runId}
+  `;
   return calls.reduce((sum, call) => sum + (Number(call.cost_usd) || 0), 0);
 }
 
@@ -376,14 +398,12 @@ function toVersion(row: RulebookRow): RulebookVersion | null {
 
 /** The Owner's current Rulebook: their latest version, or the default (version 0). */
 export async function currentRulebook(owner: Owner): Promise<RulebookVersion> {
-  const [row] = rows<RulebookRow[]>(
-    await supabase()
-      .from("rulebooks")
-      .select("version, rulebook, note, created_at")
-      .eq("owner", owner)
-      .order("version", { ascending: false })
-      .limit(1),
-  );
+  const [row] = await sql()<RulebookRow[]>`
+    select version, rulebook, note, created_at from name_extraction.rulebooks
+    where owner = ${owner}
+    order by version desc
+    limit 1
+  `;
   return (row && toVersion(row)) ?? DEFAULT_VERSION;
 }
 
@@ -392,14 +412,12 @@ export async function rulebookVersions(
   owner: Owner,
   limit = 100,
 ): Promise<RulebookVersion[]> {
-  const saved = rows<RulebookRow[]>(
-    await supabase()
-      .from("rulebooks")
-      .select("version, rulebook, note, created_at")
-      .eq("owner", owner)
-      .order("version", { ascending: false })
-      .limit(limit),
-  );
+  const saved = await sql()<RulebookRow[]>`
+    select version, rulebook, note, created_at from name_extraction.rulebooks
+    where owner = ${owner}
+    order by version desc
+    limit ${limit}
+  `;
   return [...saved.flatMap((row) => toVersion(row) ?? []), DEFAULT_VERSION];
 }
 
@@ -414,14 +432,15 @@ export async function insertRulebook(
   note: string | null,
   perOwnerPerDay: number | null,
 ): Promise<{ version: number } | { refusal: string }> {
-  const [row] = rows<{ version: number | null; refusal: string | null }[]>(
-    await supabase().rpc("save_rulebook", {
-      p_owner: owner,
-      p_rulebook: rulebook,
-      p_note: note,
-      p_per_owner_per_day: perOwnerPerDay,
-    }),
-  );
+  const db = sql();
+  const [row] = await db<{ version: number | null; refusal: string | null }[]>`
+    select version, refusal from name_extraction.save_rulebook(
+      p_owner => ${owner}::text,
+      p_rulebook => ${db.json(rulebook as never)}::jsonb,
+      p_note => ${note}::text,
+      p_per_owner_per_day => ${perOwnerPerDay}::integer
+    )
+  `;
   if (row?.version) return { version: row.version };
   return { refusal: row?.refusal ?? "The Rulebook could not be saved." };
 }
@@ -444,15 +463,13 @@ export async function insertUpload(input: {
   pages: number;
   storagePath: string;
 }) {
-  ok(
-    await supabase().from("uploads").insert({
-      id: input.id,
-      owner: input.owner,
-      title: input.title,
-      pages: input.pages,
-      storage_path: input.storagePath,
-    }),
-  );
+  await sql()`
+    insert into name_extraction.uploads (id, owner, title, pages, storage_path)
+    values (
+      ${input.id}, ${input.owner}, ${input.title}, ${input.pages},
+      ${input.storagePath}
+    )
+  `;
 }
 
 export async function ownedUpload(
@@ -460,32 +477,27 @@ export async function ownedUpload(
   uploadId: string,
 ): Promise<UploadRow | null> {
   if (!isUuid(uploadId)) return null;
-  const [row] = rows<UploadRow[]>(
-    await supabase()
-      .from("uploads")
-      .select("*")
-      .eq("id", uploadId)
-      .eq("owner", owner)
-      .limit(1),
-  );
+  const [row] = await sql()<UploadRow[]>`
+    select * from name_extraction.uploads
+    where id = ${uploadId} and owner = ${owner}
+    limit 1
+  `;
   return row ?? null;
 }
 
 /** An Upload by id with no Owner check: for the workflow, which got the id from an owned Run. */
 export async function getUpload(uploadId: string): Promise<UploadRow | null> {
   if (!isUuid(uploadId)) return null;
-  const [row] = rows<UploadRow[]>(
-    await supabase().from("uploads").select("*").eq("id", uploadId).limit(1),
-  );
+  const [row] = await sql()<UploadRow[]>`
+    select * from name_extraction.uploads where id = ${uploadId} limit 1
+  `;
   return row ?? null;
 }
 
 export async function countUploadsSince(owner: Owner, since: Date) {
-  const { count, error } = await supabase()
-    .from("uploads")
-    .select("id", { count: "exact", head: true })
-    .eq("owner", owner)
-    .gte("created_at", since.toISOString());
-  if (error) throw new Error(error.message);
-  return count ?? 0;
+  const [row] = await sql()<{ count: number }[]>`
+    select count(*)::int as count from name_extraction.uploads
+    where owner = ${owner} and created_at >= ${since.toISOString()}::timestamptz
+  `;
+  return row?.count ?? 0;
 }

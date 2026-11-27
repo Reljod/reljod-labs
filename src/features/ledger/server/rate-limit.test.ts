@@ -2,18 +2,26 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import { LIMITS, limitMessage } from "../domain/limits";
 
 const state = vi.hoisted(() => ({
-  calls: [] as { fn: string; args: Record<string, unknown> }[],
+  calls: [] as { text: string; args: Record<string, unknown> }[],
   reply: { data: null as unknown, error: null as null | { message: string } },
 }));
 
+/* A stand-in for the postgres.js tagged template: it reads each named
+   argument (`p_x => $n`) off the statement and answers with `state.reply`. */
 vi.mock("server-only", () => ({}));
-vi.mock("./supabase", () => ({
-  supabase: () => ({
-    rpc: async (fn: string, args: Record<string, unknown>) => {
-      state.calls.push({ fn, args });
-      return state.reply;
+vi.mock("./db", () => ({
+  sql:
+    () =>
+    async (strings: TemplateStringsArray, ...values: unknown[]) => {
+      const args: Record<string, unknown> = {};
+      values.forEach((value, i) => {
+        const name = /(p_\w+) => $/.exec(strings[i] ?? "")?.[1];
+        if (name) args[name] = value;
+      });
+      state.calls.push({ text: strings.join("$"), args });
+      if (state.reply.error) throw new Error(state.reply.error.message);
+      return [{ refusal: state.reply.data }];
     },
-  }),
 }));
 
 const { rateLimitMessage, takeBuildRate } = await import("./rate-limit");
@@ -35,7 +43,7 @@ describe("takeBuildRate", () => {
     await expect(takeBuildRate(visitor)).resolves.toBeNull();
     expect(state.calls).toEqual([
       {
-        fn: "take_rate_hit",
+        text: expect.stringContaining("ledger.take_rate_hit("),
         args: {
           p_visitor_hash: "visitor-hash",
           p_per_hour: LIMITS.buildsPerVisitorPerHour,
