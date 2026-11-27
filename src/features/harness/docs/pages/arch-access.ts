@@ -14,7 +14,7 @@ export const page: DocPage = {
 The Harness calls a paid model, so §/demos/harness§ and §/api/harness/*§ open only to a **Host** (a Supabase Auth account) or a **Guest** on a live Guest pass. Two gates are both required:
 
 1. The **proxy** turns visitors away before a page or route runs.
-2. Every route handler and server function calls the Access gate itself (§requireStaff()§ or §staffOrDenied()§), because a server action can be posted to any page.
+2. Every route passes the Access gate itself (§withOwner()§ and §withStaff()§ in its stack, §signedIn()§ in a page), and the MCP server checks its own token.
 
 A Guest is an anonymous Auth user. Anyone can become one, so an Auth session alone grants nothing. Access comes from a row binding the user to a live Guest pass.
 

@@ -2,8 +2,8 @@ import type { Role, Staff } from "./staff";
 
 /**
  * Everything a Role can be asked about. `can()` is the one place Roles are
- * decided (ADR 0014); every server function that writes calls it, through
- * `requirePermission()`.
+ * decided (ADR 0014): the REST policy `permits()`, the services' `assertCan()`
+ * and the MCP tools all ask it, through `refusalFor()`.
  */
 export const ACTIONS = [
   "session.create",

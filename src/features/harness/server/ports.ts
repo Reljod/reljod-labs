@@ -2,6 +2,7 @@ import type { Owner } from "@/features/access/domain/owner";
 import type { Access } from "@/features/access/server/gate";
 import type { RateLimiter } from "@/platform/rate/limiter";
 import type { Visitor } from "@/platform/request/visitor";
+import type { Attachment } from "../domain/attachments";
 import type {
   ActorKind,
   AuditAction,
@@ -152,7 +153,7 @@ export interface SessionRepository {
   attachments(owner: Owner, sessionId: string): Promise<Attachment[]>;
 }
 
-export type Attachment = import("../domain/attachments").Attachment;
+export type { Attachment };
 
 // Chat ---------------------------------------------------------------------------------
 

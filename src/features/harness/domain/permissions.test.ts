@@ -4,11 +4,25 @@ import {
   approvalRefusal,
   can,
   canDecideApproval,
+  refusalFor,
   roleNeeded,
 } from "./permissions";
 
 const user = { id: "u1", role: "user" as const };
 const admin = { id: "a1", role: "admin" as const };
+
+describe("refusalFor (the 403 every entry point answers)", () => {
+  it("refuses exactly what can() refuses, naming the Role it needs", () => {
+    for (const action of ACTIONS) {
+      for (const staff of [user, admin]) {
+        expect(refusalFor(staff, action) === null).toBe(can(staff, action));
+      }
+    }
+    expect(refusalFor(user, "rule.edit")).toBe(
+      "Only an admin may edit Rules. Switch Staff to try it.",
+    );
+  });
+});
 
 describe("can", () => {
   it("lets an admin do everything", () => {

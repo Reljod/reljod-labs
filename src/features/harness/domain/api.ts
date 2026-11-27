@@ -26,7 +26,8 @@ import type { Staff } from "./staff";
  * calls them only through `components/api.ts`.
  *
  * Every route passes the Access gate and resolves the Staff member with
- * `staffOrDenied()` (or `requirePermission()` for a write). Errors are JSON
+ * `withStaff()` (`server/api.ts`), and a write checks the Role with
+ * `authorize(permits(action))`. Errors are JSON
  * `{ error: string }` with 400 (bad request), 401 (no Access), 403 (the Role
  * may not), 404, 409 (wrong state) or 429 (a limit).
  */
