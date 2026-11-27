@@ -14,8 +14,10 @@ try {
 
 const externalBaseUrl = process.env.E2E_BASE_URL;
 const recording = process.env.E2E_RECORD === "1";
-// Its own port, so a dev server you already have on 3000 is never mistaken for this one.
-const localUrl = "http://localhost:3100";
+// Its own port, so a dev server you already have on 3000 is never mistaken for
+// this one. `E2E_PORT` gives parallel worktrees one each.
+const port = process.env.E2E_PORT ?? "3100";
+const localUrl = `http://localhost:${port}`;
 
 export default defineConfig({
   testDir: "e2e",
@@ -52,8 +54,8 @@ export default defineConfig({
     : {
         command:
           process.env.CI || process.env.E2E_SERVER === "prod"
-            ? "pnpm build && pnpm start --port 3100"
-            : "pnpm dev --port 3100",
+            ? `pnpm build && pnpm start --port ${port}`
+            : `pnpm dev --port ${port}`,
         url: localUrl,
         reuseExistingServer: false,
         timeout: 300_000,
