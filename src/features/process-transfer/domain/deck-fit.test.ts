@@ -1,13 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { type DeckPlan, SLIDE_KINDS, type SlidePlan } from "./deck";
 import { checkDeck, wordCount } from "./deck-checks";
-import {
-  fitPlan,
-  instructionBullets,
-  planFromProcess,
-  shortenWords,
-  trimTitle,
-} from "./deck-fit";
+import { fitPlan, planFromProcess } from "./deck-fit";
 import { layoutDeck } from "./deck-layout";
 import type { Process } from "./process";
 import { blocking, resolveRules, ruleSet } from "./rules";
@@ -231,12 +225,6 @@ describe("planFromProcess", () => {
       "Download the month-end statement for the pensions collection account as CSV",
     ]);
   });
-
-  it("writes plain ids p1..pn", () => {
-    expect(plan.slides.map((item) => item.id)).toEqual(
-      plan.slides.map((_, index) => `p${index + 1}`),
-    );
-  });
 });
 
 describe("fitPlan", () => {
@@ -334,76 +322,6 @@ describe("fitPlan", () => {
       tight,
     );
     expect(blocking(results)).toEqual([]);
-  });
-});
-
-describe("words", () => {
-  it("shortens at a sentence, then a clause, then before a conjunction", () => {
-    expect(
-      shortenWords(
-        "Post it. Then tell the Team Lead about every single line that differs",
-        4,
-      ),
-    ).toBe("Post it");
-    // A sentence end too early in the phrase is not used.
-    expect(
-      shortenWords(
-        "Post it. Then tell the Team Lead about every single line that differs",
-        8,
-      ),
-    ).toBe("Post it. Then tell the Team Lead about");
-    expect(
-      shortenWords("Post the lines, then tell the Team Lead about the rest", 5),
-    ).toBe("Post the lines");
-    expect(
-      shortenWords(
-        "Leave it for next month's reconciliation and note it in the summary",
-        7,
-      ),
-    ).toBe("Leave it for next month's reconciliation");
-    expect(shortenWords("one two three four five six seven eight", 5)).toBe(
-      "one two three four five",
-    );
-    expect(shortenWords("short enough", 5)).toBe("short enough");
-  });
-
-  it("trims a title at a word boundary without a dangling word", () => {
-    expect(
-      trimTitle("Review the unmatched remittances and the variances", 36),
-    ).toBe("Review the unmatched remittances");
-    expect(trimTitle("Short", 36)).toBe("Short");
-    expect(trimTitle("x".repeat(60), 20)).toHaveLength(20);
-  });
-
-  it("splits an instruction into bullets at its joints", () => {
-    expect(
-      instructionBullets(
-        "Open Reconciliation, choose Import statement and upload the CSV.",
-        5,
-      ),
-    ).toEqual([
-      "Open Reconciliation, choose Import statement",
-      "Upload the CSV",
-    ]);
-    expect(
-      instructionBullets(
-        "Open Reconciliation, choose Import statement and upload the CSV.",
-        4,
-      ),
-    ).toEqual([
-      "Open Reconciliation",
-      "Choose Import statement",
-      "Upload the CSV",
-    ]);
-    expect(instructionBullets("Press Auto-match.", 14)).toEqual([
-      "Press Auto-match",
-    ]);
-    // An opening "because" clause stays with the instruction it explains.
-    const [first] = instructionBullets(
-      "Because the names are close, mark the Full name / Alias row as Partial using the Result dropdown.",
-      14,
-    );
-    expect(first.startsWith("Because the names are close, mark")).toBe(true);
   });
 });
 

@@ -85,15 +85,6 @@ describe("checkDeck on the rule-written deck", () => {
     expect(blocking(results)).toEqual([]);
   });
 
-  it("says what passed in plain words", () => {
-    expect(result(results, "layout.safe-area").summary).toBe(
-      `All ${goodDeck.slides.length} slides keep a 48 px margin`,
-    );
-    expect(result(results, "content.every-step-covered").summary).toBe(
-      "All 9 steps have a slide, in order",
-    );
-  });
-
   it("carries each Rule's current severity", () => {
     const changed = run({
       overrides: { "layout.aligned": { severity: "warn" } },

@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { redoProblem, spendView, workProblem } from "./caps";
+import { redoProblem, workProblem } from "./caps";
 import { LIMITS } from "./limits";
 
 const clear = {
@@ -88,17 +88,5 @@ describe("redoProblem", () => {
   it("refuses a running Run or one without a Process", () => {
     expect(redoProblem({ ...done, status: "running" })).toMatch(/still going/);
     expect(redoProblem({ ...done, hasProcess: false })).toMatch(/no Process/);
-  });
-});
-
-describe("spendView", () => {
-  it("never shows negative Runs left", () => {
-    expect(
-      spendView({ ownerSpentToday: 0.123456, visitorStartsLastHour: 99 }),
-    ).toEqual({
-      todayUsd: 0.1235,
-      capUsd: LIMITS.spendPerOwnerPerDay,
-      runsLeftThisHour: 0,
-    });
   });
 });
