@@ -58,6 +58,37 @@ const n = (params: Params, key: string) => Number(params[key] ?? 0);
 const money = (params: Params, key: string) => formatMoney(n(params, key));
 const flag = (params: Params, key: string) => params[key] === true;
 
+/**
+ * The Default blocked topics of the Growth Rule. They are also a floor no
+ * Owner can lower: a Version can add words, never remove these
+ * (`growthBlockedWords` in `checks.ts`), because the Rule is per Owner and
+ * anyone on a Guest pass can be a supervisor of their own bank.
+ */
+export const GROWTH_BLOCKED_FLOOR = [
+  "password",
+  "secret",
+  "token",
+  "api key",
+  "credential",
+  "auth",
+  "login",
+  "env",
+  "ci",
+  "workflow file",
+  "github action",
+  "other demo",
+  "harness",
+  "sieve",
+  "casework",
+  "ignore previous",
+  "system prompt",
+] as const;
+
+/** The floor and an Owner's own words, without repeats. */
+export function withGrowthFloor(blocked: readonly string[]): string[] {
+  return [...new Set([...GROWTH_BLOCKED_FLOOR, ...blocked])];
+}
+
 export const RULES = [
   {
     id: "limits.payments",
@@ -500,31 +531,17 @@ export const RULES = [
     group: "Growth",
     title: "What the bank may learn",
     sentence: (p) =>
-      `A request to grow the bank is filed only if it is about this bank demo and mentions none of: ${(p.blocked as string[]).join(", ")}. ${flag(p, "bugs") ? "Bugs" : "Only features"}${flag(p, "bugs") ? " and features are" : " are"} accepted.`,
+      `A request to grow the bank is filed only if it is about this bank demo and mentions none of: ${withGrowthFloor(p.blocked as string[]).join(", ")}. ${flag(p, "bugs") ? "Bugs" : "Only features"}${flag(p, "bugs") ? " and features are" : " are"} accepted.`,
     params: [
-      { key: "blocked", label: "Blocked topics", kind: "words" },
+      {
+        key: "blocked",
+        label: "Blocked topics (added to the Defaults, which always apply)",
+        kind: "words",
+      },
       { key: "bugs", label: "Accept bug reports", kind: "flag" },
     ],
     defaults: {
-      blocked: [
-        "password",
-        "secret",
-        "token",
-        "api key",
-        "credential",
-        "auth",
-        "login",
-        "env",
-        "ci",
-        "workflow file",
-        "github action",
-        "other demo",
-        "harness",
-        "sieve",
-        "casework",
-        "ignore previous",
-        "system prompt",
-      ],
+      blocked: [...GROWTH_BLOCKED_FLOOR],
       bugs: true,
     },
     required: true,
