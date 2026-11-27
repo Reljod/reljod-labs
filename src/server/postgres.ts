@@ -91,9 +91,9 @@ export function db(): Pool {
 }
 
 /** Process-wide, so pools built in any bundle chunk (the proxy's too) add to one count. */
-const counter = ((
-  globalThis as { __labsDbStatements?: { n: number } }
-).__labsDbStatements ??= { n: 0 });
+const scope = globalThis as { __labsDbStatements?: { n: number } };
+scope.__labsDbStatements ??= { n: 0 };
+const counter = scope.__labsDbStatements;
 
 /**
  * Statement counts for the benchmark (`scripts/bench-api.mts`), on only with
