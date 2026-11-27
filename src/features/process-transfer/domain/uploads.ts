@@ -151,9 +151,10 @@ type Boxes = {
   fragmented: boolean;
 };
 
-/** The boxes of an MP4 or MOV that declare how long it is, or null when it has no `moov`. */
+/** How deep `readBoxes` walks; a real MP4 nests five levels. */
 const MAX_BOX_DEPTH = 8;
 
+/** The boxes of an MP4 or MOV that declare how long it is, or null when it has no `moov`. */
 function readBoxes(bytes: Uint8Array): Boxes | null {
   const view = new DataView(bytes.buffer, bytes.byteOffset, bytes.byteLength);
   const type = (at: number) =>

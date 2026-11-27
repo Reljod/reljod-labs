@@ -117,6 +117,13 @@ describe("the Growth guard's content checks", () => {
           "docs/demos/bank.md",
           hunk("+Goals live in `bank.goals`; see casework.md for the pattern."),
         ),
+        patched(
+          "src/features/bank/core/goals.ts",
+          hunk(
+            "+// We process the request, then the process ends with a note.",
+            '+const label = "Process a goal";',
+          ),
+        ),
       ]),
     ).toEqual([]);
   });
@@ -235,6 +242,11 @@ describe("the Growth guard's content checks", () => {
       hunk('+import { env } from "node:process";'),
     ],
     ["src/features/bank/server/llm.ts", hunk('+import { env } from "./env";')],
+    [
+      "src/features/bank/server/llm.ts",
+      hunk('+import { env } from "process";'),
+    ],
+    ["src/features/bank/server/llm.ts", hunk("+const key = process?.env.X;")],
     [
       "src/features/bank/core/reads.ts",
       hunk("++  await tx`select * from auth.users`;"),

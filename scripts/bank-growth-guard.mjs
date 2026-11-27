@@ -158,8 +158,13 @@ const SEARCH_PATH =
   /\bset\s+(?:local\s+|session\s+)?(?:search_path\b(?!\s*(?:=|to)\s*''(?=\s|;|,|$))|role\b)/i;
 const CREATE_SCHEMA = /\bcreate\s+schema\b/i;
 const OWNER_PREDICATE = /\bowner\s*(?:=|:)/gi;
+/**
+ * Reading the environment: `process` used as a value (`process.env`,
+ * `process["env"]`, `= process`, `(process)`), `node:process`, other
+ * runtimes' env and an import of an env module. Not the word in prose.
+ */
 const ENV_READ =
-  /\bprocess\b|\bnode:process\b|\bimport\s*\.\s*meta\s*\.\s*env\b|\bDeno\s*\.\s*env\b|\bBun\s*\.\s*env\b|\b(?:from|import|require)\s*\(?\s*["'][^"']*\/env(?:\.[a-z]+)?["']/;
+  /\bprocess\s*(?:\?\.|[.[])|[=(,]\s*process\b|\bnode:process\b|\bglobalThis\s*\.\s*process\b|["']process["']|\bimport\s*\.\s*meta\s*\.\s*env\b|\bDeno\s*\.\s*env\b|\bBun\s*\.\s*env\b|\b(?:from|import|require)\s*\(?\s*["'][^"']*\/env(?:\.[a-z]+)?["']/;
 const ENV_FILE = /(^|\/)\.env(\.|$)|(^|\/)env\.(ts|tsx|js|mjs|cjs)$/;
 const TEXT_SOURCE = /\.(ts|tsx|js|jsx|mjs|cjs|sql|json|md|yml|yaml|sh)$/;
 
