@@ -2,6 +2,7 @@ import "server-only";
 import { getWritable } from "workflow";
 import type { CheckResult } from "../domain/rules";
 import type { RunEvent, RunEventInput, RunLog, RunPatch } from "../domain/run";
+import type { RunFeed } from "./ports";
 import { appendLogs, patchRun } from "./repository";
 
 /** Which Run, and which pass of its pipeline (0, or the Redo it belongs to). */
@@ -44,14 +45,10 @@ export async function publish(
   return true;
 }
 
-export function log(
-  text: string,
-  level: RunLog["level"] = "info",
-): RunEventInput {
-  return { type: "log", level, text };
-}
-
 /** Ends the stream. The last thing a Run's workflow does. */
 export async function closeStream() {
   await getWritable<RunEvent>().close();
 }
+
+/** The live feed of the step it is called from: the row and the workflow's stream. */
+export const runFeed: RunFeed = { publish, close: closeStream };

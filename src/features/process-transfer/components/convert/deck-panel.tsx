@@ -8,7 +8,7 @@ import {
   isOver,
   type RunView,
 } from "../../domain/run";
-import { redoDeck } from "../../server/actions";
+import { redoDeck } from "../api";
 import { ConfirmDialog } from "../confirm-dialog";
 import { DeckPlayer } from "../deck/slide-view";
 import {
@@ -506,7 +506,7 @@ function RedoBox({
     try {
       const result = await redoDeck(run.id);
       if (result.ok) {
-        onRedone(result.runId);
+        onRedone(result.value);
         return { done: "The Redo has started." };
       }
       setError(result.error);

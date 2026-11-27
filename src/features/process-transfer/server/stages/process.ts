@@ -12,6 +12,7 @@ import {
 } from "../../domain/rules";
 import { RunError } from "../errors";
 import { generate, type RunContext } from "../llm";
+import type { Verified } from "../ports";
 import {
   extractInstructions,
   extractPrompt,
@@ -74,7 +75,7 @@ async function ground(
   return review.findings.slice(0, 30);
 }
 
-function allChecks(
+export function allChecks(
   process: Process,
   watch: Watch,
   rules: RuleSet,
@@ -87,14 +88,6 @@ function allChecks(
       : groundedCheck(findings, rules.get("process.grounded"));
   return grounded ? [...checks, grounded] : checks;
 }
-
-export type Verified = {
-  process: Process;
-  checks: CheckResult[];
-  /** The reviewer's findings before any repair. */
-  findings: ReviewFinding[];
-  repaired: boolean;
-};
 
 /**
  * The Verify stage: Process Rules, then the Review model grounds every step

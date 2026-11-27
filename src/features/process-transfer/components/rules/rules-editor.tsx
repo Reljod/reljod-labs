@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { RULE_GROUPS, type Rule, type RuleGroup } from "../../domain/rules";
-import { resetRules } from "../../server/actions";
+import { resetRules } from "../api";
 import { ConfirmDialog } from "../confirm-dialog";
 import { plural } from "../format";
 import { quietButtonClass } from "../ui";
@@ -19,7 +19,7 @@ export function RulesEditor({
 }: {
   rules: Rule[];
   rulesVersion: number;
-  onSaved: (saved: Omit<SavedRules, "ok">) => void;
+  onSaved: (saved: SavedRules) => void;
 }) {
   const [confirming, setConfirming] = useState(false);
   const [opened, setOpened] = useState(0);
@@ -104,9 +104,9 @@ export function RulesEditor({
           onConfirm={async () => {
             const result = await resetRules();
             if (!result.ok) return { error: result.error };
-            onSaved(result);
+            onSaved(result.value);
             return {
-              done: `Every Rule is back to its default. Rules are now version ${result.rulesVersion}.`,
+              done: `Every Rule is back to its default. Rules are now version ${result.value.rulesVersion}.`,
             };
           }}
         >
