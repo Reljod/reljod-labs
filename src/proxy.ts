@@ -112,6 +112,7 @@ export const config = {
     "/api/prism/:path*",
     "/api/helio/:path*",
     "/api/floorwalk/:path*",
+    "/api/ledger/:path*",
     // The door's own routes pass for everyone (`decide`); the rest are a Host's.
     "/api/access/:path*",
     "/access/:path*",

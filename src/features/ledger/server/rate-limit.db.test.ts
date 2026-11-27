@@ -1,7 +1,7 @@
 import { randomUUID } from "node:crypto";
 import { afterAll, beforeAll, describe, expect, it, vi } from "vitest";
-import { LIMITS, limitMessage } from "../domain/limits";
-import type { Visitor } from "./visitor";
+import type { Visitor } from "@/platform/request/visitor";
+import { LIMITS } from "../domain/limits";
 
 /**
  * Ledger's rate limit against the real `ledger.take_rate_hit`. Skipped unless
@@ -16,19 +16,17 @@ vi.mock("server-only", () => ({}));
 const PREFIX = `ledger-rate-db-test-${randomUUID()}`;
 const fresh = (): Visitor => ({
   hash: `${PREFIX}-${randomUUID()}`,
-  limited: true,
-  stubbed: false,
-  forceLimit: false,
+  trusted: false,
 });
 
 describe.skipIf(!url)("Ledger's rate limit, on Postgres", () => {
-  let rate: typeof import("./rate-limit");
-  let sql: typeof import("./db").sql;
+  let rate: typeof import("./rate-limit").buildRate;
+  let sql: typeof import("@/server/postgres").db;
 
   beforeAll(async () => {
     process.env.DATABASE_URL = url;
-    rate = await import("./rate-limit");
-    ({ sql } = await import("./db"));
+    ({ buildRate: rate } = await import("./rate-limit"));
+    ({ db: sql } = await import("@/server/postgres"));
   });
 
   afterAll(async () => {
@@ -45,26 +43,26 @@ describe.skipIf(!url)("Ledger's rate limit, on Postgres", () => {
     return row?.n ?? 0;
   };
 
-  it("lets a visitor take the hourly allowance, then refuses with the visitor message", async () => {
+  it("lets a visitor take the hourly allowance, then refuses for the visitor", async () => {
     const visitor = fresh();
     for (let i = 0; i < LIMITS.buildsPerVisitorPerHour; i++) {
-      expect(await rate.takeBuildRate(visitor)).toBeNull();
+      expect(await rate.take(visitor)).toBeNull();
     }
     expect(await hits(visitor)).toBe(LIMITS.buildsPerVisitorPerHour);
-    expect(await rate.takeBuildRate(visitor)).toBe(limitMessage("visitor"));
-    expect(await rate.rateLimitMessage(visitor)).toBe(limitMessage("visitor"));
+    expect(await rate.take(visitor)).toBe("visitor");
+    expect(await rate.peek(visitor)).toBe("visitor");
     // A refusal records nothing.
     expect(await hits(visitor)).toBe(LIMITS.buildsPerVisitorPerHour);
     // Another visitor is not held up by this one.
-    expect(await rate.rateLimitMessage(fresh())).toBeNull();
+    expect(await rate.peek(fresh())).toBeNull();
   });
 
   it("peeks without recording a hit", async () => {
     const visitor = fresh();
-    expect(await rate.rateLimitMessage(visitor)).toBeNull();
-    expect(await rate.rateLimitMessage(visitor)).toBeNull();
+    expect(await rate.peek(visitor)).toBeNull();
+    expect(await rate.peek(visitor)).toBeNull();
     expect(await hits(visitor)).toBe(0);
-    expect(await rate.takeBuildRate(visitor)).toBeNull();
+    expect(await rate.take(visitor)).toBeNull();
     expect(await hits(visitor)).toBe(1);
   });
 
@@ -89,12 +87,9 @@ describe.skipIf(!url)("Ledger's rate limit, on Postgres", () => {
     expect(await hits(visitor)).toBe(3);
   });
 
-  it("never touches the database for an unlimited or force-limited visitor", async () => {
-    const unlimited = { ...fresh(), limited: false };
-    expect(await rate.takeBuildRate(unlimited)).toBeNull();
-    expect(await hits(unlimited)).toBe(0);
-    const forced = { ...fresh(), forceLimit: true };
-    expect(await rate.takeBuildRate(forced)).toBe(limitMessage("visitor"));
-    expect(await hits(forced)).toBe(0);
+  it("never touches the database for the e2e suite", async () => {
+    const trusted = { ...fresh(), trusted: true };
+    expect(await rate.take(trusted)).toBeNull();
+    expect(await hits(trusted)).toBe(0);
   });
 });
