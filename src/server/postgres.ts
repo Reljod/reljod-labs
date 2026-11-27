@@ -90,22 +90,27 @@ export function db(): Pool {
   return shared;
 }
 
+/** Process-wide, so pools built in any bundle chunk (the proxy's too) add to one count. */
+const counter = ((
+  globalThis as { __labsDbStatements?: { n: number } }
+).__labsDbStatements ??= { n: 0 });
+
 /**
  * Statement counts for the benchmark (`scripts/bench-api.mts`), on only with
- * `DB_STATS=1`. The count is per process, so it is exact for a benchmark
- * that sends one request at a time; each REST answer carries the statements
- * it ran in `x-db-queries`.
+ * `DB_STATS=1`; every pool passes `dbStats.count` as its postgres.js `debug`
+ * hook. The count is per process, so it is exact for a benchmark that sends
+ * one request at a time. Each REST answer carries the statements its
+ * handler ran in `x-db-queries`, and `GET /api/bench/db-stats` the total.
  */
 export const dbStats = {
   enabled: process.env.DB_STATS === "1",
-  total: 0,
   count: () => {
-    dbStats.total += 1;
+    counter.n += 1;
   },
-  snapshot: () => dbStats.total,
+  snapshot: () => counter.n,
   annotate(response: Response, since: number) {
     try {
-      response.headers.set("x-db-queries", String(dbStats.total - since));
+      response.headers.set("x-db-queries", String(counter.n - since));
     } catch {
       // A redirect's headers are immutable; it ran no query worth counting.
     }
