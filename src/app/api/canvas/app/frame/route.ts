@@ -1,7 +1,4 @@
-import { getPublicOrigin } from "mcp-handler";
-import { requireCallerAccess } from "@/features/canvas/server/caller";
-import { appCsp, readViewApp } from "@/features/canvas/server/host";
-import { failure } from "@/features/canvas/server/respond";
+import { canvasApi } from "@/features/canvas/server/api";
 
 /**
  * The document the page's sandboxed frame loads: the View App, fetched from
@@ -10,18 +7,9 @@ import { failure } from "@/features/canvas/server/respond";
  * `sandbox="allow-scripts"` and the header repeats it, so the App runs in an
  * opaque origin with no network whichever way it is opened (ADR 0031).
  */
-export async function GET(request: Request) {
-  try {
-    const { caller, access } = await requireCallerAccess();
-    const app = await readViewApp(access, caller, getPublicOrigin(request));
-    const csp = appCsp(app.meta?.csp as Record<string, unknown> | undefined);
-    // The page puts this document in the frame's `srcdoc` (a sandboxed frame
-    // sends no cookies of its own to fetch it), where a response header does
-    // not reach: the same policy rides inside the document as a meta tag.
-    const html = app.html.replace(
-      "<head>",
-      `<head><meta http-equiv="Content-Security-Policy" content="${csp.replace("; sandbox allow-scripts", "")}">`,
-    );
+export const GET = canvasApi.handle(
+  async ({ services, access, caller, origin }) => {
+    const { html, csp } = await services.host.frame(access, caller, origin);
     return new Response(html, {
       headers: {
         "content-type": "text/html; charset=utf-8",
@@ -32,7 +20,5 @@ export async function GET(request: Request) {
         "cache-control": "private, max-age=300",
       },
     });
-  } catch (error) {
-    return failure(error);
-  }
-}
+  },
+);

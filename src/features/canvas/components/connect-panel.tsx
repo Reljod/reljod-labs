@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { API } from "../domain/api";
-import { mintTokenAction } from "../server/actions";
+import { mintToken } from "./api";
 import { Button, Panel } from "./ui";
 
 /** Connect a client: a per-Owner token and how to add this MCP server to Claude. */
@@ -22,10 +22,9 @@ export function ConnectPanel() {
   const mint = async () => {
     setPending(true);
     setError(null);
-    const result = await mintTokenAction();
+    const result = await mintToken();
     setPending(false);
-    if (result.ok)
-      setToken({ token: result.token, expiresAt: result.expiresAt });
+    if (result.ok) setToken(result.value);
     else setError(result.error);
   };
 

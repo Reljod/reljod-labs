@@ -1,6 +1,5 @@
 import { describe, expect, it } from "vitest";
 import { blocks, checkView } from "./chart-checks";
-import { partsOf, titleOf } from "./chat";
 import { guardStatement, minimumGroupTemplate, parametersOf } from "./guard";
 import extraFixtures from "./guard.fixtures.extra.json";
 import fixtures from "./guard.fixtures.json";
@@ -10,11 +9,10 @@ import {
   normaliseRulebook,
   settings,
 } from "./rules";
-import { STUB_SPEC, stubPlan } from "./stub";
+import { STUB_SPEC } from "./stub";
 import { type CanvasClaims, readCanvasToken, signCanvasToken } from "./token";
 import { verifyView } from "./verify";
 import {
-  defaultParams,
   mergeParams,
   type QueryResult,
   type ViewSpec,
@@ -493,14 +491,6 @@ describe("Rule edits", () => {
 // Parameters ---------------------------------------------------------------------------------
 
 describe("Parameters", () => {
-  it("starts from the spec's own values", () => {
-    expect(defaultParams(STUB_SPEC)).toEqual({
-      from: "2025-02-01",
-      to: "2025-03-01",
-      min_peak: 0,
-    });
-  });
-
   it("clamps a slider to its bounds and refuses the wrong type or an unknown name", () => {
     const merged = mergeParams(STUB_SPEC, {}, { min_peak: 99_999 });
     expect(merged.values.min_peak).toBe(3000);
@@ -569,61 +559,24 @@ describe("MCP tokens", () => {
     expect(readCanvasToken(undefined, secret)).toBeNull();
     expect(readCanvasToken("sieve_abc.def", secret)).toBeNull();
   });
-});
 
-// The turn's events --------------------------------------------------------------------------
-
-describe("a turn's events", () => {
-  it("fold into the parts a message keeps", () => {
-    const parts = partsOf([
-      { type: "text.delta", text: "Here " },
-      { type: "text.delta", text: "it is." },
-      {
-        type: "tool.started",
-        id: "t1",
-        name: "run_query",
-        args: { sql: "select 1" },
-      },
-      { type: "tool.finished", id: "t1", ok: true, summary: "1 row", ms: 12 },
-      { type: "tool.started", id: "t2", name: "create_view", args: {} },
-    ]);
-    expect(parts).toEqual([
-      { type: "text", text: "Here it is." },
-      {
-        type: "tool",
-        id: "t1",
-        name: "run_query",
-        args: { sql: "select 1" },
-        ok: true,
-        summary: "1 row",
-        ms: 12,
-      },
-      {
-        type: "tool",
-        id: "t2",
-        name: "create_view",
-        args: {},
-        ok: false,
-        summary: "Did not finish",
-        ms: 0,
-      },
-    ]);
-  });
-
-  it("titles a Conversation after its first Question", () => {
-    expect(titleOf("  What   happened? ")).toBe("What happened?");
-    expect(titleOf("x".repeat(200)).length).toBeLessThanOrEqual(70);
-  });
-
-  it("the stubbed Analyst makes a View, or tries the Restricted column when asked to", () => {
-    expect(stubPlan("anything").map((call) => call.name)).toEqual([
-      "list_tables",
-      "run_query",
-      "create_view",
-    ]);
+  it("only an e2e token may ask for the canned adapters", () => {
+    // A Guest's or a Host's token that says `stub` would let a visitor run
+    // free of the Sandbox's real checks: it is refused outright.
     expect(
-      stubPlan("show income per household row by row")[0].args.sql,
-    ).toContain("household_id");
-    expect(viewSpecSchema.safeParse(STUB_SPEC).success).toBe(true);
+      readCanvasToken(
+        signCanvasToken({ ...claims, stub: true }, secret),
+        secret,
+      ),
+    ).toBeNull();
+    const e2e: CanvasClaims = {
+      kind: "e2e",
+      via: "pasted",
+      owner: "e2e",
+      visitor: "e2e",
+      stub: true,
+      exp: claims.exp,
+    };
+    expect(readCanvasToken(signCanvasToken(e2e, secret), secret)).toEqual(e2e);
   });
 });

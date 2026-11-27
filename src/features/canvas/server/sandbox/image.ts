@@ -1,13 +1,13 @@
 import "server-only";
 import { gzipSync } from "node:zlib";
 import { Sandbox } from "@vercel/sandbox";
+import { db as pool } from "@/server/postgres";
 import {
   CATALOG,
   type ColumnType,
   DATA_VERSION,
   tableCsvChunks,
 } from "../../domain/data";
-import { sql } from "../db";
 import { env } from "../env";
 import { SandboxUnavailable } from "../errors";
 import {
@@ -160,13 +160,13 @@ export async function ensureImage(): Promise<string> {
   ready = undefined;
   if (!env.sandboxConfigured())
     throw new SandboxUnavailable("Sandbox unavailable: it is not set up here.");
-  const db = sql();
+  const db = pool();
   const read = () => db<
     {
       snapshot_id: string | null;
       status: string;
       stale: boolean;
-      built_at: Date | null;
+      built_at: string | null;
     }[]
   >`
     select snapshot_id, status, built_at,
@@ -174,11 +174,12 @@ export async function ensureImage(): Promise<string> {
     from canvas.sandbox_images where key = ${IMAGE_KEY}`;
   let [row] = await read();
   if (row?.status === "ready" && row.snapshot_id) {
-    if (imageIsFresh(row.built_at)) {
+    const builtAt = row.built_at ? new Date(row.built_at) : null;
+    if (builtAt && imageIsFresh(builtAt)) {
       ready = {
         key: IMAGE_KEY,
         snapshotId: row.snapshot_id,
-        builtAt: row.built_at as Date,
+        builtAt,
       };
       return row.snapshot_id;
     }
@@ -229,7 +230,7 @@ export async function ensureImage(): Promise<string> {
 /** Forget an image that turned out to be gone (its snapshot was deleted), so the next call rebuilds it. */
 export async function forgetImage(snapshotId: string) {
   ready = undefined;
-  await sql()`
+  await pool()`
     delete from canvas.sandbox_images
     where key = ${IMAGE_KEY} and snapshot_id = ${snapshotId}`;
 }

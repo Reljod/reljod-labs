@@ -1,72 +1,40 @@
 import "server-only";
+import { ConflictError, InvalidError } from "@/platform/errors";
 import type { RuleEditError } from "../domain/rules";
 
-/** A cap in `LIMITS` was reached. Routes answer 429. */
-export class LimitError extends Error {
-  constructor(message: string) {
-    super(message);
-    this.name = "LimitError";
-  }
-}
+/*
+ * Canvas throws the platform's errors (`@/platform/errors`): 400 Invalid,
+ * 404 NotFound, 409 Conflict, 429 Limit. Only what is Canvas's own is here,
+ * and each extends one of them, so the REST layer, the MCP tools and the
+ * chat stream map it the same way.
+ */
 
-/** The thing asked for is not this Owner's. Routes answer 404. */
-export class NotFoundError extends Error {
-  constructor(message = "Not found") {
-    super(message);
-    this.name = "NotFoundError";
-  }
-}
-
-/** The request cannot be done as asked. Routes answer 400. */
-export class InvalidError extends Error {
-  constructor(message: string) {
-    super(message);
-    this.name = "InvalidError";
-  }
-}
-
-/** The Guard or a check refused, under a Rule. Routes answer 400 with the Rule. */
+/** The Guard or a check refused, under a Rule: 400, naming the Rule in `rule`. */
 export class RuleRefusal extends InvalidError {
   constructor(
     readonly rule: string,
     message: string,
   ) {
-    super(message);
-    this.name = "RuleRefusal";
+    super(message, { rule });
   }
 }
 
-/** A Rule edit that fails its schema. Routes answer 400 with `errors`. */
+/** A Rule edit that fails its schema: 400, with one error per field at fault in `errors`. */
 export class RuleEditRefused extends InvalidError {
   constructor(readonly errors: RuleEditError[]) {
-    super(errors[0]?.message ?? "That Rule edit doesn't look right.");
-    this.name = "RuleEditRefused";
+    super(errors[0]?.message ?? "That Rule edit doesn't look right.", {
+      errors,
+    });
   }
 }
 
-/** The thing is in the wrong state. Routes answer 409. */
-export class StateError extends Error {
-  constructor(message: string) {
-    super(message);
-    this.name = "StateError";
-  }
-}
-
-/** The Sandbox cannot be reached. Routes answer 503. */
-export class SandboxUnavailable extends Error {
+/**
+ * The Sandbox cannot be reached or failed: a 409 (as the Harness's) whose
+ * message the Analyst can act on. The platform has no 503; a refusal the
+ * visitor can retry is what both mean here.
+ */
+export class SandboxUnavailable extends ConflictError {
   constructor(message = "Sandbox unavailable") {
     super(message);
-    this.name = "SandboxUnavailable";
   }
-}
-
-/** Errors whose message is written for the person, so it may be shown. */
-export function isSafeError(error: unknown): error is Error {
-  return (
-    error instanceof LimitError ||
-    error instanceof NotFoundError ||
-    error instanceof InvalidError ||
-    error instanceof StateError ||
-    error instanceof SandboxUnavailable
-  );
 }
