@@ -356,6 +356,66 @@ describe("codes and tokens", () => {
   });
 });
 
+describe("revocation and single use", () => {
+  it("carries the Grant's iat into the access token and through a refresh", () => {
+    const clientId = registered();
+    const g = grant({ iat: SECONDS - 10 });
+    const tokens = tokensFor(g, clientId, SECRET, NOW);
+    expect(readHarnessToken(tokens.access_token, SECRET, NOW)?.iat).toBe(
+      SECONDS - 10,
+    );
+    const refreshed = redeem(
+      new URLSearchParams({
+        grant_type: "refresh_token",
+        client_id: clientId,
+        refresh_token: tokens.refresh_token,
+      }),
+      SECRET,
+      NOW,
+    );
+    expect(refreshed.ok && refreshed.grant.iat).toBe(SECONDS - 10);
+    expect(refreshed.ok && refreshed.code).toBeUndefined();
+  });
+
+  it("hands back the code it traded, to be recorded as used", () => {
+    const clientId = registered();
+    const code = codeFor(clientId);
+    const result = redeem(
+      new URLSearchParams({
+        grant_type: "authorization_code",
+        client_id: clientId,
+        code,
+        redirect_uri: "https://claude.ai/api/mcp/auth_callback",
+        code_verifier: VERIFIER,
+      }),
+      SECRET,
+      NOW,
+    );
+    expect(result.ok && result.code).toEqual({
+      value: code,
+      exp: SECONDS + 120,
+    });
+  });
+
+  it("names the callback of a request it would send an error back to", () => {
+    const parsed = parseAuthorizationRequest(
+      authorize(registered(), { response_type: "token" }),
+      SECRET,
+    );
+    expect(parsed.kind === "error" && parsed.redirectUri).toBe(
+      "https://claude.ai/api/mcp/auth_callback",
+    );
+  });
+
+  it("refuses a token whose iat is not a number", () => {
+    const token = signHarnessToken(
+      claims({ iat: "soon" as unknown as number }),
+      SECRET,
+    );
+    expect(readHarnessToken(token, SECRET, NOW)).toBeNull();
+  });
+});
+
 describe("metadata", () => {
   it("names a path-suffixed issuer and the Harness resource", () => {
     const origin = "https://site.test";

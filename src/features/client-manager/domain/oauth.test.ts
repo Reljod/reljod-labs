@@ -193,3 +193,65 @@ describe("the token endpoint", () => {
     expect(tokens.expires_in).toBe(60);
   });
 });
+
+describe("revocation and single use", () => {
+  const issued = { ...grant, iat: seconds - 10 };
+
+  it("carries the Grant's iat into the access token and the refresh token", () => {
+    const clientId = register();
+    const tokens = tokensFor(issued, clientId, SECRET, now);
+    expect(readMcpToken(tokens.access_token, SECRET, now)?.iat).toBe(
+      issued.iat,
+    );
+    const refreshed = redeem(
+      new URLSearchParams({
+        grant_type: "refresh_token",
+        client_id: clientId,
+        refresh_token: tokens.refresh_token,
+      }),
+      SECRET,
+      now,
+    );
+    expect(refreshed.ok && refreshed.grant.iat).toBe(issued.iat);
+    // A refresh token names no code, so nothing is recorded for it.
+    expect(refreshed.ok && refreshed.code).toBeUndefined();
+  });
+
+  it("hands back the code it traded, to be recorded as used", () => {
+    const clientId = register();
+    const code = codeFor(clientId);
+    const result = redeem(
+      new URLSearchParams({
+        grant_type: "authorization_code",
+        client_id: clientId,
+        code,
+        redirect_uri: callback,
+        code_verifier: verifier,
+      }),
+      SECRET,
+      now,
+    );
+    expect(result.ok && result.code).toEqual({
+      value: code,
+      exp: seconds + 120,
+    });
+  });
+
+  it("names the callback of a request it would send an error back to", () => {
+    const parsed = parseAuthorizationRequest(
+      authorize(register(), { response_type: "token" }),
+      SECRET,
+    );
+    expect(parsed.kind === "error" && parsed.redirectUri).toBe(callback);
+  });
+
+  it("refuses a token whose iat is not a number", () => {
+    const token = tokensFor(
+      { ...grant, iat: "soon" as unknown as number },
+      register(),
+      SECRET,
+      now,
+    ).access_token;
+    expect(readMcpToken(token, SECRET, now)).toBeNull();
+  });
+});

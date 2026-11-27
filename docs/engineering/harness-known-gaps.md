@@ -30,13 +30,13 @@ alter table harness.passages
 
 Repeat this for staff (`started_by`, `saved_by`, `decided_by`, `staff_id`), sessions, runs, run_steps, findings, approvals and conflicts. Where the column may be null (`decided_by`, `session_id` with `on delete set null`), use `match simple` and `on delete set null (session_id)` (Postgres 15+) so the `owner` column is not nulled.
 
-## OAuth codes can be replayed for two minutes, and one token cannot be revoked
+## One MCP token cannot be revoked by itself
 
-**What.** Authorization codes, access tokens and refresh tokens are signed blobs with no server-side state (`src/features/harness/domain/oauth.ts`). Within its two-minute life (`CODE_SECONDS`), a code can be redeemed more than once. One token cannot be revoked by itself. A token ends only at its expiry, or when the Guest pass behind it ends (checked on every call), or for everyone when `RATE_LIMIT_SALT` is rotated.
+**What.** Codes are now single-use and a Host can revoke all their tokens at once ("Disconnect all MCP clients", `docs/engineering/access.md`, "MCP tokens"). What is left: one connection cannot be revoked without the others, a second redemption of a code does not revoke the tokens the first one minted (RFC 6749 §4.1.2 says it should), and a Guest has no disconnect of their own (their tokens end with their Guest pass).
 
-**Why not fixed here.** Fixing it needs server-side state. The demo's exposure is small: a code's PKCE verifier is needed to redeem it, and a token acts only inside its Owner's Workspace.
+**Why not fixed here.** Per-connection revocation needs a row per issued Grant; the epoch needs one per Owner. The demo's exposure is small: a code's PKCE verifier is needed to redeem it, and a token acts only inside its Owner's Workspace.
 
-**Proposed fix.** Add a `harness.oauth_grants` table, registered in `access.owned_tables`, with a row per issued code and refresh token (`jti`, owner, staff, expires_at, used_at, revoked_at). Redeeming a code claims it with `update … set used_at = now() where jti = $1 and used_at is null returning …`. A second redemption fails, and per RFC 6749 §4.1.2 it revokes the tokens already issued from that code. Add a "Disconnect" action on the MCP page that sets `revoked_at`, and check it in `verifyBearer`.
+**Proposed fix.** Add a `harness.oauth_grants` table, registered in `access.owned_tables`, with a row per Grant (`jti`, owner, staff, client name, callback host, expires_at, revoked_at), put the `jti` in the code, the refresh and access tokens, list the rows on the Connect page with a Disconnect per row, and check `revoked_at` in `verifyBearer`. On a second redemption of a code, revoke its Grant.
 
 ## Roles separate duties, not data, inside a Workspace
 

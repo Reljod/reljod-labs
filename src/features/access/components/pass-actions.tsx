@@ -188,7 +188,7 @@ export function PassActions({
  * runs), then shows what changed. Escape and the backdrop close it, except
  * while the write is running.
  */
-function ConfirmDialog({
+export function ConfirmDialog({
   id,
   title,
   children,

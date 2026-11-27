@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { Suspense } from "react";
+import { callbackTrust } from "@/features/access/domain/mcp-clients";
 import { AccessDeniedError } from "@/features/access/server/gate";
 import { HarnessPageBar } from "@/features/harness/components/harness-bar";
 import { HARNESS_CONNECT_PATH } from "@/features/harness/domain/mcp-tools";
@@ -75,7 +76,8 @@ async function Consent({
     return (
       <CannotConnect message="Open the demos first, then start again from the app." />
     );
-  // Only after Access: the redirect goes to a URI the client registered.
+  // Only after Access: anyone can register a client with any https
+  // callback, so a visitor without Access is never redirected to one.
   if (parsed.kind === "error") redirect(parsed.redirect);
   const { request } = parsed;
   const { access, owner, staff } = context;
@@ -84,6 +86,7 @@ async function Consent({
       request={params.toString()}
       clientName={request.client.name}
       callbackHost={new URL(request.redirectUri).host}
+      unknownCallback={callbackTrust(request.redirectUri) === "unknown"}
       who={
         access.kind === "host"
           ? access.email
