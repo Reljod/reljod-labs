@@ -69,41 +69,123 @@ export function outsideAllowlist(files) {
 /** The only schema a growth pull request's SQL may name. */
 const OWN_SCHEMA = "bank";
 /**
+ * Every schema the app's migrations create, except the bank's. Kept by hand
+ * because this script runs from a sparse checkout of the base branch; a test
+ * (src/features/bank/domain/growth.test.ts) fails when a migration creates a
+ * schema missing here.
+ */
+export const APP_SCHEMAS = [
+  "access",
+  "canvas",
+  "casework",
+  "client_manager",
+  "document_compliance",
+  "floorwalk",
+  "harness",
+  "helio",
+  "ledger",
+  "loupe",
+  "name_extraction",
+  "operator",
+  "prism",
+  "process_transfer",
+  "switchboard",
+  "vellum",
+];
+const PLATFORM_SCHEMAS = [
+  "public",
+  "auth",
+  "storage",
+  "vault",
+  "cron",
+  "net",
+  "realtime",
+  "graphql",
+  "graphql_public",
+  "extensions",
+  "supabase_functions",
+  "supabase_migrations",
+  "pgsodium",
+  "pg_catalog",
+  "information_schema",
+  "pg_temp",
+  "pg_toast",
+];
+const SCHEMAS = [...APP_SCHEMAS, ...PLATFORM_SCHEMAS].join("|");
+/**
+ * Schemas whose name is also a common identifier in code (`access.kind`,
+ * `storage.from`): in code they count only after a SQL keyword. The rest
+ * (`client_manager.clients`) count anywhere.
+ */
+const AMBIGUOUS_IN_CODE = new Set([
+  "access",
+  "public",
+  "auth",
+  "storage",
+  "vault",
+  "cron",
+  "net",
+  "realtime",
+  "extensions",
+  "operator",
+]);
+const UNAMBIGUOUS = [...APP_SCHEMAS, ...PLATFORM_SCHEMAS]
+  .filter((schema) => !AMBIGUOUS_IN_CODE.has(schema))
+  .join("|");
+/**
  * In a SQL file: a keyword followed by a schema-qualified relation or
- * function. (Not `on` or `to`: `on a.id = b.id` is an alias.)
+ * function, across line breaks. (Not `on` or `to`: `on a.id = b.id` is an
+ * alias.)
  */
 const SQL_QUALIFIED =
   /\b(?:from|join|into|update|table|view|function|procedure|trigger|sequence|type|schema|references|truncate|exists|execute|call)\s+(?:only\s+)?"?([a-z_][a-z0-9_$]*)"?\s*\.\s*"?[a-z_*]/gi;
-const SCHEMAS =
-  "access|public|auth|storage|vault|cron|net|realtime|graphql|graphql_public|extensions|supabase_functions|supabase_migrations|pgsodium|pg_catalog|information_schema|pg_temp|pg_toast";
 /** Schemas that are never the bank's, named anywhere in a SQL file. */
 const FOREIGN_SCHEMA = new RegExp(
   `(?<![a-z0-9_.])"?(${SCHEMAS})"?\\s*\\.\\s*[a-z_"*]`,
-  "i",
+  "gi",
 );
 /** In code: SQL (a query in a template) that names a schema that is never the bank's. */
 const FOREIGN_SCHEMA_IN_CODE = new RegExp(
-  `\\b(?:from|join|into|update|table|references|truncate|exists)\\s+"?(${SCHEMAS})"?\\s*\\.\\s*[a-z_"*]`,
-  "i",
+  `\\b(?:from|join|into|update|table|references|truncate|exists)\\s+"?(${SCHEMAS})"?\\s*\\.\\s*[a-z_"*]` +
+    `|(?<![a-z0-9_.$])"?(${UNAMBIGUOUS})"?\\s*\\.\\s*[a-z_"*]`,
+  "gi",
 );
-const SEARCH_PATH = /\bset\s+(?:local\s+|session\s+)?(?:search_path|role)\b/i;
+/** What a growth migration must be able to write: register its own table, harden a function. */
+const ALLOWED_SQL = [
+  /\binsert\s+into\s+access\s*\.\s*owned_tables\s*(?:\([^)]*\)\s*)?values\s*\(\s*'bank\.[a-z0-9_]+'\s*\)\s*(?:on\s+conflict\s+do\s+nothing)?/gi,
+];
+const SEARCH_PATH =
+  /\bset\s+(?:local\s+|session\s+)?(?:search_path\b(?!\s*(?:=|to)\s*''(?=\s|;|,|$))|role\b)/i;
 const CREATE_SCHEMA = /\bcreate\s+schema\b/i;
 const OWNER_PREDICATE = /\bowner\s*(?:=|:)/gi;
 const ENV_READ =
-  /\bprocess\s*(?:\.\s*env\b|\[)|\bimport\s*\.\s*meta\s*\.\s*env\b|\bDeno\s*\.\s*env\b|\bBun\s*\.\s*env\b/;
+  /\bprocess\b|\bnode:process\b|\bimport\s*\.\s*meta\s*\.\s*env\b|\bDeno\s*\.\s*env\b|\bBun\s*\.\s*env\b|\b(?:from|import|require)\s*\(?\s*["'][^"']*\/env(?:\.[a-z]+)?["']/;
 const ENV_FILE = /(^|\/)\.env(\.|$)|(^|\/)env\.(ts|tsx|js|mjs|cjs)$/;
 const TEXT_SOURCE = /\.(ts|tsx|js|jsx|mjs|cjs|sql|json|md|yml|yaml|sh)$/;
 
+/** Added and removed lines of a GitHub `patch` (it has no file headers). */
 function diffLines(patch) {
   const added = [];
   const removed = [];
   for (const line of patch.split("\n")) {
-    if (line.startsWith("+++") || line.startsWith("---")) continue;
     if (line.startsWith("+")) added.push(line.slice(1));
     else if (line.startsWith("-")) removed.push(line.slice(1));
   }
   return { added, removed };
 }
+
+/** The added text with the allowed statements taken out. */
+function addedText(added) {
+  let text = added.join("\n");
+  for (const allowed of ALLOWED_SQL) text = text.replace(allowed, "");
+  return text;
+}
+
+const lineOf = (text, index) => {
+  const start = text.lastIndexOf("\n", index) + 1;
+  const end = text.indexOf("\n", index);
+  return text.slice(start, end === -1 ? undefined : end).trim();
+};
 
 const count = (lines, pattern) =>
   lines.reduce((sum, line) => sum + (line.match(pattern)?.length ?? 0), 0);
@@ -133,20 +215,28 @@ export function contentFindings(files) {
         out.push({ path, why: `touches the environment: ${line.trim()}` });
       }
     }
-    for (const line of added) {
-      if (isSql) {
-        for (const match of line.matchAll(SQL_QUALIFIED)) {
-          if (match[1].toLowerCase() !== OWN_SCHEMA) {
-            out.push({
-              path,
-              why: `SQL names the schema "${match[1]}": ${line.trim()}`,
-            });
-          }
+    const text = addedText(added);
+    if (isSql) {
+      for (const match of text.matchAll(SQL_QUALIFIED)) {
+        if (match[1].toLowerCase() !== OWN_SCHEMA) {
+          out.push({
+            path,
+            why: `SQL names the schema "${match[1]}": ${lineOf(text, match.index)}`,
+          });
         }
       }
-      if ((isSql ? FOREIGN_SCHEMA : FOREIGN_SCHEMA_IN_CODE).test(line)) {
-        out.push({ path, why: `SQL names another schema: ${line.trim()}` });
-      }
+    }
+    // Prose (`docs/demos/casework.md`) is read by a person, never run.
+    const foreign = path.endsWith(".md")
+      ? []
+      : text.matchAll(isSql ? FOREIGN_SCHEMA : FOREIGN_SCHEMA_IN_CODE);
+    for (const match of foreign) {
+      out.push({
+        path,
+        why: `SQL names another schema: ${lineOf(text, match.index)}`,
+      });
+    }
+    for (const line of text.split("\n")) {
       if (SEARCH_PATH.test(line) || CREATE_SCHEMA.test(line)) {
         out.push({
           path,

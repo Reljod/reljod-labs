@@ -1,3 +1,4 @@
+import { readdirSync, readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
 // The guard CI runs: a plain script outside the allowlist, on purpose.
 import * as guard from "../../../../scripts/bank-growth-guard.mjs";
@@ -98,6 +99,42 @@ describe("the Growth guard's content checks", () => {
   ) => ({ filename, status, patch });
   const hunk = (...lines: string[]) => ["@@ -1,3 +1,3 @@", ...lines].join("\n");
 
+  it("passes the statements a growth migration needs: registering its table, a hardened function", () => {
+    expect(
+      guard.contentFindings([
+        patched(
+          "supabase/migrations/20261201090000_bank_goals.sql",
+          hunk(
+            "+create table if not exists bank.goals (id uuid primary key);",
+            "+insert into access.owned_tables values ('bank.goals') on conflict do nothing;",
+            "+create or replace function bank.goal_total(p_owner text) returns numeric",
+            "+language sql stable security invoker set search_path = ''",
+            "+as $$ select 1 $$;",
+          ),
+          "added",
+        ),
+        patched(
+          "docs/demos/bank.md",
+          hunk("+Goals live in `bank.goals`; see casework.md for the pattern."),
+        ),
+      ]),
+    ).toEqual([]);
+  });
+
+  it("knows every schema the migrations create", () => {
+    const created = new Set<string>();
+    for (const file of readdirSync("supabase/migrations")) {
+      const sql = readFileSync(`supabase/migrations/${file}`, "utf8");
+      for (const match of sql.matchAll(
+        /create\s+schema\s+(?:if\s+not\s+exists\s+)?"?([a-z_]+)/gi,
+      )) {
+        created.add(match[1].toLowerCase());
+      }
+    }
+    created.delete("bank");
+    expect([...created].sort()).toEqual([...guard.APP_SCHEMAS].sort());
+  });
+
   it("passes an ordinary bank change", () => {
     expect(
       guard.contentFindings([
@@ -173,6 +210,35 @@ describe("the Growth guard's content checks", () => {
     ["src/features/bank/server/env.ts", hunk("+export const x = 1;")],
     ["src/features/bank/.env.local", hunk("+X=1")],
     ["src/features/bank/core/huge.ts", undefined],
+    [
+      "supabase/migrations/20261201090000_bank_x.sql",
+      hunk("+insert into casework.sessions (id) values (1);"),
+    ],
+    [
+      "supabase/migrations/20261201090000_bank_x.sql",
+      hunk("+select * from", "+  access.passes;"),
+    ],
+    [
+      "src/features/bank/core/reads.ts",
+      hunk(
+        "+  const rows = await tx`select * from",
+        "+    client_manager.clients`;",
+      ),
+    ],
+    [
+      "src/features/bank/core/reads.ts",
+      hunk("+  await tx`delete from harness.sources`;"),
+    ],
+    ["src/features/bank/server/llm.ts", hunk("+const { env } = process;")],
+    [
+      "src/features/bank/server/llm.ts",
+      hunk('+import { env } from "node:process";'),
+    ],
+    ["src/features/bank/server/llm.ts", hunk('+import { env } from "./env";')],
+    [
+      "src/features/bank/core/reads.ts",
+      hunk("++  await tx`select * from auth.users`;"),
+    ],
   ])("holds %s", (path, patch) => {
     expect(
       guard.contentFindings([patched(path, patch)]).length,
