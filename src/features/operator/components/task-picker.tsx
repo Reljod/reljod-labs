@@ -12,7 +12,7 @@ import {
   type TaskRef,
 } from "../domain/contract";
 import { LIMITS } from "../domain/limits";
-import { startRun } from "../server/actions";
+import { api } from "./api";
 import { bytes, modelPrice, usd } from "./format";
 import { loadHandKit } from "./hand-kit";
 import {
@@ -236,13 +236,13 @@ export function TaskPicker({
       ? { kind: "own", brief: words }
       : { kind: "sample", taskId: picked };
     try {
-      const result = await startRun({
+      const result = await api.startRun({
+        driver: "operator",
         task,
         manifestId: own ? (manifest?.id ?? null) : null,
         model,
       });
-      if ("error" in result) setError(result.error);
-      else onStarted(result.runId);
+      onStarted(result.runId);
     } catch (caught) {
       setError(friendly(caught, "The Run could not start."));
     }

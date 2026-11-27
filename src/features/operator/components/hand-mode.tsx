@@ -6,7 +6,7 @@ import type { HandInput, TaskCard } from "../domain/contract";
 import { LIMITS } from "../domain/limits";
 import type { SampleTask } from "../domain/task";
 import { GEOMETRY, type LegacyState, SCREEN_TITLES } from "../legacy/types";
-import { submitHandRun } from "../server/actions";
+import { api } from "./api";
 import { clock, errorsLabel } from "./format";
 import { actionOfKey, clickAction, releasesFocus } from "./hand-keys";
 import { type HandKit, loadHandKit } from "./hand-kit";
@@ -125,13 +125,13 @@ export function HandMode({
     if (!session) return;
     setError(null);
     try {
-      const result = await submitHandRun({
+      const result = await api.startRun({
+        driver: "hand",
         taskId: task.id,
         inputs: inputs.current,
         elapsedMs: Math.min(MAX_MS, Date.now() - session.startedAt),
       });
-      if ("error" in result) setError(result.error);
-      else onFinished(result.runId);
+      onFinished(result.runId);
     } catch (caught) {
       setError(friendly(caught, "The attempt could not be checked."));
     }

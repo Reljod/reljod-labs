@@ -1,8 +1,10 @@
 import "server-only";
 import { Sandbox } from "@vercel/sandbox";
+import { CODE_LIMITS } from "../domain/limits";
 import type { Change } from "../legacy/types";
 import type { RunContext } from "./context";
 import { env } from "./env";
+import type { CodeResult, CodeRunner } from "./ports";
 
 /*
  * The Code sandbox: where `run_code` runs (ADR 0026). A second Vercel
@@ -12,15 +14,6 @@ import { env } from "./env";
  * wrote cannot reach HARBOURMASTER or the Guard: the keyboard is the only
  * way in. After Sieve's (name-extraction/server/sandbox.ts).
  */
-export const CODE_LIMITS = {
-  commandMs: 30_000,
-  sandboxMs: 6 * 60_000,
-  codeChars: 20_000,
-  outputChars: 6_000,
-  outputBytes: 24_000,
-  outputFileBlocks: 20_000,
-} as const;
-
 /**
  * Never persistent: a named Sandbox is persistent by default, and a
  * persistent one writes a snapshot of its whole disk every time it stops.
@@ -89,13 +82,6 @@ const README = `Files here (read-only inputs, no network):
 - iso6346.mjs    import { normalise, checkDigit, isValid } from "./iso6346.mjs"
 Write plain Node.js (ESM). Print what you need with console.log.
 `;
-
-export type CodeResult = {
-  stdout: string;
-  stderr: string;
-  exitCode: number;
-  ms: number;
-};
 
 const cap = (text: string) =>
   text.length > CODE_LIMITS.outputChars
@@ -194,3 +180,17 @@ export async function disposeCode(runId: string) {
     // None was made, or it is already gone.
   }
 }
+
+/** `run_code` in a Vercel Sandbox of its own. */
+export const vercelCode: CodeRunner = { run: runCode, dispose: disposeCode };
+
+/** The stubbed e2e suite starts no Sandbox: `run_code` answers that it did not run. */
+export const stubCode: CodeRunner = {
+  run: async () => ({
+    stdout: "",
+    stderr: "Not run: the stubbed e2e suite starts no Code sandbox.",
+    exitCode: 1,
+    ms: 0,
+  }),
+  dispose: async () => {},
+};

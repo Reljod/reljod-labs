@@ -10,7 +10,7 @@ import {
 import type { RunDetail, RunSummary } from "../domain/contract";
 import { LIMITS } from "../domain/limits";
 import { SCREEN_TITLES } from "../legacy/types";
-import { stopRun } from "../server/actions";
+import { api } from "./api";
 import { ApprovalCard } from "./approval-card";
 import { Expectations, Findings, Plan, VerdictCard } from "./checklist";
 import { Comparison } from "./comparison";
@@ -105,8 +105,7 @@ function StopButton({ runId }: { runId: string }) {
   const write = useWrite(async () => {
     setError(null);
     try {
-      const result = await stopRun(runId);
-      if ("error" in result) setError(result.error);
+      await api.stopRun(runId);
     } catch (caught) {
       setError(friendly(caught, "The Run could not be stopped."));
     }

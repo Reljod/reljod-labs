@@ -18,34 +18,18 @@ import { timingSafeEqual } from "node:crypto";
 import { readFileSync } from "node:fs";
 import { createServer, type IncomingMessage } from "node:http";
 import type { ScreenAction } from "../../domain/actions";
-import { afterCommit, type GuardLedger, guard } from "../../domain/guard";
-import { diffBooks } from "../../legacy/books";
 import { domKeyToInput } from "../../legacy/input";
-import { boot, render, step } from "../../legacy/machine";
-import {
-  cellAt,
-  pointOf,
-  screenHtml,
-  screenText,
-  TERMINAL_CSS,
-} from "../../legacy/terminal";
-import {
-  GEOMETRY,
-  type LegacyInput,
-  type LegacyState,
-  ROWS,
-  type ScreenCode,
-} from "../../legacy/types";
+import { cellAt, TERMINAL_CSS } from "../../legacy/terminal";
+import { GEOMETRY, type LegacyInput } from "../../legacy/types";
 import {
   type ActRequest,
   type ActResult,
-  type Blocked,
-  type BooksReport,
   SCREEN_DIR,
   SCREEN_PORTS,
   type ScreenConfig,
   SECRET_HEADER,
 } from "./protocol";
+import { createScreenCore } from "./screen-core";
 
 // playwright-core is installed in the sandbox image, not bundled.
 type Page = {
@@ -75,57 +59,9 @@ const config = JSON.parse(
   readFileSync(`${SCREEN_DIR}/config.json`, "utf8"),
 ) as ScreenConfig;
 
-// The machine, the Guard's ledger, and what the current Action did ---------------------
+// The machine and the Guard in front of it (screen-core.ts) ------------------------------
 
-let state: LegacyState = boot(config.fixture, Date.now());
-let ledger: GuardLedger = { records: 0, approved: [] };
-const screens = new Set<ScreenCode>([state.screen]);
-
-/** The Action in flight: what it committed, and the input the Guard stopped. */
-let current: {
-  changes: ActResult["changes"];
-  applied: number;
-  blocked: Blocked | null;
-} | null = null;
-
-const inputLabel = (input: LegacyInput) =>
-  input.kind === "key"
-    ? `key ${input.key}`
-    : input.kind === "char"
-      ? `type "${input.char}"`
-      : "click";
-
-/** One input from the page: through the Guard, then into HARBOURMASTER. */
-function take(input: LegacyInput) {
-  // After the Guard stops an input, the rest of that Action is dropped.
-  if (current?.blocked) return;
-  const now = Date.now();
-  const next = step(state, input, now);
-  const changes = diffBooks(state.books, next.books);
-  const decision = guard(config.rulebook, ledger, {
-    from: state.screen,
-    to: next.screen,
-    changes,
-  });
-  if (decision.kind !== "allow") {
-    if (current)
-      current.blocked = {
-        decision,
-        applied: current.applied,
-        input: inputLabel(input),
-      };
-    return;
-  }
-  state = next;
-  ledger = afterCommit(config.rulebook, ledger, changes);
-  screens.add(state.screen);
-  if (current) {
-    current.applied += 1;
-    current.changes.push(...changes);
-  }
-}
-
-const terminal = () => screenHtml(render(state, Date.now()));
+const core = createScreenCore(config, Date.now);
 
 // HARBOURMASTER, the web app ------------------------------------------------------------
 
@@ -197,12 +133,12 @@ createServer(async (request, response) => {
   if (request.method === "POST" && request.url === "/input") {
     try {
       const input = inputFrom(JSON.parse(await body(request)));
-      if (input) take(input);
+      if (input) core.take(input);
     } catch {
       // Not an input: the Screen is sent back unchanged.
     }
     response.setHeader("content-type", "text/html; charset=utf-8");
-    response.end(terminal());
+    response.end(core.html());
     return;
   }
   response.setHeader("content-type", "text/html; charset=utf-8");
@@ -255,42 +191,24 @@ async function main() {
 
   async function act(request: ActRequest): Promise<ActResult> {
     const started = Date.now();
-    current = { changes: [], applied: 0, blocked: null };
-    const turn = current;
+    core.beginAction();
     try {
       const units = request.action ? unitsOf(request.action) : [];
       for (const unit of units.slice(Math.max(0, request.skip ?? 0))) {
         await unit();
         await settle();
-        if (turn.blocked) break;
+        if (core.blocked()) break;
       }
       // Draw the Screen as it is now (the clock, a timeout) before the picture.
       await page.keyboard.press("F24").catch(() => {});
       await settle();
       const png = await page.screenshot({ type: "png" });
-      const screen = render(state, Date.now());
-      const text = screenText(screen);
       return {
         png: png.toString("base64"),
-        screen: screen.code,
-        message: (text[ROWS - 2] ?? "").trim(),
-        caret: screen.cursor
-          ? pointOf(screen.cursor.row, screen.cursor.col)
-          : null,
-        pointer,
-        changes: turn.changes,
-        diff:
-          turn.changes.length > 0
-            ? diffBooks(config.fixture.books, state.books)
-            : null,
-        blocked: turn.blocked,
-        records: ledger.records,
-        errors: state.errors,
-        signedOn: state.signedOn,
-        ms: Date.now() - started,
+        ...core.endAction(pointer, started),
       };
     } finally {
-      current = null;
+      core.abortAction();
     }
   }
 
@@ -304,15 +222,6 @@ async function main() {
     );
   };
 
-  const report = (): BooksReport => ({
-    books: state.books,
-    diff: diffBooks(config.fixture.books, state.books),
-    signedOn: state.signedOn,
-    errors: state.errors,
-    inputs: state.inputs,
-    screens: [...screens],
-  });
-
   createServer(async (request, response) => {
     const send = (status: number, value: unknown) => {
       response.statusCode = status;
@@ -323,22 +232,18 @@ async function main() {
       return send(403, { error: "forbidden" });
     try {
       if (request.url === "/health") return send(200, { ok: true });
-      if (request.url === "/books") return send(200, report());
+      if (request.url === "/books") return send(200, core.report());
       const sent = request.method === "POST" ? await body(request) : "";
       const payload = sent ? JSON.parse(sent) : {};
       if (request.url === "/approve") {
         // A person approved exactly this change; it is good for one commit.
         if (typeof payload.fingerprint === "string")
-          ledger = {
-            ...ledger,
-            approved: [...ledger.approved, payload.fingerprint],
-          };
-        // The session must not time out because a person took their time.
-        state = { ...state, lastInputAt: Date.now() };
+          core.approve(payload.fingerprint);
+        else core.touch();
         return send(200, { ok: true });
       }
       if (request.url === "/touch") {
-        state = { ...state, lastInputAt: Date.now() };
+        core.touch();
         return send(200, { ok: true });
       }
       if (request.url === "/act") {

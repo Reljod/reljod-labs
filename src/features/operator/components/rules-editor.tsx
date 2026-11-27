@@ -22,7 +22,6 @@ import {
   SCREEN_CODES,
 } from "../domain/rules";
 import { SCREEN_TITLES } from "../legacy/types";
-import { saveRulebook } from "../server/actions";
 import { api } from "./api";
 import {
   changedRules,
@@ -496,14 +495,7 @@ export function RulesEditor({
     const saved = draft;
     const savedNote = note.trim().slice(0, NOTE_CHARS);
     try {
-      const response = await saveRulebook({
-        rulebook: saved,
-        note: savedNote || undefined,
-      });
-      if ("error" in response) {
-        setResult({ ok: false, text: response.error });
-        return;
-      }
+      const response = await api.saveRulebook(saved, savedNote || undefined);
       // Drop any read that started before the save, show the write's own
       // answer at once, then read the history again.
       reading.current?.abort();

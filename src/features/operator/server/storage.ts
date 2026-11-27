@@ -1,6 +1,8 @@
 import "server-only";
 import { createClient } from "@supabase/supabase-js";
+import { extractText } from "@/features/harness/server/knowledge/extract";
 import { BUCKET, env } from "./env";
+import type { FrameStore, ManifestFiles } from "./ports";
 
 let client: ReturnType<typeof createServiceClient> | undefined;
 
@@ -55,11 +57,23 @@ export async function getFrame(runId: string, n: number) {
   return Buffer.from(await data.arrayBuffer());
 }
 
-/** Removes a Run's Frames. Best effort: for a Run that failed before it showed anything. */
-export async function removeFrames(runId: string, count: number) {
-  if (count <= 0) return;
-  const paths = Array.from({ length: count }, (_, n) => framePath(runId, n));
-  await bucket()
-    .remove(paths)
-    .catch(() => {});
-}
+/** Frames in the private bucket, at `frames/<run id>/<n>.png`. */
+export const frameStore: FrameStore = { put: putFrame, get: getFrame };
+
+/** Manifest files in the private bucket, at `manifests/<hashed owner>/<id>.<ext>`. */
+export const manifestFiles: ManifestFiles = {
+  async uploadUrl(path) {
+    const { data, error } = await bucket().createSignedUploadUrl(path, {
+      upsert: false,
+    });
+    return error || !data
+      ? null
+      : { signedUrl: data.signedUrl, token: data.token };
+  },
+  async download(path) {
+    const { data, error } = await bucket().download(path);
+    if (error || !data) return null;
+    return new Uint8Array(await data.arrayBuffer());
+  },
+  pdfText: (bytes) => extractText("pdf", bytes),
+};

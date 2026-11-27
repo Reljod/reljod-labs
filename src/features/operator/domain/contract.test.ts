@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { ACTION_LIMITS, actionLabel, screenActionSchema } from "./actions";
+import { ACTION_LIMITS, screenActionSchema } from "./actions";
 import { frameSrc } from "./api";
 import {
   DEFAULT_MODEL,
@@ -167,21 +167,6 @@ describe("screenActionSchema", () => {
     expect(valid({ type: "wait", ms: 99 })).toBe(false);
     expect(valid({ type: "wait", ms: ACTION_LIMITS.waitMs + 1 })).toBe(false);
     expect(valid({ type: "drag", x: 0, y: 0 })).toBe(false);
-  });
-});
-
-describe("actionLabel", () => {
-  it("labels each kind of Action", () => {
-    expect(actionLabel({ type: "click", x: 12, y: 34 })).toBe("click 12,34");
-    expect(actionLabel({ type: "type", text: "MRDU4821131" })).toBe(
-      'type "MRDU4821131"',
-    );
-    expect(actionLabel({ type: "key", keys: ["Tab", "F10"] })).toBe(
-      "key Tab F10",
-    );
-    expect(actionLabel({ type: "scroll", dy: 100 })).toBe("scroll down");
-    expect(actionLabel({ type: "scroll", dy: -100 })).toBe("scroll up");
-    expect(actionLabel({ type: "wait", ms: 500 })).toBe("wait 500 ms");
   });
 });
 
