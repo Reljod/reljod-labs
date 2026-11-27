@@ -585,7 +585,8 @@ export async function searchNodesAcross(
   limit: number,
 ) {
   if (clientIds.length === 0) return [];
-  const vector = embedding ? `[${embedding.join(",")}]` : null;
+  // No vector (none made, or an empty one): words alone.
+  const vector = embedding?.length ? `[${embedding.join(",")}]` : null;
   return sql()<
     (GraphNodeRow & {
       client_id: string;

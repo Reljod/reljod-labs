@@ -5,11 +5,12 @@ import {
   InvalidError,
   NotFoundError,
 } from "@/platform/errors";
-import type {
-  AskInput,
-  DecisionInput,
-  ThreadPatch,
-  ThreadResponse,
+import {
+  type AskInput,
+  type DecisionInput,
+  isUuid,
+  type ThreadPatch,
+  type ThreadResponse,
 } from "../../domain/api";
 import {
   type AssistantEvent,
@@ -121,6 +122,11 @@ export function createThreadService(ports: ThreadPorts): ThreadService {
   const owned = (thread: ThreadRow | null, owner: Owner) =>
     thread && thread.owner === owner ? thread : null;
 
+  /** A Thread id that is not a uuid names no Thread (and never reaches SQL as one). */
+  const known = (threadId: string) => {
+    if (!isUuid(threadId)) throw noThread();
+  };
+
   /** A client this Owner may scope a Thread to: one it can see. */
   async function visibleClient(clientId: string | null, owner: Owner) {
     if (!clientId) return null;
@@ -148,6 +154,7 @@ export function createThreadService(ports: ThreadPorts): ThreadService {
     },
 
     async get(owner, threadId) {
+      known(threadId);
       // The messages query checks the Owner itself, so both run at once.
       const [thread, messages] = await Promise.all([
         threads.get(threadId),
@@ -159,23 +166,31 @@ export function createThreadService(ports: ThreadPorts): ThreadService {
     },
 
     async patch(owner, threadId, input) {
-      const [thread] = await Promise.all([
+      known(threadId);
+      // Both at once; the Thread's refusal comes first.
+      const [thread, scope] = await Promise.all([
         threads.get(threadId),
         input.clientId !== undefined
-          ? visibleClient(input.clientId, owner)
+          ? visibleClient(input.clientId, owner).then(
+              () => null,
+              (error: unknown) => error,
+            )
           : null,
       ]);
       if (!owned(thread, owner)) throw noThread();
+      if (scope) throw scope;
       await threads.update(threadId, input);
     },
 
     async remove(owner, threadId) {
+      known(threadId);
       const thread = owned(await threads.get(threadId), owner);
       if (!thread) throw noThread();
       await threads.remove(thread.id);
     },
 
     async ask(caller, threadId, input, watch) {
+      known(threadId);
       const { owner, visitor } = caller;
       const research = input.research || ASKS_FOR_RESEARCH.test(input.text);
       // What the answer needs before its first word, read with the Thread
@@ -292,6 +307,7 @@ export function createThreadService(ports: ThreadPorts): ThreadService {
     },
 
     async decide(caller, threadId, messageId, input) {
+      known(threadId);
       const [found, message] = await Promise.all([
         threads.get(threadId),
         threads.message(threadId, messageId),
