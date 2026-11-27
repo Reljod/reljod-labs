@@ -3,18 +3,13 @@ import { createMCPClient } from "@ai-sdk/mcp";
 import { isStepCount, streamText, type ToolSet, tool } from "ai";
 import { z } from "zod";
 import { auditIn } from "../core/audit";
-import { InvalidError } from "../core/errors";
 import { listConfirmations } from "../core/reads";
 import { BANK_MCP_PATH } from "../domain/api";
 import {
   type ChatEvent,
   cutArgs,
-  historyOf,
   instructionsFor,
-  partsOf,
-  type SessionSummary,
   stubPlan,
-  titleFrom,
   toolData,
   toolOk,
   toolSummary,
@@ -24,87 +19,36 @@ import { LIMITS } from "../domain/limits";
 import { ROLE_LABEL } from "../domain/staff";
 import type { CustomerDetail, CustomerSummary } from "../domain/views";
 import { SKILLS, skillById } from "../skills";
-import { read } from "./bank";
-import { actorOf, type StaffContext } from "./context";
 import { sql } from "./db";
 import { env } from "./env";
-import { addUsage, gateway, type Usage, usageOf, visibleThinking } from "./llm";
+import { addUsage, gateway, usageOf, visibleThinking } from "./llm";
 import { mcpHandler } from "./mcp";
-import { chatToken } from "./mcp-auth";
-import { takeRate } from "./rate";
+import type { PreparedTurn, Teller, TokenSigner } from "./ports";
 import { customerFiles, runCode } from "./sandbox";
-import {
-  appendMessage,
-  listMessages,
-  ownedSession,
-  setSession,
-} from "./sessions";
+import type { CommandService } from "./services/commands";
+import { actorOf } from "./services/staff";
 
 /*
- * One chat turn. The Teller reaches the bank only through the bank's MCP
- * server, called in process with a ten-minute token for the Session's Staff
- * member; its only local tools are `load_skill` and `run_code`. The harness
- * (this file and the engine behind the MCP server) owns the caps, the
- * permissions and the confirmation gate. The model owns none of them.
+ * The two Tellers: the model, and the e2e suite's canned turn. Either one
+ * reaches the bank only through the bank's MCP server, called in process
+ * with a ten-minute token for the Session's Staff member; the model's only
+ * local tools are `load_skill` and `run_code`. The chat service and the
+ * engine behind the MCP server own the caps, the permissions and the
+ * confirmation gate. The model owns none of them.
  */
 
 const LOAD_SKILL = "load_skill";
 const RUN_CODE = "run_code";
 
-export type TurnInput = {
-  context: StaffContext;
-  sessionId: string;
-  text: string;
-  origin: string;
-  /** e2e only: a canned turn that still calls a real tool, no model spend. */
-  stubbed: boolean;
-};
+type TellerPorts = { commands: CommandService; tokens: TokenSigner };
 
-export type PreparedTurn = TurnInput & {
-  session: SessionSummary;
-  renamed: boolean;
-  history: { role: "user" | "assistant"; content: string }[];
-};
-
-/** Everything before the stream: the Session is the Owner's, the message passes the caps and is saved. */
-export async function prepareTurn(input: TurnInput): Promise<PreparedTurn> {
-  const { context } = input;
-  const text = input.text.trim();
-  if (!text) throw new InvalidError("Say something first.");
-  if (text.length > LIMITS.messageChars) {
-    throw new InvalidError(
-      `A message is at most ${LIMITS.messageChars} characters.`,
-    );
-  }
-  const before = await ownedSession(context.owner, input.sessionId);
-  await takeRate(context.visitor, context.owner, "message");
-  const earlier = await listMessages(context.owner, before.id);
-  await appendMessage({
-    owner: context.owner,
-    sessionId: before.id,
-    role: "person",
-    content: text,
-  });
-  const first = earlier.length === 0;
-  const session = first
-    ? await setSession(context.owner, before.id, { title: titleFrom(text) })
-    : before;
-  return {
-    ...input,
-    text,
-    session,
-    renamed: first,
-    history: historyOf(earlier),
-  };
-}
-
-function mcpClient(turn: PreparedTurn) {
+function mcpClient(turn: PreparedTurn, tokens: TokenSigner) {
   return createMCPClient({
     transport: {
       type: "http",
       url: `${turn.origin}${BANK_MCP_PATH}`,
       headers: {
-        authorization: `Bearer ${chatToken(turn.context, turn.session.id)}`,
+        authorization: `Bearer ${tokens.chat(turn.context, turn.session.id)}`,
       },
       // In process: no network hop, the same handler outside clients reach.
       fetch: (url, init) => mcpHandler(new Request(url, init)),
@@ -112,30 +56,20 @@ function mcpClient(turn: PreparedTurn) {
   });
 }
 
-async function finish(
-  turn: PreparedTurn,
-  content: string,
-  events: ChatEvent[],
-  usage: Usage | null,
-): Promise<ChatEvent> {
-  const messageId = await appendMessage({
-    owner: turn.context.owner,
-    sessionId: turn.session.id,
-    role: "teller",
-    content,
-    parts: partsOf(events),
-    usage,
-  });
-  return { type: "done", messageId };
-}
-
 type Execute = (
   args: Record<string, unknown>,
   options: { toolCallId: string; messages: [] },
 ) => Promise<unknown>;
 
-/** The e2e suite's turn: the same events and saves, one real MCP tool call, no model. */
-async function* stubTurn(turn: PreparedTurn): AsyncGenerator<ChatEvent> {
+/** The e2e suite's Teller: the same events and saves, one real MCP tool call, no model. */
+export function createStubTeller(ports: TellerPorts): Teller {
+  return { answer: (turn) => stubTurn(turn, ports) };
+}
+
+async function* stubTurn(
+  turn: PreparedTurn,
+  { commands, tokens }: TellerPorts,
+): AsyncGenerator<ChatEvent> {
   const events: ChatEvent[] = [];
   const emit = (event: ChatEvent) => {
     events.push(event);
@@ -144,24 +78,26 @@ async function* stubTurn(turn: PreparedTurn): AsyncGenerator<ChatEvent> {
   const plan = stubPlan(turn.text);
   let said = "";
   if (plan) {
-    const mcp = await mcpClient(turn);
+    const mcp = await mcpClient(turn, tokens);
     try {
       const tools = (await mcp.tools()) as unknown as ToolSet;
       let args: Record<string, unknown> = {};
       if (plan.needs === "transfer") {
         const actor = actorOf(turn.context);
-        const { customers } = (await read(actor, "list_customers", {})) as {
-          customers: CustomerSummary[];
-        };
+        const { customers } = (await commands.read(
+          actor,
+          "list_customers",
+          {},
+        )) as { customers: CustomerSummary[] };
         const detail = async (name: string) =>
-          (await read(actor, "get_customer", {
+          (await commands.read(actor, "get_customer", {
             customerId: customers.find((customer) => customer.name === name)
               ?.id,
           })) as CustomerDetail;
-        const [mara, joren] = [
-          await detail("Mara Voss"),
-          await detail("Joren Pike"),
-        ];
+        const [mara, joren] = await Promise.all([
+          detail("Mara Voss"),
+          detail("Joren Pike"),
+        ]);
         args = {
           fromAccountId: mara.accounts.find(
             (account) => account.kind === "current",
@@ -215,19 +151,19 @@ async function* stubTurn(turn: PreparedTurn): AsyncGenerator<ChatEvent> {
     outputTokens: 0,
     costUsd: 0,
   };
-  yield await finish(turn, reply, events, null);
+  yield await turn.finish(reply, events, null);
 }
 
-/** The Teller's answer to a prepared turn, as ChatEvents. Ends with `done`, or throws. */
-export async function* streamTurn(
+/** The model's Teller: the answer to a prepared turn, as ChatEvents. Ends with `done`, or throws. */
+export function createLiveTeller(ports: TellerPorts): Teller {
+  return { answer: (turn, signal) => liveTurn(turn, signal, ports) };
+}
+
+async function* liveTurn(
   turn: PreparedTurn,
   signal: AbortSignal,
+  { commands, tokens }: TellerPorts,
 ): AsyncGenerator<ChatEvent> {
-  if (turn.renamed) yield { type: "session", session: turn.session };
-  if (turn.stubbed) {
-    yield* stubTurn(turn);
-    return;
-  }
   const { context } = turn;
   const { owner, staff } = context;
   const actor = actorOf(context, "chat", turn.session.id);
@@ -235,14 +171,14 @@ export async function* streamTurn(
   const model = env.chatModel();
   const db = sql();
 
-  const opening = mcpClient(turn);
+  const opening = mcpClient(turn, tokens);
   let mcp: Awaited<typeof opening>;
   let mcpTools: ToolSet;
   let brief: Parameters<typeof instructionsFor>[0];
   try {
     const [client, customers, pending, clock] = await Promise.all([
       opening,
-      read(actorOf(context), "list_customers", {}) as Promise<{
+      commands.read(actorOf(context), "list_customers", {}) as Promise<{
         customers: CustomerSummary[];
       }>,
       listConfirmations(db, owner, { sessionId }),
@@ -344,7 +280,7 @@ export async function* streamTurn(
         }),
         execute: async ({ customerId, code, purpose }, { toolCallId }) => {
           // The cap and the trail come first: no command runs uncounted or untraced.
-          await takeRate(context.visitor, owner, "sandbox");
+          await turn.spend("sandbox");
           await auditIn(
             db,
             { actor },
@@ -486,17 +422,16 @@ export async function* streamTurn(
         },
       );
     }
-    yield await finish(
-      turn,
+    yield await turn.finish(
       aborted ? `${text.trim()} (stopped)`.trim() : text.trim(),
       events,
       usage,
     );
   } catch (error) {
     if (!signal.aborted) throw error;
-    await finish(turn, `${text.trim()} (stopped)`.trim(), events, null).catch(
-      () => null,
-    );
+    await turn
+      .finish(`${text.trim()} (stopped)`.trim(), events, null)
+      .catch(() => null);
   } finally {
     await mcp.close().catch(() => {});
   }

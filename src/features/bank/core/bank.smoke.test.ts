@@ -291,9 +291,8 @@ it.skipIf(!base)(
         .filter(Boolean)
         .map((line) => JSON.parse(line) as TurnEvent);
     };
-    const stubbed = await turn("Please transfer some money", {
-      "x-bank-stub": "1",
-    });
+    // The e2e token alone gets the container's canned Teller; `x-e2e-live: 1` the model.
+    const stubbed = await turn("Please transfer some money", {});
     const tool = stubbed.find((event) => event.type === "tool.finished");
     expect(tool?.name).toBe("transfer");
     expect(tool?.summary).toMatch(/confirmation/i);
@@ -304,7 +303,7 @@ it.skipIf(!base)(
     // (when the server has BANK_GITHUB_TOKEN and BANK_GROWTH_E2E_LIVE=1) filed.
     const wish = process.env.BANK_SMOKE_GROW;
     if (wish) {
-      const live = await turn(wish, {});
+      const live = await turn(wish, { "x-e2e-live": "1" });
       const raised = live.find(
         (event) =>
           event.type === "tool.finished" && event.name === "raise_request",
@@ -343,7 +342,7 @@ it.skipIf(!base)(
     if (process.env.BANK_SMOKE_LIVE === "1") {
       const live = await turn(
         "What is Mara Voss's current account balance? One short sentence.",
-        {},
+        { "x-e2e-live": "1" },
       );
       const text = live
         .filter((event) => event.type === "text.delta")

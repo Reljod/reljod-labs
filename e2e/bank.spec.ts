@@ -7,8 +7,9 @@ import {
 
 /*
  * Tidewater Bank, the paths a person takes, without model spend: the Teller
- * turn is stubbed (`x-bank-stub`: it calls one real MCP tool in process and
- * gives a canned reply), and the e2e Owner's Growth requests are triaged
+ * turn is stubbed (the container's canned Teller, the e2e suite's default:
+ * it calls one real MCP tool in process and gives a canned reply), and the
+ * e2e Owner's Growth requests are triaged
  * without a model and never filed on GitHub. It still writes to the `e2e`
  * Owner's bank in the database and starts real Workflows.
  *
@@ -26,7 +27,6 @@ test.use({
   actionTimeout: 30_000,
   extraHTTPHeaders: {
     "x-e2e-token": process.env.E2E_BYPASS_TOKEN ?? "",
-    "x-bank-stub": "1",
   },
 });
 
@@ -432,10 +432,10 @@ test("one real Teller turn, with the model", async ({ page }) => {
     process.env.E2E_BANK_LIVE !== "1",
     "Set E2E_BANK_LIVE=1 for one real, cheap model turn.",
   );
-  // The context's stub header is overridden: this turn reaches the model.
+  // `x-e2e-live: 1`: the container's live adapters, so this turn reaches the model.
   await page.setExtraHTTPHeaders({
     "x-e2e-token": process.env.E2E_BYPASS_TOKEN ?? "",
-    "x-bank-stub": "0",
+    "x-e2e-live": "1",
   });
   await openBank(page, "chat");
   await page.getByTestId("bank-chat-new").click();

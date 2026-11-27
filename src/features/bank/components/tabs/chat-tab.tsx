@@ -11,7 +11,6 @@ import { commandDef } from "../../domain/commands";
 import { exampleView, TELLER_EXAMPLES } from "../../domain/examples";
 import { LIMITS } from "../../domain/limits";
 import type { ConfirmationView } from "../../domain/views";
-import { createSessionAction, deleteSessionAction } from "../../server/actions";
 import { chatApi, messageOf, type SessionDetail } from "../api";
 import { ResultCard } from "../chat/result-card";
 import {
@@ -261,10 +260,11 @@ export function ChatTab() {
     try {
       let id = current;
       if (!id) {
-        const made = await createSessionAction(customerId);
+        const made = await chatApi.create(customerId);
         if (!made.ok) throw new Error(made.error);
-        id = made.session.id;
-        setSessions((before) => [made.session, ...before]);
+        const session = made.value;
+        id = session.id;
+        setSessions((before) => [session, ...before]);
         openId.current = id;
         setCurrent(id);
         openTab("chat", { session: id });
@@ -341,7 +341,7 @@ export function ChatTab() {
     if (removing) return;
     setRemoving(id);
     try {
-      const done = await deleteSessionAction(id);
+      const done = await chatApi.remove(id);
       if (!done.ok) return setError(done.error);
       setSessions((before) => before.filter((item) => item.id !== id));
       if (current === id) open(null);

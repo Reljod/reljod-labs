@@ -1,19 +1,68 @@
+import { z } from "zod";
 import type { CommandName } from "./commands";
+import { LIMITS } from "./limits";
 
 /**
- * The bank's HTTP contract. Reads are gated GET routes (one per read
- * command, generated from the command list); writes are server actions.
- * The browser calls them only through `components/api.ts`.
+ * The bank's HTTP contract. Every read is `GET /api/bank/read/<command>`
+ * and every write `POST /api/bank/commands/<command>` (one route each,
+ * generated from the command list); the rest are the few resources a screen
+ * needs (the active Staff member, MCP tokens, chat Sessions). The browser
+ * calls them only through `components/api.ts`.
  */
 export const API_ROOT = "/api/bank";
 export const BANK_MCP_PATH = `${API_ROOT}/mcp`;
 export const DEMO_PATH = "/demos/bank";
 
+export const ROUTES = {
+  command: (name: CommandName) => `${API_ROOT}/commands/${name}`,
+  /** PUT: become another Staff member of the Owner's bank. */
+  activeStaff: `${API_ROOT}/staff/active`,
+  /** POST: a token for an outside MCP client. */
+  tokens: `${API_ROOT}/tokens`,
+  sessions: `${API_ROOT}/sessions`,
+  session: (id: string) => `${API_ROOT}/sessions/${id}`,
+  chat: (id: string) => `${API_ROOT}/sessions/${id}/chat`,
+} as const;
+
 /** Remembers which of the Owner's own Staff is active. Carries no authority. */
 export const STAFF_COOKIE = "bank_staff";
 
-/** e2e only, with the bypass token: a canned Teller turn, no model spend. */
-export const CHAT_STUB_HEADER = "x-bank-stub";
+export const commandParamsSchema = z.object({ name: z.string().max(60) });
+export const sessionParamsSchema = z.object({ id: z.string().max(60) });
+
+/** `?input=<JSON object>`: the read command's input, validated by its own schema in the engine. */
+export const readQuerySchema = z.object({
+  input: z
+    .string()
+    .max(8_000)
+    .optional()
+    .transform((raw, ctx): Record<string, unknown> => {
+      if (!raw) return {};
+      try {
+        const value: unknown = JSON.parse(raw);
+        if (value && typeof value === "object" && !Array.isArray(value))
+          return value as Record<string, unknown>;
+      } catch {}
+      ctx.addIssue({ code: "custom", message: "The input is not valid JSON." });
+      return z.NEVER;
+    }),
+});
+
+/** One write command. The browser makes the idempotency key per click, so a click sent twice runs once. */
+export const commandBodySchema = z.object({
+  input: z.record(z.string(), z.unknown()),
+  idempotencyKey: z.string().min(8).max(120),
+});
+
+export const activeStaffSchema = z.object({ staffId: z.string().uuid() });
+
+export const newSessionSchema = z.object({
+  customerId: z.string().uuid().nullable(),
+});
+
+export const chatBodySchema = z.object({
+  text: z.string().max(LIMITS.messageChars),
+});
 
 export const readPath = (
   name: CommandName,
@@ -54,11 +103,6 @@ export const TAB_LABEL: Record<Tab, string> = {
 
 export const isTab = (value: unknown): value is Tab =>
   typeof value === "string" && (TABS as readonly string[]).includes(value);
-
-export type ApiError = {
-  error: string;
-  errors?: { field: string; message: string }[];
-};
 
 export type McpTokenResponse = {
   token: string;
