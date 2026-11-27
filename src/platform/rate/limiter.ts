@@ -10,11 +10,16 @@ import type { Visitor } from "../request/visitor";
  * the whole demo's; the window is the last hour or day. `message` is what
  * the visitor is told when it refuses.
  */
-export type Cap = {
+export type Cap<K extends string = never> = {
   scope: "visitor" | "everyone";
   window: "hour" | "day";
   max: number;
   message: string;
+  /**
+   * Kinds counted together against this cap (Prism's one daily ceiling for
+   * all its kinds); just the kind being taken when left out.
+   */
+  across?: readonly K[];
 };
 
 /** The contract every feature's rate limits are reached through, so services can be tested without a database. */
@@ -43,7 +48,7 @@ type Config<K extends string> = {
   units?: boolean;
   /** The table has an `owner` column (a workspace foreign key) that must be filled. */
   owner?: boolean;
-  caps: Record<K, readonly Cap[]>;
+  caps: Record<K, readonly Cap<K>[]>;
   /** The pool; the shared one unless a test gives its own. */
   db?: () => Pool;
 };
@@ -72,40 +77,36 @@ export function pgRateLimiter<K extends string>(
       if (who.trusted) return;
       const caps = config.caps[kind];
       const units = Math.max(1, Math.floor(options.units ?? 1));
+      // Kinds that share a cap must queue on one lock, or two of them could
+      // both take the last place.
+      const shared = caps.some((cap) => cap.across);
+      const kindsOf = (cap: Cap<K>) => cap.across ?? [kind];
+      const counted = [...new Set(caps.flatMap(kindsOf))] as string[];
       const refusal = await pool().begin(async (tx) => {
-        await tx`select pg_advisory_xact_lock(hashtextextended(${`${schema}:${kind}`}, 0))`;
+        await tx`select pg_advisory_xact_lock(hashtextextended(${shared ? `${schema}:*` : `${schema}:${kind}`}, 0))`;
         if (Math.random() * SWEEP_EVERY < 1)
           await tx`delete from ${tx(config.table)} where created_at < now() - interval '1 day'`;
-        const amount = (where: postgres.PendingQuery<postgres.Row[]>) =>
-          config.units
+        const amount = (cap: Cap<K>) => {
+          const where = tx`${tx(kindColumn)} in ${tx([...kindsOf(cap)] as string[])}
+            ${cap.scope === "visitor" ? tx`and visitor_hash = ${who.hash}` : tx``}
+            ${cap.window === "hour" ? tx`and created_at > now() - interval '1 hour'` : tx``}`;
+          return config.units
             ? tx`coalesce(sum(units) filter (where ${where}), 0)::int`
             : tx`(count(*) filter (where ${where}))::int`;
-        const mine = tx`visitor_hash = ${who.hash}`;
-        const lastHour = tx`created_at > now() - interval '1 hour'`;
-        const [row] = await tx<
-          {
-            visitorHour: number;
-            visitorDay: number;
-            everyoneHour: number;
-            everyoneDay: number;
-          }[]
-        >`
-          select
-            ${amount(tx`${mine} and ${lastHour}`)} as "visitorHour",
-            ${amount(mine)} as "visitorDay",
-            ${amount(lastHour)} as "everyoneHour",
-            ${amount(tx`true`)} as "everyoneDay"
-          from ${tx(config.table)}
-          where ${tx(kindColumn)} = ${kind} and created_at > now() - interval '1 day'`;
-        const spent = {
-          visitor: { hour: row?.visitorHour ?? 0, day: row?.visitorDay ?? 0 },
-          everyone: {
-            hour: row?.everyoneHour ?? 0,
-            day: row?.everyoneDay ?? 0,
-          },
         };
+        // One query counts every cap: a column per cap.
+        const columns = () =>
+          caps
+            .map((cap, index) => tx`${amount(cap)} as ${tx(`c${index}`)}`)
+            .reduce((all, column) => tx`${all}, ${column}`);
+        const [row] = caps.length
+          ? await tx<Record<string, number>[]>`
+              select ${columns()}
+              from ${tx(config.table)}
+              where ${tx(kindColumn)} in ${tx(counted)} and created_at > now() - interval '1 day'`
+          : [];
         const over = caps.find(
-          (cap) => spent[cap.scope][cap.window] + units > cap.max,
+          (cap, index) => (row?.[`c${index}`] ?? 0) + units > cap.max,
         );
         if (over) return over.message;
         const hit: Record<string, unknown> = {

@@ -7,14 +7,8 @@ export const LIMITS = {
   refractionsPerHour: 120,
   tribunalCallsPerHour: 120,
   cascadeCallsPerHour: 120,
-  /**
-   * Decision Model calls from everyone, per kind, per day. Together they are
-   * the old 6,000 a day for all kinds: the shared limiter counts each kind's
-   * hits under its own lock, so a ceiling across kinds is three ceilings.
-   */
-  refractionsPerDay: 2_000,
-  tribunalCallsPerDay: 2_000,
-  cascadeCallsPerDay: 2_000,
+  /** Decision Model calls from everyone, all kinds together, per day. */
+  callsPerDay: 6_000,
   maxStateChars: 4_000,
   maxCustomQuestions: 6,
   maxOptionsPerQuestion: 8,
