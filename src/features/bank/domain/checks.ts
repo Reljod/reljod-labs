@@ -1,7 +1,14 @@
 import { addDays, type BankDate, dateOf, daysBetween } from "./dates";
 import { monthlyPayment } from "./lending";
 import { formatMoney } from "./money";
-import { bool, num, type Rulebook, type RuleId, words } from "./rules";
+import {
+  bool,
+  num,
+  type Rulebook,
+  type RuleId,
+  withGrowthFloor,
+  words,
+} from "./rules";
 
 /**
  * The checks that apply the Rules. Pure functions: facts and a Rulebook in,
@@ -572,7 +579,9 @@ export const savingsRate = (book: Rulebook) =>
 
 /**
  * The code half of triage: refuses a request that names a blocked topic or a
- * kind the bank does not accept. The request's text is untrusted data.
+ * kind the bank does not accept. The request's text is untrusted data. The
+ * Default blocked topics always apply (`GROWTH_BLOCKED_FLOOR`): an Owner's
+ * Version can add words, never lower the floor, since the Rule is per Owner.
  */
 export function checkGrowthRequest(
   book: Rulebook,
@@ -592,7 +601,7 @@ export function checkGrowthRequest(
   }
   const text =
     `${request.title}\n${request.want}\n${request.evidence}`.toLowerCase();
-  const hit = words(book, rule, "blocked").find((word) =>
+  const hit = withGrowthFloor(words(book, rule, "blocked")).find((word) =>
     new RegExp(
       `(^|[^a-z0-9])${word.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}([^a-z0-9]|$)`,
     ).test(text),

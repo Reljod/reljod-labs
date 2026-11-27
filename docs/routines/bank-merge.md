@@ -14,7 +14,7 @@ You are the merge step for the Tidewater Bank demo in `Reljod/reljod-labs`. You 
 ### 1. Find the candidates
 
 - If this run was started by a GitHub event, it names one pull request: take only that one. Otherwise (the hourly sweep, or you cannot tell) list open pull requests into `main` and take every one that passes the next point, oldest first, at most 5.
-- A candidate is not a draft, targets `main`, has no `hold`, `do-not-merge`, `wip`, `bank:blocked` or `bank:held` label, was opened by `Reljod` (the owner's account, which the build routine uses) and stays inside the bank: write its changed files (from the API, as `[{"filename","status","previous_filename"}]`) to a file and run `node scripts/bank-growth-guard.mjs <file>` from `main`. It must pass, and at least one file must be under `src/features/bank/`, `src/app/demos/bank/`, `src/app/api/bank/` or `e2e/bank.spec.ts`. Anything else is not yours: skip it silently.
+- A candidate is not a draft, targets `main`, has no `hold`, `do-not-merge`, `wip`, `bank:blocked` or `bank:held` label, was opened by `Reljod` (the owner's account, which the build routine uses) and stays inside the bank: write its changed files (from the API, as `[{"filename","status","previous_filename","patch"}]`) to a file and run `node scripts/bank-growth-guard.mjs <file>` from `main`. It must pass, and at least one file must be under `src/features/bank/`, `src/app/demos/bank/`, `src/app/api/bank/` or `e2e/bank.spec.ts`. Anything else is not yours: skip it silently.
 - Record the pull request's head SHA now. Before every write below, read it again; if it moved, stop work on that pull request (the next event or sweep takes the new head).
 
 ### 2. Is the review done, and passed, at this head?
@@ -38,6 +38,12 @@ These do not depend on the review or its label, so they hold even if a review or
 - writes `bank.postings`, `bank.journal_entries` or `bank.account_balances` other than through `post()`, or removes a `requireStaff(`, `can(`, `assertCan(`, `auditIn(` or `takeRate(` call;
 - deletes or skips a test (`it.skip`, `describe.skip`, `test.skip` added, a test file removed), or loosens an assertion;
 - adds a file under `supabase/migrations/`: migrations are applied by hand, so **hold** and say "apply `<file>`, then merge by hand".
+- touches a file outside the allowlist, even if the guard passed (the same list as `ALLOWED_PREFIXES`, `ALLOWED_FILES` and `ALLOWED_NEW_MIGRATION` in `scripts/bank-growth-guard.mjs` on `main`; a rename counts the path it came from);
+- adds SQL, in a migration or in a query in code, that names any schema other than `bank.` (`access.`, `public.`, `auth.`, `storage.`, `cron.`, another demo's schema, `pg_catalog.`, ...), or changes `search_path`, a role or a schema;
+- removes an Owner predicate (`owner =` or `owner:`, in a query, a `where` or an object passed to a write) without the same predicate coming back in the same file;
+- adds, changes or removes anything that reads or names the environment (`process.env`, `process[`, `import.meta.env`), or touches `src/features/bank/server/env.ts` or any `.env*` file.
+
+The last four are also code: run `node scripts/bank-growth-guard.mjs --content <file>` from `main` on the changed files with their `patch`. Any finding is a **hold**, and so is a file whose `patch` GitHub left out (too large to check), whatever the CI check says.
 
 A hit is not a verdict, only a reason for a person to look: say which line and why.
 

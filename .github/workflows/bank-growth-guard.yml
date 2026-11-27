@@ -58,7 +58,7 @@ jobs:
           GH_TOKEN: ${{ github.token }}
           REPO: ${{ github.repository }}
           PR: ${{ github.event.pull_request.number }}
-        run: gh api --paginate "repos/$REPO/pulls/$PR/files?per_page=100" --jq '.[] | {filename, status, previous_filename}' | jq -s '.' > "$RUNNER_TEMP/files.json"
-      - name: Every file is inside the allowlist
+        run: gh api --paginate "repos/$REPO/pulls/$PR/files?per_page=100" --jq '.[] | {filename, status, previous_filename, patch}' | jq -s '.' > "$RUNNER_TEMP/files.json"
+      - name: Every file is inside the allowlist, and the diff stays in the bank
         if: steps.growth.outputs.growth == 'true'
-        run: node scripts/bank-growth-guard.mjs "$RUNNER_TEMP/files.json"
+        run: node scripts/bank-growth-guard.mjs --content "$RUNNER_TEMP/files.json"

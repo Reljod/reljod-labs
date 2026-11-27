@@ -9,8 +9,12 @@
  * of this file (never the pull request's), with the changed files read from
  * the GitHub API. It executes nothing from the pull request.
  *
- *   node scripts/bank-growth-guard.mjs <files.json>
- *   files.json: [{ "filename": "...", "status": "added|modified|removed|renamed", "previous_filename"?: "..." }]
+ *   node scripts/bank-growth-guard.mjs [--content] <files.json>
+ *   files.json: [{ "filename": "...", "status": "added|modified|removed|renamed", "previous_filename"?: "...", "patch"?: "..." }]
+ *
+ * With --content (CI and the merge routine) it also checks each file's
+ * patch: no SQL naming a schema other than `bank`, no removed Owner
+ * predicate, nothing that reads the environment (`contentFindings`).
  *
  * Keep ALLOWED_* identical to src/features/bank/domain/growth.ts
  * (growth.test.ts fails if they differ). This file is deliberately outside
@@ -54,8 +58,119 @@ export function outsideAllowlist(files) {
   return out;
 }
 
+/*
+ * The content checks (`--content`): what a growth pull request's diff may
+ * not do even inside the allowlist. They read the `patch` GitHub gives for
+ * each file, never the pull request's checkout. A hit fails the check; the
+ * merge routine (docs/routines/bank-merge.md, section 4) holds on the same
+ * things. They are coarse on purpose: a false hit costs a person a look.
+ */
+
+/** The only schema a growth pull request's SQL may name. */
+const OWN_SCHEMA = "bank";
+/**
+ * In a SQL file: a keyword followed by a schema-qualified relation or
+ * function. (Not `on` or `to`: `on a.id = b.id` is an alias.)
+ */
+const SQL_QUALIFIED =
+  /\b(?:from|join|into|update|table|view|function|procedure|trigger|sequence|type|schema|references|truncate|exists|execute|call)\s+(?:only\s+)?"?([a-z_][a-z0-9_$]*)"?\s*\.\s*"?[a-z_*]/gi;
+const SCHEMAS =
+  "access|public|auth|storage|vault|cron|net|realtime|graphql|graphql_public|extensions|supabase_functions|supabase_migrations|pgsodium|pg_catalog|information_schema|pg_temp|pg_toast";
+/** Schemas that are never the bank's, named anywhere in a SQL file. */
+const FOREIGN_SCHEMA = new RegExp(
+  `(?<![a-z0-9_.])"?(${SCHEMAS})"?\\s*\\.\\s*[a-z_"*]`,
+  "i",
+);
+/** In code: SQL (a query in a template) that names a schema that is never the bank's. */
+const FOREIGN_SCHEMA_IN_CODE = new RegExp(
+  `\\b(?:from|join|into|update|table|references|truncate|exists)\\s+"?(${SCHEMAS})"?\\s*\\.\\s*[a-z_"*]`,
+  "i",
+);
+const SEARCH_PATH = /\bset\s+(?:local\s+|session\s+)?(?:search_path|role)\b/i;
+const CREATE_SCHEMA = /\bcreate\s+schema\b/i;
+const OWNER_PREDICATE = /\bowner\s*(?:=|:)/gi;
+const ENV_READ =
+  /\bprocess\s*(?:\.\s*env\b|\[)|\bimport\s*\.\s*meta\s*\.\s*env\b|\bDeno\s*\.\s*env\b|\bBun\s*\.\s*env\b/;
+const ENV_FILE = /(^|\/)\.env(\.|$)|(^|\/)env\.(ts|tsx|js|mjs|cjs)$/;
+const TEXT_SOURCE = /\.(ts|tsx|js|jsx|mjs|cjs|sql|json|md|yml|yaml|sh)$/;
+
+function diffLines(patch) {
+  const added = [];
+  const removed = [];
+  for (const line of patch.split("\n")) {
+    if (line.startsWith("+++") || line.startsWith("---")) continue;
+    if (line.startsWith("+")) added.push(line.slice(1));
+    else if (line.startsWith("-")) removed.push(line.slice(1));
+  }
+  return { added, removed };
+}
+
+const count = (lines, pattern) =>
+  lines.reduce((sum, line) => sum + (line.match(pattern)?.length ?? 0), 0);
+
+/** The content of a pull request's diff that must not land unseen, each with why. */
+export function contentFindings(files) {
+  const out = [];
+  for (const file of files) {
+    const path = String(file.filename);
+    const isSql = path.endsWith(".sql");
+    for (const touched of [path, file.previous_filename].filter(Boolean)) {
+      if (ENV_FILE.test(String(touched))) {
+        out.push({ path, why: "touches an environment file" });
+      }
+    }
+    if (typeof file.patch !== "string") {
+      // GitHub leaves the patch out of large or binary files: a text file
+      // that cannot be read cannot be checked, so it fails closed.
+      if (file.status !== "removed" && TEXT_SOURCE.test(path)) {
+        out.push({ path, why: "no diff to check (too large?)" });
+      }
+      continue;
+    }
+    const { added, removed } = diffLines(file.patch);
+    for (const line of [...added, ...removed]) {
+      if (ENV_READ.test(line)) {
+        out.push({ path, why: `touches the environment: ${line.trim()}` });
+      }
+    }
+    for (const line of added) {
+      if (isSql) {
+        for (const match of line.matchAll(SQL_QUALIFIED)) {
+          if (match[1].toLowerCase() !== OWN_SCHEMA) {
+            out.push({
+              path,
+              why: `SQL names the schema "${match[1]}": ${line.trim()}`,
+            });
+          }
+        }
+      }
+      if ((isSql ? FOREIGN_SCHEMA : FOREIGN_SCHEMA_IN_CODE).test(line)) {
+        out.push({ path, why: `SQL names another schema: ${line.trim()}` });
+      }
+      if (SEARCH_PATH.test(line) || CREATE_SCHEMA.test(line)) {
+        out.push({
+          path,
+          why: `SQL changes the schema or role: ${line.trim()}`,
+        });
+      }
+    }
+    const lost =
+      count(removed, OWNER_PREDICATE) - count(added, OWNER_PREDICATE);
+    if (lost > 0) {
+      out.push({
+        path,
+        why: `removes ${lost} Owner predicate(s) (owner = / owner:)`,
+      });
+    }
+  }
+  return out;
+}
+
 if (process.argv[1]?.endsWith("bank-growth-guard.mjs")) {
-  const files = JSON.parse(readFileSync(process.argv[2], "utf8"));
+  const args = process.argv.slice(2);
+  const content = args.includes("--content");
+  const input = args.find((arg) => !arg.startsWith("--"));
+  const files = JSON.parse(readFileSync(input, "utf8"));
   if (!Array.isArray(files)) {
     console.error("Expected a JSON list of changed files.");
     process.exit(2);
@@ -75,7 +190,17 @@ if (process.argv[1]?.endsWith("bank-growth-guard.mjs")) {
     for (const item of outside) console.error(`  ${item.path}  (${item.why})`);
     process.exit(1);
   }
+  if (content) {
+    const found = contentFindings(files);
+    if (found.length > 0) {
+      console.error(
+        `A bank:growth pull request may not change other schemas, Owner predicates or the environment. ${found.length} finding(s):`,
+      );
+      for (const item of found) console.error(`  ${item.path}  (${item.why})`);
+      process.exit(1);
+    }
+  }
   console.log(
-    `bank:growth guard: ${files.length} file(s), all inside the allowlist.`,
+    `bank:growth guard: ${files.length} file(s), all inside the allowlist${content ? ", no content findings" : ""}.`,
   );
 }
