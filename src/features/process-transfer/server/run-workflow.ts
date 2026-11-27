@@ -1,44 +1,14 @@
-import {
-  checkSummary,
-  decideApproval,
-  nextMove,
-  processChecksUnder,
-  roundPassed,
-} from "../domain/approval";
-import { layoutDeck } from "../domain/deck-layout";
-import { documentSections } from "../domain/document";
-import { clock } from "../domain/process";
-import { blocking, type CheckResult, ruleSet } from "../domain/rules";
-import type {
-  DeckRound,
-  RunEventInput,
-  StageId,
-  StageState,
-} from "../domain/run";
-import { STAGES } from "../domain/run";
-import { auditPipeline } from "./audit";
-import { closeStream, log, publish } from "./emit";
-import { RunError, stageFailure } from "./errors";
-import type { RunContext } from "./llm";
-import {
-  claimRun,
-  pipelineRun,
-  pipelineStatus,
-  type RunRow,
-} from "./repository";
-import { checkRound, designPlan } from "./stages/deck";
-import { extractProcess, verifyProcess } from "./stages/process";
-import { watchRecording } from "./stages/watch";
+import type { DeckRound, StageId } from "../domain/run";
+import { pipeline } from "./pipeline-container";
 
 /*
- * One Run as a durable workflow. Every stage is a step that reads what it
- * needs from the Run's row and writes what it made back (through `publish`,
- * which also streams it), so the workflow itself only carries ids and the
- * loop's next move. A stopped Run ends quietly between stages.
- *
- * Each pass of the pipeline has a generation: 0 for the Run, n for its nth
- * Redo. The row only takes writes from the current generation, so a step of
- * an older pass that is still in flight cannot overwrite a Redo.
+ * One Run as a durable workflow. Step and workflow names (and this file's
+ * path) are replay keys: never rename or move them. Each step's work is the
+ * pipeline service's (`services/pipeline.ts`), which reads what it needs
+ * from the Run's row and writes what it made back (and streams it), so the
+ * workflow itself only carries ids and the loop's next move. A stopped Run
+ * ends quietly between stages. A Run the stubbed e2e suite started carries
+ * `stub`, and its steps get the scripted Analyst from the same container.
  */
 
 export type PipelineInput = {
@@ -50,126 +20,24 @@ export type PipelineInput = {
   origin: string;
   /** The Run's `redos` when this pass started. */
   generation: number;
+  /** Started by the stubbed e2e suite: no model is called. Absent on older Runs. */
+  stub?: boolean;
 };
 
-const LABEL = Object.fromEntries(
-  STAGES.map((stage) => [stage.id, stage.label]),
-) as Record<StageId, string>;
-
-function plural(count: number, word: string) {
-  return `${count} ${word}${count === 1 ? "" : "s"}`;
-}
-
-function contextOf(input: PipelineInput): RunContext {
-  return {
-    runId: input.runId,
-    owner: input.owner,
-    generation: input.generation,
-  };
-}
-
-async function loadRow(runId: string): Promise<RunRow> {
-  const row = await pipelineRun(runId);
-  if (!row) throw new RunError("The Run is gone.");
-  return row;
-}
-
-/**
- * Changes one stage on the row, together with whatever else the stage made,
- * in one write, and streams it. False when it did not apply: the Run was
- * stopped, failed as stale or redone meanwhile.
- */
-async function markStage(
-  ctx: RunContext,
-  row: RunRow,
-  id: StageId,
-  change: Partial<StageState>,
-  extra: RunEventInput[] = [],
-  rowOnly: { grounding?: CheckResult | null } = {},
-): Promise<boolean> {
-  const stages = row.stages.map((stage) =>
-    stage.id === id ? { ...stage, ...change } : stage,
-  );
-  row.stages = stages;
-  return publish(
-    ctx,
-    [{ type: "patch", patch: { stages } }, ...extra],
-    rowOnly,
-  );
-}
-
-/**
- * Marks a stage done with what it made, in one write. When the Run stopped
- * (or failed as stale, or a Redo replaced this pass) while it worked, the
- * write does not apply, what it made is dropped, nothing is audited and
- * this returns false. Design and Check add each Round's time to the stage's.
- */
-async function stageDone(
-  ctx: RunContext,
-  row: RunRow,
-  id: StageId,
-  summary: string,
-  started: number,
-  extra: RunEventInput[] = [],
-  carryMs = 0,
-  rowOnly: { grounding?: CheckResult | null } = {},
-): Promise<boolean> {
-  const ms = carryMs + Date.now() - started;
-  const applied = await markStage(
-    ctx,
-    row,
-    id,
-    { status: "done", summary, ms },
-    [...extra, log(`✓ ${LABEL[id]} (${(ms / 1000).toFixed(1)}s): ${summary}`)],
-    rowOnly,
-  );
-  if (!applied) return false;
-  await auditPipeline({
-    owner: ctx.owner,
-    action: "stage.completed",
-    runId: ctx.runId,
-    summary: `${LABEL[id]}: ${summary}`,
-    detail: { stage: id, ms, generation: ctx.generation },
-  });
-  return true;
-}
-
-/** The time a repeated stage already spent in earlier Rounds of this pass. */
-function earlierMs(row: RunRow, id: StageId, round: number) {
-  if (round <= 1) return 0;
-  return row.stages.find((stage) => stage.id === id)?.ms ?? 0;
-}
+const work = (input?: Pick<PipelineInput, "stub">) =>
+  pipeline({ stub: input?.stub === true });
 
 // Steps ----------------------------------------------------------------------------
 
 async function beginStep(input: PipelineInput) {
   "use step";
-  const ctx = contextOf(input);
-  if (!(await claimRun(input.runId, input.generation))) return false;
-  const row = await loadRow(input.runId);
-  await publish(ctx, [
-    { type: "patch", patch: { status: "running" } },
-    log(
-      input.mode === "redo"
-        ? `Redo ${row.redos}: Design, Check and Approve under Rules v${row.rules_version}`
-        : `Run ${row.id.slice(0, 8)} · Watch ${row.models.watch} · Write ${row.models.write} · Review ${row.models.review}`,
-    ),
-  ]);
-  return true;
+  return work(input).begin(input);
 }
 
 /** Whether this pass should go on: not stopped, failed, replaced or gone. */
 async function goingStep(runId: string, generation: number) {
   "use step";
-  return (await pipelineStatus(runId, generation)) === "running";
-}
-
-function processSummary(checks: CheckResult[]) {
-  const failed = checks.filter((check) => !check.passed);
-  const stillBlocking = blocking(checks);
-  return failed.length === 0
-    ? `${plural(checks.length, "Check")} passed`
-    : `${checks.length - failed.length} of ${checks.length} Checks passed${stillBlocking.length > 0 ? `, ${stillBlocking.length} blocking` : ""}`;
+  return work().going(runId, generation);
 }
 
 /**
@@ -178,153 +46,30 @@ function processSummary(checks: CheckResult[]) {
  */
 async function recheckStep(input: PipelineInput) {
   "use step";
-  const ctx = contextOf(input);
-  const row = await loadRow(input.runId);
-  if (!row.process) throw new RunError("There is no Process.");
-  const checks = processChecksUnder({
-    process: row.process,
-    watch: row.watch,
-    grounding: row.grounding,
-    rules: ruleSet(row.rules),
-  });
-  const stages = row.stages.map((stage) =>
-    stage.id === "verify"
-      ? {
-          ...stage,
-          summary: `${processSummary(checks)} under Rules v${row.rules_version}`,
-        }
-      : stage,
-  );
-  await publish(ctx, [
-    { type: "patch", patch: { processChecks: checks, stages } },
-    log(
-      `Process Checks again under Rules v${row.rules_version}: ${processSummary(checks)}`,
-      blocking(checks).length > 0 ? "warn" : "info",
-    ),
-  ]);
+  await work(input).recheck(input);
 }
 
 async function watchStep(input: PipelineInput) {
   "use step";
-  const ctx = contextOf(input);
-  const row = await loadRow(input.runId);
-  const started = Date.now();
-  await markStage(ctx, row, "watch", { status: "running" }, [
-    log(`▶ Watch: sending the Recording to ${row.models.watch}`),
-  ]);
-  const watch = await watchRecording(ctx, row, input.origin);
-  const speakers = watch.participants.map((person) => person.name).join(", ");
-  await stageDone(
-    ctx,
-    row,
-    "watch",
-    `${plural(watch.observations.length, "moment")}, ${clock(watch.durationSeconds)} long`,
-    started,
-    [
-      { type: "patch", patch: { watch, title: watch.title } },
-      log(`  heard ${speakers || "nobody by name"}`),
-    ],
-  );
+  await work(input).watch(input);
 }
 watchStep.maxRetries = 1;
 
 async function extractStep(input: PipelineInput) {
   "use step";
-  const ctx = contextOf(input);
-  const row = await loadRow(input.runId);
-  if (!row.watch) {
-    throw new RunError("There is nothing watched to extract from.");
-  }
-  const started = Date.now();
-  await markStage(ctx, row, "extract", { status: "running" }, [
-    log(`▶ Extract: ${row.models.write} writes the Process`),
-  ]);
-  const process = await extractProcess(ctx, {
-    watch: row.watch,
-    rules: ruleSet(row.rules),
-    models: row.models,
-  });
-  const decisions = process.steps.filter((step) => step.decision).length;
-  await stageDone(
-    ctx,
-    row,
-    "extract",
-    `${plural(process.steps.length, "step")}, ${plural(decisions, "decision")}, ${plural(process.openQuestions.length, "open question")}`,
-    started,
-    [{ type: "patch", patch: { process, title: process.title || row.title } }],
-  );
+  await work(input).extract(input);
 }
 extractStep.maxRetries = 1;
 
 async function verifyStep(input: PipelineInput) {
   "use step";
-  const ctx = contextOf(input);
-  const row = await loadRow(input.runId);
-  if (!row.watch || !row.process) throw new RunError("There is no Process.");
-  const started = Date.now();
-  await markStage(ctx, row, "verify", { status: "running" }, [
-    log("▶ Verify: Process Rules, then the reviewer checks every step"),
-  ]);
-  const verified = await verifyProcess(
-    ctx,
-    {
-      process: row.process,
-      watch: row.watch,
-      rules: ruleSet(row.rules),
-      models: row.models,
-    },
-    async (text) => {
-      await publish(ctx, [log(`  ${text}`, "warn")]);
-    },
-  );
-  await stageDone(
-    ctx,
-    row,
-    "verify",
-    `${processSummary(verified.checks)}${verified.repaired ? " after one repair" : ""}`,
-    started,
-    [
-      {
-        type: "patch",
-        patch: {
-          process: verified.process,
-          processChecks: verified.checks,
-          processFindings: verified.findings,
-        },
-      },
-      ...blocking(verified.checks).map((check) =>
-        log(`  still failing: ${check.summary}`, "warn"),
-      ),
-    ],
-    0,
-    {
-      grounding:
-        verified.checks.find((check) => check.ruleId === "process.grounded") ??
-        null,
-    },
-  );
+  await work(input).verify(input);
 }
 verifyStep.maxRetries = 1;
 
 async function documentStep(input: PipelineInput) {
   "use step";
-  const ctx = contextOf(input);
-  const row = await loadRow(input.runId);
-  if (!row.process) throw new RunError("There is no Process.");
-  const started = Date.now();
-  await markStage(ctx, row, "document", { status: "running" });
-  const sections = documentSections(row.process, {
-    recordingName: row.recording_name ?? row.title,
-    generatedAt: new Date().toISOString(),
-    status: "draft",
-  });
-  await stageDone(
-    ctx,
-    row,
-    "document",
-    `${plural(sections.length, "section")}, ${plural(row.process.steps.length, "step")}`,
-    started,
-  );
+  await work(input).document(input);
 }
 
 /** Design for one Round: plans the Deck and shows it before it is checked. */
@@ -334,233 +79,31 @@ async function designStep(
   by: DeckRound["by"],
 ) {
   "use step";
-  const ctx = contextOf(input);
-  const row = await loadRow(input.runId);
-  if (!row.process) {
-    throw new RunError("There is no Process to plan slides from.");
-  }
-  const rules = ruleSet(row.rules);
-  const earlier = row.rounds.filter((item) => item.round < round);
-  const previous = earlier.at(-1) ?? null;
-  const carry = earlierMs(row, "design", round);
-  const started = Date.now();
-  await markStage(ctx, row, "design", { status: "running", summary: null }, [
-    log(
-      by === "auto-fit"
-        ? `▶ Design, round ${round}: fitting the last plan by rule`
-        : by === "revision"
-          ? `▶ Design, round ${round}: ${row.models.write} revises the slides`
-          : `▶ Design, round ${round}: ${row.models.write} plans the slides`,
-    ),
-  ]);
-  const designed = await designPlan(ctx, {
-    round,
-    by,
-    process: row.process,
-    previous,
-    rules,
-    models: row.models,
-  });
-  const deck = layoutDeck(designed.plan, row.process, rules);
-  const current: DeckRound = {
-    round,
-    by,
-    plan: designed.plan,
-    deck,
-    checks: [],
-    findings: [],
-    passed: false,
-  };
-  const rounds = [...earlier, current];
-  row.rounds = rounds;
-  const done = await stageDone(
-    ctx,
-    row,
-    "design",
-    `Round ${round}: ${plural(deck.slides.length, "slide")}${by === "auto-fit" ? " (fit by rule)" : designed.fallback ? " (planned by rule)" : ""}`,
-    started,
-    [
-      { type: "patch", patch: { rounds } },
-      ...(designed.fallback
-        ? [
-            log(
-              `  ${designed.fallback}; planned the deck by rule instead`,
-              "warn",
-            ),
-          ]
-        : []),
-    ],
-    carry,
-  );
-  // Only for a revision this pass really wrote: a stopped or replaced pass,
-  // or a retried step whose first try failed, adds nothing to the trail.
-  if (done && by === "revision") {
-    await auditPipeline({
-      owner: ctx.owner,
-      action: "deck.revised",
-      runId: ctx.runId,
-      summary: `Round ${round - 1} sent back: ${checkSummary(round - 1, previous?.checks ?? [], previous?.findings ?? []).replace(/^Round \d+: /, "")}`,
-      detail: { round, generation: ctx.generation },
-    });
-  }
+  await work(input).design(input, round, by);
 }
 designStep.maxRetries = 1;
 
 /** Check for one Round. Returns what the loop does next. */
 async function checkStep(input: PipelineInput, round: number) {
   "use step";
-  const ctx = contextOf(input);
-  const row = await loadRow(input.runId);
-  const current = row.rounds.find((item) => item.round === round);
-  if (!row.process || !current) {
-    throw new RunError("There is no Deck to check.");
-  }
-  const rules = ruleSet(row.rules);
-  const carry = earlierMs(row, "check", round);
-  const started = Date.now();
-  await markStage(ctx, row, "check", { status: "running", summary: null }, [
-    log(`▶ Check, round ${round}: measuring every slide`),
-  ]);
-  const { checks, findings } = await checkRound(ctx, {
-    round,
-    plan: current.plan,
-    process: row.process,
-    rules,
-    models: row.models,
-  });
-  const passed = roundPassed(checks, findings, rules);
-  const rounds = row.rounds.map((item) =>
-    item.round === round ? { ...item, checks, findings, passed } : item,
-  );
-  row.rounds = rounds;
-  const move = nextMove({ round, passed, checks, rules });
-  const failures = blocking(checks).slice(0, 3);
-  await stageDone(
-    ctx,
-    row,
-    "check",
-    checkSummary(round, checks, findings),
-    started,
-    [
-      { type: "patch", patch: { rounds } },
-      ...failures.map((check) => log(`  ${check.summary}`, "warn")),
-      ...(move === "revise"
-        ? [log(`  round ${round} failed; sending the slides back to Design`)]
-        : move === "auto-fit"
-          ? [log(`  round ${round} failed; the last round fits by rule`)]
-          : []),
-    ],
-    carry,
-  );
-  return move;
+  return work(input).check(input, round);
 }
 checkStep.maxRetries = 1;
 
 async function approveStep(input: PipelineInput) {
   "use step";
-  const ctx = contextOf(input);
-  const row = await loadRow(input.runId);
-  if (!row.process) throw new RunError("There is no Process.");
-  const rules = ruleSet(row.rules);
-  const started = Date.now();
-  const at = new Date().toISOString();
-  // Decided on the Process Checks under this pass's Rules, never on ones
-  // stored under other Rules.
-  const processChecks = processChecksUnder({
-    process: row.process,
-    watch: row.watch,
-    grounding: row.grounding,
-    rules,
-  });
-  const approval = decideApproval({
-    round: row.rounds.at(-1) ?? null,
-    processChecks,
-    rules,
-    at,
-  });
-  const done = await stageDone(
-    ctx,
-    row,
-    "approve",
-    approval.status === "approved"
-      ? `Approved in round ${approval.round}`
-      : "Held for a person",
-    started,
-    [
-      {
-        type: "patch",
-        patch: {
-          processChecks,
-          approval,
-          status: "completed",
-          completedAt: at,
-        },
-      },
-      log(
-        `${approval.status === "approved" ? "Approved" : "Held"}: ${approval.reason}`,
-        approval.status === "approved" ? "info" : "warn",
-      ),
-      { type: "end", status: "completed" },
-    ],
-  );
-  // Stopped during the last Check: no verdict is written or audited.
-  if (!done) {
-    await closeStream().catch(() => {});
-    return;
-  }
-  await auditPipeline({
-    owner: ctx.owner,
-    action: approval.status === "approved" ? "deck.approved" : "deck.held",
-    runId: ctx.runId,
-    summary: approval.reason,
-    detail: { round: approval.round, generation: ctx.generation },
-  });
-  const final = await loadRow(input.runId);
-  await auditPipeline({
-    owner: ctx.owner,
-    action: "run.completed",
-    runId: ctx.runId,
-    summary: `${final.title || "Run"} finished: ${approval.status}, $${Number(final.cost_usd).toFixed(4)}`,
-    detail: { approval: approval.status, costUsd: Number(final.cost_usd) },
-  });
-  await closeStream();
+  await work(input).approve(input);
 }
 
 async function failStep(input: PipelineInput, stage: StageId, raw: string) {
   "use step";
-  const ctx = contextOf(input);
-  const error = stageFailure(stage, raw);
-  const row = await pipelineRun(input.runId);
-  const applied =
-    row !== null &&
-    (await markStage(ctx, row, stage, { status: "failed", summary: error }, [
-      {
-        type: "patch",
-        patch: {
-          status: "failed",
-          error,
-          completedAt: new Date().toISOString(),
-        },
-      },
-      log(`✗ ${LABEL[stage]} failed: ${error}`, "error"),
-      { type: "end", status: "failed" },
-    ]));
-  if (applied) {
-    await auditPipeline({
-      owner: input.owner,
-      action: "run.failed",
-      runId: input.runId,
-      summary: `${LABEL[stage]} failed: ${error}`,
-      detail: { stage, generation: input.generation },
-    });
-  }
-  await closeStream().catch(() => {});
+  await work(input).fail(input, stage, raw);
 }
 
 /** A Run someone stopped: the stream ends with it. */
 async function stoppedStep() {
   "use step";
-  await closeStream().catch(() => {});
+  await work().stopped();
 }
 
 // Orchestration --------------------------------------------------------------------

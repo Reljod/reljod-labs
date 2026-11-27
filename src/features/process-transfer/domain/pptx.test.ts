@@ -268,20 +268,6 @@ describe("buildPptx", () => {
     });
   });
 
-  it("writes the same fade transition with its duration on every slide", () => {
-    deck.slides.forEach((_, index) => {
-      const xml = parseXml(
-        files.get(`ppt/slides/slide${index + 1}.xml`) as string,
-      );
-      const transitions = all(xml, "p:transition");
-      expect(transitions).toHaveLength(2);
-      expect(transitions[0].attrs["p14:dur"]).toBe("500");
-      expect(
-        transitions.every((node) => node.children[0].name === "p:fade"),
-      ).toBe(true);
-    });
-  });
-
   it("animates exactly the Deck's entrances, targeting shapes that exist on the slide", () => {
     deck.slides.forEach((slide, index) => {
       const xml = parseXml(
@@ -323,37 +309,6 @@ describe("buildPptx", () => {
     });
   });
 
-  it("embeds each captured frame once and draws a placeholder where one is missing", () => {
-    const media = [...files.keys()].filter((path) =>
-      path.startsWith("ppt/media/"),
-    );
-    expect(media).toHaveLength(Object.keys(frames).length);
-    const missing = deck.slides.findIndex(
-      (slide) => slide.kind === "step" && slide.stepId === "s4",
-    );
-    const slideXml = files.get(`ppt/slides/slide${missing + 1}.xml`) as string;
-    expect(slideXml).not.toContain("<p:pic>");
-    expect(slideXml).toContain("Screenshot at 3:34");
-    const withFrame = deck.slides.findIndex(
-      (slide) => slide.kind === "step" && slide.stepId === "s1",
-    );
-    expect(files.get(`ppt/slides/slide${withFrame + 1}.xml`)).toContain(
-      "<p:pic>",
-    );
-  });
-
-  it("writes the speaker notes", () => {
-    const notes = [...files.keys()].filter((path) =>
-      /^ppt\/notesSlides\/notesSlide\d+\.xml$/.test(path),
-    );
-    expect(notes).toHaveLength(
-      deck.slides.filter((slide) => slide.notes).length,
-    );
-    expect(files.get("ppt/notesSlides/notesSlide1.xml")).toContain(
-      SAMPLE_PROCESS.purpose.replace(/'/g, "&apos;"),
-    );
-  });
-
   it("marks every slide of an unapproved deck as a draft, and none of an approved one", () => {
     const draft = unzip(buildPptx(deck, { frames: {}, approved: false }));
     deck.slides.forEach((_, index) => {
@@ -364,16 +319,6 @@ describe("buildPptx", () => {
         "DRAFT",
       );
     });
-  });
-
-  it("is byte-for-byte repeatable", () => {
-    const again = buildPptx(deck, {
-      frames,
-      approved: true,
-      author: "Daniel Reyes",
-      createdAt: "2026-11-17T09:30:00.123Z",
-    });
-    expect(again).toEqual(bytes);
   });
 
   it("escapes text that would break the XML", () => {

@@ -4,7 +4,7 @@ import Image from "next/image";
 import { type DragEvent, useEffect, useRef, useState } from "react";
 import type { DeskView } from "../../domain/run";
 import { SAMPLES, type Sample } from "../../domain/samples";
-import { createUpload, startRun } from "../../server/actions";
+import { createUpload, startRun } from "../api";
 import { bytes, seconds, usdCents } from "../format";
 import {
   buttonClass,
@@ -225,7 +225,7 @@ function SamplePreview({
     try {
       const result = await startRun({ kind: "sample", slug: sample.slug });
       if (result.ok) {
-        onStarted(result.runId);
+        onStarted(result.value);
         return;
       }
       setError(result.error);
@@ -386,7 +386,7 @@ function UploadZone({
       setPhase({ at: "uploading", name: file.name, fraction: 0 });
       abort.current = new AbortController();
       await putFile(
-        ticket.signedUrl,
+        ticket.value.signedUrl,
         file,
         (fraction) => setPhase({ at: "uploading", name: file.name, fraction }),
         abort.current.signal,
@@ -395,14 +395,14 @@ function UploadZone({
       setPhase({ at: "starting", name: file.name });
       const result = await startRun({
         kind: "upload",
-        path: ticket.path,
+        path: ticket.value.path,
         name: file.name,
       });
       if (!result.ok) {
         setError(result.error);
         return;
       }
-      onStarted(result.runId);
+      onStarted(result.value);
     } catch (caught) {
       if (!mounted.current) return;
       setError(

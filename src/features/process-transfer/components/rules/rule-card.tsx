@@ -1,8 +1,9 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState } from "react";
+import type { RulesResponse } from "../../domain/api";
 import { describeRule, type Rule, type RuleOverride } from "../../domain/rules";
-import { saveRule } from "../../server/actions";
+import { saveRule } from "../api";
 import {
   fieldClass,
   focusRing,
@@ -21,10 +22,7 @@ import {
   toOverride,
 } from "./rule-form";
 
-export type SavedRules = Extract<
-  Awaited<ReturnType<typeof saveRule>>,
-  { ok: true }
->;
+export type SavedRules = RulesResponse;
 
 /** Changes when what the Rule says changes, not when its object is replaced. */
 function signature(rule: Rule): string {
@@ -83,11 +81,11 @@ export function RuleCard({
         setError(result.error);
         return;
       }
-      onSaved(result);
+      onSaved(result.value);
       setNote(
         kind === "default"
-          ? `Back to the default. Rules are now version ${result.rulesVersion}.`
-          : `Saved. Rules are now version ${result.rulesVersion}.`,
+          ? `Back to the default. Rules are now version ${result.value.rulesVersion}.`
+          : `Saved. Rules are now version ${result.value.rulesVersion}.`,
       );
     } catch {
       setError("That did not reach the server. Try again.");

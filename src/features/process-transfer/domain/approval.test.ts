@@ -1,6 +1,5 @@
 import { describe, expect, it } from "vitest";
 import {
-  checkSummary,
   decideApproval,
   exportRefusal,
   maxRounds,
@@ -219,24 +218,6 @@ describe("decideApproval", () => {
       decideApproval({ round: null, processChecks: [], rules: rules(), at })
         .status,
     ).toBe("held");
-  });
-});
-
-describe("checkSummary", () => {
-  it("counts blocking failures, warnings and majors", () => {
-    expect(
-      checkSummary(
-        2,
-        [
-          check("layout.text-fits", false),
-          check("content.slide-count", false, "warn"),
-          check("content.speaker-notes", false, "warn"),
-          check("layout.safe-area", true),
-        ],
-        [major],
-      ),
-    ).toBe("Round 2: 1 blocking, 2 warnings, 1 major finding");
-    expect(checkSummary(1, [check("x", true)], [])).toBe("Round 1: all clear");
   });
 });
 

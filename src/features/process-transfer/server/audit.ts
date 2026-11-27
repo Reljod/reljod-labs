@@ -1,6 +1,7 @@
 import "server-only";
 import type { AuditAction, AuditEvent } from "../domain/run";
-import { insertAudit } from "./repository";
+import type { AuditLog } from "./ports";
+import { insertAudit, listAuditEvents } from "./repository";
 
 export type AuditInput = {
   owner: string;
@@ -23,5 +24,12 @@ export async function auditPipeline(input: AuditInput) {
     console.error("[process-transfer] could not write an Audit line", error);
   });
 }
+
+/** The Audit trail in Postgres (append-only: the table refuses UPDATE). */
+export const auditLog: AuditLog = {
+  person: auditPerson,
+  pipeline: auditPipeline,
+  list: listAuditEvents,
+};
 
 export type { AuditEvent };
