@@ -309,9 +309,10 @@ export function SourceReader({
           }}
         >
           <p>
-            {source.title} will be deleted with its {source.passages} Passages,
-            its Conflicts and its file. A Passage it had superseded will be
-            found by search again. This cannot be undone.
+            {source.title} leaves the Knowledge base with its {source.passages}{" "}
+            Passages and its Conflicts, and search stops finding it. A Passage
+            it had superseded will be found by search again. Its file is kept
+            for 30 days, then purged.
           </p>
         </ConfirmDialog>
       ) : null}

@@ -1,6 +1,7 @@
 import "server-only";
 import { headers } from "next/headers";
 import type { Owner } from "@/features/access/domain/owner";
+import { isE2eToken } from "@/features/access/server/e2e";
 import { E2E_HEADER } from "@/features/document-compliance/constants";
 import { hashVisitor } from "@/features/document-compliance/server/rate-limit";
 import { LIMITS } from "../domain/limits";
@@ -17,8 +18,7 @@ export type Visitor = { hash: string; trusted: boolean };
 /** The visitor of the current request, hashed with the site's shared helper. */
 export async function visitor(): Promise<Visitor> {
   const requestHeaders = await headers();
-  const bypass = env.e2eBypassToken();
-  if (bypass && requestHeaders.get(E2E_HEADER) === bypass) {
+  if (isE2eToken(requestHeaders.get(E2E_HEADER))) {
     return { hash: TRUSTED_VISITOR, trusted: true };
   }
   const ip =

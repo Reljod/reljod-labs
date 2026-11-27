@@ -43,7 +43,7 @@ export async function sourcesOf(
     select id, title, kind, storage_path, status,
            (created_at at time zone 'UTC')::date::text as added_on
     from harness.sources
-    where owner = ${owner} and id in ${db(ids)}`;
+    where owner = ${owner} and deleted_at is null and id in ${db(ids)}`;
   const byId = new Map(rows.map((row) => [row.id, row]));
   return ids.flatMap((id) => {
     const row = byId.get(id);

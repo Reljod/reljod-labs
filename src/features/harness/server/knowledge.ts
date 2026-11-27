@@ -168,7 +168,7 @@ async function clearStale(owner: Owner) {
   await sql()`
     update harness.sources
     set status = 'failed', error = 'Reading was interrupted. Try again.'
-    where owner = ${owner} and status = 'reading' and not is_seed
+    where owner = ${owner} and status = 'reading' and not is_seed and deleted_at is null
       and reading_at < now() - make_interval(mins => ${STALE_READING_MINUTES + 2})`;
 }
 
@@ -248,7 +248,8 @@ export async function readSourceText(
   if (!isUuid(sourceId)) return null;
   const [row] = await sql()<TextRow[]>`
     select id, title, kind, storage_path, extracted_text
-    from harness.sources where id = ${sourceId} and owner = ${owner}`;
+    from harness.sources where id = ${sourceId} and owner = ${owner}
+      and deleted_at is null`;
   if (!row) return null;
   const cached = row.extracted_text !== null;
   let text: string;
@@ -302,7 +303,8 @@ export async function previewSource(
     throw new NotFoundError("That Source is not in this Workspace.");
   const [row] = await sql()<TextRow[]>`
     select id, title, kind, storage_path, extracted_text
-    from harness.sources where id = ${sourceId} and owner = ${owner}`;
+    from harness.sources where id = ${sourceId} and owner = ${owner}
+      and deleted_at is null`;
   const source = row ? await loadSource(sql(), owner, sourceId) : null;
   if (!row || !source)
     throw new NotFoundError("That Source is not in this Workspace.");
@@ -421,9 +423,11 @@ async function registerSource(
   const db = sql();
 
   await clearStalePending(db, owner);
+  await purgeRemovedSources(db, owner);
 
   const [count] = await db<{ n: number }[]>`
-    select count(*)::int as n from harness.sources where owner = ${owner}`;
+    select count(*)::int as n from harness.sources where owner = ${owner}
+      and deleted_at is null`;
   if ((count?.n ?? 0) >= LIMITS.sourcesPerWorkspace) {
     throw new LimitError(
       `This Workspace holds ${LIMITS.sourcesPerWorkspace} Sources. An admin can remove one first.`,
@@ -596,6 +600,7 @@ async function claim(
     set status = 'reading', error = null, reading_at = now(),
         read_attempts = read_attempts + 1
     where id = ${sourceId} and owner = ${owner} and not is_seed
+      and deleted_at is null
       and read_attempts < ${MAX_READS}
       and (
         status in ('pending', 'failed')
@@ -676,6 +681,7 @@ export async function ingestSource(
       const [mine] = await tx<{ id: string }[]>`
         select id from harness.sources
         where id = ${claimed.id} and owner = ${owner} and status = 'reading'
+          and deleted_at is null
         for update`;
       if (!mine) throw new StateError("This Source changed while it was read.");
       // A retry starts from nothing: its old Passages (and their Conflicts) go.
@@ -739,6 +745,7 @@ export async function ingestSource(
       const [mine] = await tx<{ id: string }[]>`
         select id from harness.sources
         where id = ${claimed.id} and owner = ${owner} and status = 'reading'
+          and deleted_at is null
         for update`;
       if (!mine) throw new StateError("This Source changed while it was read.");
       const ids: { id: string; conflictOf: (typeof checked.found)[number] }[] =
@@ -845,10 +852,16 @@ function quietTotal(calls: AuditUsage[]): AuditUsage | null {
 
 // Removing -------------------------------------------------------------------------
 
+/** Days a removed Source is kept (hidden) before it is purged with its Passages and file. */
+export const REMOVED_SOURCE_DAYS = 30;
+
 /**
- * Removes a Source that is not a seed, with its Passages and Conflicts and its
- * file. A Passage it had superseded is live again. Checks `can(staff,
- * "source.remove")` and writes `source.removed`.
+ * Removes a Source that is not a seed. The delete is soft: the Source is
+ * marked `deleted_at` and drops out of every list, read and search (its
+ * Passages and Conflicts with it), and `purgeRemovedSources` deletes the row
+ * and its file `REMOVED_SOURCE_DAYS` later. A Passage it had superseded is
+ * live again at once. Checks `can(staff, "source.remove")` and writes
+ * `source.removed`.
  */
 export async function removeSource(
   input: Actor & { sourceId: string },
@@ -857,30 +870,34 @@ export async function removeSource(
   assertCan(staff, "source.remove");
   if (!isUuid(input.sourceId))
     throw new NotFoundError("That Source is not in this Workspace.");
-  const path = await sql().begin(async (tx) => {
+  await sql().begin(async (tx) => {
     const [row] = await tx<
       {
         id: string;
         title: string;
         is_seed: boolean;
-        storage_path: string | null;
         kind: string;
         session_id: string | null;
       }[]
     >`
-      select id, title, is_seed, storage_path, kind, session_id
+      select id, title, is_seed, kind, session_id
       from harness.sources
-      where id = ${input.sourceId} and owner = ${owner}
+      where id = ${input.sourceId} and owner = ${owner} and deleted_at is null
       for update`;
     if (!row) throw new NotFoundError("That Source is not in this Workspace.");
     if (row.is_seed) {
       throw new InvalidError("A seed Source cannot be removed.");
     }
-    await tx`delete from harness.sources where id = ${row.id} and owner = ${owner}`;
+    await tx`
+      update harness.sources set deleted_at = now()
+      where id = ${row.id} and owner = ${owner} and deleted_at is null`;
     // Passages it superseded lost their replacement: they stand again.
     const restored = await tx<{ id: number }[]>`
-      update harness.passages set superseded_at = null
-      where owner = ${owner} and superseded_by is null and superseded_at is not null
+      update harness.passages set superseded_by = null, superseded_at = null
+      where owner = ${owner} and superseded_by in (
+        select id from harness.passages
+        where owner = ${owner} and source_id = ${row.id}
+      )
       returning id`;
     await auditIn(tx, {
       owner,
@@ -891,9 +908,37 @@ export async function removeSource(
       target: { kind: "source", id: row.id },
       detail: { kind: row.kind, passagesRestored: restored.length },
     });
-    return row.storage_path;
   });
-  if (path) await removeFile(path);
+  await purgeRemovedSources(sql(), owner).catch((error) => {
+    console.error("[harness] could not purge removed Sources", error);
+  });
+}
+
+/**
+ * Deletes the Owner's Sources removed more than `REMOVED_SOURCE_DAYS` ago,
+ * with their Passages and Conflicts (by cascade) and their stored files. At
+ * most `STALE_BATCH` at a time, and the delete is limited to that batch, so
+ * every row deleted has its file removed too. Runs whenever a Source is added
+ * or removed; a daily cron deletes the ones that have no file.
+ */
+export async function purgeRemovedSources(
+  db: Db,
+  owner: Owner,
+): Promise<number> {
+  const purged = await db<{ storage_path: string | null }[]>`
+    delete from harness.sources
+    where owner = ${owner} and id in (
+      select id from harness.sources
+      where owner = ${owner} and deleted_at is not null
+        and deleted_at < now() - make_interval(days => ${REMOVED_SOURCE_DAYS})
+      order by deleted_at
+      limit ${STALE_BATCH}
+    )
+    returning storage_path`;
+  for (const row of purged) {
+    if (row.storage_path) await removeFile(row.storage_path);
+  }
+  return purged.length;
 }
 
 // Conflicts ------------------------------------------------------------------------
@@ -935,10 +980,17 @@ export async function resolveConflict(
         summary: string;
       }[]
     >`
-      select id, status, new_passage_id, old_passage_id, summary
-      from harness.conflicts
-      where id = ${input.conflictId} and owner = ${owner}
-      for update`;
+      select c.id, c.status, c.new_passage_id, c.old_passage_id, c.summary
+      from harness.conflicts c
+      where c.id = ${input.conflictId} and c.owner = ${owner}
+        -- A Conflict on a removed Source is gone with it.
+        and not exists (
+          select 1 from harness.passages p
+          join harness.sources s on s.id = p.source_id
+          where p.id in (c.new_passage_id, c.old_passage_id)
+            and s.deleted_at is not null
+        )
+      for update of c`;
     if (!row)
       throw new NotFoundError("That Conflict is not in this Workspace.");
     const plan = planResolution(

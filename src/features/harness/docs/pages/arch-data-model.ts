@@ -75,6 +75,8 @@ The schema is §harness§, in §supabase/migrations/20261117120000_harness.sql§
 
 The Owner purge (ADR 0011) deletes the Workspace row, and everything else goes by cascade. §harness.workspaces§ is the only Harness table in §access.owned_tables§. Registering another would break the purge, because the Audit trail refuses direct deletes.
 
+Removing a Source is a soft delete: it sets §deleted_at§, and every list, read and search (§search_passages§ included) leaves the Source out, with its Passages and Conflicts. The row and its file are purged 30 days later, when the Workspace next adds or removes a Source; a daily job deletes removed Sources that have no file.
+
 ## Storage
 
 A private bucket named §harness§ holds uploaded Sources, with a size cap that repeats the app's.

@@ -80,7 +80,9 @@ export function shouldTryBackfill(key: string, now = Date.now()): boolean {
 export async function hasUnembedded(owner: string): Promise<boolean> {
   const [row] = await sql()<{ found: boolean }[]>`
     select exists (
-      select 1 from harness.passages where owner = ${owner} and embedding is null
+      select 1 from harness.passages p
+      join harness.sources s on s.id = p.source_id
+      where p.owner = ${owner} and p.embedding is null and s.deleted_at is null
     ) as found`;
   return row?.found ?? false;
 }

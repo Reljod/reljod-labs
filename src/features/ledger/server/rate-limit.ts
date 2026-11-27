@@ -1,28 +1,38 @@
 import "server-only";
-import { countBuilds } from "./repository";
+import { LIMITS, limitMessage } from "../domain/limits";
+import { supabase } from "./supabase";
 import type { Visitor } from "./visitor";
 
-export const RATE_LIMITS = { perVisitorPerHour: 10, perDay: 300 };
-
-/** Returns a message when the visitor or the whole site is over its limit. */
-export async function rateLimitMessage(visitor: Visitor) {
-  if (visitor.forceLimit) return limitMessages.visitor;
+/**
+ * Asks `ledger.take_rate_hit` whether the visitor and the site are under
+ * their caps. With `take`, it also records a hit in the same transaction,
+ * under an advisory lock, so parallel requests cannot all take the last place.
+ * Returns the refusal message, or null.
+ */
+async function checkRate(visitor: Visitor, take: boolean) {
+  if (visitor.forceLimit) return limitMessage("visitor");
   if (!visitor.limited) return null;
-  const now = Date.now();
-  const [visitorBuilds, dailyBuilds] = await Promise.all([
-    countBuilds({
-      visitorHash: visitor.hash,
-      since: new Date(now - 60 * 60 * 1000),
-    }),
-    countBuilds({ since: new Date(now - 24 * 60 * 60 * 1000) }),
-  ]);
-  if (visitorBuilds >= RATE_LIMITS.perVisitorPerHour)
-    return limitMessages.visitor;
-  if (dailyBuilds >= RATE_LIMITS.perDay) return limitMessages.site;
-  return null;
+  const { data, error } = await supabase().rpc("take_rate_hit", {
+    p_visitor_hash: visitor.hash,
+    p_per_hour: LIMITS.buildsPerVisitorPerHour,
+    p_per_day: LIMITS.buildsPerDay,
+    p_take: take,
+  });
+  if (error)
+    throw new Error(`Could not check the rate limit: ${error.message}`);
+  return limitMessage(data);
 }
 
-const limitMessages = {
-  visitor: `Ledger has answered ${RATE_LIMITS.perVisitorPerHour} of your questions this hour and needs a nap. Here's a recent answer instead.`,
-  site: "Ledger has hit today's question limit. Here's a recent answer instead.",
-};
+/**
+ * Takes one Build from the visitor's hourly and the site's daily allowance,
+ * before the model is called: a client that disconnects mid-stream, or posts
+ * many Builds at once, still pays for each. Returns a message when over.
+ */
+export function takeBuildRate(visitor: Visitor) {
+  return checkRate(visitor, true);
+}
+
+/** Whether a new Ask session would be refused, without spending a hit. */
+export function rateLimitMessage(visitor: Visitor) {
+  return checkRate(visitor, false);
+}

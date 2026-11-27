@@ -2,6 +2,7 @@
 
 import { headers } from "next/headers";
 import { z } from "zod";
+import { isE2eToken } from "@/features/access/server/e2e";
 import { requireOwner } from "@/features/access/server/gate";
 import {
   type HandInput,
@@ -37,8 +38,7 @@ import { visitor } from "./visitor";
  */
 
 async function wantsStub() {
-  const bypass = env.e2eBypassToken();
-  return Boolean(bypass) && (await headers()).get(STUB_HEADER) === bypass;
+  return isE2eToken((await headers()).get(STUB_HEADER));
 }
 
 /** Starts a Run the Operator drives. */

@@ -1,3 +1,5 @@
+import "server-only";
+
 /**
  * A Sieve MCP token: which Owner an outside MCP client acts for, the visitor
  * it spends against, and until when. Signed with RATE_LIMIT_SALT, not
