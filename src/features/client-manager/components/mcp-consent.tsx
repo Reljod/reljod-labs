@@ -1,9 +1,9 @@
 "use client";
 
-import { useActionState, useState } from "react";
-import { useSubmitGuard } from "@/components/ui/use-submit-guard";
+import { type FormEvent, useRef, useState } from "react";
 import { CallbackWarning } from "@/features/access/components/callback-warning";
-import { answerMcpClient, type ConsentState } from "../server/oauth-actions";
+import { attempt, send } from "@/platform/client/api";
+import { type ConsentAnswer, MCP_CONSENT_ROUTE } from "../domain/consent";
 import { Icon } from "./icons";
 
 /**
@@ -27,12 +27,37 @@ export function McpConsent({
   unknownCallback: boolean;
   who: string;
 }) {
-  const [state, action, pending] = useActionState<ConsentState, FormData>(
-    answerMcpClient,
-    null,
-  );
+  const [pending, setPending] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   const [trusted, setTrusted] = useState(false);
-  const guard = useSubmitGuard(pending, state);
+  // Closes the gap before `pending` renders: a double click sends one answer.
+  const busy = useRef(false);
+
+  const answer =
+    (choice: ConsentAnswer["answer"]) =>
+    async (event: FormEvent<HTMLFormElement>) => {
+      event.preventDefault();
+      if (busy.current) return;
+      busy.current = true;
+      setPending(true);
+      setError(null);
+      const outcome = await attempt(() =>
+        send<{ to: string }>("POST", MCP_CONSENT_ROUTE, {
+          request,
+          answer: choice,
+          trustHost: trusted ? callbackHost : null,
+        }),
+      );
+      if (outcome.ok) {
+        // Back to the app that asked; the buttons stay off on the way.
+        window.location.assign(outcome.value.to);
+        return;
+      }
+      busy.current = false;
+      setPending(false);
+      setError(outcome.error);
+    };
+
   return (
     <div className="space-y-6">
       <div className="space-y-2">
@@ -55,8 +80,7 @@ export function McpConsent({
       </div>
       <form
         id="mcp-consent-allow"
-        action={action}
-        onSubmit={guard}
+        onSubmit={answer("allow")}
         className="space-y-6"
       >
         {unknownCallback ? (
@@ -68,8 +92,6 @@ export function McpConsent({
             disabled={pending}
           />
         ) : null}
-        <input type="hidden" name="request" value={request} />
-        <input type="hidden" name="answer" value="allow" />
       </form>
       <div className="flex flex-wrap gap-3">
         <button
@@ -82,9 +104,7 @@ export function McpConsent({
           <Icon name="check" className="size-4" />
           {pending ? "Connecting…" : "Allow"}
         </button>
-        <form action={action} onSubmit={guard}>
-          <input type="hidden" name="request" value={request} />
-          <input type="hidden" name="answer" value="deny" />
+        <form onSubmit={answer("deny")}>
           <button
             type="submit"
             disabled={pending}
@@ -94,9 +114,9 @@ export function McpConsent({
           </button>
         </form>
       </div>
-      {state?.error ? (
+      {error ? (
         <p role="alert" className="text-sm text-seal-red">
-          {state.error}
+          {error}
         </p>
       ) : null}
     </div>
