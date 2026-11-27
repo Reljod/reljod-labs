@@ -1,7 +1,7 @@
 import "server-only";
-import { timingSafeEqual } from "node:crypto";
 import { headers } from "next/headers";
 import type { Owner } from "@/features/access/domain/owner";
+import { isE2eToken } from "@/features/access/server/e2e";
 import { E2E_HEADER } from "@/features/document-compliance/constants";
 import {
   E2E_VISITOR,
@@ -16,22 +16,6 @@ import { env } from "./env";
 export type Visitor = { hash: string; trusted: boolean };
 
 export { E2E_VISITOR };
-
-/**
- * Whether a header carries the e2e bypass token, compared in constant time
- * (never with `===`). With no token configured, nothing passes. The same
- * check as `isE2eToken` in `@/features/access/server/e2e`; switch to that
- * one once it is on this branch.
- */
-export function isE2eToken(
-  given: string | null | undefined,
-  expected: string = env.e2eBypassToken(),
-): boolean {
-  if (!expected || !given) return false;
-  const a = Buffer.from(given);
-  const b = Buffer.from(expected);
-  return a.length === b.length && timingSafeEqual(a, b);
-}
 
 export async function visitor(): Promise<Visitor> {
   const requestHeaders = await headers();
