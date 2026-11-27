@@ -1,5 +1,5 @@
 /**
- * A canned Pass for the end-to-end test (`STUB_HEADER` with the e2e token):
+ * A canned Pass for the stubbed end-to-end suite (`cannedDraftsman`):
  * a few marks that sit roughly where any screen has a header, a title and a
  * button, so the stream, the drawing and the Ruler all run with no model.
  */

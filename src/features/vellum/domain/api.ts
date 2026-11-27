@@ -14,9 +14,6 @@ export const paths = {
   allowance: `${API}/allowance`,
 } as const;
 
-/** The header the end-to-end test sends for a canned Pass; honoured only with the e2e token. */
-export const STUB_HEADER = "x-vellum-stub";
-
 const DATA_URL = /^data:image\/(png|jpeg|webp);base64,[A-Za-z0-9+/]+=*$/;
 
 /** Base64 grows bytes by 4/3; this bounds the string before it is decoded. */

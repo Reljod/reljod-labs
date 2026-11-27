@@ -1,5 +1,6 @@
 "use client";
 
+import { errorOf, getJson } from "@/platform/client/api";
 import {
   type Allowance,
   type PassEvent,
@@ -7,65 +8,43 @@ import {
   paths,
 } from "../domain/api";
 
-/** The only place the browser calls Vellum's routes (`domain/api.ts`). */
+export { ApiError } from "@/platform/client/api";
 
-export class ApiError extends Error {
-  constructor(
-    message: string,
-    readonly status: number,
-  ) {
-    super(message);
-    this.name = "ApiError";
-  }
+/** Typed wrappers over Vellum's routes (`domain/api.ts`); components never call `fetch` themselves. */
+
+export function getAllowance(signal?: AbortSignal): Promise<Allowance> {
+  return getJson<Allowance>(paths.allowance, { signal });
 }
 
-async function failed(response: Response): Promise<never> {
-  let message = "Something went wrong. Try again.";
-  try {
-    const text = await response.text();
-    try {
-      message = (JSON.parse(text) as { error?: string }).error ?? message;
-    } catch {
-      // The gate answers in plain text.
-      if (text && text.length < 200) message = text;
-    }
-  } catch {
-    // Keep the default.
-  }
-  throw new ApiError(message, response.status);
-}
-
-export async function getAllowance(signal?: AbortSignal): Promise<Allowance> {
-  const response = await fetch(paths.allowance, { cache: "no-store", signal });
-  if (!response.ok) return failed(response);
-  return (await response.json()) as Allowance;
-}
-
-/** Starts a Pass and yields its events as they arrive. */
+/**
+ * Starts a Pass and yields its events as they arrive (pulled, so a Trace
+ * that stops reading stops the download). A refusal before the stream (the
+ * gate, a bad image, the cap) throws an ApiError with its status.
+ */
 export async function* streamPass(
   request: PassRequest,
   signal: AbortSignal,
 ): AsyncGenerator<PassEvent> {
   const response = await fetch(paths.passes, {
     method: "POST",
-    headers: { "content-type": "application/json" },
+    headers: {
+      accept: "application/x-ndjson",
+      "content-type": "application/json",
+    },
     body: JSON.stringify(request),
     signal,
   });
-  if (!response.ok || !response.body) return failed(response);
+  if (!response.ok || !response.body) throw await errorOf(response);
   const reader = response.body.pipeThrough(new TextDecoderStream()).getReader();
   let buffer = "";
-  while (true) {
+  for (;;) {
     const { value, done } = await reader.read();
     if (done) break;
     buffer += value;
-    let newline = buffer.indexOf("\n");
-    while (newline >= 0) {
-      const line = buffer.slice(0, newline).trim();
-      buffer = buffer.slice(newline + 1);
-      if (line) yield JSON.parse(line) as PassEvent;
-      newline = buffer.indexOf("\n");
-    }
+    const lines = buffer.split("\n");
+    buffer = lines.pop() ?? "";
+    for (const line of lines)
+      if (line.trim()) yield JSON.parse(line) as PassEvent;
   }
   if (buffer.trim()) yield JSON.parse(buffer) as PassEvent;
 }
