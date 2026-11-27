@@ -3,10 +3,10 @@
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { motion } from "motion/react";
 import { Fragment, useEffect, useMemo, useRef, useState } from "react";
+import type { ClientSummary, SourceFull } from "../domain/api";
 import { toneOf } from "../domain/categories";
 import { CERTAINTY_STYLE, certaintyOf } from "../domain/confidence";
-import type { ClientSummary, SourceFull } from "../server/service";
-import { fetchSource, keys } from "./api";
+import { fetchSource, isGone, keys } from "./api";
 import { CertaintyDot } from "./certainty";
 import { Icon } from "./icons";
 import { DocumentSkeleton } from "./skeletons";
@@ -188,7 +188,7 @@ function DocumentReader({
   if (query.isError) {
     return (
       <p role="alert" className="p-8 text-center text-sm text-ink-muted">
-        {query.error.message === "not-found"
+        {isGone(query.error)
           ? "This document is gone."
           : "This document didn't load. Try again."}
       </p>

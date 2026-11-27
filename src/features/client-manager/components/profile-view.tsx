@@ -3,9 +3,9 @@
 import { useQuery } from "@tanstack/react-query";
 import { motion } from "motion/react";
 import { type ReactNode, useMemo, useState } from "react";
+import type { ClientSummary, NodeLite } from "../domain/api";
 import { BRANCHES, toneOf } from "../domain/categories";
 import { ROOT_KEY } from "../domain/graph";
-import type { ClientSummary, NodeLite } from "../server/service";
 import { fetchEdges, keys } from "./api";
 import { CertaintyDot } from "./certainty";
 import { Icon, type IconName } from "./icons";

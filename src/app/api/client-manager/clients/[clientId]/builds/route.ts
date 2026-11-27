@@ -1,32 +1,14 @@
-import { failure, notFound } from "@/features/client-manager/server/respond";
 import {
-  createAddition,
-  viewableClient,
-} from "@/features/client-manager/server/service";
-import {
-  currentOwner,
-  visitor,
-} from "@/features/client-manager/server/session";
+  additionSchema,
+  clientParamsSchema,
+} from "@/features/client-manager/domain/api";
+import { clientManagerApi } from "@/features/client-manager/server/api";
+import { body, params } from "@/platform/http/middleware";
 
 /** An addition: more notes or files folded into an existing Client graph. */
-export async function POST(
-  request: Request,
-  { params }: RouteContext<"/api/client-manager/clients/[clientId]/builds">,
-) {
-  try {
-    const { clientId } = await params;
-    const owner = await currentOwner();
-    const client = await viewableClient(clientId, owner);
-    if (!client) return notFound();
-    return Response.json(
-      await createAddition(
-        client,
-        await request.json(),
-        await visitor(),
-        owner,
-      ),
-    );
-  } catch (error) {
-    return failure(error);
-  }
-}
+export const POST = clientManagerApi
+  .use(params(clientParamsSchema))
+  .use(body(additionSchema))
+  .handle(({ services, caller, path, body }) =>
+    services.builds.addition(caller, path.clientId, body),
+  );

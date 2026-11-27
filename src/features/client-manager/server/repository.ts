@@ -1,6 +1,7 @@
 import "server-only";
 import type postgres from "postgres";
 import type { Owner } from "@/features/access/domain/owner";
+import { type EdgeScope, isUuid } from "../domain/api";
 import type {
   BuildStats,
   Persona,
@@ -19,11 +20,10 @@ import {
 } from "../domain/graph";
 import type { Usage24h } from "../domain/limits";
 import { sql } from "./db";
+import type { CallContext } from "./llm";
 
 /** A connection or a transaction: the repository's writes take either. */
 export type Db = ReturnType<typeof sql> | postgres.TransactionSql;
-
-import type { CallContext } from "./llm";
 
 // Clients ---------------------------------------------------------------------
 
@@ -68,11 +68,6 @@ export async function getClient(id: string): Promise<ClientRow | null> {
   const [row] = await sql()<ClientRow[]>`
     select * from client_manager.clients where id = ${id} and deleted_at is null`;
   return row ?? null;
-}
-
-/** Samples are open to everyone; anyone else's clients only to their Owner. */
-export function canView(client: ClientRow, owner: Owner | null) {
-  return client.is_sample || (!!owner && client.owner === owner);
 }
 
 export type CatalogRow = ClientRow & {
@@ -202,6 +197,23 @@ export async function getBuild(id: string): Promise<BuildRow | null> {
   return row ?? null;
 }
 
+/** A Build with who its client belongs to, in one statement; none once the client is deleted. */
+export async function buildWithClient(
+  id: string,
+): Promise<
+  (BuildRow & { client_owner: string | null; client_is_sample: boolean }) | null
+> {
+  if (!isUuid(id)) return null;
+  const [row] = await sql()<
+    (BuildRow & { client_owner: string | null; client_is_sample: boolean })[]
+  >`
+    select b.*, c.owner as client_owner, c.is_sample as client_is_sample
+    from client_manager.builds b
+    join client_manager.clients c on c.id = b.client_id and c.deleted_at is null
+    where b.id = ${id}`;
+  return row ?? null;
+}
+
 export async function updateBuild(
   id: string,
   patch: {
@@ -283,8 +295,14 @@ export async function sourcesOfClient(clientId: string) {
     from client_manager.sources where client_id = ${clientId} order by created_at, name`;
 }
 
-export async function setSourceText(id: string, text: string | null) {
-  await sql()`update client_manager.sources set text = ${text} where id = ${id}`;
+/** The text read from several Sources, in one statement. */
+export async function setSourceTexts(rows: { id: string; text: string }[]) {
+  if (rows.length === 0) return;
+  const values = rows.map((row) => [row.id, row.text]);
+  await sql()`
+    update client_manager.sources s set text = v.text
+    from (values ${sql()(values)}) as v(id, text)
+    where s.id = v.id::uuid`;
 }
 
 export async function setSourcePath(id: string, path: string) {
@@ -556,25 +574,45 @@ export type GraphNodeRow = {
   confidence: number;
 };
 
-export async function searchNodes(
-  clientId: string,
+/**
+ * A search of several clients at once, in one statement: `search_nodes` per
+ * client in a lateral join, not one query per client of the book.
+ */
+export async function searchNodesAcross(
+  clientIds: string[],
   query: string,
   embedding: number[] | null,
-  limit = 8,
+  limit: number,
 ) {
+  if (clientIds.length === 0) return [];
   const vector = embedding ? `[${embedding.join(",")}]` : null;
   return sql()<
     (GraphNodeRow & {
+      client_id: string;
       score: number;
       semantic: number | null;
       lexical: number | null;
     })[]
   >`
-    select n.id, n.key, n.label, n.type, n.category, n.summary, n.attributes, n.confidence,
-      s.score, s.semantic, s.lexical
-    from client_manager.search_nodes(${clientId}, ${query}, ${vector}::extensions.vector, ${limit}) s
+    select c.client_id, n.id, n.key, n.label, n.type, n.category, n.summary, n.attributes,
+      n.confidence, s.score, s.semantic, s.lexical
+    from unnest(${clientIds}::uuid[]) as c(client_id)
+    cross join lateral client_manager.search_nodes(
+      c.client_id, ${query}, ${vector}::extensions.vector, ${limit}) s
     join client_manager.nodes n on n.id = s.node_id
     order by s.score desc`;
+}
+
+/** The labels of cited Nodes, for any number of clients, in one statement. */
+export async function nodesByClientKeys(
+  refs: { clientId: string; key: string }[],
+) {
+  if (refs.length === 0) return [];
+  return sql()<{ client_id: string; key: string; label: string }[]>`
+    select n.client_id, n.key, n.label
+    from client_manager.nodes n
+    join unnest(${refs.map((ref) => ref.clientId)}::uuid[], ${refs.map((ref) => ref.key)}::text[])
+      as r(client_id, key) on r.client_id = n.client_id and r.key = n.key`;
 }
 
 export async function expandNodes(
@@ -661,21 +699,23 @@ export async function edgesByIds(clientId: string, ids: number[]) {
     where e.client_id = ${clientId} and e.id = any(${ids}::bigint[])`;
 }
 
-export async function evidenceForNodes(clientId: string, ids: number[]) {
-  if (ids.length === 0) return [];
+/** The quotes of Nodes by Key, so they are read beside the Nodes, not after them. */
+export async function evidenceForKeys(clientId: string, keys: string[]) {
+  if (keys.length === 0) return [];
   return sql()<
     {
-      node_id: number;
+      key: string;
       quote: string;
       source_id: string;
       source_name: string;
       source_kind: string;
     }[]
   >`
-    select v.node_id, v.quote, s.id as source_id, s.name as source_name, s.kind as source_kind
-    from client_manager.evidence v
+    select n.key, v.quote, s.id as source_id, s.name as source_name, s.kind as source_kind
+    from client_manager.nodes n
+    join client_manager.evidence v on v.node_id = n.id
     join client_manager.sources s on s.id = v.source_id
-    where v.client_id = ${clientId} and v.node_id = any(${ids}::bigint[])
+    where n.client_id = ${clientId} and n.key = any(${keys})
     order by v.id`;
 }
 
@@ -795,31 +835,11 @@ export async function usageSince(visitorHash: string | null, since: Date) {
   return row ?? { builds: 0, messages: 0, cost: 0 };
 }
 
-export type ClientStats = {
-  cost: number;
-  tokens: number;
-  edges: number;
-  build: Pick<BuildRow, "id" | "status" | "trigger" | "stats" | "error"> | null;
-};
-
-/**
- * What the Client file's header needs besides its Nodes and Sources: spend,
- * the Edge total and the latest Build, in one round trip instead of three.
- */
-export async function clientStats(clientId: string): Promise<ClientStats> {
-  const [row] = await sql()<ClientStats[]>`
-    select
-      (select coalesce(sum(cost_usd), 0)::float8 from client_manager.model_calls
-        where client_id = ${clientId}) as cost,
-      (select coalesce(sum(input_tokens + output_tokens), 0)::int from client_manager.model_calls
-        where client_id = ${clientId}) as tokens,
-      (select count(*)::int from client_manager.edges where client_id = ${clientId}) as edges,
-      (select jsonb_build_object('id', b.id, 'status', b.status, 'trigger', b.trigger,
-          'stats', b.stats, 'error', b.error)
-        from client_manager.builds b where b.client_id = ${clientId}
-        order by b.created_at desc limit 1) as build`;
-  return row ?? { cost: 0, tokens: 0, edges: 0, build: null };
-}
+/** The latest Build as the Client file's header shows it. */
+type LatestBuild = Pick<
+  BuildRow,
+  "id" | "status" | "trigger" | "stats" | "error"
+> | null;
 
 export async function buildSpend(buildId: string) {
   const [row] = await sql()<{ cost: number; tokens: number }[]>`
@@ -843,12 +863,6 @@ function asRecord(value: unknown): Record<string, string> {
     : {};
 }
 
-export function isUuid(value: string) {
-  return /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(
-    value,
-  );
-}
-
 // Lazy views of one client ---------------------------------------------------------
 
 export type NodeLiteRow = {
@@ -864,18 +878,85 @@ export type NodeLiteRow = {
   quotes: number;
 };
 
-/** Every Node without its quotes: enough for the profile and the map's first frame. */
-export async function nodesLite(clientId: string) {
-  const rows = await sql()<NodeLiteRow[]>`
-    select n.id, n.key, n.label, n.type, n.category, n.summary, n.attributes, n.confidence,
-      coalesce(array_agg(distinct v.source_id) filter (where v.source_id is not null), '{}') as source_ids,
-      count(v.id)::int as quotes
-    from client_manager.nodes n
-    left join client_manager.evidence v on v.node_id = n.id
-    where n.client_id = ${clientId}
-    group by n.id
-    order by n.id`;
-  return rows.map((row) => ({ ...row, attributes: asRecord(row.attributes) }));
+/** A Source as the Client file lists it: no text, how long it is and how many facts it backs. */
+export type SourceLiteRow = {
+  id: string;
+  build_id: string | null;
+  kind: SourceKind;
+  name: string;
+  media_type: string;
+  chars: number;
+  facts: number;
+  /** ISO 8601, as jsonb prints a timestamptz. */
+  created_at: string;
+};
+
+/** A Client file's first frame, read in one statement (see `clientFile`). */
+export type ClientFileRow = ClientRow & {
+  nodes: Omit<NodeLiteRow, "id">[];
+  sources: SourceLiteRow[];
+  cost: number;
+  tokens: number;
+  edges: number;
+  build: LatestBuild;
+};
+
+/**
+ * The Client file's first frame in ONE statement: the client's row, every
+ * Node without its quotes, the Sources with the facts each backs, spend, the
+ * Edge total and the latest Build. It used to be the lookup, then four
+ * queries on a pool of four: two database rounds. Not scoped here: the
+ * service hands it only to an Owner who may see the client.
+ */
+export async function clientFile(id: string): Promise<ClientFileRow | null> {
+  if (!isUuid(id)) return null;
+  const [row] = await sql()<ClientFileRow[]>`
+    select c.*,
+      coalesce((
+        select jsonb_agg(jsonb_build_object(
+            'key', n.key, 'label', n.label, 'type', n.type, 'category', n.category,
+            'summary', n.summary, 'attributes', n.attributes, 'confidence', n.confidence,
+            'source_ids', coalesce(v.source_ids, '{}'), 'quotes', coalesce(v.quotes, 0))
+          order by n.id)
+        from client_manager.nodes n
+        left join lateral (
+          select array_agg(distinct e.source_id) as source_ids, count(*)::int as quotes
+          from client_manager.evidence e where e.node_id = n.id
+        ) v on true
+        where n.client_id = c.id
+      ), '[]'::jsonb) as nodes,
+      coalesce((
+        select jsonb_agg(jsonb_build_object(
+            'id', s.id, 'build_id', s.build_id, 'kind', s.kind, 'name', s.name,
+            'media_type', s.media_type, 'chars', coalesce(char_length(s.text), 0),
+            'facts', coalesce(f.total, 0), 'created_at', s.created_at)
+          order by s.created_at, s.name)
+        from client_manager.sources s
+        left join (
+          select source_id, count(*)::int as total from client_manager.evidence
+          where client_id = c.id group by source_id
+        ) f on f.source_id = s.id
+        where s.client_id = c.id
+      ), '[]'::jsonb) as sources,
+      (select coalesce(sum(cost_usd), 0)::float8 from client_manager.model_calls
+        where client_id = c.id) as cost,
+      (select coalesce(sum(input_tokens + output_tokens), 0)::int from client_manager.model_calls
+        where client_id = c.id) as tokens,
+      (select count(*)::int from client_manager.edges where client_id = c.id) as edges,
+      (select jsonb_build_object('id', b.id, 'status', b.status, 'trigger', b.trigger,
+          'stats', b.stats, 'error', b.error)
+        from client_manager.builds b where b.client_id = c.id
+        order by b.created_at desc limit 1) as build
+    from client_manager.clients c
+    where c.id = ${id} and c.deleted_at is null`;
+  if (!row) return null;
+  return {
+    ...row,
+    nodes: row.nodes.map((node) => ({
+      ...node,
+      attributes: asRecord(node.attributes),
+    })),
+  };
 }
 
 export type EdgeLiteRow = {
@@ -887,12 +968,6 @@ export type EdgeLiteRow = {
   confidence: number;
   quotes: number;
 };
-
-export type EdgeScope =
-  | { kind: "root" }
-  | { kind: "branch"; id: string }
-  | { kind: "leaf"; id: string }
-  | { kind: "node"; key: string };
 
 /**
  * The Edges one part of the map needs: those touching the client, a Branch,
@@ -922,14 +997,17 @@ export async function edgesInScope(clientId: string, scope: EdgeScope) {
 
 /** One Node in full: what it says, the quotes it stands on, and every link with its own quotes. */
 export async function nodeDetail(clientId: string, key: string) {
-  const [node] = await sql()<(GraphNodeRow & { is_root: boolean })[]>`
-    select id, key, label, type, category, summary, attributes, confidence, is_root
-    from client_manager.nodes where client_id = ${clientId} and key = ${key}`;
-  if (!node) return null;
-  const [evidence, edges] = await Promise.all([
+  // The Node, its quotes and its links by Key, all at once: one round, not
+  // the Node's id first and then the rest.
+  const [[node], evidence, edges] = await Promise.all([
+    sql()<(GraphNodeRow & { is_root: boolean })[]>`
+      select id, key, label, type, category, summary, attributes, confidence, is_root
+      from client_manager.nodes where client_id = ${clientId} and key = ${key}`,
     sql()<{ source_id: string; quote: string }[]>`
-      select source_id, quote from client_manager.evidence
-      where node_id = ${node.id} order by id limit 40`,
+      select v.source_id, v.quote from client_manager.evidence v
+      join client_manager.nodes n on n.id = v.node_id
+      where n.client_id = ${clientId} and n.key = ${key}
+      order by v.id limit 40`,
     sql()<
       (EdgeLiteRow & {
         evidence: { source_id: string; quote: string }[] | null;
@@ -942,10 +1020,11 @@ export async function nodeDetail(clientId: string, key: string) {
       from client_manager.edges e
       join client_manager.nodes s on s.id = e.source_id
       join client_manager.nodes t on t.id = e.target_id
-      where e.client_id = ${clientId} and (e.source_id = ${node.id} or e.target_id = ${node.id})
+      where e.client_id = ${clientId} and (s.key = ${key} or t.key = ${key})
       order by e.confidence desc
       limit 120`,
   ]);
+  if (!node) return null;
   return {
     node: { ...node, attributes: asRecord(node.attributes) },
     evidence,
@@ -953,16 +1032,20 @@ export async function nodeDetail(clientId: string, key: string) {
   };
 }
 
-/** A Source's full text and every fact that stands on it. */
+/** A Source's full text and every fact that stands on it, in one round. */
 export async function sourceDetail(clientId: string, sourceId: string) {
   if (!isUuid(sourceId)) return null;
-  const [source] = await sql()<
-    (SourceRow & { created_at: Date; build_id: string | null })[]
-  >`
-    select id, client_id, build_id, kind, name, media_type, storage_path, byte_size, text, created_at
-    from client_manager.sources where client_id = ${clientId} and id = ${sourceId}`;
-  if (!source) return null;
-  const facts = await sql()<
+  const [[source], facts] = await Promise.all([
+    sql()<(SourceRow & { created_at: Date; build_id: string | null })[]>`
+      select id, client_id, build_id, kind, name, media_type, storage_path, byte_size, text, created_at
+      from client_manager.sources where client_id = ${clientId} and id = ${sourceId}`,
+    sourceFacts(clientId, sourceId),
+  ]);
+  return source ? { source, facts } : null;
+}
+
+function sourceFacts(clientId: string, sourceId: string) {
+  return sql()<
     {
       quote: string;
       node_key: string | null;
@@ -982,10 +1065,9 @@ export async function sourceDetail(clientId: string, sourceId: string) {
     left join client_manager.edges e on e.id = v.edge_id
     left join client_manager.nodes s on s.id = e.source_id
     left join client_manager.nodes t on t.id = e.target_id
-    where v.source_id = ${sourceId}
+    where v.source_id = ${sourceId} and v.client_id = ${clientId}
     order by v.id
     limit 300`;
-  return { source, facts };
 }
 
 /** How many facts each Source of a client backs. */
@@ -1112,12 +1194,19 @@ export async function addThreadMessage(
   return row.id;
 }
 
-export async function threadMessages(threadId: string) {
+/**
+ * A Thread's messages, only when the Thread is the Owner's, so they can be
+ * read beside the Thread's own row instead of after it.
+ */
+export async function threadMessages(threadId: string, owner: Owner) {
+  if (!isUuid(threadId)) return [];
   return sql()<ThreadMessageRow[]>`
-    select id, role, mode, content, client_id, traversal, proposal, build_id, created_at
-    from client_manager.messages
-    where thread_id = ${threadId}
-    order by created_at, role desc
+    select m.id, m.role, m.mode, m.content, m.client_id, m.traversal, m.proposal,
+      m.build_id, m.created_at
+    from client_manager.messages m
+    join client_manager.threads t on t.id = m.thread_id
+    where m.thread_id = ${threadId} and t.owner = ${owner} and t.deleted_at is null
+    order by m.created_at, m.role desc
     limit 300`;
 }
 

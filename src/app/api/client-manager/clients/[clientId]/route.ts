@@ -1,54 +1,19 @@
-import type { ClientResponse } from "@/features/client-manager/domain/api";
-import {
-  failure,
-  json,
-  notFound,
-} from "@/features/client-manager/server/respond";
-import {
-  clientSummary,
-  gatedClient,
-  ownedClient,
-  removeClient,
-} from "@/features/client-manager/server/service";
-import {
-  currentOwner,
-  visitor,
-} from "@/features/client-manager/server/session";
+import { clientParamsSchema } from "@/features/client-manager/domain/api";
+import { clientManagerApi } from "@/features/client-manager/server/api";
+import { params } from "@/platform/http/middleware";
 
-/** A client's first frame: profile and facts, without Edges or quotes. */
-export async function GET(
-  _request: Request,
-  { params }: RouteContext<"/api/client-manager/clients/[clientId]">,
-) {
-  try {
-    const { clientId } = await params;
-    const { owner, client } = await gatedClient(clientId);
-    if (!client) return notFound();
-    // Never kept, even for a Sample: it carries a signed portrait URL that
-    // dies in an hour, and `canAdd`, which depends on the visitor.
-    return json<ClientResponse>(
-      await clientSummary(client, owner, await visitor()),
-    );
-  } catch (error) {
-    return failure(error);
-  }
-}
+const client = clientManagerApi.use(params(clientParamsSchema));
 
-export async function DELETE(
-  _request: Request,
-  { params }: RouteContext<"/api/client-manager/clients/[clientId]">,
-) {
-  try {
-    const { clientId } = await params;
-    const client = await ownedClient(
-      clientId,
-      await currentOwner(),
-      await visitor(),
-    );
-    if (!client) return notFound();
-    await removeClient(client);
-    return json({ deleted: true });
-  } catch (error) {
-    return failure(error);
-  }
-}
+/**
+ * A client's first frame: profile and facts, without Edges or quotes. Never
+ * kept, even for a Sample: it carries a signed portrait URL that dies in an
+ * hour, and `canAdd`, which depends on the visitor.
+ */
+export const GET = client.handle(({ services, caller, path }) =>
+  services.clients.file(caller, path.clientId),
+);
+
+/** Deletes the client (softly): its Owner only. */
+export const DELETE = client.handle(async ({ services, caller, path }) => {
+  await services.clients.remove(caller, path.clientId);
+});

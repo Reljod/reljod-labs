@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { Suspense } from "react";
 import { ClientManagerApp } from "@/features/client-manager/components/app";
 import { AppSkeleton } from "@/features/client-manager/components/app-skeleton";
-import { firstLoad } from "@/features/client-manager/server/first-load";
+import { firstLoad } from "@/features/client-manager/server/page";
 import { QueryProvider } from "@/features/document-compliance/components/query-provider";
 
 export const metadata: Metadata = {

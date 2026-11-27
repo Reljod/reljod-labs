@@ -10,15 +10,9 @@ import {
   useState,
 } from "react";
 import { EXAMPLE_INTAKES } from "../domain/examples";
+import { createIntake, deleteClient, startBuild } from "./api";
 import { filesFromDrop, SampleFiles } from "./sample-files";
-import { ACCEPT, formatBytes, metaOf, postJson, putFile } from "./upload";
-
-type Created = {
-  clientId: string;
-  buildId: string;
-  uploads: { sourceId: string; name: string; url: string }[];
-  portraitUpload: { url: string } | null;
-};
+import { ACCEPT, formatBytes, metaOf, putFile } from "./upload";
 
 const KIND: [RegExp, string][] = [
   [/\.pdf$/i, "PDF"],
@@ -131,7 +125,7 @@ export function IntakeDialog({
     let createdId: string | null = null;
     try {
       setStage("Opening a file for the client");
-      const created = await postJson<Created>("/api/client-manager/clients", {
+      const created = await createIntake({
         name: name.trim(),
         note,
         files: files.map(metaOf),
@@ -160,15 +154,13 @@ export function IntakeDialog({
           : Promise.resolve(),
       ]);
       setStage("Starting the pipeline");
-      await postJson(`/api/client-manager/builds/${created.buildId}/start`, {});
+      await startBuild(created.buildId);
       if (onCreated) onCreated(created.clientId);
       else router.push(`/demos/client-manager/${created.clientId}`);
     } catch (failure) {
       // A client whose files never arrived would sit in the Catalog as failed.
       if (createdId) {
-        void fetch(`/api/client-manager/clients/${createdId}`, {
-          method: "DELETE",
-        });
+        void deleteClient(createdId).catch(() => {});
       }
       sending.current = false;
       setPhase("form");

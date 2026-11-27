@@ -1,32 +1,10 @@
-import { failure, notFound } from "@/features/client-manager/server/respond";
-import {
-  ownedClient,
-  stopBuild,
-  viewableBuild,
-} from "@/features/client-manager/server/service";
-import {
-  currentOwner,
-  visitor,
-} from "@/features/client-manager/server/session";
+import { buildParamsSchema } from "@/features/client-manager/domain/api";
+import { clientManagerApi } from "@/features/client-manager/server/api";
+import { params } from "@/platform/http/middleware";
 
-/** Stops a running Build: Stop button, Escape, or telling the Navigator. */
-export async function POST(
-  _request: Request,
-  { params }: RouteContext<"/api/client-manager/builds/[buildId]/stop">,
-) {
-  try {
-    const { buildId } = await params;
-    const owner = await currentOwner();
-    const found = await viewableBuild(buildId, owner);
-    if (
-      !found ||
-      !(await ownedClient(found.client.id, owner, await visitor()))
-    ) {
-      return notFound();
-    }
-    await stopBuild(found.build);
-    return Response.json({ stopped: true });
-  } catch (error) {
-    return failure(error);
-  }
-}
+/** Stops a running Build (the Stop button, Escape): the client's Owner only. */
+export const POST = clientManagerApi
+  .use(params(buildParamsSchema))
+  .handle(({ services, caller, path }) =>
+    services.builds.stop(caller, path.buildId),
+  );

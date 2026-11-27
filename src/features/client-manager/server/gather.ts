@@ -7,51 +7,6 @@ import { download } from "./storage";
 /** The most text one Source hands the extractor. */
 export const MAX_SOURCE_CHARS = 40_000;
 
-export const ACCEPTED = {
-  pdf: ["application/pdf"],
-  image: ["image/jpeg", "image/png", "image/webp", "image/gif"],
-  sheet: [
-    "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-    "text/csv",
-  ],
-  doc: [
-    "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
-  ],
-  text: ["text/plain", "text/markdown"],
-} as const;
-
-/** What kind of Source a file is, from its type and then its extension. */
-export function kindOf(name: string, mediaType: string): SourceKind | null {
-  const extension = name.toLowerCase().split(".").pop() ?? "";
-  if (mediaType === "application/pdf" || extension === "pdf") return "pdf";
-  if (
-    mediaType.startsWith("image/") &&
-    ["jpg", "jpeg", "png", "webp", "gif"].includes(extension)
-  ) {
-    return "image";
-  }
-  if (["xlsx", "csv"].includes(extension)) return "sheet";
-  if (extension === "docx") return "doc";
-  if (["txt", "md", "markdown", "eml"].includes(extension)) return "text";
-  return null;
-}
-
-export function mediaTypeFor(kind: SourceKind, name: string, given: string) {
-  const extension = name.toLowerCase().split(".").pop() ?? "";
-  if (kind === "pdf") return "application/pdf";
-  if (kind === "image") {
-    return given.startsWith("image/")
-      ? given
-      : extension === "png"
-        ? "image/png"
-        : "image/jpeg";
-  }
-  if (kind === "sheet")
-    return extension === "csv" ? "text/csv" : ACCEPTED.sheet[0];
-  if (kind === "doc") return ACCEPTED.doc[0];
-  return "text/plain";
-}
-
 export type GatheredSource = {
   id: string;
   name: string;

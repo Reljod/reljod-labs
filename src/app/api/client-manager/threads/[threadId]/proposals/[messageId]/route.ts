@@ -1,29 +1,14 @@
-import { failure, notFound } from "@/features/client-manager/server/respond";
 import {
-  currentOwner,
-  visitor,
-} from "@/features/client-manager/server/session";
-import { decide, ownedThread } from "@/features/client-manager/server/threads";
+  decisionSchema,
+  proposalParamsSchema,
+} from "@/features/client-manager/domain/api";
+import { clientManagerApi } from "@/features/client-manager/server/api";
+import { body, params } from "@/platform/http/middleware";
 
-/** The person's pick from a research card: add the chosen findings, or dismiss them. */
-export async function POST(
-  request: Request,
-  {
-    params,
-  }: RouteContext<"/api/client-manager/threads/[threadId]/proposals/[messageId]">,
-) {
-  try {
-    const { threadId, messageId } = await params;
-    const thread = await ownedThread(threadId, await currentOwner());
-    if (!thread) return notFound();
-    const proposal = await decide({
-      thread,
-      messageId,
-      raw: await request.json(),
-      visitor: await visitor(),
-    });
-    return Response.json({ proposal });
-  } catch (error) {
-    return failure(error);
-  }
-}
+/** The person's pick from a Research card: add the chosen findings, or dismiss them. */
+export const POST = clientManagerApi
+  .use(params(proposalParamsSchema))
+  .use(body(decisionSchema, { limit: 4 * 1024 }))
+  .handle(({ services, caller, path, body }) =>
+    services.threads.decide(caller, path.threadId, path.messageId, body),
+  );

@@ -3,15 +3,13 @@
 import { motion } from "motion/react";
 import { useEffect, useRef, useState } from "react";
 import { DemoBar } from "@/components/demo/demo-bar";
+import type { McpTokenResponse } from "../domain/api";
 import { GUEST_TOKEN_HEADER, MCP_PATH } from "../domain/oauth-paths";
 import { MCP_SERVER_NAME, MCP_TOOLS, researchSkill } from "../domain/research";
+import { mintMcpToken } from "./api";
 import { Icon } from "./icons";
 
-type Minted = {
-  token: string;
-  kind: "host" | "guest" | "e2e";
-  expiresAt: string;
-};
+type Minted = McpTokenResponse;
 
 /**
  * How to use the Client Manager from Claude Code: one command with the
@@ -35,13 +33,7 @@ export function McpSetup({ guest }: { guest: boolean }) {
     setBusy(true);
     setError(null);
     try {
-      const response = await fetch("/api/client-manager/mcp-token", {
-        method: "POST",
-      });
-      const body = (await response.json()) as Minted & { error?: string };
-      if (!response.ok)
-        throw new Error(body.error ?? "Could not create a token.");
-      setMinted(body);
+      setMinted(await mintMcpToken());
     } catch (failure) {
       setError(
         failure instanceof Error

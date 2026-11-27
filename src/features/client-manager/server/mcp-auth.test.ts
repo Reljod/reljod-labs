@@ -8,11 +8,9 @@ vi.mock("server-only", () => ({}));
 vi.mock("./env", () => ({
   env: { rateLimitSalt: () => "salt", e2eBypassToken: () => "" },
 }));
-vi.mock("./session", () => ({ TRUSTED_VISITOR: "trusted", visitor: vi.fn() }));
 vi.mock("@/features/access/server/env", () => ({
-  env: { hostEmails: () => ["host@example.com"] },
+  env: { hostEmails: () => ["host@example.com"], rateLimitSalt: () => "salt" },
 }));
-vi.mock("@/features/access/server/gate", () => ({ requireOwner: vi.fn() }));
 vi.mock("@/features/access/server/repository", () => ({
   guestPassOf: async () => null,
 }));

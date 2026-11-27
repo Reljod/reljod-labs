@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useReducer, useRef } from "react";
+import { ApiError } from "@/platform/client/api";
 import {
   type BuildState,
   buildReducer,
@@ -8,7 +9,7 @@ import {
 } from "../domain/build-state";
 import type { BuildEvent } from "../domain/events";
 import type { DraftGraph } from "../domain/graph";
-import { readNdjson } from "./ndjson";
+import { followBuild, isGone } from "./api";
 
 type Action =
   | { type: "event"; event: BuildEvent }
@@ -58,20 +59,23 @@ export function useBuildFeed(buildId: string | null, base?: DraftGraph) {
       while (!signal.aborted) {
         let ended = false;
         try {
-          const response = await fetch(
-            `/api/client-manager/builds/${buildId}/events?from=${received.current}`,
-            { signal, cache: "no-store" },
+          await followBuild(
+            buildId,
+            received.current,
+            (event) => {
+              dispatch({ type: "event", event });
+              if (event.type === "end") ended = true;
+            },
+            { signal },
           );
-          if (response.status === 404 && misses++ < 20) {
+        } catch (error) {
+          // Not started yet: ask again in a moment, for a little while.
+          if (isGone(error) && misses++ < 20) {
             await sleep(800, signal);
             continue;
           }
-          if (!response.ok) return;
-          for await (const event of readNdjson<BuildEvent>(response)) {
-            dispatch({ type: "event", event });
-            if (event.type === "end") ended = true;
-          }
-        } catch {
+          // Refused for good (no Access, not this Owner's): stop asking.
+          if (error instanceof ApiError) return;
           // Network blip or a function timeout: reconnect below.
         }
         if (ended) return;

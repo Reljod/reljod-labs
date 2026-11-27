@@ -3,6 +3,7 @@
 import { useQueries } from "@tanstack/react-query";
 import { AnimatePresence } from "motion/react";
 import { useEffect, useMemo, useState } from "react";
+import type { ClientSummary, NodeLite } from "../domain/api";
 import type { BuildState } from "../domain/build-state";
 import { BRANCHES, type CategoryId } from "../domain/categories";
 import {
@@ -14,7 +15,6 @@ import {
   ROOT_KEY,
 } from "../domain/graph";
 import { EMPTY_HIGHLIGHT, type Highlight } from "../domain/traversal";
-import type { ClientSummary, NodeLite } from "../server/service";
 import { fetchEdges, keys } from "./api";
 import { CategoryTree } from "./category-tree";
 import { CertaintyLine } from "./certainty";

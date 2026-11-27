@@ -1,5 +1,4 @@
-import { registerClient } from "@/features/client-manager/domain/oauth";
-import { env } from "@/features/client-manager/server/env";
+import { openApi } from "@/features/client-manager/server/api";
 import {
   oauthJson,
   preflight,
@@ -9,10 +8,10 @@ import {
  * RFC 7591 dynamic registration. Nothing is stored: the client id is the
  * signed registration, so registering costs nothing and needs no Access.
  */
-export async function POST(request: Request) {
-  let body: unknown;
+export const POST = openApi.handle(async ({ services, request }) => {
+  let metadata: unknown;
   try {
-    body = await request.json();
+    metadata = await request.json();
   } catch {
     return oauthJson(
       {
@@ -22,12 +21,8 @@ export async function POST(request: Request) {
       400,
     );
   }
-  const result = registerClient(body, env.rateLimitSalt(), Date.now());
-  if (!result.ok) {
-    const { ok: _ok, ...error } = result;
-    return oauthJson(error, 400);
-  }
-  return oauthJson(result.registration, 201);
-}
+  const { status, body } = services.connect.register(metadata);
+  return oauthJson(body, status);
+});
 
 export const OPTIONS = preflight;

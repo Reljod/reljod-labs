@@ -2,63 +2,15 @@ import "server-only";
 import { guestPassStatus } from "@/features/access/domain/guest-pass";
 import type { Owner } from "@/features/access/domain/owner";
 import { env as accessEnv } from "@/features/access/server/env";
-import { type Access, requireOwner } from "@/features/access/server/gate";
 import { issuedSinceDisconnect } from "@/features/access/server/mcp-tokens";
 import { guestPassOf } from "@/features/access/server/repository";
+import { E2E_VISITOR_HASH, type Visitor } from "@/platform/request/visitor";
 import {
   type McpClaims,
   readMcpToken,
   signMcpToken,
 } from "../domain/mcp-token";
-import type { Grant } from "../domain/oauth";
 import { env } from "./env";
-import { TRUSTED_VISITOR, type Visitor, visitor } from "./session";
-
-const DAY = 86_400;
-
-/**
- * What this visitor may hand an outside MCP client (Claude Code, say): their
- * Owner's clients (a Guest's are their Guest pass's, shared by every device
- * on it), spending against this visitor's limits. A Guest's lasts as long as
- * their Guest pass and is refused the moment the pass is revoked; a Host's
- * lasts 30 days. The OAuth consent page and the token page both mint from it.
- */
-export async function currentGrant(): Promise<Grant> {
-  const { access, owner }: { access: Access; owner: Owner } =
-    await requireOwner();
-  const who = await visitor();
-  const now = Math.floor(Date.now() / 1000);
-  return access.kind === "guest"
-    ? {
-        kind: "guest",
-        owner,
-        visitor: who.hash,
-        iat: now,
-        user: access.userId,
-        pass: access.passId,
-        until: Math.floor(Date.parse(access.expiresAt) / 1000),
-      }
-    : access.kind === "host"
-      ? {
-          kind: "host",
-          owner,
-          visitor: who.hash,
-          iat: now,
-          email: access.email,
-          until: now + 30 * DAY,
-        }
-      : { kind: "e2e", owner, visitor: who.hash, iat: now, until: now + DAY };
-}
-
-/** A token to paste, for MCP clients that cannot sign in with OAuth. */
-export async function mintMcpToken() {
-  const { until, ...claims } = await currentGrant();
-  return {
-    token: signMcpToken({ ...claims, exp: until }, env.rateLimitSalt()),
-    kind: claims.kind,
-    expiresAt: new Date(until * 1000).toISOString(),
-  };
-}
 
 /** The app's own chat: a token for one message, narrowed to the Thread's client. */
 export function deskToken(input: {
@@ -121,9 +73,10 @@ async function holderOf(claims: McpClaims): Promise<McpClaims | null> {
   }
 }
 
-export function visitorOf(claims: McpClaims): Visitor {
+/** Whose caps an MCP call spends: the token's visitor; the e2e suite's are not capped. */
+export function visitorOfClaims(claims: McpClaims): Visitor {
   return {
     hash: claims.visitor,
-    trusted: claims.kind === "e2e" || claims.visitor === TRUSTED_VISITOR,
+    trusted: claims.kind === "e2e" || claims.visitor === E2E_VISITOR_HASH,
   };
 }

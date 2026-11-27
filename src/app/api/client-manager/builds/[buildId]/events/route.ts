@@ -1,43 +1,22 @@
-import { getRun } from "workflow/api";
-import { failure } from "@/features/client-manager/server/respond";
-import { viewableBuild } from "@/features/client-manager/server/service";
-import { currentOwner } from "@/features/client-manager/server/session";
+import {
+  buildEventsQuerySchema,
+  buildParamsSchema,
+} from "@/features/client-manager/domain/api";
+import type { BuildEvent } from "@/features/client-manager/domain/events";
+import { clientManagerApi } from "@/features/client-manager/server/api";
+import { params, query } from "@/platform/http/middleware";
+import { ndjson } from "@/platform/http/respond";
 
 // Stays open while the Build streams; a reconnect resumes from `from`.
 export const maxDuration = 300;
 
-/** Streams a Build's events as newline-delimited JSON. */
-export async function GET(
-  request: Request,
-  { params }: RouteContext<"/api/client-manager/builds/[buildId]/events">,
-) {
-  const { buildId } = await params;
-  let workflowRunId: string | null | undefined;
-  try {
-    const found = await viewableBuild(buildId, await currentOwner());
-    workflowRunId = found?.build.workflow_run_id;
-  } catch (error) {
-    return failure(error);
-  }
-  if (!workflowRunId) {
-    return new Response("Not found", { status: 404 });
-  }
-  const from = Number(new URL(request.url).searchParams.get("from") ?? 0);
-  const events = getRun(workflowRunId).getReadable({
-    startIndex: Number.isFinite(from) ? Math.max(0, Math.trunc(from)) : 0,
-  });
-  const encoder = new TextEncoder();
-  const body = events.pipeThrough(
-    new TransformStream<unknown, Uint8Array>({
-      transform(event, controller) {
-        controller.enqueue(encoder.encode(`${JSON.stringify(event)}\n`));
-      },
-    }),
+/** A Build's events as NDJSON, from the `from`th on, to an Owner who may see its client. */
+export const GET = clientManagerApi
+  .use(params(buildParamsSchema))
+  .use(query(buildEventsQuerySchema))
+  .handle(async ({ services, owner, path, query, request }) =>
+    ndjson<BuildEvent>(
+      await services.builds.events(owner, path.buildId, query.from),
+      { scope: "client-manager", signal: request.signal },
+    ),
   );
-  return new Response(body, {
-    headers: {
-      "content-type": "application/x-ndjson",
-      "cache-control": "no-store",
-    },
-  });
-}
