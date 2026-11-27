@@ -65,7 +65,7 @@ $$;
 --
 -- Returns `taken` and, when not taken, a refusal code the app turns into
 -- words: 'visitor', 'day', 'owner_spend' or 'session_spend'. The limits are
--- passed in from LIMITS in server/runs.ts; a trusted visitor (the e2e suite)
+-- passed in from LIMITS in domain/limits.ts; a trusted visitor (the e2e suite)
 -- passes nulls. A null owner (a Desk from before Owners) skips the Owner cap.
 create function casework.take_chat_turn(
   p_session_id uuid,
@@ -136,8 +136,8 @@ $$;
 -- Counts and creates a Run, or says which cap refused it ---------------------
 
 -- Returns the new Run's id, or a refusal code: 'active' (the Desk already has
--- a Run going), 'visitor' or 'day'. Limits come from LIMITS in
--- server/runs.ts; a trusted visitor passes nulls for the rate limits.
+-- a Run going), 'visitor', 'day', 'owner_spend' or 'session_spend'. Limits
+-- come from LIMITS in domain/limits.ts; a trusted visitor passes nulls.
 create function casework.create_run(
   p_session_id uuid,
   p_pipeline text,
