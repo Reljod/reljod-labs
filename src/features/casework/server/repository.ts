@@ -277,22 +277,40 @@ export async function insertUpload(input: {
   storagePath: string;
   pagePaths: string[];
   sizeBytes: number;
-}) {
-  return rows<DocumentRow>(
+}): Promise<DocumentRow | null> {
+  const result = await supabase()
+    .from("documents")
+    .insert({
+      session_id: input.sessionId,
+      name: input.name,
+      media_type: input.mediaType,
+      source_format: input.sourceFormat,
+      storage_path: input.storagePath,
+      page_paths: input.pagePaths,
+      size_bytes: input.sizeBytes,
+    })
+    .select(DOCUMENT_COLUMNS)
+    .single();
+  // An upload's path is recorded once (a unique index): a ticket used twice
+  // at the same moment records nothing the second time.
+  if (result.error?.code === "23505") return null;
+  return rows<DocumentRow>(result);
+}
+
+/** Which of these Storage paths are already recorded as uploads of the Desk. */
+export async function recordedUploadPaths(
+  sessionId: string,
+  paths: string[],
+): Promise<Set<string>> {
+  if (paths.length === 0) return new Set();
+  const found = rows<{ storage_path: string }[]>(
     await supabase()
       .from("documents")
-      .insert({
-        session_id: input.sessionId,
-        name: input.name,
-        media_type: input.mediaType,
-        source_format: input.sourceFormat,
-        storage_path: input.storagePath,
-        page_paths: input.pagePaths,
-        size_bytes: input.sizeBytes,
-      })
-      .select(DOCUMENT_COLUMNS)
-      .single(),
+      .select("storage_path")
+      .eq("session_id", sessionId)
+      .in("storage_path", paths),
   );
+  return new Set(found.map((row) => row.storage_path));
 }
 
 export async function countUploads(sessionId: string) {
@@ -359,22 +377,6 @@ export async function loadMessages(sessionId: string, limit = 40) {
   return recent.reverse();
 }
 
-export async function countMessages(filter: {
-  visitorHash?: string;
-  since: Date;
-}) {
-  let query = supabase()
-    .from("messages")
-    .select("id, sessions!inner(visitor_hash)", { count: "exact", head: true })
-    .eq("role", "user")
-    .gte("created_at", filter.since.toISOString());
-  if (filter.visitorHash)
-    query = query.eq("sessions.visitor_hash", filter.visitorHash);
-  const { count, error } = await query;
-  if (error) throw new Error(error.message);
-  return count ?? 0;
-}
-
 // Runs ----------------------------------------------------------------------------
 
 export type RunRow = {
@@ -392,26 +394,88 @@ export type RunRow = {
   completed_at: string | null;
 };
 
+/** Why a Run was not created: the Desk has one going, or a rate limit. */
+export type RunRefusal = "active" | "visitor" | "day";
+
+/**
+ * Creates a Run, counted against the rate limits and the one-Run-per-Desk
+ * rule and inserted in one transaction under an advisory lock
+ * (`casework.create_run`). `limits` null skips the rate limits (the e2e suite).
+ */
 export async function createRun(input: {
   sessionId: string;
   pipeline: PipelineId | null;
   jobs: JobId[];
   documentIds: string[];
   visitorHash: string;
-}) {
-  return rows<{ id: string }>(
-    await supabase()
-      .from("runs")
-      .insert({
-        session_id: input.sessionId,
-        pipeline: input.pipeline,
-        jobs: input.jobs,
-        document_ids: input.documentIds,
-        visitor_hash: input.visitorHash,
-      })
-      .select("id")
-      .single(),
-  ).id;
+  limits: { perVisitorPerHour: number; perDay: number } | null;
+}): Promise<{ runId: string } | { refusal: RunRefusal }> {
+  const [row] = rows<{ run_id: string | null; refusal: string | null }[]>(
+    await supabase().rpc("create_run", {
+      p_session_id: input.sessionId,
+      p_pipeline: input.pipeline,
+      p_jobs: input.jobs,
+      p_document_ids: input.documentIds,
+      p_visitor_hash: input.visitorHash,
+      p_per_visitor_per_hour: input.limits?.perVisitorPerHour ?? null,
+      p_per_day: input.limits?.perDay ?? null,
+    }),
+  );
+  if (row?.run_id) return { runId: row.run_id };
+  const refusal = row?.refusal;
+  return {
+    refusal: refusal === "active" || refusal === "visitor" ? refusal : "day",
+  };
+}
+
+/** Which cap refused a chat turn. */
+export type ChatRefusal = "visitor" | "day" | "owner_spend" | "session_spend";
+
+/**
+ * Takes one chat turn before the Specialist's model is called: the caps are
+ * checked and the turn recorded in one transaction under an advisory lock
+ * (`casework.take_chat_turn`). `limits` null skips them (the e2e suite).
+ */
+export async function takeChatTurn(input: {
+  session: SessionRow;
+  limits: {
+    perVisitorPerHour: number;
+    perDay: number;
+    ownerSpendPerDay: number;
+    sessionSpend: number;
+  } | null;
+}): Promise<{ taken: true } | { refusal: ChatRefusal }> {
+  const [row] = rows<{ taken: boolean; refusal: string | null }[]>(
+    await supabase().rpc("take_chat_turn", {
+      p_session_id: input.session.id,
+      p_owner: input.session.owner,
+      p_visitor_hash: input.session.visitor_hash,
+      p_per_visitor_per_hour: input.limits?.perVisitorPerHour ?? null,
+      p_turns_per_day: input.limits?.perDay ?? null,
+      p_owner_spend_per_day: input.limits?.ownerSpendPerDay ?? null,
+      p_session_spend: input.limits?.sessionSpend ?? null,
+    }),
+  );
+  if (row?.taken) return { taken: true };
+  const refusal = row?.refusal;
+  return {
+    refusal:
+      refusal === "visitor" ||
+      refusal === "owner_spend" ||
+      refusal === "session_spend"
+        ? refusal
+        : "day",
+  };
+}
+
+/** USD the Owner's Desks have spent on models since a time, all Desks together. */
+export async function ownerSpendUsd(owner: Owner, since: Date) {
+  const { data, error } = await supabase().rpc("owner_spend_usd", {
+    p_owner: owner,
+    p_since: since.toISOString(),
+  });
+  if (error) throw new Error(error.message);
+  return Number(data ?? 0);
 }
 
 export async function updateRun(
@@ -463,17 +527,6 @@ export async function activeRuns(sessionId: string) {
       .in("status", ["queued", "running", "waiting"])
       .order("created_at", { ascending: false }),
   );
-}
-
-export async function countRuns(filter: { visitorHash?: string; since: Date }) {
-  let query = supabase()
-    .from("runs")
-    .select("id", { count: "exact", head: true })
-    .gte("created_at", filter.since.toISOString());
-  if (filter.visitorHash) query = query.eq("visitor_hash", filter.visitorHash);
-  const { count, error } = await query;
-  if (error) throw new Error(error.message);
-  return count ?? 0;
 }
 
 export async function recordJobRun(input: {
@@ -710,10 +763,4 @@ export async function sessionSpend(sessionId: string): Promise<SpendRow[]> {
     grouped.set(key, row);
   }
   return [...grouped.values()];
-}
-
-export async function deleteSessionsByVisitor(visitorHash: string) {
-  ok(
-    await supabase().from("sessions").delete().eq("visitor_hash", visitorHash),
-  );
 }

@@ -1,10 +1,14 @@
+import { readdirSync, readFileSync } from "node:fs";
+import path from "node:path";
 import { describe, expect, it } from "vitest";
 import { LIMITS } from "./limits";
 import {
   displayName,
+  MIN_RECORDING_BITS_PER_SECOND,
   mp4DurationSeconds,
   ownerPrefix,
   ownRecordingType,
+  recordingLength,
   recordingPath,
   uploadProblem,
 } from "./uploads";
@@ -100,6 +104,199 @@ function mvhd(scale: number, duration: number) {
   view.setUint32(16, duration);
   return box("mvhd", body);
 }
+
+function join(...parts: Uint8Array[]) {
+  const out = new Uint8Array(parts.reduce((sum, part) => sum + part.length, 0));
+  let at = 0;
+  for (const part of parts) {
+    out.set(part, at);
+    at += part.length;
+  }
+  return out;
+}
+
+/** A version 0 `tkhd` whose duration is in the movie's time scale. */
+function tkhd(duration: number) {
+  const body = new Uint8Array(84);
+  new DataView(body.buffer).setUint32(20, duration);
+  return box("tkhd", body);
+}
+
+function mdhd(scale: number, duration: number) {
+  const body = new Uint8Array(24);
+  const view = new DataView(body.buffer);
+  view.setUint32(12, scale);
+  view.setUint32(16, duration);
+  return box("mdhd", body);
+}
+
+/** One run of `count` samples, each `delta` ticks long. */
+function stts(count: number, delta: number) {
+  const body = new Uint8Array(16);
+  const view = new DataView(body.buffer);
+  view.setUint32(4, 1);
+  view.setUint32(8, count);
+  view.setUint32(12, delta);
+  return box("stts", body);
+}
+
+function stsz(count: number) {
+  const body = new Uint8Array(12);
+  new DataView(body.buffer).setUint32(8, count);
+  return box("stsz", body);
+}
+
+/** A track `seconds` long by every header, unless a part says otherwise. */
+function trak(input: {
+  header: number;
+  mediaScale: number;
+  media: number;
+  samples: number;
+  delta: number;
+  sized?: number;
+}) {
+  return box(
+    "trak",
+    join(
+      tkhd(input.header),
+      box(
+        "mdia",
+        join(
+          mdhd(input.mediaScale, input.media),
+          box(
+            "minf",
+            box(
+              "stbl",
+              join(
+                stts(input.samples, input.delta),
+                stsz(input.sized ?? input.samples),
+              ),
+            ),
+          ),
+        ),
+      ),
+    ),
+  );
+}
+
+/** A 1 MB file: `ftyp`, the `moov` and enough `mdat` for a real bitrate. */
+function movie(...children: Uint8Array[]) {
+  return join(
+    box("ftyp", new Uint8Array(16)),
+    box("moov", join(...children)),
+    box("mdat", new Uint8Array(1024 * 1024)),
+  );
+}
+
+/** A 60 s video track at 30 fps in a 90 kHz time scale; the movie scale is 1000. */
+const honestTrack = {
+  header: 60_000,
+  mediaScale: 90_000,
+  media: 60 * 90_000,
+  samples: 1800,
+  delta: 3000,
+};
+
+describe("recordingLength", () => {
+  it("reads a file whose headers agree", () => {
+    expect(
+      recordingLength(movie(mvhd(1000, 60_000), trak(honestTrack))),
+    ).toEqual({ seconds: 60 });
+  });
+
+  it("takes the longest declared length, within the tolerance", () => {
+    const length = recordingLength(
+      movie(mvhd(1000, 60_000), trak({ ...honestTrack, header: 61_000 })),
+    );
+    expect(length).toEqual({ seconds: 61 });
+  });
+
+  it("refuses a movie header that understates its tracks", () => {
+    // Says 1 minute; the track runs 20.
+    const length = recordingLength(
+      movie(
+        mvhd(1000, 60_000),
+        trak({
+          header: 1_200_000,
+          mediaScale: 90_000,
+          media: 1200 * 90_000,
+          samples: 36_000,
+          delta: 3000,
+        }),
+      ),
+    );
+    expect(length).toEqual({ refusal: expect.stringMatching(/disagree/) });
+  });
+
+  it("counts the sample table even when every header understates it", () => {
+    // Every header says 60 s, but 20 minutes of samples are timed.
+    const length = recordingLength(
+      movie(
+        mvhd(1000, 60_000),
+        trak({ ...honestTrack, samples: 36_000, sized: 36_000 }),
+      ),
+    );
+    expect(length).toEqual({ refusal: expect.stringMatching(/disagree/) });
+  });
+
+  it("refuses sample tables that disagree on the number of samples", () => {
+    const length = recordingLength(
+      movie(mvhd(1000, 60_000), trak({ ...honestTrack, sized: 36_000 })),
+    );
+    expect(length).toEqual({ refusal: expect.stringMatching(/sample tables/) });
+  });
+
+  it("refuses a fragmented MP4", () => {
+    const length = recordingLength(
+      join(
+        movie(
+          mvhd(1000, 60_000),
+          trak(honestTrack),
+          box("mvex", new Uint8Array(8)),
+        ),
+        box("moof", new Uint8Array(8)),
+      ),
+    );
+    expect(length).toEqual({ refusal: expect.stringMatching(/fragmented/) });
+  });
+
+  it("refuses a length the file is too small to hold", () => {
+    // 60 s in a 1 kB file is about 140 bit/s.
+    const tiny = join(
+      box("ftyp", new Uint8Array(16)),
+      box("moov", join(mvhd(1000, 60_000), trak(honestTrack))),
+      box("mdat", new Uint8Array(512)),
+    );
+    expect(tiny.byteLength * 8).toBeLessThan(
+      60 * MIN_RECORDING_BITS_PER_SECOND,
+    );
+    expect(recordingLength(tiny)).toEqual({
+      refusal: expect.stringMatching(/too small/),
+    });
+  });
+
+  it("refuses a file with no movie box or no length", () => {
+    expect(recordingLength(new Uint8Array([1, 2, 3]))).toEqual({
+      refusal: expect.stringMatching(/cannot be read/),
+    });
+    expect(recordingLength(movie(mvhd(1000, 0)))).toEqual({
+      refusal: expect.stringMatching(/cannot be read/),
+    });
+  });
+
+  it("accepts every shipped sample Recording", () => {
+    const folder = path.join(process.cwd(), "public/process-transfer/samples");
+    const videos = readdirSync(folder).filter((name) => name.endsWith(".mp4"));
+    expect(videos.length).toBeGreaterThan(0);
+    for (const name of videos) {
+      const bytes = new Uint8Array(readFileSync(path.join(folder, name)));
+      const length = recordingLength(bytes);
+      expect(length, name).toHaveProperty("seconds");
+      const seconds = (length as { seconds: number }).seconds;
+      expect(seconds, name).toBeCloseTo(mp4DurationSeconds(bytes) ?? 0, 0);
+    }
+  });
+});
 
 describe("mp4DurationSeconds", () => {
   it("reads the movie header", () => {

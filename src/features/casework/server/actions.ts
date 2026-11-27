@@ -9,6 +9,12 @@ import {
 } from "../domain/model-config";
 import { type Answer, answerSchema } from "../domain/run-events";
 import type { SourceFormat } from "../domain/run-state";
+import {
+  SNIFF_BYTES,
+  storedProblem,
+  ticketExpired,
+  UPLOADS,
+} from "../domain/uploads";
 import type { DeskView, DocView } from "../view";
 import { deskView, docView, thumbUrls } from "./desk-view";
 import { env } from "./env";
@@ -16,6 +22,7 @@ import {
   countUploads,
   type DocumentRow,
   insertUpload,
+  recordedUploadPaths,
   setModelOverrides,
 } from "./repository";
 import { answerQuestion, settingsFor, stopActiveRun, stopRun } from "./runs";
@@ -25,10 +32,10 @@ import {
   startSession,
   switchSession,
 } from "./session";
-import { BUCKET, supabase } from "./supabase";
+import { BUCKET, storedObject, supabase } from "./supabase";
 
-const MAX_UPLOAD_BYTES = 10 * 1024 * 1024;
-const MAX_UPLOADS_PER_SESSION = 30;
+const MAX_UPLOAD_BYTES = UPLOADS.maxBytes;
+const MAX_UPLOADS_PER_SESSION = UPLOADS.perDesk;
 
 /** Everything the desk shows on load: the Cabinet, the chat so far, runs, spend, settings. */
 export async function openDesk(): Promise<DeskView> {
@@ -86,7 +93,7 @@ export async function stop(runId?: string | null) {
 }
 
 const IMAGE_TYPES = new Set(["image/jpeg", "image/png"]);
-const MAX_PAGES = 12;
+const MAX_PAGES = UPLOADS.maxPages;
 
 type UploadTicket = {
   sessionId: string;
@@ -95,7 +102,10 @@ type UploadTicket = {
   sourceFormat: SourceFormat;
   storagePath: string;
   pagePaths: string[];
+  /** What the browser said; the recorded size is read from Storage. */
   sizeBytes: number;
+  /** When the ticket stops being accepted (ms since epoch). */
+  expiresAt: number;
 };
 
 function sign(payload: string) {
@@ -114,7 +124,38 @@ function readTicket(ticket: string, sessionId: string): UploadTicket | null {
   const parsed = JSON.parse(
     Buffer.from(payload, "base64url").toString(),
   ) as UploadTicket;
-  return parsed.sessionId === sessionId ? parsed : null;
+  if (parsed.sessionId !== sessionId) return null;
+  return ticketExpired(parsed.expiresAt) ? null : parsed;
+}
+
+/**
+ * The upload as Storage holds it, or null when it is not what the ticket
+ * said: the file must exist, be within the size cap and start with its
+ * type's signature. A PDF keeps only the page images that were really
+ * stored, each a JPEG within the cap, so its page count is what was
+ * uploaded, not what the browser claimed.
+ */
+async function verifiedUpload(
+  ticket: UploadTicket,
+): Promise<{ sizeBytes: number; pagePaths: string[] } | null> {
+  const file = await storedObject(ticket.storagePath, SNIFF_BYTES);
+  if (storedProblem(file, ticket.mediaType) || !file) return null;
+  if (ticket.sourceFormat === "image") {
+    return { sizeBytes: file.size, pagePaths: [ticket.storagePath] };
+  }
+  const pages = await Promise.all(
+    ticket.pagePaths
+      .slice(0, MAX_PAGES)
+      .map(async (path) =>
+        storedProblem(await storedObject(path, SNIFF_BYTES), "image/jpeg")
+          ? null
+          : path,
+      ),
+  );
+  return {
+    sizeBytes: file.size,
+    pagePaths: pages.filter((path): path is string => path !== null),
+  };
 }
 
 export type UploadRequest = {
@@ -225,6 +266,7 @@ export async function beginUpload(
         storagePath,
         pagePaths,
         sizeBytes: Math.trunc(file.size),
+        expiresAt: Date.now() + UPLOADS.ticketMs,
       } satisfies UploadTicket),
     ).toString("base64url");
     slots.push({
@@ -242,9 +284,22 @@ export async function beginUpload(
 /** Records the files the browser finished uploading as Documents of this desk. */
 export async function finishUpload(tickets: string[]): Promise<DocView[]> {
   const session = await ensureSession();
-  const valid = tickets
+  const read = tickets
     .slice(0, 60)
     .flatMap((ticket) => readTicket(ticket, session.id) ?? []);
+  // A ticket is good once: one whose file is already a Document is dropped.
+  const recorded = await recordedUploadPaths(
+    session.id,
+    read.map((ticket) => ticket.storagePath),
+  );
+  const seen = new Set<string>();
+  const valid = read.filter((ticket) => {
+    if (recorded.has(ticket.storagePath) || seen.has(ticket.storagePath)) {
+      return false;
+    }
+    seen.add(ticket.storagePath);
+    return true;
+  });
   if (valid.length === 0) return [];
   if (
     (await countUploads(session.id)) + valid.length >
@@ -252,19 +307,21 @@ export async function finishUpload(tickets: string[]): Promise<DocView[]> {
   ) {
     throw new Error(`A desk holds at most ${MAX_UPLOADS_PER_SESSION} uploads.`);
   }
+  const checked = await Promise.all(valid.map(verifiedUpload));
   const created: DocumentRow[] = [];
-  for (const ticket of valid) {
-    created.push(
-      await insertUpload({
-        sessionId: session.id,
-        name: ticket.name,
-        mediaType: ticket.mediaType,
-        sourceFormat: ticket.sourceFormat,
-        storagePath: ticket.storagePath,
-        pagePaths: ticket.pagePaths,
-        sizeBytes: ticket.sizeBytes,
-      }),
-    );
+  for (const [index, ticket] of valid.entries()) {
+    const stored = checked[index];
+    if (!stored) continue;
+    const row = await insertUpload({
+      sessionId: session.id,
+      name: ticket.name,
+      mediaType: ticket.mediaType,
+      sourceFormat: ticket.sourceFormat,
+      storagePath: ticket.storagePath,
+      pagePaths: stored.pagePaths,
+      sizeBytes: stored.sizeBytes,
+    });
+    if (row) created.push(row);
   }
   const urls = await thumbUrls(created);
   return created.map((row) => docView(row, urls));

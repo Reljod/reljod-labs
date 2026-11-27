@@ -4,6 +4,7 @@ import { headers } from "next/headers";
 import { start } from "workflow/api";
 import { DENIED_MESSAGE } from "@/features/access/constants";
 import { type Owner, ownerOf } from "@/features/access/domain/owner";
+import { isE2eToken } from "@/features/access/server/e2e";
 import { type Access, currentAccess } from "@/features/access/server/gate";
 import { E2E_HEADER } from "../constants";
 import { isRunId } from "../domain/api";
@@ -21,7 +22,12 @@ import {
   reviewFinding as review,
 } from "./evaluations";
 import { prescreenWorkflow } from "./prescreen-workflow";
-import { E2E_VISITOR, hashVisitor, rateLimitMessage } from "./rate-limit";
+import {
+  E2E_VISITOR,
+  hashVisitor,
+  RATE_LIMITS,
+  rateLimitMessage,
+} from "./rate-limit";
 import {
   createRun,
   failRun,
@@ -32,8 +38,7 @@ import { ownerRuleStates } from "./rules";
 
 async function visitor() {
   const requestHeaders = await headers();
-  const bypass = env.e2eBypassToken();
-  if (bypass && requestHeaders.get(E2E_HEADER) === bypass) {
+  if (isE2eToken(requestHeaders.get(E2E_HEADER))) {
     return { hash: E2E_VISITOR, limited: false };
   }
   const ip =
@@ -73,27 +78,27 @@ async function startRun(
   if (!pack) throw new Error(`Unknown pack ${packSlug}`);
 
   const { hash, limited } = await visitor();
-  if (limited) {
-    const message = await rateLimitMessage(hash);
-    if (message) {
-      return {
-        status: "limited",
-        runId: await latestCompletedRunId(pack.slug, owner),
-        message,
-      };
-    }
-  }
 
   // The Owner's Rules as they are now; the run keeps them (ADR 0019).
   const rulebook = resolveRulebook(await ownerRuleStates(owner));
-  const runId = await createRun({
+  // The rate limits are taken here, in the same transaction as the insert.
+  const created = await createRun({
     packSlug: pack.slug,
     rulebook,
     declaration: pack.clientDeclaration,
     visitorHash: hash,
     owner,
     model: env.model(),
+    limits: limited ? RATE_LIMITS : null,
   });
+  if ("refusal" in created) {
+    return {
+      status: "limited",
+      runId: await latestCompletedRunId(pack.slug, owner),
+      message: rateLimitMessage(created.refusal),
+    };
+  }
+  const { runId } = created;
   try {
     // Paid work starts only once its Audit event has landed.
     await audit({
