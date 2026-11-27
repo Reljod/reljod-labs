@@ -15,6 +15,7 @@ vi.mock("@/features/access/server/gate", () => ({
 import { ForbiddenError, LimitError, NotFoundError } from "../errors";
 import { body, sameOrigin } from "./middleware";
 import { api, derive } from "./pipeline";
+import { CACHE, json } from "./respond";
 
 const call = (
   handler: ReturnType<ReturnType<typeof api>["handle"]>,
@@ -87,8 +88,15 @@ describe("the layers", () => {
     expect(handler).not.toHaveBeenCalled();
   });
 
-  it("answers a GET with an ETag and 304 when the browser already has the body", async () => {
-    const route = api("t").handle(() => ({ walks: 2 }));
+  it("revalidates shared data with an ETag, and never offers one for no-store data", async () => {
+    const own = await call(
+      api("t").handle(() => ({ walks: 2 })),
+      new Request("https://labs.example/api/x"),
+    );
+    expect(own.headers.get("etag")).toBeNull();
+    const route = api("t").handle(({ request }) =>
+      json({ walks: 2 }, { cache: CACHE.seed, request }),
+    );
     const first = await call(route, new Request("https://labs.example/api/x"));
     const etag = first.headers.get("etag");
     expect(etag).toBeTruthy();

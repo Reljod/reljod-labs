@@ -63,7 +63,7 @@ export type RouteHandler = (
  *     .handle(({ services, staff, body }) => services.rules.save(staff, body));
  *
  * A handler returns a Response, or any value, sent as `CACHE.none` JSON
- * (with an ETag on GET). Whatever a layer or the handler throws becomes the
+ * (`private, no-store`). Whatever a layer or the handler throws becomes the
  * one JSON error shape (`failure`).
  */
 export class Route<C> {

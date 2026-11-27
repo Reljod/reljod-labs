@@ -1,25 +1,27 @@
 import "server-only";
 import { LimitError } from "@/platform/errors";
-import { pgRateLimiter } from "@/platform/rate/limiter";
+import { type Cap, capLock, pgRateLimiter } from "@/platform/rate/limiter";
 import { LIMITS, voiceRefusal } from "../domain/limits";
 import { sql } from "./db";
 import type { SwitchboardRate } from "./ports";
 
 const callRefusal = `That's ${LIMITS.callsPerHour} Calls this hour. Try again soon.`;
 
+const callCaps: Cap<"call">[] = [
+  {
+    scope: "visitor",
+    window: "hour",
+    max: LIMITS.callsPerHour,
+    message: callRefusal,
+  },
+];
+
 /** The visitor's hourly caps, in `switchboard.rate_hits` (which also records the Owner). */
 const hourly = pgRateLimiter<"call" | "turn">({
   table: "switchboard.rate_hits",
   owner: true,
   caps: {
-    call: [
-      {
-        scope: "visitor",
-        window: "hour",
-        max: LIMITS.callsPerHour,
-        message: callRefusal,
-      },
-    ],
+    call: callCaps,
     turn: [
       {
         scope: "visitor",
@@ -47,7 +49,9 @@ export const switchboardRate: SwitchboardRate = {
   async takeVoiceCall({ owner, visitor }) {
     if (visitor.trusted) return;
     const refusal = await sql().begin(async (tx) => {
-      await tx`select pg_advisory_xact_lock(hashtextextended(${"switchboard:call"}, 0))`;
+      // The very lock the shared limiter takes for a text Call's `call` cap,
+      // so the two never both take the visitor's last Call place.
+      await tx`select pg_advisory_xact_lock(hashtextextended(${capLock("switchboard", "call", visitor, callCaps)}, 0))`;
       await tx`select pg_advisory_xact_lock(hashtextextended(${`swb:owner:${owner}:voice`}, 0))`;
       await tx`select pg_advisory_xact_lock(hashtextextended(${"swb:all:voice"}, 0))`;
       const [use] = await tx<

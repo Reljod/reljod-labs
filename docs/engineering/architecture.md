@@ -36,7 +36,7 @@ export const POST = floorwalkApi
   .handle(({ services, owner, visitor, body }) => services.ask({ owner, visitor }, body));
 ```
 
-A handler returns a value (sent as `private, no-store` JSON, with an ETag on GET), `undefined` (204), or a `Response` (`ndjson(events)` for streams, `json(value, { cache: CACHE.seed, request })` for shared seed data). Whatever a layer or handler throws becomes `{ error }` with the right status (`failure` in `src/platform/http/respond.ts`); an unknown error is logged and answered as a bare 500.
+A handler returns a value (sent as `private, no-store` JSON), `undefined` (204), or a `Response` (`ndjson(events)` for streams, `json(value, { cache: CACHE.seed, request })` for shared seed data, which also gets an ETag and a 304 when the browser already holds it). Whatever a layer or handler throws becomes `{ error }` with the right status (`failure` in `src/platform/http/respond.ts`); an unknown error is logged and answered as a bare 500.
 
 ## Middleware
 

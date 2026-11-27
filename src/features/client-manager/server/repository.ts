@@ -1211,11 +1211,17 @@ export async function threadMessages(threadId: string, owner: Owner) {
     limit 300`;
 }
 
-export async function threadHistory(threadId: string, limit = 10) {
+/** The Thread's last messages, only when the Thread is the Owner's own. */
+export async function threadHistory(
+  threadId: string,
+  owner: Owner,
+  limit = 10,
+) {
   const rows = await sql()<{ role: "user" | "assistant"; content: string }[]>`
-    select role, content from client_manager.messages
-    where thread_id = ${threadId}
-    order by created_at desc limit ${limit}`;
+    select m.role, m.content from client_manager.messages m
+    join client_manager.threads t on t.id = m.thread_id
+    where m.thread_id = ${threadId} and t.owner = ${owner} and t.deleted_at is null
+    order by m.created_at desc limit ${limit}`;
   return rows.reverse();
 }
 

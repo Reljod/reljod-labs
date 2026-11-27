@@ -197,7 +197,7 @@ export function createThreadService(ports: ThreadPorts): ThreadService {
       // (before the question is saved, so the history is the conversation so far).
       const [found, history, catalogRows] = await Promise.all([
         threads.get(threadId),
-        threads.history(threadId),
+        threads.history(threadId, owner),
         clients.catalog(owner),
       ]);
       const thread = owned(found, owner);

@@ -54,6 +54,25 @@ type Config<K extends string> = {
 };
 
 /**
+ * The advisory lock a take of `kind` queues on. Requests that could take the
+ * same last place must share it: every kind that shares a cap queues on one
+ * lock for the schema, a kind with an everyone-cap on one for the kind, and
+ * otherwise only one visitor's takes of that kind queue together. Exported
+ * so a feature's own multi-cap take (Switchboard's voice Call) locks the
+ * same key as the shared limiter for the cap they share.
+ */
+export function capLock<K extends string>(
+  schema: string,
+  kind: K,
+  who: Visitor,
+  caps: readonly Cap<K>[],
+): string {
+  if (caps.some((cap) => cap.across)) return `${schema}:*`;
+  if (caps.some((cap) => cap.scope === "everyone")) return `${schema}:${kind}`;
+  return `${schema}:${kind}:${who.hash}`;
+}
+
+/**
  * Old hits are deleted on about one take in `SWEEP_EVERY`, not on every one:
  * the sweep is a write and a scan, and the windows only ever look back a day.
  */
@@ -77,20 +96,18 @@ export function pgRateLimiter<K extends string>(
       if (who.trusted) return;
       const caps = config.caps[kind];
       const units = Math.max(1, Math.floor(options.units ?? 1));
-      // Requests that could take the same last place queue on one lock:
-      // every kind that shares a cap together, a kind with an everyone-cap
-      // per kind, and otherwise only one visitor's requests of that kind.
-      const lock = caps.some((cap) => cap.across)
-        ? `${schema}:*`
-        : caps.some((cap) => cap.scope === "everyone")
-          ? `${schema}:${kind}`
-          : `${schema}:${kind}:${who.hash}`;
+      const lock = capLock(schema, kind, who, caps);
       const kindsOf = (cap: Cap<K>) => cap.across ?? [kind];
       const counted = [...new Set(caps.flatMap(kindsOf))] as string[];
       const refusal = await pool().begin(async (tx) => {
         await tx`select pg_advisory_xact_lock(hashtextextended(${lock}, 0))`;
-        if (Math.random() * SWEEP_EVERY < 1)
-          await tx`delete from ${tx(config.table)} where created_at < now() - interval '1 day'`;
+        // One sweeper at a time per table: concurrent deletes could deadlock.
+        if (Math.random() * SWEEP_EVERY < 1) {
+          const [sweep] = await tx<{ mine: boolean }[]>`
+            select pg_try_advisory_xact_lock(hashtextextended(${`${schema}:sweep`}, 0)) as mine`;
+          if (sweep?.mine)
+            await tx`delete from ${tx(config.table)} where created_at < now() - interval '1 day'`;
+        }
         const amount = (cap: Cap<K>) => {
           const where = tx`${tx(kindColumn)} in ${tx([...kindsOf(cap)] as string[])}
             ${cap.scope === "visitor" ? tx`and visitor_hash = ${who.hash}` : tx``}

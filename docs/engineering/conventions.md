@@ -78,7 +78,7 @@ Next sends a browser's server actions one at a time (`node_modules/next/dist/doc
 
 - Reads are GET routes, writes POST/PUT/PATCH/DELETE, under the demo's `/api/<demo>/` prefix, which must be in the `src/proxy.ts` matcher. Each is a stack on the feature's base route (`server/api.ts`) over its services; no handler holds business logic.
 - Writes stack `sameOrigin()`: server actions compared Origin and Host for us; a REST write must check it itself.
-- The platform owns the plumbing: `failure()` (one error shape, `unstable_rethrow` first, never a stack or a cause), `json()` with `CACHE` and an ETag on GET, `ndjson()` for streams, and the browser client (`getJson`, `send`, `attempt`, `followNdjson`, `streamJson`) in `src/platform/client/api.ts`. A feature keeps only `domain/api.ts` (routes and response types) and typed wrappers in `components/api.ts`. Components never call `fetch` for their own routes.
+- The platform owns the plumbing: `failure()` (one error shape, `unstable_rethrow` first, never a stack or a cause), `json()` with `CACHE` (and an ETag for a policy the browser may keep), `ndjson()` for streams, and the browser client (`getJson`, `send`, `attempt`, `followNdjson`, `streamJson`) in `src/platform/client/api.ts`. A feature keeps only `domain/api.ts` (routes and response types) and typed wrappers in `components/api.ts`. Components never call `fetch` for their own routes.
 - The client reads an error body as text and parses JSON only if it can: the proxy's 401 is plain text.
 
 ## A demo page arrives with its first view

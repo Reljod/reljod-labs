@@ -29,9 +29,10 @@ export function etagOf(body: string): string {
 
 /**
  * JSON with a cache policy (`CACHE.none` unless the route says otherwise).
- * Given the request of a GET, it answers 304 when the browser already holds
- * this exact body (`If-None-Match`), so a poll or a refetch of unchanged data
- * costs no download and no parse.
+ * Given the request of a GET with a policy the browser may keep (`seed`,
+ * `brief`), it sends an ETag and answers 304 when the browser already holds
+ * this exact body (`If-None-Match`), so revalidating shared data costs no
+ * download and no parse.
  */
 export function json<T>(
   body: T,
@@ -47,7 +48,14 @@ export function json<T>(
   headers.set("content-type", "application/json");
   headers.set("cache-control", init?.cache ?? CACHE.none);
   const status = init?.status ?? 200;
-  if (init?.request?.method === "GET" && status === 200) {
+  // A `no-store` answer is never kept, so the browser has nothing to
+  // revalidate: only a policy it may keep gets a validator.
+  const policy = init?.cache ?? CACHE.none;
+  if (
+    init?.request?.method === "GET" &&
+    status === 200 &&
+    policy !== CACHE.none
+  ) {
     const etag = etagOf(text);
     headers.set("etag", etag);
     if (init.request.headers.get("if-none-match") === etag) {

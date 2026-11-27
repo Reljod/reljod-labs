@@ -117,6 +117,28 @@ export function withServices<C extends BaseContext, S>(
 const MAX_BODY = 256 * 1024;
 
 /**
+ * The body as text, read until `limit` bytes and no further: a chunked
+ * request carries no length to refuse it by, so it is counted as it arrives.
+ */
+async function readCapped(request: Request, limit: number): Promise<string> {
+  if (!request.body) return "";
+  const reader = request.body.getReader();
+  const chunks: Uint8Array[] = [];
+  let size = 0;
+  for (;;) {
+    const { value, done } = await reader.read();
+    if (done) break;
+    size += value.byteLength;
+    if (size > limit) {
+      await reader.cancel().catch(() => {});
+      throw new TooLargeError("That request is too large.");
+    }
+    chunks.push(value);
+  }
+  return new TextDecoder().decode(Buffer.concat(chunks));
+}
+
+/**
  * The JSON body, parsed by the route's schema; 400 with the first issue when
  * it does not fit. Bodies over `limit` bytes (256 KB unless the route says
  * otherwise; files go to Storage by signed URL, never through here) are
@@ -130,9 +152,7 @@ export function body<C extends BaseContext, S extends z.ZodType>(
   return derive(async ({ request }) => {
     const length = Number(request.headers.get("content-length") ?? 0);
     if (length > limit) throw new TooLargeError("That request is too large.");
-    const text = await request.text();
-    if (text.length > limit)
-      throw new TooLargeError("That request is too large.");
+    const text = await readCapped(request, limit);
     let raw: unknown = {};
     if (text) {
       try {
