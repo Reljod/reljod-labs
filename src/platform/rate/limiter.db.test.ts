@@ -20,7 +20,10 @@ describe.skipIf(!run)(
     const { createPool } = await import("@/server/postgres");
     const { pgRateLimiter } = await import("./limiter");
     const { LimitError } = await import("../errors");
-    const pool = createPool(2);
+    // Collected (not run) even when skipped: no pool without a database.
+    const pool = run
+      ? createPool(2)
+      : (null as unknown as ReturnType<typeof createPool>);
     const who = { hash: `test-${randomUUID()}`, trusted: false };
 
     afterAll(async () => {
