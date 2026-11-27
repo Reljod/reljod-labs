@@ -79,8 +79,12 @@ function seal(kind: Kind, value: unknown, secret: string) {
 
 function unseal<T>(kind: Kind, token: unknown, secret: string): T | null {
   if (typeof token !== "string" || !token.startsWith(PREFIX[kind])) return null;
-  const [payload, signature] = token.slice(PREFIX[kind].length).split(".");
-  if (!payload || !signature) return null;
+  // Strict: a token with extra parts is refused, so `code.x` is not a
+  // second spelling of the same code (single use hashes the raw string).
+  const [payload, signature, ...rest] = token
+    .slice(PREFIX[kind].length)
+    .split(".");
+  if (!payload || !signature || rest.length > 0) return null;
   const expected = Buffer.from(mac(kind, payload, secret));
   const given = Buffer.from(signature);
   if (expected.length !== given.length || !timingSafeEqual(expected, given))

@@ -237,6 +237,28 @@ describe("revocation and single use", () => {
     });
   });
 
+  it("refuses a code, client id or token with extra parts, so a suffix is not a second spelling of it", () => {
+    const clientId = register();
+    const code = codeFor(clientId);
+    const trade = (id: string, value: string) =>
+      redeem(
+        new URLSearchParams({
+          grant_type: "authorization_code",
+          client_id: id,
+          code: value,
+          redirect_uri: callback,
+          code_verifier: verifier,
+        }),
+        SECRET,
+        now,
+      ).ok;
+    expect(trade(clientId, `${code}.x`)).toBe(false);
+    expect(trade(`${clientId}.x`, code)).toBe(false);
+    expect(trade(clientId, code)).toBe(true);
+    const tokens = tokensFor(issued, clientId, SECRET, now);
+    expect(readMcpToken(`${tokens.access_token}.x`, SECRET, now)).toBeNull();
+  });
+
   it("names the callback of a request it would send an error back to", () => {
     const parsed = parseAuthorizationRequest(
       authorize(register(), { response_type: "token" }),

@@ -61,8 +61,8 @@ export function readMcpToken(
   now = Date.now(),
 ): McpClaims | null {
   if (!token.startsWith(PREFIX)) return null;
-  const [payload, signature] = token.slice(PREFIX.length).split(".");
-  if (!payload || !signature) return null;
+  const [payload, signature, ...rest] = token.slice(PREFIX.length).split(".");
+  if (!payload || !signature || rest.length > 0) return null;
   const expected = Buffer.from(sign(payload, secret));
   const given = Buffer.from(signature);
   if (expected.length !== given.length || !timingSafeEqual(expected, given))

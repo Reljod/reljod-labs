@@ -115,8 +115,8 @@ function sign(payload: string) {
 }
 
 function readTicket(ticket: string, sessionId: string): UploadTicket | null {
-  const [payload, signature] = String(ticket).split(".");
-  if (!payload || !signature) return null;
+  const [payload, signature, ...rest] = String(ticket).split(".");
+  if (!payload || !signature || rest.length > 0) return null;
   const expected = Buffer.from(sign(payload));
   const given = Buffer.from(signature);
   if (expected.length !== given.length || !timingSafeEqual(expected, given))
