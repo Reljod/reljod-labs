@@ -1,6 +1,7 @@
 {
   "$schema": "https://openapi.vercel.sh/vercel.json",
   "regions": ["syd1"],
+  "crons": [{ "path": "/api/cron/storage-purge", "schedule": "17 4 * * *" }],
   "functions": {
     "src/app/demos/document-compliance/runs/[runId]/events/route.ts": {
       "supportsCancellation": true
