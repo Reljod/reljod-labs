@@ -52,7 +52,8 @@ for migration in \
   20261127130200_document_compliance_take_run \
   20261127120000_access_mcp_tokens \
   20261127150000_access_take_attempt \
-  20261127150100_access_storage_purge; do
+  20261127150100_access_storage_purge \
+  20261128120400_document_compliance_rest_indexes; do
   grep -vi "create extension.*pg_cron" "$root/supabase/migrations/$migration.sql" | psql
 done
 

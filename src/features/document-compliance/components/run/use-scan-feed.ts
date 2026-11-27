@@ -9,6 +9,7 @@ import {
   scanReducer,
 } from "../../scan-state";
 import type { RunView } from "../../view";
+import { streamRunEvents } from "../api";
 
 export type FeedSource =
   | { mode: "live"; runId: string }
@@ -61,28 +62,15 @@ async function streamLive(
   while (!signal.aborted) {
     let ended = false;
     try {
-      const response = await fetch(
-        `/demos/document-compliance/runs/${runId}/events?from=${from()}`,
-        { signal, cache: "no-store" },
-      );
-      if (!response.ok || !response.body) throw new Error(`${response.status}`);
-      const reader = response.body
-        .pipeThrough(new TextDecoderStream())
-        .getReader();
-      let buffer = "";
-      for (;;) {
-        const { value, done } = await reader.read();
-        if (done) break;
-        buffer += value;
-        const lines = buffer.split("\n");
-        buffer = lines.pop() ?? "";
-        for (const line of lines) {
-          if (!line.trim()) continue;
-          const event = JSON.parse(line) as ScanEvent;
+      await streamRunEvents(
+        runId,
+        from(),
+        (event) => {
           dispatch(event);
           if (event.type === "end") ended = true;
-        }
-      }
+        },
+        signal,
+      );
     } catch {
       // Network blip or function timeout: fall through and reconnect.
     }

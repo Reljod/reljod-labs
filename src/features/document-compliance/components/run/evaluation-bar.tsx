@@ -5,8 +5,8 @@ import Link from "next/link";
 import { useRef, useState } from "react";
 import { diffFindings, type FindingChange } from "../../domain/review";
 import { OUTCOME_LABELS } from "../../domain/types";
-import { reevaluateRun } from "../../server/actions";
 import type { EvaluationView, RunView } from "../../view";
+import { reevaluateRun } from "../api";
 import { AUDIT_KEY, runKey } from "../queries";
 
 const outcomeText = (outcome: FindingChange["from"]) =>
@@ -60,9 +60,9 @@ export function EvaluationBar({
           queryClient.invalidateQueries({ queryKey: [AUDIT_KEY] }),
         ]);
         onSelect(null);
-        setNotice({ ok: true, number: result.number });
+        setNotice({ ok: true, number: result.value.number });
       } else {
-        setNotice({ ok: false, text: result.message });
+        setNotice({ ok: false, text: result.error });
       }
     },
     onError: () =>

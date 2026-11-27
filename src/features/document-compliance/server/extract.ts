@@ -2,16 +2,13 @@ import "server-only";
 import { createGateway, Output, streamText } from "ai";
 import { z } from "zod";
 import {
-  type DocumentJudgments,
   type DocumentKind,
   FIELD_NAMES,
   type FieldName,
   type FieldReading,
-  type Span,
-  type SpanCorrection,
 } from "../domain/types";
-import type { ReadUsage } from "../metrics";
 import { env } from "./env";
+import type { DocumentExtraction, DocumentReader } from "./ports";
 import { readUsage } from "./usage";
 
 /** The fields worth reading from each kind of Document. */
@@ -97,33 +94,15 @@ Judgments, from the page images:
 - signaturePresent: for a certified copy, whether the certification carries a handwritten signature; null for other documents.
 - notes: one sentence explaining any tampering or legibility concern, otherwise empty.`;
 
-/** The model's structured answer, exactly as the schema parsed it. */
-export type RawExtraction = z.infer<typeof extractionSchema>;
-
-export type DocumentExtraction = {
-  readings: FieldReading[];
-  judgments: DocumentJudgments;
-  /** The model's fixes to OCR text, by Span ref; never to where a Span sits. */
-  corrections: SpanCorrection[];
-  usage: ReadUsage;
-  /** The model's structured answer exactly as it returned it. */
-  raw: RawExtraction;
-};
-
 type ExtractedItem = z.infer<typeof extractionSchema>["fields"][number];
 
 /**
  * Reads one Document with the model, streaming: `onReading` gets each field as
  * soon as the model has finished writing it, before the whole answer is in.
  */
-export async function extractDocument(input: {
-  kind: DocumentKind;
-  spans: Span[];
-  /** Whether the Spans came from OCR, the only text the model may correct. */
-  ocr: boolean;
-  pageImages: { data: Uint8Array; mediaType: string }[];
-  onReading?: (reading: FieldReading) => Promise<void>;
-}): Promise<DocumentExtraction> {
+async function extractDocument(
+  input: Parameters<DocumentReader["read"]>[0],
+): Promise<DocumentExtraction> {
   const requested = FIELDS_BY_KIND[input.kind]
     .map((name) => `- ${name}: ${FIELD_HINTS[name]}`)
     .join("\n");
@@ -202,3 +181,11 @@ export async function extractDocument(input: {
 function isComplete(field: unknown): field is ExtractedItem {
   return extractionSchema.shape.fields.element.safeParse(field).success;
 }
+
+/** The model behind the Vercel AI Gateway: the paid reader of the live demo. */
+export const modelReader: DocumentReader = {
+  get model() {
+    return env.model();
+  },
+  read: extractDocument,
+};

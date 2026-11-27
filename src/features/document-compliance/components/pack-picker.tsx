@@ -6,7 +6,7 @@ import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState, useTransition } from "react";
 import type { Pack } from "../packs";
 import { DOCUMENT_ORDER } from "../scan-events";
-import { startPrescreen } from "../server/actions";
+import { startPrescreen } from "./api";
 import { DOCUMENT_LABELS, DOCUMENT_SHORT_LABELS } from "./labels";
 import { PageFrame } from "./page-frame";
 import { pageImageUrl } from "./page-image";
@@ -80,10 +80,25 @@ export function PackPicker({ packs }: { packs: PackSummary[] }) {
     setPageIndex(0);
   }
 
+  // A pack picked before hydration is a checked radio React never heard
+  // about: the radios are uncontrolled, so take the choice from the page
+  // once, instead of starting a run of the default pack.
+  const options = useRef<HTMLFieldSetElement>(null);
+  useEffect(() => {
+    const picked = options.current?.querySelector<HTMLInputElement>(
+      'input[name="pack"]:checked',
+    );
+    // On mount the page index is still 0, so only the pack can change.
+    if (picked) setPackSlug(picked.value);
+  }, []);
+
   return (
     <div className="grid gap-8 lg:min-h-0 lg:flex-1 lg:grid-cols-[minmax(0,5fr)_minmax(0,6fr)] lg:grid-rows-[minmax(0,1fr)]">
       <div className="flex flex-col gap-6 lg:min-h-0">
-        <fieldset className="grid content-start gap-4 sm:grid-cols-2 lg:min-h-0 lg:flex-1 lg:grid-rows-3 lg:content-stretch">
+        <fieldset
+          ref={options}
+          className="grid content-start gap-4 sm:grid-cols-2 lg:min-h-0 lg:flex-1 lg:grid-rows-3 lg:content-stretch"
+        >
           <legend className="sr-only">Document pack</legend>
           {packs.map((item) => {
             const selected = item.slug === packSlug;
@@ -101,7 +116,7 @@ export function PackPicker({ packs }: { packs: PackSummary[] }) {
                   type="radio"
                   name="pack"
                   value={item.slug}
-                  checked={selected}
+                  defaultChecked={selected}
                   onChange={() => choose(item.slug)}
                   className="sr-only"
                 />

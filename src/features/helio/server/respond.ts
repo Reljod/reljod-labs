@@ -3,7 +3,7 @@ import { unstable_rethrow } from "next/navigation";
 import { NextResponse } from "next/server";
 import { isE2eToken } from "@/features/access/server/e2e";
 import { AccessDeniedError, denied } from "@/features/access/server/gate";
-import { E2E_HEADER } from "@/features/document-compliance/constants";
+import { E2E_HEADER } from "@/platform/request/headers";
 import { HelioInputError, publicMessage } from "./errors";
 import { RateLimitError } from "./rate";
 

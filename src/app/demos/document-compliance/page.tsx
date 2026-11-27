@@ -10,7 +10,6 @@ import { QueryProvider } from "@/features/document-compliance/components/query-p
 import { SessionRuns } from "@/features/document-compliance/components/session-runs";
 import { packs } from "@/features/document-compliance/packs";
 import { initialFor } from "@/features/document-compliance/server/initial";
-import { listOwnerRuns } from "@/features/document-compliance/server/repository";
 
 export const metadata: Metadata = {
   title: "Document compliance checks · Demo",
@@ -45,6 +44,8 @@ export default function DocumentComplianceDemoPage() {
 
 /** Streams in after the pack picker, which is static and paints first. */
 async function Runs() {
-  const runs = await initialFor("the Session's runs", listOwnerRuns);
+  const runs = await initialFor("the Session's runs", (services, owner) =>
+    services.runs.list(owner),
+  );
   return <SessionRuns initialRuns={runs} />;
 }

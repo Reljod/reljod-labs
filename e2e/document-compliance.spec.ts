@@ -5,7 +5,7 @@ import { packs } from "../src/features/document-compliance/packs";
 const recording = process.env.E2E_RECORD === "1";
 
 const DEMO = "/demos/document-compliance";
-// Generous: three parses plus three model calls, on a cold parser.
+// Generous: three parses plus three reads (model calls with E2E_LIVE=1), on a cold parser.
 const RUN_TIMEOUT = 4 * 60 * 1000;
 
 /** The field each flawed pack's scan should stamp, as soon as its Document is read. */
@@ -118,7 +118,7 @@ test("page images show a loading state until they arrive", async ({ page }) => {
   const held = new Promise<void>((resolve) => {
     release = resolve;
   });
-  await page.route("**/demos/document-compliance/packs/**", async (route) => {
+  await page.route("**/api/document-compliance/packs/**", async (route) => {
     await held;
     await route.continue();
   });

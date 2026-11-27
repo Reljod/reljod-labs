@@ -6,6 +6,7 @@ import type {
   Box,
   DocumentJudgments,
   DocumentKind,
+  ExtractedDocument,
   FieldName,
   Finding,
   Outcome,
@@ -130,6 +131,24 @@ export type StartResult =
   | { status: "limited"; runId: string | null; message: string }
   /** Starting failed on the server; the cause is in the server logs. */
   | { status: "error"; message: string };
+
+/** A stored Document as evaluation reads it: its fields and the model's judgments. */
+export function asExtracted(
+  document: Pick<DocumentView, "kind" | "fields" | "judgments">,
+): ExtractedDocument {
+  return {
+    kind: document.kind,
+    spans: [],
+    fields: document.fields.map((field) => ({
+      name: field.name,
+      value: field.value,
+      spanRefs: field.spanRefs,
+      verified: field.verified,
+      confidence: field.confidence ?? 0,
+    })),
+    judgments: document.judgments,
+  };
+}
 
 /** Shapes the Findings an evaluation just produced, in Rulebook order. */
 export function findingViews(

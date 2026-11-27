@@ -1,18 +1,14 @@
-import { requireOwner } from "@/features/access/server/gate";
 import {
   type AuditResponse,
-  parseAuditQuery,
+  auditQuerySchema,
 } from "@/features/document-compliance/domain/api";
-import { listAuditEvents } from "@/features/document-compliance/server/audit";
-import { failure, json } from "@/features/document-compliance/server/respond";
+import { documentComplianceApi } from "@/features/document-compliance/server/api";
+import { query } from "@/platform/http/middleware";
 
 /** The Owner's Audit trail, newest first, optionally for one run or one action. */
-export async function GET(request: Request) {
-  try {
-    const { owner } = await requireOwner();
-    const filter = parseAuditQuery(new URL(request.url).searchParams);
-    return json<AuditResponse>(await listAuditEvents(owner, filter));
-  } catch (error) {
-    return failure(error);
-  }
-}
+export const GET = documentComplianceApi
+  .use(query(auditQuerySchema))
+  .handle(
+    ({ services, owner, query }): Promise<AuditResponse> =>
+      services.audit.list(owner, query),
+  );

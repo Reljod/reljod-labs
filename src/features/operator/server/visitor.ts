@@ -1,11 +1,11 @@
 import "server-only";
 import { headers } from "next/headers";
 import { isE2eToken } from "@/features/access/server/e2e";
-import { E2E_HEADER } from "@/features/document-compliance/constants";
 import {
   E2E_VISITOR,
   hashVisitor,
 } from "@/features/document-compliance/server/rate-limit";
+import { E2E_HEADER } from "@/platform/request/headers";
 import { env } from "./env";
 
 /** Who is spending: a salted hash of the IP, never an Owner. Rate limits stay on it. */

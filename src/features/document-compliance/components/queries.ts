@@ -1,6 +1,7 @@
 import { infiniteQueryOptions, queryOptions } from "@tanstack/react-query";
+import { ApiError } from "@/platform/client/api";
 import type { AuditAction } from "../domain/audit";
-import { ApiFailure, api } from "./api";
+import { api } from "./api";
 
 /**
  * Every read the demo's screens make, as React Query options over `api`.
@@ -20,7 +21,7 @@ export const runQuery = (runId: string) =>
       try {
         return await api.run(runId, { signal });
       } catch (error) {
-        if (error instanceof ApiFailure && error.status === 404) return null;
+        if (error instanceof ApiError && error.status === 404) return null;
         throw error;
       }
     },

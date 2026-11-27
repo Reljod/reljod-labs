@@ -1,39 +1,27 @@
 import { afterAll, beforeAll, describe, expect, it, vi } from "vitest";
 import type { Owner } from "@/features/access/domain/owner";
+import { InvalidError, LimitError } from "@/platform/errors";
 import type { AuditActor } from "../domain/audit";
+import { LIMITS } from "../domain/limits";
 import type { ExtractedDocument, Finding } from "../domain/types";
 import type { ReadUsage } from "../metrics";
-import type { RawExtraction } from "./extract";
+import type { Caller, RawExtraction, RunRepository } from "./ports";
 
 /**
- * The Document compliance server code against a real Postgres with the
- * demo's migrations applied. Skipped unless DEMO_TEST_DATABASE_URL is set
- * (`pnpm test:demo-db` boots a throwaway database). Other suites share that
- * database, so every row here belongs to random Owners and a random visitor
- * hash, and is deleted afterwards; nothing is truncated.
+ * The Document compliance repositories and services against a real Postgres
+ * with the demo's migrations applied: Owner scope, the caps the database
+ * takes, the append-only Audit trail. Skipped unless DEMO_TEST_DATABASE_URL
+ * is set (`pnpm test:demo-db` boots a throwaway database). Other suites share
+ * that database, so every row here belongs to random Owners and a random
+ * visitor hash, and is deleted afterwards; nothing is truncated.
  */
 const url = process.env.DEMO_TEST_DATABASE_URL;
 
-/** Runs once right after the next `loadRun`, to change the database between a server function's read and its write. */
-const hooks = vi.hoisted(() => ({
-  afterLoad: null as null | (() => Promise<void>),
-}));
+/** Runs once right after the next `load`, to change the database between a service's read and its write. */
+const hooks = { afterLoad: null as null | (() => Promise<void>) };
 
 vi.mock("server-only", () => ({}));
 vi.mock("./supabase", () => ({ packPageUrls: async () => new Map() }));
-vi.mock("./repository", async (importOriginal) => {
-  const actual = await importOriginal<typeof import("./repository")>();
-  return {
-    ...actual,
-    loadRun: async (...args: Parameters<typeof actual.loadRun>) => {
-      const view = await actual.loadRun(...args);
-      const hook = hooks.afterLoad;
-      hooks.afterLoad = null;
-      if (hook) await hook();
-      return view;
-    },
-  };
-});
 
 const ISO = /^\d{4}-\d\d-\d\dT\d\d:\d\d:\d\d(\.\d+)?[+-]\d\d:\d\d$/;
 
@@ -155,13 +143,22 @@ const findings: Finding[] = [
   },
 ];
 
+const caller = (owner: Owner, actor: AuditActor = ACTOR): Caller => ({
+  owner,
+  actor,
+  visitor: { hash: VISITOR, trusted: true },
+});
+
 describe.skipIf(!url)("Document compliance on Postgres", () => {
   let mod: {
-    repository: typeof import("./repository");
-    audit: typeof import("./audit");
-    rules: typeof import("./rules");
-    evaluations: typeof import("./evaluations");
-    db: typeof import("./db");
+    /** The run repository, with `hooks.afterLoad` run after each load. */
+    runs: RunRepository;
+    audit: typeof import("./audit")["auditLog"];
+    services: {
+      rules: import("./services/rules").RulesService;
+      runs: import("./services/runs").RunsService;
+    };
+    sql: typeof import("@/server/postgres")["db"];
     domainRules: typeof import("../domain/rules");
     packs: typeof import("../packs");
   };
@@ -169,12 +166,39 @@ describe.skipIf(!url)("Document compliance on Postgres", () => {
 
   beforeAll(async () => {
     process.env.DATABASE_URL = url;
+    const { runRepository } = await import("./repository");
+    const { auditLog } = await import("./audit");
+    const { ruleRepository } = await import("./rules");
+    const { createRulesService } = await import("./services/rules");
+    const { createRunsService } = await import("./services/runs");
+    const runs: RunRepository = {
+      ...runRepository,
+      async load(...args) {
+        const view = await runRepository.load(...args);
+        const hook = hooks.afterLoad;
+        hooks.afterLoad = null;
+        if (hook) await hook();
+        return view;
+      },
+    };
+    const rules = createRulesService({ rules: ruleRepository });
     mod = {
-      repository: await import("./repository"),
-      audit: await import("./audit"),
-      rules: await import("./rules"),
-      evaluations: await import("./evaluations"),
-      db: await import("./db"),
+      runs,
+      audit: auditLog,
+      services: {
+        rules,
+        runs: createRunsService({
+          runs,
+          audit: auditLog,
+          rules,
+          model: "openai/test-model",
+          workflow: {
+            start: async () => "wrun_test",
+            events: async function* () {},
+          },
+        }),
+      },
+      sql: (await import("@/server/postgres")).db,
       domainRules: await import("../domain/rules"),
       packs: await import("../packs"),
     };
@@ -182,7 +206,7 @@ describe.skipIf(!url)("Document compliance on Postgres", () => {
 
   afterAll(async () => {
     if (!mod) return;
-    const sql = mod.db.sql();
+    const sql = mod.sql();
     await sql`delete from document_compliance.prescreen_runs where owner = any(${[OWNER, OTHER, BUSY]})`;
     await sql`delete from document_compliance.rule_versions where owner = any(${[OWNER, OTHER, BUSY]})`;
     await sql`delete from document_compliance.audit_trails where owner = any(${[OWNER, OTHER, BUSY]})`;
@@ -196,7 +220,7 @@ describe.skipIf(!url)("Document compliance on Postgres", () => {
   ) => {
     const pack = mod.packs.findPack("clean");
     if (!pack) throw new Error("clean pack missing");
-    return mod.repository.createRun({
+    return mod.runs.create({
       packSlug: pack.slug,
       rulebook: mod.domainRules.resolveRulebook({}),
       declaration: pack.clientDeclaration,
@@ -213,31 +237,31 @@ describe.skipIf(!url)("Document compliance on Postgres", () => {
   };
 
   it("creates a run and keeps its status and workflow id to its Owner", async () => {
-    const { repository } = mod;
+    const { runs } = mod;
     runId = await startRun();
     expect(runId).toMatch(/^[0-9a-f-]{36}$/);
-    await repository.setRunStatus(runId, "parsing");
-    await repository.setWorkflowRunId(runId, "wrun_123");
-    expect(await repository.workflowRunIdOf(runId, OWNER)).toBe("wrun_123");
-    expect(await repository.workflowRunIdOf(runId, OTHER)).toBeNull();
+    await runs.setStatus(runId, "parsing");
+    await runs.setWorkflowRunId(runId, "wrun_123");
+    expect(await runs.workflowRunIdOf(runId, OWNER)).toBe("wrun_123");
+    expect(await runs.workflowRunIdOf(runId, OTHER)).toBeNull();
 
-    const view = await repository.loadRun(runId, OWNER);
+    const view = await runs.load(runId, OWNER);
     expect(view?.status).toBe("parsing");
     expect(view?.completedAt).toBeNull();
     expect(view?.createdAt).toMatch(ISO);
     expect(view?.documents).toEqual([]);
-    expect(await repository.loadRun(runId, OTHER)).toBeNull();
+    expect(await runs.load(runId, OTHER)).toBeNull();
   });
 
   it("saves Documents with their Spans, Fields and links, and Findings with their Evidence", async () => {
-    const { repository } = mod;
-    const savedIdentity = await repository.saveDocument(
+    const { runs } = mod;
+    const savedIdentity = await runs.saveDocument(
       runId,
       {
         storagePath: "presets/clean/identity-document.jpg",
         mediaType: "image/jpeg",
         sourceFormat: "image",
-        parser: "paddleocr",
+        parser: "tesseract",
         pageCount: 1,
         parseMs: 120.4,
         readMs: 2400.6,
@@ -257,13 +281,13 @@ describe.skipIf(!url)("Document compliance on Postgres", () => {
       "full_name",
     ]);
     // A Document with nothing on it still saves.
-    const savedAddress = await repository.saveDocument(
+    const savedAddress = await runs.saveDocument(
       runId,
       {
         storagePath: "presets/clean/proof-of-address.pdf",
         mediaType: "application/pdf",
         sourceFormat: "pdf_digital",
-        parser: "opendataloader_pdf",
+        parser: "pdfjs",
         pageCount: 1,
         parseMs: 10,
         readMs: 20,
@@ -279,7 +303,7 @@ describe.skipIf(!url)("Document compliance on Postgres", () => {
     );
     expect(savedAddress.spanIds.size).toBe(0);
 
-    await repository.saveFindings(
+    await runs.saveFindings(
       runId,
       findings,
       new Map([
@@ -290,7 +314,7 @@ describe.skipIf(!url)("Document compliance on Postgres", () => {
   });
 
   it("loads the run back whole, in the shape the Reviewer view reads", async () => {
-    const view = await mod.repository.loadRun(runId, OWNER);
+    const view = await mod.runs.load(runId, OWNER);
     if (!view) throw new Error("run not found");
     expect(view.status).toBe("completed");
     expect(view.completedAt).toMatch(ISO);
@@ -302,7 +326,7 @@ describe.skipIf(!url)("Document compliance on Postgres", () => {
     ]);
 
     const [document] = view.documents;
-    expect(document?.parser).toBe("paddleocr");
+    expect(document?.parser).toBe("tesseract");
     expect(document?.pages).toEqual([{ page: 1, imageUrl: "" }]);
     expect(document?.spans).toEqual([
       {
@@ -405,10 +429,10 @@ describe.skipIf(!url)("Document compliance on Postgres", () => {
   });
 
   it("lists, counts and finds only the Owner's runs", async () => {
-    const { repository } = mod;
-    const runs = await repository.listOwnerRuns(OWNER);
-    expect(runs).toHaveLength(1);
-    expect(runs[0]).toMatchObject({
+    const { runs } = mod;
+    const listed = await runs.list(OWNER);
+    expect(listed).toHaveLength(1);
+    expect(listed[0]).toMatchObject({
       id: runId,
       packSlug: "clean",
       status: "completed",
@@ -416,22 +440,20 @@ describe.skipIf(!url)("Document compliance on Postgres", () => {
       tokens: 1200 + 300 + 100 + 10,
       counts: { pass: 1, fail: 1, needs_review: 1 },
     });
-    expect(runs[0]?.costUsd).toBeCloseTo(0.015, 10);
-    expect(runs[0]?.createdAt).toMatch(ISO);
-    expect(await repository.listOwnerRuns(OTHER)).toEqual([]);
+    expect(listed[0]?.costUsd).toBeCloseTo(0.015, 10);
+    expect(listed[0]?.createdAt).toMatch(ISO);
+    expect(await runs.list(OTHER)).toEqual([]);
 
-    expect(await repository.latestCompletedRunId("clean", OWNER)).toBe(runId);
-    expect(await repository.latestCompletedRunId("clean", OTHER)).toBeNull();
-    expect(
-      await repository.latestCompletedRunId("stale-bill", OWNER),
-    ).toBeNull();
+    expect(await runs.latestCompletedId("clean", OWNER)).toBe(runId);
+    expect(await runs.latestCompletedId("clean", OTHER)).toBeNull();
+    expect(await runs.latestCompletedId("stale-bill", OWNER)).toBeNull();
   });
 
-  it("lists runs newest first, up to the limit", async () => {
-    const { repository } = mod;
+  it("lists runs newest first", async () => {
+    const { runs } = mod;
     const newer = await startRun();
-    const listed = await repository.listOwnerRuns(OWNER, 1);
-    expect(listed.map((run) => run.id)).toEqual([newer]);
+    const listed = await runs.list(OWNER);
+    expect(listed.map((run) => run.id)).toEqual([newer, runId]);
     expect(listed[0]).toMatchObject({
       status: "queued",
       // A run with no Documents yet has no cost to show.
@@ -439,21 +461,18 @@ describe.skipIf(!url)("Document compliance on Postgres", () => {
       tokens: 0,
       counts: { pass: 0, fail: 0, needs_review: 0 },
     });
-    expect(
-      (await repository.listOwnerRuns(OWNER)).map((run) => run.id),
-    ).toEqual([newer, runId]);
 
-    await repository.failRun(newer, "x".repeat(1500));
-    const failed = await repository.loadRun(newer, OWNER);
+    await runs.fail(newer, "x".repeat(1500));
+    const failed = await runs.load(newer, OWNER);
     expect(failed?.status).toBe("failed");
     expect(failed?.error).toHaveLength(1000);
     // A failed run is never where a limited visitor lands.
-    expect(await repository.latestCompletedRunId("clean", OWNER)).toBe(runId);
+    expect(await runs.latestCompletedId("clean", OWNER)).toBe(runId);
   });
 
   it("appends Audit events and pages through them newest first, per Owner", async () => {
     const { audit } = mod;
-    await audit.audit({
+    await audit.append({
       owner: OWNER,
       runId,
       actor: { kind: "model", label: "Model" },
@@ -467,14 +486,14 @@ describe.skipIf(!url)("Document compliance on Postgres", () => {
         costUsd: 0.0125,
       },
     });
-    await audit.audit({
+    await audit.append({
       owner: OWNER,
       runId: null,
       actor: ACTOR,
       action: "run.started",
       summary: "Started a Pre-screen",
     });
-    await audit.auditBestEffort({
+    await audit.append({
       owner: OWNER,
       runId,
       actor: { kind: "system", label: "System" },
@@ -482,7 +501,7 @@ describe.skipIf(!url)("Document compliance on Postgres", () => {
       summary: "Finished",
     });
 
-    const page = await audit.listAuditEvents(OWNER);
+    const page = await audit.list(OWNER, {});
     expect(page.events.map((event) => event.action)).toEqual([
       "run.finished",
       "run.started",
@@ -512,33 +531,33 @@ describe.skipIf(!url)("Document compliance on Postgres", () => {
       details: {},
     });
 
-    const forRun = await audit.listAuditEvents(OWNER, { runId });
+    const forRun = await audit.list(OWNER, { runId });
     expect(forRun.events.map((event) => event.action)).toEqual([
       "run.finished",
       "document.read",
     ]);
-    const started = await audit.listAuditEvents(OWNER, {
+    const started = await audit.list(OWNER, {
       action: "run.started",
     });
     expect(started.events).toHaveLength(1);
 
-    const first = await audit.listAuditEvents(OWNER, { limit: 2 });
+    const first = await audit.list(OWNER, { limit: 2 });
     expect(first.events.map((event) => event.id)).toEqual(ids.slice(0, 2));
     expect(first.before).toBe(ids[1]);
-    const second = await audit.listAuditEvents(OWNER, {
+    const second = await audit.list(OWNER, {
       limit: 2,
       before: first.before,
     });
     expect(second.events.map((event) => event.id)).toEqual(ids.slice(2));
     expect(second.before).toBeNull();
 
-    expect((await audit.listAuditEvents(OTHER)).events).toEqual([]);
-    expect((await audit.listAuditEvents(OTHER, { runId })).events).toEqual([]);
+    expect((await audit.list(OTHER, {})).events).toEqual([]);
+    expect((await audit.list(OTHER, { runId })).events).toEqual([]);
   });
 
   it("refuses an Audit event the trail's constraints reject, with its reason", async () => {
     await expect(
-      mod.audit.audit({
+      mod.audit.append({
         owner: OWNER,
         runId: null,
         actor: ACTOR,
@@ -549,28 +568,28 @@ describe.skipIf(!url)("Document compliance on Postgres", () => {
   });
 
   it("saves, lists and restores Rule Versions per Owner", async () => {
-    const { rules } = mod;
-    const before = await rules.listRules(OWNER);
+    const { rules } = mod.services;
+    const before = await rules.list(OWNER);
     expect(
       before.every((rule) => !rule.edited && rule.versionCount === 0),
     ).toBe(true);
 
-    const saved = await rules.saveRule(OWNER, ACTOR, "field-confidence", {
+    const saved = await rules.save(caller(OWNER), "field-confidence", {
       params: { minConfidence: 0.7 },
     });
-    expect(saved).toEqual({ ok: true, version: 1 });
-    expect(
-      await rules.saveRule(OWNER, ACTOR, "field-confidence", {
+    expect(saved).toEqual({ version: 1 });
+    await expect(
+      rules.save(caller(OWNER), "field-confidence", {
         params: { minConfidence: 0.7 },
       }),
-    ).toEqual({ ok: false, message: "Nothing changed." });
-    expect(
-      await rules.saveRule(OWNER, ACTOR, "field-confidence", {
+    ).rejects.toThrow("Nothing changed.");
+    await expect(
+      rules.save(caller(OWNER), "field-confidence", {
         params: { minConfidence: 5 },
       }),
-    ).toMatchObject({ ok: false });
+    ).rejects.toBeInstanceOf(InvalidError);
 
-    const listed = await rules.listRules(OWNER);
+    const listed = await rules.list(OWNER);
     const confidence = listed.find((rule) => rule.id === "field-confidence");
     expect(confidence).toMatchObject({
       edited: true,
@@ -579,36 +598,29 @@ describe.skipIf(!url)("Document compliance on Postgres", () => {
       state: { version: 1, enabled: true, params: { minConfidence: 0.7 } },
     });
     expect(confidence?.savedAt).toMatch(ISO);
-    expect(await rules.ownerRuleStates(OWNER)).toEqual({
+    expect(await rules.states(OWNER)).toEqual({
       "field-confidence": {
         version: 1,
         enabled: true,
         params: { minConfidence: 0.7 },
       },
     });
-    expect(await rules.ownerRuleStates(OTHER)).toEqual({});
+    expect(await rules.states(OTHER)).toEqual({});
 
-    const restored = await rules.restoreRule(
-      OWNER,
-      SECOND_ACTOR,
+    const restored = await rules.restore(
+      caller(OWNER, SECOND_ACTOR),
       "field-confidence",
       0,
     );
-    expect(restored).toEqual({ ok: true, version: 2 });
-    expect(
-      await rules.restoreRule(OWNER, ACTOR, "field-confidence", 9),
-    ).toEqual({
-      ok: false,
-      message: "No such Version.",
-    });
-    expect(
-      await rules.restoreRule(OWNER, ACTOR, "field-confidence", 2),
-    ).toEqual({
-      ok: false,
-      message: "That Version is already in force.",
-    });
+    expect(restored).toEqual({ version: 2 });
+    await expect(
+      rules.restore(caller(OWNER), "field-confidence", 9),
+    ).rejects.toThrow("No such Version.");
+    await expect(
+      rules.restore(caller(OWNER), "field-confidence", 2),
+    ).rejects.toThrow("That Version is already in force.");
 
-    const versions = await rules.listRuleVersions(OWNER, "field-confidence");
+    const versions = await rules.versions(OWNER, "field-confidence");
     expect(
       versions.map((item) => [item.version, item.restoredFrom, item.savedBy]),
     ).toEqual([
@@ -619,11 +631,9 @@ describe.skipIf(!url)("Document compliance on Postgres", () => {
     expect(versions[0]?.params).toEqual({ minConfidence: 0.6 });
     expect(versions[0]?.savedAt).toMatch(ISO);
     expect(versions[2]?.savedAt).toBeNull();
-    expect(
-      await rules.listRuleVersions(OTHER, "field-confidence"),
-    ).toHaveLength(1);
+    expect(await rules.versions(OTHER, "field-confidence")).toHaveLength(1);
 
-    const events = await mod.audit.listAuditEvents(OWNER, {
+    const events = await mod.audit.list(OWNER, {
       action: "rule.restored",
     });
     expect(events.events[0]?.details).toMatchObject({
@@ -635,40 +645,36 @@ describe.skipIf(!url)("Document compliance on Postgres", () => {
   });
 
   it("refuses a Rule save past the hourly cap", async () => {
-    const sql = mod.db.sql();
-    const { LIMITS } = await import("../domain/review");
+    const sql = mod.sql();
     for (let n = 0; n < LIMITS.ruleSavesPerHour; n += 1) {
       await sql`
         insert into document_compliance.rule_versions (owner, rule_id, version, enabled, saved_by)
         values (${BUSY}, ${`filler-${n}`}, 1, true, 'Filler')`;
     }
-    expect(
-      await mod.rules.saveRule(BUSY, ACTOR, "field-confidence", {
-        params: { minConfidence: 0.7 },
-      }),
-    ).toEqual({
-      ok: false,
-      message: `You can save up to ${LIMITS.ruleSavesPerHour} Rule changes an hour. Try again later.`,
+    const refused = mod.services.rules.save(caller(BUSY), "field-confidence", {
+      params: { minConfidence: 0.7 },
     });
+    await expect(refused).rejects.toBeInstanceOf(LimitError);
+    await expect(refused).rejects.toThrow(
+      `You can save up to ${LIMITS.ruleSavesPerHour} Rule changes an hour. Try again later.`,
+    );
   });
 
   it("re-evaluates a run only when the Rules changed, and keeps each Evaluation", async () => {
-    const { evaluations, repository } = mod;
-    expect(await evaluations.reevaluateRun(OTHER, ACTOR, runId)).toEqual({
-      ok: false,
-      message: "No such run.",
-    });
+    const { runs } = mod;
+    const service = mod.services.runs;
+    await expect(service.reevaluate(caller(OTHER), runId)).rejects.toThrow(
+      "No such run.",
+    );
     // The restore saved the Default again as Version 2, so the Rules differ
     // from the run's own (Version 0) and the run can be re-evaluated.
-    const result = await evaluations.reevaluateRun(OWNER, ACTOR, runId);
-    expect(result).toMatchObject({ ok: true, number: 2 });
-    expect(await evaluations.reevaluateRun(OWNER, ACTOR, runId)).toEqual({
-      ok: false,
-      message:
-        "Your Rules are the ones Evaluation 2 applied. Edit a Rule first.",
-    });
+    const result = await service.reevaluate(caller(OWNER), runId);
+    expect(result).toMatchObject({ number: 2 });
+    await expect(service.reevaluate(caller(OWNER), runId)).rejects.toThrow(
+      "Your Rules are the ones Evaluation 2 applied. Edit a Rule first.",
+    );
 
-    const view = await repository.loadRun(runId, OWNER);
+    const view = await runs.load(runId, OWNER);
     expect(view?.evaluations.map((item) => item.number)).toEqual([1, 2]);
     const second = view?.evaluations[1];
     expect(second?.createdBy).toBe("Test Reviewer");
@@ -678,7 +684,7 @@ describe.skipIf(!url)("Document compliance on Postgres", () => {
     ).toMatchObject({ version: 2, params: { minConfidence: 0.6 } });
     expect(second?.findings.length).toBeGreaterThan(0);
 
-    const events = await mod.audit.listAuditEvents(OWNER, {
+    const events = await mod.audit.list(OWNER, {
       runId,
       action: "run.reevaluated",
     });
@@ -690,58 +696,38 @@ describe.skipIf(!url)("Document compliance on Postgres", () => {
   });
 
   it("records a Reviewer decision on the latest Evaluation", async () => {
-    const { evaluations, repository } = mod;
-    const view = await repository.loadRun(runId, OWNER);
+    const { runs } = mod;
+    const service = mod.services.runs;
+    const view = await runs.load(runId, OWNER);
     const flagged = view?.evaluations[1]?.findings.find(
       (finding) => finding.outcome !== "pass",
     );
     if (!flagged) throw new Error("expected a flagged Finding");
+    const decision = { outcome: "pass", note: "Checked by hand" };
 
-    expect(
-      await evaluations.reviewFinding(
-        OWNER,
-        ACTOR,
-        runId,
-        flagged.requirementId,
-        1,
-        {
-          outcome: "pass",
-          note: "Checked by hand",
-        },
-      ),
-    ).toEqual({
-      ok: false,
-      message:
-        "The run was just re-evaluated. Look at the new Evaluation and review again.",
+    await expect(
+      service.review(caller(OWNER), runId, {
+        requirementId: flagged.requirementId,
+        evaluation: 1,
+        ...decision,
+      }),
+    ).rejects.toThrow(
+      "The run was just re-evaluated. Look at the new Evaluation and review again.",
+    );
+    await expect(
+      service.review(caller(OWNER), runId, {
+        requirementId: "not-a-requirement",
+        evaluation: 2,
+        ...decision,
+      }),
+    ).rejects.toThrow("No such Requirement.");
+
+    await service.review(caller(OWNER), runId, {
+      requirementId: flagged.requirementId,
+      evaluation: 2,
+      ...decision,
     });
-    expect(
-      await evaluations.reviewFinding(
-        OWNER,
-        ACTOR,
-        runId,
-        "not-a-requirement",
-        2,
-        {
-          outcome: "pass",
-          note: "Checked by hand",
-        },
-      ),
-    ).toEqual({ ok: false, message: "No such Requirement." });
-
-    expect(
-      await evaluations.reviewFinding(
-        OWNER,
-        ACTOR,
-        runId,
-        flagged.requirementId,
-        2,
-        {
-          outcome: "pass",
-          note: "Checked by hand",
-        },
-      ),
-    ).toEqual({ ok: true });
-    const after = await repository.loadRun(runId, OWNER);
+    const after = await runs.load(runId, OWNER);
     expect(after?.reviews).toHaveLength(1);
     expect(after?.reviews[0]).toMatchObject({
       requirementId: flagged.requirementId,
@@ -756,7 +742,7 @@ describe.skipIf(!url)("Document compliance on Postgres", () => {
 
   describe("the database's own refusals, when the run changes under a server function", () => {
     const flaggedId = async () => {
-      const view = await mod.repository.loadRun(runId, OWNER);
+      const view = await mod.runs.load(runId, OWNER);
       const latest = view?.evaluations.at(-1);
       const flagged = latest?.findings.find(
         (finding) => finding.outcome !== "pass",
@@ -765,9 +751,9 @@ describe.skipIf(!url)("Document compliance on Postgres", () => {
       return { number: latest.number, requirementId: flagged.requirementId };
     };
     const setStatus = (status: string) =>
-      mod.db.sql()`update document_compliance.prescreen_runs set status = ${status} where id = ${runId}`;
+      mod.sql()`update document_compliance.prescreen_runs set status = ${status} where id = ${runId}`;
     const recordEvaluation = () =>
-      mod.db.sql()`
+      mod.sql()`
         select document_compliance.record_evaluation(
           p_owner => ${OWNER}, p_run_id => ${runId}::uuid,
           p_rules_applied => '[]'::jsonb, p_findings => '[]'::jsonb,
@@ -780,57 +766,47 @@ describe.skipIf(!url)("Document compliance on Postgres", () => {
       hooks.afterLoad = async () => {
         await recordEvaluation();
       };
-      expect(
-        await mod.evaluations.reviewFinding(
-          OWNER,
-          ACTOR,
-          runId,
+      await expect(
+        mod.services.runs.review(caller(OWNER), runId, {
           requirementId,
-          number,
-          {
-            outcome: "fail",
-            note: "Too late",
-          },
-        ),
-      ).toEqual({
-        ok: false,
-        message:
-          "The run was just re-evaluated. Look at the new Evaluation and review again.",
-      });
+          evaluation: number,
+          outcome: "fail",
+          note: "Too late",
+        }),
+      ).rejects.toThrow(
+        "The run was just re-evaluated. Look at the new Evaluation and review again.",
+      );
     });
 
     it("run_not_found: the run stops being a finished run of the Owner's", async () => {
       // The filler Evaluation applied no Rules, so the Owner's Rules differ from it.
       hooks.afterLoad = () => setStatus("failed").then(() => undefined);
-      expect(await mod.evaluations.reevaluateRun(OWNER, ACTOR, runId)).toEqual({
-        ok: false,
-        message: "No such run.",
-      });
+      await expect(
+        mod.services.runs.reevaluate(caller(OWNER), runId),
+      ).rejects.toThrow("No such run.");
       await setStatus("completed");
-      const view = await mod.repository.loadRun(runId, OWNER);
+      const view = await mod.runs.load(runId, OWNER);
       expect(view?.evaluations.map((item) => item.number)).toEqual([1, 2, 3]);
     });
 
     it("limit_reached: Evaluations fill up between the read and the write", async () => {
-      const { LIMITS } = await import("../domain/review");
       hooks.afterLoad = async () => {
         let count = 0;
         do {
-          const [row] = await mod.db.sql()<{ count: number }[]>`
+          const [row] = await mod.sql()<{ count: number }[]>`
             select count(*)::int as count from document_compliance.evaluations where run_id = ${runId}`;
           count = row?.count ?? 0;
           if (count < LIMITS.reevaluationsPerRun) await recordEvaluation();
         } while (count < LIMITS.reevaluationsPerRun);
       };
-      expect(await mod.evaluations.reevaluateRun(OWNER, ACTOR, runId)).toEqual({
-        ok: false,
-        message: `A run can be re-evaluated up to ${LIMITS.reevaluationsPerRun} times.`,
-      });
+      const message = `A run can be re-evaluated up to ${LIMITS.reevaluationsPerRun} times.`;
+      await expect(
+        mod.services.runs.reevaluate(caller(OWNER), runId),
+      ).rejects.toThrow(message);
       // And from then on the app refuses before it asks the database.
-      expect(await mod.evaluations.reevaluateRun(OWNER, ACTOR, runId)).toEqual({
-        ok: false,
-        message: `A run can be re-evaluated up to ${LIMITS.reevaluationsPerRun} times.`,
-      });
+      await expect(
+        mod.services.runs.reevaluate(caller(OWNER), runId),
+      ).rejects.toThrow(message);
     });
   });
 
@@ -841,13 +817,13 @@ describe.skipIf(!url)("Document compliance on Postgres", () => {
     beforeAll(async () => {
       // A fresh finished run of its own, whose no-tampering Finding needs review.
       reviewRun = await startRun();
-      const saved = await mod.repository.saveDocument(
+      const saved = await mod.runs.saveDocument(
         reviewRun,
         {
           storagePath: "presets/clean/identity-document.jpg",
           mediaType: "image/jpeg",
           sourceFormat: "image",
-          parser: "paddleocr",
+          parser: "tesseract",
           pageCount: 1,
           parseMs: 1,
           readMs: 1,
@@ -856,7 +832,7 @@ describe.skipIf(!url)("Document compliance on Postgres", () => {
         },
         identity,
       );
-      await mod.repository.saveFindings(
+      await mod.runs.saveFindings(
         reviewRun,
         findings,
         new Map([["identity_document", saved]]),
@@ -864,37 +840,26 @@ describe.skipIf(!url)("Document compliance on Postgres", () => {
       requirementId = "no-tampering";
     });
 
-    const review = () =>
-      mod.evaluations.reviewFinding(OWNER, ACTOR, reviewRun, requirementId, 1, {
+    const review = (owner: Owner = OWNER) =>
+      mod.services.runs.review(caller(owner), reviewRun, {
+        requirementId,
+        evaluation: 1,
         outcome: "fail",
         note: "Tampered",
       });
 
     it("run_not_found: the run is no longer finished when the decision is written", async () => {
       hooks.afterLoad = async () => {
-        await mod.db.sql()`update document_compliance.prescreen_runs set status = 'failed' where id = ${reviewRun}`;
+        await mod.sql()`update document_compliance.prescreen_runs set status = 'failed' where id = ${reviewRun}`;
       };
-      expect(await review()).toEqual({ ok: false, message: "No such run." });
-      await mod.db.sql()`update document_compliance.prescreen_runs set status = 'completed' where id = ${reviewRun}`;
-      expect(
-        await mod.evaluations.reviewFinding(
-          OTHER,
-          ACTOR,
-          reviewRun,
-          requirementId,
-          1,
-          {
-            outcome: "fail",
-            note: "Tampered",
-          },
-        ),
-      ).toEqual({ ok: false, message: "No such run." });
+      await expect(review()).rejects.toThrow("No such run.");
+      await mod.sql()`update document_compliance.prescreen_runs set status = 'completed' where id = ${reviewRun}`;
+      await expect(review(OTHER)).rejects.toThrow("No such run.");
     });
 
     it("limit_reached: decisions fill up between the read and the write", async () => {
-      const { LIMITS } = await import("../domain/review");
       hooks.afterLoad = async () => {
-        const sql = mod.db.sql();
+        const sql = mod.sql();
         const rows = Array.from({ length: LIMITS.reviewsPerRun }, () => ({
           run_id: reviewRun,
           evaluation: 1,
@@ -906,17 +871,16 @@ describe.skipIf(!url)("Document compliance on Postgres", () => {
         }));
         await sql`insert into document_compliance.finding_reviews ${sql(rows)}`;
       };
-      expect(await review()).toEqual({
-        ok: false,
-        message: `A run takes up to ${LIMITS.reviewsPerRun} Reviewer decisions.`,
-      });
-      const view = await mod.repository.loadRun(reviewRun, OWNER);
+      await expect(review()).rejects.toThrow(
+        `A run takes up to ${LIMITS.reviewsPerRun} Reviewer decisions.`,
+      );
+      const view = await mod.runs.load(reviewRun, OWNER);
       expect(view?.reviews).toHaveLength(LIMITS.reviewsPerRun);
     });
   });
 
   describe("create_prescreen_run", () => {
-    const sql = () => mod.db.sql();
+    const sql = () => mod.sql();
 
     it("stores the declaration and the applied Rules as jsonb, not as strings", async () => {
       const [row] = await sql()<
@@ -997,10 +961,10 @@ describe.skipIf(!url)("Document compliance on Postgres", () => {
   });
 
   it("deleting a run takes everything under it", async () => {
-    await mod.db.sql()`
+    await mod.sql()`
       delete from document_compliance.prescreen_runs where id = ${runId} and owner = ${OWNER}`;
-    expect(await mod.repository.loadRun(runId, OWNER)).toBeNull();
-    const [row] = await mod.db.sql()<{ count: number }[]>`
+    expect(await mod.runs.load(runId, OWNER)).toBeNull();
+    const [row] = await mod.sql()<{ count: number }[]>`
       select
         (select count(*) from document_compliance.findings where run_id = ${runId})
         + (select count(*) from document_compliance.documents where run_id = ${runId})
