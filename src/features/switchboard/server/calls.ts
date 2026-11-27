@@ -163,7 +163,7 @@ export async function startCall(input: StartInput): Promise<CallView> {
       where owner = ${input.owner} and kind = 'booking' and ref = ${reference}`;
     if (!found) throw new InvalidError("No such Booking in the Back office.");
   }
-  await takeRate(input.who, input.owner, "call");
+  await takeRate(input.who, input.owner, "call", input.line);
   const replaced: string[] = [];
   const row = await sql().begin(async (tx) => {
     await tx`select 1 from switchboard.workspaces where owner = ${input.owner} for update`;

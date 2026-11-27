@@ -1,8 +1,10 @@
+import { after } from "next/server";
 import type { CatalogResponse } from "@/features/client-manager/domain/api";
 import { failure, json } from "@/features/client-manager/server/respond";
 import {
   catalog,
   createIntake,
+  purgeDeletedClients,
 } from "@/features/client-manager/server/service";
 import {
   currentOwner,
@@ -12,6 +14,9 @@ import {
 /** The Catalog: every Sample plus this browser's own clients. */
 export async function GET() {
   try {
+    // Clients deleted 30 days ago leave Storage after a read, not on a cron:
+    // Storage cannot be emptied from SQL.
+    after(() => purgeDeletedClients());
     return json<CatalogResponse>({
       clients: await catalog(await currentOwner()),
     });

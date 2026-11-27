@@ -1,5 +1,6 @@
 import "server-only";
 import { createGateway, type LanguageModelUsage } from "ai";
+import type { Owner } from "@/features/access/domain/owner";
 import type { Usage } from "../domain/events";
 import { env } from "./env";
 import { recordModelCall } from "./repository";
@@ -32,6 +33,8 @@ export type CallContext = {
   clientId: string | null;
   buildId: string | null;
   visitorHash: string;
+  /** Whose spend this is, when the caller knows (a chat answer); Builds are counted through their client. */
+  owner?: Owner | null;
 };
 
 /**

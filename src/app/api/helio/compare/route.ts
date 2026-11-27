@@ -5,6 +5,7 @@ import type {
   CompareStreamEvent,
   HelioModelTier,
 } from "@/features/helio/domain/types";
+import { publicMessage } from "@/features/helio/server/errors";
 import { takeRate, visitor } from "@/features/helio/server/rate";
 import {
   failure,
@@ -84,10 +85,7 @@ export async function POST(request: Request) {
                 emit({
                   type: "error",
                   tier,
-                  error:
-                    err instanceof Error && err.message
-                      ? err.message.slice(0, 180)
-                      : "Generation failed.",
+                  error: publicMessage(err, "Generation failed."),
                 });
               }
             }),

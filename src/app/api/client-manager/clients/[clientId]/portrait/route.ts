@@ -1,5 +1,8 @@
 import { z } from "zod";
-import { safeExtension } from "@/features/client-manager/domain/file-name";
+import {
+  isUploadedPortraitPath,
+  safeExtension,
+} from "@/features/client-manager/domain/file-name";
 import { paintPortrait } from "@/features/client-manager/server/persona";
 import {
   getClient,
@@ -16,6 +19,7 @@ import {
   visitor,
 } from "@/features/client-manager/server/session";
 import {
+  objectExists,
   signedUrl,
   upload,
   uploadUrl,
@@ -53,9 +57,15 @@ export async function POST(
       return Response.json({ path, url: await uploadUrl(path) });
     }
     if (body.mode === "confirm") {
-      if (!body.path.startsWith(`clients/${client.id}/portrait-uploaded-`)) {
+      if (!isUploadedPortraitPath(client.id, body.path)) {
         return Response.json(
           { error: "That isn't this client's upload." },
+          { status: 400 },
+        );
+      }
+      if (!(await objectExists(body.path))) {
+        return Response.json(
+          { error: "That upload hasn't arrived. Try again." },
           { status: 400 },
         );
       }
@@ -63,7 +73,7 @@ export async function POST(
       return Response.json({ url: await signedUrl(body.path) });
     }
 
-    await checkLimits(who, "build");
+    await checkLimits(who, "build", client.owner);
     const fresh = await getClient(client.id);
     const prompt = fresh?.persona?.portraitPrompt;
     if (!prompt)

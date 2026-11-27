@@ -1,11 +1,11 @@
 import { headers } from "next/headers";
+import { isE2eToken } from "@/features/access/server/e2e";
 import { requireAccess } from "@/features/access/server/gate";
 import {
   type PassEvent,
   passRequestSchema,
   STUB_HEADER,
 } from "@/features/vellum/domain/api";
-import { env } from "@/features/vellum/server/env";
 import { preparePass, runPass } from "@/features/vellum/server/pass";
 import { takePass, visitor } from "@/features/vellum/server/rate";
 import { failure, NDJSON_HEADERS } from "@/features/vellum/server/respond";
@@ -27,11 +27,7 @@ export async function POST(request: Request) {
       headers(),
     ]);
     const prepared = preparePass(passRequestSchema.parse(body));
-    const bypass = env.e2eBypassToken();
-    const stub =
-      who.trusted &&
-      Boolean(bypass) &&
-      requestHeaders.get(STUB_HEADER) === bypass;
+    const stub = who.trusted && isE2eToken(requestHeaders.get(STUB_HEADER));
     await takePass(who);
     events = runPass(prepared, { stub, signal: request.signal });
     const first = await events.next();

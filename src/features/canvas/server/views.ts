@@ -236,7 +236,7 @@ async function load(db: Db, caller: Pick<Caller, "owner">, id: string) {
   if (!isUuid(id)) throw new NotFoundError("No such View.");
   const [row] = await db<Row[]>`
     select * from canvas.views
-    where id = ${id} and owner = ${caller.owner}`;
+    where id = ${id} and owner = ${caller.owner} and deleted_at is null`;
   if (!row) throw new NotFoundError("No such View.");
   return row;
 }
@@ -253,13 +253,17 @@ export async function listViews(
   const db = sql();
   const rows = isUuid(conversationId)
     ? await db<Row[]>`
-        select * from canvas.views
-        where owner = ${caller.owner} and conversation_id = ${conversationId}
+        select * from canvas.views v
+        where v.owner = ${caller.owner} and v.conversation_id = ${conversationId}
+          and v.deleted_at is null
+          and exists (
+            select 1 from canvas.conversations c
+            where c.id = v.conversation_id and c.deleted_at is null)
         order by created_at
         limit ${LIMITS.viewsPerConversation}`
     : await db<Row[]>`
         select * from canvas.views
-        where owner = ${caller.owner}
+        where owner = ${caller.owner} and deleted_at is null
         order by created_at desc
         limit 40`;
   return rows.map(recordOf);
@@ -284,7 +288,8 @@ export async function createView(
   if (!replaced && isUuid(caller.conversationId)) {
     const [count] = await db<{ n: number }[]>`
       select count(*)::int as n from canvas.views
-      where owner = ${caller.owner} and conversation_id = ${caller.conversationId}`;
+      where owner = ${caller.owner} and conversation_id = ${caller.conversationId}
+        and deleted_at is null`;
     if ((count?.n ?? 0) >= LIMITS.viewsPerConversation)
       throw new LimitError(
         `A Conversation holds at most ${LIMITS.viewsPerConversation} Views. Start a new one.`,
@@ -387,7 +392,7 @@ async function save(
       rulebook_version = ${context.rulebookVersion}, work = ${jsonb(tx, work)},
       guarded = ${jsonb(tx, computed.guarded)}, revision = revision + 1,
       updated_at = now()
-    where id = ${row.id} and owner = ${caller.owner}
+    where id = ${row.id} and owner = ${caller.owner} and deleted_at is null
     returning *`;
   if (!saved) throw new NotFoundError("No such View.");
   return saved;
@@ -397,9 +402,12 @@ async function save(
 async function neighbours(caller: Caller, row: Row) {
   return sql()<Row[]>`
     select v.* from canvas.views v
-    where v.owner = ${caller.owner} and v.id <> ${row.id}
+    where v.owner = ${caller.owner} and v.id <> ${row.id} and v.deleted_at is null
       and (
-        (v.conversation_id is not null and v.conversation_id = ${row.conversation_id})
+        (v.conversation_id is not null and v.conversation_id = ${row.conversation_id}
+          and exists (
+            select 1 from canvas.conversations c
+            where c.id = v.conversation_id and c.deleted_at is null))
         or exists (
           select 1 from canvas.board_items a
           join canvas.board_items b on b.board_id = a.board_id
@@ -617,11 +625,16 @@ export async function refreshView(
   }
 }
 
-/** Deletes a View; it leaves every Board that held it. */
+/**
+ * Deletes a View; it leaves every Board that held it. The delete is soft (no
+ * read sees it again); the purge cron removes the row after 30 days.
+ */
 export async function deleteView(caller: Caller, id: string) {
   const row = await load(sql(), caller, id);
   await sql().begin(async (tx) => {
-    await tx`delete from canvas.views where id = ${row.id} and owner = ${caller.owner}`;
+    await tx`
+      update canvas.views set deleted_at = now()
+      where id = ${row.id} and owner = ${caller.owner} and deleted_at is null`;
     await trailIn(tx, caller, {
       action: "view.deleted",
       summary: `Deleted View "${row.spec.title}"`,
