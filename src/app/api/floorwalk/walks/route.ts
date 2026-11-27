@@ -1,12 +1,12 @@
 import { headers } from "next/headers";
 import { after } from "next/server";
+import { isE2eToken } from "@/features/access/server/e2e";
 import { requireOwner } from "@/features/access/server/gate";
 import {
   STUB_HEADER,
   type WalkEvent,
   walkRequestSchema,
 } from "@/features/floorwalk/domain/api";
-import { env } from "@/features/floorwalk/server/env";
 import {
   assertOwnSource,
   loadFootage,
@@ -35,11 +35,7 @@ export async function POST(request: Request) {
     ]);
     const { source } = walkRequestSchema.parse(body);
     assertOwnSource(source, owner);
-    const bypass = env.e2eBypassToken();
-    const stub =
-      who.trusted &&
-      Boolean(bypass) &&
-      requestHeaders.get(STUB_HEADER) === bypass;
+    const stub = who.trusted && isE2eToken(requestHeaders.get(STUB_HEADER));
     await take("walk", who);
     after(sweepUploads);
     const footage = await loadFootage(

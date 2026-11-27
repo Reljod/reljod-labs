@@ -1,4 +1,5 @@
 import "server-only";
+import type postgres from "postgres";
 import type { Owner } from "@/features/access/domain/owner";
 import type {
   BuildStats,
@@ -16,7 +17,12 @@ import {
   type NodeType,
   ROOT_KEY,
 } from "../domain/graph";
+import type { Usage24h } from "../domain/limits";
 import { sql } from "./db";
+
+/** A connection or a transaction: the repository's writes take either. */
+export type Db = ReturnType<typeof sql> | postgres.TransactionSql;
+
 import type { CallContext } from "./llm";
 
 // Clients ---------------------------------------------------------------------
@@ -36,19 +42,22 @@ export type ClientRow = {
   updated_at: Date;
 };
 
-export async function createClientRow(input: {
-  name: string;
-  owner: Owner | null;
-  isSample: boolean;
-  visitorHash: string;
-}): Promise<string> {
-  const [row] = await sql()<{ id: string }[]>`
+export async function createClientRow(
+  input: {
+    name: string;
+    owner: Owner | null;
+    isSample: boolean;
+    visitorHash: string;
+  },
+  db: Db = sql(),
+): Promise<string> {
+  const [row] = await db<{ id: string }[]>`
     insert into client_manager.clients (name, owner, is_sample, visitor_hash)
     values (${input.name}, ${input.owner}, ${input.isSample}, ${input.visitorHash})
     returning id`;
   if (!row) throw new Error("Client was not created");
   // The client is the Root of their own graph from the start.
-  await sql()`
+  await db`
     insert into client_manager.nodes (client_id, key, label, type, category, is_root, confidence)
     values (${row.id}, ${ROOT_KEY}, ${input.name}, 'person', 'profile.personal', true, 1)`;
   return row.id;
@@ -57,7 +66,7 @@ export async function createClientRow(input: {
 export async function getClient(id: string): Promise<ClientRow | null> {
   if (!isUuid(id)) return null;
   const [row] = await sql()<ClientRow[]>`
-    select * from client_manager.clients where id = ${id}`;
+    select * from client_manager.clients where id = ${id} and deleted_at is null`;
   return row ?? null;
 }
 
@@ -88,7 +97,8 @@ export async function listCatalog(owner: Owner | null): Promise<CatalogRow[]> {
       (select b.status from client_manager.builds b where b.client_id = c.id
         order by b.created_at desc limit 1) as last_build_status
     from client_manager.clients c
-    where c.is_sample or (${owner}::text is not null and c.owner = ${owner}::text)
+    where c.deleted_at is null
+      and (c.is_sample or (${owner}::text is not null and c.owner = ${owner}::text))
     order by c.is_sample, c.created_at desc
     limit 60`;
 }
@@ -115,8 +125,31 @@ export async function setPortrait(
     where id = ${id}`;
 }
 
+/**
+ * Marks a client deleted: every read stops seeing it at once, and its rows
+ * and Storage files go later, in `purgeDeletedClients` (or with the client's
+ * own expiry). A person's delete never removes data on the spot.
+ */
 export async function deleteClient(id: string) {
-  await sql()`delete from client_manager.clients where id = ${id}`;
+  await sql()`
+    update client_manager.clients set deleted_at = now()
+    where id = ${id} and deleted_at is null`;
+}
+
+/** Clients deleted long enough ago (or about to expire anyway) to purge. */
+export async function clientsToPurge(limit: number) {
+  return sql()<{ id: string }[]>`
+    select id from client_manager.clients
+    where deleted_at is not null
+      and (deleted_at < now() - interval '30 days' or expires_at < now() + interval '1 day')
+    order by deleted_at
+    limit ${limit}`;
+}
+
+/** Removes a deleted client's rows for good; everything under it cascades. */
+export async function purgeClient(id: string) {
+  await sql()`
+    delete from client_manager.clients where id = ${id} and deleted_at is not null`;
 }
 
 // Builds and Sources ------------------------------------------------------------
@@ -134,12 +167,15 @@ export type BuildRow = {
   finished_at: Date | null;
 };
 
-export async function createBuild(input: {
-  clientId: string;
-  trigger: BuildRow["trigger"];
-  visitorHash: string;
-}): Promise<string> {
-  const [row] = await sql()<{ id: string }[]>`
+export async function createBuild(
+  input: {
+    clientId: string;
+    trigger: BuildRow["trigger"];
+    visitorHash: string;
+  },
+  db: Db = sql(),
+): Promise<string> {
+  const [row] = await db<{ id: string }[]>`
     insert into client_manager.builds (client_id, trigger, visitor_hash)
     values (${input.clientId}, ${input.trigger}, ${input.visitorHash})
     returning id`;
@@ -693,9 +729,55 @@ export async function addMessage(input: {
 export async function recordModelCall(context: CallContext, usage: Usage) {
   await sql()`
     insert into client_manager.model_calls
-      (client_id, build_id, purpose, model, input_tokens, output_tokens, cost_usd, latency_ms, visitor_hash)
-    values (${context.clientId}, ${context.buildId}, ${usage.purpose}, ${usage.model},
+      (client_id, build_id, owner, purpose, model, input_tokens, output_tokens, cost_usd, latency_ms, visitor_hash)
+    values (${context.clientId}, ${context.buildId}, ${context.owner ?? null}, ${usage.purpose}, ${usage.model},
       ${usage.inputTokens}, ${usage.outputTokens}, ${usage.costUsd}, ${usage.ms}, ${context.visitorHash})`;
+}
+
+/**
+ * Everything the caps read, in one round trip. Run inside the transaction
+ * that holds the caps' advisory locks (`takeLimit` in `service.ts`), so the
+ * count and the insert that follows cannot interleave with another request.
+ * An Owner's spend is the calls tagged with them plus every call on one of
+ * their clients (Builds run in a workflow that knows the client, not the
+ * Owner).
+ */
+export async function usageFor(
+  db: Db,
+  who: { visitorHash: string; owner: string | null },
+): Promise<Usage24h> {
+  const [row] = await db<Usage24h[]>`
+    select
+      (select count(*)::int from client_manager.builds
+        where visitor_hash = ${who.visitorHash} and created_at >= now() - interval '1 hour') as "hourBuilds",
+      (select count(*)::int from client_manager.messages
+        where role = 'user' and mode in ('ask', 'research') and visitor_hash = ${who.visitorHash}
+          and created_at >= now() - interval '1 hour') as "hourAsks",
+      (select count(*)::int from client_manager.messages
+        where role = 'user' and mode = 'research' and visitor_hash = ${who.visitorHash}
+          and created_at >= now() - interval '1 hour') as "hourResearch",
+      (select coalesce(sum(cost_usd), 0)::float8 from client_manager.model_calls
+        where visitor_hash = ${who.visitorHash} and created_at >= now() - interval '1 day') as "visitorCost",
+      (select coalesce(sum(m.cost_usd), 0)::float8 from client_manager.model_calls m
+        where m.created_at >= now() - interval '1 day'
+          and (m.owner = ${who.owner}::text or m.client_id in (
+            select c.id from client_manager.clients c where c.owner = ${who.owner}::text))) as "ownerCost",
+      (select count(*)::int from client_manager.builds
+        where created_at >= now() - interval '1 day') as "allBuilds",
+      (select count(*)::int from client_manager.messages
+        where role = 'user' and mode in ('ask', 'research')
+          and created_at >= now() - interval '1 day') as "allAsks"`;
+  return (
+    row ?? {
+      hourBuilds: 0,
+      hourAsks: 0,
+      hourResearch: 0,
+      visitorCost: 0,
+      ownerCost: 0,
+      allBuilds: 0,
+      allAsks: 0,
+    }
+  );
 }
 
 export async function usageSince(visitorHash: string | null, since: Date) {
@@ -941,9 +1023,12 @@ export async function createThread(input: {
 
 export async function getThread(id: string): Promise<ThreadRow | null> {
   if (!isUuid(id)) return null;
+  // A deleted client reads as no client, as the old cascade (set null) did.
   const [row] = await sql()<ThreadRow[]>`
-    select id, owner, client_id, title, created_at, updated_at
-    from client_manager.threads where id = ${id}`;
+    select t.id, t.owner, c.id as client_id, t.title, t.created_at, t.updated_at
+    from client_manager.threads t
+    left join client_manager.clients c on c.id = t.client_id and c.deleted_at is null
+    where t.id = ${id} and t.deleted_at is null`;
   return row ?? null;
 }
 
@@ -951,14 +1036,14 @@ export async function listThreads(owner: Owner) {
   return sql()<
     (ThreadRow & { client_name: string | null; preview: string | null })[]
   >`
-    select t.id, t.owner, t.client_id, t.title, t.created_at, t.updated_at,
+    select t.id, t.owner, c.id as client_id, t.title, t.created_at, t.updated_at,
       c.name as client_name,
       (select m.content from client_manager.messages m
         where m.thread_id = t.id and m.role = 'assistant'
         order by m.created_at desc limit 1) as preview
     from client_manager.threads t
-    left join client_manager.clients c on c.id = t.client_id
-    where t.owner = ${owner}
+    left join client_manager.clients c on c.id = t.client_id and c.deleted_at is null
+    where t.owner = ${owner} and t.deleted_at is null
     order by t.updated_at desc
     limit 100`;
 }
@@ -976,8 +1061,11 @@ export async function updateThread(
     where id = ${id}`;
 }
 
+/** Marks a Thread deleted; the purge cron removes it (and its messages) after 30 days. */
 export async function deleteThread(id: string) {
-  await sql()`delete from client_manager.threads where id = ${id}`;
+  await sql()`
+    update client_manager.threads set deleted_at = now()
+    where id = ${id} and deleted_at is null`;
 }
 
 export type ThreadMessageRow = {
@@ -996,19 +1084,22 @@ export type ThreadMessageRow = {
   created_at: Date;
 };
 
-export async function addThreadMessage(input: {
-  threadId: string;
-  owner: Owner;
-  clientId: string | null;
-  role: "user" | "assistant";
-  mode: "ask" | "research";
-  content: string;
-  traversal?: ThreadMessageRow["traversal"];
-  proposal?: unknown;
-  buildId?: string | null;
-  visitorHash: string;
-}): Promise<string> {
-  const [row] = await sql()<{ id: string }[]>`
+export async function addThreadMessage(
+  input: {
+    threadId: string;
+    owner: Owner;
+    clientId: string | null;
+    role: "user" | "assistant";
+    mode: "ask" | "research";
+    content: string;
+    traversal?: ThreadMessageRow["traversal"];
+    proposal?: unknown;
+    buildId?: string | null;
+    visitorHash: string;
+  },
+  db: Db = sql(),
+): Promise<string> {
+  const [row] = await db<{ id: string }[]>`
     insert into client_manager.messages
       (thread_id, client_id, owner, role, mode, content, traversal, proposal, build_id, visitor_hash)
     values (${input.threadId}, ${input.clientId}, ${input.owner}, ${input.role}, ${input.mode},
@@ -1017,7 +1108,7 @@ export async function addThreadMessage(input: {
       ${input.buildId ?? null}, ${input.visitorHash})
     returning id`;
   if (!row) throw new Error("Message was not saved");
-  await sql()`update client_manager.threads set updated_at = now() where id = ${input.threadId}`;
+  await db`update client_manager.threads set updated_at = now() where id = ${input.threadId}`;
   return row.id;
 }
 
@@ -1056,14 +1147,6 @@ export async function decideProposal(
     where id = ${messageId} and proposal->>'status' = 'open'
     returning id`;
   return rows.length > 0;
-}
-
-export async function researchSince(visitorHash: string, since: Date) {
-  const [row] = await sql()<{ total: number }[]>`
-    select count(*)::int as total from client_manager.messages
-    where role = 'user' and mode = 'research' and visitor_hash = ${visitorHash}
-      and created_at >= ${since}`;
-  return row?.total ?? 0;
 }
 
 export async function setProposal(messageId: string, proposal: unknown) {

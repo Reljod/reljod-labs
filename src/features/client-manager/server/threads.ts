@@ -22,7 +22,6 @@ import {
   getThreadMessage,
   listCatalog,
   listThreads,
-  researchSince,
   setProposal,
   type ThreadMessageRow,
   type ThreadRow,
@@ -30,7 +29,7 @@ import {
   threadMessages,
   updateThread,
 } from "./repository";
-import { addFacts, checkLimits, LIMITS, LimitError } from "./service";
+import { addFacts, LimitError, takeLimit } from "./service";
 import { currentOwner, type Visitor } from "./session";
 
 /** Threads: the book-wide chat of one browser session. */
@@ -158,40 +157,39 @@ export async function* ask(input: {
   const { text, research: asked } = askSchema.parse(input.raw);
   const research = asked || ASKS_FOR_RESEARCH.test(text);
   const { thread } = input;
-  // Everything the answer needs before its first word, in one round trip.
-  const [, researchRuns, history, catalogRows] = await Promise.all([
-    checkLimits(input.visitor, "ask"),
-    research && !input.visitor.trusted
-      ? researchSince(input.visitor.hash, new Date(Date.now() - 3_600_000))
-      : Promise.resolve(0),
+  // What the answer needs before its first word, read together (before the
+  // question is saved, so the history is the conversation so far).
+  const [history, catalogRows] = await Promise.all([
     threadHistory(thread.id),
     listCatalog(input.owner),
   ]);
-  if (researchRuns >= LIMITS.researchPerHour) {
-    throw new LimitError(
-      `That's ${LIMITS.researchPerHour} research runs this hour. Ask without Research, or try again soon.`,
-    );
-  }
+  // The caps (per visitor, per Owner, for everyone) and the question's row
+  // are taken in one locked transaction, before any model call.
+  await takeLimit(
+    input.visitor,
+    input.owner,
+    research ? "research" : "ask",
+    (db) =>
+      addThreadMessage(
+        {
+          threadId: thread.id,
+          owner: input.owner,
+          clientId: thread.client_id,
+          role: "user",
+          mode: research ? "research" : "ask",
+          content: text,
+          visitorHash: input.visitor.hash,
+        },
+        db,
+      ),
+  );
 
   // Only a chat still called "New chat" takes its first question as a title.
   const title =
     history.length === 0 && thread.title === "New chat"
       ? titleFrom(text)
       : thread.title;
-  await Promise.all([
-    title !== thread.title
-      ? updateThread(thread.id, { title })
-      : Promise.resolve(),
-    addThreadMessage({
-      threadId: thread.id,
-      owner: input.owner,
-      clientId: thread.client_id,
-      role: "user",
-      mode: research ? "research" : "ask",
-      content: text,
-      visitorHash: input.visitor.hash,
-    }),
-  ]);
+  if (title !== thread.title) await updateThread(thread.id, { title });
   yield {
     type: "thread",
     thread: summaryOf({

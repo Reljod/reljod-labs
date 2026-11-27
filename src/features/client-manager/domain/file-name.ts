@@ -14,3 +14,16 @@ export function safeExtension(name: string, fallback: string): string {
     .slice(0, 8);
   return extension || fallback;
 }
+
+const UPLOADED_PORTRAIT =
+  /^clients\/([0-9a-f-]{36})\/portrait-uploaded-\d{13}\.[a-z0-9]{1,8}$/;
+
+/**
+ * Whether a path the browser sends back is exactly what the upload step
+ * handed out for this client: `clients/<id>/portrait-uploaded-<ms>.<ext>`,
+ * with nothing else before, after or in between.
+ */
+export function isUploadedPortraitPath(clientId: string, path: string) {
+  const match = UPLOADED_PORTRAIT.exec(path);
+  return !!match && match[1] === clientId.toLowerCase();
+}

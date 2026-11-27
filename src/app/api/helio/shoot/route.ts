@@ -10,6 +10,7 @@ import type {
   HelioMarket,
   ShootStreamEvent,
 } from "@/features/helio/domain/types";
+import { publicMessage } from "@/features/helio/server/errors";
 import { takeRates, visitor } from "@/features/helio/server/rate";
 import {
   failure,
@@ -146,10 +147,7 @@ export async function POST(request: Request) {
                 };
                 emit({ type: "frame-ready", marketId: market.id, version });
               } catch (err) {
-                const message =
-                  err instanceof Error && err.message
-                    ? err.message.slice(0, 180)
-                    : "Market shoot failed.";
+                const message = publicMessage(err, "Market shoot failed.");
                 emit({
                   type: "frame-error",
                   marketId: market.id,
@@ -165,10 +163,7 @@ export async function POST(request: Request) {
             totalCostUsd,
           });
         } catch (err) {
-          const message =
-            err instanceof Error && err.message
-              ? err.message.slice(0, 200)
-              : "Campaign shoot interrupted.";
+          const message = publicMessage(err, "Campaign shoot interrupted.");
           for (const market of markets) {
             emit({ type: "frame-error", marketId: market.id, error: message });
           }

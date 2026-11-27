@@ -352,6 +352,7 @@ export async function* converse(input: {
         clientId: scoped?.id ?? null,
         buildId: null,
         visitorHash: input.visitor.hash,
+        owner: input.owner,
       },
       {
         purpose: "chat",

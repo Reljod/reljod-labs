@@ -101,3 +101,9 @@ export async function removeFolder(prefix: string) {
   }
   return paths.length;
 }
+
+/** Whether an object is in the bucket; any error reads as no. */
+export async function objectExists(path: string) {
+  const { data, error } = await bucket().exists(path);
+  return !error && data === true;
+}
