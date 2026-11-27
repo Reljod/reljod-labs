@@ -37,13 +37,17 @@ export const LIMITS = {
   trailEvents: 400,
 } as const;
 
+/** What one `run_code` may take and give back, in the Code sandbox. */
+export const CODE_LIMITS = {
+  commandMs: 30_000,
+  sandboxMs: 6 * 60_000,
+  codeChars: 20_000,
+  outputChars: 6_000,
+  outputBytes: 24_000,
+  outputFileBlocks: 20_000,
+} as const;
+
 /** A Run older than this that still says it is going has lost its workflow. */
 export const STALE_RUN_MINUTES =
   LIMITS.sandboxMinutes + LIMITS.pausesPerRun * LIMITS.approvalWaitMinutes + 5;
 export const STALE_RUN_MS = STALE_RUN_MINUTES * 60_000;
-
-/**
- * The request header that asks for the scripted Operator (a sample Task's
- * Script, no model call). Honoured only when it carries the e2e bypass token.
- */
-export const STUB_HEADER = "x-operator-stub";

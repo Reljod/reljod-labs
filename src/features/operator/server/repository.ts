@@ -242,12 +242,7 @@ export type RunLimits = {
   activePerOwner: number;
 };
 
-/**
- * Inserts a Run under the limits, counted and inserted under one lock per
- * Owner so two starts cannot both pass the count. Null limits (the e2e
- * bypass) skip the counts but not the one-live-Screen rule's lock.
- */
-export async function createRun(input: {
+export type NewRun = {
   owner: Owner;
   visitorHash: string;
   driver: Driver;
@@ -268,7 +263,16 @@ export async function createRun(input: {
     metrics: RunMetrics;
   };
   limits: RunLimits | null;
-}): Promise<{ runId: string } | { refusal: string }> {
+};
+
+/**
+ * Inserts a Run under the limits, counted and inserted under one lock per
+ * Owner so two starts cannot both pass the count. Null limits (the e2e
+ * bypass) skip the counts but not the one-live-Screen rule's lock.
+ */
+export async function createRun(
+  input: NewRun,
+): Promise<{ runId: string } | { refusal: string }> {
   return sql().begin(async (tx) => {
     await tx`select pg_advisory_xact_lock(hashtext(${`operator-run:${input.owner}`}))`;
     const live = input.driver !== "hand";
@@ -341,6 +345,14 @@ export async function ownedRun(
   return row ?? null;
 }
 
+/** Whether the Run is the Owner's: one index probe, for reads that need no more of the row (a Frame). */
+export async function isOwnedRun(owner: Owner, runId: string) {
+  if (!isUuid(runId)) return false;
+  const rows = await sql()`
+    select 1 from operator.runs where id = ${runId} and owner = ${owner}`;
+  return rows.length > 0;
+}
+
 /** For the workflow and the stream, which hold a run id a checked function gave them. */
 export async function getRunRow(runId: string): Promise<RunRow | null> {
   if (!isUuid(runId)) return null;
@@ -363,7 +375,7 @@ export async function runsOf(owner: Owner, limit: number): Promise<RunRow[]> {
     where r.owner = ${owner} order by r.started_at desc limit ${limit}`;
 }
 
-type RunPatch = Partial<{
+export type RunPatch = Partial<{
   status: RunStatus;
   stopped_by: StopReason;
   verdict: Verdict;
@@ -488,10 +500,6 @@ export async function eventsAfter(
     where run_id = ${runId} and seq > ${after}
     order by seq asc limit ${limit}`;
   return rows.map(toEvent);
-}
-
-export async function allEvents(runId: string): Promise<RunEvent[]> {
-  return eventsAfter(runId, 0, 5000);
 }
 
 // Approvals -------------------------------------------------------------------------------

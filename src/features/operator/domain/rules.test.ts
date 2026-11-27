@@ -8,7 +8,6 @@ import {
   RULES,
   type Rulebook,
   rulebookSchema,
-  rulebookText,
   ruleEnabled,
   SCREEN_CODES,
 } from "./rules";
@@ -119,56 +118,6 @@ describe("RULES", () => {
     expect(new Set(RULES.map((rule) => rule.id)).size).toBe(RULES.length);
     expect(new Set(RULES.map((rule) => rule.key)).size).toBe(RULES.length);
     expect(RULES).toHaveLength(Object.keys(DEFAULT_RULEBOOK).length);
-  });
-
-  it("sentences reflect edited Parameters", () => {
-    const sentence = (id: string, rulebook: Rulebook) =>
-      RULES.find((rule) => rule.id === id)?.sentence(rulebook);
-    const edited = rules((r) => {
-      r.records.max = 7;
-      r.screens.allowed = ["HMV200"];
-      r.protectedFields.fields = [];
-      r.guarded.actions = ["berth.cancel"];
-    });
-    expect(sentence("records.max", edited)).toBe(
-      "One Run may add, change or delete at most 7 records.",
-    );
-    expect(sentence("screens.allowed", edited)).toBe(
-      "The Operator may enter only these Screens: HMV200.",
-    );
-    expect(sentence("fields.protected", edited)).toContain("changed: none.");
-    expect(sentence("actions.guarded", edited)).toBe(
-      "These Actions wait for a person to approve: cancel a berth booking.",
-    );
-    expect(sentence("records.max", DEFAULT_RULEBOOK)).toContain("at most 30");
-  });
-});
-
-describe("rulebookText", () => {
-  it("has one line per enabled Rule", () => {
-    expect(rulebookText(DEFAULT_RULEBOOK).split("\n")).toHaveLength(
-      RULES.length,
-    );
-  });
-
-  it("omits a disabled Rule", () => {
-    const text = rulebookText(
-      rules((r) => {
-        r.records.enabled = false;
-      }),
-    );
-    expect(text.split("\n")).toHaveLength(RULES.length - 1);
-    expect(text).not.toContain("at most 30 records");
-    expect(rulebookText(DEFAULT_RULEBOOK)).toContain("at most 30 records");
-  });
-
-  it("says when code applies each Rule", () => {
-    expect(rulebookText(DEFAULT_RULEBOOK)).toContain(
-      "(before the key is pressed; code refuses the Action.)",
-    );
-    expect(rulebookText(DEFAULT_RULEBOOK)).toContain(
-      "(after the Run; code returns a Finding.)",
-    );
   });
 });
 

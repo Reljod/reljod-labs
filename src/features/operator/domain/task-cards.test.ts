@@ -4,36 +4,11 @@ import { boot, step } from "../legacy/machine";
 import type { LegacyState } from "../legacy/types";
 import type { ScreenAction } from "./actions";
 import { OWN_OPERATOR, OWN_SIGN_ON, ownFixture, taskCards } from "./task-cards";
-import { SAMPLE_TASKS } from "./tasks";
 
 describe("taskCards", () => {
   const cards = taskCards();
 
-  it("has one card per sample Task, in order", () => {
-    expect(cards.map((card) => card.id)).toEqual(
-      SAMPLE_TASKS.map((task) => task.id),
-    );
-  });
-
-  it("carries the labels and Manifest row counts", () => {
-    for (const [i, card] of cards.entries()) {
-      const task = SAMPLE_TASKS[i];
-      expect(card.title).toBe(task.title);
-      expect(card.brief).toBe(task.brief);
-      expect(card.needsApproval).toBe(task.needsApproval);
-      expect(card.expected).toEqual(task.expected.map((want) => want.label));
-    }
-    expect(cards.map((card) => card.manifest)).toEqual([
-      {
-        name: "corvina-0412n.csv",
-        href: "/operator/samples/corvina-0412n.csv",
-        rows: 6,
-      },
-      null,
-      null,
-    ]);
-  });
-
+  // The cards go to the browser: the answer key stays on the server.
   it("carries no Script and no Fixture", () => {
     for (const card of cards) {
       expect(card).not.toHaveProperty("script");

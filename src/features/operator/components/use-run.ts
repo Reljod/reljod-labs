@@ -1,7 +1,6 @@
 "use client";
 
 import { useEffect, useReducer, useRef } from "react";
-import { apiPath } from "../domain/api";
 import type { RunDetail, RunEvent } from "../domain/contract";
 import { ApiError, api } from "./api";
 import {
@@ -142,38 +141,23 @@ export function useRun(runId: string | null, finished: FinishedRuns): RunState {
         attempt++
       ) {
         try {
-          // The one stream of the demo; every other read goes through `api`.
-          const response = await fetch(
-            apiPath.runEvents(runId ?? "", Math.max(0, lastSeq)),
-            { signal: controller.signal, cache: "no-store" },
-          );
-          if (response.status === 404) return;
-          if (!response.ok || !response.body)
-            throw new Error(String(response.status));
-          const reader = response.body
-            .pipeThrough(new TextDecoderStream())
-            .getReader();
-          let buffer = "";
-          for (;;) {
-            const { value, done } = await reader.read();
-            if (done) break;
-            buffer += value;
-            const lines = buffer.split("\n");
-            buffer = lines.pop() ?? "";
-            for (const line of lines) {
-              if (!line.trim()) continue;
-              const event = JSON.parse(line) as RunEvent;
-              if (typeof event.seq !== "number") continue;
+          await api.follow(
+            runId ?? "",
+            Math.max(0, lastSeq),
+            (event) => {
+              if (typeof event.seq !== "number") return;
               lastSeq = Math.max(lastSeq, event.seq);
               push(event);
               if (event.type === "end") {
                 ended = true;
                 final.current = runId;
               }
-            }
-          }
-        } catch {
+            },
+            { signal: controller.signal },
+          );
+        } catch (error) {
           if (controller.signal.aborted) return;
+          if (error instanceof ApiError && error.status === 404) return;
         }
         if (!ended)
           await new Promise((resolve) => setTimeout(resolve, RECONNECT_MS));

@@ -14,15 +14,14 @@ import {
   screenActionSchema,
 } from "../domain/actions";
 import { DEFAULT_MODEL, estimateCost } from "../domain/contract";
-import { LIMITS } from "../domain/limits";
+import { CODE_LIMITS, LIMITS } from "../domain/limits";
 import { rulebookText } from "../domain/rules";
 import { sampleTask } from "../domain/tasks";
 import { GEOMETRY } from "../legacy/types";
 import { SKILL_IDS, SKILLS } from "../skills";
-import { CODE_LIMITS } from "./code-sandbox";
 import type { RunContext } from "./context";
 import { env } from "./env";
-import { runStatus } from "./repository";
+import type { OperatorModel } from "./ports";
 import { getFrame } from "./storage";
 
 /*
@@ -382,7 +381,10 @@ export type TurnResult =
     };
 
 /** The scripted Operator: the sample Task's Script, one Turn at a time, then finish. */
-export function scriptedTurn(ctx: RunContext, turn: number): TurnResult {
+export function scriptedTurn(
+  ctx: RunContext,
+  turn: number,
+): Extract<TurnResult, { kind: "turn" }> {
   const script =
     (ctx.taskId ? sampleTask(ctx.taskId)?.script : undefined) ?? [];
   const planned = script[turn];
@@ -409,18 +411,19 @@ export function scriptedTurn(ctx: RunContext, turn: number): TurnResult {
   };
 }
 
-/**
- * One Turn of the Operator: one model call, or the next Turn of the Script
- * for a stubbed Run. A Run whose row says it is over spends nothing more.
- */
-export async function operatorTurn(
+/** The scripted Operator of the stubbed e2e suite: no model call, no spend. */
+export const scriptedOperator: OperatorModel = {
+  turn: async (ctx, _transcript, turn) => scriptedTurn(ctx, turn),
+};
+
+/** The Operator on the model, through the AI Gateway: one paid call a Turn. */
+export const modelOperator: OperatorModel = { turn: modelTurn };
+
+async function modelTurn(
   ctx: RunContext,
   transcript: TranscriptItem[],
-  turn: number,
-): Promise<TurnResult> {
-  const status = await runStatus(ctx.runId);
-  if (status !== "running") return { kind: "over" };
-  if (ctx.stubbed) return scriptedTurn(ctx, turn);
+  _turn: number,
+): Promise<Extract<TurnResult, { kind: "turn" }>> {
   const model = ctx.model ?? DEFAULT_MODEL;
   const started = Date.now();
   const result = await generateText({

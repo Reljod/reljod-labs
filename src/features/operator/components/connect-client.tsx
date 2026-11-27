@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import { apiPath } from "../domain/api";
 import { LIMITS } from "../domain/limits";
 import { MCP_TOOLS, type McpToolInfo } from "../domain/mcp-tools";
-import { mintMcpToken } from "../server/actions";
+import { api } from "./api";
 import { Button, ErrorNote, Panel, Tag, useWrite } from "./ui";
 
 type Minted = { token: string; expiresAt: string };
@@ -70,7 +70,7 @@ export function ConnectClient() {
   const mint = useWrite(async () => {
     setError(null);
     try {
-      const fresh = await mintMcpToken();
+      const fresh = await api.mintToken();
       if (!fresh.token) {
         setError("Tokens are not available on this server yet.");
         return;
