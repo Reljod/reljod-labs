@@ -36,8 +36,7 @@ const OPEN = {
 
 describe.skipIf(!url)("the Casework repository, on Postgres", () => {
   let repo: Repository;
-  let db: ReturnType<typeof import("./db").sql>;
-  let mcp: typeof import("./mcp") | undefined;
+  let db: ReturnType<typeof import("@/server/postgres").db>;
   let session = "";
   let otherSession = "";
   let seedDocument = "";
@@ -81,8 +80,7 @@ describe.skipIf(!url)("the Casework repository, on Postgres", () => {
   beforeAll(async () => {
     process.env.DATABASE_URL = url;
     repo = await import("./repository");
-    db = (await import("./db")).sql();
-    mcp = await import("./mcp").catch(() => undefined);
+    db = (await import("@/server/postgres")).db();
 
     // This run's own Case file, with one labelled Document of a wanted Kind and one spare.
     await db`
@@ -133,6 +131,18 @@ describe.skipIf(!url)("the Casework repository, on Postgres", () => {
     expect(mine.map((desk) => desk.id)).toEqual([session]);
     const theirs = await repo.sessionsOf(OTHER, 10);
     expect(theirs.map((desk) => desk.id)).toEqual([otherSession]);
+
+    // The open Desk: a remembered id of another Owner's Desk never opens it.
+    expect((await repo.openSessionOf(OWNER, otherSession))?.id).toBe(session);
+    expect((await repo.openSessionOf(OWNER, null))?.id).toBe(session);
+    expect((await repo.openSessionOf(OWNER, "not-a-uuid"))?.id).toBe(session);
+    expect(
+      await repo.openSessionOf(`host:${randomUUID()}` as Owner, session),
+    ).toBeNull();
+    const listed = await repo.sessionsWithSpend(OWNER, 10);
+    expect(listed.map((desk) => [desk.id, desk.spend_usd])).toEqual([
+      [session, 0],
+    ]);
   });
 
   it("touches a Desk, names it once, and stores model overrides as jsonb", async () => {
@@ -576,10 +586,10 @@ describe.skipIf(!url)("the Casework repository, on Postgres", () => {
       purpose: "chat" as never,
     });
 
-    const costs = await repo.runCosts([run]);
-    expect(costs.get(run)?.calls).toBe(2);
-    expect(costs.get(run)?.costUsd).toBeCloseTo(0.501235, 6);
-    expect((await repo.runCosts([])).size).toBe(0);
+    const withCosts = await repo.runsWithCosts(session);
+    const costed = withCosts.find((row) => row.id === run);
+    expect(costed?.calls).toBe(2);
+    expect(costed?.cost_usd).toBeCloseTo(0.501235, 6);
 
     const bySession = await repo.spendBySession([session, otherSession]);
     expect(bySession.get(session)).toBeCloseTo(0.50247, 6);
@@ -597,12 +607,11 @@ describe.skipIf(!url)("the Casework repository, on Postgres", () => {
   });
 
   it("gives an outside MCP client one shared desk", async () => {
-    if (!mcp) throw new Error("mcp.ts could not be imported");
     const [before] = await db<{ n: number }[]>`
       select count(*)::int as n from casework.sessions where visitor_hash = 'mcp-external'`;
-    const first = await mcp.externalSession();
+    const first = await repo.externalSession();
     try {
-      const second = await mcp.externalSession();
+      const second = await repo.externalSession();
       expect(second).toBe(first);
       expect((await repo.getSession(first))?.owner).toBeNull();
     } finally {
