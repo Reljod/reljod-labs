@@ -152,6 +152,8 @@ type Boxes = {
 };
 
 /** The boxes of an MP4 or MOV that declare how long it is, or null when it has no `moov`. */
+const MAX_BOX_DEPTH = 8;
+
 function readBoxes(bytes: Uint8Array): Boxes | null {
   const view = new DataView(bytes.buffer, bytes.byteOffset, bytes.byteLength);
   const type = (at: number) =>
@@ -166,6 +168,9 @@ function readBoxes(bytes: Uint8Array): Boxes | null {
   let mediaScale = 0;
 
   const walk = (start: number, end: number, depth: number) => {
+    // A real MP4 nests moov > trak > mdia > minf > stbl: five levels. A file
+    // nesting deeper is refused, never walked until the stack overflows.
+    if (depth > MAX_BOX_DEPTH) throw BROKEN;
     let at = start;
     while (at + 8 <= end) {
       let size = u32(at);

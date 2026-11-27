@@ -81,6 +81,8 @@ export async function loadFootage(
             ? { "x-vercel-protection-bypass": bypass }
             : undefined,
           signal: AbortSignal.timeout(20_000),
+          // The bypass header must never follow a redirect elsewhere.
+          redirect: "error",
         });
         if (!response.ok) throw new Error(`Sample fetch ${response.status}`);
         return new Uint8Array(await response.arrayBuffer());

@@ -14,12 +14,11 @@ import {
 /** The Catalog: every Sample plus this browser's own clients. */
 export async function GET() {
   try {
+    const owner = await currentOwner();
     // Clients deleted 30 days ago leave Storage after a read, not on a cron:
-    // Storage cannot be emptied from SQL.
+    // Storage cannot be emptied from SQL. Registered only past the gate.
     after(() => purgeDeletedClients());
-    return json<CatalogResponse>({
-      clients: await catalog(await currentOwner()),
-    });
+    return json<CatalogResponse>({ clients: await catalog(owner) });
   } catch (error) {
     return failure(error);
   }

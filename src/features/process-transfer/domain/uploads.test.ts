@@ -204,6 +204,15 @@ describe("recordingLength", () => {
     ).toEqual({ seconds: 60 });
   });
 
+  it("refuses boxes nested past any real MP4's depth, without overflowing the stack", () => {
+    let nested = trak(honestTrack);
+    for (let level = 0; level < 20_000; level++) nested = box("edts", nested);
+    const length = recordingLength(
+      movie(mvhd(1000, 60_000), box("trak", nested)),
+    );
+    expect(length).toEqual({ refusal: expect.any(String) });
+  });
+
   it("takes the longest declared length, within the tolerance", () => {
     const length = recordingLength(
       movie(mvhd(1000, 60_000), trak({ ...honestTrack, header: 61_000 })),

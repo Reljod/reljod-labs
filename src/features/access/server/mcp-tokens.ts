@@ -54,7 +54,9 @@ export async function issuedSinceDisconnect(
 /**
  * "Disconnect all MCP clients": every token the Owner was issued up to now
  * (OAuth access and refresh tokens, pasted tokens, chat tokens) stops
- * working on its next use. Signing in again afterwards works at once.
+ * working on its next use. Tokens carry `iat` in whole seconds, so one minted
+ * in the same second as the disconnect is refused too: signing in again works
+ * from the next second on.
  */
 export async function disconnectMcpClientsOf(owner: Owner) {
   const { error } = await supabase()
