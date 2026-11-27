@@ -8,39 +8,35 @@ const db = vi.hoisted(() => ({
 }));
 
 vi.mock("server-only", () => ({}));
-vi.mock("./supabase", () => ({
-  supabase: () => ({
-    from: (table: string) => {
-      if (table !== "token_epochs") throw new Error(table);
-      return {
-        select: () => ({
-          eq: (_column: string, owner: string) => ({
-            maybeSingle: async () => {
-              db.epochReads += 1;
-              if (db.error) return { data: null, error: db.error };
-              const value = db.epochs.get(owner);
-              return { data: value ? { not_before: value } : null };
-            },
-          }),
-        }),
-        upsert: async (row: { owner: string; not_before: string }) => {
-          db.epochs.set(row.owner, row.not_before);
-          return { error: null };
-        },
-      };
-    },
-    rpc: async (
-      name: string,
-      args: { p_code_hash: string; p_expires_at: string },
-    ) => {
-      if (name !== "redeem_oauth_code") throw new Error(name);
-      if (db.error) return { data: null, error: db.error };
-      if (db.codes.has(args.p_code_hash)) return { data: false, error: null };
-      db.codes.add(args.p_code_hash);
-      return { data: true, error: null };
-    },
-  }),
-}));
+/* A stand-in for the postgres.js tagged template over the two tables:
+   it answers by which statement it is handed. */
+vi.mock("./db", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("./db")>();
+  const tag = async (strings: TemplateStringsArray, ...values: unknown[]) => {
+    const text = strings.join("$");
+    if (db.error)
+      throw Object.assign(new Error(db.error.message), {
+        code: db.error.code,
+      });
+    if (text.includes("select not_before from access.token_epochs")) {
+      db.epochReads += 1;
+      const value = db.epochs.get(values[0] as string);
+      return value ? [{ not_before: value }] : [];
+    }
+    if (text.includes("insert into access.token_epochs")) {
+      db.epochs.set(values[0] as string, values[1] as string);
+      return [];
+    }
+    if (text.includes("access.redeem_oauth_code(")) {
+      const hash = values[0] as string;
+      if (db.codes.has(hash)) return [{ redeemed: false }];
+      db.codes.add(hash);
+      return [{ redeemed: true }];
+    }
+    throw new Error(`Unexpected statement: ${text}`);
+  };
+  return { ...actual, sql: () => tag };
+});
 
 import {
   disconnectMcpClientsOf,
@@ -76,7 +72,7 @@ describe("Disconnect all MCP clients", () => {
   });
 
   it("treats a missing table as nothing disconnected, and fails closed on any other error", async () => {
-    db.error = { code: "PGRST205", message: "no table" };
+    db.error = { code: "42P01", message: "no table" };
     expect(await issuedSinceDisconnect(HOST, undefined)).toBe(true);
     db.error = { code: "08006", message: "connection lost" };
     await expect(issuedSinceDisconnect(OTHER, undefined)).rejects.toThrow(

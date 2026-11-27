@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Applies the Document compliance, Ledger, Casework and Sieve migrations to a
+# Applies the Access, Document compliance, Ledger, Casework and Sieve migrations to a
 # throwaway Postgres in Docker, on top of stubs for what Supabase provides
 # (roles, auth, storage, pg_cron), and runs each demo's repository against it
 # (`*.db.test.ts`, skipped unless DEMO_TEST_DATABASE_URL is set).
@@ -49,7 +49,10 @@ for migration in \
   20261127110000_ledger_rate_hits \
   20261127130000_casework_caps \
   20261127130100_casework_uploads \
-  20261127130200_document_compliance_take_run; do
+  20261127130200_document_compliance_take_run \
+  20261127120000_access_mcp_tokens \
+  20261127150000_access_take_attempt \
+  20261127150100_access_storage_purge; do
   grep -vi "create extension.*pg_cron" "$root/supabase/migrations/$migration.sql" | psql
 done
 
@@ -57,5 +60,5 @@ url="postgres://postgres:test@127.0.0.1:$port/postgres"
 if [ -n "${KEEP:-}" ]; then echo "DEMO_TEST_DATABASE_URL=$url (container $name)"; fi
 cd "$root"
 DEMO_TEST_DATABASE_URL="$url" pnpm exec vitest run \
-  src/features/document-compliance src/features/ledger \
+  src/features/access src/features/document-compliance src/features/ledger \
   src/features/casework src/features/name-extraction "$@"

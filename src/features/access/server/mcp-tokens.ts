@@ -3,7 +3,7 @@ import { createHash } from "node:crypto";
 import { cache } from "react";
 import { issuedAfterEpoch } from "../domain/mcp-clients";
 import type { Owner } from "../domain/owner";
-import { supabase } from "./supabase";
+import { pgCode, sql, UNDEFINED_FUNCTION, UNDEFINED_TABLE } from "./db";
 
 /*
  * Server-side state for the demos' MCP tokens (Client Manager, Harness).
@@ -12,30 +12,32 @@ import { supabase } from "./supabase";
  * and the authorization codes already redeemed.
  */
 
-type DbError = { code?: string; message: string };
-
 /**
  * The table or function is not there yet: the migration
  * (`20261127120000_access_mcp_tokens.sql`) has not been applied. Before it
  * is, nobody can have pressed Disconnect and no code was recorded, so the
  * callers carry on as they did before it existed.
  */
-const missing = (error: DbError) =>
-  ["PGRST205", "PGRST202", "42P01", "42883"].includes(error.code ?? "");
+const missing = (error: unknown) => {
+  const code = pgCode(error);
+  return code === UNDEFINED_TABLE || code === UNDEFINED_FUNCTION;
+};
+
+const messageOf = (error: unknown) =>
+  error instanceof Error ? error.message : String(error);
 
 /** When the Owner last disconnected every MCP client (epoch ms), or null. */
 const notBeforeOf = cache(async (owner: Owner): Promise<number | null> => {
-  const { data, error } = await supabase()
-    .from("token_epochs")
-    .select("not_before")
-    .eq("owner", owner)
-    .maybeSingle();
-  if (error) {
+  try {
+    const [row] = await sql()<{ not_before: string }[]>`
+      select not_before from access.token_epochs where owner = ${owner}`;
+    return row?.not_before ? Date.parse(row.not_before) : null;
+  } catch (error) {
     if (missing(error)) return null;
-    throw new Error(`Could not load the token epoch: ${error.message}`);
+    throw new Error(`Could not load the token epoch: ${messageOf(error)}`, {
+      cause: error,
+    });
   }
-  const value = (data as { not_before: string } | null)?.not_before;
-  return value ? Date.parse(value) : null;
 });
 
 /**
@@ -59,13 +61,16 @@ export async function issuedSinceDisconnect(
  * from the next second on.
  */
 export async function disconnectMcpClientsOf(owner: Owner) {
-  const { error } = await supabase()
-    .from("token_epochs")
-    .upsert(
-      { owner, not_before: new Date().toISOString() },
-      { onConflict: "owner" },
-    );
-  if (error) throw new Error(`Could not disconnect: ${error.message}`);
+  try {
+    await sql()`
+      insert into access.token_epochs (owner, not_before)
+      values (${owner}, ${new Date().toISOString()}::timestamptz)
+      on conflict (owner) do update set not_before = excluded.not_before`;
+  } catch (error) {
+    throw new Error(`Could not disconnect: ${messageOf(error)}`, {
+      cause: error,
+    });
+  }
 }
 
 /**
@@ -74,18 +79,22 @@ export async function disconnectMcpClientsOf(owner: Owner) {
  * within its two minutes.
  */
 export async function redeemCodeOnce(code: string, expiresAt: number) {
-  const { data, error } = await supabase().rpc("redeem_oauth_code", {
-    p_code_hash: createHash("sha256").update(code).digest("base64url"),
-    p_expires_at: new Date(expiresAt * 1000).toISOString(),
-  });
-  if (error) {
+  try {
+    const [row] = await sql()<{ redeemed: boolean | null }[]>`
+      select access.redeem_oauth_code(
+        p_code_hash => ${createHash("sha256").update(code).digest("base64url")}::text,
+        p_expires_at => ${new Date(expiresAt * 1000).toISOString()}::timestamptz
+      ) as redeemed`;
+    return row?.redeemed === true;
+  } catch (error) {
     if (missing(error)) {
       console.error(
         "access.redeem_oauth_code is missing: apply 20261127120000_access_mcp_tokens.sql",
       );
       return true;
     }
-    throw new Error(`Could not redeem the code: ${error.message}`);
+    throw new Error(`Could not redeem the code: ${messageOf(error)}`, {
+      cause: error,
+    });
   }
-  return data === true;
 }
