@@ -8,6 +8,7 @@ import { kindLabel } from "../domain/document-kinds";
 import { JOB_IDS, JOBS, planJobs } from "../domain/jobs";
 import { PIPELINE_IDS, PIPELINES, type PipelineId } from "../domain/pipelines";
 import { answerSchema } from "../domain/run-events";
+import { sql } from "./db";
 import { env } from "./env";
 import {
   createSession,
@@ -28,7 +29,6 @@ import {
   stopRun,
 } from "./runs";
 import { ownerMatches, verifySessionToken } from "./session";
-import { supabase } from "./supabase";
 
 const EXTERNAL_VISITOR = "mcp-external";
 
@@ -368,17 +368,21 @@ export function registerCaseworkTools(server: McpServer) {
 }
 
 /** The session an outside MCP client works in: one shared desk, created on first use. */
-async function externalSession() {
-  const { data } = await supabase()
-    .from("sessions")
-    .select("id")
-    .eq("visitor_hash", EXTERNAL_VISITOR)
-    .order("created_at", { ascending: false })
-    .limit(1);
-  return (
-    (data?.[0] as { id: string } | undefined)?.id ??
-    createSession(EXTERNAL_VISITOR, null)
-  );
+export async function externalSession() {
+  // A failed lookup falls through to a new desk, as it did on the Data API,
+  // but is logged rather than hidden. The bearer token is never part of it.
+  const found = await sql()<{ id: string }[]>`
+    select id from casework.sessions
+    where visitor_hash = ${EXTERNAL_VISITOR}
+    order by created_at desc
+    limit 1`.catch((error: unknown) => {
+    console.error(
+      "Casework: could not look up the outside MCP client's desk",
+      error instanceof Error ? error.message : error,
+    );
+    return [];
+  });
+  return found[0]?.id ?? createSession(EXTERNAL_VISITOR, null);
 }
 
 const handler = createMcpHandler(registerCaseworkTools, {

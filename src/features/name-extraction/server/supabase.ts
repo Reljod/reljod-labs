@@ -9,12 +9,14 @@ let client: ReturnType<typeof createServiceClient> | undefined;
 
 function createServiceClient() {
   return createClient(env.supabaseUrl(), env.supabaseServiceRoleKey(), {
-    db: { schema: "name_extraction" },
     auth: { persistSession: false, autoRefreshToken: false },
   });
 }
 
-/** Service-role client: server code only, bypasses RLS on the `name_extraction` schema. */
+/**
+ * Service-role client for Storage only (the `name-extraction` bucket). The
+ * `name_extraction` tables are reached directly through `sql()` in `./db`.
+ */
 export function supabase() {
   client ??= createServiceClient();
   return client;

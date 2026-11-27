@@ -1,5 +1,6 @@
 import "server-only";
 import type { Owner } from "@/features/access/domain/owner";
+import { jsonb } from "@/server/postgres";
 import type { AuditActor } from "../domain/audit";
 import { evaluate } from "../domain/evaluate";
 import {
@@ -16,9 +17,9 @@ import { resolveRulebook } from "../domain/rules";
 import { OUTCOME_LABELS } from "../domain/types";
 import { findPack } from "../packs";
 import { findingViews } from "../view";
+import { sql } from "./db";
 import { asExtracted, loadRun } from "./repository";
 import { ownerRuleStates } from "./rules";
-import { supabase } from "./supabase";
 
 export type ReevaluateResult =
   | { ok: true; number: number; changes: FindingChange[] }
@@ -76,29 +77,36 @@ export async function reevaluateRun(
   );
   const changes = diffFindings(latest?.findings ?? [], findings);
   const counts = countOutcomes(findings);
-  const { data, error } = await supabase().rpc("record_evaluation", {
-    p_owner: owner,
-    p_run_id: runId,
-    p_rules_applied: rulebook.applied,
-    p_findings: findings,
-    p_created_by: actor.label,
-    p_summary: `${pack.title}: ${changes.length === 0 ? "no Finding changed" : `${changes.length} Finding${changes.length === 1 ? "" : "s"} changed`} (${counts.pass} pass, ${counts.fail} fail, ${counts.needs_review} needs review)`,
-    p_details: {
-      pack: pack.slug,
-      against: latest?.number ?? null,
-      counts,
-      changes: changes.map(({ requirementId, from, to }) => ({
-        requirementId,
-        from,
-        to,
-      })),
-      editedRules: rulebook.applied
-        .filter((rule) => rule.version > 0)
-        .map(({ ruleId, version }) => ({ ruleId, version })),
-    },
-    p_max: LIMITS.reevaluationsPerRun,
-  });
-  if (error) {
+  const summary = `${pack.title}: ${changes.length === 0 ? "no Finding changed" : `${changes.length} Finding${changes.length === 1 ? "" : "s"} changed`} (${counts.pass} pass, ${counts.fail} fail, ${counts.needs_review} needs review)`;
+  const details = {
+    pack: pack.slug,
+    against: latest?.number ?? null,
+    counts,
+    changes: changes.map(({ requirementId, from, to }) => ({
+      requirementId,
+      from,
+      to,
+    })),
+    editedRules: rulebook.applied
+      .filter((rule) => rule.version > 0)
+      .map(({ ruleId, version }) => ({ ruleId, version })),
+  };
+  const db = sql();
+  try {
+    const [row] = await db<{ number: number }[]>`
+      select document_compliance.record_evaluation(
+        p_owner => ${owner},
+        p_run_id => ${runId}::uuid,
+        p_rules_applied => ${jsonb(db, rulebook.applied)},
+        p_findings => ${jsonb(db, findings)},
+        p_created_by => ${actor.label},
+        p_summary => ${summary},
+        p_details => ${jsonb(db, details)},
+        p_max => ${LIMITS.reevaluationsPerRun}::integer
+      ) as number`;
+    return { ok: true, number: Number(row?.number), changes };
+  } catch (error) {
+    if (!(error instanceof Error)) throw error;
     if (limitReached(error)) {
       return {
         ok: false,
@@ -106,9 +114,8 @@ export async function reevaluateRun(
       };
     }
     if (runGone(error)) return { ok: false, message: "No such run." };
-    throw new Error(error.message);
+    throw error;
   }
-  return { ok: true, number: Number(data), changes };
 }
 
 const STALE_MESSAGE =
@@ -164,26 +171,30 @@ export async function reviewFinding(
   }
 
   const verb = finding.outcome === checked.outcome ? "Confirmed" : "Overrode";
-  const { error } = await supabase().rpc("record_review", {
-    p_owner: owner,
-    p_run_id: runId,
-    p_evaluation: evaluation,
-    p_requirement_id: requirementId,
-    p_finding_outcome: finding.outcome,
-    p_outcome: checked.outcome,
-    p_note: checked.note,
-    p_reviewer: actor.label,
-    p_summary: `${verb} "${finding.title}": ${OUTCOME_LABELS[finding.outcome]} → ${OUTCOME_LABELS[checked.outcome]}`,
-    p_details: {
-      requirementId,
-      evaluation: latest.number,
-      from: finding.outcome,
-      to: checked.outcome,
-      note: checked.note,
-    },
-    p_max: LIMITS.reviewsPerRun,
-  });
-  if (error) {
+  const db = sql();
+  try {
+    await db`
+      select document_compliance.record_review(
+        p_owner => ${owner},
+        p_run_id => ${runId}::uuid,
+        p_evaluation => ${evaluation}::integer,
+        p_requirement_id => ${requirementId},
+        p_finding_outcome => ${finding.outcome},
+        p_outcome => ${checked.outcome},
+        p_note => ${checked.note},
+        p_reviewer => ${actor.label},
+        p_summary => ${`${verb} "${finding.title}": ${OUTCOME_LABELS[finding.outcome]} → ${OUTCOME_LABELS[checked.outcome]}`},
+        p_details => ${jsonb(db, {
+          requirementId,
+          evaluation: latest.number,
+          from: finding.outcome,
+          to: checked.outcome,
+          note: checked.note,
+        })},
+        p_max => ${LIMITS.reviewsPerRun}::integer
+      )`;
+  } catch (error) {
+    if (!(error instanceof Error)) throw error;
     if (limitReached(error)) {
       return {
         ok: false,
@@ -194,7 +205,7 @@ export async function reviewFinding(
     if (error.message.includes("stale_evaluation")) {
       return { ok: false, message: STALE_MESSAGE };
     }
-    throw new Error(error.message);
+    throw error;
   }
   return { ok: true };
 }

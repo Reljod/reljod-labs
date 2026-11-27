@@ -13,6 +13,7 @@
     "test:e2e": "playwright test",
     "test:sql": "supabase/tests/run-document-compliance-rules-audit.sh",
     "test:bank-db": "supabase/tests/run-bank.sh",
+    "test:demo-db": "supabase/tests/run-demo-db.sh",
     "test:e2e:record": "E2E_RECORD=1 playwright test",
     "seed:document-compliance": "node --env-file=.env.local scripts/seed-document-compliance.mts",
     "seed:casework": "NODE_USE_ENV_PROXY=1 node scripts/seed-casework.mts",

@@ -1,8 +1,9 @@
 import "server-only";
 import type { Owner } from "@/features/access/domain/owner";
+import { jsonb } from "@/server/postgres";
 import type { AskSessionView, StoredBuild } from "../domain/build-events";
 import { type BuildPlan, finalizePlan } from "../domain/build-plan";
-import { supabase } from "./supabase";
+import { sql } from "./db";
 
 type BuildRow = {
   id: string;
@@ -12,7 +13,6 @@ type BuildRow = {
   created_at: string;
 };
 
-const BUILD_COLUMNS = "id, position, question, build_plan, created_at";
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
 /* Re-validated on read, so a source the site no longer shows is never replayed. */
@@ -24,18 +24,29 @@ const toBuild = (row: BuildRow): StoredBuild => ({
   createdAt: row.created_at,
 });
 
+/** Run a query, naming what failed the way the callers' logs always have. */
+async function attempt<T>(what: string, run: () => Promise<T>): Promise<T> {
+  try {
+    return await run();
+  } catch (error) {
+    const message = error instanceof Error ? error.message : String(error);
+    throw new Error(`${what}: ${message}`, { cause: error });
+  }
+}
+
 export async function createAskSession(input: {
   visitorHash: string;
   owner: Owner;
 }) {
-  const { data, error } = await supabase()
-    .from("ask_sessions")
-    .insert({ visitor_hash: input.visitorHash, owner: input.owner })
-    .select("id")
-    .single();
-  if (error)
-    throw new Error(`Could not create an Ask session: ${error.message}`);
-  return data.id as string;
+  const [row] = await attempt(
+    "Could not create an Ask session",
+    () => sql()<{ id: string }[]>`
+      insert into ledger.ask_sessions (visitor_hash, owner)
+      values (${input.visitorHash}, ${input.owner})
+      returning id`,
+  );
+  if (!row) throw new Error("Could not create an Ask session: no row");
+  return row.id;
 }
 
 /** An Owner's Ask session; null when it is missing or someone else's. */
@@ -44,17 +55,30 @@ export async function loadAskSession(
   owner: Owner,
 ): Promise<AskSessionView | null> {
   if (!UUID.test(id)) return null;
-  const { data, error } = await supabase()
-    .from("ask_sessions")
-    .select(`id, builds (${BUILD_COLUMNS})`)
-    .eq("id", id)
-    .eq("owner", owner)
-    .order("position", { referencedTable: "builds" })
-    .maybeSingle();
-  if (error)
-    throw new Error(`Could not load Ask session ${id}: ${error.message}`);
-  if (!data) return null;
-  return { id: data.id, builds: (data.builds as BuildRow[]).map(toBuild) };
+  const [row] = await attempt(
+    `Could not load Ask session ${id}`,
+    () => sql()<{ id: string; builds: BuildRow[] }[]>`
+      select s.id,
+        coalesce(
+          (select json_agg(
+              json_build_object(
+                'id', b.id,
+                'position', b.position,
+                'question', b.question,
+                'build_plan', b.build_plan,
+                'created_at', b.created_at
+              )
+              order by b.position
+            )
+            from ledger.builds b
+            where b.ask_session_id = s.id),
+          '[]'::json
+        ) as builds
+      from ledger.ask_sessions s
+      where s.id = ${id}::uuid and s.owner = ${owner}`,
+  );
+  if (!row) return null;
+  return { id: row.id, builds: row.builds.map(toBuild) };
 }
 
 export async function insertBuild(input: {
@@ -64,26 +88,23 @@ export async function insertBuild(input: {
   model: string;
   visitorHash: string;
 }): Promise<StoredBuild> {
-  const { count, error: countError } = await supabase()
-    .from("builds")
-    .select("id", { count: "exact", head: true })
-    .eq("ask_session_id", input.askSessionId);
-  if (countError)
-    throw new Error(`Could not count Builds: ${countError.message}`);
-  const { data, error } = await supabase()
-    .from("builds")
-    .insert({
-      ask_session_id: input.askSessionId,
-      position: count ?? 0,
-      question: input.question,
-      build_plan: input.plan,
-      model: input.model,
-      visitor_hash: input.visitorHash,
-    })
-    .select(BUILD_COLUMNS)
-    .single();
-  if (error) throw new Error(`Could not store the Build: ${error.message}`);
-  return toBuild(data as BuildRow);
+  const db = sql();
+  // The next position is the session's Build count; `unique (ask_session_id,
+  // position)` refuses a second Build racing for the same one.
+  const [row] = await attempt(
+    "Could not store the Build",
+    () => db<BuildRow[]>`
+      insert into ledger.builds
+        (ask_session_id, position, question, build_plan, model, visitor_hash)
+      select ${input.askSessionId}::uuid, count(*)::int, ${input.question}::text,
+        ${jsonb(db, input.plan)}::jsonb, ${input.model}::text,
+        ${input.visitorHash}::text
+      from ledger.builds
+      where ask_session_id = ${input.askSessionId}::uuid
+      returning id, position, question, build_plan, created_at`,
+  );
+  if (!row) throw new Error("Could not store the Build: no row");
+  return toBuild(row);
 }
 
 /**
@@ -91,14 +112,15 @@ export async function insertBuild(input: {
  * visitor lands. Null when they have none.
  */
 export async function latestAnsweredSessionId(owner: Owner) {
-  const { data, error } = await supabase()
-    .from("builds")
-    .select("ask_session_id, ask_sessions!inner(owner)")
-    .eq("ask_sessions.owner", owner)
-    .order("created_at", { ascending: false })
-    .limit(1)
-    .maybeSingle();
-  if (error)
-    throw new Error(`Could not find a stored session: ${error.message}`);
-  return (data?.ask_session_id as string | undefined) ?? null;
+  const [row] = await attempt(
+    "Could not find a stored session",
+    () => sql()<{ ask_session_id: string }[]>`
+      select b.ask_session_id
+      from ledger.builds b
+      join ledger.ask_sessions s on s.id = b.ask_session_id
+      where s.owner = ${owner}
+      order by b.created_at desc
+      limit 1`,
+  );
+  return row?.ask_session_id ?? null;
 }

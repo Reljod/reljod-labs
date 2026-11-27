@@ -8,13 +8,8 @@ function required(name: string): string {
 
 /** Read lazily so `next build` works without secrets. Values are never logged. */
 export const env = {
-  /**
-   * A Postgres connection string for the Supabase project (transaction
-   * pooler, port 6543). Falls back to the Client Manager's, which reaches the
-   * same database.
-   */
-  databaseUrl: () =>
-    process.env.LOUPE_DATABASE_URL ?? required("CLIENT_MANAGER_DATABASE_URL"),
+  /** The Supabase Postgres database, shared by every demo (transaction pooler, port 6543). */
+  databaseUrl: () => required("DATABASE_URL"),
   supabaseUrl: () => required("SUPABASE_URL"),
   supabaseServiceRoleKey: () => required("SUPABASE_SERVICE_ROLE_KEY"),
   /** Hashes visitors and signs every Loupe MCP token, so rotating it revokes them. */

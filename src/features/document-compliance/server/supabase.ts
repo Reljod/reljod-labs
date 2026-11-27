@@ -7,18 +7,16 @@ export const BUCKET = "document-compliance";
 let client: ReturnType<typeof createServiceClient> | undefined;
 
 /**
- * Untyped on purpose: supabase-js's schema generics only accept generated types,
- * which cover `public` alone. The repository types every row it reads with
- * `database.types.ts` instead.
+ * For Storage only (the private `document-compliance` bucket). Database reads
+ * and writes go straight to Postgres through `sql()` in `./db`.
  */
 function createServiceClient() {
   return createClient(env.supabaseUrl(), env.supabaseServiceRoleKey(), {
-    db: { schema: "document_compliance" },
     auth: { persistSession: false, autoRefreshToken: false },
   });
 }
 
-/** Service-role client: server code only, bypasses RLS on the `document_compliance` schema. */
+/** Service-role Storage client: server code only. */
 export function supabase() {
   client ??= createServiceClient();
   return client;

@@ -8,12 +8,14 @@ let client: ReturnType<typeof createServiceClient> | undefined;
 
 function createServiceClient() {
   return createClient(env.supabaseUrl(), env.supabaseServiceRoleKey(), {
-    db: { schema: "casework" },
     auth: { persistSession: false, autoRefreshToken: false },
   });
 }
 
-/** Service-role client: server code only, bypasses RLS on the `casework` schema. */
+/**
+ * Service-role client for Storage only (the private `casework` bucket). The
+ * `casework` tables are reached directly over Postgres (`./db`).
+ */
 export function supabase() {
   client ??= createServiceClient();
   return client;

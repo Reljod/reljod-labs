@@ -14,7 +14,7 @@ Never put a value in the repository or paste one into a chat. Set them in the Ve
 
 | Variable | Needed | What it does |
 | --- | --- | --- |
-| §HARNESS_DATABASE_URL§ | Yes, or the fallback | Postgres connection string for the Supabase project (transaction pooler, port 6543). Falls back to §CLIENT_MANAGER_DATABASE_URL§. |
+| §DATABASE_URL§ | Yes | Postgres connection string for the Supabase project (transaction pooler, port 6543), shared by every demo. |
 | §JOD_BANKING_HARNESS_AI_GATEWAY_API_KEY§ | Yes, or the fallback | Key for Vercel AI Gateway. Falls back to §DOCUMENT_COMPLIANCE_AI_GATEWAY_API_KEY§. |
 | §HARNESS_MODEL§ | No | The Agent's model. Default §anthropic/claude-sonnet-5.5§. |
 | §HARNESS_STEP_MODEL§ | No | Model for Steps that read or draft, and for the Conflict check. Default §anthropic/claude-haiku-5.5§. |

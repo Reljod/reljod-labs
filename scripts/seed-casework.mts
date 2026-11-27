@@ -5,11 +5,13 @@
  *   node fixtures/casework/render.mjs   # render first
  *   pnpm seed:casework
  *
- * Needs SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY.
+ * Needs DATABASE_URL (the `casework` tables, reached directly) and
+ * SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY (Storage only).
  */
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
 import { createClient } from "@supabase/supabase-js";
+import postgres from "postgres";
 
 const ROOT = join(import.meta.dirname, "../fixtures/casework");
 const OUT = join(ROOT, "out");
@@ -42,11 +44,21 @@ type ManifestCase = {
 
 const url = process.env.SUPABASE_URL;
 const key = process.env.SUPABASE_SERVICE_ROLE_KEY;
-if (!url || !key)
-  throw new Error("Set SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY");
-const db = createClient(url, key, {
-  db: { schema: "casework" },
+const databaseUrl = process.env.DATABASE_URL;
+if (!url || !key || !databaseUrl)
+  throw new Error(
+    "Set DATABASE_URL, SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY",
+  );
+/** Storage only: the `casework` bucket. */
+const storage = createClient(url, key, {
   auth: { persistSession: false },
+}).storage;
+// Supavisor (the transaction pooler): no prepared statements, one query at a time.
+const sql = postgres(databaseUrl, {
+  prepare: false,
+  max_pipeline: 1,
+  max: 1,
+  onnotice: () => {},
 });
 
 const manifest: { cases: ManifestCase[] } = JSON.parse(
@@ -78,7 +90,7 @@ const safe = (file: string) =>
 
 async function upload(path: string, file: string) {
   const body = readFileSync(file);
-  const { error } = await db.storage
+  const { error } = await storage
     .from(BUCKET)
     .upload(path, body, { contentType: contentType(file), upsert: true });
   if (error) throw new Error(`${path}: ${error.message}`);
@@ -103,22 +115,23 @@ for (const [position, item] of ordered.entries()) {
   const folder = join(OUT, item.scenario, item.slug);
   const prefix = `cabinet/${item.scenario}/${item.slug}`;
 
-  const { error: caseError } = await db.from("case_files").upsert({
-    slug: item.slug,
-    scenario: item.scenario,
-    title: item.title,
-    summary: item.summary,
-    as_of: item.asOf,
-    expected: item.expected,
-    split: splits[item.slug] ?? "train",
-    position,
-  });
-  if (caseError) throw new Error(caseError.message);
-  const { error: deleteError } = await db
-    .from("documents")
-    .delete()
-    .eq("case_file_slug", item.slug);
-  if (deleteError) throw new Error(deleteError.message);
+  await sql`
+    insert into casework.case_files
+      (slug, scenario, title, summary, as_of, expected, split, position)
+    values (
+      ${item.slug}, ${item.scenario}, ${item.title}, ${item.summary},
+      ${item.asOf}, ${sql.json(item.expected as never)},
+      ${splits[item.slug] ?? "train"}, ${position}
+    )
+    on conflict (slug) do update set
+      scenario = excluded.scenario,
+      title = excluded.title,
+      summary = excluded.summary,
+      as_of = excluded.as_of,
+      expected = excluded.expected,
+      split = excluded.split,
+      position = excluded.position`;
+  await sql`delete from casework.documents where case_file_slug = ${item.slug}`;
 
   const files = [
     ...new Set(
@@ -129,20 +142,22 @@ for (const [position, item] of ordered.entries()) {
     upload(`${prefix}/${safe(file)}`, join(folder, file)),
   );
 
-  const { error } = await db.from("documents").insert(
-    item.documents.map((document) => ({
-      case_file_slug: item.slug,
-      name: document.name,
-      media_type: document.mediaType,
-      source_format: document.sourceFormat,
-      storage_path: `${prefix}/${safe(document.file)}`,
-      page_paths: document.pages.map((page) => `${prefix}/${safe(page)}`),
-      size_bytes: readFileSync(join(folder, document.file)).byteLength,
-      label_kind: document.kind,
-      label: document.label,
-    })),
-  );
-  if (error) throw new Error(error.message);
+  // One statement, as before: a Case file's Documents land together or not at all.
+  if (item.documents.length > 0)
+    await sql`
+    insert into casework.documents ${sql(
+      item.documents.map((document) => ({
+        case_file_slug: item.slug,
+        name: document.name,
+        media_type: document.mediaType,
+        source_format: document.sourceFormat,
+        storage_path: `${prefix}/${safe(document.file)}`,
+        page_paths: document.pages.map((page) => `${prefix}/${safe(page)}`),
+        size_bytes: readFileSync(join(folder, document.file)).byteLength,
+        label_kind: document.kind,
+        label: sql.json(document.label as never),
+      })),
+    )}`;
   documents += item.documents.length;
   console.log(
     `✓ ${item.scenario}/${item.slug} (${item.documents.length}, ${splits[item.slug]})`,
@@ -150,10 +165,13 @@ for (const [position, item] of ordered.entries()) {
 }
 
 // Case files no longer in the manifest.
-const { data: existing } = await db.from("case_files").select("slug");
-const stale = (existing ?? [])
-  .map((row: { slug: string }) => row.slug)
-  .filter((slug: string) => !manifest.cases.some((item) => item.slug === slug));
-if (stale.length > 0) await db.from("case_files").delete().in("slug", stale);
+const existing = await sql<{ slug: string }[]>`
+  select slug from casework.case_files`;
+const stale = existing
+  .map((row) => row.slug)
+  .filter((slug) => !manifest.cases.some((item) => item.slug === slug));
+if (stale.length > 0)
+  await sql`delete from casework.case_files where slug = any(${stale}::text[])`;
 
 console.log(`${ordered.length} case files, ${documents} documents seeded`);
+await sql.end();

@@ -62,8 +62,8 @@ type DocumentRow = {
   output_tokens: number | null;
   reasoning_tokens: number | null;
   cached_input_tokens: number | null;
-  /** `numeric` arrives as a number from PostgREST. */
-  cost_usd: number | null;
+  /** `numeric` arrives from postgres.js as a string; read it with `asNumber`. Written as a number. */
+  cost_usd: number | string | null;
   parse_ms: number | null;
   read_ms: number | null;
   raw_output: Json | null;

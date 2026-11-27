@@ -1,6 +1,6 @@
 import "server-only";
 import { LIMITS, limitMessage } from "../domain/limits";
-import { supabase } from "./supabase";
+import { sql } from "./db";
 import type { Visitor } from "./visitor";
 
 /**
@@ -12,15 +12,21 @@ import type { Visitor } from "./visitor";
 async function checkRate(visitor: Visitor, take: boolean) {
   if (visitor.forceLimit) return limitMessage("visitor");
   if (!visitor.limited) return null;
-  const { data, error } = await supabase().rpc("take_rate_hit", {
-    p_visitor_hash: visitor.hash,
-    p_per_hour: LIMITS.buildsPerVisitorPerHour,
-    p_per_day: LIMITS.buildsPerDay,
-    p_take: take,
-  });
-  if (error)
-    throw new Error(`Could not check the rate limit: ${error.message}`);
-  return limitMessage(data);
+  try {
+    const [row] = await sql()<{ refusal: string | null }[]>`
+      select ledger.take_rate_hit(
+        p_visitor_hash => ${visitor.hash}::text,
+        p_per_hour => ${LIMITS.buildsPerVisitorPerHour}::integer,
+        p_per_day => ${LIMITS.buildsPerDay}::integer,
+        p_take => ${take}::boolean
+      ) as refusal`;
+    return limitMessage(row?.refusal);
+  } catch (error) {
+    throw new Error(
+      `Could not check the rate limit: ${error instanceof Error ? error.message : String(error)}`,
+      { cause: error },
+    );
+  }
 }
 
 /**

@@ -1,4 +1,4 @@
-import { createClient } from "@supabase/supabase-js";
+import postgres from "postgres";
 
 /**
  * Deletes everything the suite created: Pre-screen runs (documents, spans and
@@ -8,34 +8,46 @@ import { createClient } from "@supabase/supabase-js";
  * Set `E2E_KEEP_RUNS=1` to keep them for debugging a failure in the database.
  */
 export default async function globalTeardown() {
-  const url = process.env.SUPABASE_URL;
-  const key = process.env.SUPABASE_SERVICE_ROLE_KEY;
-  if (!url || !key || process.env.E2E_KEEP_RUNS === "1") return;
-  const targets = [
-    { schema: "document_compliance", table: "prescreen_runs" },
-    { schema: "ledger", table: "ask_sessions" },
-  ];
-  for (const { schema, table } of targets) {
-    const { error } = await createClient(url, key, {
-      db: { schema },
-      auth: { persistSession: false },
-    })
-      .from(table)
-      .delete()
-      .eq("visitor_hash", "e2e");
-    if (error)
-      throw new Error(`Could not delete e2e ${table}: ${error.message}`);
-  }
-  // The e2e Owner's Rule edits and Audit trail, so every run starts at the
-  // Default Rules. Deleting the trail row takes its append-only events by
-  // cascade (ADR 0019).
-  const compliance = createClient(url, key, {
-    db: { schema: "document_compliance" },
-    auth: { persistSession: false },
+  const url = process.env.DATABASE_URL;
+  if (!url || process.env.E2E_KEEP_RUNS === "1") return;
+  // Set up for Supabase's transaction pooler, as `src/server/postgres.ts` is.
+  const sql = postgres(url, {
+    prepare: false,
+    max_pipeline: 1,
+    max: 1,
+    connect_timeout: 15,
+    onnotice: () => {},
   });
-  for (const table of ["rule_versions", "audit_trails"]) {
-    const { error } = await compliance.from(table).delete().eq("owner", "e2e");
-    if (error)
-      throw new Error(`Could not delete e2e ${table}: ${error.message}`);
+  try {
+    await deleteOrThrow(
+      "prescreen_runs",
+      sql`delete from document_compliance.prescreen_runs where visitor_hash = 'e2e'`,
+    );
+    await deleteOrThrow(
+      "ask_sessions",
+      sql`delete from ledger.ask_sessions where visitor_hash = 'e2e'`,
+    );
+    // The e2e Owner's Rule edits and Audit trail, so every run starts at the
+    // Default Rules. Deleting the trail row takes its append-only events by
+    // cascade (ADR 0019).
+    await deleteOrThrow(
+      "rule_versions",
+      sql`delete from document_compliance.rule_versions where owner = 'e2e'`,
+    );
+    await deleteOrThrow(
+      "audit_trails",
+      sql`delete from document_compliance.audit_trails where owner = 'e2e'`,
+    );
+  } finally {
+    await sql.end();
+  }
+}
+
+async function deleteOrThrow(table: string, query: Promise<unknown>) {
+  try {
+    await query;
+  } catch (error) {
+    const message = error instanceof Error ? error.message : String(error);
+    throw new Error(`Could not delete e2e ${table}: ${message}`);
   }
 }

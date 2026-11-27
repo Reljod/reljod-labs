@@ -11,10 +11,8 @@ export const DEFAULT_MODEL = "google/gemini-4-neon";
 
 /** Read lazily so `next build` works without secrets. Values are never logged. */
 export const env = {
-  /** Supabase transaction pooler; falls back to the Client Manager's, the same database. */
-  databaseUrl: () =>
-    process.env.FLOORWALK_DATABASE_URL ??
-    required("CLIENT_MANAGER_DATABASE_URL"),
+  /** The Supabase Postgres database, shared by every demo (transaction pooler, port 6543). */
+  databaseUrl: () => required("DATABASE_URL"),
   supabaseUrl: () => required("SUPABASE_URL"),
   supabaseServiceRoleKey: () => required("SUPABASE_SERVICE_ROLE_KEY"),
   /** Hashes visitors for rate limits. */

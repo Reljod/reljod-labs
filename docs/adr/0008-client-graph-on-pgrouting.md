@@ -4,7 +4,7 @@ Client Manager keeps each client's knowledge graph in Supabase Postgres as two p
 
 We chose this over Apache AGE (openCypher in Postgres), the usual "graph database in Postgres": Supabase's hosted Postgres does not offer AGE, while pgRouting and pgvector are both on its extension list. A recursive CTE would also walk the graph, but pgRouting gives depth, predecessor Edge and weighted shortest paths in one call, which is exactly what the traversal animation needs. A separate graph database was ruled out to keep one store for the demo.
 
-The app talks to these tables over a direct Postgres connection (`CLIENT_MANAGER_DATABASE_URL`, the transaction pooler on Vercel, prepared statements off) rather than through the Data API: graph functions take arrays and vectors and run in one transaction with the commit, which PostgREST makes awkward.
+The app talks to these tables over a direct Postgres connection (`DATABASE_URL`, the transaction pooler on Vercel, prepared statements off) rather than through the Data API: graph functions take arrays and vectors and run in one transaction with the commit, which PostgREST makes awkward.
 
 ## Consequences
 

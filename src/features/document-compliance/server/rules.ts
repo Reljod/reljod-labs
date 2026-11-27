@@ -1,5 +1,6 @@
 import "server-only";
 import type { Owner } from "@/features/access/domain/owner";
+import { jsonb } from "@/server/postgres";
 import type { AuditActor } from "../domain/audit";
 import { LIMITS } from "../domain/review";
 import {
@@ -16,7 +17,7 @@ import {
   storedRuleState,
 } from "../domain/rules";
 import type { RuleVersionView, RuleView } from "../view";
-import { supabase } from "./supabase";
+import { sql } from "./db";
 
 type VersionRow = {
   rule_id: string;
@@ -28,19 +29,15 @@ type VersionRow = {
   created_at: string;
 };
 
-const VERSION_COLUMNS =
-  "rule_id, version, enabled, params, restored_from, saved_by, created_at";
-
 async function versionRows(owner: Owner, ruleId?: RuleId) {
-  let query = supabase()
-    .from("rule_versions")
-    .select(VERSION_COLUMNS)
-    .eq("owner", owner)
-    .order("version", { ascending: false });
-  if (ruleId) query = query.eq("rule_id", ruleId);
-  const { data, error } = await query;
-  if (error) throw new Error(error.message);
-  return (data ?? []) as VersionRow[];
+  const db = sql();
+  const rows = await db<VersionRow[]>`
+    select rule_id, version, enabled, params, restored_from, saved_by, created_at
+    from document_compliance.rule_versions
+    where owner = ${owner}
+    ${ruleId ? db`and rule_id = ${ruleId}` : db``}
+    order by version desc`;
+  return [...rows];
 }
 
 /** The newest saved row of each Rule; Rules never saved are absent. */
@@ -140,30 +137,33 @@ async function writeVersion(input: {
     restoredFrom === null
       ? `${describe(ruleId, next)}`
       : `Restored Version ${restoredFrom}: ${describe(ruleId, next)}`;
-  const { data, error } = await supabase().rpc("save_rule_version", {
-    p_owner: owner,
-    p_rule_id: ruleId,
-    p_enabled: next.enabled,
-    p_params: next.params,
-    p_restored_from: restoredFrom,
-    p_saved_by: actor.label,
-    p_summary: summary,
-    p_details: {
-      from: {
-        version: from.version,
-        enabled: from.enabled,
-        params: from.params,
-      },
-      to: { enabled: next.enabled, params: next.params },
-    },
-    p_max_per_hour: LIMITS.ruleSavesPerHour,
-  });
-  if (error) {
-    const limited = limitMessage(error);
+  const db = sql();
+  try {
+    const [row] = await db<{ version: number }[]>`
+      select document_compliance.save_rule_version(
+        p_owner => ${owner},
+        p_rule_id => ${ruleId},
+        p_enabled => ${next.enabled},
+        p_params => ${jsonb(db, next.params)},
+        p_restored_from => ${restoredFrom}::integer,
+        p_saved_by => ${actor.label},
+        p_summary => ${summary},
+        p_details => ${jsonb(db, {
+          from: {
+            version: from.version,
+            enabled: from.enabled,
+            params: from.params,
+          },
+          to: { enabled: next.enabled, params: next.params },
+        })},
+        p_max_per_hour => ${LIMITS.ruleSavesPerHour}::integer
+      ) as version`;
+    return { ok: true, version: Number(row?.version) };
+  } catch (error) {
+    const limited = error instanceof Error ? limitMessage(error) : null;
     if (limited) return { ok: false, message: limited };
-    throw new Error(error.message);
+    throw error;
   }
-  return { ok: true, version: Number(data) };
 }
 
 async function currentState(owner: Owner, ruleId: RuleId) {
