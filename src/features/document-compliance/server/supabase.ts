@@ -8,7 +8,7 @@ let client: ReturnType<typeof createServiceClient> | undefined;
 
 /**
  * For Storage only (the private `document-compliance` bucket). Database reads
- * and writes go straight to Postgres through `sql()` in `./db`.
+ * and writes go straight to Postgres through `db()` (`@/server/postgres`).
  */
 function createServiceClient() {
   return createClient(env.supabaseUrl(), env.supabaseServiceRoleKey(), {
@@ -28,6 +28,13 @@ export async function signedUrl(path: string, expiresInSeconds = 600) {
     .createSignedUrl(path, expiresInSeconds);
   if (error) throw new Error(`Could not sign ${path}: ${error.message}`);
   return data.signedUrl;
+}
+
+/** A file of the bucket, through a short-lived signed URL. */
+export async function download(path: string): Promise<Uint8Array> {
+  const response = await fetch(await signedUrl(path));
+  if (!response.ok) throw new Error(`Could not download ${path}`);
+  return new Uint8Array(await response.arrayBuffer());
 }
 
 /** A signed URL kept for reuse, and when it stops working (ms since epoch). */

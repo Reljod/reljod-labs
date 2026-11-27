@@ -10,7 +10,6 @@ import {
   RulebookSkeleton,
 } from "@/features/document-compliance/components/rules/rulebook-editor";
 import { initialFor } from "@/features/document-compliance/server/initial";
-import { listRules } from "@/features/document-compliance/server/rules";
 
 export const metadata: Metadata = {
   title: "Rules · Document compliance checks",
@@ -33,6 +32,8 @@ export default function DocumentComplianceRulesPage() {
 }
 
 async function Rulebook() {
-  const rules = await initialFor("the Rules", listRules);
+  const rules = await initialFor("the Rules", (services, owner) =>
+    services.rules.list(owner),
+  );
   return <RulebookEditor initialRules={rules} />;
 }

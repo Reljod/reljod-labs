@@ -1,27 +1,17 @@
 import { getStepMetadata, getWritable } from "workflow";
 import type { Owner } from "@/features/access/domain/owner";
-import { MODEL_ACTOR, SYSTEM_ACTOR } from "../domain/audit";
-import { evaluate } from "../domain/evaluate";
-import { fieldChecks } from "../domain/field-checks";
-import { countOutcomes } from "../domain/review";
-import { type AppliedRule, rulebookFromApplied } from "../domain/rules";
-import type { DocumentKind, ExtractedDocument, Span } from "../domain/types";
-import { correctSpans, verifyReading } from "../domain/verify";
-import type { ReadUsage } from "../metrics";
-import { findPack, type Pack, type PackDocument, storagePath } from "../packs";
+import type { AppliedRule } from "../domain/rules";
+import type { DocumentKind, Span } from "../domain/types";
 import type { ScanEvent } from "../scan-events";
-import { findingViews } from "../view";
-import { auditBestEffort } from "./audit";
-import { extractDocument, type RawExtraction } from "./extract";
-import { type ParsedDocument, parseDocument } from "./parsers";
-import {
-  failRun,
-  type SavedDocument,
-  saveDocument,
-  saveFindings,
-  setRunStatus,
-} from "./repository";
-import { signedUrl } from "./supabase";
+import { documentCompliance } from "./container";
+import type { ParsedDocument } from "./parsers";
+import type { PrescreenRun, ProcessedDocument } from "./services/prescreen";
+
+/*
+ * The function and step names below (and this file's path) are the
+ * workflow's replay keys: never rename or move them. Each step only streams
+ * and hands its work to the Pre-screen service (`services/prescreen.ts`).
+ */
 
 type DistributiveOmit<T, K extends PropertyKey> = T extends unknown
   ? Omit<T, K>
@@ -36,12 +26,15 @@ async function emit(event: DistributiveOmit<ScanEvent, "at">) {
   }
 }
 
-function packAndDocument(packSlug: string, kind: DocumentKind) {
-  const pack = findPack(packSlug);
-  const document = pack?.documents.find((item) => item.kind === kind);
-  if (!pack || !document) throw new Error(`No ${kind} in pack ${packSlug}`);
-  return { pack, document };
-}
+/** What every step of one run needs to know; plain data, so steps can take it. */
+type RunContext = PrescreenRun & {
+  /** A stubbed e2e run: the scripted reader stands in for the model. */
+  stub?: boolean;
+};
+
+/** The services, stubbed as the run was started; a run from before stubbing is live. */
+const servicesOf = (run?: Pick<RunContext, "stub">) =>
+  documentCompliance({ stub: run?.stub === true });
 
 /**
  * Runs one stage of one Document inside a step, streaming its start (or retry),
@@ -85,22 +78,7 @@ async function markStatus(
   status: "parsing" | "evaluating",
 ): Promise<void> {
   "use step";
-  await setRunStatus(runId, status);
-}
-
-async function download(path: string) {
-  const response = await fetch(await signedUrl(path));
-  if (!response.ok) throw new Error(`Could not download ${path}`);
-  return new Uint8Array(await response.arrayBuffer());
-}
-
-function pageImages(pack: Pack, document: PackDocument) {
-  return Promise.all(
-    document.pages.map(async (file) => ({
-      data: await download(storagePath(pack.slug, file)),
-      mediaType: file.endsWith(".png") ? "image/png" : "image/jpeg",
-    })),
-  );
+  await servicesOf().prescreen.markStatus(runId, status);
 }
 
 type TimedParse = ParsedDocument & { parseMs: number };
@@ -111,17 +89,8 @@ async function parseStep(
   kind: DocumentKind,
 ): Promise<TimedParse> {
   "use step";
-  const { pack, document } = packAndDocument(packSlug, kind);
   const { value, ms } = await staged(kind, "parse", async () => {
-    const [file, pages] = await Promise.all([
-      download(storagePath(pack.slug, document.file)),
-      pageImages(pack, document),
-    ]);
-    const parsed = await parseDocument({
-      file,
-      sourceFormat: document.sourceFormat,
-      pageImages: pages.map((page) => page.data),
-    });
+    const parsed = await servicesOf().prescreen.parse(packSlug, kind);
     await emit({
       type: "spans",
       kind,
@@ -143,13 +112,6 @@ async function parseStep(
 }
 parseStep.maxRetries = 2;
 
-/** What reading a Document cost and returned, kept with the run (ADR 0007). */
-export type ReadRecord = {
-  usage: ReadUsage;
-  readMs: number;
-  raw: RawExtraction;
-};
-
 /**
  * The model corrects OCR'd Span text and reads each field as Span references,
  * streamed field by field; code then verifies every reading against the
@@ -160,75 +122,39 @@ async function readStep(
   kind: DocumentKind,
   ocrSpans: Span[],
   ocr: boolean,
-): Promise<{ extracted: ExtractedDocument; read: ReadRecord }> {
+): Promise<Pick<ProcessedDocument, "extracted" | "read">> {
   "use step";
-  const { pack, document } = packAndDocument(run.packSlug, kind);
+  const { prescreen } = servicesOf(run);
   const { value: read, ms } = await staged(kind, "read", async () => {
-    const extraction = await extractDocument({
-      kind,
-      spans: ocrSpans,
-      ocr,
-      pageImages: await pageImages(pack, document),
-      onReading: (reading) => emit({ type: "field", kind, reading }),
-    });
-    const { spans, applied } = correctSpans(ocrSpans, extraction.corrections);
-    if (applied.length > 0) {
-      await emit({ type: "corrections", kind, corrections: applied });
+    const result = await prescreen.read(run, kind, ocrSpans, ocr, (reading) =>
+      emit({ type: "field", kind, reading }),
+    );
+    if (result.corrections.length > 0) {
+      await emit({
+        type: "corrections",
+        kind,
+        corrections: result.corrections,
+      });
     }
-    const value: ExtractedDocument = {
-      kind,
-      spans,
-      fields: extraction.readings.map((reading) =>
-        verifyReading(reading, spans),
-      ),
-      judgments: extraction.judgments,
-    };
+    const applied = result.corrections.length;
     return {
-      value: { extracted: value, usage: extraction.usage, raw: extraction.raw },
-      detail: `${value.fields.length} fields${applied.length > 0 ? ` · ${applied.length} OCR fixes` : ""}`,
+      value: result,
+      detail: `${result.extracted.fields.length} fields${applied > 0 ? ` · ${applied} OCR fixes` : ""}`,
     };
   });
   const { extracted, usage, raw } = read;
   // Only the attempt that succeeded is kept, so only its usage is streamed.
   await emit({ type: "usage", kind, usage });
-
+  const checks = await prescreen.finishRead(run, extracted, usage, ms);
   await emit({
     type: "checks",
     kind,
-    checks: fieldChecks(extracted, {
-      rulebook: rulebookFromApplied(run.rules),
-      prescreenDate: pack.prescreenDate,
-      declaration: pack.clientDeclaration,
-    }),
+    checks,
     judgments: extracted.judgments,
   });
-  if (run.owner) {
-    const verified = extracted.fields.filter((field) => field.verified).length;
-    await auditBestEffort({
-      owner: run.owner,
-      runId: run.runId,
-      actor: { ...MODEL_ACTOR, label: usage.model ?? MODEL_ACTOR.label },
-      action: "document.read",
-      summary: `Read the ${kind.replaceAll("_", " ")}: ${extracted.fields.length} fields, ${verified} found on the page`,
-      details: {
-        kind,
-        fields: extracted.fields.length,
-        verified,
-        readMs: ms,
-        provider: usage.provider,
-      },
-      usage,
-    });
-  }
   return { extracted, read: { usage, readMs: ms, raw } };
 }
 readStep.maxRetries = 2;
-
-type ProcessedDocument = {
-  parsed: Omit<TimedParse, "spans">;
-  extracted: ExtractedDocument;
-  read: ReadRecord;
-};
 
 /** Evaluates the Rulebook, persists the whole chain and ends the stream. */
 async function saveStep(
@@ -236,71 +162,15 @@ async function saveStep(
   processed: ProcessedDocument[],
 ): Promise<void> {
   "use step";
-  const { runId, packSlug } = run;
-  const pack = findPack(packSlug);
-  if (!pack) throw new Error(`Unknown pack ${packSlug}`);
-  const rulebook = rulebookFromApplied(run.rules);
-
-  const saved = new Map<DocumentKind, SavedDocument>();
-  for (const { parsed, extracted, read } of processed) {
-    const document = pack.documents.find(
-      (item) => item.kind === extracted.kind,
-    );
-    if (!document) continue;
-    saved.set(
-      extracted.kind,
-      await saveDocument(
-        runId,
-        {
-          storagePath: storagePath(pack.slug, document.file),
-          mediaType: document.mediaType,
-          sourceFormat: document.sourceFormat,
-          parser: parsed.parser,
-          pageCount: parsed.pageCount,
-          parseMs: parsed.parseMs,
-          ...read,
-        },
-        extracted,
-      ),
-    );
-  }
-
-  const findings = evaluate({
-    rulebook,
-    prescreenDate: pack.prescreenDate,
-    declaration: pack.clientDeclaration,
-    documents: processed.map(({ extracted }) => extracted),
-  });
-  await saveFindings(runId, findings, saved);
-  if (run.owner) {
-    const counts = countOutcomes(findings);
-    await auditBestEffort({
-      owner: run.owner,
-      runId,
-      actor: SYSTEM_ACTOR,
-      action: "run.finished",
-      summary: `${pack.title}: ${counts.pass} pass, ${counts.fail} fail, ${counts.needs_review} needs review`,
-      details: { pack: pack.slug, counts },
-    });
-  }
-  await emit({ type: "findings", findings: findingViews(rulebook, findings) });
+  const findings = await servicesOf(run).prescreen.save(run, processed);
+  await emit({ type: "findings", findings });
   await emit({ type: "end", status: "completed" });
   await getWritable().close();
 }
 
 async function failStep(run: RunContext, message: string): Promise<void> {
   "use step";
-  await failRun(run.runId, message);
-  if (run.owner) {
-    await auditBestEffort({
-      owner: run.owner,
-      runId: run.runId,
-      actor: SYSTEM_ACTOR,
-      action: "run.failed",
-      summary: `Failed: ${message.slice(0, 200)}`,
-      details: { pack: run.packSlug },
-    });
-  }
+  await servicesOf(run).prescreen.fail(run, message);
   await emit({ type: "end", status: "failed", error: message });
   await getWritable().close();
 }
@@ -309,22 +179,13 @@ async function failStep(run: RunContext, message: string): Promise<void> {
  * One Pre-screen run (ADR 0003): every Document is parsed and read in parallel,
  * each stage a retryable step, then the Rulebook is evaluated over all of them.
  */
-/** What every step of one run needs to know; plain data, so steps can take it. */
-type RunContext = {
-  runId: string;
-  packSlug: string;
-  /** The Rules the run applies; null for a run started before Rules were edited. */
-  rules: AppliedRule[] | null;
-  /** Whose Audit trail the run writes to; null for a run started before it. */
-  owner: Owner | null;
-};
-
 export async function prescreenWorkflow(input: {
   runId: string;
   packSlug: string;
   kinds: DocumentKind[];
   rules?: AppliedRule[];
   owner?: Owner;
+  stub?: boolean;
 }) {
   "use workflow";
   const { runId, packSlug, kinds } = input;
@@ -333,19 +194,20 @@ export async function prescreenWorkflow(input: {
     packSlug,
     rules: input.rules ?? null,
     owner: input.owner ?? null,
+    stub: input.stub === true,
   };
   try {
     await markStatus(runId, "parsing");
     const processed = await Promise.all(
       kinds.map(async (kind): Promise<ProcessedDocument> => {
-        const { spans, ...parsed } = await parseStep(packSlug, kind);
+        const { spans, parseMs, ...parsed } = await parseStep(packSlug, kind);
         const { extracted, read } = await readStep(
           run,
           kind,
           spans,
           parsed.parser === "tesseract",
         );
-        return { parsed, extracted, read };
+        return { parsed: { ...parsed, parseMs }, extracted, read };
       }),
     );
     await markStatus(runId, "evaluating");

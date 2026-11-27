@@ -1,27 +1,14 @@
-import { requireOwner } from "@/features/access/server/gate";
 import {
-  isRunId,
   type RunResponse,
+  runPathSchema,
 } from "@/features/document-compliance/domain/api";
-import { loadRun } from "@/features/document-compliance/server/repository";
-import {
-  failure,
-  json,
-  NotFoundError,
-} from "@/features/document-compliance/server/respond";
+import { documentComplianceApi } from "@/features/document-compliance/server/api";
+import { params } from "@/platform/http/middleware";
 
 /** One of the Owner's runs, whole; another Owner's run is not found. */
-export async function GET(
-  _request: Request,
-  { params }: RouteContext<"/api/document-compliance/runs/[runId]">,
-) {
-  try {
-    const { owner } = await requireOwner();
-    const { runId } = await params;
-    const run = isRunId(runId) ? await loadRun(runId, owner) : null;
-    if (!run) throw new NotFoundError("No such run.");
-    return json<RunResponse>(run);
-  } catch (error) {
-    return failure(error);
-  }
-}
+export const GET = documentComplianceApi
+  .use(params(runPathSchema))
+  .handle(
+    ({ services, owner, path }): Promise<RunResponse> =>
+      services.runs.get(owner, path.runId),
+  );

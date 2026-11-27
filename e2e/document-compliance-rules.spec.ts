@@ -2,9 +2,10 @@ import { expect, type Locator, type Page, test } from "@playwright/test";
 
 /**
  * Rules, re-evaluation, Reviewer decisions, the Pipeline view and the Audit
- * trail (ADR 0019), end to end against the live project. One real Pre-screen
- * of the stale-bill pack: its proof of address is too old under the Default
- * Rules and recent enough once the Rule allows 6 months.
+ * trail (ADR 0019), end to end against the live project. One Pre-screen of
+ * the stale-bill pack (read by the scripted reader unless `E2E_LIVE=1`): its
+ * proof of address is too old under the Default Rules and recent enough once
+ * the Rule allows 6 months.
  */
 
 const DEMO = "/demos/document-compliance";

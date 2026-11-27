@@ -9,7 +9,6 @@ import {
   DemoHeader,
 } from "@/features/document-compliance/components/demo-nav";
 import { QueryProvider } from "@/features/document-compliance/components/query-provider";
-import { listAuditEvents } from "@/features/document-compliance/server/audit";
 import { initialFor } from "@/features/document-compliance/server/initial";
 
 export const metadata: Metadata = {
@@ -33,8 +32,8 @@ export default function DocumentComplianceAuditPage() {
 }
 
 async function Trail() {
-  const page = await initialFor("the Audit trail", (owner) =>
-    listAuditEvents(owner),
+  const page = await initialFor("the Audit trail", (services, owner) =>
+    services.audit.list(owner),
   );
   return <AuditTrail initialPage={page} />;
 }

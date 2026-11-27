@@ -8,10 +8,13 @@ import {
 } from "@/features/document-compliance/components/run/run-screen";
 import { isRunId } from "@/features/document-compliance/domain/api";
 import { initialFor } from "@/features/document-compliance/server/initial";
-import {
-  listOwnerRuns,
-  loadRun,
-} from "@/features/document-compliance/server/repository";
+import { NotFoundError } from "@/platform/errors";
+
+/** A run that is missing or someone else's shows as not found; any other failure is logged. */
+function nullIfNotFound(error: unknown): null {
+  if (error instanceof NotFoundError) return null;
+  throw error;
+}
 
 export const metadata: Metadata = {
   title: "Pre-screen run · Document compliance checks",
@@ -37,10 +40,12 @@ export default function PrescreenRunPage({
 async function Run({ params }: { params: Promise<{ runId: string }> }) {
   const { runId } = await params;
   // The run and the Session's runs come with the page, read side by side.
-  const initial = await initialFor("the run", (owner) =>
+  const initial = await initialFor("the run", (services, owner) =>
     Promise.all([
-      isRunId(runId) ? loadRun(runId, owner) : null,
-      listOwnerRuns(owner),
+      isRunId(runId)
+        ? services.runs.get(owner, runId).catch(nullIfNotFound)
+        : null,
+      services.runs.list(owner),
     ]),
   );
   return (

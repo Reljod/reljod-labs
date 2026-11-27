@@ -1,20 +1,6 @@
+import { LIMITS } from "./limits";
 import type { RequirementId } from "./rulebook";
 import type { Outcome } from "./types";
-
-/**
- * Caps on the writes a person can make without spending on the model. They
- * live here once and the server functions apply them.
- */
-export const LIMITS = {
-  /** Re-evaluations of one run, after the first evaluation. */
-  reevaluationsPerRun: 20,
-  /** Reviewer decisions on one run, every Finding together. */
-  reviewsPerRun: 60,
-  /** Rule saves and restores by one Owner in an hour. */
-  ruleSavesPerHour: 60,
-  noteMinLength: 3,
-  noteMaxLength: 1000,
-} as const;
 
 /** What a Reviewer settles a flagged Finding as. */
 export type ReviewOutcome = Extract<Outcome, "pass" | "fail">;
