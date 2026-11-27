@@ -1,17 +1,27 @@
 import { z } from "zod";
 import type { StaffSwitchResponse } from "@/features/harness/domain/api";
-import { switchStaff } from "@/features/harness/server/context";
-import { bodyOf, failure, json } from "@/features/harness/server/respond";
+import { harnessApi, staffCookie } from "@/features/harness/server/api";
+import { body } from "@/platform/http/middleware";
+import { json } from "@/platform/http/respond";
 
 const schema = z.object({ staffId: z.string().uuid() });
 
-/** Signs the visitor in as another Staff member of their own Workspace. */
-export async function POST(request: Request) {
-  try {
-    // `switchStaff` passes the gate and checks the Staff member against the Owner.
-    const { staffId } = schema.parse(await bodyOf(request));
-    return json<StaffSwitchResponse>({ staff: await switchStaff(staffId) });
-  } catch (error) {
-    return failure(error);
-  }
-}
+/**
+ * Signs the visitor in as another Staff member of their own Workspace and
+ * remembers the choice in the `harness_staff` cookie. Anyone in a Workspace
+ * may switch, by design (ADR 0014); the gate checks the cookie against the
+ * Owner on every request.
+ */
+export const POST = harnessApi
+  .use(body(schema))
+  .handle(async ({ services, owner, staff, everyone, body }) => {
+    const to = await services.staff.switchTo(
+      owner,
+      { staff, everyone },
+      body.staffId,
+    );
+    return json<StaffSwitchResponse>(
+      { staff: to },
+      { headers: { "set-cookie": staffCookie(to.id) } },
+    );
+  });

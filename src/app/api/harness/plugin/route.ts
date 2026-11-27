@@ -1,41 +1,22 @@
-import { PluginError } from "@/features/harness/domain/plugin";
-import { audit } from "@/features/harness/server/audit";
-import { staffOrDenied } from "@/features/harness/server/context";
-import { InvalidError } from "@/features/harness/server/errors";
-import { originOf } from "@/features/harness/server/oauth-http";
-import { failure, NO_STORE } from "@/features/harness/server/respond";
-import { buildPluginZip } from "@/features/harness/server/skills";
+import { getPublicOrigin } from "mcp-handler";
+import { harnessApi, permits } from "@/features/harness/server/api";
+import { authorize } from "@/platform/http/middleware";
+import { CACHE } from "@/platform/http/respond";
 
 /** The Claude Plugin: a zip of the Workspace's current Skills and the MCP server's address. */
-export async function GET(request: Request) {
-  try {
-    const context = await staffOrDenied("plugin.download");
-    if (context instanceof Response) return context;
+export const GET = harnessApi
+  .use(authorize(permits("plugin.download")))
+  .handle(async ({ services, caller, request }) => {
     // The public address, as the MCP token and the OAuth metadata give it.
-    const origin = originOf(request);
-    let built: Awaited<ReturnType<typeof buildPluginZip>>;
-    try {
-      built = await buildPluginZip(context.owner, origin);
-    } catch (error) {
-      if (error instanceof PluginError) throw new InvalidError(error.message);
-      throw error;
-    }
-    await audit({
-      owner: context.owner,
-      actor: { kind: "staff", staff: context.staff },
-      action: "plugin.downloaded",
-      summary: `Downloaded the Claude plugin (${built.files.length} files)`,
-      target: { kind: "plugin", id: "jod-harness-bank" },
-      detail: { files: built.files.length, bytes: built.bytes.byteLength },
-    });
-    return new Response(built.bytes, {
+    const plugin = await services.skills.plugin(
+      caller,
+      getPublicOrigin(request),
+    );
+    return new Response(plugin.bytes, {
       headers: {
         "content-type": "application/zip",
-        "content-disposition": `attachment; filename="${built.filename}"`,
-        "cache-control": NO_STORE,
+        "content-disposition": `attachment; filename="${plugin.filename}"`,
+        "cache-control": CACHE.none,
       },
     });
-  } catch (error) {
-    return failure(error);
-  }
-}
+  });

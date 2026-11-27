@@ -23,7 +23,7 @@ import {
   isDirty,
   type ParamDraft,
 } from "../../domain/skills/rule-fields";
-import { ApiFailure, api, keys, messageOf } from "../api";
+import { api, keys, messageOf, ruleErrorsOf } from "../api";
 import { scrollWithin } from "../scroll";
 import {
   Badge,
@@ -138,7 +138,7 @@ export function RuleCard({
       setSaved(`Saved as Version ${next.state.version}.`);
       return next;
     } catch (error) {
-      if (error instanceof ApiFailure) setServer(error.errors);
+      setServer(ruleErrorsOf(error));
       throw error;
     }
   });

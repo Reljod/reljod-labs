@@ -1,5 +1,6 @@
 import "server-only";
 import type { Owner } from "@/features/access/domain/owner";
+import { NotFoundError } from "@/platform/errors";
 import type { PipelineId } from "../domain/pipeline";
 import {
   type RuleStates,
@@ -10,38 +11,31 @@ import { bankToday } from "../domain/pipelines/dates";
 import {
   defaultRuleState,
   type Outcome,
-  type RuleEdit,
   type RuleParams,
   type RuleSpec,
   type RuleState,
   type RuleVersion,
   type RuleView,
-  validateRuleEdit,
 } from "../domain/rules";
 import { RULE_SPECS } from "../domain/rules/defaults";
 import {
-  changedParams,
   latestOf,
   nextScheduledRuleState,
   nextVersion,
-  planRestore,
   resolveRuleAsOf,
   resolveRuleState,
   sameRuleState,
 } from "../domain/skills/versions";
-import type { Actor } from "./actor";
 import { auditIn } from "./audit";
-import { assertCan } from "./context";
 import { type Db, jsonb, sql } from "./db";
-import { InvalidError, NotFoundError, RuleRefusedError } from "./errors";
+import type { RuleRepository } from "./ports";
 
 /*
  * Rules are data (ADR 0015): `RULE_SPECS` are the Defaults and
  * `harness.rule_versions` holds a Workspace's edits. No row for a Rule means
  * its Default (Version 0). A save never updates a row: it adds Version n+1.
+ * What an edit may say is the Rules service's; this is the SQL.
  */
-
-const NOTE_CHARS = 500;
 
 type RuleRow = {
   rule_id: string;
@@ -108,18 +102,17 @@ function viewOf(
   };
 }
 
-/** Every saved Version of the given Rules (all of the Owner's when none are named), newest first per Rule. */
+/** Every saved Version of the given Rules, newest first per Rule, in one query. */
 async function allRows(
   db: Db,
   owner: Owner,
-  ruleIds?: string[],
+  ruleIds: string[],
 ): Promise<Map<string, RuleRow[]>> {
   const rows = await db<RuleRow[]>`
     select ${COLUMNS(db)}
     from harness.rule_versions rv
     join harness.staff st on st.id = rv.saved_by
-    where rv.owner = ${owner}
-      ${ruleIds ? db`and rv.rule_id in ${db(ruleIds)}` : db``}
+    where rv.owner = ${owner} and rv.rule_id in ${db(ruleIds)}
     order by rv.rule_id, rv.version desc`;
   const byRule = new Map<string, RuleRow[]>();
   for (const row of rows) {
@@ -128,21 +121,6 @@ async function allRows(
     byRule.set(row.rule_id, list);
   }
   return byRule;
-}
-
-async function latestRows(
-  db: Db,
-  owner: Owner,
-  ruleIds?: string[],
-): Promise<Map<string, RuleRow>> {
-  const rows = await db<RuleRow[]>`
-    select distinct on (rv.rule_id) ${COLUMNS(db)}
-    from harness.rule_versions rv
-    join harness.staff st on st.id = rv.saved_by
-    where rv.owner = ${owner}
-      ${ruleIds ? db`and rv.rule_id in ${db(ruleIds)}` : db``}
-    order by rv.rule_id, rv.version desc`;
-  return new Map(rows.map((row) => [row.rule_id, row]));
 }
 
 async function versionRows(
@@ -179,24 +157,12 @@ export async function listRules(
 }
 
 /**
- * rule id → the latest saved state, for every Rule in `RULE_SPECS`: what the
- * Rules editor edits (the Rulebook Skill renders `inForce` and `scheduled`). A Run does not apply these (a
- * latest Version may be scheduled for later): it applies `ruleStatesAsOf`.
- */
-export async function currentRuleStates(
-  owner: Owner,
-): Promise<Record<string, RuleState>> {
-  const views = await listRules(owner);
-  return Object.fromEntries(views.map((view) => [view.spec.id, view.state]));
-}
-
-/**
  * The states a Run of `pipelineId` applies on `asOf`: each Rule at the
  * highest Version already in effect on that date, else its Default, else
- * null (not yet in force; the Run skips it). `startRun` snapshots the
- * Versions from this.
+ * null (not yet in force; the Run skips it). A Run snapshots the Versions
+ * from this.
  */
-export async function ruleStatesAsOf(
+async function ruleStatesAsOf(
   owner: Owner,
   pipelineId: PipelineId,
   asOf: string,
@@ -211,166 +177,52 @@ export async function ruleStatesAsOf(
   return resolveRuleStatesAsOf(pipelineId, saved, asOf);
 }
 
-const cleanNote = (note: string | null | undefined): string | null => {
-  const text = note?.trim();
-  if (!text) return null;
-  if (text.length > NOTE_CHARS) {
-    throw new InvalidError(`The note is at most ${NOTE_CHARS} characters.`);
-  }
-  return text;
-};
+export const ruleRepository: RuleRepository = {
+  list: listRules,
+  statesAsOf: ruleStatesAsOf,
 
-/** Takes the Workspace's lock on one Rule so two saves at once get Versions n+1 and n+2, not two n+1. */
-async function lockRule(tx: Db, owner: Owner, ruleId: string) {
-  await tx`select pg_advisory_xact_lock(hashtextextended(${`harness:rule:${owner}:${ruleId}`}, 0))`;
-}
-
-async function insertVersion(
-  tx: Db,
-  input: {
-    owner: Owner;
-    staffId: string;
-    spec: RuleSpec;
-    state: Omit<RuleState, "version">;
-    note: string | null;
+  async history(owner, ruleId): Promise<RuleVersion[]> {
+    const spec = specOf(ruleId);
+    const rows = await versionRows(sql(), owner, spec.id);
+    return rows.map((row) => ({
+      ...stateOf(spec, row),
+      ruleId: spec.id,
+      savedBy: { id: row.saved_by, name: row.saved_by_name },
+      note: row.note,
+      createdAt: row.created_at.toISOString(),
+    }));
   },
-): Promise<RuleRow> {
-  const [top] = await tx<{ top: number }[]>`
-    select coalesce(max(version), 0)::int as top
-    from harness.rule_versions
-    where owner = ${input.owner} and rule_id = ${input.spec.id}`;
-  const version = nextVersion([top?.top ?? 0]);
-  await tx`
-    insert into harness.rule_versions
-      (owner, rule_id, version, enabled, params, outcome, effective_from, saved_by, note)
-    values (
-      ${input.owner}, ${input.spec.id}, ${version}, ${input.state.enabled},
-      ${jsonb(tx, input.state.params)}, ${input.state.outcome},
-      ${input.state.effectiveFrom}::date, ${input.staffId}, ${input.note}
-    )`;
-  const rows = await versionRows(tx, input.owner, input.spec.id);
-  const row = rows.find((candidate) => candidate.version === version);
-  if (!row) throw new Error("The Rule Version was not saved.");
-  return row;
-}
 
-/**
- * Saves an edit as the Rule's next Version. Needs `rule.edit`. A bad edit is
- * refused with a RuleRefusedError naming each field at fault; an edit that
- * changes nothing is refused too. The Audit event is written in the same
- * transaction, with the Parameters that changed.
- */
-export async function saveRule(
-  input: Actor & { ruleId: string; edit: RuleEdit; note?: string | null },
-): Promise<RuleView> {
-  assertCan(input.staff, "rule.edit");
-  const spec = specOf(input.ruleId);
-  const note = cleanNote(input.note);
-  const row = await sql().begin(async (tx) => {
-    await lockRule(tx, input.owner, spec.id);
-    const latest = (await latestRows(tx, input.owner, [spec.id])).get(spec.id);
-    const current = latest ? stateOf(spec, latest) : defaultRuleState(spec);
-    const result = validateRuleEdit(spec, input.edit, current);
-    if (!result.ok) throw new RuleRefusedError(result.errors);
-    if (sameRuleState(spec, result.next, current)) {
-      throw new InvalidError("Nothing changed: the Rule already says that.");
-    }
-    const saved = await insertVersion(tx, {
-      owner: input.owner,
-      staffId: input.staff.id,
-      spec,
-      state: result.next,
-      note,
+  /**
+   * Under the Workspace's lock on the Rule (two saves at once get Versions
+   * n+1 and n+2, not two n+1): the saved Versions are read once, the plan
+   * decides, Version n+1 and its event go in the same transaction.
+   */
+  async saveVersion(owner, ruleId, staffId, plan) {
+    const spec = specOf(ruleId);
+    const versions = await sql().begin(async (tx) => {
+      await tx`select pg_advisory_xact_lock(hashtextextended(${`harness:rule:${owner}:${spec.id}`}, 0))`;
+      const rows = await versionRows(tx, owner, spec.id);
+      const latest = latestOf(rows);
+      const decided = plan({
+        current: latest ? stateOf(spec, latest) : defaultRuleState(spec),
+        versions: rows.map((row) => ({
+          ...stateOf(spec, row),
+          version: row.version,
+        })),
+      });
+      const version = nextVersion(rows.map((row) => row.version));
+      await tx`
+        insert into harness.rule_versions
+          (owner, rule_id, version, enabled, params, outcome, effective_from, saved_by, note)
+        values (
+          ${owner}, ${spec.id}, ${version}, ${decided.state.enabled},
+          ${jsonb(tx, decided.state.params)}, ${decided.state.outcome},
+          ${decided.state.effectiveFrom}::date, ${staffId}, ${decided.note}
+        )`;
+      await auditIn(tx, decided.event(version));
+      return versionRows(tx, owner, spec.id);
     });
-    await auditIn(tx, {
-      owner: input.owner,
-      actor: { kind: "staff", staff: input.staff },
-      action: "rule.saved",
-      summary: `Saved ${spec.title} as Version ${saved.version}`,
-      target: { kind: "rule", id: spec.id },
-      detail: {
-        pipelineId: spec.pipelineId,
-        version: saved.version,
-        previousVersion: current.version,
-        params: changedParams(spec, current.params, result.next.params),
-        enabled: [current.enabled, result.next.enabled],
-        outcome: [current.outcome, result.next.outcome],
-        effectiveFrom: [current.effectiveFrom, result.next.effectiveFrom],
-        note,
-      },
-    });
-    return { saved, versions: await versionRows(tx, input.owner, spec.id) };
-  });
-  return viewOf(spec, row.saved, row.versions);
-}
-
-/**
- * Puts a Rule back to its Default (`version` left out or 0) or to an earlier
- * Version, by saving that state as a new Version. Needs `rule.edit`.
- */
-export async function restoreRule(
-  input: Actor & { ruleId: string; version?: number | null },
-): Promise<RuleView> {
-  assertCan(input.staff, "rule.edit");
-  const spec = specOf(input.ruleId);
-  const row = await sql().begin(async (tx) => {
-    await lockRule(tx, input.owner, spec.id);
-    const rows = await versionRows(tx, input.owner, spec.id);
-    const latest = latestOf(rows);
-    const current = latest ? stateOf(spec, latest) : defaultRuleState(spec);
-    const plan = planRestore<Omit<RuleState, "version">>(
-      defaultRuleState(spec),
-      rows.map((saved) => ({
-        ...stateOf(spec, saved),
-        version: saved.version,
-      })),
-      input.version,
-    );
-    if (!plan) throw new NotFoundError("That Version was never saved.");
-    if (sameRuleState(spec, plan.state, current)) {
-      throw new InvalidError(
-        plan.from === null
-          ? "The Rule already says what the Default says."
-          : `The Rule already says what Version ${plan.from} says.`,
-      );
-    }
-    const saved = await insertVersion(tx, {
-      owner: input.owner,
-      staffId: input.staff.id,
-      spec,
-      state: plan.state,
-      note: plan.note,
-    });
-    await auditIn(tx, {
-      owner: input.owner,
-      actor: { kind: "staff", staff: input.staff },
-      action: "rule.restored",
-      summary: `${plan.note} on ${spec.title} (now Version ${saved.version})`,
-      target: { kind: "rule", id: spec.id },
-      detail: {
-        pipelineId: spec.pipelineId,
-        version: saved.version,
-        restoredFrom: plan.from === null ? "default" : plan.from,
-        params: changedParams(spec, current.params, plan.state.params),
-      },
-    });
-    return { saved, versions: await versionRows(tx, input.owner, spec.id) };
-  });
-  return viewOf(spec, row.saved, row.versions);
-}
-
-/** A Rule's saved Versions, newest first. Empty while only the Default applies. */
-export async function ruleHistory(
-  owner: Owner,
-  ruleId: string,
-): Promise<RuleVersion[]> {
-  const spec = specOf(ruleId);
-  const rows = await versionRows(sql(), owner, spec.id);
-  return rows.map((row) => ({
-    ...stateOf(spec, row),
-    ruleId: spec.id,
-    savedBy: { id: row.saved_by, name: row.saved_by_name },
-    note: row.note,
-    createdAt: row.created_at.toISOString(),
-  }));
-}
+    return viewOf(spec, latestOf(versions), versions);
+  },
+};

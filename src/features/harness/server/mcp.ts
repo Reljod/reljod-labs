@@ -4,6 +4,17 @@ import { createMcpHandler, getPublicOrigin, withMcpAuth } from "mcp-handler";
 import { unstable_rethrow } from "next/navigation";
 import { ZodError, z } from "zod";
 import {
+  ForbiddenError,
+  InvalidError,
+  isAppError,
+  NotFoundError,
+} from "@/platform/errors";
+import {
+  attachmentList,
+  isSourceId,
+  resolveSourceRef,
+} from "../domain/attachments";
+import {
   ACTOR_KINDS,
   AUDIT_ACTION_IDS,
   type AuditActor,
@@ -20,9 +31,9 @@ import {
   runLink,
   STATIC_MCP_TOOLS,
   type StaticToolName,
-  toolAllowed,
 } from "../domain/mcp-tools";
 import { guestTokenProblem, type HarnessClaims } from "../domain/oauth";
+import { refusalFor } from "../domain/permissions";
 import { levels, PIPELINE_IDS } from "../domain/pipeline";
 import { PIPELINES } from "../domain/pipelines";
 import { pipelineInputSchema } from "../domain/pipelines/tool-schema";
@@ -34,57 +45,22 @@ import { listedRule } from "../domain/rules";
 import type { RunView } from "../domain/run";
 import { sandboxNote } from "../domain/sandbox";
 import { renderSkillMd } from "../domain/skills";
-import {
-  attachmentsHint,
-  resolveSourceId,
-  resolveSourceIds,
-  sessionAttachments,
-} from "./attachments";
-import { audit, listAudit } from "./audit";
+import { auditLog } from "./audit";
 import { env } from "./env";
-import {
-  ForbiddenError,
-  InvalidError,
-  LimitError,
-  NotFoundError,
-  StateError,
-} from "./errors";
-import {
-  addTextSource,
-  ingestSource,
-  listConflicts,
-  listSources,
-  readSource,
-  readSourceText,
-  searchKnowledge,
-} from "./knowledge";
 import { actorOf, type McpActor, verifyBearer } from "./mcp-auth";
-import {
-  findMembers,
-  getEmployer,
-  getMember,
-  listEmployers,
-  listMemberRequests,
-  listSchedules,
-} from "./records";
-import { listRules } from "./rules";
-import { getRun, listRuns, startRun, stopRun } from "./runs";
-import {
-  sandboxListFiles,
-  sandboxReadFile,
-  sandboxRun,
-  sandboxWriteFile,
-} from "./sandbox";
-import { writableSession } from "./sessions";
-import { getSkill, listSkills } from "./skills";
+import type { HarnessServices } from "./services";
 
 /*
  * The Harness MCP server (ADR 0013): the only way in, for the built-in chat
  * and for Claude alike. Every request carries a Harness token; every tool
- * checks the Staff member's Role, scopes to the Owner and writes an Audit
- * event. No tool gives an Approval or settles a Conflict: a person does that
- * in the app.
+ * runs on the same services as the REST routes, applies the same Role
+ * policy to the token's Staff member, scopes to the Owner and writes an
+ * Audit event. No tool gives an Approval or settles a Conflict: a person
+ * does that in the app.
  */
+
+/** The services an MCP request runs on: the route's (live or stub), or the chat turn's own. */
+export type McpServices = Omit<HarnessServices, "chat">;
 
 // Answers ------------------------------------------------------------------------------
 
@@ -122,22 +98,13 @@ function answer(outcome: Outcome) {
   };
 }
 
-const KNOWN = [
-  ForbiddenError,
-  InvalidError,
-  LimitError,
-  NotFoundError,
-  StateError,
-] as const;
-
 /**
  * What the model is told when a tool fails: the reason when it is one a
- * person can act on. A Sandbox that is off or unreachable throws
- * `StateError("Sandbox offline: …")`, which passes through as written.
+ * person can act on (a service's refusal, a Sandbox that is unavailable),
+ * the first schema issue for bad arguments, and a plain phrase otherwise.
  */
 function refusalOf(error: unknown): string {
-  if (KNOWN.some((kind) => error instanceof kind))
-    return (error as Error).message;
+  if (isAppError(error)) return error.message;
   if (error instanceof ZodError)
     return error.issues[0]?.message ?? "Those arguments don't look right.";
   return "That failed on the server. Try again, or another tool.";
@@ -150,21 +117,21 @@ function failed(message: string) {
   };
 }
 
-class ToolRefusal extends InvalidError {}
-
 // Who is calling -----------------------------------------------------------------------
 
 type ToolContext = {
   http?: { authInfo?: { extra?: Record<string, unknown> } };
 };
 
-type Caller = McpActor & { origin: string };
+type Caller = McpActor & { origin: string; services: McpServices };
 
 function callerOf(ctx: unknown): Caller {
   const extra = (ctx as ToolContext).http?.authInfo?.extra;
   const actor = extra?.actor as McpActor | undefined;
-  if (!actor) throw new ForbiddenError("Not signed in to the Harness.");
-  return { ...actor, origin: String(extra?.origin ?? "") };
+  const services = extra?.services as McpServices | undefined;
+  if (!actor || !services)
+    throw new ForbiddenError("Not signed in to the Harness.");
+  return { ...actor, services, origin: String(extra?.origin ?? "") };
 }
 
 /** The chat's tokens act as the Agent; anyone else's as the Staff member. */
@@ -174,9 +141,13 @@ function auditActorOf(caller: Caller): AuditActor {
     : { kind: "staff", staff: caller.staff };
 }
 
+/** The Session the token was minted for (the chat's), if any. */
+const sessionOf = (caller: Caller) => caller.claims.sessionId ?? null;
+
 /**
- * Runs one tool for the caller: the Role check, the work, and a `tool.called`
- * or `tool.failed` Audit event. Any error becomes a clean tool error.
+ * Runs one tool for the caller: the Role policy (`refusalFor`, the same as
+ * the REST routes' `permits`), the work, and a `tool.called` or
+ * `tool.failed` Audit event. Any error becomes a clean tool error.
  */
 function handle<I>(
   spec: McpToolSpec,
@@ -190,41 +161,93 @@ function handle<I>(
       return failed(refusalOf(error));
     }
     const record = (ok: boolean, extra: Record<string, unknown> = {}) =>
-      audit({
-        owner: caller.owner,
-        sessionId: caller.claims.sessionId ?? null,
-        actor: auditActorOf(caller),
-        action: ok ? "tool.called" : "tool.failed",
-        summary: `${ok ? "Called" : "Failed"} ${spec.name}`,
-        target: { kind: "tool", id: spec.name },
-        detail: {
-          tool: spec.name,
-          via: caller.claims.via,
-          staff: { id: caller.staff.id, name: caller.staff.name },
-          args: cutArgs(input),
-          ...extra,
-        },
-      });
+      recordTool(caller, spec, ok, cutArgs(input), extra);
     try {
-      if (spec.permission && !toolAllowed(caller.staff, spec)) {
-        throw ForbiddenError.forAction(spec.permission);
-      }
+      const refusal = spec.permission
+        ? refusalFor(caller.staff, spec.permission)
+        : null;
+      if (refusal !== null) throw new ForbiddenError(refusal);
       const outcome = await work(input, caller);
       await record(true);
       return answer(outcome);
     } catch (error) {
       unstable_rethrow(error);
       const message = refusalOf(error);
-      if (message.startsWith("That failed on the server"))
+      if (!isAppError(error) && !(error instanceof ZodError))
         console.error("[harness] mcp tool", spec.name, error);
-      await record(false, { error: message }).catch(() => null);
+      await record(false, { error: message });
       return failed(message);
     }
   };
 }
 
+/** `tool.called` / `tool.failed`, best effort. */
+async function recordTool(
+  caller: Caller,
+  spec: McpToolSpec,
+  ok: boolean,
+  args: Record<string, unknown>,
+  extra: Record<string, unknown>,
+) {
+  await auditLog
+    .record({
+      owner: caller.owner,
+      sessionId: sessionOf(caller),
+      actor: auditActorOf(caller),
+      action: ok ? "tool.called" : "tool.failed",
+      summary: `${ok ? "Called" : "Failed"} ${spec.name}`,
+      target: { kind: "tool", id: spec.name },
+      detail: {
+        tool: spec.name,
+        via: caller.claims.via,
+        staff: { id: caller.staff.id, name: caller.staff.name },
+        args,
+        ...extra,
+      },
+    })
+    .catch(() => null);
+}
+
 const absolute = (caller: Caller, path: string) =>
   caller.origin ? `${caller.origin}${path}` : path;
+
+// Source references ----------------------------------------------------------------------
+
+/**
+ * The Source id a tool was given. A UUID passes through (the service checks
+ * it is the Owner's). Anything else is looked up among this Session's
+ * attachments by file name or title, and used only when exactly one fits.
+ * Without a Session (an outside MCP client) only ids resolve. The refusal
+ * lists the attachments, so the model can correct itself.
+ */
+async function sourceIdOf(caller: Caller, ref: string): Promise<string> {
+  if (isSourceId(ref)) return ref.trim().toLowerCase();
+  const sessionId = sessionOf(caller);
+  const attachments = sessionId
+    ? await caller.services.sessions.attachments(caller.owner, sessionId)
+    : [];
+  const result = resolveSourceRef(ref, attachments);
+  if (!result.ok) {
+    throw new InvalidError(
+      sessionId
+        ? result.message
+        : `"${ref.slice(0, 80)}" is not a Source id. Give the id (a UUID) from list_sources.`,
+    );
+  }
+  return result.sourceId;
+}
+
+/** A hint appended to a "not found" for a Session's attachments, so a wrong id can be corrected in one step. */
+async function attachmentsHint(caller: Caller): Promise<string> {
+  const sessionId = sessionOf(caller);
+  if (!sessionId) return "";
+  const attachments = await caller.services.sessions.attachments(
+    caller.owner,
+    sessionId,
+  );
+  if (attachments.length === 0) return "";
+  return ` Attached in this Session:\n${attachmentList(attachments)}`;
+}
 
 // Pipelines ------------------------------------------------------------------------------
 
@@ -294,29 +317,24 @@ function registerPipelineTools(server: McpServer) {
         inputSchema: pipelineInputSchema(spec),
       },
       handle(tool, async (given: Record<string, unknown>, caller) => {
-        const where = {
-          owner: caller.owner,
-          sessionId: caller.claims.sessionId ?? null,
-        };
         // A model that names a paper by its file name is helped to its id.
         const input = { ...given };
         for (const field of spec.inputSchema) {
           if (field.type !== "id") continue;
           const value = input[field.name];
           if (typeof value === "string") {
-            input[field.name] = await resolveSourceId(where, value);
+            input[field.name] = await sourceIdOf(caller, value);
           } else if (Array.isArray(value)) {
-            input[field.name] = await resolveSourceIds(
-              where,
-              value.filter((item): item is string => typeof item === "string"),
-            );
+            const ids: string[] = [];
+            for (const ref of value) {
+              if (typeof ref === "string")
+                ids.push(await sourceIdOf(caller, ref));
+            }
+            input[field.name] = [...new Set(ids)];
           }
         }
-        const run = await startRun({
-          owner: caller.owner,
-          staff: caller.staff,
-          visitor: caller.visitor,
-          sessionId: caller.claims.sessionId ?? null,
+        const run = await caller.services.runs.start(caller, {
+          sessionId: sessionOf(caller),
           pipelineId: spec.id,
           input,
           via: caller.claims.via === "chat" ? "chat" : "mcp",
@@ -343,11 +361,11 @@ function registerPipelineTools(server: McpServer) {
  * passed: a Run with model Steps takes half a minute or more, and an Agent
  * that polls re-sends its whole conversation on every call.
  */
-async function settledRun(owner: Caller["owner"], runId: string) {
+async function settledRun(caller: Caller, runId: string) {
   const until = Date.now() + LIMITS.runWaitMs;
   for (;;) {
-    const run = await getRun(owner, runId);
-    const atWork = run?.status === "queued" || run?.status === "running";
+    const run = await caller.services.runs.get(caller, runId);
+    const atWork = run.status === "queued" || run.status === "running";
     if (!atWork || Date.now() >= until) return run;
     await new Promise((resolve) => setTimeout(resolve, 1_500));
   }
@@ -369,19 +387,15 @@ const sessionArg = z
     "The Session whose Sandbox to use. Needed outside the built-in chat; must be a Session of the Staff member you act as.",
   );
 
-/** The Session a Sandbox tool works in: the chat's own, or one the Staff member owns. */
-async function sandboxSession(
-  caller: Caller,
-  given: string | undefined,
-): Promise<string> {
-  if (caller.claims.via === "chat" && caller.claims.sessionId)
-    return caller.claims.sessionId;
+/** The Session a Sandbox tool works in: the chat's own, or one the Staff member owns (the service checks). */
+function sandboxSession(caller: Caller, given: string | undefined): string {
+  const own = caller.claims.via === "chat" ? sessionOf(caller) : null;
+  if (own) return own;
   if (!given)
-    throw new ToolRefusal(
+    throw new InvalidError(
       "Give sessionId: a Session of the Staff member you act as (open one in the app).",
     );
-  const session = await writableSession(caller, given);
-  return session.id;
+  return given;
 }
 
 type Work<I> = (input: I, caller: Caller) => Promise<Outcome>;
@@ -397,6 +411,38 @@ const reg = <S extends z.ZodObject>(
 ): Registration<z.infer<S>> => ({ input, work });
 
 const noInput = z.object({});
+
+/** What an ingest added, with a card per Source and Conflict. */
+function ingested(result: {
+  source: { id: string; title: string; status: string; passages: number };
+  conflicts: { id: string; summary: string }[];
+}): Outcome {
+  const { source, conflicts } = result;
+  return {
+    lead: `"${source.title}" is ${source.status} with ${source.passages} Passages${
+      conflicts.length > 0
+        ? `. ${conflicts.length} Conflict${conflicts.length === 1 ? "" : "s"} found: an admin settles them in the app.`
+        : "."
+    }`,
+    data: {
+      sourceId: source.id,
+      title: source.title,
+      status: source.status,
+      passages: source.passages,
+      conflicts: conflicts.map((conflict) => ({
+        id: conflict.id,
+        summary: conflict.summary,
+      })),
+    },
+    cards: {
+      sources: [{ sourceId: source.id, title: source.title }],
+      conflicts: conflicts.map((conflict) => ({
+        conflictId: conflict.id,
+        summary: conflict.summary,
+      })),
+    },
+  };
+}
 
 /** Each tool's input and work, keyed by its name in `STATIC_MCP_TOOLS`. */
 // biome-ignore lint/suspicious/noExplicitAny: the registry holds every tool's own input type.
@@ -421,8 +467,7 @@ const TOOLS: Record<StaticToolName, Registration<any>> = {
   })),
 
   get_run: reg(z.object({ runId: id }), async (input, caller) => {
-    const run = await settledRun(caller.owner, input.runId);
-    if (!run) throw new NotFoundError("That Run is not in this Workspace.");
+    const run = await settledRun(caller, input.runId);
     const brief = runBrief(run, caller);
     return {
       lead: `${run.subject}: ${run.status}.${brief.waitingFor ? ` Waiting for a person: ${brief.waitingFor.join(" ")}` : ""}`,
@@ -433,7 +478,7 @@ const TOOLS: Record<StaticToolName, Registration<any>> = {
   list_runs: reg(
     z.object({ sessionId: z.string().optional(), limit: limit(50) }),
     async (input, caller) => {
-      const runs = await listRuns(caller.owner, {
+      const runs = await caller.services.runs.list(caller, {
         sessionId: input.sessionId ?? null,
         limit: input.limit ?? 20,
       });
@@ -453,11 +498,7 @@ const TOOLS: Record<StaticToolName, Registration<any>> = {
   ),
 
   stop_run: reg(z.object({ runId: id }), async (input, caller) => {
-    const run = await stopRun({
-      owner: caller.owner,
-      staff: caller.staff,
-      runId: input.runId,
-    });
+    const run = await caller.services.runs.stop(caller, input.runId);
     return {
       lead: `The Run is ${run.status}.`,
       data: { runId: run.id, status: run.status },
@@ -471,7 +512,7 @@ const TOOLS: Record<StaticToolName, Registration<any>> = {
       limit: limit(50),
     }),
     async (input, caller) => {
-      const members = await findMembers(caller.owner, {
+      const members = await caller.services.records.members(caller, {
         q: input.query ?? "",
         employerId: input.employerId ?? null,
         limit: input.limit ?? 20,
@@ -483,8 +524,7 @@ const TOOLS: Record<StaticToolName, Registration<any>> = {
   get_member: reg(
     z.object({ member: id.describe("A Member's id or member number") }),
     async (input, caller) => {
-      const found = await getMember(caller.owner, input.member);
-      if (!found) throw new NotFoundError("No such Member in this Workspace.");
+      const found = await caller.services.records.member(caller, input.member);
       return {
         lead: `${found.member.fullName} (${found.member.memberNo}).`,
         data: found,
@@ -493,16 +533,17 @@ const TOOLS: Record<StaticToolName, Registration<any>> = {
   ),
 
   list_employers: reg(noInput, async (_input, caller) => {
-    const employers = await listEmployers(caller.owner);
+    const employers = await caller.services.records.employers(caller);
     return { lead: `${employers.length} Employers.`, data: employers };
   }),
 
   get_employer: reg(
     z.object({ employer: id.describe("An Employer's id or code") }),
     async (input, caller) => {
-      const found = await getEmployer(caller.owner, input.employer);
-      if (!found)
-        throw new NotFoundError("No such Employer in this Workspace.");
+      const found = await caller.services.records.employer(
+        caller,
+        input.employer,
+      );
       return {
         lead: `${found.employer.name} (${found.employer.code}), ${found.schedules.length} Schedules.`,
         data: found,
@@ -519,7 +560,7 @@ const TOOLS: Record<StaticToolName, Registration<any>> = {
         .optional(),
     }),
     async (input, caller) => {
-      const schedules = await listSchedules(caller.owner, {
+      const schedules = await caller.services.records.schedules(caller, {
         employerId: input.employerId ?? null,
         period: input.period ? `${input.period.slice(0, 7)}-01` : null,
       });
@@ -543,7 +584,7 @@ const TOOLS: Record<StaticToolName, Registration<any>> = {
         .optional(),
     }),
     async (input, caller) => {
-      const requests = await listMemberRequests(caller.owner, {
+      const requests = await caller.services.records.memberRequests(caller, {
         kind: input.kind ?? null,
         memberId: input.memberId ?? null,
         status: input.status ?? null,
@@ -558,11 +599,10 @@ const TOOLS: Record<StaticToolName, Registration<any>> = {
       limit: limit(12),
     }),
     async (input, caller) => {
-      const hits = await searchKnowledge(
-        caller.owner,
+      const hits = await caller.services.knowledge.search(
+        caller,
         input.query,
         input.limit ?? 8,
-        caller.visitor,
       );
       const conflictOpen = hits.some((hit) => hit.conflictOpen);
       return {
@@ -584,21 +624,19 @@ const TOOLS: Record<StaticToolName, Registration<any>> = {
   ),
 
   read_source: reg(z.object({ sourceId: sourceRef }), async (input, caller) => {
-    const where = {
-      owner: caller.owner,
-      sessionId: caller.claims.sessionId ?? null,
-    };
-    const sourceId = await resolveSourceId(where, input.sourceId);
-    const found = await readSource(caller.owner, sourceId);
-    if (!found)
-      throw new NotFoundError(
-        `That Source is not in this Workspace.${await attachmentsHint(where)}`,
-      );
+    const { knowledge } = caller.services;
+    const sourceId = await sourceIdOf(caller, input.sourceId);
+    const found = await knowledge
+      .source(caller, sourceId)
+      .catch(async (error: unknown) => {
+        if (!(error instanceof NotFoundError)) throw error;
+        throw new NotFoundError(
+          `That Source is not in this Workspace.${await attachmentsHint(caller)}`,
+        );
+      });
     if (found.source.status === "pending") {
       // Attached, not filed: no Passages yet, so the Agent reads the file's text.
-      const read = await readSourceText(caller.owner, sourceId);
-      if (!read)
-        throw new NotFoundError("That Source is not in this Workspace.");
+      const read = await knowledge.text(caller, sourceId);
       const text = read.text.slice(0, TEXT_CHARS);
       const cut = read.text.length > text.length;
       return {
@@ -640,13 +678,16 @@ const TOOLS: Record<StaticToolName, Registration<any>> = {
   }),
 
   list_attachments: reg(noInput, async (_input, caller) => {
-    const sessionId = caller.claims.sessionId ?? null;
+    const sessionId = sessionOf(caller);
     if (!sessionId) {
-      throw new ToolRefusal(
+      throw new InvalidError(
         "Attachments belong to a Session, and this connection has none. Use list_sources for the Knowledge base.",
       );
     }
-    const attachments = await sessionAttachments(caller.owner, sessionId);
+    const attachments = await caller.services.sessions.attachments(
+      caller.owner,
+      sessionId,
+    );
     return {
       lead: `${attachments.length} attached in this Session (filed or not). Pass an id to read_source, file_source or a Pipeline.`,
       data: attachments.map((item) => ({
@@ -661,7 +702,9 @@ const TOOLS: Record<StaticToolName, Registration<any>> = {
 
   list_sources: reg(noInput, async (_input, caller) => {
     // Attached-but-unfiled Sources are not in the Knowledge base yet.
-    const sources = await listSources(caller.owner, { filedOnly: true });
+    const sources = await caller.services.knowledge.sources(caller, {
+      filedOnly: true,
+    });
     return {
       lead: `${sources.length} Sources.`,
       data: sources.map((source) => ({
@@ -688,39 +731,31 @@ const TOOLS: Record<StaticToolName, Registration<any>> = {
         .optional()
         .describe("The date the document itself carries"),
     }),
-    async (input, caller) => {
-      const result = await addTextSource({
-        owner: caller.owner,
-        staff: caller.staff,
-        visitor: caller.visitor,
-        title: input.title,
-        text: input.text,
-        kind: input.kind ?? "text",
-        documentDate: input.documentDate ?? null,
-        sessionId: caller.claims.sessionId ?? null,
-      });
-      return ingested(result);
-    },
+    async (input, caller) =>
+      ingested(
+        await caller.services.knowledge.addText(caller, {
+          title: input.title,
+          text: input.text,
+          kind: input.kind ?? "text",
+          documentDate: input.documentDate ?? null,
+          sessionId: sessionOf(caller),
+        }),
+      ),
   ),
 
-  file_source: reg(z.object({ sourceId: sourceRef }), async (input, caller) => {
-    const sourceId = await resolveSourceId(
-      { owner: caller.owner, sessionId: caller.claims.sessionId ?? null },
-      input.sourceId,
-    );
-    const result = await ingestSource({
-      owner: caller.owner,
-      staff: caller.staff,
-      visitor: caller.visitor,
-      sourceId,
-    });
-    return ingested(result);
-  }),
+  file_source: reg(z.object({ sourceId: sourceRef }), async (input, caller) =>
+    ingested(
+      await caller.services.knowledge.ingest(
+        caller,
+        await sourceIdOf(caller, input.sourceId),
+      ),
+    ),
+  ),
 
   list_conflicts: reg(
     z.object({ status: z.enum(["open", "resolved"]).optional() }),
     async (input, caller) => {
-      const conflicts = await listConflicts(caller.owner, {
+      const conflicts = await caller.services.knowledge.conflicts(caller, {
         status: input.status ?? null,
       });
       return {
@@ -739,7 +774,7 @@ const TOOLS: Record<StaticToolName, Registration<any>> = {
   ),
 
   list_skills: reg(noInput, async (_input, caller) => {
-    const skills = await listSkills(caller.owner);
+    const skills = await caller.services.skills.list(caller);
     return {
       lead: `${skills.length} Skills.`,
       data: skills.map((skill) => ({
@@ -757,12 +792,7 @@ const TOOLS: Record<StaticToolName, Registration<any>> = {
   get_skill: reg(
     z.object({ skill: id.describe("The Skill's id or name") }),
     async (input, caller) => {
-      const skill =
-        (await getSkill(caller.owner, input.skill)) ??
-        (await listSkills(caller.owner)).find(
-          (item) => item.name === input.skill,
-        ) ??
-        null;
+      const skill = await caller.services.skills.find(caller, input.skill);
       if (!skill) throw new NotFoundError("No such Skill.");
       return {
         lead: `Skill ${skill.name}${skill.kind === "rulebook" ? " (Rulebook, the Rules in force now)" : ""}, Version ${skill.version}:\n\n${renderSkillMd(skill)}`,
@@ -773,7 +803,10 @@ const TOOLS: Record<StaticToolName, Registration<any>> = {
   list_rules: reg(
     z.object({ pipelineId: z.enum(PIPELINE_IDS).optional() }),
     async (input, caller) => {
-      const rules = await listRules(caller.owner, input.pipelineId ?? null);
+      const rules = await caller.services.rules.list(
+        caller,
+        input.pipelineId ?? null,
+      );
       return {
         lead: `${rules.length} Rules, as a Run started today applies them (inForce), with any change scheduled for a later date (scheduled).`,
         data: rules.map(listedRule),
@@ -790,9 +823,7 @@ const TOOLS: Record<StaticToolName, Registration<any>> = {
       limit: limit(100),
     }),
     async (input, caller) => {
-      const page = await listAudit({
-        owner: caller.owner,
-        staff: caller.staff,
+      const page = await caller.services.audit.list(caller, {
         sessionId: input.sessionId ?? null,
         actorKind: input.actorKind ?? null,
         action: (input.action as (typeof AUDIT_ACTION_IDS)[number]) ?? null,
@@ -832,16 +863,12 @@ const TOOLS: Record<StaticToolName, Registration<any>> = {
       sessionId: sessionArg,
     }),
     async (input, caller) => {
-      const sessionId = await sandboxSession(caller, input.sessionId);
-      const file = await sandboxWriteFile({
-        owner: caller.owner,
-        staff: caller.staff,
-        visitor: caller.visitor,
-        sessionId,
-        path: input.path,
-        content: input.content,
-        via: "agent",
-      });
+      const file = await caller.services.sandbox.write(
+        caller,
+        { sessionId: sandboxSession(caller, input.sessionId), via: "agent" },
+        input.path,
+        input.content,
+      );
       return {
         lead: `Wrote ${file.path} (${file.bytes} bytes).${sandboxNote(file)}`,
         data: file,
@@ -855,15 +882,11 @@ const TOOLS: Record<StaticToolName, Registration<any>> = {
       sessionId: sessionArg,
     }),
     async (input, caller) => {
-      const sessionId = await sandboxSession(caller, input.sessionId);
-      const result = await sandboxRun({
-        owner: caller.owner,
-        staff: caller.staff,
-        visitor: caller.visitor,
-        sessionId,
-        command: input.command,
-        via: "agent",
-      });
+      const result = await caller.services.sandbox.run(
+        caller,
+        { sessionId: sandboxSession(caller, input.sessionId), via: "agent" },
+        input.command,
+      );
       return {
         lead: `Exit ${result.exitCode ?? "none"}${result.timedOut ? " (timed out)" : ""}${result.truncated ? " (output cut)" : ""}.${sandboxNote(result)}`,
         data: result,
@@ -874,13 +897,11 @@ const TOOLS: Record<StaticToolName, Registration<any>> = {
   code_read_file: reg(
     z.object({ path: z.string().min(1).max(200), sessionId: sessionArg }),
     async (input, caller) => {
-      const sessionId = await sandboxSession(caller, input.sessionId);
-      const file = await sandboxReadFile({
-        owner: caller.owner,
-        staff: caller.staff,
-        sessionId,
-        path: input.path,
-      });
+      const file = await caller.services.sandbox.read(
+        caller,
+        sandboxSession(caller, input.sessionId),
+        input.path,
+      );
       return {
         lead: `${file.path} (${file.bytes} bytes${file.truncated ? ", cut" : ""}).`,
         data: file,
@@ -894,49 +915,15 @@ const TOOLS: Record<StaticToolName, Registration<any>> = {
       sessionId: sessionArg,
     }),
     async (input, caller) => {
-      const sessionId = await sandboxSession(caller, input.sessionId);
-      const files = await sandboxListFiles({
-        owner: caller.owner,
-        staff: caller.staff,
-        sessionId,
-        ...(input.path ? { path: input.path } : {}),
-      });
+      const files = await caller.services.sandbox.list(
+        caller,
+        sandboxSession(caller, input.sessionId),
+        input.path,
+      );
       return { lead: `${files.length} entries.`, data: files };
     },
   ),
 };
-
-/** What an ingest added, with a card per Source and Conflict. */
-function ingested(result: {
-  source: { id: string; title: string; status: string; passages: number };
-  conflicts: { id: string; summary: string }[];
-}): Outcome {
-  const { source, conflicts } = result;
-  return {
-    lead: `"${source.title}" is ${source.status} with ${source.passages} Passages${
-      conflicts.length > 0
-        ? `. ${conflicts.length} Conflict${conflicts.length === 1 ? "" : "s"} found: an admin settles them in the app.`
-        : "."
-    }`,
-    data: {
-      sourceId: source.id,
-      title: source.title,
-      status: source.status,
-      passages: source.passages,
-      conflicts: conflicts.map((conflict) => ({
-        id: conflict.id,
-        summary: conflict.summary,
-      })),
-    },
-    cards: {
-      sources: [{ sourceId: source.id, title: source.title }],
-      conflicts: conflicts.map((conflict) => ({
-        conflictId: conflict.id,
-        summary: conflict.summary,
-      })),
-    },
-  };
-}
 
 /** Registers every tool in `MCP_TOOLS`: one per Pipeline, then the rest. */
 export function registerHarnessTools(server: McpServer) {
@@ -964,6 +951,9 @@ const handler = createMcpHandler(registerHarnessTools, {
 
 /** Each request's bearer is checked once, by the guest check and by the auth wrapper. */
 const verified = new WeakMap<Request, Promise<HarnessClaims | null>>();
+/** The services each request runs on, for the auth wrapper to hand the tools. */
+const servicesOf = new WeakMap<Request, McpServices>();
+
 function verifiedClaims(request: Request, bearer: string) {
   let claims = verified.get(request);
   if (!claims) {
@@ -987,6 +977,8 @@ const authenticated = withMcpAuth(
   handler,
   async (request, bearer) => {
     if (!bearer) return undefined;
+    const services = servicesOf.get(request);
+    if (!services) return undefined;
     const claims = await verifiedClaims(request, bearer);
     if (!claims) return undefined;
     const actor = await actorOf(claims);
@@ -996,18 +988,24 @@ const authenticated = withMcpAuth(
       clientId: `harness-${claims.via}`,
       scopes: ["harness"],
       expiresAt: claims.exp,
-      extra: { actor, origin: getPublicOrigin(request) },
+      extra: { actor, services, origin: getPublicOrigin(request) },
     };
   },
   { required: true, resourceMetadataPath: HARNESS_PROTECTED_RESOURCE_PATH },
 );
 
 /**
- * The Harness MCP server's entry point. A Guest signed in with OAuth must
- * also send their pasted Harness token (ADR 0012): refused with a 403 that
- * says so, not a 401, which would only send the client to sign in again.
+ * The Harness MCP server's entry point, on the services given: the route's
+ * (live, or stubbed for the e2e suite), or a chat turn's own. A Guest signed
+ * in with OAuth must also send their pasted Harness token (ADR 0012):
+ * refused with a 403 that says so, not a 401, which would only send the
+ * client to sign in again.
  */
-export async function mcpHandler(request: Request): Promise<Response> {
+export async function mcpHandler(
+  request: Request,
+  services: McpServices,
+): Promise<Response> {
+  servicesOf.set(request, services);
   const bearer = bearerOf(request);
   const claims = bearer ? await verifiedClaims(request, bearer) : null;
   const problem = claims

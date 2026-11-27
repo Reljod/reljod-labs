@@ -2,9 +2,8 @@ import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 import { Suspense } from "react";
 import { ACCESS_PATH } from "@/features/access/constants";
-import { AccessDeniedError } from "@/features/access/server/gate";
 import { HARNESS_CONNECT_PATH } from "@/features/harness/domain/mcp-tools";
-import { requireStaff } from "@/features/harness/server/context";
+import { signedIn } from "@/features/harness/server/page";
 import { Connect } from "./connect";
 import "@/features/harness/harness.css";
 
@@ -24,13 +23,11 @@ export default function ConnectPage() {
 
 /** A Guest's setup asks for their Harness token beside the OAuth sign-in. */
 async function Setup() {
-  const context = await requireStaff().catch((error: unknown) => {
-    if (error instanceof AccessDeniedError) return null;
-    throw error;
-  });
-  if (!context)
+  const signed = await signedIn();
+  if (!signed)
     redirect(`${ACCESS_PATH}?next=${encodeURIComponent(HARNESS_CONNECT_PATH)}`);
+  const { caller } = signed;
   return (
-    <Connect guest={context.access.kind === "guest"} staff={context.staff} />
+    <Connect guest={caller.access.kind === "guest"} staff={caller.staff} />
   );
 }

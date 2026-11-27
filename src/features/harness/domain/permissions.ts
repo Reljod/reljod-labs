@@ -53,6 +53,39 @@ export function can(staff: Pick<Staff, "role">, action: Action): boolean {
   return RANK[staff.role] >= RANK[NEEDS[action]];
 }
 
+const PHRASE: Record<Action, string> = {
+  "session.create": "open a Session",
+  "run.start": "start a Run",
+  "run.stop": "stop a Run",
+  "approval.decide.low": "give an Approval",
+  "approval.decide.high": "give a high-risk Approval",
+  "skill.edit": "edit Skills",
+  "rule.edit": "edit Rules",
+  "conflict.resolve": "settle a Conflict",
+  "source.add": "add a Source",
+  "source.remove": "remove a Source",
+  "audit.read.own": "read an Audit trail",
+  "audit.read.workspace": "read the whole Workspace's Audit trail",
+  "plugin.download": "download the Plugin",
+  "mcp.connect": "connect an MCP client",
+};
+
+/**
+ * Why this Staff member may not do the action, naming the Role it needs
+ * ("Only an admin may edit Rules. Switch Staff to try it."), or null when
+ * `can()` allows it. The REST policies, the MCP tools and the services all
+ * refuse with this one message.
+ */
+export function refusalFor(
+  staff: Pick<Staff, "role">,
+  action: Action,
+): string | null {
+  if (can(staff, action)) return null;
+  return roleNeeded(action) === "admin"
+    ? `Only an admin may ${PHRASE[action]}. Switch Staff to try it.`
+    : `Your Role may not ${PHRASE[action]}.`;
+}
+
 export type ApprovalRisk = "low" | "high";
 
 export type ApprovalCheck = {

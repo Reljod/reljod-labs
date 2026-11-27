@@ -1,25 +1,20 @@
 import { z } from "zod";
 import type { SourceUploadUrlResponse } from "@/features/harness/domain/api";
-import { requirePermission } from "@/features/harness/server/context";
-import { createUpload } from "@/features/harness/server/knowledge";
-import { bodyOf, failure, json } from "@/features/harness/server/respond";
+import { harnessApi, permits } from "@/features/harness/server/api";
+import { authorize, body } from "@/platform/http/middleware";
 
 const schema = z.object({
   name: z.string().min(1).max(255),
   type: z.string().max(255).default(""),
   bytes: z.number().int().positive(),
-  sessionId: z.string().nullish(),
+  sessionId: z.string().max(64).nullish(),
 });
 
 /** Registers a Source as pending and answers a signed URL the browser PUTs the file to. */
-export async function POST(request: Request) {
-  try {
-    const context = await requirePermission("source.add");
-    const body = schema.parse(await bodyOf(request));
-    return json<SourceUploadUrlResponse>(
-      await createUpload({ ...context, ...body }),
-    );
-  } catch (error) {
-    return failure(error);
-  }
-}
+export const POST = harnessApi
+  .use(authorize(permits("source.add")))
+  .use(body(schema))
+  .handle(
+    ({ services, caller, body }): Promise<SourceUploadUrlResponse> =>
+      services.knowledge.upload(caller, body),
+  );

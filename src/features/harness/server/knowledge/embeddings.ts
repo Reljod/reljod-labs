@@ -1,8 +1,8 @@
 import "server-only";
 import type { AuditUsage } from "../../domain/audit";
-import { type Db, sql } from "../db";
 import { EMBEDDING_DIMENSIONS } from "../env";
-import { addUsage, embed, toVector } from "../llm";
+import { addUsage, embed } from "../llm";
+import type { Embedder } from "../ports";
 
 /** Passages embedded in one gateway call. */
 const BATCH = 64;
@@ -10,9 +10,9 @@ const BATCH = 64;
 /**
  * Embeds texts in batches. A batch the gateway refuses (no key, a limit, an
  * outage) yields nulls, not an error: a Passage without an embedding is still
- * found by its words, and `backfillKnowledge` embeds it later.
+ * found by its words, and the Knowledge service's backfill embeds it later.
  */
-export async function embedAll(texts: string[]): Promise<{
+async function embedAll(texts: string[]): Promise<{
   vectors: (number[] | null)[];
   usage: AuditUsage | null;
 }> {
@@ -35,54 +35,30 @@ export async function embedAll(texts: string[]): Promise<{
   return { vectors, usage: addUsage(usages) };
 }
 
-/** Sets the embeddings of Passages by id, only where one is still missing. */
-export async function setEmbeddings(
-  db: Db,
-  rows: { id: number; embedding: number[] }[],
-): Promise<void> {
-  if (rows.length === 0) return;
-  const values = rows.map((row) => [String(row.id), toVector(row.embedding)]);
-  await db`
-    update harness.passages p set embedding = v.embedding::extensions.vector
-    from (values ${db(values)}) as v(id, embedding)
-    where p.id = v.id::bigint and p.embedding is null`;
-}
+/** The embedding model on the AI Gateway (paid). */
+export const gatewayEmbedder: Embedder = {
+  embedAll,
+  async embedQuery(text) {
+    try {
+      const { embeddings } = await embed([text]);
+      return embeddings[0] ?? null;
+    } catch (error) {
+      // No gateway key or the gateway is down: search by words alone.
+      console.error("[harness] could not embed a search query", error);
+      return null;
+    }
+  },
+};
 
-/** Passages of one Source by ordinal, for a Source whose rows were just inserted. */
-export async function setEmbeddingsByOrdinal(
-  db: Db,
-  sourceId: string,
-  rows: { ordinal: number; embedding: number[] }[],
-): Promise<void> {
-  if (rows.length === 0) return;
-  const values = rows.map((row) => [
-    String(row.ordinal),
-    toVector(row.embedding),
-  ]);
-  await db`
-    update harness.passages p set embedding = v.embedding::extensions.vector
-    from (values ${db(values)}) as v(ordinal, embedding)
-    where p.source_id = ${sourceId} and p.ordinal = v.ordinal::int`;
-}
-
-const TRIED = new Map<string, number>();
-const RETRY_AFTER_MS = 10 * 60 * 1000;
-
-/** Whether this instance has not tried to embed this Owner's Passages lately. Marks the attempt. */
-export function shouldTryBackfill(key: string, now = Date.now()): boolean {
-  const last = TRIED.get(key);
-  if (last !== undefined && now - last < RETRY_AFTER_MS) return false;
-  TRIED.set(key, now);
-  if (TRIED.size > 500) TRIED.clear();
-  return true;
-}
-
-export async function hasUnembedded(owner: string): Promise<boolean> {
-  const [row] = await sql()<{ found: boolean }[]>`
-    select exists (
-      select 1 from harness.passages p
-      join harness.sources s on s.id = p.source_id
-      where p.owner = ${owner} and p.embedding is null and s.deleted_at is null
-    ) as found`;
-  return row?.found ?? false;
-}
+/**
+ * The e2e suite's embedder: no vectors, no spend. Passages are filed with no
+ * embedding (search finds them by their words; a live request embeds them
+ * later), and a query searches by words alone.
+ */
+export const noEmbedder: Embedder = {
+  embedAll: async (texts) => ({
+    vectors: texts.map(() => null),
+    usage: null,
+  }),
+  embedQuery: async () => null,
+};

@@ -1,15 +1,20 @@
 import { z } from "zod";
 import type { AuditListResponse } from "@/features/harness/domain/api";
-import { ACTOR_KINDS, AUDIT_ACTION_IDS } from "@/features/harness/domain/audit";
+import {
+  ACTOR_KINDS,
+  AUDIT_ACTION_IDS,
+  type AuditAction,
+} from "@/features/harness/domain/audit";
 import { LIMITS } from "@/features/harness/domain/limits";
-import { listAudit } from "@/features/harness/server/audit";
-import { requirePermission } from "@/features/harness/server/context";
-import { failure, json } from "@/features/harness/server/respond";
+import { harnessApi, permits } from "@/features/harness/server/api";
+import { authorize, query } from "@/platform/http/middleware";
 
 const querySchema = z.object({
   session: z.string().uuid().optional(),
   actor: z.enum(ACTOR_KINDS).optional(),
-  action: z.enum(AUDIT_ACTION_IDS as [string, ...string[]]).optional(),
+  action: z
+    .enum(AUDIT_ACTION_IDS as [AuditAction, ...AuditAction[]])
+    .optional(),
   mine: z.enum(["1"]).optional(),
   before: z.coerce.number().int().positive().optional(),
   limit: z.coerce.number().int().min(1).max(LIMITS.auditPageSize).optional(),
@@ -19,26 +24,17 @@ const querySchema = z.object({
  * The Audit trail, newest first. An admin reads the whole Workspace's; a
  * user only the events of their own Sessions, whatever they filter by.
  */
-export async function GET(request: Request) {
-  try {
-    const context = await requirePermission("audit.read.own");
-    const query = querySchema.parse(
-      Object.fromEntries(new URL(request.url).searchParams),
-    );
-    const action = AUDIT_ACTION_IDS.find((id) => id === query.action) ?? null;
-    return json<AuditListResponse>(
-      await listAudit({
-        owner: context.owner,
-        staff: context.staff,
+export const GET = harnessApi
+  .use(authorize(permits("audit.read.own")))
+  .use(query(querySchema))
+  .handle(
+    ({ services, caller, query }): Promise<AuditListResponse> =>
+      services.audit.list(caller, {
         sessionId: query.session ?? null,
         actorKind: query.actor ?? null,
-        action,
+        action: query.action ?? null,
         mine: query.mine === "1",
         before: query.before ?? null,
         limit: query.limit ?? null,
       }),
-    );
-  } catch (error) {
-    return failure(error);
-  }
-}
+  );

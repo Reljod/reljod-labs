@@ -1,9 +1,8 @@
 import "server-only";
-import { after } from "next/server";
 import type { Owner } from "@/features/access/domain/owner";
 import { SEED_STAFF } from "../domain/staff";
 import { sql } from "./db";
-import { backfillKnowledge, seedKnowledge } from "./seed/knowledge";
+import { seedKnowledge } from "./seed/knowledge";
 import { seedRecords } from "./seed/records";
 
 /**
@@ -29,15 +28,17 @@ export function forgetWorkspace(owner: Owner) {
  * Workspace row, the seed Staff, then the records and the Knowledge base.
  * Safe to call on every request and from several at once: the row is created
  * with `on conflict do nothing`, then locked, and the seed runs in that one
- * transaction, so a second caller waits and finds it done.
+ * transaction, so a second caller waits and finds it done. True when this
+ * call seeded it: its Passages then wait for embeddings, which the caller
+ * schedules off the response (no model call holds the seed's lock).
  */
-export async function ensureWorkspace(owner: Owner): Promise<void> {
-  if (seeded.has(owner)) return;
+export async function ensureWorkspace(owner: Owner): Promise<boolean> {
+  if (seeded.has(owner)) return false;
   const [existing] = await sql()<{ seed_version: number }[]>`
     select seed_version from harness.workspaces where owner = ${owner}`;
   if (existing && existing.seed_version >= SEED_VERSION) {
     seeded.add(owner);
-    return;
+    return false;
   }
 
   const ran = await sql().begin(async (tx) => {
@@ -66,18 +67,5 @@ export async function ensureWorkspace(owner: Owner): Promise<void> {
     return true;
   });
   seeded.add(owner);
-
-  if (ran) {
-    const backfill = () =>
-      backfillKnowledge(owner).catch((error) => {
-        console.error("[harness] could not embed the seed Passages", error);
-      });
-    try {
-      // Model calls stay out of the seed transaction and off the response.
-      after(backfill);
-    } catch {
-      // Not in a request (a script, a workflow step): run it now, unawaited.
-      void backfill();
-    }
-  }
+  return ran;
 }

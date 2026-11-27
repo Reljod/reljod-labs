@@ -1,10 +1,7 @@
 import { z } from "zod";
 import type { RunResponse } from "@/features/harness/domain/api";
-import { requirePermission } from "@/features/harness/server/context";
-import { bodyOf, failure, json } from "@/features/harness/server/respond";
-import { decideApproval } from "@/features/harness/server/runs";
-
-type Context = { params: Promise<{ id: string }> };
+import { harnessApi, idSchema, permits } from "@/features/harness/server/api";
+import { authorize, body, params } from "@/platform/http/middleware";
 
 const decideSchema = z.object({
   decision: z.enum(["approve", "return"]),
@@ -14,22 +11,19 @@ const decideSchema = z.object({
 /**
  * Approves or returns a Draft. Any Staff member may decide a low-risk
  * Approval; a high-risk one needs an admin who did not start the Run, which
- * `decideApproval` checks.
+ * the Runs service checks against the Approval's row.
  */
-export async function POST(request: Request, { params }: Context) {
-  try {
-    const context = await requirePermission("approval.decide.low");
-    const { id } = await params;
-    const body = decideSchema.parse(await bodyOf(request));
-    return json<RunResponse>({
-      run: await decideApproval({
-        ...context,
-        approvalId: id,
-        decision: body.decision,
-        note: body.note ?? null,
-      }),
-    });
-  } catch (error) {
-    return failure(error);
-  }
-}
+export const POST = harnessApi
+  .use(authorize(permits("approval.decide.low")))
+  .use(params(idSchema))
+  .use(body(decideSchema))
+  .handle(
+    async ({ services, caller, path, body }): Promise<RunResponse> => ({
+      run: await services.runs.decide(
+        caller,
+        path.id,
+        body.decision,
+        body.note ?? null,
+      ),
+    }),
+  );
