@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { Suspense } from "react";
+import { callbackTrust } from "@/features/access/domain/mcp-clients";
 import { currentAccess } from "@/features/access/server/gate";
 import { McpConsent } from "@/features/client-manager/components/mcp-consent";
 import { parseAuthorizationRequest } from "@/features/client-manager/domain/oauth";
@@ -41,10 +42,15 @@ async function Consent({
     if (typeof value === "string") params.set(key, value);
   }
   const parsed = parseAuthorizationRequest(params, env.rateLimitSalt());
-  // Safe before checking Access only because src/proxy.ts gates /demos/*
-  // first, and the redirect goes to a URI the client registered.
-  if (parsed.kind === "error") redirect(parsed.redirect);
-  if (parsed.kind === "invalid" || !access) {
+  // A mistake goes back to the client only for someone with Access, or to a
+  // callback on this machine or a known client's: anyone can register a
+  // client with any https callback, so this page is no open redirect.
+  if (
+    parsed.kind === "error" &&
+    (access || callbackTrust(parsed.redirectUri) !== "unknown")
+  )
+    redirect(parsed.redirect);
+  if (parsed.kind !== "ok" || !access) {
     return (
       <div className="space-y-3">
         <h1 className="text-2xl font-semibold tracking-tight">
@@ -53,7 +59,9 @@ async function Consent({
         <p className="text-ink-muted">
           {parsed.kind === "invalid"
             ? parsed.message
-            : "Open the demos first, then start again from the app."}
+            : parsed.kind === "error"
+              ? "This sign-in link is not a valid request. Start again from the app."
+              : "Open the demos first, then start again from the app."}
         </p>
         <Link
           href="/demos/client-manager/mcp"
@@ -70,6 +78,7 @@ async function Consent({
       request={params.toString()}
       clientName={request.client.name}
       callbackHost={new URL(request.redirectUri).host}
+      unknownCallback={callbackTrust(request.redirectUri) === "unknown"}
       who={
         access.kind === "host"
           ? access.email

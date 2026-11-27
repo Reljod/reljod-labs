@@ -1,4 +1,5 @@
 import { createHash, createHmac, timingSafeEqual } from "node:crypto";
+import { LOOPBACK_HOSTS } from "@/features/access/domain/mcp-clients";
 import { type Owner, parseOwner } from "@/features/access/domain/owner";
 import {
   HARNESS_AUTHORIZE_PATH,
@@ -44,6 +45,13 @@ export type HarnessClaims = {
   pass?: string;
   /** A Host's account. */
   email?: string;
+  /**
+   * When the access it carries was given, epoch seconds: a pasted or chat
+   * token's mint time, an OAuth token's consent time. Checked against the
+   * Owner's token epoch ("Disconnect all MCP clients"). Absent on tokens
+   * minted before it existed.
+   */
+  iat?: number;
   /** Expiry, epoch seconds. */
   exp: number;
 };
@@ -114,6 +122,7 @@ export function readHarnessToken(
   ) as Partial<HarnessClaims> | null;
   if (!claims || typeof claims !== "object") return null;
   if (typeof claims.exp !== "number" || claims.exp * 1000 <= now) return null;
+  if (claims.iat !== undefined && typeof claims.iat !== "number") return null;
   if (!parseOwner(claims.owner)) return null;
   if (typeof claims.staffId !== "string" || !claims.staffId) return null;
   if (typeof claims.visitor !== "string") return null;
@@ -211,9 +220,14 @@ const unseal = <T>(kind: BlobKind, token: unknown, secret: string) =>
 
 export type OAuthClient = { name: string; redirectUris: string[] };
 
-const LOOPBACK = new Set(["localhost", "127.0.0.1", "[::1]"]);
+const LOOPBACK = LOOPBACK_HOSTS;
 
-/** https anywhere, or http on this machine (a CLI's local callback, RFC 8252). */
+/**
+ * https anywhere, or http on this machine (a CLI's local callback, RFC 8252). Anyone may register any https callback and any name, so the consent
+ * page warns and asks for an explicit "I trust <host>" unless the callback
+ * is loopback or a known client's (`callbackTrust` in
+ * `access/domain/mcp-clients.ts`).
+ */
 export function redirectUriAllowed(uri: string) {
   let url: URL;
   try {
@@ -353,7 +367,7 @@ export function parseAuthorizationRequest(
 ):
   | { kind: "ok"; request: AuthorizationRequest }
   | { kind: "invalid"; message: string }
-  | { kind: "error"; redirect: string } {
+  | { kind: "error"; redirect: string; redirectUri: string } {
   const clientId = params.get("client_id");
   const client = readClient(clientId, secret);
   if (!clientId || !client)
@@ -375,6 +389,7 @@ export function parseAuthorizationRequest(
   const back = (error: OAuthErrorCode, description: string) => ({
     kind: "error" as const,
     redirect: errorRedirect(redirectUri, state, error, description),
+    redirectUri,
   });
   if (params.get("response_type") !== "code")
     return back("unsupported_response_type", "Only response_type=code.");
@@ -468,14 +483,23 @@ export function redeem(
   form: URLSearchParams,
   secret: string,
   now: number,
-): { ok: true; grant: Grant; clientId: string } | ({ ok: false } & OAuthError) {
+):
+  | {
+      ok: true;
+      grant: Grant;
+      clientId: string;
+      /** The code traded, to be recorded as used (`redeemCodeOnce`). */
+      code?: { value: string; exp: number };
+    }
+  | ({ ok: false } & OAuthError) {
   const clientId = form.get("client_id");
   if (!clientId || !readClient(clientId, secret))
     return fail("invalid_client", "Unknown client_id. Register again.");
   const seconds = Math.floor(now / 1000);
   switch (form.get("grant_type")) {
     case "authorization_code": {
-      const code = unseal<Code>("code", form.get("code"), secret);
+      const given = form.get("code");
+      const code = unseal<Code>("code", given, secret);
       if (!code || code.exp <= seconds || code.client !== sha256(clientId))
         return fail("invalid_grant", "The code is unknown or has expired.");
       if (form.get("redirect_uri") !== code.redirectUri)
@@ -489,7 +513,12 @@ export function redeem(
         return fail("invalid_grant", "The PKCE code_verifier does not match.");
       if (code.grant.until <= seconds)
         return fail("invalid_grant", "This access has ended. Sign in again.");
-      return { ok: true, grant: code.grant, clientId };
+      return {
+        ok: true,
+        grant: code.grant,
+        clientId,
+        code: { value: given as string, exp: code.exp },
+      };
     }
     case "refresh_token": {
       const refresh = unseal<Refresh>(
