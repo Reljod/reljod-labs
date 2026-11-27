@@ -1,8 +1,6 @@
 "use client";
 
 import { useEffect, useReducer, useRef } from "react";
-import { apiPath } from "../domain/api";
-import type { RunEvent } from "../domain/contract";
 import { ApiError, api } from "./api";
 import {
   emptyRunView,
@@ -116,36 +114,20 @@ export function useRun(runId: string | null): RunState {
         attempt++
       ) {
         try {
-          const response = await fetch(
-            apiPath.runEvents(runId ?? "", Math.max(0, seen - 1)),
-            { signal: controller.signal, cache: "no-store" },
-          );
-          if (!response.ok || !response.body)
-            throw new Error(String(response.status));
-          const reader = response.body
-            .pipeThrough(new TextDecoderStream())
-            .getReader();
-          let buffer = "";
-          for (;;) {
-            const { value, done } = await reader.read();
-            if (done) break;
-            buffer += value;
-            const lines = buffer.split("\n");
-            buffer = lines.pop() ?? "";
-            for (const line of lines) {
-              if (!line.trim()) continue;
-              const event = withSeq(
-                JSON.parse(line) as RunEvent & { seq?: number },
-                seen,
-              );
+          await api.followEvents(
+            runId ?? "",
+            Math.max(0, seen - 1),
+            (line) => {
+              const event = withSeq(line, seen);
               seen = Math.max(seen, event.seq + 1);
               dispatch({ type: "event", event });
               if (event.type === "end") {
                 ended = true;
                 final.current = runId;
               }
-            }
-          }
+            },
+            { signal: controller.signal },
+          );
         } catch {
           if (controller.signal.aborted) return;
         }

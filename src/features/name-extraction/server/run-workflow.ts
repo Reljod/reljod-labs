@@ -1,17 +1,5 @@
 import type { ModelMessage, ToolResultPart } from "ai";
-import {
-  analystTurn,
-  begin,
-  type EndOutcome,
-  end,
-  type Ledger,
-  mergeReaders,
-  planReaders,
-  readOneRange,
-  runTool,
-  type ToolCall,
-  type ToolOutcome,
-} from "./analyst";
+import type { EndOutcome, Ledger, ToolCall, ToolOutcome } from "./analyst";
 import { emit, runSink } from "./emit";
 import type { ReaderJob, ReaderResult } from "./reader";
 import {
@@ -19,26 +7,35 @@ import {
   RUN_LIMITS,
   type RunContext,
 } from "./toolkit/state";
+import { analystWork } from "./work-container";
 
 export type RunInput = { ctx: RunContext };
+
+/*
+ * Step and workflow names (and this file's path) are replay keys: never
+ * rename or move them. Each step's body does its work through the Analyst
+ * work (`analyst.ts`) from the work container; a Run the stubbed e2e suite
+ * started (`ctx.stub`) gets the scripted Analyst and Readers there.
+ */
+const work = (ctx: RunContext) => analystWork({ stub: ctx.stub === true });
 
 // Steps: each is durable, so a crash resumes after the last finished one. -----------------
 
 async function beginStep(ctx: RunContext): Promise<AnalystState> {
   "use step";
-  return begin(ctx);
+  return work(ctx).begin(ctx);
 }
 
 async function turnStep(ctx: RunContext, messages: ModelMessage[]) {
   "use step";
-  return analystTurn(ctx, messages);
+  return work(ctx).turn(ctx, messages);
 }
 // The gateway is sometimes flaky for a provider; a failed turn is retried.
 turnStep.maxRetries = 2;
 
 async function toolStep(ctx: RunContext, ledger: Ledger, call: ToolCall) {
   "use step";
-  return runTool(ctx, ledger, call);
+  return work(ctx).runTool(ctx, ledger, call);
 }
 toolStep.maxRetries = 1;
 
@@ -48,7 +45,7 @@ async function planReadersStep(
   call: ToolCall,
 ) {
   "use step";
-  return planReaders(ctx, ledger, call);
+  return work(ctx).planReaders(ctx, ledger, call);
 }
 
 async function readerStep(
@@ -56,7 +53,7 @@ async function readerStep(
   job: ReaderJob,
 ): Promise<ReaderResult> {
   "use step";
-  return readOneRange(ctx, job);
+  return work(ctx).readOneRange(ctx, job);
 }
 // runReader reports its own failures; a retry would only bill the range twice.
 readerStep.maxRetries = 0;
@@ -70,7 +67,7 @@ async function mergeReadersStep(
   started: number,
 ) {
   "use step";
-  return mergeReaders(ctx, ledger, call, plan, results, started);
+  return work(ctx).mergeReaders(ctx, ledger, call, plan, results, started);
 }
 
 async function spendStep(ctx: RunContext, costUsd: number) {
@@ -85,7 +82,7 @@ async function nudgeStep(ctx: RunContext, text: string) {
 
 async function endStep(ctx: RunContext, ledger: Ledger, outcome: EndOutcome) {
   "use step";
-  return end(ctx, ledger, outcome);
+  return work(ctx).end(ctx, ledger, outcome);
 }
 
 // Orchestration -------------------------------------------------------------------------

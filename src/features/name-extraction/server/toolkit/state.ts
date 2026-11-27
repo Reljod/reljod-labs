@@ -59,6 +59,11 @@ export type RunContext = {
   models: ModelChoice;
   rulebook: Rulebook;
   rulebookVersion: number;
+  /**
+   * Started by the stubbed e2e suite: the steps play the Analyst and its
+   * Readers from a script and start no Sandbox (`work-container.ts`).
+   */
+  stub?: boolean;
 };
 
 export type ReaderRun = {

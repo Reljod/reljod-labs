@@ -1,5 +1,10 @@
+import { LIMITS } from "../../domain/limits";
+
 /** What an Upload may hold. Pure, so the browser-facing checks and the tests share it. */
-export const UPLOAD_LIMITS = { pages: 500, charsPerPage: 20_000 };
+export const UPLOAD_LIMITS = {
+  pages: LIMITS.maxPages,
+  charsPerPage: LIMITS.charsPerPage,
+};
 
 /** Checks an Upload's JSON: `{ pages: string[] }`, at most 500 pages of 20k characters. */
 export function parseUploadPages(value: unknown): string[] {

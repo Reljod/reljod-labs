@@ -1,60 +1,70 @@
 /**
- * The browser's one client for Sieve's read routes (domain/api.ts). Writes
- * stay server actions. Components never call `fetch` for a read themselves.
+ * Typed wrappers over Sieve's REST routes (domain/api.ts), on the platform
+ * client. Components never call `fetch` for the demo's own routes.
  */
 import {
+  attempt,
+  followNdjson,
+  getJson,
+  type Outcome,
+  send,
+} from "@/platform/client/api";
+import {
   apiPath,
+  type CreateUploadRequest,
+  type CreateUploadResponse,
   type RulebookListResponse,
   type RunListResponse,
   type RunResponse,
+  type SaveRulebookRequest,
+  type SaveRulebookResponse,
+  type StartRunRequest,
+  type StartRunResponse,
+  type StopRunResponse,
+  type TokenResponse,
 } from "../domain/api";
+import type { RunEvent } from "../domain/contract";
 
-/** A read route's refusal, with its HTTP status. */
-export class ApiError extends Error {
-  constructor(
-    message: string,
-    readonly status: number,
-  ) {
-    super(message);
-    this.name = "ApiError";
-  }
-}
+export { ApiError, getJson } from "@/platform/client/api";
 
-/** A read route's JSON, or throws with the route's own `{ error }` (or the status). */
-export async function getJson<T>(
-  path: string,
-  init?: { signal?: AbortSignal },
-): Promise<T> {
-  const response = await fetch(path, {
-    cache: "no-store",
-    headers: { accept: "application/json" },
-    signal: init?.signal,
-  });
-  if (!response.ok) {
-    const text = await response.text().catch(() => "");
-    let message = text.trim();
-    try {
-      const body = JSON.parse(text) as { error?: unknown };
-      if (typeof body?.error === "string") message = body.error;
-    } catch {
-      // The gate answers in plain text.
-    }
-    throw new ApiError(
-      message && message.length < 200
-        ? message
-        : response.statusText || `Request failed (${response.status})`,
-      response.status,
-    );
-  }
-  return (await response.json()) as T;
-}
+type Init = { signal?: AbortSignal };
 
 /** Reads that are never cached: they change while the page is open. */
 export const api = {
-  runs: (init?: { signal?: AbortSignal }) =>
-    getJson<RunListResponse>(apiPath.runs(), init),
-  run: (runId: string, init?: { signal?: AbortSignal }) =>
+  runs: (init?: Init) => getJson<RunListResponse>(apiPath.runs(), init),
+  run: (runId: string, init?: Init) =>
     getJson<RunResponse>(apiPath.run(runId), init),
-  rulebooks: (init?: { signal?: AbortSignal }) =>
+  rulebooks: (init?: Init) =>
     getJson<RulebookListResponse>(apiPath.rulebooks(), init),
+  /** Follows a Run's Audit trail from `after` until the stream ends. */
+  followEvents: (
+    runId: string,
+    after: number,
+    onEvent: (event: RunEvent & { seq?: number }) => void,
+    init?: Init,
+  ) =>
+    followNdjson(apiPath.runEvents(runId), onEvent, {
+      query: { after },
+      signal: init?.signal,
+    }),
+};
+
+/** Writes: each resolves to what it wrote, or to the error to show where it was clicked. */
+export const writes = {
+  startRun: (input: StartRunRequest): Promise<Outcome<StartRunResponse>> =>
+    attempt(() => send<StartRunResponse>("POST", apiPath.runs(), input)),
+  stopRun: (runId: string): Promise<Outcome<StopRunResponse>> =>
+    attempt(() => send<StopRunResponse>("POST", apiPath.stop(runId))),
+  saveRulebook: (
+    input: SaveRulebookRequest,
+  ): Promise<Outcome<SaveRulebookResponse>> =>
+    attempt(() =>
+      send<SaveRulebookResponse>("POST", apiPath.rulebooks(), input),
+    ),
+  createUpload: (
+    input: CreateUploadRequest,
+  ): Promise<Outcome<CreateUploadResponse>> =>
+    attempt(() => send<CreateUploadResponse>("POST", apiPath.uploads(), input)),
+  mintToken: (): Promise<Outcome<TokenResponse>> =>
+    attempt(() => send<TokenResponse>("POST", apiPath.tokens())),
 };

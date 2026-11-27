@@ -8,8 +8,7 @@ import {
   type RulebookVersion,
   rulebookSchema,
 } from "../domain/contract";
-import { saveRulebook } from "../server/actions";
-import { api } from "./api";
+import { api, writes } from "./api";
 import { percent } from "./format";
 import {
   Button,
@@ -183,17 +182,25 @@ export function RulesEditor({
 
   /** Writes a Rulebook as a new version; says what happened where the button is. */
   const write = async (rulebook: Rulebook, saveNote: string) => {
-    const response = await saveRulebook({
+    const response = await writes.saveRulebook({
       rulebook,
       note: saveNote.trim() || undefined,
     });
-    if ("error" in response) return response.error;
-    const fresh = await load();
-    if (fresh) onSaved(fresh);
+    if (!response.ok) return response.error;
+    // The route answers with the version it wrote: no second read.
+    const saved = response.value;
+    setCurrent(saved);
+    setDraft(saved.rulebook);
+    setHistory((list) => [
+      saved,
+      ...list.filter((item) => item.version !== saved.version),
+    ]);
+    setLoadError(null);
+    onSaved(saved);
     setNote("");
     setResult({
       ok: true,
-      text: `Saved as version ${response.version}. New runs use it.`,
+      text: `Saved as version ${saved.version}. New runs use it.`,
     });
     return null;
   };

@@ -3,29 +3,29 @@ import type { McpServer } from "@modelcontextprotocol/server";
 import { createMcpHandler, withMcpAuth } from "mcp-handler";
 import { z } from "zod";
 import { guestPassStatus } from "@/features/access/domain/guest-pass";
-import type { Owner } from "@/features/access/domain/owner";
 import { env as accessEnv } from "@/features/access/server/env";
 import { guestPassOf } from "@/features/access/server/repository";
+import { isAppError } from "@/platform/errors";
 import { MODEL_IDS, type ModelId } from "../domain/contract";
 import { corpusCards } from "../domain/corpus";
 import { env } from "./env";
-import { allEvents, currentRulebook, ownedRun, toSummary } from "./repository";
-import { closeIfStale, startRun } from "./runs";
+import type { SieveServices } from "./services";
+import type { Caller } from "./services/runs";
 import { readSieveToken, type SieveClaims } from "./toolkit/mcp-token";
-import type { Visitor } from "./visitor";
-
-type Caller = { owner: Owner; visitor: Visitor };
 
 type ToolContext = {
   http?: { authInfo?: { extra?: Record<string, unknown> } };
 };
 
-function callerOf(ctx: unknown): Caller {
-  const caller = (ctx as ToolContext).http?.authInfo?.extra?.caller as
-    | Caller
-    | undefined;
-  if (!caller) throw new Error("Not authorised");
-  return caller;
+type Bound = { caller: Caller; services: SieveServices };
+
+/** The verified caller and the services the token reaches; never from tool input. */
+function boundOf(ctx: unknown): Bound {
+  const extra = (ctx as ToolContext).http?.authInfo?.extra;
+  const caller = extra?.caller as Caller | undefined;
+  const services = extra?.services as SieveServices | undefined;
+  if (!caller || !services) throw new Error("Not authorised");
+  return { caller, services };
 }
 
 function result(data: unknown, text?: string) {
@@ -39,7 +39,17 @@ function failure(message: string) {
   return { content: [{ type: "text" as const, text: message }], isError: true };
 }
 
-export function registerNameExtractionTools(server: McpServer) {
+/** A service's refusal (404, 429, …) as a tool error the client can read; anything else is a bug. */
+async function refusalOr<T>(work: () => Promise<T>, ok: (value: T) => unknown) {
+  try {
+    return ok(await work()) as ReturnType<typeof result>;
+  } catch (error) {
+    if (isAppError(error)) return failure(error.message);
+    throw error;
+  }
+}
+
+function registerNameExtractionTools(server: McpServer) {
   server.registerTool(
     "list_corpus",
     {
@@ -50,7 +60,7 @@ export function registerNameExtractionTools(server: McpServer) {
       annotations: { readOnlyHint: true },
     },
     async (_args, ctx) => {
-      callerOf(ctx);
+      boundOf(ctx);
       return result({ documents: corpusCards() });
     },
   );
@@ -69,28 +79,29 @@ export function registerNameExtractionTools(server: McpServer) {
       }),
     },
     async (args, ctx) => {
-      const caller = callerOf(ctx);
+      const { caller, services } = boundOf(ctx);
       if (Boolean(args.corpusId) === Boolean(args.uploadId))
         return failure("Give exactly one of corpusId or uploadId.");
-      const started = await startRun({
-        owner: caller.owner,
-        visitor: caller.visitor,
-        source: args.corpusId
-          ? { kind: "corpus", corpusId: args.corpusId }
-          : { kind: "upload", uploadId: args.uploadId as string },
-        ...(args.analystModel || args.readerModel
-          ? {
-              models: {
-                analyst: args.analystModel ?? "openai/gpt-6.1-terra",
-                reader: args.readerModel ?? "anthropic/claude-haiku-5.5",
-              },
-            }
-          : {}),
-      });
-      if ("error" in started) return failure(started.error);
-      return result(
-        { runId: started.runId, status: "running" },
-        `Started run ${started.runId}. Poll get_run for progress.`,
+      return refusalOr(
+        () =>
+          services.runs.start(caller, {
+            source: args.corpusId
+              ? { kind: "corpus", corpusId: args.corpusId }
+              : { kind: "upload", uploadId: args.uploadId as string },
+            ...(args.analystModel || args.readerModel
+              ? {
+                  models: {
+                    analyst: args.analystModel ?? "openai/gpt-6.1-terra",
+                    reader: args.readerModel ?? "anthropic/claude-haiku-5.5",
+                  },
+                }
+              : {}),
+          }),
+        ({ runId }) =>
+          result(
+            { runId, status: "running" },
+            `Started run ${runId}. Poll get_run for progress.`,
+          ),
       );
     },
   );
@@ -114,25 +125,11 @@ export function registerNameExtractionTools(server: McpServer) {
       annotations: { readOnlyHint: true },
     },
     async (args, ctx) => {
-      const caller = callerOf(ctx);
-      const found = await ownedRun(caller.owner, args.runId);
-      if (!found) return failure("No such run.");
-      const run = await closeIfStale(found);
-      const events = await allEvents(run.id);
-      const latestNames = [...events]
-        .reverse()
-        .find((event) => event.type === "names");
-      const names =
-        Array.isArray(run.names) && run.names.length > 0
-          ? run.names
-          : latestNames?.type === "names"
-            ? latestNames.names
-            : [];
-      return result({
-        ...toSummary(run),
-        names,
-        events: events.slice(-(args.events ?? 30)),
-      });
+      const { caller, services } = boundOf(ctx);
+      return refusalOr(
+        () => services.runs.report(caller.owner, args.runId, args.events ?? 30),
+        (report) => result(report),
+      );
     },
   );
 
@@ -145,13 +142,12 @@ export function registerNameExtractionTools(server: McpServer) {
       inputSchema: z.object({}),
       annotations: { readOnlyHint: true },
     },
-    async (_args, ctx) => result(await currentRulebook(callerOf(ctx).owner)),
+    async (_args, ctx) => {
+      const { caller, services } = boundOf(ctx);
+      return result(await services.rulebooks.current(caller.owner));
+    },
   );
 }
-
-const handler = createMcpHandler(registerNameExtractionTools, {
-  serverInfo: { name: "sieve", version: "1.0.0" },
-});
 
 /** Whether a signed token's holder still has Access: a live Guest pass, a Host still on the list. */
 async function stillAllowed(claims: SieveClaims) {
@@ -179,28 +175,39 @@ async function stillAllowed(claims: SieveClaims) {
 
 /**
  * The Sieve MCP server. The only bearer is a token minted for an Owner
- * (`mintMcpToken`, from "Connect a client" on the page), checked against the
- * Owner's Access on every call, so a client acts for that Owner alone and
- * under their limits. There is no shared token: one would need an Owner of
- * its own, and borrowing `e2e` would mix outside clients with test data.
+ * (`POST /api/name-extraction/tokens`, from "Connect a client" on the page),
+ * checked against the Owner's Access on every call, so a client acts for
+ * that Owner alone and under their limits. Its tools call the same services
+ * as the REST routes; a token the stubbed e2e suite minted (`stub` in its
+ * signed claims) reaches the stubbed ones. There is no shared token: one
+ * would need an Owner of its own, and borrowing `e2e` would mix outside
+ * clients with test data.
  */
-export const mcpHandler = withMcpAuth(
-  handler,
-  async (_request, bearer) => {
-    if (!bearer) return undefined;
-    const claims = readSieveToken(bearer, env.rateLimitSalt());
-    if (!claims || !(await stillAllowed(claims))) return undefined;
-    return {
-      token: bearer,
-      clientId: `sieve-${claims.kind}`,
-      scopes: ["name-extraction"],
-      extra: {
-        caller: {
-          owner: claims.owner,
-          visitor: { hash: claims.visitor, trusted: claims.kind === "e2e" },
-        } satisfies Caller,
-      },
-    };
-  },
-  { required: true },
-);
+export function createSieveMcpHandler(
+  servicesFor: (stub: boolean) => SieveServices,
+) {
+  const handler = createMcpHandler(registerNameExtractionTools, {
+    serverInfo: { name: "sieve", version: "1.0.0" },
+  });
+  return withMcpAuth(
+    handler,
+    async (_request, bearer) => {
+      if (!bearer) return undefined;
+      const claims = readSieveToken(bearer, env.rateLimitSalt());
+      if (!claims || !(await stillAllowed(claims))) return undefined;
+      return {
+        token: bearer,
+        clientId: `sieve-${claims.kind}`,
+        scopes: ["name-extraction"],
+        extra: {
+          caller: {
+            owner: claims.owner,
+            visitor: { hash: claims.visitor, trusted: claims.kind === "e2e" },
+          } satisfies Caller,
+          services: servicesFor(claims.kind === "e2e" && claims.stub === true),
+        },
+      };
+    },
+    { required: true },
+  );
+}
