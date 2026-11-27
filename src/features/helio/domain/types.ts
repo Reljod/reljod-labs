@@ -1,3 +1,20 @@
+/** Every path the browser calls; each is a gated POST (`src/app/api/helio/`). */
+export const ROUTES = {
+  extract: "/api/helio/extract",
+  shoot: "/api/helio/shoot",
+  edit: "/api/helio/edit",
+  audit: "/api/helio/audit",
+  compare: "/api/helio/compare",
+} as const;
+
+/** One image an image model made (a plate, an edit), as the routes answer it. */
+export type RenderedFrame = {
+  imageDataUrl: string;
+  model: string;
+  latencyMs: number;
+  costUsd: number;
+};
+
 export type HelioTab = "studio" | "placements" | "compare" | "hood";
 
 export type HelioModelTier = "flash" | "flagship";

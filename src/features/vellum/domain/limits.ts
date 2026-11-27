@@ -1,7 +1,7 @@
 /**
  * Caps on paid work. Each Pass is one call to the model, so a Pass is what is
  * counted: per visitor per hour, and across every visitor per day. Applied in
- * `server/trace.ts` before the model is called.
+ * `server/service.ts` before the model is called.
  */
 export const LIMITS = {
   /** Passes one visitor may start in an hour. */

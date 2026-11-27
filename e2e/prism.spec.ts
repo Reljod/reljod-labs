@@ -2,9 +2,10 @@ import { expect, test } from "@playwright/test";
 
 /*
  * Prism, the main path across all four tabs. Decision Model calls are stubbed
- * (`x-prism-stub`: deterministic calibrated answers in place of AI Gateway,
- * zero spend) while the Access gate, route validation, NDJSON streaming,
- * threshold physics, and UI animations run for real.
+ * (the e2e token alone selects the container's stub Decider: deterministic
+ * calibrated answers in place of AI Gateway, zero spend) while the Access
+ * gate, route validation, the caps, NDJSON streaming, threshold physics, and
+ * UI animations run for real.
  *
  * Opt-in with `E2E_PRISM=1`.
  */
@@ -13,14 +14,7 @@ test.skip(
   "Set E2E_PRISM=1 to run the stubbed Prism end-to-end suite.",
 );
 
-const BYPASS = {
-  "x-e2e-token": process.env.E2E_BYPASS_TOKEN ?? "",
-  "x-prism-stub": "1",
-};
-
 test.describe("Prism (stubbed Decision Models)", () => {
-  test.use({ extraHTTPHeaders: BYPASS });
-
   test("refracts a slip live, re-routes with zero extra API calls on threshold slide, and runs Tribunal, Cascade, and Lab", async ({
     page,
   }) => {

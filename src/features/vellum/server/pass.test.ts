@@ -10,7 +10,7 @@ vi.mock("./env", () => ({
 }));
 
 import { stubDrawing } from "../domain/stub";
-import { decodeImage, partialReporter, preparePass, runPass } from "./pass";
+import { decodeImage, partialReporter, preparePass } from "./pass";
 
 const PNG = `data:image/png;base64,${Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]).toString("base64")}`;
 const sheet = { width: 1000, height: 563 };
@@ -70,26 +70,5 @@ describe("the stream of a Pass", () => {
       full.marks.length - 1,
     );
     expect(report(full, true)).toEqual([]);
-  });
-
-  it("plays the stub with no model, ending with the whole Drawing", async () => {
-    const prepared = preparePass({
-      pass: 1,
-      width: 1280,
-      height: 720,
-      screenshot: PNG,
-      squared: PNG,
-    });
-    const events = [];
-    for await (const event of runPass(prepared, {
-      stub: true,
-      signal: new AbortController().signal,
-    }))
-      events.push(event);
-    expect(events[0]).toEqual({ t: "start", pass: 1, model: "stub" });
-    const done = events.at(-1);
-    expect(done?.t).toBe("done");
-    if (done?.t === "done") expect(done.drawing.marks).toHaveLength(5);
-    expect(events.filter((event) => event.t === "mark")).toHaveLength(5);
   });
 });

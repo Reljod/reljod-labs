@@ -8,8 +8,6 @@ function required(name: string): string {
 
 /** Read lazily so `next build` works without secrets. Values are never logged. */
 export const env = {
-  /** The Supabase Postgres database, shared by every demo (transaction pooler, port 6543). */
-  databaseUrl: () => required("DATABASE_URL"),
   aiGatewayApiKey: () =>
     process.env.HELIO_AI_GATEWAY_API_KEY?.trim() ||
     required("DOCUMENT_COMPLIANCE_AI_GATEWAY_API_KEY"),
@@ -19,7 +17,4 @@ export const env = {
     process.env.HELIO_FLAGSHIP_IMAGE_MODEL?.trim() || "microsoft/mai-image-2.7",
   directorModel: () =>
     process.env.HELIO_DIRECTOR_MODEL?.trim() || "google/gemini-4-neon",
-  /** Never falls back to a constant: fail loudly when misconfigured. */
-  rateLimitSalt: () => required("RATE_LIMIT_SALT"),
-  e2eBypassToken: () => process.env.E2E_BYPASS_TOKEN?.trim() || "",
 };

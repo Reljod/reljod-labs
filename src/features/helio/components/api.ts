@@ -1,13 +1,16 @@
 "use client";
 
+import { send, streamJson } from "@/platform/client/api";
 import { LIMITS } from "../domain/limits";
 import { analyzeRgbaPixels } from "../domain/telemetry";
-import type {
-  BrandAuditResult,
-  CompareStreamEvent,
-  HelioModelTier,
-  OpticalTelemetry,
-  ShootStreamEvent,
+import {
+  type BrandAuditResult,
+  type CompareStreamEvent,
+  type HelioModelTier,
+  type OpticalTelemetry,
+  type RenderedFrame,
+  ROUTES,
+  type ShootStreamEvent,
 } from "../domain/types";
 
 export type ProductPayload =
@@ -116,59 +119,12 @@ async function compressProductPayload(
   return { ...product, imageDataUrl: compressed };
 }
 
-async function readErrorMessage(response: Response): Promise<string> {
-  const text = await response.text().catch(() => "");
-  if (text) {
-    try {
-      const parsed = JSON.parse(text) as { error?: string };
-      if (parsed?.error) return parsed.error;
-    } catch {
-      return text.trim().slice(0, 200);
-    }
-  }
-  return `Request failed (${response.status})`;
-}
-
-async function readNdjson<T>(
-  response: Response,
-  onEvent: (event: T) => void,
-): Promise<void> {
-  if (!response.body) throw new Error("Empty response stream.");
-  const reader = response.body.getReader();
-  const decoder = new TextDecoder();
-  let buffer = "";
-
-  while (true) {
-    const { done, value } = await reader.read();
-    if (done) break;
-    buffer += decoder.decode(value, { stream: true });
-    let newlineIdx = buffer.indexOf("\n");
-    while (newlineIdx !== -1) {
-      const line = buffer.slice(0, newlineIdx).trim();
-      buffer = buffer.slice(newlineIdx + 1);
-      if (line) {
-        onEvent(JSON.parse(line) as T);
-      }
-      newlineIdx = buffer.indexOf("\n");
-    }
-  }
-  const rest = buffer.trim();
-  if (rest) {
-    onEvent(JSON.parse(rest) as T);
-  }
-}
-
 export async function postExtractPlate(
   body:
     | { mode: "isolate"; imageDataUrl: string; productName?: string }
     | { mode: "synthesize"; concept: string; productName?: string },
   signal?: AbortSignal,
-): Promise<{
-  imageDataUrl: string;
-  model: string;
-  latencyMs: number;
-  costUsd: number;
-}> {
+): Promise<RenderedFrame> {
   const payload =
     body.mode === "isolate"
       ? {
@@ -179,21 +135,7 @@ export async function postExtractPlate(
           }),
         }
       : body;
-  const response = await fetch("/api/helio/extract", {
-    method: "POST",
-    headers: { "content-type": "application/json" },
-    body: JSON.stringify(payload),
-    signal,
-  });
-  if (!response.ok) {
-    throw new Error(await readErrorMessage(response));
-  }
-  return (await response.json()) as {
-    imageDataUrl: string;
-    model: string;
-    latencyMs: number;
-    costUsd: number;
-  };
+  return send<RenderedFrame>("POST", ROUTES.extract, payload, { signal });
 }
 
 export async function streamCampaignShoot(
@@ -216,16 +158,12 @@ export async function streamCampaignShoot(
         })
       : Promise.resolve(undefined),
   ]);
-  const response = await fetch("/api/helio/shoot", {
-    method: "POST",
-    headers: { "content-type": "application/json" },
-    body: JSON.stringify({ ...body, product, moodReferenceDataUrl }),
-    signal,
-  });
-  if (!response.ok) {
-    throw new Error(await readErrorMessage(response));
-  }
-  await readNdjson<ShootStreamEvent>(response, onEvent);
+  await streamJson<ShootStreamEvent>(
+    ROUTES.shoot,
+    { ...body, product, moodReferenceDataUrl },
+    onEvent,
+    { signal },
+  );
 }
 
 export async function postSurgicalEdit(
@@ -238,12 +176,7 @@ export async function postSurgicalEdit(
     referenceImageDataUrl?: string;
   },
   signal?: AbortSignal,
-): Promise<{
-  imageDataUrl: string;
-  model: string;
-  latencyMs: number;
-  costUsd: number;
-}> {
+): Promise<RenderedFrame> {
   const [product, baseImageDataUrl, referenceImageDataUrl] = await Promise.all([
     compressProductPayload(body.product),
     compressImageDataUrl(body.baseImageDataUrl, {
@@ -257,26 +190,12 @@ export async function postSurgicalEdit(
         })
       : Promise.resolve(undefined),
   ]);
-  const response = await fetch("/api/helio/edit", {
-    method: "POST",
-    headers: { "content-type": "application/json" },
-    body: JSON.stringify({
-      ...body,
-      product,
-      baseImageDataUrl,
-      referenceImageDataUrl,
-    }),
-    signal,
-  });
-  if (!response.ok) {
-    throw new Error(await readErrorMessage(response));
-  }
-  return (await response.json()) as {
-    imageDataUrl: string;
-    model: string;
-    latencyMs: number;
-    costUsd: number;
-  };
+  return send<RenderedFrame>(
+    "POST",
+    ROUTES.edit,
+    { ...body, product, baseImageDataUrl, referenceImageDataUrl },
+    { signal },
+  );
 }
 
 export async function postBrandAudit(
@@ -295,16 +214,12 @@ export async function postBrandAudit(
       preserveAlpha: false,
     }),
   ]);
-  const response = await fetch("/api/helio/audit", {
-    method: "POST",
-    headers: { "content-type": "application/json" },
-    body: JSON.stringify({ ...body, product, stagedImageDataUrl }),
-    signal,
-  });
-  if (!response.ok) {
-    throw new Error(await readErrorMessage(response));
-  }
-  return (await response.json()) as BrandAuditResult;
+  return send<BrandAuditResult>(
+    "POST",
+    ROUTES.audit,
+    { ...body, product, stagedImageDataUrl },
+    { signal },
+  );
 }
 
 export async function streamTierCompare(
@@ -317,16 +232,12 @@ export async function streamTierCompare(
   signal?: AbortSignal,
 ): Promise<void> {
   const product = await compressProductPayload(body.product);
-  const response = await fetch("/api/helio/compare", {
-    method: "POST",
-    headers: { "content-type": "application/json" },
-    body: JSON.stringify({ ...body, product }),
-    signal,
-  });
-  if (!response.ok) {
-    throw new Error(await readErrorMessage(response));
-  }
-  await readNdjson<CompareStreamEvent>(response, onEvent);
+  await streamJson<CompareStreamEvent>(
+    ROUTES.compare,
+    { ...body, product },
+    onEvent,
+    { signal },
+  );
 }
 
 export function fileToDataUrl(file: File): Promise<string> {

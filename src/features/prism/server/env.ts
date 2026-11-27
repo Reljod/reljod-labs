@@ -8,14 +8,8 @@ function required(name: string): string {
 
 /** Read lazily so `next build` works without secrets. Values are never logged. */
 export const env = {
-  /** The Supabase Postgres database, shared by every demo (transaction pooler, port 6543). */
-  databaseUrl: () => required("DATABASE_URL"),
   /** Falls back to the document compliance key, like the other demos. */
   aiGatewayApiKey: () =>
     process.env.PRISM_AI_GATEWAY_API_KEY?.trim() ||
     required("DOCUMENT_COMPLIANCE_AI_GATEWAY_API_KEY"),
-  /** Shared salt for hashing visitor IPs into rate-limit keys. */
-  rateLimitSalt: () => required("RATE_LIMIT_SALT"),
-  /** When set, requests carrying it skip hourly rate limits. */
-  e2eBypassToken: () => process.env.E2E_BYPASS_TOKEN?.trim() ?? "",
 };

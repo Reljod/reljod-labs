@@ -3,6 +3,7 @@ import { readFile } from "node:fs/promises";
 import { join } from "node:path";
 import { createGateway, generateImage, generateText, Output } from "ai";
 import { z } from "zod";
+import { InvalidError } from "@/platform/errors";
 import {
   AUDIT_SYSTEM_INSTRUCTIONS,
   buildCampaignShootPrompt,
@@ -17,12 +18,18 @@ import { decodeImageDataUrl } from "../domain/schemas";
 import type {
   ArtDirectionBrief,
   BrandAuditResult,
-  HelioMarket,
   HelioModelTier,
   MarketDirection,
+  RenderedFrame,
 } from "../domain/types";
 import { env } from "./env";
-import { HelioInputError } from "./errors";
+import type { Products, ResolvedProduct, Studio } from "./ports";
+
+type Input<K extends keyof Studio> = Studio[K] extends (
+  input: infer I,
+) => unknown
+  ? I
+  : never;
 
 function getGateway() {
   const apiKey = env.aiGatewayApiKey();
@@ -34,11 +41,11 @@ function getGateway() {
   return createGateway({ apiKey });
 }
 
-export function imageModelIdForTier(tier: HelioModelTier): string {
+function imageModelIdForTier(tier: HelioModelTier): string {
   return tier === "flagship" ? env.flagshipImageModel() : env.flashImageModel();
 }
 
-export function extractGatewayCost(
+function extractGatewayCost(
   providerMetadata: unknown,
   fallbackUsd: number,
 ): number {
@@ -54,35 +61,24 @@ export function extractGatewayCost(
   return fallbackUsd;
 }
 
-export function bytesToDataUrl(bytes: Uint8Array, mediaType: string): string {
+function bytesToDataUrl(bytes: Uint8Array, mediaType: string): string {
   return `data:${mediaType};base64,${Buffer.from(bytes).toString("base64")}`;
 }
 
-export type ResolvedProduct = {
-  name: string;
-  category: string;
-  materialNotes: string;
-  bytes: Uint8Array;
-  mediaType: string;
-};
-
 const specimenBytesCache = new Map<string, Uint8Array>();
 
-export async function resolveProductSource(
-  source:
-    | { kind: "specimen"; slug: string }
-    | {
-        kind: "custom";
-        name: string;
-        category: string;
-        materialNotes: string;
-        imageDataUrl: string;
-      },
+/** Sample plates from `public/helio/samples/` (cached per instance), or the visitor's upload, checked by magic bytes. */
+export const productFiles: Products = {
+  resolve: resolveProductSource,
+};
+
+async function resolveProductSource(
+  source: Parameters<Products["resolve"]>[0],
 ): Promise<ResolvedProduct> {
   if (source.kind === "specimen") {
     const specimen = findSpecimen(source.slug);
     if (!specimen) {
-      throw new HelioInputError("That Sample product is not in the studio.");
+      throw new InvalidError("That Sample product is not in the studio.");
     }
     let bytes = specimenBytesCache.get(specimen.slug);
     if (!bytes) {
@@ -108,7 +104,7 @@ export async function resolveProductSource(
 
   const decoded = decodeImageDataUrl(source.imageDataUrl);
   if (!decoded.ok) {
-    throw new HelioInputError(decoded.error);
+    throw new InvalidError(decoded.error);
   }
   return {
     name: source.name,
@@ -141,38 +137,10 @@ const directionSchema = z.object({
  * Google Gemini 4 Neon (Nov 18, 2026) Executive Creative Director.
  * Sees the real hero product plate and produces lighting/lens/copy briefs.
  */
-export async function directCampaign(input: {
-  product: ResolvedProduct;
-  markets: HelioMarket[];
-  customBrief?: string;
-  moodReference?: { bytes: Uint8Array; mediaType: string };
-  stub?: boolean;
-}): Promise<ArtDirectionBrief> {
+async function directCampaign(
+  input: Input<"direct">,
+): Promise<ArtDirectionBrief> {
   const modelId = env.directorModel();
-  if (input.stub) {
-    return {
-      campaignTitle: `${input.product.name} · Global Light Edition`,
-      executiveSummary:
-        "Three calibrated flagship environments tuned to preserve material truth across coastal twilight, travertine daylight, and warm tropical hour.",
-      thinkingSummary:
-        "Balanced specular rim light against matte surface grain; preserved silhouette lock across all three markets.",
-      markets: input.markets.map((m) => ({
-        marketId: m.id,
-        headline: m.defaultHeadline,
-        subcopy: m.defaultSubcopy,
-        localizedBadge: `${m.city.toUpperCase()} · ${m.kelvin}K`,
-        cameraSpec: m.lens,
-        lightingSpec: `${m.kelvin}K directional key + calibrated ambient bounce`,
-        materialPhysics: `Contact shadow & reflection calibrated on ${m.surface.toLowerCase()}`,
-        maiPrompt: m.scenePrompt,
-      })),
-      model: `${modelId} (stub)`,
-      latencyMs: 180,
-      costUsd: 0.0018,
-      reasoningTokens: 142,
-    };
-  }
-
   const gw = getGateway();
   const started = Date.now();
   const promptText = buildDirectorPrompt({
@@ -258,32 +226,10 @@ export async function directCampaign(input: {
  * Microsoft MAI Image 2.7-Flash / 2.7 (Nov 17, 2026) native transparent RGBA
  * product isolation OR brand-new product plate synthesis.
  */
-export async function generateRgbaPlate(input: {
-  mode: "isolate" | "synthesize";
-  sourceImage?: Uint8Array;
-  concept?: string;
-  productName?: string;
-  stub?: boolean;
-}): Promise<{
-  imageDataUrl: string;
-  model: string;
-  latencyMs: number;
-  costUsd: number;
-}> {
+async function generateRgbaPlate(
+  input: Input<"plate">,
+): Promise<RenderedFrame> {
   const modelId = env.flashImageModel();
-  if (input.stub) {
-    const sample = await resolveProductSource({
-      kind: "specimen",
-      slug: "solis-kettle",
-    });
-    return {
-      imageDataUrl: bytesToDataUrl(sample.bytes, "image/png"),
-      model: `${modelId} (stub)`,
-      latencyMs: 220,
-      costUsd: 0.0103,
-    };
-  }
-
   const gw = getGateway();
   const started = Date.now();
   const prompt =
@@ -323,33 +269,8 @@ export async function generateRgbaPlate(input: {
 /**
  * Microsoft MAI Image 2.7 / 2.7-Flash multi-reference campaign photography shoot.
  */
-export async function shootMarketFrame(input: {
-  product: ResolvedProduct;
-  market: HelioMarket;
-  tier: HelioModelTier;
-  maiPrompt?: string;
-  customBrief?: string;
-  moodReferenceBytes?: Uint8Array;
-  stub?: boolean;
-}): Promise<{
-  imageDataUrl: string;
-  model: string;
-  latencyMs: number;
-  costUsd: number;
-}> {
+async function shootMarketFrame(input: Input<"shoot">): Promise<RenderedFrame> {
   const modelId = imageModelIdForTier(input.tier);
-  if (input.stub) {
-    return {
-      imageDataUrl: bytesToDataUrl(
-        input.product.bytes,
-        input.product.mediaType,
-      ),
-      model: `${modelId} (stub)`,
-      latencyMs: input.tier === "flagship" ? 390 : 240,
-      costUsd: input.tier === "flagship" ? 0.034 : 0.0103,
-    };
-  }
-
   const gw = getGateway();
   const started = Date.now();
   const images = input.moodReferenceBytes
@@ -386,30 +307,8 @@ export async function shootMarketFrame(input: {
 /**
  * Microsoft MAI Image 2.7 / 2.7-Flash surgical multi-reference art-direction edit.
  */
-export async function editCampaignFrame(input: {
-  product: ResolvedProduct;
-  baseFrameBytes: Uint8Array;
-  market: HelioMarket;
-  instruction: string;
-  tier: HelioModelTier;
-  extraReferenceBytes?: Uint8Array;
-  stub?: boolean;
-}): Promise<{
-  imageDataUrl: string;
-  model: string;
-  latencyMs: number;
-  costUsd: number;
-}> {
+async function editCampaignFrame(input: Input<"edit">): Promise<RenderedFrame> {
   const modelId = imageModelIdForTier(input.tier);
-  if (input.stub) {
-    return {
-      imageDataUrl: bytesToDataUrl(input.baseFrameBytes, "image/png"),
-      model: `${modelId} (stub)`,
-      latencyMs: 260,
-      costUsd: input.tier === "flagship" ? 0.034 : 0.0103,
-    };
-  }
-
   const gw = getGateway();
   const started = Date.now();
   const images = input.extraReferenceBytes
@@ -480,81 +379,11 @@ const auditSchema = z.object({
  * Google Gemini 4 Neon Vision Brand-Integrity Auditor: compares the original
  * product reference plate and the staged campaign photograph side-by-side.
  */
-export async function auditStagedFrame(input: {
-  product: ResolvedProduct;
-  stagedBytes: Uint8Array;
-  stagedMediaType: string;
-  marketId: string;
-  directionSummary?: string;
-  stub?: boolean;
-}): Promise<BrandAuditResult> {
+async function auditStagedFrame(
+  input: Input<"audit">,
+): Promise<BrandAuditResult> {
   const modelId = env.directorModel();
   const market = findMarket(input.marketId);
-
-  if (input.stub) {
-    return {
-      verdict: "APPROVED",
-      overallScore: 95,
-      scores: {
-        geometryFidelity: 96,
-        lightingPhysics: 94,
-        materialRealism: 95,
-        brandLegibility: 93,
-        commercialImpact: 97,
-      },
-      headlineNote:
-        "Silhouette, proportions, and specular rim reflections hold across the staged surface with billboard-grade polish.",
-      thinkingSummary:
-        "Verified hero contour against original RGBA plate; contact shadow direction aligns with key light temperature.",
-      pins: [
-        {
-          id: "pin-1",
-          x: 50,
-          y: 34,
-          category: "geometry",
-          status: "pass",
-          label: "Silhouette Lock",
-          detail:
-            "Primary contour and proportions match the studio reference plate cleanly.",
-        },
-        {
-          id: "pin-2",
-          x: 64,
-          y: 52,
-          category: "lighting",
-          status: "pass",
-          label: "Specular Rim Light",
-          detail:
-            "Edge highlight matches the directional kelvin temperature of the set.",
-        },
-        {
-          id: "pin-3",
-          x: 48,
-          y: 78,
-          category: "material",
-          status: "pass",
-          label: "Contact Shadow",
-          detail:
-            "Grounded ambient occlusion anchors the product realistically onto the plinth.",
-        },
-        {
-          id: "pin-4",
-          x: 24,
-          y: 26,
-          category: "composition",
-          status: "pass",
-          label: "Headline Negative Space",
-          detail:
-            "Clean upper-left visual breathing room leaves space for localized campaign copy.",
-        },
-      ],
-      model: `${modelId} (stub)`,
-      latencyMs: 210,
-      costUsd: 0.0029,
-      reasoningTokens: 168,
-    };
-  }
-
   const gw = getGateway();
   const started = Date.now();
   const contextLine = market
@@ -626,3 +455,147 @@ export async function auditStagedFrame(input: {
     reasoningTokens,
   };
 }
+
+/** Gemini 4 Neon and MAI Image 2.7 through AI Gateway. */
+export const modelStudio: Studio = {
+  imageModel: imageModelIdForTier,
+  direct: directCampaign,
+  plate: generateRgbaPlate,
+  shoot: shootMarketFrame,
+  edit: editCampaignFrame,
+  audit: auditStagedFrame,
+};
+
+const imageCost = (tier: HelioModelTier) =>
+  tier === "flagship" ? 0.034 : 0.0103;
+
+/**
+ * The stubbed e2e suite's studio: canned direction and audits, and images
+ * that are the product plate (or the frame being edited) handed back. No
+ * model call and no spend.
+ */
+export const stubStudio: Studio = {
+  imageModel: imageModelIdForTier,
+
+  async direct(input) {
+    return {
+      campaignTitle: `${input.product.name} · Global Light Edition`,
+      executiveSummary:
+        "Three calibrated flagship environments tuned to preserve material truth across coastal twilight, travertine daylight, and warm tropical hour.",
+      thinkingSummary:
+        "Balanced specular rim light against matte surface grain; preserved silhouette lock across all three markets.",
+      markets: input.markets.map((m) => ({
+        marketId: m.id,
+        headline: m.defaultHeadline,
+        subcopy: m.defaultSubcopy,
+        localizedBadge: `${m.city.toUpperCase()} · ${m.kelvin}K`,
+        cameraSpec: m.lens,
+        lightingSpec: `${m.kelvin}K directional key + calibrated ambient bounce`,
+        materialPhysics: `Contact shadow & reflection calibrated on ${m.surface.toLowerCase()}`,
+        maiPrompt: m.scenePrompt,
+      })),
+      model: `${env.directorModel()} (stub)`,
+      latencyMs: 180,
+      costUsd: 0.0018,
+      reasoningTokens: 142,
+    };
+  },
+
+  async plate() {
+    const sample = await resolveProductSource({
+      kind: "specimen",
+      slug: "solis-kettle",
+    });
+    return {
+      imageDataUrl: bytesToDataUrl(sample.bytes, "image/png"),
+      model: `${env.flashImageModel()} (stub)`,
+      latencyMs: 220,
+      costUsd: 0.0103,
+    };
+  },
+
+  async shoot(input) {
+    return {
+      imageDataUrl: bytesToDataUrl(
+        input.product.bytes,
+        input.product.mediaType,
+      ),
+      model: `${imageModelIdForTier(input.tier)} (stub)`,
+      latencyMs: input.tier === "flagship" ? 390 : 240,
+      costUsd: imageCost(input.tier),
+    };
+  },
+
+  async edit(input) {
+    return {
+      imageDataUrl: bytesToDataUrl(input.baseFrameBytes, "image/png"),
+      model: `${imageModelIdForTier(input.tier)} (stub)`,
+      latencyMs: 260,
+      costUsd: imageCost(input.tier),
+    };
+  },
+
+  async audit() {
+    return {
+      verdict: "APPROVED",
+      overallScore: 95,
+      scores: {
+        geometryFidelity: 96,
+        lightingPhysics: 94,
+        materialRealism: 95,
+        brandLegibility: 93,
+        commercialImpact: 97,
+      },
+      headlineNote:
+        "Silhouette, proportions, and specular rim reflections hold across the staged surface with billboard-grade polish.",
+      thinkingSummary:
+        "Verified hero contour against original RGBA plate; contact shadow direction aligns with key light temperature.",
+      pins: [
+        {
+          id: "pin-1",
+          x: 50,
+          y: 34,
+          category: "geometry",
+          status: "pass",
+          label: "Silhouette Lock",
+          detail:
+            "Primary contour and proportions match the studio reference plate cleanly.",
+        },
+        {
+          id: "pin-2",
+          x: 64,
+          y: 52,
+          category: "lighting",
+          status: "pass",
+          label: "Specular Rim Light",
+          detail:
+            "Edge highlight matches the directional kelvin temperature of the set.",
+        },
+        {
+          id: "pin-3",
+          x: 48,
+          y: 78,
+          category: "material",
+          status: "pass",
+          label: "Contact Shadow",
+          detail:
+            "Grounded ambient occlusion anchors the product realistically onto the plinth.",
+        },
+        {
+          id: "pin-4",
+          x: 24,
+          y: 26,
+          category: "composition",
+          status: "pass",
+          label: "Headline Negative Space",
+          detail:
+            "Clean upper-left visual breathing room leaves space for localized campaign copy.",
+        },
+      ],
+      model: `${env.directorModel()} (stub)`,
+      latencyMs: 210,
+      costUsd: 0.0029,
+      reasoningTokens: 168,
+    };
+  },
+};

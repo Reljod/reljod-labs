@@ -3,54 +3,46 @@ import { LIMITS } from "../domain/limits";
 
 vi.mock("server-only", () => ({}));
 
-const { bucketLimits, evaluateRateBudget } = await import("./rate");
+const { rateRefusal } = await import("./rate");
 
-describe("helio Postgres rate budget evaluation", () => {
-  it("enforces per-visitor hourly caps with multi-unit shoots", () => {
-    const { hourLimit } = bucketLimits("image");
-
+describe("Helio's caps", () => {
+  it("refuse a multi-unit Shoot that would pass the visitor's hour", () => {
+    const hour = LIMITS.imageCallsPerHour;
     expect(
-      evaluateRateBudget({
+      rateRefusal({
         bucket: "image",
         units: 3,
-        visitorUsedHour: hourLimit - 3,
+        visitorUsedHour: hour - 3,
         globalUsedDay: 10,
       }),
-    ).toEqual({ ok: true });
-
-    const overVisitor = evaluateRateBudget({
-      bucket: "image",
-      units: 3,
-      visitorUsedHour: hourLimit - 2,
-      globalUsedDay: 10,
-    });
-    expect(overVisitor.ok).toBe(false);
-    if (!overVisitor.ok) {
-      expect(overVisitor.message).toContain(`${LIMITS.imageCallsPerHour}/hr`);
-    }
+    ).toBeNull();
+    expect(
+      rateRefusal({
+        bucket: "image",
+        units: 3,
+        visitorUsedHour: hour - 2,
+        globalUsedDay: 10,
+      }),
+    ).toContain(`${hour}/hr`);
   });
 
-  it("enforces global 24-hour caps across all visitors", () => {
-    const { dayLimit } = bucketLimits("director");
-
+  it("refuse every visitor once everyone's day is used", () => {
+    const day = LIMITS.directorCallsPerDayGlobal;
     expect(
-      evaluateRateBudget({
+      rateRefusal({
         bucket: "director",
         units: 1,
         visitorUsedHour: 0,
-        globalUsedDay: dayLimit - 1,
+        globalUsedDay: day - 1,
       }),
-    ).toEqual({ ok: true });
-
-    const overGlobal = evaluateRateBudget({
-      bucket: "director",
-      units: 1,
-      visitorUsedHour: 0,
-      globalUsedDay: dayLimit,
-    });
-    expect(overGlobal.ok).toBe(false);
-    if (!overGlobal.ok) {
-      expect(overGlobal.message).toContain("Daily studio quota");
-    }
+    ).toBeNull();
+    expect(
+      rateRefusal({
+        bucket: "director",
+        units: 1,
+        visitorUsedHour: 0,
+        globalUsedDay: day,
+      }),
+    ).toContain("Daily studio quota");
   });
 });
