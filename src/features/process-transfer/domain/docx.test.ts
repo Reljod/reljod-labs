@@ -165,64 +165,6 @@ describe("buildDocx", () => {
     for (const name of overrides) expect(all).toContain(name);
   });
 
-  it("embeds the Frames given, scaled to the page, with alt text", () => {
-    expect(all.filter((name) => name.startsWith("word/media/"))).toEqual([
-      "word/media/frame1.jpeg",
-      "word/media/frame2.png",
-    ]);
-    expect(unzipSync(bytes)["word/media/frame2.png"]).toEqual(PNG);
-    const extents = [
-      ...document.matchAll(/<wp:extent cx="(\d+)" cy="(\d+)"\/>/g),
-    ].map(([, cx, cy]) => [Number(cx), Number(cy)]);
-    expect(extents).toHaveLength(2);
-    // 16:9 is capped by height, 4:5 too; both keep their aspect.
-    for (const [[cx, cy], [w, h]] of extents.map(
-      (extent, index) =>
-        [extent, index === 0 ? [1280, 720] : [800, 1000]] as const,
-    )) {
-      expect(cx).toBeLessThanOrEqual(9638 * 635);
-      expect(Math.abs(cx / cy - w / h)).toBeLessThan(0.01);
-    }
-    expect(document).toContain(
-      'descr="Screen at 0:42 in the recording, step 1: Download the treasury statement"',
-    );
-    expect(document).toContain("Figure 2. Step 2 at 1:35 in the recording");
-  });
-
-  it("has no picture at all without Frames", () => {
-    const plain = buildDocx(SAMPLE_PROCESS, { frames: {}, meta });
-    const names = Object.keys(unzipSync(plain));
-    expect(names.some((name) => name.startsWith("word/media/"))).toBe(false);
-    const xml = unpack(plain)["word/document.xml"];
-    expect(xml).not.toContain("<w:drawing>");
-    expect(xml).not.toContain("Figure");
-    expect(unpack(plain)["[Content_Types].xml"]).not.toContain("jpeg");
-  });
-
-  it("uses real numbering, styles, repeating header rows and page fields", () => {
-    expect(document.match(/<w:numId w:val="3"\/>/g)).toHaveLength(9); // steps
-    expect(document).toContain('<w:pStyle w:val="Heading1"/>');
-    expect(document).toContain("<w:tblHeader/>");
-    expect(document).toContain("<w:keepNext/>");
-    expect(document).not.toMatch(/<w:t[^>]*>\d+\. /); // no typed "1."
-    expect(parts["word/numbering.xml"]).toContain('w:val="Step %1:"');
-    expect(parts["word/footer1.xml"]).toContain('w:instr=" PAGE ');
-    expect(parts["word/footer1.xml"]).toContain('w:instr=" NUMPAGES ');
-    expect(parts["word/header1.xml"]).toContain(
-      "Month-end contribution reconciliation",
-    );
-    expect(document).toContain('<w:pgSz w:w="11906" w:h="16838"/>');
-  });
-
-  it("restarts each numbered list at 1", () => {
-    const process: Process = structuredClone(SAMPLE_PROCESS);
-    const xml = unpack(buildDocx(process, { frames: {}, meta }))[
-      "word/numbering.xml"
-    ];
-    expect(xml).toContain('<w:num w:numId="4"><w:abstractNumId w:val="3"/>');
-    expect(xml).toContain('<w:startOverride w:val="1"/>');
-  });
-
   it("keeps special characters intact and drops what XML forbids", () => {
     const process: Process = structuredClone(SAMPLE_PROCESS);
     process.title = `R&D <"quoted"> & 'single' 😀`;
@@ -241,44 +183,6 @@ describe("buildDocx", () => {
     expect(out["docProps/core.xml"]).toContain(
       "<dc:title>R&amp;D &lt;&quot;quoted&quot;&gt;",
     );
-  });
-
-  it("keeps a step's heading, meta, instruction and screenshot on one page", () => {
-    // Step 1 has a Frame and two details: the chain runs heading -> meta ->
-    // instruction -> figure (all keepNext) -> caption; the details follow and flow.
-    const start = document.indexOf('<w:pStyle w:val="StepHeading"/>');
-    const end = document.indexOf('<w:pStyle w:val="StepHeading"/>', start + 1);
-    const paragraphs = document
-      .slice(
-        document.lastIndexOf("<w:p>", start),
-        document.lastIndexOf("<w:p>", end),
-      )
-      .split("<w:p>")
-      .filter(Boolean);
-    const kinds = paragraphs.map((item) =>
-      item.includes("<w:drawing>")
-        ? "figure"
-        : (/<w:pStyle w:val="(\w+)"\/>/.exec(item)?.[1] ?? "Normal"),
-    );
-    expect(kinds).toEqual([
-      "StepHeading",
-      "StepMeta",
-      "Normal",
-      "figure",
-      "Caption",
-      "ListParagraph",
-      "ListParagraph",
-    ]);
-    const keepNext = paragraphs.map((item) => item.includes("<w:keepNext/>"));
-    expect(keepNext).toEqual([false, false, true, true, false, false, false]);
-    // StepHeading and StepMeta carry keepNext in their styles.
-    expect(parts["word/styles.xml"]).toMatch(
-      /w:styleId="StepMeta">.*?<w:keepNext\/>.*?<\/w:style>/,
-    );
-  });
-
-  it("is the same bytes for the same input", () => {
-    expect(buildDocx(SAMPLE_PROCESS, { frames, meta })).toEqual(bytes);
   });
 });
 

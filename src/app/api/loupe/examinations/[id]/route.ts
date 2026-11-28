@@ -1,18 +1,11 @@
-import { requireOwner } from "@/features/access/server/gate";
 import type { ExaminationResponse } from "@/features/loupe/domain/api";
-import { examinationDetail } from "@/features/loupe/server/reads";
-import { failure, json, notFound } from "@/features/loupe/server/respond";
+import { examinationPath, loupeApi } from "@/features/loupe/server/api";
+import { params } from "@/platform/http/middleware";
 
 /** One of the Owner's Examinations with its Trail, Measurements and Findings. */
-export async function GET(
-  _request: Request,
-  { params }: { params: Promise<{ id: string }> },
-) {
-  try {
-    const [{ owner }, { id }] = await Promise.all([requireOwner(), params]);
-    const detail = await examinationDetail(owner, id);
-    return detail ? json<ExaminationResponse>(detail) : notFound();
-  } catch (error) {
-    return failure(error);
-  }
-}
+export const GET = loupeApi
+  .use(params(examinationPath))
+  .handle(
+    ({ services, owner, path }): Promise<ExaminationResponse> =>
+      services.examinations.detail(owner, path.id),
+  );

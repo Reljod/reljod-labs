@@ -5,23 +5,20 @@ import { env as accessEnv } from "@/features/access/server/env";
 import type { Access } from "@/features/access/server/gate";
 import { issuedSinceDisconnect } from "@/features/access/server/mcp-tokens";
 import { guestPassOf } from "@/features/access/server/repository";
-import type { McpTokenResponse } from "../domain/api";
-import { HARNESS_MCP_PATH } from "../domain/mcp-tools";
+import type { Visitor } from "@/platform/request/visitor";
 import {
   type Grant,
   type HarnessClaims,
   readHarnessToken,
   signHarnessToken,
 } from "../domain/oauth";
-import { can } from "../domain/permissions";
 import type { Staff } from "../domain/staff";
-import type { PaidActor } from "./actor";
-import { auditStrict } from "./audit";
-import type { StaffContext } from "./context";
 import { env } from "./env";
-import { ForbiddenError } from "./errors";
-import { TRUSTED_VISITOR, type Visitor } from "./rate";
+import type { PaidActor } from "./ports";
 import { ownedStaff } from "./staff";
+
+/** The visitor hash the e2e suite's tokens carry: no visitor cap applies to it. */
+const TRUSTED_VISITOR = "e2e";
 
 const DAY = 86_400;
 /** A chat turn's token: long enough for a turn, short enough not to matter if seen. */
@@ -62,39 +59,13 @@ export function grantOf(
   }
 }
 
-/**
- * A token to paste, for an MCP client that cannot sign in with OAuth. It acts
- * as the Staff member signed in now (ADR 0013: fixed at mint time). A Guest's
- * also goes in `X-Guest-Token` beside an OAuth sign-in. Checks `mcp.connect`
- * and writes `mcp.connected`.
- */
-export async function mintPastedToken(
-  context: StaffContext,
-  origin: string,
-): Promise<McpTokenResponse> {
-  const { access, owner, staff, visitor } = context;
-  if (!can(staff, "mcp.connect")) throw ForbiddenError.forAction("mcp.connect");
-  const { until, ...claims } = grantOf(access, owner, staff, visitor);
-  const token = signHarnessToken(
+/** A pasted token's claims, signed: it acts as the Staff member until the Grant ends. */
+export function pastedToken(grant: Grant): string {
+  const { until, ...claims } = grant;
+  return signHarnessToken(
     { ...claims, via: "pasted", exp: until },
     env.rateLimitSalt(),
   );
-  // Written before the token is handed over, and the token is not handed
-  // over if it cannot be: no MCP client connects untraced.
-  await auditStrict({
-    owner,
-    actor: { kind: "staff", staff },
-    action: "mcp.connected",
-    summary: `Took an MCP token acting as ${staff.name}`,
-    target: { kind: "staff", id: staff.id },
-    detail: { via: "pasted", role: staff.role, expiresAt: until },
-  });
-  return {
-    token,
-    expiresAt: new Date(until * 1000).toISOString(),
-    url: `${origin}${HARNESS_MCP_PATH}`,
-    staff,
-  };
 }
 
 /**

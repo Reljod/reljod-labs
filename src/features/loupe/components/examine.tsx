@@ -1,6 +1,7 @@
 "use client";
 
 import { memo, useEffect, useMemo, useRef, useState } from "react";
+import type { StartRequest } from "../domain/api";
 import {
   CHECKS,
   DRIVERS,
@@ -22,11 +23,12 @@ import { LIMITS, UPLOAD_TYPES } from "../domain/limits";
 import { formatThreshold, ruleSentence } from "../domain/rules";
 import {
   createUpload,
+  putFile,
   reevaluateExamination,
   runCheckAgain,
   startExamination,
   stopExamination,
-} from "../server/actions";
+} from "./api";
 import { type LayerToggles, Stage } from "./stage";
 import {
   Button,
@@ -73,7 +75,7 @@ export function Shelf({
 
   const start = useWrite(async () => {
     setError(null);
-    let source: Parameters<typeof startExamination>[0]["source"];
+    let source: StartRequest["source"];
     if (file) {
       if (!(file.type in UPLOAD_TYPES))
         return setError("Upload a PDF, or a JPEG, PNG or WebP image.");
@@ -86,21 +88,16 @@ export function Shelf({
         contentType: file.type,
         bytes: file.size,
       });
-      if ("error" in opened) return setError(opened.error);
-      const put = await fetch(opened.signedUrl, {
-        method: "PUT",
-        headers: { "content-type": file.type, "x-upsert": "false" },
-        body: file,
-      });
-      if (!put.ok)
+      if (!opened.ok) return setError(opened.error);
+      if (!(await putFile(opened.value.signedUrl, file)))
         return setError("The file could not be uploaded. Try again.");
-      source = { kind: "upload", uploadId: opened.uploadId };
+      source = { kind: "upload", uploadId: opened.value.uploadId };
     } else if (sample) {
       source = { kind: "sample", sampleId: sample.id };
     } else return setError("Pick a Sample or choose a file.");
     const started = await startExamination({ source, driver, model });
-    if ("error" in started) return setError(started.error);
-    onStarted(started.examinationId);
+    if (!started.ok) return setError(started.error);
+    onStarted(started.value.examinationId);
   });
 
   return (
@@ -336,8 +333,12 @@ export function Examination({
     if (finding && finding.page > 0) setPageNumber(finding.page);
   };
 
+  const [stopError, setStopError] = useState<string | null>(null);
   const stop = useWrite(async () => {
-    if (id) await stopExamination(id);
+    if (!id) return;
+    setStopError(null);
+    const stopped = await stopExamination(id);
+    if (!stopped.ok) setStopError(stopped.error);
   });
 
   return (
@@ -368,6 +369,7 @@ export function Examination({
         ) : null}
       </div>
       {live.error ? <ErrorNote>{live.error}</ErrorNote> : null}
+      {stopError ? <ErrorNote>{stopError}</ErrorNote> : null}
 
       <div className="grid gap-5 lg:grid-cols-[minmax(0,1.15fr)_minmax(0,1fr)]">
         <div className="min-w-0 space-y-3">
@@ -493,8 +495,9 @@ function VerdictCard({
     if (!examinationId) return;
     setError(null);
     setNote(null);
-    const result = await reevaluateExamination(examinationId);
-    if ("error" in result) return setError(result.error);
+    const outcome = await reevaluateExamination(examinationId);
+    if (!outcome.ok) return setError(outcome.error);
+    const result = outcome.value;
     setNote(
       result.from === result.to
         ? `Still ${VERDICT_LABELS[result.to]} under Rulebook v${result.toVersion}.`
@@ -710,13 +713,14 @@ const Findings = memo(function Findings({
   const rerun = useWrite(async (finding: Finding) => {
     if (!examinationId || !finding.check) return;
     setRanNote(null);
-    const result = await runCheckAgain({
-      examinationId,
+    const result = await runCheckAgain(examinationId, {
       check: finding.check,
       ...(finding.page > 0 ? { page: finding.page } : {}),
       box: finding.box,
     });
-    setRanNote("error" in result ? result.error : result.text.split("\n")[0]);
+    setRanNote(
+      result.ok ? (result.value.text.split("\n")[0] ?? "") : result.error,
+    );
     onRan();
   });
   return (

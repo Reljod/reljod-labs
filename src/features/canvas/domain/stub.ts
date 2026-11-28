@@ -2,11 +2,33 @@ import { VIEW_GRAMMAR, type ViewSpec } from "./view";
 
 /**
  * The e2e suite's Analyst: a scripted tool sequence in place of the model.
- * The tools are real (the same MCP server, the Guard, the Sandbox, the
- * checks), so a stubbed turn proves everything but the model's judgement and
- * spends nothing on one.
+ * The tools are real (the same MCP server, the Guard, the checks, the
+ * database); the Sandbox is the canned one (`server/sandbox/stub.ts`),
+ * which parses from trees DuckDB really produced. A stubbed turn proves
+ * everything but the model's judgement and the Sandbox, and spends nothing.
+ * Every statement here and in `STUB_PROBES` is recorded in
+ * `server/sandbox/stub.fixtures.json`.
  */
-export const CHAT_STUB_HEADER = "x-canvas-stub";
+
+/** The statements the e2e suite sends the MCP server directly, beside `STUB_SPEC`. */
+export const STUB_PROBES = {
+  /** Explores before the View (the stub Analyst's plan). */
+  peakByRegion:
+    "select region_code, round(max(load_mw), 1) as peak_mw from grid_load group by all order by peak_mw desc",
+  /** A Restricted column row by row: refused. */
+  rowLevel:
+    "select household_id, monthly_income_mdc from household_survey limit 5",
+  /** The same, behind a comment and a subquery: refused. */
+  hiddenInSubquery:
+    "select * from (select /* avg( */ monthly_income_mdc as x from household_survey) limit 3",
+  /** A Restricted column aggregated: passes, with the minimum group size added. */
+  meanIncome:
+    "select region_code, round(avg(monthly_income_mdc)) as mean_income from household_survey group by all order by 1",
+  /** A file: refused. */
+  readFile: "select * from read_csv('/etc/passwd')",
+  /** An open column, until a Rule restricts it. */
+  cardAmounts: "select amount_mdc from card_spend limit 3",
+} as const;
 
 export type StubCall = { name: string; args: Record<string, unknown> };
 
@@ -68,7 +90,7 @@ export function stubPlan(question: string): StubCall[] {
       {
         name: "run_query",
         args: {
-          sql: "select household_id, monthly_income_mdc from household_survey limit 5",
+          sql: STUB_PROBES.rowLevel,
           purpose: "Row-level income (should be refused)",
         },
       },
@@ -77,10 +99,7 @@ export function stubPlan(question: string): StubCall[] {
     { name: "list_tables", args: {} },
     {
       name: "run_query",
-      args: {
-        sql: "select region_code, round(max(load_mw), 1) as peak_mw from grid_load group by all order by peak_mw desc",
-        purpose: "Peak load by region",
-      },
+      args: { sql: STUB_PROBES.peakByRegion, purpose: "Peak load by region" },
     },
     { name: "create_view", args: { spec: STUB_SPEC } },
   ];

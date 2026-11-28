@@ -5,9 +5,8 @@ import { requireAccess } from "@/features/access/server/gate";
 import { VellumSkeleton } from "@/features/vellum/components/skeleton";
 import { Vellum } from "@/features/vellum/components/vellum";
 import type { Allowance } from "@/features/vellum/domain/api";
-import { LIMITS } from "@/features/vellum/domain/limits";
-import { env } from "@/features/vellum/server/env";
-import { passesUsed, visitor } from "@/features/vellum/server/rate";
+import { vellum } from "@/features/vellum/server/container";
+import { currentRequest } from "@/platform/request/current";
 
 export const metadata: Metadata = {
   title: "Vellum · Demo",
@@ -17,7 +16,8 @@ export const metadata: Metadata = {
 
 /*
  * The Samples are static. The visitor's allowance comes from the request, so
- * it is read behind Suspense and handed down. The Access gate runs in
+ * it is read behind Suspense and handed down, through the same service the
+ * allowance route uses. The Access gate runs in
  * `src/proxy.ts`, here, and again in every route.
  */
 export default function VellumDemoPage() {
@@ -31,12 +31,11 @@ export default function VellumDemoPage() {
 async function VellumWithData() {
   let initial: Allowance | null = null;
   try {
-    const [, who] = await Promise.all([requireAccess(), visitor()]);
-    initial = {
-      used: await passesUsed(who),
-      perHour: LIMITS.passesPerHour,
-      model: env.model(),
-    };
+    const [, { mode, visitor }] = await Promise.all([
+      requireAccess(),
+      currentRequest(),
+    ]);
+    initial = await vellum(mode).allowance(visitor);
   } catch (error) {
     // Next's own signals pass; without Access (or before the migration) the client's reads say why.
     unstable_rethrow(error);

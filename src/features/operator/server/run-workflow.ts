@@ -3,11 +3,11 @@ import { LIMITS } from "../domain/limits";
 import type { Change } from "../legacy/types";
 import type { RunContext } from "./context";
 import { type Counters, emptyCounters } from "./counters";
-import type { EndOutcome } from "./finish";
 import type { ToolCall, TranscriptItem } from "./operator";
 import {
   begin,
   type CallResult,
+  type EndOutcome,
   end,
   note,
   pause,

@@ -29,7 +29,7 @@ vi.mock("../audit", () => ({
 }));
 
 import type { Owner } from "@/features/access/domain/owner";
-import { StateError } from "../errors";
+import { ConflictError } from "@/platform/errors";
 import { paperFiles, RUN_CODE_TOOL, stepCode } from "./code";
 
 const scope = {
@@ -124,7 +124,7 @@ describe("stepCode", () => {
 
   it("answers the model with a failure instead of throwing, and hides an unknown error", async () => {
     mocks.openSandbox.mockRejectedValueOnce(
-      new StateError("Sandbox unavailable: it is not set up here"),
+      new ConflictError("Sandbox unavailable: it is not set up here"),
     );
     const code = stepCode(scope, papers);
     expect(await executeOf(code)({ code: "1" })).toContain(

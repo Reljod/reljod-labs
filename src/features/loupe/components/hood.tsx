@@ -5,9 +5,8 @@ import { AUDIT_ACTIONS, type AuditEvent, MCP_PATH } from "../domain/api";
 import { CHECKS, DRIVERS, TOOLS } from "../domain/contract";
 import { LIMITS, RUN_LIMITS } from "../domain/limits";
 import type { Calibration } from "../domain/score";
-import { mintMcpToken } from "../server/actions";
 import { SKILLS } from "../skills";
-import { api } from "./api";
+import { api, mintMcpToken } from "./api";
 import { CalibrationTable } from "./rules";
 import { Button, ErrorNote, Panel, Tag, useWrite } from "./ui";
 import { type ExaminationView, money, seconds } from "./view";
@@ -300,8 +299,8 @@ export function Connect() {
   const mint = useWrite(async () => {
     setError(null);
     const minted = await mintMcpToken();
-    if ("error" in minted) return setError(minted.error);
-    setToken(minted);
+    if (!minted.ok) return setError(minted.error);
+    setToken(minted.value);
     setCopied(false);
   });
   const origin = typeof window === "undefined" ? "" : window.location.origin;

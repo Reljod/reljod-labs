@@ -1,22 +1,26 @@
 import "server-only";
 import type { Owner } from "@/features/access/domain/owner";
-import type { ModelCall, ModelChoice, Purpose } from "../domain/models";
-import type { Process, Watch } from "../domain/process";
-import type { CheckResult, ReviewFinding, Rule } from "../domain/rules";
+import type { ModelCall, ModelChoice } from "../domain/models";
+import type { CheckResult, Rule } from "../domain/rules";
 import type {
   Approval,
   AuditAction,
   AuditEvent,
-  DeckRound,
   RunLog,
   RunPatch,
-  RunSource,
   RunStatus,
   RunSummary,
-  RunView,
   StageState,
 } from "../domain/run";
 import { sql } from "./db";
+import {
+  type ActiveRun,
+  type RunRow,
+  type SettingsRow,
+  sourceOf,
+} from "./run-row";
+
+export type { ActiveRun, RunRow, SettingsRow };
 
 /*
  * Every list and every load by id here takes the Owner and filters on it in
@@ -29,77 +33,6 @@ const MAX_LOGS = 300;
 
 // biome-ignore lint/suspicious/noExplicitAny: postgres.js's JSON parameter type is narrower than our data.
 const json = (value: unknown) => sql().json(value as any);
-
-export type RunRow = {
-  id: string;
-  owner: string;
-  visitor_hash: string;
-  source_kind: "sample" | "upload";
-  sample_slug: string | null;
-  recording_path: string | null;
-  recording_name: string | null;
-  recording_type: string | null;
-  status: RunStatus;
-  title: string;
-  workflow_run_id: string | null;
-  stages: StageState[];
-  watch: Watch | null;
-  process: Process | null;
-  process_checks: CheckResult[];
-  process_findings: ReviewFinding[];
-  rounds: DeckRound[];
-  approval: Approval | null;
-  /** The grounding Check as Verify computed it; kept for every later Redo. */
-  grounding: CheckResult | null;
-  rules: Rule[];
-  rules_version: number;
-  models: ModelChoice;
-  logs: RunLog[];
-  cost_usd: string | number;
-  redos: number;
-  error: string | null;
-  created_at: Date;
-  started_at: Date;
-  completed_at: Date | null;
-};
-
-export function sourceOf(
-  row: Pick<RunRow, "source_kind" | "sample_slug" | "recording_name">,
-): RunSource {
-  return row.source_kind === "sample"
-    ? { kind: "sample", slug: row.sample_slug ?? "" }
-    : { kind: "upload", name: row.recording_name ?? "Recording" };
-}
-
-export function toRunView(
-  row: RunRow,
-  calls: ModelCall[],
-  videoUrl: string | null,
-): RunView {
-  return {
-    id: row.id,
-    title: row.title,
-    status: row.status,
-    source: sourceOf(row),
-    videoUrl,
-    createdAt: row.created_at.toISOString(),
-    completedAt: row.completed_at?.toISOString() ?? null,
-    stages: row.stages,
-    watch: row.watch,
-    process: row.process,
-    processChecks: row.process_checks,
-    processFindings: row.process_findings,
-    rounds: row.rounds,
-    approval: row.approval,
-    calls,
-    costUsd: Number(row.cost_usd),
-    rules: row.rules,
-    rulesVersion: row.rules_version,
-    models: row.models,
-    logs: row.logs,
-    error: row.error,
-  };
-}
 
 // Runs -------------------------------------------------------------------------
 
@@ -174,10 +107,6 @@ export async function claimRun(id: string, generation: number) {
   return rows.length > 0;
 }
 
-/** The message a person sees when the one-active-Run gate refuses. */
-export const ACTIVE_RUN_MESSAGE =
-  "A Run is still going. Stop it or let it finish before starting another.";
-
 /** The unique index that keeps one active Run per Owner was hit. */
 export function isActiveRunConflict(error: unknown) {
   const pg = error as { code?: string; constraint_name?: string } | null;
@@ -229,9 +158,9 @@ export async function listRuns(
   }));
 }
 
-export async function activeRuns(owner: Owner): Promise<RunRow[]> {
-  return sql()<RunRow[]>`
-    select * from process_transfer.runs
+export async function activeRuns(owner: Owner): Promise<ActiveRun[]> {
+  return sql()<ActiveRun[]>`
+    select id, title, started_at from process_transfer.runs
     where owner = ${owner} and status in ('queued', 'running')
     order by created_at desc`;
 }
@@ -427,69 +356,65 @@ export async function recordModelCall(
   };
 }
 
-export async function modelCalls(runId: string): Promise<ModelCall[]> {
-  const rows = await sql()<
-    {
-      id: string;
-      purpose: Purpose;
-      label: string;
-      model: string;
-      input_tokens: number;
-      output_tokens: number;
-      cost_usd: string;
-      ms: number;
-      generation: number;
-      created_at: Date;
-    }[]
+/**
+ * One of the Owner's Runs with its model calls, in one statement (the calls
+ * as a json array, ordered as they were made), or null.
+ */
+export async function ownedRunWithCalls(
+  owner: Owner,
+  id: string,
+): Promise<{ row: RunRow; calls: ModelCall[] } | null> {
+  if (typeof id !== "string" || !UUID.test(id)) return null;
+  const [found] = await sql()<(RunRow & { calls: ModelCall[] })[]>`
+    select r.*, coalesce((
+      select json_agg(json_build_object(
+        'id', c.id, 'purpose', c.purpose, 'label', c.label, 'model', c.model,
+        'inputTokens', c.input_tokens, 'outputTokens', c.output_tokens,
+        'costUsd', c.cost_usd::float8, 'ms', c.ms, 'generation', c.generation,
+        'at', to_char(c.created_at at time zone 'UTC', 'YYYY-MM-DD"T"HH24:MI:SS.MS"Z"')
+      ) order by c.created_at, c.id)
+      from process_transfer.model_calls c where c.run_id = r.id
+    ), '[]'::json) as calls
+    from process_transfer.runs r
+    where r.id = ${id} and r.owner = ${owner}`;
+  if (!found) return null;
+  const { calls, ...row } = found;
+  return { row: row as RunRow, calls: calls as ModelCall[] };
+}
+
+/** What the caps on paid work count, in one statement (`WorkCounts` without the active Run). */
+export async function workTotals(
+  owner: Owner,
+  visitorHash: string,
+): Promise<{
+  ownerSpentToday: number;
+  visitorStartsLastHour: number;
+  startsToday: number;
+}> {
+  const [row] = await sql()<
+    { spent: string | null; visitor_hour: number; day: number }[]
   >`
-    select * from process_transfer.model_calls
-    where run_id = ${runId} order by created_at, id`;
-  return rows.map((row) => ({
-    id: row.id,
-    purpose: row.purpose,
-    label: row.label,
-    model: row.model,
-    inputTokens: row.input_tokens,
-    outputTokens: row.output_tokens,
-    costUsd: Number(row.cost_usd),
-    ms: row.ms,
-    generation: row.generation,
-    at: row.created_at.toISOString(),
-  }));
-}
-
-/** USD the Owner's model calls cost in the last day, Redos included. */
-export async function ownerSpentToday(owner: Owner): Promise<number> {
-  const [row] = await sql()<{ total: string | null }[]>`
-    select sum(c.cost_usd) as total
-    from process_transfer.model_calls c
-    join process_transfer.runs r on r.id = c.run_id
-    where r.owner = ${owner} and c.created_at > now() - interval '1 day'`;
-  return Number(row?.total ?? 0);
-}
-
-/** Runs and Redos started since a time, by one visitor or by everyone. */
-export async function startsSince(
-  since: Date,
-  visitorHash?: string,
-): Promise<number> {
-  const [row] = await sql()<{ count: number }[]>`
-    select count(*)::int as count
+    select
+      (select sum(c.cost_usd)
+        from process_transfer.model_calls c
+        join process_transfer.runs r on r.id = c.run_id
+        where r.owner = ${owner} and c.created_at > now() - interval '1 day'
+      ) as spent,
+      (count(*) filter (
+        where visitor_hash = ${visitorHash}
+          and created_at > now() - interval '1 hour'))::int as visitor_hour,
+      count(*)::int as day
     from process_transfer.audit_events
     where action in ('run.started', 'deck.redone')
-      and created_at > ${since}
-      ${visitorHash ? sql()`and visitor_hash = ${visitorHash}` : sql()``}`;
-  return row?.count ?? 0;
+      and created_at > now() - interval '1 day'`;
+  return {
+    ownerSpentToday: Number(row?.spent ?? 0),
+    visitorStartsLastHour: row?.visitor_hour ?? 0,
+    startsToday: row?.day ?? 0,
+  };
 }
 
 // Settings ---------------------------------------------------------------------
-
-export type SettingsRow = {
-  owner: string;
-  rule_overrides: unknown;
-  models: unknown;
-  version: number;
-};
 
 export async function settingsOf(owner: Owner): Promise<SettingsRow | null> {
   const [row] = await sql()<SettingsRow[]>`

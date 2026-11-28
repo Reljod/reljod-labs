@@ -31,6 +31,7 @@ export function createPool(max = 4) {
     idle_timeout: 20,
     connect_timeout: 15,
     onnotice: () => {},
+    debug: dbStats.enabled ? dbStats.count : undefined,
     types: {
       bigint: {
         to: 20,
@@ -75,6 +76,46 @@ export function isoTimestamp(value: string): string {
 }
 
 export type Pool = ReturnType<typeof createPool>;
+
+let shared: Pool | undefined;
+
+/**
+ * The one pool of this function instance, shared by every feature whose rows
+ * come back in the default shape. A pool per feature held up to 4
+ * connections each, so one warm instance serving several demos kept a dozen
+ * pooler connections open; one pool of 6 serves them all.
+ */
+export function db(): Pool {
+  shared ??= createPool(6);
+  return shared;
+}
+
+/** Process-wide, so pools built in any bundle chunk (the proxy's too) add to one count. */
+const scope = globalThis as { __labsDbStatements?: { n: number } };
+scope.__labsDbStatements ??= { n: 0 };
+const counter = scope.__labsDbStatements;
+
+/**
+ * Statement counts for the benchmark (`scripts/bench-api.mts`), on only with
+ * `DB_STATS=1`; every pool passes `dbStats.count` as its postgres.js `debug`
+ * hook. The count is per process, so it is exact for a benchmark that sends
+ * one request at a time. Each REST answer carries the statements its
+ * handler ran in `x-db-queries`, and `GET /api/bench/db-stats` the total.
+ */
+export const dbStats = {
+  enabled: process.env.DB_STATS === "1",
+  count: () => {
+    counter.n += 1;
+  },
+  snapshot: () => counter.n,
+  annotate(response: Response, since: number) {
+    try {
+      response.headers.set("x-db-queries", String(counter.n - since));
+    } catch {
+      // A redirect's headers are immutable; it ran no query worth counting.
+    }
+  },
+};
 
 /** The pool, or a transaction on it: what a function takes when it may run inside either. */
 export type Db =

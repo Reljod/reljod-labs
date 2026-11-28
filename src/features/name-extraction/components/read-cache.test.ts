@@ -9,31 +9,8 @@ const upload = {
 } as const;
 
 describe("paths", () => {
-  it("names a Document by its source", () => {
-    expect(apiPath.overview(corpus)).toBe(
-      "/api/name-extraction/preview/overview?corpus=ne-te-01",
-    );
-    expect(apiPath.pages(upload, null, 1, 12)).toBe(
-      `/api/name-extraction/preview/pages?upload=${upload.uploadId}&from=1&to=12`,
-    );
-  });
-
-  it("names a Run's pages by the Run alone, so every view of it shares a key", () => {
-    expect(apiPath.pages(corpus, "r1", 13, 24)).toBe(
-      "/api/name-extraction/preview/pages?run=r1&from=13&to=24",
-    );
-    expect(apiPath.pages(null, "r1", 13, 24)).toBe(
-      apiPath.pages(corpus, "r1", 13, 24),
-    );
-  });
-
-  it("escapes a Run id in the path", () => {
-    expect(apiPath.comparison("a/b")).toBe(
-      "/api/name-extraction/runs/a%2Fb/comparison",
-    );
-  });
-
-  it("tells a Rulebook-dependent preview from a Run's", () => {
+  it("tells a Rulebook-dependent preview from a Run's, so a save drops only those", () => {
+    expect(isRulebookPreview(apiPath.pages(upload, null, 1, 12))).toBe(true);
     expect(isRulebookPreview(apiPath.pages(corpus, null, 1, 12))).toBe(true);
     expect(isRulebookPreview(apiPath.overview(corpus))).toBe(true);
     expect(isRulebookPreview(apiPath.pages(corpus, "r1", 1, 12))).toBe(false);

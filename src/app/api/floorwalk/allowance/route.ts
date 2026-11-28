@@ -1,23 +1,7 @@
-import { requireAccess } from "@/features/access/server/gate";
 import type { Allowance } from "@/features/floorwalk/domain/api";
-import { LIMITS } from "@/features/floorwalk/domain/limits";
-import { env } from "@/features/floorwalk/server/env";
-import { used, visitor } from "@/features/floorwalk/server/rate";
-import { failure, json } from "@/features/floorwalk/server/respond";
+import { floorwalkApi } from "@/features/floorwalk/server/api";
 
 /** How many Walks and questions the visitor has left this hour. */
-export async function GET() {
-  try {
-    const [, who] = await Promise.all([requireAccess(), visitor()]);
-    const count = await used(who);
-    return json<Allowance>({
-      walksUsed: count.walks,
-      walksPerHour: LIMITS.walksPerHour,
-      asksUsed: count.asks,
-      asksPerHour: LIMITS.asksPerHour,
-      model: env.model(),
-    });
-  } catch (error) {
-    return failure(error);
-  }
-}
+export const GET = floorwalkApi.handle(
+  ({ services, visitor }): Promise<Allowance> => services.allowance(visitor),
+);

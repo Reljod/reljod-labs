@@ -1,4 +1,6 @@
 import "server-only";
+import { type Db, db, jsonb } from "@/server/postgres";
+import { isUuid } from "../domain/ids";
 import { LIMITS } from "../domain/limits";
 import {
   type ActorKind,
@@ -6,22 +8,8 @@ import {
   redactDetail,
   type TrailAction,
   type TrailEvent,
-  type TrailUsage,
 } from "../domain/trail";
-import type { Caller } from "./caller";
-import { type Db, isUuid, jsonb, sql } from "./db";
-
-export type TrailInput = {
-  action: TrailAction;
-  summary: string;
-  detail?: Record<string, unknown>;
-  viewId?: string | null;
-  boardId?: string | null;
-  usage?: TrailUsage;
-  ms?: number;
-  /** Overrides the Caller's actor: a tool the Analyst called writes as the Analyst. */
-  actor?: ActorKind;
-};
+import type { Caller, TrailInput, TrailRepository } from "./ports";
 
 type Row = {
   id: number;
@@ -38,8 +26,11 @@ type Row = {
   output_tokens: number | null;
   cost_usd: string | null;
   ms: number | null;
-  created_at: Date;
+  created_at: string;
 };
+
+/** A timestamp as `toISOString()` writes it, whatever the pool parsed it into. */
+export const iso = (value: string | Date) => new Date(value).toISOString();
 
 const eventOf = (row: Row): TrailEvent => ({
   id: row.id,
@@ -56,13 +47,18 @@ const eventOf = (row: Row): TrailEvent => ({
   outputTokens: row.output_tokens,
   costUsd: row.cost_usd === null ? null : Number(row.cost_usd),
   ms: row.ms,
-  createdAt: row.created_at.toISOString(),
+  createdAt: iso(row.created_at),
 });
 
-async function insert(db: Db, caller: Caller, input: TrailInput) {
+/** Inside a transaction: the write and its event stand or fall together. */
+export async function trailIn(
+  tx: Db,
+  caller: Caller,
+  input: TrailInput,
+): Promise<number> {
   if (!isTrailAction(input.action))
     throw new Error(`Unknown Trail action "${String(input.action)}"`);
-  const [row] = await db<{ id: number }[]>`
+  const [row] = await tx<{ id: number }[]>`
     insert into canvas.events (
       owner, conversation_id, question_id, view_id, board_id, actor_kind,
       action, summary, detail, model, input_tokens, output_tokens, cost_usd, ms
@@ -75,7 +71,7 @@ async function insert(db: Db, caller: Caller, input: TrailInput) {
       ${input.actor ?? caller.actor},
       ${input.action},
       ${input.summary.slice(0, 300)},
-      ${jsonb(db, redactDetail(input.detail))},
+      ${jsonb(tx, redactDetail(input.detail))},
       ${input.usage?.model ?? null},
       ${input.usage ? Math.round(input.usage.inputTokens) : null},
       ${input.usage ? Math.round(input.usage.outputTokens) : null},
@@ -87,64 +83,42 @@ async function insert(db: Db, caller: Caller, input: TrailInput) {
   return row.id;
 }
 
-/**
- * Writes one Trail event after the fact. Best effort in production: the work
- * it records has already happened, so a failed insert is logged (action
- * only) and the caller carries on. Outside production it throws, so an
- * unknown action or a schema drift shows the first time it runs.
- */
-export async function trail(
-  caller: Caller,
-  input: TrailInput,
-): Promise<number | null> {
-  try {
-    return await insert(sql(), caller, input);
-  } catch (error) {
-    if (process.env.NODE_ENV !== "production") throw error;
-    console.error("[canvas] trail failed", input.action, error);
-    return null;
-  }
-}
+/** The Trail in Postgres (`canvas.events`, which refuses UPDATE and DELETE). */
+export const trailRepository: TrailRepository = {
+  /**
+   * Best effort in production: the work it records has already happened,
+   * so a failed insert is logged (action only) and the caller carries on.
+   * Outside production it throws, so an unknown action or a schema drift
+   * shows the first time it runs.
+   */
+  async record(caller, input) {
+    try {
+      return await trailIn(db(), caller, input);
+    } catch (error) {
+      if (process.env.NODE_ENV !== "production") throw error;
+      console.error("[canvas] trail failed", input.action, error);
+      return null;
+    }
+  },
 
-/** For an event that must be on the Trail before the work happens: throws if it cannot be written. */
-export function trailStrict(caller: Caller, input: TrailInput) {
-  return insert(sql(), caller, input);
-}
+  strict: (caller, input) => trailIn(db(), caller, input),
 
-/** Inside a transaction: the write and its event stand or fall together. */
-export function trailIn(tx: Db, caller: Caller, input: TrailInput) {
-  return insert(tx, caller, input);
-}
-
-export type TrailFilter = {
-  conversationId?: string;
-  questionId?: string;
-  viewId?: string;
-  boardId?: string;
-  /** Events older than this id. */
-  before?: number;
-  limit?: number;
+  async list(owner, filter) {
+    const sql = db();
+    const limit = Math.min(filter.limit ?? LIMITS.trailPageSize, 500);
+    const rows = await sql<Row[]>`
+      select id, conversation_id, question_id, view_id, board_id, actor_kind,
+             action, summary, detail, model, input_tokens, output_tokens,
+             cost_usd, ms, created_at
+      from canvas.events
+      where owner = ${owner}
+        ${isUuid(filter.conversationId) ? sql`and conversation_id = ${filter.conversationId}` : sql``}
+        ${isUuid(filter.questionId) ? sql`and question_id = ${filter.questionId}` : sql``}
+        ${isUuid(filter.viewId) ? sql`and view_id = ${filter.viewId}` : sql``}
+        ${isUuid(filter.boardId) ? sql`and board_id = ${filter.boardId}` : sql``}
+        ${filter.before ? sql`and id < ${filter.before}` : sql``}
+      order by id desc
+      limit ${limit}`;
+    return rows.map(eventOf);
+  },
 };
-
-/** A page of the Owner's Trail, newest first. */
-export async function listTrail(
-  caller: Pick<Caller, "owner">,
-  filter: TrailFilter = {},
-): Promise<TrailEvent[]> {
-  const db = sql();
-  const limit = Math.min(filter.limit ?? LIMITS.trailPageSize, 500);
-  const rows = await db<Row[]>`
-    select id, conversation_id, question_id, view_id, board_id, actor_kind,
-           action, summary, detail, model, input_tokens, output_tokens,
-           cost_usd, ms, created_at
-    from canvas.events
-    where owner = ${caller.owner}
-      ${isUuid(filter.conversationId) ? db`and conversation_id = ${filter.conversationId}` : db``}
-      ${isUuid(filter.questionId) ? db`and question_id = ${filter.questionId}` : db``}
-      ${isUuid(filter.viewId) ? db`and view_id = ${filter.viewId}` : db``}
-      ${isUuid(filter.boardId) ? db`and board_id = ${filter.boardId}` : db``}
-      ${filter.before ? db`and id < ${filter.before}` : db``}
-    order by id desc
-    limit ${limit}`;
-  return rows.map(eventOf);
-}

@@ -1,20 +1,19 @@
+import { z } from "zod";
 import type { ScheduleListResponse } from "@/features/harness/domain/api";
-import { requireStaff } from "@/features/harness/server/context";
-import { listSchedules } from "@/features/harness/server/records";
-import { failure, json } from "@/features/harness/server/respond";
+import { harnessApi } from "@/features/harness/server/api";
+import { query } from "@/platform/http/middleware";
+
+const schema = z.object({
+  employer: z.string().max(200).optional(),
+  period: z.string().max(20).optional(),
+});
 
 /** Schedules with their lines, newest month first; `?employer=` for one Employer's. */
-export async function GET(request: Request) {
-  try {
-    const { owner } = await requireStaff();
-    const search = new URL(request.url).searchParams;
-    return json<ScheduleListResponse>({
-      schedules: await listSchedules(owner, {
-        employerId: search.get("employer"),
-        period: search.get("period"),
-      }),
-    });
-  } catch (error) {
-    return failure(error);
-  }
-}
+export const GET = harnessApi.use(query(schema)).handle(
+  async ({ services, caller, query }): Promise<ScheduleListResponse> => ({
+    schedules: await services.records.schedules(caller, {
+      employerId: query.employer ?? null,
+      period: query.period ?? null,
+    }),
+  }),
+);

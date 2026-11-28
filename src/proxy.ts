@@ -1,8 +1,12 @@
 import { type NextRequest, NextResponse } from "next/server";
 import { DENIED_MESSAGE } from "@/features/access/constants";
 import { checksItsOwnBearer, decide } from "@/features/access/domain/routing";
+import {
+  FORWARDED_ACCESS_HEADER,
+  forwardAccess,
+} from "@/features/access/server/forwarded";
 import { type Access, accessThrough } from "@/features/access/server/gate";
-import { E2E_HEADER } from "@/features/document-compliance/constants";
+import { E2E_HEADER } from "@/platform/request/mode";
 
 /**
  * The first gate in front of the demos: a visitor without Access is sent to
@@ -12,7 +16,8 @@ import { E2E_HEADER } from "@/features/document-compliance/constants";
  */
 export async function proxy(request: NextRequest) {
   const path = request.nextUrl.pathname;
-  if (checksItsOwnBearer(path)) return NextResponse.next();
+  if (checksItsOwnBearer(path))
+    return passOn(request, NextResponse.next(), null);
 
   let response = NextResponse.next({ request });
   let access: Access | null = null;
@@ -45,7 +50,7 @@ export async function proxy(request: NextRequest) {
     method: request.method,
     access: access?.kind ?? null,
   });
-  if (decision.kind === "pass") return response;
+  if (decision.kind === "pass") return passOn(request, response, access);
   const refusal =
     decision.kind === "redirect"
       ? NextResponse.redirect(new URL(decision.to, request.url))
@@ -55,6 +60,36 @@ export async function proxy(request: NextRequest) {
         });
   for (const cookie of response.cookies.getAll()) refusal.cookies.set(cookie);
   return refusal;
+}
+
+/**
+ * Lets the request through with the Access just worked out, signed, in an
+ * internal header (`forwarded.ts`), so the page or route does not look it up
+ * again. Whatever the browser sent under that name is dropped first. The
+ * cookies and cache headers of a refreshed session are carried over.
+ */
+function passOn(
+  request: NextRequest,
+  response: NextResponse,
+  access: Access | null,
+): NextResponse {
+  const headers = new Headers(request.headers);
+  headers.delete(FORWARDED_ACCESS_HEADER);
+  if (access) {
+    try {
+      headers.set(FORWARDED_ACCESS_HEADER, forwardAccess(access));
+    } catch (error) {
+      // No salt to sign with: the route checks Access from scratch.
+      console.error("[access] could not forward Access", error);
+    }
+  }
+  const forwarded = NextResponse.next({ request: { headers } });
+  for (const cookie of response.cookies.getAll()) forwarded.cookies.set(cookie);
+  for (const [name, value] of response.headers) {
+    if (name === "cache-control" || name === "expires" || name === "pragma")
+      forwarded.headers.set(name, value);
+  }
+  return forwarded;
 }
 
 export const config = {
@@ -77,6 +112,9 @@ export const config = {
     "/api/prism/:path*",
     "/api/helio/:path*",
     "/api/floorwalk/:path*",
+    "/api/ledger/:path*",
+    // The door's own routes pass for everyone (`decide`); the rest are a Host's.
+    "/api/access/:path*",
     "/access/:path*",
   ],
 };

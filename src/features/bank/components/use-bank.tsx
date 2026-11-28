@@ -19,7 +19,13 @@ import { isTab, type Tab } from "../domain/api";
 import type { CommandName, WriteOutcome } from "../domain/commands";
 import type { Staff } from "../domain/staff";
 import type { CustomerSummary, OverviewView } from "../domain/views";
-import { ApiError, messageOf, readBank, runCommand } from "./api";
+import {
+  type ApiError,
+  fieldErrorsOf,
+  messageOf,
+  readBank,
+  runCommand,
+} from "./api";
 
 /**
  * What every tab of the bank shares: who is signed in, the bank's clock and
@@ -222,8 +228,7 @@ export function useCommand<Result = unknown>() {
         return result;
       } catch (caught) {
         setError(messageOf(caught));
-        if (caught instanceof ApiError && caught.errors)
-          setFieldErrors(caught.errors);
+        setFieldErrors(fieldErrorsOf(caught));
         return undefined;
       } finally {
         running.current = false;

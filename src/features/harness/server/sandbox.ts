@@ -1,27 +1,20 @@
 import "server-only";
 import { Sandbox } from "@vercel/sandbox";
 import type { Owner } from "@/features/access/domain/owner";
-import type { AuditInput } from "../domain/audit";
+import { NotFoundError } from "@/platform/errors";
 import {
   commandSecondsFor,
   runnerScript,
   SANDBOX_LIMITS,
   SANDBOX_WORKDIR,
   type SandboxFile,
-  type SandboxFileContent,
   type SandboxRunResult,
-  type SandboxWriteResult,
   sessionSandboxName,
-  workdirPath,
 } from "../domain/sandbox";
-import type { Staff } from "../domain/staff";
-import type { Actor, PaidActor } from "./actor";
-import { audit, auditStrict } from "./audit";
 import { sql } from "./db";
 import { env } from "./env";
-import { InvalidError, NotFoundError, StateError } from "./errors";
-import { takeRate } from "./rate";
-import { readableSession, writableSession } from "./sessions";
+import { sandboxUnavailable } from "./errors";
+import type { SessionSandboxes } from "./ports";
 
 /*
  * The Sandbox on Vercel Sandbox (ADR 0022), as Sieve does it: a microVM with
@@ -29,18 +22,13 @@ import { readableSession, writableSession } from "./sessions";
  * one (`sessionSandboxName`), made on its first write or command; a model
  * Step that codes gets its own for one call (`pipelines/code.ts`). Auth is the
  * deployment's OIDC token (`VERCEL_OIDC_TOKEN` from `vercel env pull` locally).
+ * The checks, the cap and the Audit trail are the Sandbox service's.
  */
 
-const DEFAULT_COMMAND_MS = 30_000;
-const MIN_COMMAND_MS = 1_000;
-const COMMAND_AUDIT_CHARS = 200;
-const OUTPUT_HEAD_CHARS = 120;
-const MAX_COMMAND_CHARS = 64 * 1024;
 const MAX_LISTED_FILES = 500;
 const MINUTE = 60_000;
 
-const unavailable = (reason: string) =>
-  new StateError(`Sandbox unavailable: ${reason}`);
+const unavailable = sandboxUnavailable;
 
 /** Throws "Sandbox unavailable" when this deployment cannot reach Vercel Sandbox. */
 function requireConfigured() {
@@ -229,15 +217,11 @@ export async function execIn(
 // A Session's Sandbox ------------------------------------------------------------------
 
 /** Bookkeeping for the `sandboxes` row. Never fails the command. */
-async function touch(
-  owner: Owner,
-  sessionId: string,
-  status: "ready" | "stopped",
-) {
+async function touch(owner: Owner, sessionId: string) {
   try {
     await sql()`
       insert into harness.sandboxes (session_id, owner, container, status)
-      values (${sessionId}, ${owner}, ${sessionSandboxName(sessionId)}, ${status})
+      values (${sessionId}, ${owner}, ${sessionSandboxName(sessionId)}, 'ready')
       on conflict (session_id) do update
         set status = excluded.status, last_used_at = now()
         where harness.sandboxes.owner = excluded.owner`;
@@ -246,195 +230,15 @@ async function touch(
   }
 }
 
-/** An Audit write that cannot fail the command it records. */
-async function record(input: AuditInput & { owner: Owner }) {
-  try {
-    await audit(input);
-  } catch (error) {
-    console.error("[harness] sandbox audit failed", input.action, error);
-  }
-}
-
-const viaOf = (via?: "app" | "agent") => (via ? { via } : {});
-
-/** A failure's message when it is one of ours; a plain phrase otherwise. */
-const safeMessage = (error: unknown): string =>
-  error instanceof StateError || error instanceof InvalidError
-    ? error.message
-    : "The Sandbox failed.";
-
-const cut = (text: string, max: number) =>
-  text.length > max ? `${text.slice(0, max)}…` : text;
-
-const oneLine = (text: string) => text.replace(/\s+/g, " ").trim();
-
-async function openSessionSandbox(input: {
-  owner: Owner;
-  sessionId: string;
-  staff: Pick<Staff, "id" | "name">;
-  via?: "app" | "agent";
-}): Promise<Opened> {
-  const opened = await openSandbox(sessionSandboxName(input.sessionId), {
+async function openSessionSandbox(
+  owner: Owner,
+  sessionId: string,
+): Promise<Opened> {
+  const opened = await openSandbox(sessionSandboxName(sessionId), {
     persistent: true,
   });
-  await touch(input.owner, input.sessionId, "ready");
-  if (opened.created) {
-    await record({
-      owner: input.owner,
-      sessionId: input.sessionId,
-      actor: { kind: "staff", staff: input.staff },
-      action: "sandbox.started",
-      summary: "Started a Sandbox",
-      target: { kind: "session", id: input.sessionId },
-      detail: viaOf(input.via),
-    });
-  }
+  await touch(owner, sessionId);
   return opened;
-}
-
-/** Writes a file under the Session Sandbox's workdir (at most `SANDBOX_LIMITS.fileBytes`), starting it if needed. */
-export async function sandboxWriteFile(
-  input: PaidActor & {
-    sessionId: string;
-    path: string;
-    content: string;
-    via?: "app" | "agent";
-  },
-): Promise<SandboxWriteResult> {
-  await writableSession(input, input.sessionId);
-  requireConfigured();
-  if (typeof input.path !== "string" || typeof input.content !== "string") {
-    throw new InvalidError("Give a path and the file's text.");
-  }
-  const path = workdirPath(input.path);
-  if (!path) {
-    throw new InvalidError(
-      "Give a path inside the Sandbox's work directory, like data/schedule.csv.",
-    );
-  }
-  const bytes = Buffer.byteLength(input.content, "utf8");
-  if (bytes > SANDBOX_LIMITS.fileBytes) {
-    throw new InvalidError(
-      `A file in the Sandbox is at most ${SANDBOX_LIMITS.fileBytes / 1024} KB.`,
-    );
-  }
-  await takeRate(input.visitor, input.owner, "sandbox_command");
-  const { sandbox, created } = await openSessionSandbox(input);
-  try {
-    await sandbox.writeFiles([
-      { path: `${SANDBOX_WORKDIR}/${path}`, content: input.content },
-    ]);
-  } catch (error) {
-    console.error("[harness] sandbox write failed", messageOf(error));
-    throw unavailable(
-      `the file could not be written (${sdkReason(error)}); try again`,
-    );
-  }
-  // Always recorded: the path and size, never the content.
-  await record({
-    owner: input.owner,
-    sessionId: input.sessionId,
-    actor: { kind: "staff", staff: input.staff },
-    action: "sandbox.file_written",
-    summary: `Wrote ${cut(path, 120)}`,
-    target: { kind: "session", id: input.sessionId },
-    detail: { ...viaOf(input.via), path, bytes },
-  });
-  return { path, bytes, directory: false, sandboxCreated: created };
-}
-
-/**
- * Runs one shell command (under `sh -c`, in the workdir) and returns what it
- * printed. Takes one of the visitor's `LIMITS.sandboxCommandsPerHour`.
- * `timeoutMs` defaults to 30 s and is held to 1 s .. 60 s.
- */
-export async function sandboxRun(
-  input: PaidActor & {
-    sessionId: string;
-    command: string;
-    timeoutMs?: number;
-    via?: "app" | "agent";
-  },
-): Promise<SandboxRunResult> {
-  await writableSession(input, input.sessionId);
-  requireConfigured();
-  const command = typeof input.command === "string" ? input.command : "";
-  if (!command.trim()) throw new InvalidError("Give a command to run.");
-  if (command.length > MAX_COMMAND_CHARS) {
-    throw new InvalidError("That command is too long.");
-  }
-  const timeoutMs = Math.min(
-    SANDBOX_LIMITS.commandSeconds * 1000,
-    Math.max(
-      MIN_COMMAND_MS,
-      Math.trunc(Number(input.timeoutMs ?? DEFAULT_COMMAND_MS)) ||
-        DEFAULT_COMMAND_MS,
-    ),
-  );
-  await takeRate(input.visitor, input.owner, "sandbox_command");
-  const actor = { kind: "staff", staff: input.staff } as const;
-  const target = { kind: "session", id: input.sessionId };
-  // The command stands or falls with its Audit event (ADR 0018): written
-  // first, and nothing runs if it cannot be.
-  try {
-    await auditStrict({
-      owner: input.owner,
-      sessionId: input.sessionId,
-      actor,
-      action: "sandbox.command",
-      // Written before the call: it says what was asked, not that it ran.
-      summary: `Asked to run: ${cut(oneLine(command), 80)}`,
-      target,
-      detail: {
-        ...viaOf(input.via),
-        command: cut(command, COMMAND_AUDIT_CHARS),
-        timeoutMs,
-      },
-    });
-  } catch (error) {
-    console.error("[harness] sandbox command audit failed", error);
-    throw new StateError(
-      "The command was not run: its Audit event could not be written. Try again.",
-    );
-  }
-  let run: SandboxRunResult;
-  try {
-    const { sandbox, created } = await openSessionSandbox(input);
-    run = {
-      ...(await execIn(sandbox, command, timeoutMs)),
-      sandboxCreated: created,
-    };
-  } catch (error) {
-    // The trail already says it was asked; say it did not run (best effort).
-    const message = safeMessage(error);
-    await record({
-      owner: input.owner,
-      sessionId: input.sessionId,
-      actor,
-      action: "sandbox.command_finished",
-      summary: `Not run: ${cut(message, 120)}`,
-      target,
-      detail: { ...viaOf(input.via), error: message },
-    });
-    throw error;
-  }
-  await record({
-    owner: input.owner,
-    sessionId: input.sessionId,
-    actor,
-    action: "sandbox.command_finished",
-    summary: `Exit ${run.exitCode ?? "none"}: ${cut(oneLine(command), 80)}`,
-    target,
-    detail: {
-      ...viaOf(input.via),
-      exitCode: run.exitCode,
-      durationMs: run.ms,
-      timedOut: run.timedOut,
-      truncated: run.truncated,
-      outputHead: cut(oneLine(run.stdout || run.stderr), OUTPUT_HEAD_CHARS),
-    },
-  });
-  return run;
 }
 
 /** The Session's Sandbox if it has one; never makes one just to read it. */
@@ -451,58 +255,119 @@ async function existingSessionSandbox(sessionId: string): Promise<Sandbox> {
   }
 }
 
-/** Reads a file from the Session Sandbox's workdir, cut at `SANDBOX_LIMITS.fileBytes`. */
-export async function sandboxReadFile(
-  input: Actor & { sessionId: string; path: string },
-): Promise<SandboxFileContent> {
-  if (!(await readableSession(input, input.sessionId))) {
-    throw new NotFoundError("That Session is not in this Workspace.");
-  }
-  const path = workdirPath(String(input.path));
-  if (!path) throw new InvalidError("Give a path inside the work directory.");
-  const sandbox = await existingSessionSandbox(input.sessionId);
-  let buffer: Buffer | null;
-  try {
-    buffer = await sandbox.readFileToBuffer({ path, cwd: SANDBOX_WORKDIR });
-  } catch (error) {
-    console.error("[harness] sandbox read failed", messageOf(error));
-    throw unavailable(
-      `the file could not be read (${sdkReason(error)}); try again`,
-    );
-  }
-  if (!buffer) throw new NotFoundError(`No file ${path} in the Sandbox.`);
-  const truncated = buffer.byteLength > SANDBOX_LIMITS.fileBytes;
-  const content = buffer.subarray(0, SANDBOX_LIMITS.fileBytes).toString("utf8");
-  return {
-    path,
-    content,
-    bytes: buffer.byteLength,
-    truncated,
-  };
-}
+/** A Session's Sandbox on Vercel Sandbox, made on its first write or command. */
+export const vercelSandboxes: SessionSandboxes = {
+  get configured() {
+    return env.sandboxConfigured();
+  },
 
-/** Lists the files under a directory of the Session Sandbox's workdir (the workdir itself by default). */
-export async function sandboxListFiles(
-  input: Actor & { sessionId: string; path?: string },
-): Promise<SandboxFile[]> {
-  if (!(await readableSession(input, input.sessionId))) {
-    throw new NotFoundError("That Session is not in this Workspace.");
-  }
-  const dir = input.path?.trim() ? workdirPath(input.path) : "";
-  if (dir === null)
-    throw new InvalidError("Give a directory inside the work directory.");
-  const sandbox = await existingSessionSandbox(input.sessionId);
-  const listed = await execIn(
-    sandbox,
-    `find . -type f -printf '%P\\t%s\\n' 2>/dev/null | sort | head -n ${MAX_LISTED_FILES}`,
-    15_000,
-  );
-  return listed.stdout
-    .split("\n")
-    .filter(Boolean)
-    .map((line) => {
-      const [path = "", size = "0"] = line.split("\t");
-      return { path, bytes: Number(size) || 0, directory: false };
-    })
-    .filter((file) => file.path && (!dir || file.path.startsWith(`${dir}/`)));
+  async write(sessionId, owner, path, content) {
+    const { sandbox, created } = await openSessionSandbox(owner, sessionId);
+    try {
+      await sandbox.writeFiles([
+        { path: `${SANDBOX_WORKDIR}/${path}`, content },
+      ]);
+    } catch (error) {
+      console.error("[harness] sandbox write failed", messageOf(error));
+      throw unavailable(
+        `the file could not be written (${sdkReason(error)}); try again`,
+      );
+    }
+    return { created };
+  },
+
+  async run(sessionId, owner, command, timeoutMs): Promise<SandboxRunResult> {
+    const { sandbox, created } = await openSessionSandbox(owner, sessionId);
+    return {
+      ...(await execIn(sandbox, command, timeoutMs)),
+      sandboxCreated: created,
+    };
+  },
+
+  async read(sessionId, path) {
+    const sandbox = await existingSessionSandbox(sessionId);
+    let buffer: Buffer | null;
+    try {
+      buffer = await sandbox.readFileToBuffer({ path, cwd: SANDBOX_WORKDIR });
+    } catch (error) {
+      console.error("[harness] sandbox read failed", messageOf(error));
+      throw unavailable(
+        `the file could not be read (${sdkReason(error)}); try again`,
+      );
+    }
+    if (!buffer) throw new NotFoundError(`No file ${path} in the Sandbox.`);
+    return {
+      path,
+      content: buffer.subarray(0, SANDBOX_LIMITS.fileBytes).toString("utf8"),
+      bytes: buffer.byteLength,
+      truncated: buffer.byteLength > SANDBOX_LIMITS.fileBytes,
+    };
+  },
+
+  async list(sessionId, dir): Promise<SandboxFile[]> {
+    const sandbox = await existingSessionSandbox(sessionId);
+    const listed = await execIn(
+      sandbox,
+      `find . -type f -printf '%P\\t%s\\n' 2>/dev/null | sort | head -n ${MAX_LISTED_FILES}`,
+      15_000,
+    );
+    return listed.stdout
+      .split("\n")
+      .filter(Boolean)
+      .map((line) => {
+        const [path = "", size = "0"] = line.split("\t");
+        return { path, bytes: Number(size) || 0, directory: false };
+      })
+      .filter((file) => file.path && (!dir || file.path.startsWith(`${dir}/`)));
+  },
+};
+
+/** The e2e suite's Sandbox: files kept in memory, commands answered with a canned line. Never reaches Vercel. */
+export function stubSandboxes(): SessionSandboxes {
+  const files = new Map<string, Map<string, string>>();
+  const of = (sessionId: string) => {
+    let session = files.get(sessionId);
+    if (!session) {
+      session = new Map();
+      files.set(sessionId, session);
+    }
+    return session;
+  };
+  return {
+    configured: true,
+    async write(sessionId, _owner, path, content) {
+      const created = !files.has(sessionId);
+      of(sessionId).set(path, content);
+      return { created };
+    },
+    async run(sessionId, _owner, command) {
+      const created = !files.has(sessionId);
+      of(sessionId);
+      return {
+        exitCode: 0,
+        stdout: `(stub Sandbox) ran: ${command.slice(0, 200)}\n`,
+        stderr: "",
+        timedOut: false,
+        truncated: false,
+        ms: 0,
+        sandboxCreated: created,
+      };
+    },
+    async read(sessionId, path) {
+      const content = files.get(sessionId)?.get(path);
+      if (content === undefined)
+        throw new NotFoundError(`No file ${path} in the Sandbox.`);
+      const bytes = Buffer.byteLength(content, "utf8");
+      return { path, content, bytes, truncated: false };
+    },
+    async list(sessionId, dir) {
+      return [...(files.get(sessionId)?.entries() ?? [])]
+        .filter(([path]) => !dir || path.startsWith(`${dir}/`))
+        .map(([path, content]) => ({
+          path,
+          bytes: Buffer.byteLength(content, "utf8"),
+          directory: false,
+        }));
+    },
+  };
 }

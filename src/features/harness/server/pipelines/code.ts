@@ -3,9 +3,9 @@ import { randomUUID } from "node:crypto";
 import { type ToolSet, tool } from "ai";
 import { z } from "zod";
 import type { Owner } from "@/features/access/domain/owner";
+import { ConflictError } from "@/platform/errors";
 import { SANDBOX_LIMITS, SANDBOX_WORKDIR } from "../../domain/sandbox";
 import { audit, auditStrict } from "../audit";
-import { StateError } from "../errors";
 import { execIn, type Opened, openSandbox, removeSandbox } from "../sandbox";
 
 /*
@@ -151,8 +151,10 @@ export function stepCode(scope: StepScope, papers: StepPaper[]) {
           return resultText(run);
         } catch (error) {
           const why =
-            error instanceof StateError ? error.message : "The Sandbox failed.";
-          if (!(error instanceof StateError))
+            error instanceof ConflictError
+              ? error.message
+              : "The Sandbox failed.";
+          if (!(error instanceof ConflictError))
             console.error("[harness] step code failed", error);
           await audit({
             ...base,

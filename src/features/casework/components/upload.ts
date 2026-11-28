@@ -1,7 +1,7 @@
 "use client";
 
-import { beginUpload, finishUpload, type UploadSlot } from "../server/actions";
 import type { DocView } from "../view";
+import { beginUpload, finishUpload } from "./api";
 
 const MAX_PAGES = 12;
 const ACCEPTED = /\.(pdf|jpe?g|png|csv)$/i;
@@ -131,7 +131,7 @@ export async function uploadFiles(
       const rendered = isPdf
         ? await renderPdf(file)
         : { pages: [], digital: false };
-      const [slot] = (await beginUpload([
+      const [slot] = await beginUpload([
         {
           name: file.name,
           type: file.type,
@@ -139,7 +139,7 @@ export async function uploadFiles(
           pages: rendered.pages.length,
           digital: rendered.digital,
         },
-      ])) as UploadSlot[];
+      ]);
       if (!slot?.ok) {
         skipped.push({
           name: file.name,

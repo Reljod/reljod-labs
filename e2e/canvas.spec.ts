@@ -1,16 +1,19 @@
 import { expect, type Page, test } from "@playwright/test";
-import { STUB_SPEC } from "../src/features/canvas/domain/stub";
+import { STUB_PROBES, STUB_SPEC } from "../src/features/canvas/domain/stub";
+import { E2E_HEADER, E2E_LIVE_HEADER } from "../src/platform/request/headers";
 
 /*
- * Canvas, the main path a person takes. The Analyst's turn is stubbed
- * (`x-canvas-stub`: a scripted tool sequence in place of the model, nothing
- * spent) but everything it calls is real: the MCP server, the Guard, the
- * Query in DuckDB, the checks, the View App in its sandboxed frame. It writes
- * to the `e2e` Workspace in the database.
+ * Canvas, the main path a person takes. Stubbed by default (the e2e token
+ * alone): the Analyst's turn is a scripted tool sequence and the Sandbox is
+ * the canned one, which parses from trees DuckDB really produced, so nothing
+ * is spent. Everything else is real: the MCP server, the Guard, the checks,
+ * the Trail, the View App in its sandboxed frame. It writes to the `e2e`
+ * Workspace in the database. A token taken here carries the stub mode, so
+ * the MCP requests the suite makes with it are stubbed too.
  *
- * Needs `supabase/migrations/20261119160000_canvas.sql` applied, and either
- * Vercel Sandbox or `CANVAS_LOCAL_RUNNER` on the server. Opt-in with
- * `E2E_CANVAS=1`; add `E2E_CANVAS_LIVE=1` for the one real model Question.
+ * Needs `supabase/migrations/20261119160000_canvas.sql` applied. Opt-in with
+ * `E2E_CANVAS=1`; add `E2E_CANVAS_LIVE=1` for the one real model Question
+ * (the real Sandbox, or `CANVAS_LOCAL_RUNNER`, on the server).
  */
 test.skip(
   process.env.E2E_CANVAS !== "1",
@@ -19,7 +22,7 @@ test.skip(
 test.describe.configure({ mode: "serial" });
 test.setTimeout(240_000);
 
-const BYPASS = { "x-e2e-token": process.env.E2E_BYPASS_TOKEN ?? "" };
+const BYPASS = { [E2E_HEADER]: process.env.E2E_BYPASS_TOKEN ?? "" };
 const TITLE = "Daily peak load in Kestrel Coast";
 
 async function askStarter(page: Page, question: string) {
@@ -29,7 +32,7 @@ async function askStarter(page: Page, question: string) {
 }
 
 test.describe("stubbed Analyst", () => {
-  test.use({ extraHTTPHeaders: { ...BYPASS, "x-canvas-stub": "1" } });
+  test.use({ extraHTTPHeaders: BYPASS });
 
   test("a Question comes back as a View in a sandboxed frame, and a Control re-runs it with no model call", async ({
     page,
@@ -209,38 +212,33 @@ test.describe("stubbed Analyst", () => {
       // The Guard: a Restricted column never comes back row by row...
       const rowLevel = await client.callTool({
         name: "run_query",
-        arguments: {
-          sql: "select household_id, monthly_income_mdc from household_survey limit 5",
-        },
+        arguments: { sql: STUB_PROBES.rowLevel },
       });
       expect(rowLevel.isError).toBe(true);
       expect(text(rowLevel)).toMatch(/Restricted/i);
       // ...not behind a comment or a subquery either...
       const hidden = await client.callTool({
         name: "run_query",
-        arguments: {
-          sql: "select * from (select /* avg( */ monthly_income_mdc as x from household_survey) limit 3",
-        },
+        arguments: { sql: STUB_PROBES.hiddenInSubquery },
       });
       expect(hidden.isError).toBe(true);
+      expect(text(hidden)).toMatch(/Restricted/i);
       // ...but aggregated above the minimum group size it does.
       const aggregated = await client.callTool({
         name: "run_query",
-        arguments: {
-          sql: "select region_code, round(avg(monthly_income_mdc)) as mean_income from household_survey group by all order by 1",
-        },
+        arguments: { sql: STUB_PROBES.meanIncome },
       });
       expect(aggregated.isError ?? false).toBe(false);
       expect(text(aggregated)).toMatch(/minimum group size/i);
       // Files are never read.
       const file = await client.callTool({
         name: "run_query",
-        arguments: { sql: "select * from read_csv('/etc/passwd')" },
+        arguments: { sql: STUB_PROBES.readFile },
       });
       expect(file.isError).toBe(true);
 
       // A Rule edit takes effect at the query tool: restrict a column, and it is refused.
-      const sql = "select amount_mdc from card_spend limit 3";
+      const sql = STUB_PROBES.cardAmounts;
       const before = await client.callTool({
         name: "run_query",
         arguments: { sql },
@@ -343,6 +341,20 @@ test.describe("without Access", () => {
       maxRedirects: 0,
     });
     expect([401, 307]).toContain(call.status());
+    // The writes that were server actions are gated REST routes now.
+    const writes = [
+      request.post("/api/canvas/rules", {
+        data: { edits: [{ id: "verify.tolerance", params: { percent: 1 } }] },
+        maxRedirects: 0,
+      }),
+      request.post("/api/canvas/tokens", { maxRedirects: 0 }),
+      request.delete(
+        "/api/canvas/conversations/00000000-0000-4000-8000-000000000000",
+        { maxRedirects: 0 },
+      ),
+    ];
+    for (const response of await Promise.all(writes))
+      expect([401, 307], response.url()).toContain(response.status());
     await page.goto("/demos/canvas");
     await expect(page).not.toHaveURL(/\/demos\/canvas$/);
   });
@@ -353,7 +365,7 @@ test.describe("the real Analyst", () => {
     process.env.E2E_CANVAS_LIVE !== "1",
     "Set E2E_CANVAS_LIVE=1 to ask the real model one Question (a few cents).",
   );
-  test.use({ extraHTTPHeaders: BYPASS });
+  test.use({ extraHTTPHeaders: { ...BYPASS, [E2E_LIVE_HEADER]: "1" } });
 
   test("one live Question is answered with a View and its cost is shown", async ({
     page,

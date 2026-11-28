@@ -2,15 +2,15 @@
 
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useId, useRef, useState } from "react";
+import { LIMITS } from "../../domain/limits";
 import {
-  LIMITS,
   type ReviewOutcome,
   type ReviewView,
   reviewVerb,
 } from "../../domain/review";
 import { OUTCOME_LABELS } from "../../domain/types";
-import { reviewFinding } from "../../server/actions";
 import type { FindingView } from "../../view";
+import { reviewFinding } from "../api";
 import { AUDIT_KEY, runKey } from "../queries";
 
 /**
@@ -41,13 +41,15 @@ export function ReviewPanel({
   const busy = useRef(false);
   const save = useMutation({
     mutationFn: () =>
-      reviewFinding(runId, finding.requirementId, evaluation, {
+      reviewFinding(runId, {
+        requirementId: finding.requirementId,
+        evaluation,
         outcome,
         note,
       }),
     onSuccess: async (result) => {
       if (!result.ok) {
-        setError(result.message);
+        setError(result.error);
         return;
       }
       await Promise.all([

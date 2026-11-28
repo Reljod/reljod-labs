@@ -65,20 +65,24 @@ export async function guestPassOf(
  */
 export async function codeLooksGood(codeHash: string, userId: string | null) {
   const db = sql();
+  // One round trip: the pass by its code (unique), with the other devices on it.
   const [pass] = await attempt(
     "Could not look up the Guest code",
     () => db<
       {
-        id: string;
         expires_at: string;
         max_devices: number;
         revoked_at: string | null;
         deleted_at: string | null;
+        others: number;
       }[]
     >`
-      select id, expires_at, max_devices, revoked_at, deleted_at
-      from access.guest_passes
-      where code_hash = ${codeHash}`,
+      select p.expires_at, p.max_devices, p.revoked_at, p.deleted_at,
+        (select count(*)::int from access.guest_sessions s
+          where s.guest_pass_id = p.id
+            ${userId ? db`and s.user_id <> ${userId}::uuid` : db``}) as others
+      from access.guest_passes p
+      where p.code_hash = ${codeHash}`,
   );
   if (
     !pass ||
@@ -87,14 +91,7 @@ export async function codeLooksGood(codeHash: string, userId: string | null) {
     Date.parse(pass.expires_at) <= Date.now()
   )
     return false;
-  const [others] = await attempt(
-    "Could not count the Guest sessions",
-    () => db<{ count: number }[]>`
-      select count(*)::int as count from access.guest_sessions
-      where guest_pass_id = ${pass.id}::uuid
-        ${userId ? db`and user_id <> ${userId}::uuid` : db``}`,
-  );
-  return (others?.count ?? 0) < pass.max_devices;
+  return (pass.others ?? 0) < pass.max_devices;
 }
 
 /** Binds an Auth user to the pass the code names. Null when it is refused. */

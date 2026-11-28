@@ -1,12 +1,9 @@
-import { requireOwner } from "@/features/access/server/gate";
-import { ownedExamination } from "@/features/loupe/server/repository";
-import { failure, IMMUTABLE, notFound } from "@/features/loupe/server/respond";
-import {
-  assetPath,
-  contentTypeOf,
-  download,
-  isAssetKey,
-} from "@/features/loupe/server/storage";
+import { z } from "zod";
+import { examinationPath, loupeApi } from "@/features/loupe/server/api";
+import { params, query } from "@/platform/http/middleware";
+
+/** For an Examination's page images and Evidence layers: written once, never changed. */
+const IMMUTABLE = "private, max-age=86400, immutable";
 
 /**
  * A page image or an Evidence layer of one of the Owner's Examinations, by
@@ -14,26 +11,16 @@ import {
  * `layers/`, `looks/`), and the Examination the Owner's. The files are
  * written once and never changed, so the browser may keep them.
  */
-export async function GET(
-  request: Request,
-  { params }: { params: Promise<{ id: string }> },
-) {
-  try {
-    const [{ owner }, { id }] = await Promise.all([requireOwner(), params]);
-    const key = new URL(request.url).searchParams.get("key");
-    if (!isAssetKey(key)) return notFound();
-    const examination = await ownedExamination(owner, id);
-    if (!examination) return notFound();
-    const bytes = await download(assetPath(owner, examination.id, key));
-    if (!bytes) return notFound();
-    return new Response(new Uint8Array(bytes), {
+export const GET = loupeApi
+  .use(params(examinationPath))
+  .use(query(z.object({ key: z.string().max(200).optional() })))
+  .handle(async ({ services, owner, path, query }) => {
+    const asset = await services.examinations.asset(owner, path.id, query.key);
+    return new Response(new Uint8Array(asset.bytes), {
       headers: {
-        "content-type": contentTypeOf(key),
+        "content-type": asset.contentType,
         "cache-control": IMMUTABLE,
         "x-content-type-options": "nosniff",
       },
     });
-  } catch (error) {
-    return failure(error);
-  }
-}
+  });

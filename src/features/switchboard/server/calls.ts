@@ -1,7 +1,6 @@
 import "server-only";
-import { resumeHook, start } from "workflow/api";
-import { z } from "zod";
 import type { Owner } from "@/features/access/domain/owner";
+import { InvalidError, NotFoundError } from "@/platform/errors";
 import {
   type CallState,
   NEW_CALL_STATE,
@@ -11,38 +10,19 @@ import type {
   CallEvent,
   CallStatus,
   CallView,
-  Line,
   ReportedEvent,
-  Scenario,
 } from "../domain/contract";
 import { detectLanguage } from "../domain/hearing";
 import { LIMITS } from "../domain/limits";
-import {
-  addUsage,
-  DEFAULT_REALTIME_MODEL,
-  realtimeCost,
-  realtimeModel,
-  STUB_MODEL,
-  TEXT_MODELS,
-} from "../domain/models";
+import { addUsage, realtimeCost } from "../domain/models";
 import { num, ruleOf } from "../domain/rules";
-import { sampleCaller } from "../domain/samples";
-import { TOOL_DOING } from "../domain/tools";
 import {
   type Booking,
   disruptionForIssue,
   normalizeReference,
 } from "../domain/world";
-import { callHookToken, callLifecycle } from "./call-workflow";
 import { type Db, isUuid, jsonb, sql } from "./db";
-import {
-  InvalidError,
-  LimitError,
-  messageOf,
-  NotFoundError,
-  StateError,
-} from "./errors";
-import { takeRate, type Visitor } from "./rate";
+import type { NewCall, ReportOutcome, ToolInput, ToolOutcome } from "./ports";
 import {
   type CallRow,
   callEvents,
@@ -56,10 +36,11 @@ import {
 } from "./store";
 
 /**
- * The life of a Call, the same for the voice Line, the text Line and an
- * outside MCP client: start, tool calls through the Back office, what was
- * said, the end. The harness owns the clock, the caps and the Rules; the
- * model and the browser own neither.
+ * A Call's units of work in Postgres, the same for the voice Line, the text
+ * Line and an outside MCP client. Each runs under the Call's row lock (the
+ * Workspace first when it writes Records), so its state, Records and Events
+ * land together. The caps, the Workflow and the model are the service's
+ * (`services/calls.ts`); only the pure `runBackOfficeTool` refuses a tool.
  */
 
 const secondsSince = (from: Date) =>
@@ -89,15 +70,6 @@ async function finish(
       reason,
       seconds,
     });
-}
-
-/** Tells the Call's Workflow the Call is over, so the Wrap-up starts now. */
-async function wake(callId: string) {
-  try {
-    await resumeHook(callHookToken(callId), { ended: true });
-  } catch {
-    // The Workflow is already past its wait (it cut the Call off itself).
-  }
 }
 
 const pastGrace = (row: CallRow) =>
@@ -130,40 +102,10 @@ async function liveCall(tx: Db, owner: Owner, callId: string) {
   return { row, live: true as const };
 }
 
-export type StartInput = {
-  owner: Owner;
-  who: Visitor;
-  line: Line;
-  origin: "app" | "mcp";
-  model?: string;
-  scenario: Scenario;
-  consentAudio: boolean;
-  /** The end-to-end test's canned Agent on the text Line (`domain/stub.ts`). */
-  stub?: boolean;
-};
-
 /** Starts a Call: one live Call per Owner, so an older live one is ended first. */
-export async function startCall(input: StartInput): Promise<CallView> {
-  const model =
-    input.line === "voice"
-      ? (realtimeModel(input.model ?? "")?.id ?? DEFAULT_REALTIME_MODEL)
-      : input.stub
-        ? STUB_MODEL
-        : TEXT_MODELS.line;
-  if (
-    input.scenario.kind === "sample" &&
-    !sampleCaller(input.scenario.sampleId)
-  )
-    throw new InvalidError("No such Sample caller.");
-  // A typo in the Booking costs nothing: check it before taking the rate.
-  if (input.scenario.kind === "own") {
-    const reference = normalizeReference(input.scenario.bookingRef);
-    const [found] = await sql()<{ ref: string }[]>`
-      select ref from switchboard.records
-      where owner = ${input.owner} and kind = 'booking' and ref = ${reference}`;
-    if (!found) throw new InvalidError("No such Booking in the Back office.");
-  }
-  await takeRate(input.who, input.owner, "call", input.line);
+export async function openCall(
+  input: NewCall,
+): Promise<{ call: CallView; replaced: string[] }> {
   const replaced: string[] = [];
   const row = await sql().begin(async (tx) => {
     await tx`select 1 from switchboard.workspaces where owner = ${input.owner} for update`;
@@ -213,7 +155,7 @@ export async function startCall(input: StartInput): Promise<CallView> {
       insert into switchboard.calls
         (owner, line, origin, model, scenario, rulebook, state, consent_audio, deadline_at)
       values (
-        ${input.owner}, ${input.line}, ${input.origin}, ${model},
+        ${input.owner}, ${input.line}, ${input.origin}, ${input.model},
         ${jsonb(tx, input.scenario)}, ${jsonb(tx, rulebook)}, ${jsonb(tx, NEW_CALL_STATE)},
         ${input.line === "voice" && input.consentAudio},
         now() + make_interval(secs => ${seconds})
@@ -222,7 +164,7 @@ export async function startCall(input: StartInput): Promise<CallView> {
     await emit(tx, input.owner, created.id, "system", "call.started", {
       line: input.line,
       origin: input.origin,
-      model,
+      model: input.model,
       scenario: input.scenario,
       rules: rulebook.map((rule) => ({
         id: rule.id,
@@ -234,69 +176,45 @@ export async function startCall(input: StartInput): Promise<CallView> {
     });
     return created;
   });
-  await Promise.all(replaced.map(wake));
-  try {
-    const run = await start(callLifecycle, [
-      {
-        callId: row.id,
-        owner: input.owner,
-        deadlineAt: row.deadline_at.toISOString(),
-      },
-    ]);
-    await sql()`
-      update switchboard.calls set workflow_run_id = ${run.runId}
-      where id = ${row.id}`;
-  } catch (error) {
-    // Without its Workflow a Call has no server-side cut-off and no Wrap-up: do not run it.
-    await sql().begin(async (tx) => {
-      const locked = await callRow(input.owner, row.id, tx, true);
-      if (locked?.status === "live")
-        await finish(
-          tx,
-          locked,
-          "failed",
-          "server",
-          "The Call's Workflow could not start.",
-        );
-    });
-    console.error("[switchboard] workflow start failed", messageOf(error));
-    throw new StateError("The Call could not start. Try again in a moment.");
-  }
-  return toCall(row);
+  return { call: toCall(row), replaced };
+}
+
+export async function attachRun(callId: string, runId: string) {
+  await sql()`
+    update switchboard.calls set workflow_run_id = ${runId}
+    where id = ${callId}`;
+}
+
+/** A Call that cannot run (no Workflow) is marked failed, never left live. */
+export async function failCall(owner: Owner, callId: string, reason: string) {
+  await sql().begin(async (tx) => {
+    const locked = await callRow(owner, callId, tx, true);
+    if (locked?.status === "live")
+      await finish(tx, locked, "failed", "server", reason);
+  });
 }
 
 /** Ends a Call. Ending one that is already over is not an error. */
-export async function endCall(input: {
-  owner: Owner;
-  callId: string;
-  by: "caller" | "agent" | "client";
-  reason?: string;
-}): Promise<CallView> {
+export async function endCall(
+  owner: Owner,
+  callId: string,
+  by: "caller" | "agent" | "client",
+  reason?: string,
+): Promise<CallView> {
   const row = await sql().begin(async (tx) => {
-    const found = await liveCall(tx, input.owner, input.callId);
+    const found = await liveCall(tx, owner, callId);
     if (found.live)
       await finish(
         tx,
         found.row,
         "ended",
-        input.by,
-        input.reason ??
-          (input.by === "caller" ? "The Caller hung up." : "The Call ended."),
+        by,
+        reason ?? (by === "caller" ? "The Caller hung up." : "The Call ended."),
       );
-    return callRow(input.owner, input.callId, tx);
+    return callRow(owner, callId, tx);
   });
-  await wake(input.callId);
   return toCall(row as CallRow);
 }
-
-export type ToolOutcome = {
-  ok: boolean;
-  output: Record<string, unknown>;
-  summary: string;
-  events: CallEvent[];
-  /** Set when the Call is no longer live: the caller must hang up. */
-  over: CallStatus | null;
-};
 
 /** What each side has said so far, for the Checks that read the transcript. */
 function heardIn(events: CallEvent[], saying: string) {
@@ -315,23 +233,11 @@ function heardIn(events: CallEvent[], saying: string) {
  * Records, whichever Line or client asks. It runs under the Call's row lock,
  * so the Call's state, the Records and the two Events land together.
  */
-export async function callTool(input: {
-  owner: Owner;
-  who: Visitor;
-  callId: string;
-  toolCallId: string;
-  name: string;
-  args: unknown;
-  /** What the Agent has said in the Turn it is still speaking. */
-  saying?: string;
-  /** What the Caller said that the transcript does not hold yet. */
-  hearing?: string;
-}): Promise<ToolOutcome> {
-  await takeRate(input.who, input.owner, "turn");
+export async function toolCall(input: ToolInput): Promise<ToolOutcome> {
   const started = Date.now();
-  const outcome = await sql().begin(async (tx) => {
+  return sql().begin(async (tx) => {
     // The Workspace first, then the Call: the one lock order everywhere
-    // (`startCall`, `saveWrapup`), so two of them can never deadlock.
+    // (`openCall`, `saveWrapup`), so two of them can never deadlock.
     const [workspace] = await tx<{ ref_seq: number }[]>`
       select ref_seq from switchboard.workspaces where owner = ${input.owner} for update`;
     const found = await liveCall(tx, input.owner, input.callId);
@@ -397,13 +303,7 @@ export async function callTool(input: {
       over: null,
     } satisfies ToolOutcome;
   });
-  if (outcome.over === "cut_off") await wake(input.callId);
-  return outcome;
 }
-
-const reported = z.object({
-  events: z.array(z.unknown()).max(LIMITS.eventsPerRequest),
-});
 
 /**
  * What the browser heard and measured in a voice Call: the transcript, the
@@ -411,20 +311,13 @@ const reported = z.object({
  * Owner's own account of their own Call (ADR 0029): it feeds the transcript
  * Checks and the Scorecard, and never a Record.
  */
-export async function reportEvents(input: {
-  owner: Owner;
-  callId: string;
-  body: unknown;
-}): Promise<{ accepted: number; status: CallStatus; costUsd: number }> {
-  const { events } = reported.parse(input.body);
-  const { reportedEventSchema } = await import("../domain/contract");
-  const parsed: ReportedEvent[] = [];
-  for (const event of events) {
-    const one = reportedEventSchema.safeParse(event);
-    if (one.success) parsed.push(one.data);
-  }
-  const result = await sql().begin(async (tx) => {
-    const found = await liveCall(tx, input.owner, input.callId);
+export async function reportEvents(
+  owner: Owner,
+  callId: string,
+  parsed: ReportedEvent[],
+): Promise<ReportOutcome> {
+  return sql().begin(async (tx) => {
+    const found = await liveCall(tx, owner, callId);
     const row = found.row;
     // The last words and the Session log arrive just after the end.
     const late =
@@ -440,7 +333,7 @@ export async function reportEvents(input: {
       };
     const [{ count }] = await tx<{ count: number }[]>`
       select count(*)::int as count from switchboard.events
-      where owner = ${input.owner} and call_id = ${row.id}`;
+      where owner = ${owner} and call_id = ${row.id}`;
     let room = Math.max(0, LIMITS.eventsPerCall - count);
     let usage = row.usage;
     let cost = Number(row.cost_usd);
@@ -452,7 +345,7 @@ export async function reportEvents(input: {
       switch (event.type) {
         case "turn.caller":
           if (!event.text.trim()) break;
-          await emit(tx, input.owner, row.id, "caller", "turn.caller", {
+          await emit(tx, owner, row.id, "caller", "turn.caller", {
             text: event.text,
             language: detectLanguage(event.text),
             via: event.via,
@@ -461,7 +354,7 @@ export async function reportEvents(input: {
           break;
         case "turn.agent":
           if (!event.text.trim()) break;
-          await emit(tx, input.owner, row.id, "agent", "turn.agent", {
+          await emit(tx, owner, row.id, "agent", "turn.agent", {
             text: event.text,
             language: detectLanguage(event.text),
             atMs: event.atMs,
@@ -471,7 +364,7 @@ export async function reportEvents(input: {
           });
           break;
         case "barge_in":
-          await emit(tx, input.owner, row.id, "caller", "barge_in", {
+          await emit(tx, owner, row.id, "caller", "barge_in", {
             atMs: event.atMs,
             playedMs: event.playedMs,
           });
@@ -480,26 +373,26 @@ export async function reportEvents(input: {
           const costUsd = realtimeCost(row.model, event.usage);
           usage = addUsage(usage, event.usage);
           cost += costUsd;
-          await emit(tx, input.owner, row.id, "system", "usage", {
+          await emit(tx, owner, row.id, "system", "usage", {
             usage: event.usage,
             costUsd,
           });
           break;
         }
         case "session.opened":
-          await emit(tx, input.owner, row.id, "system", "session.opened", {
+          await emit(tx, owner, row.id, "system", "session.opened", {
             model: row.model,
             mintMs: event.mintMs,
             connectMs: event.connectMs,
           });
           break;
         case "session.error":
-          await emit(tx, input.owner, row.id, "system", "session.error", {
+          await emit(tx, owner, row.id, "system", "session.error", {
             message: event.message,
           });
           break;
         case "session.log":
-          await emit(tx, input.owner, row.id, "system", "session.log", {
+          await emit(tx, owner, row.id, "system", "session.log", {
             entries: event.entries,
             audioInSeconds: event.audioInSeconds,
             audioOutSeconds: event.audioOutSeconds,
@@ -527,114 +420,65 @@ export async function reportEvents(input: {
     }
     return { accepted, status, costUsd: cost, cut };
   });
-  if (result.cut) await wake(input.callId);
-  return {
-    accepted: result.accepted,
-    status: result.status,
-    costUsd: result.costUsd,
-  };
-}
-
-/** The spend cap on the text Line: the server cuts the Call, as it does on the voice Line. */
-export async function cutOffForSpend(owner: Owner, callId: string) {
-  const cut = await sql().begin(async (tx) => {
-    const row = await callRow(owner, callId, tx, true);
-    if (!row || row.status !== "live") return false;
-    await finish(
-      tx,
-      row,
-      "cut_off",
-      "server",
-      `The Call reached its spend cap of $${LIMITS.usdPerCall.toFixed(2)}.`,
-    );
-    return true;
-  });
-  if (cut) await wake(callId);
-}
-
-/** Whether the Call is still live: the Workflow asks before it waits for the end. */
-export async function isLive(owner: Owner, callId: string) {
-  const row = await callRow(owner, callId);
-  return row?.status === "live";
 }
 
 /**
  * Appends a Turn an outside MCP client reports, under the Call's row lock and
  * the same per-Call Event cap as the browser's reports.
  */
-export async function recordTurn(input: {
-  owner: Owner;
-  who: Visitor;
-  callId: string;
-  speaker: "caller" | "agent";
-  text: string;
-}) {
-  await takeRate(input.who, input.owner, "turn");
-  const cut = await sql().begin(async (tx) => {
-    const found = await liveCall(tx, input.owner, input.callId);
-    if (!found.live) {
-      if ("cut" in found) return true;
-      throw new StateError("That Call is over.");
-    }
+export async function recordTurn(
+  owner: Owner,
+  callId: string,
+  speaker: "caller" | "agent",
+  input: string,
+): Promise<"recorded" | "over" | "cut" | "full"> {
+  return sql().begin(async (tx) => {
+    const found = await liveCall(tx, owner, callId);
+    if (!found.live) return "cut" in found ? "cut" : "over";
     const [{ count }] = await tx<{ count: number }[]>`
       select count(*)::int as count from switchboard.events
-      where owner = ${input.owner} and call_id = ${found.row.id}`;
-    if (count >= LIMITS.eventsPerCall)
-      throw new LimitError("This Call has reached its Event limit.");
-    const text = input.text.slice(0, LIMITS.transcriptChars);
+      where owner = ${owner} and call_id = ${found.row.id}`;
+    if (count >= LIMITS.eventsPerCall) return "full";
+    const text = input.slice(0, LIMITS.transcriptChars);
     const atMs = Date.now() - found.row.started_at.getTime();
     const language = detectLanguage(text);
-    if (input.speaker === "caller")
-      await emit(tx, input.owner, found.row.id, "caller", "turn.caller", {
+    if (speaker === "caller")
+      await emit(tx, owner, found.row.id, "caller", "turn.caller", {
         text,
         language,
         via: "mcp",
         atMs,
       });
     else
-      await emit(tx, input.owner, found.row.id, "client", "turn.agent", {
+      await emit(tx, owner, found.row.id, "client", "turn.agent", {
         text,
         language,
         atMs,
         interrupted: false,
       });
-    return false;
+    return "recorded";
   });
-  if (cut) {
-    await wake(input.callId);
-    throw new StateError("That Call is over.");
-  }
 }
 
-/** The Workflow's timer: cuts the Call off if it is still live at its deadline. */
-export async function cutOffIfLive(owner: Owner, callId: string) {
+/** Adds a text Turn's model cost to the Call; returns the Call's total. */
+export async function addCost(owner: Owner, callId: string, usd: number) {
+  const [spent] = await sql()<{ cost_usd: string }[]>`
+    update switchboard.calls set cost_usd = cost_usd + ${usd.toFixed(6)}
+    where id = ${callId} and owner = ${owner}
+    returning cost_usd`;
+  return Number(spent?.cost_usd ?? 0);
+}
+
+/** Cuts the Call off if it is still live: the Workflow's timer, or the text Line's spend cap. */
+export async function cutOffIfLive(
+  owner: Owner,
+  callId: string,
+  reason: string,
+) {
   return sql().begin(async (tx) => {
     const row = await callRow(owner, callId, tx, true);
     if (!row || row.status !== "live") return false;
-    await finish(
-      tx,
-      row,
-      "cut_off",
-      "server",
-      "The Call passed its longest length.",
-    );
+    await finish(tx, row, "cut_off", "server", reason);
     return true;
   });
 }
-
-/** A Call with its Events, for the screen. */
-export async function loadCall(owner: Owner, callId: string, afterId = 0) {
-  if (!isUuid(callId)) throw new NotFoundError("No such Call.");
-  const row = await callRow(owner, callId);
-  if (!row) throw new NotFoundError("No such Call.");
-  return {
-    call: toCall(row),
-    events: await callEvents(owner, callId, sql(), afterId),
-  };
-}
-
-/** What a tool call is called while it runs. */
-export const doing = (name: string) =>
-  (TOOL_DOING as Record<string, string>)[name] ?? `Using ${name}`;
-
-export { LimitError };

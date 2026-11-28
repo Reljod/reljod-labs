@@ -10,9 +10,8 @@ function required(name: string): string {
 export const env = {
   supabaseUrl: () => required("SUPABASE_URL"),
   supabaseServiceRoleKey: () => required("SUPABASE_SERVICE_ROLE_KEY"),
+  /** Signs upload tickets and the chat's MCP session tokens. */
   rateLimitSalt: () => required("RATE_LIMIT_SALT"),
-  /** When set, requests carrying it skip rate limits and are tagged as e2e. */
-  e2eBypassToken: () => process.env.E2E_BYPASS_TOKEN ?? "",
   /** Falls back to the document compliance key, which this demo grew out of. */
   aiGatewayApiKey: () =>
     process.env.CASEWORK_AI_GATEWAY_API_KEY ??

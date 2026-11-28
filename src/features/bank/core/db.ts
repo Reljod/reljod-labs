@@ -9,11 +9,14 @@ import postgres from "postgres";
  *   - `date` columns stay "YYYY-MM-DD" strings (bank dates, never a JS Date
  *     in someone's local time);
  *   - `timestamptz` columns come back as ISO strings.
- * Column names come back camelCased.
+ * Column names come back camelCased. `debug` is the benchmark's statement
+ * counter (`dbStats.count` from `src/server/postgres.ts`), passed in so this
+ * file stays free of server-only imports for the database tests.
  */
 export function makePool(
   url: string,
   max = 4,
+  options: { debug?: () => void } = {},
 ): postgres.Sql<{ bigint: number; date: string; timestamptz: string }> {
   return postgres(url, {
     prepare: false,
@@ -22,6 +25,7 @@ export function makePool(
     idle_timeout: 20,
     connect_timeout: 15,
     onnotice: () => {},
+    debug: options.debug,
     types: {
       bigint: {
         to: 20,

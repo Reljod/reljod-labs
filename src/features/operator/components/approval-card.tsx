@@ -4,7 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import type { PendingApproval } from "../domain/contract";
 import { ACTION_TITLES, type Rulebook, ruleInfo } from "../domain/rules";
 import { SCREEN_TITLES } from "../legacy/types";
-import { decideApproval } from "../server/actions";
+import { api } from "./api";
 import { clock } from "./format";
 import { Button, ErrorNote, friendly, Tag, useNow, useWrite } from "./ui";
 
@@ -29,13 +29,8 @@ export function ApprovalCard({
   const write = useWrite(async (decision: "approved" | "refused") => {
     setError(null);
     try {
-      const result = await decideApproval({
-        runId,
-        approvalId: pending.approvalId,
-        decision,
-      });
-      if ("error" in result) setError(result.error);
-      else setSent(decision);
+      await api.decide(runId, pending.approvalId, decision);
+      setSent(decision);
     } catch (caught) {
       setError(friendly(caught, "The decision did not go through."));
     }

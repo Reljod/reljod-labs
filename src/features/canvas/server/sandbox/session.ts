@@ -2,10 +2,11 @@ import "server-only";
 import { createHash, randomUUID } from "node:crypto";
 import { Sandbox } from "@vercel/sandbox";
 import type { Owner } from "@/features/access/domain/owner";
+import { db } from "@/server/postgres";
 import { LIMITS } from "../../domain/limits";
-import { sql } from "../db";
 import { BUCKET, env } from "../env";
 import { SandboxUnavailable } from "../errors";
+import type { Job, JobAnswer, SandboxRunner } from "../ports";
 import { storage } from "../supabase";
 import { ensureImage, forgetImage, IMAGE_KEY } from "./image";
 import { localPython, runLocal } from "./local";
@@ -156,13 +157,6 @@ export async function removeSandbox(owner: Owner) {
   }
 }
 
-export type Job = { op: string } & Record<string, unknown>;
-export type JobAnswer = Record<string, unknown> & {
-  error?: string;
-  kind?: "timeout" | "sql" | "runner";
-  missing?: string[];
-};
-
 async function command(sandbox: Sandbox, job: Job, seconds: number) {
   const text = JSON.stringify(job);
   let arg = Buffer.from(text, "utf8").toString("base64");
@@ -197,12 +191,13 @@ async function command(sandbox: Sandbox, job: Job, seconds: number) {
 
 /** Puts Uploads the Sandbox has lost (it was rebuilt, or its files expired) back from Storage. */
 async function restoreUploads(owner: Owner, sandbox: Sandbox, names: string[]) {
-  const rows = await sql()<
+  const sql = db();
+  const rows = await sql<
     { table_name: string; storage_path: string; format: string }[]
   >`
     select table_name, storage_path, format
     from canvas.uploads
-    where owner = ${owner} and status = 'ready' and table_name in ${sql()(names)}`;
+    where owner = ${owner} and status = 'ready' and table_name in ${sql(names)}`;
   for (const row of rows) {
     const file = await storage().from(BUCKET).download(row.storage_path);
     if (file.error || !file.data) continue;
@@ -225,7 +220,7 @@ async function restoreUploads(owner: Owner, sandbox: Sandbox, names: string[]) {
   }
 }
 
-export type Ran = { answer: JobAnswer; ms: number; sandboxCreated: boolean };
+type Ran = { answer: JobAnswer; ms: number; sandboxCreated: boolean };
 
 /**
  * Runs one job in the Owner's Sandbox and returns the runner's answer. A
@@ -298,14 +293,5 @@ async function removeIfBroken(owner: Owner) {
   await removeSandbox(owner);
 }
 
-/** Copies a file into the Sandbox's inbox and returns its path there. */
-export async function putInbox(
-  owner: Owner,
-  content: Buffer,
-  extension: string,
-) {
-  const { sandbox } = await open(owner);
-  const path = `${INBOX_DIR}/${randomUUID()}.${extension}`;
-  await sandbox.writeFiles([{ path, content }]);
-  return path;
-}
+/** The Owner's Vercel Sandbox (or, in development, the local runner) as the services' Sandbox port. */
+export const vercelSandbox: SandboxRunner = { run: runJob };

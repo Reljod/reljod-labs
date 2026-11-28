@@ -32,7 +32,6 @@ import {
   seedRecords,
 } from "../domain/world";
 import { type Db, jsonb, sql } from "./db";
-import { StateError } from "./errors";
 
 /**
  * Everything Switchboard keeps, read and written here and nowhere else.
@@ -41,14 +40,19 @@ import { StateError } from "./errors";
 
 // Workspace -------------------------------------------------------------------------------
 
+/** The seed in one statement (its references are unique), not one insert per Record. */
 async function seed(tx: Db, owner: Owner) {
-  for (const record of seedRecords()) {
-    await tx`
-      insert into switchboard.records (owner, kind, ref, data)
-      values (${owner}, ${record.kind}, ${record.ref}, ${jsonb(tx, record.data)})
-      on conflict (owner, kind, ref) do update
-        set data = excluded.data, call_id = null, updated_at = now()`;
-  }
+  const records = seedRecords().map(({ kind, ref, data }) => ({
+    kind,
+    ref,
+    data,
+  }));
+  await tx`
+    insert into switchboard.records (owner, kind, ref, data)
+    select ${owner}, seed.kind, seed.ref, seed.data
+    from jsonb_to_recordset(${jsonb(tx, records)}) as seed(kind text, ref text, data jsonb)
+    on conflict (owner, kind, ref) do update
+      set data = excluded.data, call_id = null, updated_at = now()`;
   await tx`
     update switchboard.workspaces
     set seeded_at = now(), seed_version = ${SEED_VERSION}
@@ -80,18 +84,15 @@ export async function ensureWorkspace(owner: Owner) {
  * the purge cron removes them after 30 days. (Refs restart from the seed, so
  * the old rows cannot stay in `records` under the same keys.)
  */
-export async function resetRecords(owner: Owner) {
-  await sql().begin(async (tx) => {
+export async function resetRecords(owner: Owner): Promise<boolean> {
+  return sql().begin(async (tx) => {
     await tx`select 1 from switchboard.workspaces where owner = ${owner} for update`;
     // A live Call's state points at Records (who is verified, its callback):
     // pulling them out from under it would leave the Call and its Wrap-up
     // reading a different Back office than the one it ran on.
     const [live] = await tx<{ id: string }[]>`
       select id from switchboard.calls where owner = ${owner} and status = 'live' limit 1`;
-    if (live)
-      throw new StateError(
-        "A Call is live. Hang up before resetting the Back office.",
-      );
+    if (live) return false;
     await tx`
       insert into switchboard.records_archive
         (id, owner, kind, ref, data, call_id, created_at, updated_at, deleted_at)
@@ -101,6 +102,7 @@ export async function resetRecords(owner: Owner) {
     await tx`update switchboard.workspaces set ref_seq = 0 where owner = ${owner}`;
     await seed(tx, owner);
     await emit(tx, owner, null, "owner", "world.reset", {});
+    return true;
   });
 }
 
@@ -316,6 +318,22 @@ export async function callRow(
     where owner = ${owner} and id = ${id}
     ${lock ? db`for update` : db``}`;
   return row ?? null;
+}
+
+export async function bookingExists(owner: Owner, reference: string) {
+  const [found] = await sql()<{ ref: string }[]>`
+    select ref from switchboard.records
+    where owner = ${owner} and kind = 'booking' and ref = ${reference}`;
+  return Boolean(found);
+}
+
+/** The Owner's newest live Call, if any. */
+export async function liveCallId(owner: Owner) {
+  const [row] = await sql()<{ id: string }[]>`
+    select id from switchboard.calls
+    where owner = ${owner} and status = 'live'
+    order by started_at desc limit 1`;
+  return row?.id ?? null;
 }
 
 export async function liveCallRows(owner: Owner, db: Db = sql()) {

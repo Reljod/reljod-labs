@@ -19,7 +19,9 @@ import {
   type StepStatus,
   type StepView,
 } from "../../domain/run";
+import { auditIn } from "../audit";
 import { type Db, isUuid, jsonb, sql } from "../db";
+import type { ApprovalClaim, RunRepository } from "../ports";
 
 /*
  * The Runs' rows: `harness.runs`, `run_steps`, `findings` and `approvals`.
@@ -179,28 +181,31 @@ export async function loadRunView(
   owner: Owner,
   runId: string,
 ): Promise<RunView | null> {
+  if (!isUuid(runId)) return null;
   const db = sql();
-  const row = await runRowOf(db, owner, runId);
-  if (!row) return null;
-  const [steps, findings, approvals] = await Promise.all([
+  // Every read names the Owner, so the four start together: one round, not
+  // the Run's row first and its parts after.
+  const [row, steps, findings, approvals] = await Promise.all([
+    runRowOf(db, owner, runId),
     db<StepRow[]>`
       select step_id, status, started_at, finished_at, output, error, model,
              input_tokens, output_tokens, cost_usd
       from harness.run_steps
-      where owner = ${owner} and run_id = ${row.id}`,
+      where owner = ${owner} and run_id = ${runId}`,
     db<FindingRow[]>`
       select id, rule_id, rule_version, step_id, met, outcome, summary, compared, created_at
       from harness.findings
-      where owner = ${owner} and run_id = ${row.id}
+      where owner = ${owner} and run_id = ${runId}
       order by created_at, rule_id`,
     db<ApprovalRow[]>`
       select a.id, a.run_id, a.kind, a.risk, a.title, a.draft, a.status, a.hook_token,
              a.requested_at, a.decided_by, s.name as decided_by_name, a.decided_at, a.note
       from harness.approvals a
       left join harness.staff s on s.id = a.decided_by
-      where a.owner = ${owner} and a.run_id = ${row.id}
+      where a.owner = ${owner} and a.run_id = ${runId}
       order by a.requested_at`,
   ]);
+  if (!row) return null;
   const spec = pipelineOf(row.pipeline_id);
   const byId = new Map(steps.map((step) => [step.step_id, step]));
   const order = spec
@@ -431,3 +436,170 @@ export async function expireRunApprovals(db: Db, owner: Owner, runId: string) {
 }
 
 export type { ApprovalRow };
+
+// The Runs service's repository --------------------------------------------------------
+
+/** A Run still `queued` or `running` this long after its last change has lost its workflow. */
+const STALE_RUNNING = "1 hour";
+/** A Run waiting this long has outlived its Approval's wait (24 hours). */
+const STALE_WAITING = "25 hours";
+
+/**
+ * A Run that still holds one of the Workspace's places: active and not
+ * stale. One predicate for the check before the hourly unit is taken and the
+ * count under the lock, so a Workspace refused under the lock was refused
+ * before spending a unit too.
+ */
+const holdsPlace = (db: Db) => db`
+  status in ${db(ACTIVE_RUN_STATUSES)}
+  and not (status in ('queued', 'running') and updated_at < now() - ${STALE_RUNNING}::interval)
+  and not (status = 'waiting_approval' and updated_at < now() - ${STALE_WAITING}::interval)`;
+
+/**
+ * The escape hatch for Runs whose workflow died: a Run that went quiet past
+ * its limit is closed, so it cannot hold a place forever. A swept Run that
+ * was waiting for an Approval has that Approval expired too, so nobody can
+ * decide a Draft whose Run is over.
+ */
+async function sweepStaleRuns(tx: Db, owner: Owner): Promise<void> {
+  await tx`
+    update harness.runs
+    set status = 'failed', error = 'The Run lost its workflow.', finished_at = now(), updated_at = now()
+    where owner = ${owner} and status in ('queued', 'running')
+      and updated_at < now() - ${STALE_RUNNING}::interval`;
+  await tx`
+    with waited as (
+      update harness.runs
+      set status = 'stopped', error = 'The Approval was not decided in time.', finished_at = now(), updated_at = now()
+      where owner = ${owner} and status = 'waiting_approval'
+        and updated_at < now() - ${STALE_WAITING}::interval
+      returning id
+    )
+    update harness.approvals set status = 'expired'
+    where owner = ${owner} and status = 'pending'
+      and run_id in (select id from waited)`;
+}
+
+type ClaimRow = {
+  id: string;
+  run_id: string;
+  risk: ApprovalRisk;
+  status: string;
+  hook_token: string | null;
+  title: string;
+  kind: string;
+  started_by: string;
+  session_id: string | null;
+  run_status: RunStatus;
+  workflow_run_id: string | null;
+};
+
+const claimOf = (row: ClaimRow): ApprovalClaim => ({
+  id: row.id,
+  runId: row.run_id,
+  risk: row.risk,
+  status: row.status,
+  hookToken: row.hook_token,
+  title: row.title,
+  kind: row.kind,
+  startedBy: row.started_by,
+  sessionId: row.session_id,
+  runStatus: row.run_status,
+  workflowRunId: row.workflow_run_id,
+});
+
+export const runRepository: RunRepository = {
+  async busy(owner) {
+    const db = sql();
+    const [row] = await db<{ busy: number }[]>`
+      select count(*)::int as busy from harness.runs
+      where owner = ${owner} and ${holdsPlace(db)}`;
+    return row?.busy ?? 0;
+  },
+
+  async insert(input) {
+    const { owner } = input;
+    return sql().begin(async (tx) => {
+      // One Run starts at a time per Workspace, so two cannot both take the last place.
+      await tx`select pg_advisory_xact_lock(hashtext(${`harness-runs:${owner}`}))`;
+      await sweepStaleRuns(tx, owner);
+      const [{ active } = { active: 0 }] = await tx<{ active: number }[]>`
+        select count(*)::int as active from harness.runs
+        where owner = ${owner} and ${holdsPlace(tx)}`;
+      if (active >= input.max) return { busy: active };
+      const [row] = await tx<{ id: string }[]>`
+        insert into harness.runs (owner, session_id, pipeline_id, status, input, rule_versions, started_by, started_via)
+        values (${owner}, ${input.sessionId}, ${input.pipelineId}, 'queued', ${jsonb(tx, input.input)},
+                ${jsonb(tx, input.ruleVersions)}, ${input.startedBy}, ${input.via})
+        returning id`;
+      if (!row) throw new Error("The Run was not saved");
+      await tx`
+        insert into harness.run_steps ${tx(
+          input.stepIds.map((stepId) => ({
+            run_id: row.id,
+            step_id: stepId,
+            owner,
+            status: "pending",
+          })),
+        )}`;
+      // In the same transaction: no Run starts (and spends) without its event.
+      await auditIn(tx, input.event(row.id));
+      return { runId: row.id };
+    });
+  },
+
+  async setWorkflow(owner, runId, workflowRunId) {
+    await sql()`
+      update harness.runs set workflow_run_id = ${workflowRunId}
+      where owner = ${owner} and id = ${runId}`;
+  },
+
+  setStatus: (owner, runId, status, extra) =>
+    setRunStatus(owner, runId, status, extra),
+  row: (owner, runId) => runRowOf(sql(), owner, runId),
+  view: loadRunView,
+  list: listRunSummaries,
+
+  async markStopped(owner, runId, error) {
+    await sql().begin(async (tx) => {
+      await tx`
+        update harness.runs
+        set status = 'stopped', finished_at = now(), updated_at = now(),
+            error = coalesce(error, ${error})
+        where owner = ${owner} and id = ${runId} and status in ${tx(ACTIVE_RUN_STATUSES)}`;
+      await tx`
+        update harness.run_steps set status = 'skipped', finished_at = now()
+        where owner = ${owner} and run_id = ${runId} and status = 'running'`;
+      await expireRunApprovals(tx, owner, runId);
+    });
+  },
+
+  async decide(owner, approvalId, decide) {
+    if (!isUuid(approvalId)) {
+      decide(null);
+      throw new Error("A missing Approval was not refused.");
+    }
+    return sql().begin(async (tx) => {
+      const [row] = await tx<ClaimRow[]>`
+        select a.id, a.run_id, a.risk, a.status, a.hook_token, a.title, a.kind,
+               r.started_by, r.session_id, r.status as run_status, r.workflow_run_id
+        from harness.approvals a
+        join harness.runs r on r.id = a.run_id and r.owner = a.owner
+        where a.owner = ${owner} and a.id = ${approvalId}
+        for update of a`;
+      const claim = row ? claimOf(row) : null;
+      const decision = decide(claim);
+      if (!claim) throw new Error("A missing Approval was not refused.");
+      // Claimed in the update too, so a double click decides once.
+      const updated = await tx`
+        update harness.approvals
+        set status = ${decision.status}, decided_by = ${decision.decidedBy},
+            decided_at = now(), note = ${decision.note}
+        where owner = ${owner} and id = ${claim.id} and status = 'pending'
+        returning id`;
+      if (updated.length === 0) return { claim, applied: false };
+      await auditIn(tx, decision.event);
+      return { claim, applied: true };
+    });
+  },
+};

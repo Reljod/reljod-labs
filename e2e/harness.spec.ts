@@ -1,11 +1,13 @@
 import { expect, type Page, test } from "@playwright/test";
 
 /*
- * Jod: Harness for Bank, the main path a person takes, stubbed: the chat turn
- * calls one Harness MCP tool in process instead of a model (`x-harness-stub`),
- * Runs started under the e2e bypass use their deterministic fallbacks, and
- * nothing is spent. It still writes to the `e2e` Workspace in the database
- * and uploads a sample to Storage.
+ * Jod: Harness for Bank, the main path a person takes, stubbed by default
+ * (the e2e token alone; `E2E_LIVE=1` reaches the models): Harness's
+ * container swaps in its canned Agent, which calls one Harness MCP tool in
+ * process instead of a model, Runs whose model Steps use their deterministic
+ * fallbacks, no embeddings and the Conflict check's stub, so nothing is
+ * spent. It still writes to the `e2e` Workspace in the database and uploads
+ * a sample to Storage.
  *
  * Opt-in with `E2E_HARNESS=1` until the Harness migrations
  * (`supabase/migrations/20261117*_harness*.sql`) are applied to the project
@@ -17,12 +19,6 @@ test.skip(
 );
 test.describe.configure({ mode: "serial" });
 test.setTimeout(180_000);
-test.use({
-  extraHTTPHeaders: {
-    "x-e2e-token": process.env.E2E_BYPASS_TOKEN ?? "",
-    "x-harness-stub": "1",
-  },
-});
 
 /** Signs in as a Staff member through the header's menu. */
 async function signInAs(page: Page, name: RegExp) {

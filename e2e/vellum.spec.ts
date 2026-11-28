@@ -1,20 +1,21 @@
 import { expect, test } from "@playwright/test";
+import { E2E_HEADER, E2E_LIVE_HEADER } from "../src/platform/request/headers";
 
 /*
  * Vellum: pick a Sample, watch it drawn and measured, Pass after Pass.
- * Stubbed by default: a canned Drawing streams through the real route,
- * sanitizer and Ruler, with no model call and no database write (the e2e
- * visitor skips the rate limit). `E2E_VELLUM_LIVE=1` asks the real model
+ * Stubbed by default (the e2e token alone): the container's canned
+ * Draftsman streams a Drawing through the real route, sanitizer and Ruler,
+ * with no model call and no database write (the e2e visitor skips the rate
+ * limit). `E2E_VELLUM_LIVE=1` sends `x-e2e-live: 1` and asks the real model
  * (about a dollar for a Trace); run it only when asked.
  */
 const live = process.env.E2E_VELLUM_LIVE === "1";
-const token = process.env.E2E_BYPASS_TOKEN ?? "";
 
 test.setTimeout(live ? 900_000 : 120_000);
 test.use({
   extraHTTPHeaders: {
-    "x-e2e-token": token,
-    ...(live ? {} : { "x-vellum-stub": token }),
+    [E2E_HEADER]: process.env.E2E_BYPASS_TOKEN ?? "",
+    ...(live ? { [E2E_LIVE_HEADER]: "1" } : {}),
   },
 });
 

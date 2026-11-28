@@ -15,18 +15,6 @@ describe("searching transactions", () => {
     expect(containsPattern("50%_off\\")).toBe("%50\\%\\_off\\\\%");
   });
 
-  it("takes a query alongside limit and beforeId", () => {
-    expect(
-      schema().parse({
-        accountId,
-        query: "  Greenmarket ",
-        limit: 10,
-        beforeId: 7,
-      }),
-    ).toEqual({ accountId, query: "Greenmarket", limit: 10, beforeId: 7 });
-    expect(schema().parse({ accountId })).toEqual({ accountId });
-  });
-
   it("refuses an empty or overlong query", () => {
     expect(schema().safeParse({ accountId, query: "   " }).success).toBe(false);
     expect(

@@ -14,11 +14,6 @@ export type Reasoning = (typeof REASONING)[number];
 
 /** Read lazily so `next build` works without secrets. Values are never logged. */
 export const env = {
-  /** The Supabase Postgres database, shared by every demo (transaction pooler, port 6543). */
-  databaseUrl: () => required("DATABASE_URL"),
-  /** Hashes visitors for rate limits. */
-  rateLimitSalt: () => required("RATE_LIMIT_SALT"),
-  e2eBypassToken: () => process.env.E2E_BYPASS_TOKEN ?? "",
   /** Falls back to the document compliance key, like the other demos. */
   aiGatewayApiKey: () =>
     process.env.VELLUM_AI_GATEWAY_API_KEY ??

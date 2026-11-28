@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { disconnectMcpClients } from "../server/mcp-token-actions";
+import { disconnectMcpClients } from "./api";
 import { ConfirmDialog } from "./pass-actions";
 import { quietButtonClass } from "./styles";
 
@@ -29,7 +29,7 @@ export function DisconnectMcpClients() {
           key={opened}
           id="disconnect-mcp-clients"
           title="Disconnect all MCP clients"
-          action={disconnectMcpClients}
+          write={() => disconnectMcpClients()}
           confirm="Disconnect all"
           pending="Disconnecting…"
           danger

@@ -1,13 +1,7 @@
-import { mintMcpToken } from "@/features/client-manager/server/mcp-auth";
-import { failure } from "@/features/client-manager/server/respond";
+import { clientManagerApi } from "@/features/client-manager/server/api";
 
-/** Mints this visitor's MCP token: a Guest's lasts as long as their pass. */
-export async function POST() {
-  try {
-    return Response.json(await mintMcpToken(), {
-      headers: { "cache-control": "no-store" },
-    });
-  } catch (error) {
-    return failure(error);
-  }
-}
+/** Mints this visitor's MCP token to paste: a Guest's lasts as long as their pass. */
+export const POST = clientManagerApi.handle(
+  ({ services, access, owner, visitor }) =>
+    services.connect.mint({ access, owner, visitor }),
+);

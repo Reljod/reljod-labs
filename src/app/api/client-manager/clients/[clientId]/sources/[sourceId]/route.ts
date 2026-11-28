@@ -1,29 +1,13 @@
-import type { SourceResponse } from "@/features/client-manager/domain/api";
-import {
-  failure,
-  json,
-  notFound,
-} from "@/features/client-manager/server/respond";
-import {
-  clientSource,
-  gatedClient,
-} from "@/features/client-manager/server/service";
+import { sourceParamsSchema } from "@/features/client-manager/domain/api";
+import { clientManagerApi } from "@/features/client-manager/server/api";
+import { params } from "@/platform/http/middleware";
 
-/** A document as it was read, a link to the original, and every fact that quotes it. */
-export async function GET(
-  _request: Request,
-  {
-    params,
-  }: RouteContext<"/api/client-manager/clients/[clientId]/sources/[sourceId]">,
-) {
-  try {
-    const { clientId, sourceId } = await params;
-    const { client } = await gatedClient(clientId);
-    if (!client) return notFound();
-    const source = await clientSource(client.id, sourceId, client.is_sample);
-    // Never kept, even for a Sample: `url` is a signed link that dies in an hour.
-    return source ? json<SourceResponse>(source) : notFound();
-  } catch (error) {
-    return failure(error);
-  }
-}
+/**
+ * A document as it was read, a link to the original, and every fact that
+ * quotes it. Never kept, even for a Sample: `url` is a signed link.
+ */
+export const GET = clientManagerApi
+  .use(params(sourceParamsSchema))
+  .handle(({ services, owner, path }) =>
+    services.clients.source(owner, path.clientId, path.sourceId),
+  );

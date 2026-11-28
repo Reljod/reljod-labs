@@ -1,8 +1,10 @@
 import { defineConfig } from "@playwright/test";
-import { E2E_HEADER } from "./src/features/document-compliance/constants";
+import { E2E_HEADER, E2E_LIVE_HEADER } from "./src/platform/request/headers";
 
-// End-to-end tests call the paid model and the live Supabase project.
-// Run them only when asked (see AGENTS.md): `pnpm test:e2e`.
+// End-to-end tests write to the live Supabase project. Paid services (models,
+// Sandboxes) are stubbed by default: every request carries the e2e token, and
+// each feature's container swaps in canned adapters. `E2E_LIVE=1` sends
+// `x-e2e-live: 1` too, so the real models answer (paid; only when asked).
 
 try {
   process.loadEnvFile(".env.local");
@@ -12,8 +14,10 @@ try {
 
 const externalBaseUrl = process.env.E2E_BASE_URL;
 const recording = process.env.E2E_RECORD === "1";
-// Its own port, so a dev server you already have on 3000 is never mistaken for this one.
-const localUrl = "http://localhost:3100";
+// Its own port, so a dev server you already have on 3000 is never mistaken for
+// this one. `E2E_PORT` gives parallel worktrees one each.
+const port = process.env.E2E_PORT ?? "3100";
+const localUrl = `http://localhost:${port}`;
 
 export default defineConfig({
   testDir: "e2e",
@@ -36,7 +40,10 @@ export default defineConfig({
     video: recording
       ? { mode: "on", size: { width: 1440, height: 1000 } }
       : "off",
-    extraHTTPHeaders: { [E2E_HEADER]: process.env.E2E_BYPASS_TOKEN ?? "" },
+    extraHTTPHeaders: {
+      [E2E_HEADER]: process.env.E2E_BYPASS_TOKEN ?? "",
+      ...(process.env.E2E_LIVE === "1" ? { [E2E_LIVE_HEADER]: "1" } : {}),
+    },
     trace: "retain-on-failure",
   },
   // CI tests a production build: `next dev` compiles each route on its first
@@ -47,8 +54,8 @@ export default defineConfig({
     : {
         command:
           process.env.CI || process.env.E2E_SERVER === "prod"
-            ? "pnpm build && pnpm start --port 3100"
-            : "pnpm dev --port 3100",
+            ? `pnpm build && pnpm start --port ${port}`
+            : `pnpm dev --port ${port}`,
         url: localUrl,
         reuseExistingServer: false,
         timeout: 300_000,

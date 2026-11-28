@@ -2,28 +2,7 @@ import { describe, expect, it, vi } from "vitest";
 
 vi.mock("server-only", () => ({}));
 
-import { actionOf, callCost, callOf, keptPictures } from "./operator";
-
-describe("the pictures the Operator still sees", () => {
-  it("always keeps the latest, and at most four", () => {
-    for (let count = 1; count <= 30; count++) {
-      const frames = Array.from({ length: count }, (_, index) => index);
-      const kept = keptPictures(frames);
-      expect(kept.has(count - 1)).toBe(true);
-      expect(kept.size).toBeGreaterThanOrEqual(1);
-      expect(kept.size).toBeLessThanOrEqual(4);
-    }
-  });
-
-  it("drops in blocks, so earlier messages do not change every Turn", () => {
-    const first = (count: number) =>
-      Math.min(
-        ...keptPictures(Array.from({ length: count }, (_, index) => index)),
-      );
-    expect([5, 6, 7, 8].map(first)).toEqual([4, 4, 4, 4]);
-    expect(first(9)).toBe(8);
-  });
-});
+import { actionOf, callCost, callOf } from "./operator";
 
 describe("tool calls and Actions", () => {
   it("turns a screen tool call into an Action and back", () => {

@@ -15,15 +15,3 @@ export const LIMITS = {
   maxCascadeItems: 12,
   maxJurors: 4,
 } as const;
-
-/** Whether `units` more calls fit under the visitor's hour and everyone's day. Pure. */
-export function rateVerdict(input: {
-  units: number;
-  perHour: number;
-  usedHour: number;
-  usedDay: number;
-}): "taken" | "hour" | "day" {
-  if (input.usedHour + input.units > input.perHour) return "hour";
-  if (input.usedDay + input.units > LIMITS.callsPerDay) return "day";
-  return "taken";
-}

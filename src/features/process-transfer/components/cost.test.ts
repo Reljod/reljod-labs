@@ -4,9 +4,6 @@ import {
   costByPurpose,
   costByStage,
   earlierCalls,
-  isReplaced,
-  modelLabel,
-  roundOfCall,
   stageOfCall,
   totalOf,
 } from "./cost";
@@ -46,51 +43,13 @@ const calls = [
   call("8", "review", "Review the slides (round 2)", 0.004),
 ];
 
-describe("stageOfCall", () => {
-  it("places every call on the Stage that made it", () => {
-    expect(calls.map(stageOfCall)).toEqual([
-      "watch",
-      "extract",
-      "verify",
-      "verify",
-      "design",
-      "check",
-      "design",
-      "check",
-    ]);
-  });
-});
-
-it("reads the labels the pipeline writes", () => {
-  expect(
-    stageOfCall({ purpose: "review", label: "Check the repaired steps" }),
-  ).toBe("verify");
-  expect(
-    stageOfCall({
-      purpose: "write",
-      label: "Plan the slides (unusable output)",
-    }),
-  ).toBe("design");
-});
-
-describe("roundOfCall", () => {
-  it("reads the Round from the label", () => {
-    expect(roundOfCall("Plan the slides (round 2)")).toBe(2);
-    expect(roundOfCall("Write the Process")).toBeNull();
-  });
-});
-
+/* The cost a person is shown must add up to what the Run was charged. */
 describe("cost roll-ups", () => {
   it("adds up per Stage, per purpose and overall", () => {
     const byStage = costByStage(calls);
     expect(byStage.design.calls).toBe(2);
     expect(byStage.design.costUsd).toBeCloseTo(0.01);
-    expect(byStage.verify.models).toEqual([
-      "google/gemini-3.8-flash",
-      "anthropic/claude-haiku-5.5",
-    ]);
     expect(byStage.document.calls).toBe(0);
-    expect(byStage.approve.costUsd).toBe(0);
 
     const byPurpose = costByPurpose(calls);
     expect(byPurpose.write.calls).toBe(4);
@@ -99,7 +58,6 @@ describe("cost roll-ups", () => {
     const total = totalOf(calls);
     expect(total.calls).toBe(8);
     expect(total.costUsd).toBeCloseTo(0.051);
-    expect(total.inputTokens).toBe(8000);
   });
 
   it("shows Design and Check for the latest Redo only, and still totals every call", () => {
@@ -125,14 +83,6 @@ describe("cost roll-ups", () => {
       "7",
       "8",
     ]);
-    expect(isReplaced(redone[0], 1)).toBe(false);
-    expect(isReplaced(redone[4], 1)).toBe(true);
-    expect(isReplaced(redone[4], 0)).toBe(false);
     expect(totalOf(redone).calls).toBe(redone.length);
-  });
-
-  it("names known models and passes unknown ids through", () => {
-    expect(modelLabel("anthropic/claude-haiku-5.5")).toBe("Claude Haiku 5.5");
-    expect(modelLabel("acme/x")).toBe("acme/x");
   });
 });

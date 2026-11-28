@@ -8,8 +8,8 @@ import {
   PURPOSE_IDS,
   PURPOSES,
 } from "../domain/model-config";
-import { resetModelSettings } from "../server/actions";
 import type { SpendView } from "../view";
+import { resetModelSettings } from "./api";
 import { ModelForm } from "./model-form";
 
 type Props = {

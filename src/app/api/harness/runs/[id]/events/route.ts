@@ -1,39 +1,21 @@
+import { z } from "zod";
 import type { RunEvent } from "@/features/harness/domain/run";
-import { requireStaff } from "@/features/harness/server/context";
-import {
-  failure,
-  NDJSON_HEADERS,
-  notFound,
-} from "@/features/harness/server/respond";
-import { runEventsStream } from "@/features/harness/server/runs";
+import { harnessApi, idSchema } from "@/features/harness/server/api";
+import { params, query } from "@/platform/http/middleware";
+import { ndjson } from "@/platform/http/respond";
 
 // Stays open while the Run streams; a reconnect resumes from `?from=`.
 export const maxDuration = 300;
 
-type Context = { params: Promise<{ id: string }> };
+const schema = z.object({ from: z.coerce.number().int().min(0).catch(0) });
 
-/** The Run's live stream as NDJSON `RunEvent`s, from event number `from`. */
-export async function GET(request: Request, { params }: Context) {
-  try {
-    const { owner } = await requireStaff();
-    const { id } = await params;
-    const from = Number(new URL(request.url).searchParams.get("from") ?? 0);
-    const events = await runEventsStream(
-      owner,
-      id,
-      Number.isFinite(from) ? from : 0,
-    );
-    if (!events) return notFound("That Run is not in this Workspace.");
-    const encoder = new TextEncoder();
-    const body = events.pipeThrough(
-      new TransformStream<RunEvent, Uint8Array>({
-        transform(event, controller) {
-          controller.enqueue(encoder.encode(`${JSON.stringify(event)}\n`));
-        },
-      }),
-    );
-    return new Response(body, { headers: NDJSON_HEADERS });
-  } catch (error) {
-    return failure(error);
-  }
-}
+/** The Run's live stream as NDJSON `RunEvent`s, from event number `from`. A Run that is not the Owner's is a JSON 404. */
+export const GET = harnessApi
+  .use(params(idSchema))
+  .use(query(schema))
+  .handle(async ({ services, caller, path, query, request }) =>
+    ndjson<RunEvent>(
+      await services.runs.events(caller, path.id, query.from ?? 0),
+      { scope: "harness", signal: request.signal },
+    ),
+  );

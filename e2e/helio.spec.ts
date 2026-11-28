@@ -2,15 +2,9 @@ import { expect, test } from "@playwright/test";
 
 /*
  * Helio: autonomous global product shoot & campaign studio.
- * Runs stubbed by default (`x-helio-stub: 1`, zero model spend, zero DB writes).
+ * Runs stubbed by default: the e2e token alone selects the container's stub
+ * studio (zero model spend, zero DB writes; the e2e visitor skips the caps).
  */
-test.use({
-  extraHTTPHeaders: {
-    "x-e2e-token": process.env.E2E_BYPASS_TOKEN ?? "",
-    "x-helio-stub": "1",
-  },
-});
-
 test.describe("Helio", () => {
   test("shoots a 3-market campaign, audits brand integrity, and populates placements", async ({
     page,

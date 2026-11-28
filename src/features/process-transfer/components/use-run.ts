@@ -1,15 +1,13 @@
 "use client";
 
 import { useCallback, useEffect, useReducer, useRef, useState } from "react";
-import { apiPath } from "../domain/api";
 import { isOver, type RunEvent, type RunView } from "../domain/run";
-import { fetchRun } from "./api";
+import { fetchRun, followRun } from "./api";
 import {
   failuresAfter,
   finished,
   foldEvent,
-  parseEvent,
-  takeLines,
+  isEvent,
   waitBefore,
 } from "./run-stream";
 
@@ -109,31 +107,20 @@ export function useRun(
         const seenBefore = seen;
         let threw = false;
         try {
-          const response = await fetch(apiPath.runEvents(id, seen), {
+          await followRun(
+            id,
+            seen,
+            {
+              onOpen: () => setFeed("live"),
+              onEvent: (event) => {
+                seen += 1;
+                if (!isEvent(event)) return;
+                last = event;
+                queue(event);
+              },
+            },
             signal,
-            cache: "no-store",
-          });
-          if (!response.ok || !response.body) {
-            throw new Error(`The live feed answered ${response.status}.`);
-          }
-          setFeed("live");
-          const reader = response.body
-            .pipeThrough(new TextDecoderStream())
-            .getReader();
-          let buffer = "";
-          for (;;) {
-            const { value, done } = await reader.read();
-            if (done) break;
-            const { lines, rest } = takeLines(buffer, value);
-            buffer = rest;
-            for (const line of lines) {
-              seen += 1;
-              const event = parseEvent(line);
-              if (!event) continue;
-              last = event;
-              queue(event);
-            }
-          }
+          );
           flush();
           if (finished(last)) {
             setFeed("closed");

@@ -3,12 +3,12 @@ import { readFile } from "node:fs/promises";
 import path from "node:path";
 import type { Owner } from "@/features/access/domain/owner";
 import { mp4DurationSeconds } from "@/features/process-transfer/domain/uploads";
+import { InvalidError } from "@/platform/errors";
 import type { Source } from "../domain/api";
 import { LIMITS } from "../domain/limits";
 import { type Site, siteBySlug } from "../domain/sites";
 import { ownerSlug, ownsUpload, uploadHour } from "../domain/uploads";
-import { InvalidError } from "./errors";
-import { download } from "./storage";
+import type { FootageStore } from "./ports";
 
 export type Footage = {
   bytes: Uint8Array;
@@ -62,6 +62,7 @@ export async function loadFootage(
   source: Source,
   owner: Owner,
   origin: string,
+  download: FootageStore["download"],
 ): Promise<Footage> {
   if (source.kind === "sample") {
     const site = siteBySlug(source.slug);

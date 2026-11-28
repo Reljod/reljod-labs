@@ -4,6 +4,19 @@ export const SIGN_IN_PATH = "/access/sign-in";
 export const GUESTS_PATH = "/access/guests";
 export const PROFILE_PATH = "/access/profile";
 
+/** Access's REST routes (`src/app/api/access/**`, `domain/api.ts`). */
+export const ACCESS_API = "/api/access";
+
+/**
+ * The door's routes: open to a visitor with no Access, since that is what
+ * they are for. Every other route under `ACCESS_API` is a Host's, and the
+ * proxy refuses it to anyone else.
+ */
+export const DOOR_ROUTES = {
+  session: `${ACCESS_API}/session`,
+  guestSession: `${ACCESS_API}/guest-session`,
+} as const;
+
 /**
  * A readable cookie that only says "this browser signed in or redeemed a code",
  * so the header's profile menu asks who it is only when there is someone to ask

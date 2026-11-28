@@ -2,52 +2,37 @@ import "server-only";
 import type { McpServer } from "@modelcontextprotocol/server";
 import { createMcpHandler, withMcpAuth } from "mcp-handler";
 import { z } from "zod";
-import { guestPassStatus } from "@/features/access/domain/guest-pass";
-import type { Owner } from "@/features/access/domain/owner";
-import { env as accessEnv } from "@/features/access/server/env";
-import { guestPassOf } from "@/features/access/server/repository";
 import { scenarioSchema } from "../domain/contract";
 import { LIMITS } from "../domain/limits";
 import { renderRule, ruleDefinition } from "../domain/rules";
-import { readMcpToken, type SwitchboardClaims } from "../domain/token";
 import { BACK_OFFICE_TOOLS } from "../domain/tools";
 import { RECORD_KINDS } from "../domain/world";
-import { callTool, endCall, loadCall, recordTurn, startCall } from "./calls";
+import { switchboard } from "./container";
 import { digestOf } from "./digest";
-import { env } from "./env";
-import { messageOf, StateError } from "./errors";
-import { greet, takeTurn } from "./line";
-import type { Visitor } from "./rate";
-import { restoreRule, rulesView, saveRule } from "./rules";
-import {
-  ensureWorkspace,
-  listCalls,
-  listRecords,
-  liveCallRows,
-  resetRecords,
-} from "./store";
+import type { Caller } from "./ports";
+import type { SwitchboardServices } from "./services";
 
 /**
  * The Switchboard MCP server: the railway's Back office and the line itself.
- * It is the one way in. The voice Session's tool calls, the text Line and an
- * outside client all end in `callTool`, so the same Rules, caps and trail
- * apply whoever asks (ADR 0029). An outside client can be the Agent (call the
- * Back office tools on a Call it started, reporting what was said with
+ * The voice Session's tool calls, the text Line and an outside client all
+ * end in the Calls service's `tool`, so the same Rules, caps and trail apply
+ * whoever asks (ADR 0029). An outside client can be the Agent (call the Back
+ * office tools on a Call it started, reporting what was said with
  * `record_turn`) or the Caller (`caller_says`, answered by the line's Agent).
  */
 
-type Caller = { owner: Owner; who: Visitor };
+type Session = { caller: Caller; services: SwitchboardServices };
 
 type ToolContext = {
   http?: { authInfo?: { extra?: Record<string, unknown> } };
 };
 
-function callerOf(ctx: unknown): Caller {
-  const caller = (ctx as ToolContext).http?.authInfo?.extra?.caller as
-    | Caller
-    | undefined;
+/** Who the verified token acts for, and the services its mode reaches. */
+function sessionOf(ctx: unknown): Session {
+  const extra = (ctx as ToolContext).http?.authInfo?.extra;
+  const caller = extra?.caller as Caller | undefined;
   if (!caller) throw new Error("Not authorised");
-  return caller;
+  return { caller, services: switchboard({ stub: extra?.stub === true }) };
 }
 
 function result(data: unknown) {
@@ -63,21 +48,15 @@ const failure = (message: string) => ({
 });
 
 /** Runs a tool body; what it throws becomes the tool's error, never a 500. */
-async function guarded(run: () => Promise<unknown>) {
+async function guarded(
+  ctx: unknown,
+  run: (session: Session) => Promise<unknown>,
+) {
   try {
-    return result(await run());
+    return result(await run(sessionOf(ctx)));
   } catch (error) {
-    return failure(messageOf(error));
+    return failure(error instanceof Error ? error.message : String(error));
   }
-}
-
-/** The Call a tool acts on: the one named, or the Owner's live one. */
-async function callIdFor(owner: Owner, callId?: string) {
-  if (callId) return callId;
-  const [live] = await liveCallRows(owner);
-  if (!live)
-    throw new StateError("No Call is live. Start one with start_call.");
-  return live.id;
 }
 
 const callIdArg = z
@@ -109,18 +88,21 @@ export function registerSwitchboardTools(server: McpServer) {
         annotations: { readOnlyHint: !spec.writes },
       },
       async (args: Record<string, unknown>, ctx: unknown) =>
-        guarded(async () => {
-          const caller = callerOf(ctx);
+        guarded(ctx, async ({ caller, services }) => {
           const { callId, saying, ...rest } = args;
-          const outcome = await callTool({
-            owner: caller.owner,
-            who: caller.who,
-            callId: await callIdFor(caller.owner, callId as string | undefined),
-            toolCallId: `mcp-${Date.now()}-${++toolSeq}`,
-            name,
-            args: rest,
-            saying: typeof saying === "string" ? saying : undefined,
-          });
+          const outcome = await services.calls.tool(
+            caller,
+            await services.calls.callIdFor(
+              caller.owner,
+              callId as string | undefined,
+            ),
+            {
+              toolCallId: `mcp-${Date.now()}-${++toolSeq}`,
+              name,
+              args: rest,
+              saying: typeof saying === "string" ? saying : undefined,
+            },
+          );
           return {
             ok: outcome.ok,
             summary: outcome.summary,
@@ -136,33 +118,20 @@ export function registerSwitchboardTools(server: McpServer) {
       title: "Start a Call",
       description:
         "Starts a Call on the text Line (ends any live one). The Agent greets first. Then either play the Caller with caller_says, or be the Agent yourself with the Back office tools and record_turn.",
-      inputSchema: z.object({
-        scenario: scenarioSchema.optional(),
-        stub: z
-          .boolean()
-          .optional()
-          .describe(
-            "Tests only: canned Agent Turns, honoured for the e2e Owner alone",
-          ),
-      }),
+      inputSchema: z.object({ scenario: scenarioSchema.optional() }),
     },
     async (args, ctx) =>
-      guarded(async () => {
-        const caller = callerOf(ctx);
-        const call = await startCall({
-          owner: caller.owner,
-          who: caller.who,
+      guarded(ctx, async ({ caller, services }) => {
+        const { call, events } = await services.calls.start(caller, {
           line: "text",
           origin: "mcp",
           scenario: args.scenario ?? { kind: "open" },
-          consentAudio: false,
-          stub: Boolean(args.stub) && caller.who.trusted,
         });
-        const greeting = await greet(caller.owner, call.id);
+        const greeting = events.find((event) => event.type === "turn.agent");
         return {
           callId: call.id,
           deadlineAt: call.deadlineAt,
-          agent: greeting.data.text,
+          agent: greeting?.type === "turn.agent" ? greeting.data.text : "",
         };
       }),
   );
@@ -179,18 +148,19 @@ export function registerSwitchboardTools(server: McpServer) {
       }),
     },
     async (args, ctx) =>
-      guarded(async () => {
-        const caller = callerOf(ctx);
-        const callId = await callIdFor(caller.owner, args.callId);
+      guarded(ctx, async ({ caller, services }) => {
+        const callId = await services.calls.callIdFor(
+          caller.owner,
+          args.callId,
+        );
         let agent = "";
         const tools: unknown[] = [];
-        for await (const part of takeTurn({
-          owner: caller.owner,
-          who: caller.who,
+        for await (const part of await services.calls.turn(
+          caller,
           callId,
-          text: args.text,
-          via: "mcp",
-        })) {
+          args.text,
+          "mcp",
+        )) {
           if (part.kind === "delta") agent += part.text;
           else if (part.kind === "error") throw new Error(part.message);
           else if (part.kind === "event" && part.event.type === "tool.result")
@@ -220,16 +190,13 @@ export function registerSwitchboardTools(server: McpServer) {
       }),
     },
     async (args, ctx) =>
-      guarded(async () => {
-        const caller = callerOf(ctx);
-        const callId = await callIdFor(caller.owner, args.callId);
-        await recordTurn({
-          owner: caller.owner,
-          who: caller.who,
-          callId,
-          speaker: args.who,
-          text: args.text,
-        });
+      guarded(ctx, async ({ caller, services }) => {
+        await services.calls.recordTurn(
+          caller,
+          await services.calls.callIdFor(caller.owner, args.callId),
+          args.who,
+          args.text,
+        );
         return { recorded: true };
       }),
   );
@@ -243,13 +210,12 @@ export function registerSwitchboardTools(server: McpServer) {
       inputSchema: z.object({ callId: callIdArg }),
     },
     async (args, ctx) =>
-      guarded(async () => {
-        const caller = callerOf(ctx);
-        const call = await endCall({
-          owner: caller.owner,
-          callId: await callIdFor(caller.owner, args.callId),
-          by: "client",
-        });
+      guarded(ctx, async ({ caller, services }) => {
+        const { call } = await services.calls.end(
+          caller,
+          await services.calls.callIdFor(caller.owner, args.callId),
+          "client",
+        );
         return { callId: call.id, status: call.status };
       }),
   );
@@ -264,9 +230,9 @@ export function registerSwitchboardTools(server: McpServer) {
       annotations: { readOnlyHint: true },
     },
     async (args, ctx) =>
-      guarded(async () => {
-        const { call, events } = await loadCall(
-          callerOf(ctx).owner,
+      guarded(ctx, async ({ caller, services }) => {
+        const { call, events } = await services.calls.get(
+          caller.owner,
           args.callId,
         );
         return {
@@ -286,7 +252,9 @@ export function registerSwitchboardTools(server: McpServer) {
       annotations: { readOnlyHint: true },
     },
     async (_args, ctx) =>
-      guarded(async () => ({ calls: await listCalls(callerOf(ctx).owner) })),
+      guarded(ctx, async ({ caller, services }) => ({
+        calls: await services.calls.list(caller.owner),
+      })),
   );
 
   server.registerTool(
@@ -299,14 +267,9 @@ export function registerSwitchboardTools(server: McpServer) {
       annotations: { readOnlyHint: true },
     },
     async (args, ctx) =>
-      guarded(async () => {
-        const records = await listRecords(callerOf(ctx).owner);
-        return {
-          records: records.filter(
-            (record) => !args.kind || record.kind === args.kind,
-          ),
-        };
-      }),
+      guarded(ctx, async ({ caller, services }) => ({
+        records: await services.office.records(caller.owner, args.kind),
+      })),
   );
 
   server.registerTool(
@@ -319,8 +282,8 @@ export function registerSwitchboardTools(server: McpServer) {
       annotations: { destructiveHint: true },
     },
     async (_args, ctx) =>
-      guarded(async () => {
-        await resetRecords(callerOf(ctx).owner);
+      guarded(ctx, async ({ caller, services }) => {
+        await services.office.reset(caller.owner);
         return { reset: true };
       }),
   );
@@ -335,8 +298,8 @@ export function registerSwitchboardTools(server: McpServer) {
       annotations: { readOnlyHint: true },
     },
     async (_args, ctx) =>
-      guarded(async () => {
-        const { rulebook } = await rulesView(callerOf(ctx).owner);
+      guarded(ctx, async ({ caller, services }) => {
+        const { rulebook } = await services.rules.view(caller.owner);
         return {
           rules: rulebook.map((rule) => ({
             ...rule,
@@ -362,18 +325,11 @@ export function registerSwitchboardTools(server: McpServer) {
       }),
     },
     async (args, ctx) =>
-      guarded(async () => {
-        const { owner } = callerOf(ctx);
-        if (args.restore) return restoreRule(owner, args.ruleId);
-        const { rulebook } = await rulesView(owner);
-        const current = rulebook.find((rule) => rule.id === args.ruleId);
-        return saveRule({
-          owner,
-          ruleId: args.ruleId,
-          enabled: args.enabled ?? current?.enabled ?? true,
-          params: { ...current?.params, ...args.params },
-          note: args.note,
-        });
+      guarded(ctx, async ({ caller, services }) => {
+        const { restore, ...edit } = args;
+        return restore
+          ? services.rules.restore(caller.owner, args.ruleId)
+          : services.rules.amend(caller.owner, edit);
       }),
   );
 }
@@ -382,52 +338,23 @@ const handler = createMcpHandler(registerSwitchboardTools, {
   serverInfo: { name: "switchboard", version: "1.0.0" },
 });
 
-/** Whether a signed token's holder still has Access: a live Guest pass, a Host still on the list. */
-async function stillAllowed(claims: SwitchboardClaims) {
-  switch (claims.kind) {
-    case "e2e":
-      return Boolean(env.e2eBypassToken());
-    case "host":
-      return Boolean(
-        claims.email && accessEnv.hostEmails().includes(claims.email),
-      );
-    case "guest": {
-      if (!claims.user || !claims.pass) return false;
-      const pass = await guestPassOf(claims.user);
-      if (!pass || pass.id !== claims.pass) return false;
-      return (
-        guestPassStatus({
-          expiresAt: pass.expires_at,
-          revokedAt: pass.revoked_at,
-          deletedAt: pass.deleted_at,
-        }) === "live"
-      );
-    }
-  }
-}
-
 /**
  * The only bearer is a token minted for an Owner under "Connect a client",
- * checked against that Owner's Access on every call. There is no shared
- * token.
+ * checked against that Owner's Access on every call (`connect.authenticate`).
+ * There is no shared token. A token the stubbed e2e suite minted reaches the
+ * stubbed services.
  */
 export const mcpHandler = withMcpAuth(
   handler,
   async (_request, bearer) => {
     if (!bearer) return undefined;
-    const claims = readMcpToken(bearer, env.rateLimitSalt());
-    if (!claims || !(await stillAllowed(claims))) return undefined;
-    await ensureWorkspace(claims.owner);
+    const session = await switchboard().connect.authenticate(bearer);
+    if (!session) return undefined;
     return {
       token: bearer,
-      clientId: `switchboard-${claims.kind}`,
+      clientId: `switchboard-${session.kind}`,
       scopes: ["switchboard"],
-      extra: {
-        caller: {
-          owner: claims.owner,
-          who: { hash: claims.visitor, trusted: claims.kind === "e2e" },
-        } satisfies Caller,
-      },
+      extra: { caller: session.caller, stub: session.stub },
     };
   },
   { required: true },

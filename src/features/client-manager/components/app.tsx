@@ -7,8 +7,15 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { DemoBar, demoBarControlClass } from "@/components/demo/demo-bar";
 import type { ThreadSummary, Walk } from "../domain/chat";
 import { EMPTY_HIGHLIGHT, highlightFrom } from "../domain/traversal";
-import type { FirstLoad } from "../server/first-load";
-import { FRESH_MS, fetchCatalog, fetchThreads, keys, send } from "./api";
+import type { FirstLoad } from "../server/page";
+import {
+  deleteThread as deleteThreadRequest,
+  FRESH_MS,
+  fetchCatalog,
+  fetchThreads,
+  keys,
+  patchThread,
+} from "./api";
 import { Chat } from "./chat";
 import { ClientDashboard, type DashboardView } from "./client-dashboard";
 import { ClientsPanel } from "./clients-panel";
@@ -141,11 +148,11 @@ export function ClientManagerApp({
     (clientId: string | null) => {
       setScope(clientId);
       if (threadId) {
-        void send(`/api/client-manager/threads/${threadId}`, "PATCH", {
-          clientId,
-        }).then(() =>
-          queryClient.invalidateQueries({ queryKey: keys.threads }),
-        );
+        void patchThread(threadId, { clientId })
+          .catch(() => {})
+          .then(() =>
+            queryClient.invalidateQueries({ queryKey: keys.threads }),
+          );
       }
     },
     [queryClient, threadId],
@@ -184,7 +191,7 @@ export function ClientManagerApp({
     );
     if (thread.id === threadId) setThreadId(null);
     try {
-      await send(`/api/client-manager/threads/${thread.id}`, "DELETE");
+      await deleteThreadRequest(thread.id);
     } catch (failure) {
       setThreadNotice(
         `“${thread.title}” was not deleted: ${failure instanceof Error ? failure.message : "try again."}`,

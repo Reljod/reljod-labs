@@ -1,13 +1,12 @@
 import "server-only";
 import type { Owner } from "@/features/access/domain/owner";
-import { jsonb } from "@/server/postgres";
+import { jsonb, db as sql } from "@/server/postgres";
 import type { Scenario } from "../domain/case-file";
 import type { JobId } from "../domain/jobs";
 import type { ModelSettings, Purpose } from "../domain/model-config";
 import type { PipelineId } from "../domain/pipelines";
 import type { Answer } from "../domain/run-events";
 import type { RunDocument, RunState, SourceFormat } from "../domain/run-state";
-import { sql } from "./db";
 
 /** The one row an `insert ... returning` gives back. */
 function one<T>(found: readonly T[]): T {
@@ -56,6 +55,35 @@ export async function sessionsOf(owner: Owner, limit: number) {
     select * from casework.sessions
     where owner = ${owner}
     order by last_active_at desc
+    limit ${limit}`;
+}
+
+/**
+ * The Desk a request works in, in one query: the Owner's Desk with the
+ * browser's remembered id, else the Owner's latest. Null when they have none.
+ * Never another Owner's: the id only breaks the tie among the Owner's own.
+ */
+export async function openSessionOf(owner: Owner, preferredId: string | null) {
+  const preferred =
+    preferredId && /^[0-9a-f-]{36}$/i.test(preferredId) ? preferredId : null;
+  const [session] = await sql()<SessionRow[]>`
+    select * from casework.sessions
+    where owner = ${owner}
+    order by (id = ${preferred}::uuid) is true desc, last_active_at desc
+    limit 1`;
+  return session ?? null;
+}
+
+/** An Owner's Desks, newest activity first, each with what it has spent, in one query. */
+export async function sessionsWithSpend(owner: Owner, limit: number) {
+  return sql()<(SessionRow & { spend_usd: number })[]>`
+    select s.*, (
+      select coalesce(sum(c.cost_usd), 0)::float8
+      from casework.model_calls c where c.session_id = s.id
+    ) as spend_usd
+    from casework.sessions s
+    where s.owner = ${owner}
+    order by s.last_active_at desc
     limit ${limit}`;
 }
 
@@ -264,7 +292,7 @@ export async function asOfFor(documents: DocumentRow[]) {
   );
 }
 
-export async function insertUpload(input: {
+export type NewUpload = {
   sessionId: string;
   name: string;
   mediaType: string;
@@ -272,25 +300,39 @@ export async function insertUpload(input: {
   storagePath: string;
   pagePaths: string[];
   sizeBytes: number;
-}): Promise<DocumentRow | null> {
+};
+
+/**
+ * Records uploads as Documents in one statement, in the order given. An
+ * upload's path is recorded once (a unique index): a ticket used twice at the
+ * same moment records nothing the second time, and is left out of the answer.
+ */
+export async function insertUploads(
+  inputs: NewUpload[],
+): Promise<DocumentRow[]> {
+  if (inputs.length === 0) return [];
   const db = sql();
-  try {
-    return one(
-      await db<DocumentRow[]>`
-        insert into casework.documents
-          (session_id, name, media_type, source_format, storage_path, page_paths, size_bytes)
-        values (
-          ${input.sessionId}, ${input.name}, ${input.mediaType}, ${input.sourceFormat},
-          ${input.storagePath}, ${input.pagePaths}::text[], ${input.sizeBytes}
-        )
-        returning ${db(DOCUMENT_COLUMNS)}`,
-    );
-  } catch (error) {
-    // An upload's path is recorded once (a unique index): a ticket used twice
-    // at the same moment records nothing the second time.
-    if ((error as { code?: string }).code === "23505") return null;
-    throw error;
-  }
+  const rows = inputs.map((input) => ({
+    session_id: input.sessionId,
+    name: input.name,
+    media_type: input.mediaType,
+    source_format: input.sourceFormat,
+    storage_path: input.storagePath,
+    page_paths: input.pagePaths,
+    size_bytes: input.sizeBytes,
+  }));
+  const created = await db<DocumentRow[]>`
+    insert into casework.documents ${db(rows)}
+    on conflict do nothing
+    returning ${db(DOCUMENT_COLUMNS)}`;
+  const byPath = new Map(created.map((row) => [row.storage_path, row]));
+  return inputs.flatMap((input) => byPath.get(input.storagePath) ?? []);
+}
+
+export async function insertUpload(
+  input: NewUpload,
+): Promise<DocumentRow | null> {
+  return (await insertUploads([input]))[0] ?? null;
 }
 
 /** Which of these Storage paths are already recorded as uploads of the Desk. */
@@ -545,6 +587,20 @@ export async function runsForSession(sessionId: string) {
     limit 20`;
 }
 
+/** A session's latest Runs with what each cost so far, in one query. */
+export async function runsWithCosts(sessionId: string) {
+  return sql()<(RunRow & { cost_usd: number; calls: number })[]>`
+    select r.*, coalesce(c.cost_usd, 0)::float8 as cost_usd, coalesce(c.calls, 0)::int as calls
+    from casework.runs r
+    left join lateral (
+      select sum(m.cost_usd) as cost_usd, count(*) as calls
+      from casework.model_calls m where m.run_id = r.id
+    ) c on true
+    where r.session_id = ${sessionId}
+    order by r.created_at desc
+    limit 20`;
+}
+
 /** Runs of a session that are still going: queued, running or waiting on the person. */
 export async function activeRuns(sessionId: string) {
   return sql()<RunRow[]>`
@@ -631,6 +687,20 @@ export async function getQuestion(id: string) {
   return question ?? null;
 }
 
+/** A Question with the Desk of its Run, in one query, to check it is the caller's. */
+export async function questionWithDesk(id: string) {
+  if (!/^[0-9a-f-]{36}$/i.test(id)) return null;
+  const [question] = await sql()<
+    (QuestionRow & { session_id: string | null })[]
+  >`
+    select q.*, r.session_id
+    from casework.questions q
+    join casework.runs r on r.id = q.run_id
+    where q.id = ${id}
+    limit 1`;
+  return question ?? null;
+}
+
 export async function openQuestions(runIds: string[]) {
   if (runIds.length === 0) return [];
   return sql()<QuestionRow[]>`
@@ -686,78 +756,87 @@ export type SpendRow = {
 export async function closeStoppedRun(runId: string) {
   const db = sql();
   const now = new Date().toISOString();
-  await db`
-    update casework.job_runs
-    set status = 'stopped', finished_at = ${now}
-    where run_id = ${runId} and status in ('running', 'waiting')`;
-  await db`
-    update casework.questions
-    set answer = ${jsonb(db, { skip: true, text: "Stopped" })}, answered_at = ${now}
-    where run_id = ${runId} and answered_at is null`;
+  await Promise.all([
+    db`
+      update casework.job_runs
+      set status = 'stopped', finished_at = ${now}
+      where run_id = ${runId} and status in ('running', 'waiting')`,
+    db`
+      update casework.questions
+      set answer = ${jsonb(db, { skip: true, text: "Stopped" })}, answered_at = ${now}
+      where run_id = ${runId} and answered_at is null`,
+  ]);
 }
 
-/** What each Run cost, for the Runs given. */
-export async function runCosts(runIds: string[]) {
-  const totals = new Map<string, { costUsd: number; calls: number }>();
-  if (runIds.length === 0) return totals;
-  // `cost_usd` is `numeric`, which Postgres sends as a string.
-  const calls = await sql()<{ run_id: string; cost_usd: string }[]>`
-    select run_id, cost_usd from casework.model_calls
-    where run_id = any(${runIds}::uuid[])`;
-  for (const call of calls) {
-    const total = totals.get(call.run_id) ?? { costUsd: 0, calls: 0 };
-    total.costUsd += Number(call.cost_usd);
-    total.calls += 1;
-    totals.set(call.run_id, total);
-  }
-  return totals;
-}
-
-/** Total spend per session, for the list of earlier desks. */
+/** Total spend per session, summed in the database. */
 export async function spendBySession(sessionIds: string[]) {
   const totals = new Map<string, number>();
   if (sessionIds.length === 0) return totals;
-  const calls = await sql()<{ session_id: string; cost_usd: string }[]>`
-    select session_id, cost_usd from casework.model_calls
-    where session_id = any(${sessionIds}::uuid[])`;
-  for (const call of calls)
-    totals.set(
-      call.session_id,
-      (totals.get(call.session_id) ?? 0) + Number(call.cost_usd),
-    );
+  const rows = await sql()<{ session_id: string; cost_usd: number }[]>`
+    select session_id, sum(cost_usd)::float8 as cost_usd
+    from casework.model_calls
+    where session_id = any(${sessionIds}::uuid[])
+    group by session_id`;
+  for (const row of rows) totals.set(row.session_id, Number(row.cost_usd));
   return totals;
 }
 
-/** A session's spend, by purpose and model. */
+/** A session's spend, by purpose and model, grouped in the database. */
 export async function sessionSpend(sessionId: string): Promise<SpendRow[]> {
-  const calls = await sql()<
-    {
-      purpose: Purpose;
-      model: string;
-      input_tokens: number;
-      output_tokens: number;
-      cost_usd: string;
-    }[]
-  >`
-    select purpose, model, input_tokens, output_tokens, cost_usd
+  const rows = await sql()<SpendRow[]>`
+    select purpose, model,
+      count(*)::int as calls,
+      coalesce(sum(input_tokens), 0)::float8 as "inputTokens",
+      coalesce(sum(output_tokens), 0)::float8 as "outputTokens",
+      coalesce(sum(cost_usd), 0)::float8 as "costUsd"
     from casework.model_calls
-    where session_id = ${sessionId}`;
-  const grouped = new Map<string, SpendRow>();
-  for (const call of calls) {
-    const key = `${call.purpose}|${call.model}`;
-    const row = grouped.get(key) ?? {
-      purpose: call.purpose,
-      model: call.model,
-      calls: 0,
-      inputTokens: 0,
-      outputTokens: 0,
-      costUsd: 0,
-    };
-    row.calls += 1;
-    row.inputTokens += call.input_tokens;
-    row.outputTokens += call.output_tokens;
-    row.costUsd += Number(call.cost_usd);
-    grouped.set(key, row);
-  }
-  return [...grouped.values()];
+    where session_id = ${sessionId}
+    group by purpose, model`;
+  return rows.map((row) => ({
+    ...row,
+    inputTokens: Number(row.inputTokens),
+    outputTokens: Number(row.outputTokens),
+    costUsd: Number(row.costUsd),
+  }));
+}
+
+/** The labelled Kind and fields of Documents, for the stubbed Reader of the e2e suite. */
+export async function documentLabels(ids: string[]) {
+  const valid = ids.filter((id) => /^[0-9a-f-]{36}$/i.test(id));
+  if (valid.length === 0) return new Map<string, DocumentLabel>();
+  const rows = await sql()<(DocumentLabel & { id: string })[]>`
+    select id, label_kind, label from casework.documents
+    where id = any(${valid}::uuid[])`;
+  return new Map(
+    rows.map((row) => [
+      row.id,
+      { label_kind: row.label_kind, label: row.label ?? null },
+    ]),
+  );
+}
+
+export type DocumentLabel = {
+  label_kind: string | null;
+  label: Record<string, unknown> | null;
+};
+
+/** The visitor hash of the outside MCP client's one shared desk. */
+const EXTERNAL_VISITOR = "mcp-external";
+
+/** The session an outside MCP client works in: one shared desk, created on first use. */
+export async function externalSession() {
+  // A failed lookup falls through to a new desk, as it did on the Data API,
+  // but is logged rather than hidden. The bearer token is never part of it.
+  const found = await sql()<{ id: string }[]>`
+    select id from casework.sessions
+    where visitor_hash = ${EXTERNAL_VISITOR}
+    order by created_at desc
+    limit 1`.catch((error: unknown) => {
+    console.error(
+      "Casework: could not look up the outside MCP client's desk",
+      error instanceof Error ? error.message : error,
+    );
+    return [];
+  });
+  return found[0]?.id ?? createSession(EXTERNAL_VISITOR, null);
 }

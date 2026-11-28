@@ -11,7 +11,7 @@ import {
   REASONING,
   type Reasoning,
 } from "../domain/model-config";
-import { saveModelSettings } from "../server/actions";
+import { saveModelSettings } from "./api";
 
 /** A few words for a purpose's model: "GLM 5.3 Flash · low". */
 export function modelSummary(settings: ModelSettings) {

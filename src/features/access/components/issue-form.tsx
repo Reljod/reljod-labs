@@ -1,29 +1,41 @@
 "use client";
 
-import { useActionState, useState } from "react";
-import { useSubmitGuard } from "@/components/ui/use-submit-guard";
+import { useRouter } from "next/navigation";
+import { useState } from "react";
+import type { IssuedPass } from "../domain/api";
 import { durationLabel, LIMITS } from "../domain/guest-pass";
-import { type IssueState, issueGuestPass } from "../server/actions";
+import { issueGuestPass } from "./api";
 import { LocalTime } from "./local-time";
 import { fieldClass, quietButtonClass, submitClass } from "./styles";
+import { useWrite } from "./use-write";
 
 /** Where a Host issues a Guest pass and reads off its Guest code. */
 export function IssueForm() {
-  const [state, action, pending] = useActionState<IssueState, FormData>(
-    issueGuestPass,
-    null,
-  );
-  const guard = useSubmitGuard(pending, state);
+  const router = useRouter();
+  const { run, pending, outcome } = useWrite<IssuedPass>();
   const [copied, setCopied] = useState(false);
-  const issued = state && "code" in state ? state : null;
+  const issued = outcome?.ok ? outcome.value : null;
 
   return (
     <div className="flex flex-col gap-6">
       <form
-        action={action}
-        onSubmit={(event) => {
-          guard(event);
-          if (!event.defaultPrevented) setCopied(false);
+        onSubmit={async (event) => {
+          event.preventDefault();
+          const element = event.currentTarget;
+          const form = new FormData(element);
+          const result = await run(() => {
+            setCopied(false);
+            return issueGuestPass({
+              label: String(form.get("label") ?? ""),
+              hours: Number(form.get("hours")),
+              devices: Number(form.get("devices")),
+            });
+          });
+          if (result?.ok) {
+            element.reset();
+            // The list below gains the new pass.
+            router.refresh();
+          }
         }}
         className="grid gap-4 sm:grid-cols-[2fr_1fr_1fr] sm:items-end"
       >
@@ -86,9 +98,9 @@ export function IssueForm() {
         </button>
       </form>
 
-      {state && "error" in state ? (
+      {outcome && !outcome.ok ? (
         <p role="alert" className="text-sm text-seal-red">
-          {state.error}
+          {outcome.error}
         </p>
       ) : null}
 

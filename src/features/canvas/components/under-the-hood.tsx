@@ -1,11 +1,10 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
-import { API, type TrailResponse } from "../domain/api";
 import type { MessageUsage } from "../domain/chat";
 import { LIMITS } from "../domain/limits";
 import { ACTOR_LABEL, TRAIL_ACTIONS, type TrailEvent } from "../domain/trail";
-import { getJson } from "./api";
+import { trail as loadTrail } from "./api";
 import { Badge, Button, Panel } from "./ui";
 import type { BridgeLog } from "./view-frame";
 
@@ -86,8 +85,7 @@ export function UnderTheHood({
     setLoading(true);
     setError(null);
     try {
-      const query = conversationId ? `?conversationId=${conversationId}` : "";
-      const response = await getJson<TrailResponse>(`${API.trail}${query}`);
+      const response = await loadTrail({ conversationId });
       setEvents(response.events);
     } catch (failure) {
       setError((failure as Error).message);

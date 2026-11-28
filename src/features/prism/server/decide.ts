@@ -1,15 +1,12 @@
 import "server-only";
 import { createGateway, experimental_decide as decide } from "ai";
-import type {
-  MeridianAnswers,
-  PrismAnswer,
-  RefractResponse,
-} from "../domain/api";
-import { DECISION_MODELS, type DecisionModelId } from "../domain/models";
-import { MERIDIAN_QUESTIONS, type PrismQuestionMap } from "../domain/questions";
+import type { PrismAnswer } from "../domain/api";
+import { DECISION_MODELS } from "../domain/models";
+import type { PrismQuestionMap } from "../domain/questions";
 import { costEstimateUsd, stubMeridianAnswers } from "../domain/routing";
 import { env } from "./env";
 import { ProviderUnavailableError } from "./errors";
+import type { Decider } from "./ports";
 
 let cachedGateway: ReturnType<typeof createGateway> | undefined;
 
@@ -58,88 +55,115 @@ function normalizeAnswers(
 }
 
 /**
- * Executes a single-forward-pass Decision Model call through Vercel AI Gateway
- * (`experimental_decide`). Returns calibrated probabilities, exact latency,
- * token usage (`outputTokens = 0`), and micro-dollar cost.
+ * A single-forward-pass Decision Model call through Vercel AI Gateway
+ * (`experimental_decide`): calibrated probabilities, exact latency, token
+ * usage (`outputTokens = 0`) and micro-dollar cost.
  */
-export async function runDecision({
-  modelId,
-  state,
-  questions,
-  stubbed = false,
-  abortSignal,
-}: {
-  modelId: DecisionModelId;
-  state: string;
-  questions: PrismQuestionMap;
-  stubbed?: boolean;
-  abortSignal?: AbortSignal;
-}): Promise<RefractResponse> {
-  const started = performance.now();
+export const gatewayDecider: Decider = {
+  async decide({ modelId, state, questions, signal }) {
+    const started = performance.now();
+    try {
+      const result = await decide({
+        model: gateway().decisionModel(modelId),
+        state,
+        questions,
+        maxRetries: 1,
+        abortSignal: signal,
+      });
+      const inputTokens =
+        result.usage?.inputTokens ?? estimateTokens(state, questions);
+      return {
+        modelId,
+        resolvedModel: result.response?.modelId ?? modelId,
+        latencyMs: Math.max(1, Math.round(performance.now() - started)),
+        inputTokens,
+        outputTokens: result.usage?.outputTokens ?? 0,
+        costUsd: costEstimateUsd(modelId, inputTokens),
+        answers: normalizeAnswers(result.answers as Record<string, unknown>),
+      };
+    } catch (error) {
+      console.error("[prism] decision model failed", modelId, error);
+      throw new ProviderUnavailableError(
+        `${modelId} could not evaluate this slip.`,
+      );
+    }
+  },
+};
 
-  if (stubbed) {
-    const modelIndex = DECISION_MODELS.findIndex((m) => m.id === modelId);
-    const delayMs = 70 + Math.max(0, modelIndex) * 35;
-    await new Promise((resolve) => setTimeout(resolve, delayMs));
+function isMeridianSlate(questions: PrismQuestionMap) {
+  return (
+    "routing" in questions &&
+    "severity" in questions &&
+    "urgent" in questions &&
+    "adversarial" in questions &&
+    "humanSignoff" in questions
+  );
+}
+
+/** Canned answers to any custom slate: deterministic, the same shape the model gives. */
+function stubSlateAnswers(
+  questions: PrismQuestionMap,
+): Record<string, PrismAnswer> {
+  return Object.fromEntries(
+    Object.entries(questions).map(([id, q]) => {
+      if (q.type === "boolean") {
+        return [
+          id,
+          { type: "boolean", probability: 0.74 } satisfies PrismAnswer,
+        ];
+      }
+      if (q.type === "choice") {
+        const keys = Object.keys(q.criteria);
+        const probs: Record<string, number> = {};
+        keys.forEach((k, idx) => {
+          probs[k] =
+            idx === 0
+              ? 0.72
+              : Number((0.28 / Math.max(1, keys.length - 1)).toFixed(3));
+        });
+        return [
+          id,
+          {
+            type: "choice",
+            choice: keys[0] ?? "",
+            probabilities: probs,
+          } satisfies PrismAnswer,
+        ];
+      }
+      const max = Math.max(1, q.criteria.length - 1);
+      const probs: Record<string, number> = {};
+      q.criteria.forEach((_, idx) => {
+        probs[String(idx)] =
+          idx === Math.min(2, max)
+            ? 0.68
+            : Number((0.32 / Math.max(1, q.criteria.length - 1)).toFixed(3));
+      });
+      return [
+        id,
+        {
+          type: "score",
+          score: Number(Math.min(2.1, max).toFixed(2)),
+          probabilities: probs,
+        } satisfies PrismAnswer,
+      ];
+    }),
+  );
+}
+
+/**
+ * The stubbed e2e suite's Decision Model: deterministic calibrated answers
+ * after a short, per-model delay (so a Tribunal still races), no gateway
+ * call and no spend.
+ */
+export const stubDecider: Decider = {
+  async decide({ modelId, state, questions }) {
+    const started = performance.now();
+    const modelIndex = Math.max(
+      0,
+      DECISION_MODELS.findIndex((m) => m.id === modelId),
+    );
+    await new Promise((resolve) => setTimeout(resolve, 70 + modelIndex * 35));
     const inputTokens = estimateTokens(state, questions);
-    const isMeridian =
-      "routing" in questions &&
-      "severity" in questions &&
-      "urgent" in questions &&
-      "adversarial" in questions &&
-      "humanSignoff" in questions;
-    const answers: Record<string, PrismAnswer> = isMeridian
-      ? (stubMeridianAnswers(
-          state,
-          Math.max(0, modelIndex),
-        ) as unknown as Record<string, PrismAnswer>)
-      : Object.fromEntries(
-          Object.entries(questions).map(([id, q]) => {
-            if (q.type === "boolean") {
-              return [
-                id,
-                { type: "boolean", probability: 0.74 } satisfies PrismAnswer,
-              ];
-            }
-            if (q.type === "choice") {
-              const keys = Object.keys(q.criteria);
-              const probs: Record<string, number> = {};
-              keys.forEach((k, idx) => {
-                probs[k] =
-                  idx === 0
-                    ? 0.72
-                    : Number((0.28 / Math.max(1, keys.length - 1)).toFixed(3));
-              });
-              return [
-                id,
-                {
-                  type: "choice",
-                  choice: keys[0] ?? "",
-                  probabilities: probs,
-                } satisfies PrismAnswer,
-              ];
-            }
-            const max = Math.max(1, q.criteria.length - 1);
-            const probs: Record<string, number> = {};
-            q.criteria.forEach((_, idx) => {
-              probs[String(idx)] =
-                idx === Math.min(2, max)
-                  ? 0.68
-                  : Number(
-                      (0.32 / Math.max(1, q.criteria.length - 1)).toFixed(3),
-                    );
-            });
-            return [
-              id,
-              {
-                type: "score",
-                score: Number(Math.min(2.1, max).toFixed(2)),
-                probabilities: probs,
-              } satisfies PrismAnswer,
-            ];
-          }),
-        );
-
     return {
       modelId,
       resolvedModel: modelId,
@@ -147,52 +171,12 @@ export async function runDecision({
       inputTokens,
       outputTokens: 0,
       costUsd: costEstimateUsd(modelId, inputTokens),
-      answers,
+      answers: isMeridianSlate(questions)
+        ? (stubMeridianAnswers(state, modelIndex) as unknown as Record<
+            string,
+            PrismAnswer
+          >)
+        : stubSlateAnswers(questions),
     };
-  }
-
-  try {
-    const result = await decide({
-      model: gateway().decisionModel(modelId),
-      state,
-      questions,
-      maxRetries: 1,
-      abortSignal,
-    });
-    const latencyMs = Math.max(1, Math.round(performance.now() - started));
-    const inputTokens =
-      result.usage?.inputTokens ?? estimateTokens(state, questions);
-    const outputTokens = result.usage?.outputTokens ?? 0;
-
-    return {
-      modelId,
-      resolvedModel: result.response?.modelId ?? modelId,
-      latencyMs,
-      inputTokens,
-      outputTokens,
-      costUsd: costEstimateUsd(modelId, inputTokens),
-      answers: normalizeAnswers(result.answers as Record<string, unknown>),
-    };
-  } catch (error) {
-    console.error("[prism] decision model failed", modelId, error);
-    throw new ProviderUnavailableError(
-      `${modelId} could not evaluate this slip.`,
-    );
-  }
-}
-
-export async function runMeridianDecision(params: {
-  modelId: DecisionModelId;
-  state: string;
-  stubbed?: boolean;
-  abortSignal?: AbortSignal;
-}) {
-  const res = await runDecision({
-    ...params,
-    questions: MERIDIAN_QUESTIONS,
-  });
-  return {
-    ...res,
-    answers: res.answers as unknown as MeridianAnswers,
-  };
-}
+  },
+};

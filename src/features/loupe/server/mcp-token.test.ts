@@ -1,8 +1,7 @@
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
 import { describe, expect, it, vi } from "vitest";
-import { applyEvents, assetUrl, emptyView } from "../components/view";
-import { CHECK_IDS, METRIC_IDS, type StoredEvent } from "../domain/contract";
+import { CHECK_IDS, METRIC_IDS } from "../domain/contract";
 import { type LoupeClaims, readLoupeToken, signLoupeToken } from "./mcp-token";
 
 vi.mock("server-only", () => ({}));
@@ -66,68 +65,5 @@ describe("the Toolkit and the contract agree", () => {
   it("knows every Metric and every Check by the same id", () => {
     for (const id of METRIC_IDS) expect(python).toContain(`"${id}"`);
     for (const id of CHECK_IDS) expect(python).toContain(`"${id}"`);
-  });
-});
-
-describe("the page's view of a Trail", () => {
-  const events = [
-    { seq: 1, at: 1, type: "thought", text: "Looking." },
-    {
-      seq: 2,
-      at: 2,
-      type: "tool",
-      callId: "c1",
-      tool: "look",
-      summary: "page 1",
-      input: {},
-      state: "start",
-    },
-    { seq: 3, at: 3, type: "look", callId: "c1", page: 1, box: null },
-    {
-      seq: 4,
-      at: 4,
-      type: "tool",
-      callId: "c1",
-      tool: "look",
-      summary: "page 1",
-      input: {},
-      state: "done",
-      output: "ok",
-      ms: 40,
-    },
-    {
-      seq: 5,
-      at: 5,
-      type: "cost",
-      model: "m",
-      costUsd: 0.01,
-      inputTokens: 10,
-      outputTokens: 2,
-      cachedInputTokens: 0,
-      ms: 5,
-    },
-    { seq: 6, at: 6, type: "end", status: "completed", verdict: "genuine" },
-  ] as StoredEvent[];
-
-  it("folds events the same in one batch or many, and drops repeats", () => {
-    const once = applyEvents(emptyView(), events);
-    let step = emptyView();
-    for (const event of events) step = applyEvents(step, [event, event]);
-    expect(step.feed).toEqual(once.feed);
-    expect(once.feed.map((item) => item.kind)).toEqual(["thought", "tool"]);
-    expect(once.tools.c1.state).toBe("done");
-    expect(once.costUsd).toBeCloseTo(0.01);
-    expect(once.status).toBe("completed");
-    expect(once.look).toBeNull();
-    expect(applyEvents(once, events)).toBe(once);
-  });
-
-  it("serves a Sample's file as it is and an Owner's through the gated route", () => {
-    expect(assetUrl("x", "/loupe/samples/a/p1.jpg")).toBe(
-      "/loupe/samples/a/p1.jpg",
-    );
-    expect(assetUrl("abc", "layers/sweep-ela.png")).toBe(
-      "/api/loupe/examinations/abc/asset?key=layers%2Fsweep-ela.png",
-    );
   });
 });

@@ -3,7 +3,7 @@
 import { useRef, useState } from "react";
 import { type Frames, frameKey } from "../../domain/frames";
 import type { ExportKind } from "../../domain/run";
-import { recordExport } from "../../server/actions";
+import { recordExport } from "../api";
 import { saveFile } from "../download";
 import { buttonClass, InlineError, InlineNote, quietButtonClass } from "../ui";
 

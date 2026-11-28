@@ -256,10 +256,6 @@ export type AuditEvent = {
 
 // What the screen asks the server for -----------------------------------------
 
-export type Result<T = object> =
-  | ({ ok: true } & T)
-  | { ok: false; error: string };
-
 export type Spend = {
   /** USD this Owner's Runs have cost today. */
   todayUsd: number;

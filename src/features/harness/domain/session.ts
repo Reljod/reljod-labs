@@ -5,6 +5,9 @@ import type { PipelineId } from "./pipeline";
 export const NEW_SESSION_TITLE = "New session";
 export const SESSION_TITLE_CHARS = 120;
 
+/** How much of the latest message a Session list shows. */
+export const SESSION_PREVIEW_CHARS = 90;
+
 export type SessionStatus = "open" | "closed";
 
 /** One conversation between a Staff member and the Agent. */

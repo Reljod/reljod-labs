@@ -1,5 +1,6 @@
 import "server-only";
 import { createGateway, type ModelMessage, Output, streamText } from "ai";
+import { InvalidError } from "@/platform/errors";
 import type { PassEvent, PassRequest, PassUsage } from "../domain/api";
 import { INSTRUCTIONS, passBrief } from "../domain/brief";
 import {
@@ -17,7 +18,7 @@ import {
 import { LIMITS } from "../domain/limits";
 import { stubDrawing } from "../domain/stub";
 import { env } from "./env";
-import { InvalidError } from "./errors";
+import type { Draftsman } from "./ports";
 
 type Image = { mediaType: string; data: Uint8Array };
 
@@ -186,41 +187,20 @@ export function preparePass(request: PassRequest): PreparedPass {
 }
 
 /**
- * Runs one Pass: the Draftsman looks at the screenshot (and, after the first
- * Pass, its own last Drawing as rendered and the Ruler's notes) and draws.
- * Yields NDJSON events as marks complete. The caller has passed the gate,
+ * One Pass by the model: the Draftsman looks at the screenshot (and, after
+ * the first Pass, its own last Drawing as rendered and the Ruler's notes)
+ * and draws. Yields NDJSON events as marks complete. The service has
  * prepared the Pass and taken the rate.
  */
-export async function* runPass(
+async function* modelPass(
   prepared: PreparedPass,
-  options: { stub: boolean; signal: AbortSignal },
+  signal: AbortSignal,
 ): AsyncGenerator<PassEvent> {
   const { sheet, prompt } = prepared;
-  const request = { pass: prepared.pass };
   const report = partialReporter(sheet);
   const started = Date.now();
-  const model = options.stub ? "stub" : env.model();
-  yield { t: "start", pass: request.pass, model };
-
-  if (options.stub) {
-    const canned = stubDrawing(sheet.height, request.pass);
-    for (const event of report(canned, true)) {
-      if (options.signal.aborted) return;
-      await new Promise((resolve) => setTimeout(resolve, 40));
-      yield event;
-    }
-    yield {
-      t: "done",
-      drawing: sanitizeDrawing(canned, sheet),
-      usage: {
-        inputTokens: 0,
-        outputTokens: 0,
-        costUsd: 0,
-        ms: Date.now() - started,
-      },
-    };
-    return;
-  }
+  const model = env.model();
+  yield { t: "start", pass: prepared.pass, model };
 
   const gateway = createGateway({ apiKey: env.aiGatewayApiKey() });
   const result = streamText({
@@ -230,7 +210,7 @@ export async function* runPass(
     reasoning: env.reasoning(),
     maxOutputTokens: LIMITS.outputTokens,
     abortSignal: AbortSignal.any([
-      options.signal,
+      signal,
       AbortSignal.timeout(LIMITS.passSeconds * 1000),
     ]),
     messages: prompt,
@@ -253,3 +233,48 @@ export async function* runPass(
   };
   yield { t: "done", drawing: sanitizeDrawing(output, sheet), usage: summary };
 }
+
+/**
+ * The stubbed e2e suite's Pass: the canned Drawing (`domain/stub.ts`)
+ * through the same reporter and sanitizer, a mark every 40 ms, no model.
+ */
+async function* cannedPass(
+  prepared: PreparedPass,
+  signal: AbortSignal,
+): AsyncGenerator<PassEvent> {
+  const { sheet } = prepared;
+  const started = Date.now();
+  yield { t: "start", pass: prepared.pass, model: "stub" };
+  const canned = stubDrawing(sheet.height, prepared.pass);
+  for (const event of partialReporter(sheet)(canned, true)) {
+    if (signal.aborted) return;
+    await new Promise((resolve) => setTimeout(resolve, 40));
+    yield event;
+  }
+  yield {
+    t: "done",
+    drawing: sanitizeDrawing(canned, sheet),
+    usage: {
+      inputTokens: 0,
+      outputTokens: 0,
+      costUsd: 0,
+      ms: Date.now() - started,
+    },
+  };
+}
+
+/** GPT-6.2 Astra (or `VELLUM_MODEL`) through AI Gateway. */
+export const modelDraftsman: Draftsman = {
+  get model() {
+    return env.model();
+  },
+  draw: modelPass,
+};
+
+/** The canned Draftsman of the stubbed e2e suite. */
+export const cannedDraftsman: Draftsman = {
+  get model() {
+    return env.model();
+  },
+  draw: cannedPass,
+};

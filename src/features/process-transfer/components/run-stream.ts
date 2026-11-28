@@ -5,24 +5,11 @@ import { applyEvent, type RunEvent, type RunView } from "../domain/run";
  * so it can be tested without a network.
  */
 
-/** Splits newly received text into whole lines and the unfinished rest. */
-export function takeLines(
-  buffer: string,
-  chunk: string,
-): { lines: string[]; rest: string } {
-  const parts = `${buffer}${chunk}`.split("\n");
-  const rest = parts.pop() ?? "";
-  return { lines: parts.filter((line) => line.trim() !== ""), rest };
-}
-
-/** Parses one line; a line that is not an event is skipped, not fatal. */
-export function parseEvent(line: string): RunEvent | null {
-  try {
-    const value = JSON.parse(line) as RunEvent;
-    return value && typeof value === "object" && "type" in value ? value : null;
-  } catch {
-    return null;
-  }
+/** Whether a streamed line is an event; anything else is counted and skipped, not fatal. */
+export function isEvent(value: unknown): value is RunEvent {
+  return (
+    Boolean(value) && typeof value === "object" && "type" in (value as object)
+  );
 }
 
 /**

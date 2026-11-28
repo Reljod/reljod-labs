@@ -2,6 +2,8 @@
 
 The short version is in the root `AGENTS.md` ("Your check loop"). Read this before you change a workflow in `.github/workflows/`, `scripts/e2e-select.mjs`, `playwright.config.ts`, or add an opt-in e2e suite.
 
+The e2e suite is stubbed by default: a request with only `x-e2e-token` is served by each feature's container with canned models and Sandboxes (`docs/engineering/architecture.md`), so a run spends nothing but still writes the `e2e` Owner's rows to the live database. `E2E_LIVE=1` (or a spec's own `*_LIVE` switch) adds `x-e2e-live: 1` and reaches the paid services. `E2E_PORT` picks the local server's port, so parallel worktrees do not collide; their global teardowns still share the `e2e` Owner's rows.
+
 Keep every check loop fast. A pull request's CI, an agent's own verification and a review session never run the whole end-to-end suite; only the merge to `main` does.
 
 ## Pull request CI

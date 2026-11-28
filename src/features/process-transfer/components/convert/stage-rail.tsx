@@ -9,7 +9,7 @@ import {
   type StageId,
   type StageStatus,
 } from "../../domain/run";
-import { stopRun } from "../../server/actions";
+import { stopRun } from "../api";
 import {
   costByStage,
   earlierCalls,

@@ -3,7 +3,7 @@ import { redirect } from "next/navigation";
 import { Suspense } from "react";
 import { projects } from "@/content/projects";
 import { ACCESS_PATH } from "@/features/access/constants";
-import { AccessDeniedError } from "@/features/access/server/gate";
+import { AccessDeniedError, requireOwner } from "@/features/access/server/gate";
 import { BankApp } from "@/features/bank/components/app";
 import { BankSkeleton } from "@/features/bank/components/skeleton";
 import {
@@ -16,8 +16,10 @@ import type {
   CustomerSummary,
   OverviewView,
 } from "@/features/bank/domain/views";
-import { read } from "@/features/bank/server/bank";
-import { actorOf, requireStaff } from "@/features/bank/server/context";
+import { chosenStaff } from "@/features/bank/server/api";
+import { bank } from "@/features/bank/server/container";
+import { actorOf } from "@/features/bank/server/services/staff";
+import { currentRequest } from "@/platform/request/current";
 import "@/features/bank/bank.css";
 
 const project = projects.find((item) => item.slug === "tidewater-bank");
@@ -40,22 +42,27 @@ export default function BankPage({ searchParams }: Props) {
 /**
  * Passes the Access gate once and resolves the Staff member (opening the
  * Owner's bank with its seed on first use), reads the first view (the
- * overview and the customers) together, and hands the client shell who is
- * signed in, where the address points and that data, so nothing is asked
- * for again after hydration.
+ * overview and the customers) together through the same services as the
+ * REST routes, and hands the client shell who is signed in, where the
+ * address points and that data, so nothing is asked for again after
+ * hydration.
  */
 async function App({ searchParams }: { searchParams: Props["searchParams"] }) {
-  const query = await searchParams;
+  const [query, gate, { mode, visitor }, chosen] = await Promise.all([
+    searchParams,
+    requireOwner().catch((error: unknown) => {
+      // The proxy sends visitors to the door first; this is the second gate.
+      if (error instanceof AccessDeniedError) return null;
+      throw error;
+    }),
+    currentRequest(),
+    chosenStaff(),
+  ]);
   const param = (name: string) => {
     const value = query[name];
     return typeof value === "string" ? value : null;
   };
-  const context = await requireStaff().catch((error: unknown) => {
-    // The proxy sends visitors to the door first; this is the second gate.
-    if (error instanceof AccessDeniedError) return null;
-    throw error;
-  });
-  if (!context) {
+  if (!gate) {
     const search = new URLSearchParams();
     for (const [name, value] of Object.entries(query)) {
       if (typeof value === "string") search.set(name, value);
@@ -63,10 +70,12 @@ async function App({ searchParams }: { searchParams: Props["searchParams"] }) {
     const here = `${DEMO_PATH}${search.size > 0 ? `?${search}` : ""}`;
     redirect(`${ACCESS_PATH}?next=${encodeURIComponent(here)}`);
   }
+  const services = bank(mode);
+  const context = await services.staff.signIn({ ...gate, visitor }, chosen);
   const actor = actorOf(context);
   const [overview, customers] = await Promise.all([
-    read(actor, "get_overview", {}) as Promise<OverviewView>,
-    read(actor, "list_customers", {}) as Promise<{
+    services.commands.read(actor, "get_overview", {}) as Promise<OverviewView>,
+    services.commands.read(actor, "list_customers", {}) as Promise<{
       customers: CustomerSummary[];
     }>,
   ]);

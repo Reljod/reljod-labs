@@ -2,8 +2,9 @@
 
 import { motion } from "motion/react";
 import { type FormEvent, useEffect, useRef, useState } from "react";
+import { createAddition, startBuild, stopBuild } from "./api";
 import { Icon } from "./icons";
-import { ACCEPT, formatBytes, metaOf, postJson, putFile } from "./upload";
+import { ACCEPT, formatBytes, metaOf, putFile } from "./upload";
 
 /** An addition: a note or files about a client, run through the same Build as the Intake. */
 export function AddDialog({
@@ -42,10 +43,7 @@ export function AddDialog({
     setBusy(true);
     setError(null);
     try {
-      const created = await postJson<{
-        buildId: string;
-        uploads: { sourceId: string; name: string; url: string }[];
-      }>(`/api/client-manager/clients/${clientId}/builds`, {
+      const created = await createAddition(clientId, {
         note,
         files: files.map(metaOf),
       });
@@ -58,13 +56,10 @@ export function AddDialog({
         );
       } catch (failure) {
         // Leave nothing queued behind: a queued Build blocks the next addition.
-        await postJson(
-          `/api/client-manager/builds/${created.buildId}/stop`,
-          {},
-        ).catch(() => {});
+        await stopBuild(created.buildId).catch(() => {});
         throw failure;
       }
-      await postJson(`/api/client-manager/builds/${created.buildId}/start`, {});
+      await startBuild(created.buildId);
       onStarted(created.buildId);
     } catch (failure) {
       setError(

@@ -5,20 +5,20 @@ import {
   type Page,
   test,
 } from "@playwright/test";
+import { E2E_HEADER, E2E_LIVE_HEADER } from "../src/platform/request/headers";
 
 /*
  * Operator: the journeys a person and an outside client take.
  *
- * The Operator's model is stubbed (`x-operator-stub` carrying the e2e bypass
- * token): it plays the sample Task's Script instead of calling a model, so
- * nothing is spent on tokens. Everything else is real: each Run forks a
- * Vercel Sandbox with headless Chromium, HARBOURMASTER and the Guard in it,
- * writes Frames to Storage and rows to the `operator` schema under the `e2e`
- * Owner. So the spec needs the migration
- * `supabase/migrations/20261119130000_operator.sql` applied and Vercel
- * Sandbox credentials (`VERCEL_OIDC_TOKEN` locally), and is opt-in with
- * `E2E_OPERATOR=1`. `E2E_OPERATOR_LIVE=1` adds one short Run on the real
- * model.
+ * Stubbed by default, like the rest of the suite (the e2e token alone): the
+ * Operator plays the sample Task's Script instead of calling a model, and
+ * each Run's Screen is HARBOURMASTER and the Guard in the server's own
+ * process instead of a Vercel Sandbox, so nothing is spent. The Guard, the
+ * caps, the workflow, the checks, Storage and the `operator` schema (rows
+ * under the `e2e` Owner) are real. So the spec needs the migration
+ * `supabase/migrations/20261119130000_operator.sql` applied, and is opt-in
+ * with `E2E_OPERATOR=1`. `E2E_OPERATOR_LIVE=1` adds one short Run on the
+ * real model and a real Screen sandbox (Vercel Sandbox credentials needed).
  */
 test.skip(
   process.env.E2E_OPERATOR !== "1",
@@ -30,7 +30,7 @@ test.setTimeout(8 * 60_000);
 const BYPASS = process.env.E2E_BYPASS_TOKEN ?? "";
 test.use({
   viewport: { width: 1440, height: 1000 },
-  extraHTTPHeaders: { "x-e2e-token": BYPASS, "x-operator-stub": BYPASS },
+  extraHTTPHeaders: { [E2E_HEADER]: BYPASS },
 });
 
 const verdict = (page: Page) => page.getByTestId("verdict");
@@ -360,8 +360,11 @@ test.describe("with the real model", () => {
     process.env.E2E_OPERATOR_LIVE !== "1",
     "Set E2E_OPERATOR_LIVE=1 to spend about $0.40 on one real Run.",
   );
-  // No stub header: the Operator calls the model through the AI Gateway.
-  test.use({ extraHTTPHeaders: { "x-e2e-token": BYPASS } });
+  // The live switch: the Operator calls the model through the AI Gateway,
+  // and the Run's Screen is a Vercel Sandbox.
+  test.use({
+    extraHTTPHeaders: { [E2E_HEADER]: BYPASS, [E2E_LIVE_HEADER]: "1" },
+  });
 
   test("the Operator reads the Screen and keys the Task; code gives the Verdict", async ({
     page,

@@ -1,7 +1,7 @@
 /*
  * What a Desk takes as an upload. The browser's word on a file's type, size
  * and pages only opens a slot; what is recorded is checked against the object
- * Storage actually holds (`finishUpload` in server/actions.ts). The bucket
+ * Storage actually holds (`finish` in server/services/uploads.ts). The bucket
  * enforces the same types and size (supabase/migrations/20261127130100_casework_uploads.sql).
  */
 

@@ -19,12 +19,8 @@ vi.mock("mcp-handler", () => ({
   createMcpHandler: () => () => new Response(),
   withMcpAuth: (handler: unknown) => handler,
 }));
-vi.mock("../server/bank", () => ({ read: vi.fn(), write: vi.fn() }));
-vi.mock("../server/mcp-auth", () => ({
-  callerOf: vi.fn(),
-  verifyBearer: vi.fn(),
-}));
-vi.mock("../server/respond", () => ({ refusalOf: () => null }));
+vi.mock("../server/container", () => ({ bank: vi.fn() }));
+vi.mock("../server/mcp-auth", () => ({ verifyBearer: vi.fn() }));
 
 type Registered = {
   name: string;

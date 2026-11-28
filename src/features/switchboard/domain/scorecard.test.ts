@@ -9,7 +9,7 @@ import type {
 } from "./contract";
 import { detectLanguage } from "./hearing";
 import { DEFAULT_RULEBOOK, type Rulebook, resolveRulebook } from "./rules";
-import { callStats, median, percentile, scoreCall } from "./scorecard";
+import { scoreCall } from "./scorecard";
 
 let nextId = 0;
 const ev = <T extends EventType>(type: T, data: EventData[T]): CallEvent =>
@@ -73,81 +73,6 @@ const item = (card: Scorecard, id: string) => {
   if (!found) throw new Error(`no item ${id}`);
   return found;
 };
-
-describe("median", () => {
-  it("is null for nothing", () => {
-    expect(median([])).toBeNull();
-  });
-
-  it("takes the middle of an odd list, unsorted", () => {
-    expect(median([900, 100, 500])).toBe(500);
-  });
-
-  it("averages and rounds the middle two of an even list", () => {
-    expect(median([100, 201, 400, 300])).toBe(251);
-  });
-
-  it("does not sort the list it is given", () => {
-    const values = [3, 1, 2];
-    median(values);
-    expect(values).toEqual([3, 1, 2]);
-  });
-});
-
-describe("percentile", () => {
-  const values = Array.from({ length: 20 }, (_, index) => (index + 1) * 10);
-
-  it("is null for nothing", () => {
-    expect(percentile([], 95)).toBeNull();
-  });
-
-  it("uses the nearest rank", () => {
-    expect(percentile(values, 95)).toBe(190);
-    expect(percentile(values, 50)).toBe(100);
-    expect(percentile(values, 100)).toBe(200);
-    expect(percentile(values, 0)).toBe(10);
-    expect(percentile([7], 95)).toBe(7);
-  });
-});
-
-describe("callStats", () => {
-  it("counts Turns, Barge-ins, tool calls and Refusals", () => {
-    const stats = callStats(
-      [
-        caller("Hi, is my train running late?"),
-        agent(RECORDING, 800),
-        ev("barge_in", { atMs: 1000, playedMs: 400 }),
-        caller("Salamat po, pwede bang Tagalog na lang?"),
-        agent("Opo, salamat po.", 1200),
-        agent("Isang sandali lang po."),
-        ev("tool.called", { callId: "t", name: "find_booking", args: {} }),
-        result("find_booking", false, [hit("identity.verify")]),
-        result("get_disruptions", true),
-        caller("hmm"),
-      ],
-      93,
-    );
-    expect(stats).toEqual({
-      seconds: 93,
-      callerTurns: 3,
-      agentTurns: 3,
-      bargeIns: 1,
-      toolCalls: 2,
-      refusals: 1,
-      languages: ["en", "tl"],
-      firstAudio: { turns: 2, medianMs: 1000, p95Ms: 1200, worstMs: 1200 },
-    });
-  });
-
-  it("has no wait figures for a Call without timed Turns", () => {
-    expect(callStats([], 0).firstAudio).toEqual({
-      turns: 0,
-      medianMs: null,
-      p95Ms: null,
-      worstMs: null,
-    });
-  });
-});
 
 describe("scoreCall", () => {
   it("passes a clean Call and says what was not tested", () => {

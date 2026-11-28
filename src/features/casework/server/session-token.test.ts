@@ -1,16 +1,7 @@
 import { describe, expect, it, vi } from "vitest";
 
 vi.mock("server-only", () => ({}));
-vi.mock("next/headers", () => ({ cookies: vi.fn(), headers: vi.fn() }));
-vi.mock("@/features/access/server/gate", () => ({ requireOwner: vi.fn() }));
-vi.mock("@/features/document-compliance/server/rate-limit", () => ({
-  E2E_VISITOR: "e2e",
-  hashVisitor: () => "hash",
-}));
-vi.mock("./env", () => ({
-  env: { rateLimitSalt: () => "test-salt", e2eBypassToken: () => "" },
-}));
-vi.mock("./repository", () => ({}));
+vi.mock("./env", () => ({ env: { rateLimitSalt: () => "test-salt" } }));
 
 import {
   ownerMatches,

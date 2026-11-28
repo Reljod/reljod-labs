@@ -72,14 +72,14 @@ The Workflow SDK identifies a workflow and each step by file path and function n
 - Treat a rename or move of a workflow or step function as a breaking change: say so in the PR and ship it when no run is waiting, or let the stale sweep close the old runs.
 - Pick trace-friendly names when you first add a workflow, so you do not have to rename it later.
 
-## A demo reads through GET routes, never through server actions
+## A demo talks REST, never server actions
 
-Next sends a browser's server actions one at a time (`node_modules/next/dist/docs/01-app/02-guides/server-actions.md`, "Sequential dispatch on the client"). Five demos read their data through actions called from `useEffect`, so every load, page chunk, poll and comparison waited in one line behind the others and behind any write. In Sieve, scrolling a 500-page Document fetched each 12-page chunk only after the rulebook history, the runs list and any Start or Stop in flight. Each action also ran its own access check.
+Next sends a browser's server actions one at a time (`node_modules/next/dist/docs/01-app/02-guides/server-actions.md`, "Sequential dispatch on the client"). Five demos read their data through actions called from `useEffect`, so every load, page chunk, poll and comparison waited in one line behind the others and behind any write. In Sieve, scrolling a 500-page Document fetched each 12-page chunk only after the rulebook history, the runs list and any Start or Stop in flight. Each action also ran its own access check. Writes as actions kept that queue too, so all of them are REST routes now (`docs/engineering/architecture.md`).
 
-- Read through GET Route Handlers under the demo's `/api/<demo>/` prefix, which must be in the `src/proxy.ts` matcher. Keep server actions for writes.
-- Use the three-file shape Harness started and the five read layers (Casework, Sieve, Document compliance, Handover, Client Manager) now share: `domain/api.ts` (`API_ROOT`, `apiPath`, one response type per route), `server/respond.ts` (`json`, `failure`, `NO_STORE`, `SEED`) and `components/api.ts` (`getJson` with an `AbortSignal`, and a typed wrapper per route). Harness has `NO_STORE` but no `SEED` (each Workspace gets its own copy of the seed, so nothing is shared) and reads through a private `get`, so copy `SEED` and `getJson` from one of the five. Components never call `fetch` for a read directly.
-- A handler passes the gate first, validates its query with zod and scopes every read to the Owner. `failure()` calls `unstable_rethrow` first, answers a refusal with the gate's `denied()`, and never returns a stack trace or the cause in its body.
-- The gate's 401 answer is plain text, not JSON. `getJson` must read the body as text and parse JSON only if it can, or a Guest whose pass just ended sees "Request failed (401)" instead of the reason.
+- Reads are GET routes, writes POST/PUT/PATCH/DELETE, under the demo's `/api/<demo>/` prefix, which must be in the `src/proxy.ts` matcher. Each is a stack on the feature's base route (`server/api.ts`) over its services; no handler holds business logic.
+- Writes stack `sameOrigin()`: server actions compared Origin and Host for us; a REST write must check it itself.
+- The platform owns the plumbing: `failure()` (one error shape, `unstable_rethrow` first, never a stack or a cause), `json()` with `CACHE` (and an ETag for a policy the browser may keep), `ndjson()` for streams, and the browser client (`getJson`, `send`, `attempt`, `followNdjson`, `streamJson`) in `src/platform/client/api.ts`. A feature keeps only `domain/api.ts` (routes and response types) and typed wrappers in `components/api.ts`. Components never call `fetch` for their own routes.
+- The client reads an error body as text and parses JSON only if it can: the proxy's 401 is plain text.
 
 ## A demo page arrives with its first view
 

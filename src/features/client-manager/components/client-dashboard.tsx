@@ -4,10 +4,10 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { AnimatePresence, motion } from "motion/react";
 import dynamic from "next/dynamic";
 import { useEffect, useState } from "react";
+import type { CatalogCard, ClientSummary } from "../domain/api";
 import type { Highlight } from "../domain/traversal";
-import type { CatalogCard, ClientSummary } from "../server/service";
 import { AddDialog } from "./add-dialog";
-import { clientQuery, keys, send } from "./api";
+import { clientQuery, isGone, keys, stopBuild } from "./api";
 import { BuildStrip } from "./build-strip";
 import { DocumentsView, sourceQuery } from "./documents-view";
 import { FactSheet } from "./fact-sheet";
@@ -243,11 +243,7 @@ export function ClientDashboard({
             state={live}
             canStop={client?.canAdd ?? false}
             onStop={() =>
-              send(
-                `/api/client-manager/builds/${watching}/stop`,
-                "POST",
-                {},
-              ).then(() =>
+              stopBuild(watching).then(() =>
                 queryClient.invalidateQueries({
                   queryKey: keys.client(clientId),
                 }),
@@ -260,7 +256,7 @@ export function ClientDashboard({
       <div className="relative min-h-0 flex-1">
         {query.isError ? (
           <p className="p-8 text-center text-sm text-ink-muted">
-            {query.error.message === "not-found"
+            {isGone(query.error)
               ? "This client is gone, or belongs to someone else."
               : "This client didn't load. Try again."}
           </p>

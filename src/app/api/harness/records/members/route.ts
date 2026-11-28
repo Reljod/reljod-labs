@@ -1,20 +1,19 @@
+import { z } from "zod";
 import type { MemberListResponse } from "@/features/harness/domain/api";
-import { requireStaff } from "@/features/harness/server/context";
-import { findMembers } from "@/features/harness/server/records";
-import { failure, json } from "@/features/harness/server/respond";
+import { harnessApi } from "@/features/harness/server/api";
+import { query } from "@/platform/http/middleware";
+
+const schema = z.object({
+  q: z.string().max(200).default(""),
+  employer: z.string().max(200).optional(),
+});
 
 /** Members whose name or number matches `?q=`, optionally of one `?employer=`. */
-export async function GET(request: Request) {
-  try {
-    const { owner } = await requireStaff();
-    const search = new URL(request.url).searchParams;
-    return json<MemberListResponse>({
-      members: await findMembers(owner, {
-        q: search.get("q") ?? "",
-        employerId: search.get("employer"),
-      }),
-    });
-  } catch (error) {
-    return failure(error);
-  }
-}
+export const GET = harnessApi.use(query(schema)).handle(
+  async ({ services, caller, query }): Promise<MemberListResponse> => ({
+    members: await services.records.members(caller, {
+      q: query.q,
+      employerId: query.employer ?? null,
+    }),
+  }),
+);

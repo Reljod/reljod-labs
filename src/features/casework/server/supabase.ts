@@ -72,6 +72,21 @@ export async function storedObject(
   return { size, head };
 }
 
+/** A one-time URL the browser uploads one file to; each path is fresh and written once. */
+export async function signedUploadUrl(path: string) {
+  const { data, error } = await supabase()
+    .storage.from(BUCKET)
+    .createSignedUploadUrl(path);
+  if (error || !data) throw new Error(error?.message ?? "Upload refused");
+  return data.signedUrl;
+}
+
+/** A text file's first `maxChars` characters, or null when it cannot be read. */
+export async function textOf(path: string, maxChars: number) {
+  const { data } = await supabase().storage.from(BUCKET).download(path);
+  return data ? (await data.text()).slice(0, maxChars) : null;
+}
+
 export async function signedUrls(paths: string[], expiresInSeconds = 3600) {
   if (paths.length === 0) return new Map<string, string>();
   const { data, error } = await supabase()

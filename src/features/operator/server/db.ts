@@ -1,22 +1,25 @@
 import "server-only";
 import postgres from "postgres";
-import { env } from "./env";
+import { databaseUrl, dbStats } from "@/server/postgres";
 
 let client: postgres.Sql | undefined;
 
 /**
- * One small pool per function instance, set up for Supabase's transaction
- * pooler (Supavisor) exactly as the Harness's is: prepared statements off,
- * and one query per connection at a time.
+ * The Operator's own pool, built once per function instance. Its rows keep
+ * `timestamptz` as a `Date` (the shared pool, `db()`, gives ISO strings), so
+ * it is not the shared one; otherwise it is set up as that one is, for
+ * Supabase's transaction pooler (Supavisor): prepared statements off, one
+ * query per connection at a time, and counted for the benchmark.
  */
 export function sql() {
-  client ??= postgres(env.databaseUrl(), {
+  client ??= postgres(databaseUrl(), {
     prepare: false,
     max_pipeline: 1,
     max: 4,
     idle_timeout: 20,
     connect_timeout: 15,
     onnotice: () => {},
+    debug: dbStats.enabled ? dbStats.count : undefined,
     // Event seqs are identity columns; they fit a JS number for good.
     types: {
       bigint: {

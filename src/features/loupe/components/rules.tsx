@@ -27,8 +27,7 @@ import {
   withRule,
 } from "../domain/rules";
 import { type Calibration, calibrate, overall } from "../domain/score";
-import { saveRulebook } from "../server/actions";
-import { api } from "./api";
+import { api, saveRulebook } from "./api";
 import { Button, cx, ErrorNote, fieldClass, Panel, Tag, useWrite } from "./ui";
 
 const percent = (rate: number) => `${(rate * 100).toFixed(0)}%`;
@@ -97,9 +96,9 @@ export function Rules({
     setError(null);
     setMessage(null);
     const saved = await saveRulebook({ rulebook: draft, note });
-    if ("error" in saved) return setError(saved.error);
+    if (!saved.ok) return setError(saved.error);
     setMessage(
-      `Saved as version ${saved.version}. Finished Examinations keep their Verdict until you re-evaluate them.`,
+      `Saved as version ${saved.value.version}. Finished Examinations keep their Verdict until you re-evaluate them.`,
     );
     setNote("");
     onSaved();

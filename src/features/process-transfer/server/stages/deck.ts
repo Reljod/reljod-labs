@@ -14,6 +14,7 @@ import {
 } from "../../domain/rules";
 import type { DeckRound } from "../../domain/run";
 import { generate, type RunContext } from "../llm";
+import type { Designed } from "../ports";
 import {
   DECK_REVIEW_INSTRUCTIONS,
   deckDraftPrompt,
@@ -34,12 +35,6 @@ function cleanPlan(plan: DeckPlan, process: Process): DeckPlan {
     })),
   };
 }
-
-export type Designed = {
-  plan: DeckPlan;
-  /** Set when the model's plan was unusable and the deck was planned by rule. */
-  fallback: string | null;
-};
 
 /**
  * The Design stage for one Round: a draft or a revision by the Write model,

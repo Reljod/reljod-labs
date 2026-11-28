@@ -1,24 +1,75 @@
-import { API, type ErrorResponse } from "../domain/api";
+import {
+  ApiError,
+  attempt,
+  errorOf,
+  getJson,
+  type Outcome,
+  send,
+  streamJson,
+} from "@/platform/client/api";
+import {
+  API,
+  type ConversationListResponse,
+  type ConversationResponse,
+  type RuleEditFailure,
+  type RulesResponse,
+  type TokenResponse,
+  type TrailResponse,
+} from "../domain/api";
 import type { ChatEvent } from "../domain/chat";
-import { CHAT_STUB_HEADER } from "../domain/stub";
+import type { RuleEdit } from "../domain/rules";
 
 /** The browser's way to the Canvas routes (`domain/api.ts`). Components call nothing else. */
 
-async function errorOf(response: Response) {
-  const body = (await response
-    .json()
-    .catch(() => null)) as ErrorResponse | null;
-  return new Error(body?.error ?? `The request failed (${response.status}).`);
+export const conversations = (signal?: AbortSignal) =>
+  getJson<ConversationListResponse>(API.conversations, { signal });
+
+export const conversation = (id: string, signal?: AbortSignal) =>
+  getJson<ConversationResponse>(API.conversation(id), { signal });
+
+/** Deletes a Conversation and its Views, as a write button shows it. */
+export const deleteConversation = (id: string) =>
+  attempt(() => send("DELETE", API.conversation(id)));
+
+export const rules = (signal?: AbortSignal) =>
+  getJson<RulesResponse>(API.rules, { signal });
+
+/**
+ * Saves Rule edits as a new Version and answers the Rules as they now are;
+ * a refusal carries one error per field at fault.
+ */
+export async function saveRules(
+  edits: RuleEdit[],
+): Promise<
+  { ok: true; value: RulesResponse } | ({ ok: false } & RuleEditFailure)
+> {
+  let failure: unknown;
+  const saved = await attempt(() =>
+    send<RulesResponse>("POST", API.rules, { edits }).catch((error) => {
+      failure = error;
+      throw error;
+    }),
+  );
+  if (saved.ok) return saved;
+  const errors =
+    failure instanceof ApiError
+      ? (failure.body.errors as RuleEditFailure["errors"])
+      : undefined;
+  return { ok: false, error: saved.error, errors };
 }
 
-export async function getJson<T>(
-  path: string,
+export const trail = (
+  filter: { conversationId?: string | null },
   signal?: AbortSignal,
-): Promise<T> {
-  const response = await fetch(path, { signal, cache: "no-store" });
-  if (!response.ok) throw await errorOf(response);
-  return (await response.json()) as T;
-}
+) =>
+  getJson<TrailResponse>(API.trail, {
+    query: { conversationId: filter.conversationId },
+    signal,
+  });
+
+/** A token for an outside MCP client, shown once. */
+export const mintToken = (): Promise<Outcome<TokenResponse>> =>
+  attempt(() => send<TokenResponse>("POST", API.tokens));
 
 /** A CallToolResult as the MCP server gave it. */
 export type ToolCallResult = {
@@ -32,20 +83,17 @@ export async function callApp(input: {
   name: string;
   arguments: Record<string, unknown>;
 }): Promise<ToolCallResult> {
-  const response = await fetch(API.appCall, {
-    method: "POST",
-    headers: { "content-type": "application/json" },
-    body: JSON.stringify({ name: input.name, arguments: input.arguments }),
-  });
-  if (!response.ok) {
-    const error = await errorOf(response);
-    return { isError: true, content: [{ type: "text", text: error.message }] };
-  }
-  return (await response.json()) as ToolCallResult;
+  const result = await attempt(() =>
+    send<ToolCallResult>("POST", API.appCall, input),
+  );
+  return result.ok
+    ? result.value
+    : { isError: true, content: [{ type: "text", text: result.error }] };
 }
 
 /** The View App's document, to put in a sandboxed frame's `srcdoc`. */
 export async function appDocument(): Promise<string> {
+  // HTML, not JSON: the one read `getJson` cannot make.
   const response = await fetch(API.appFrame);
   if (!response.ok) throw await errorOf(response);
   return response.text();
@@ -55,43 +103,17 @@ export async function appDocument(): Promise<string> {
  * Asks a Question and hands each event of the answer to `onEvent` as it
  * arrives. Rejects when the Question is refused before the stream starts.
  */
-export async function ask(
-  input: { text: string; conversationId?: string | null; stub?: boolean },
+export const ask = (
+  input: { text: string; conversationId?: string | null },
   onEvent: (event: ChatEvent) => void,
   signal: AbortSignal,
-) {
-  const response = await fetch(API.chat, {
-    method: "POST",
-    headers: {
-      "content-type": "application/json",
-      ...(input.stub ? { [CHAT_STUB_HEADER]: "1" } : {}),
-    },
-    body: JSON.stringify({
+) =>
+  streamJson<ChatEvent>(
+    API.chat,
+    {
       text: input.text,
       ...(input.conversationId ? { conversationId: input.conversationId } : {}),
-    }),
-    signal,
-  });
-  if (!response.ok || !response.body) throw await errorOf(response);
-  const reader = response.body.getReader();
-  const decoder = new TextDecoder();
-  let buffer = "";
-  for (;;) {
-    const { done, value } = await reader.read();
-    if (done) break;
-    buffer += decoder.decode(value, { stream: true });
-    let newline = buffer.indexOf("\n");
-    while (newline >= 0) {
-      const line = buffer.slice(0, newline).trim();
-      buffer = buffer.slice(newline + 1);
-      if (line) {
-        try {
-          onEvent(JSON.parse(line) as ChatEvent);
-        } catch {
-          // A torn line: the stream was cut; the next read ends it.
-        }
-      }
-      newline = buffer.indexOf("\n");
-    }
-  }
-}
+    },
+    onEvent,
+    { signal },
+  );

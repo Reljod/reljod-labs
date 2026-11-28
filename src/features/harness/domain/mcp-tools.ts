@@ -36,9 +36,6 @@ export const GUEST_TOKEN_HEADER = "X-Guest-Token";
 /** The name the server gives itself, and the one `claude mcp add` uses. */
 export const MCP_SERVER_NAME = "harness";
 
-/** The e2e suite's header for a canned chat turn (no model spend), beside `E2E_BYPASS_TOKEN`. */
-export const CHAT_STUB_HEADER = "x-harness-stub";
-
 export const MCP_TOOL_GROUPS = [
   "pipelines",
   "runs",

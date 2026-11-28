@@ -1,8 +1,8 @@
 "use client";
 
-import { useActionState, useId, useState } from "react";
-import { useSubmitGuard } from "@/components/ui/use-submit-guard";
+import { type FormEvent, useId, useState } from "react";
 import { CallbackWarning } from "@/features/access/components/callback-warning";
+import { api } from "@/features/harness/components/api";
 import {
   Button,
   ErrorNote,
@@ -10,10 +10,6 @@ import {
   inputClass,
 } from "@/features/harness/components/ui";
 import { ROLE_LABEL, type Staff } from "@/features/harness/domain/staff";
-import {
-  answerHarnessClient,
-  type ConsentState,
-} from "@/features/harness/server/oauth-actions";
 
 /**
  * Allow or Deny an MCP client's sign-in to the Harness, choosing which Staff
@@ -41,15 +37,39 @@ export function ConsentForm({
   staff: Staff[];
   current: string;
 }) {
-  const [state, action, pending] = useActionState<ConsentState, FormData>(
-    answerHarnessClient,
-    null,
-  );
+  const [pending, setPending] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   const [trusted, setTrusted] = useState(false);
-  const guard = useSubmitGuard(pending, state);
   const pick = useId();
+
+  /** Both answers go back to the app that asked: the route says where, the browser goes. */
+  async function submit(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    if (pending) return;
+    const submitter = (event.nativeEvent as SubmitEvent).submitter;
+    const form = new FormData(event.currentTarget);
+    setPending(true);
+    setError(null);
+    const outcome = await api.mcp.consent({
+      request,
+      answer:
+        submitter instanceof HTMLButtonElement && submitter.value === "allow"
+          ? "allow"
+          : "deny",
+      staffId: String(form.get("staffId") ?? ""),
+      trustHost: form.get("trustHost") ? String(form.get("trustHost")) : null,
+    });
+    if (outcome.ok) {
+      // Stays pending: the page is leaving.
+      window.location.assign(outcome.value.redirect);
+      return;
+    }
+    setError(outcome.error);
+    setPending(false);
+  }
+
   return (
-    <form action={action} onSubmit={guard} className="space-y-6">
+    <form onSubmit={submit} className="space-y-6">
       <div className="space-y-2">
         <p className="eyebrow text-[0.65rem] text-federal-blue">
           Connect Claude to the Harness
@@ -79,7 +99,6 @@ export function ConsentForm({
           disabled={pending}
         />
       ) : null}
-      <input type="hidden" name="request" value={request} />
       <Field
         label="Act as"
         htmlFor={pick}
@@ -115,7 +134,7 @@ export function ConsentForm({
           Deny
         </Button>
       </div>
-      <ErrorNote>{state?.error}</ErrorNote>
+      <ErrorNote>{error}</ErrorNote>
     </form>
   );
 }

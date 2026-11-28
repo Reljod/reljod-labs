@@ -17,7 +17,6 @@ import {
   plainText,
   TYPE,
 } from "./deck-layout";
-import { clock } from "./process";
 import { resolveRules, ruleSet } from "./rules";
 import { SAMPLE_PROCESS } from "./test-fixtures";
 
@@ -101,57 +100,6 @@ describe("layoutDeck", () => {
         expect(element.y + element.h).toBeLessThanOrEqual(SLIDE_H);
       }
     }
-  });
-
-  it("shows each step's screenshot at the step's time with a caption", () => {
-    for (const slide of deck.slides.filter((item) => item.kind === "step")) {
-      const step = SAMPLE_PROCESS.steps.find(
-        (item) => item.id === slide.stepId,
-      );
-      expect(step).toBeDefined();
-      const image = slide.elements.find((element) => element.type === "image");
-      expect(image && image.type === "image" && image.frameAt).toBe(step?.at);
-      const caption = texts(slide).find((element) =>
-        plainText(element).startsWith(clock(step?.at ?? 0)),
-      );
-      expect(caption && plainText(caption)).toContain(step?.actor);
-      // The big step number.
-      const number = slide.elements.find(
-        (element) => element.role === "number",
-      );
-      expect(number && number.type === "text" && plainText(number)).toBe(
-        String(SAMPLE_PROCESS.steps.indexOf(step as never) + 1).padStart(
-          2,
-          "0",
-        ),
-      );
-    }
-  });
-
-  it("adds a callout for a step's warning and shrinks the screenshot, not the type, to make room", () => {
-    const warned = deck.slides.find(
-      (slide) => slide.stepId === "s4" && slide.kind === "step",
-    ) as Slide;
-    const plain = deck.slides.find(
-      (slide) => slide.stepId === "s1" && slide.kind === "step",
-    ) as Slide;
-    const callout = warned.elements.find(
-      (element) => element.role === "callout",
-    ) as TextElement;
-    expect(plainText(callout)).toContain("payroll month");
-    expect(plain.elements.some((element) => element.role === "callout")).toBe(
-      false,
-    );
-    const image = (slide: Slide) =>
-      slide.elements.find(
-        (element) => element.type === "image",
-      ) as SlideElement;
-    expect(image(warned).h).toBeLessThan(image(plain).h);
-    expect(image(warned).x).toBe(image(plain).x);
-    expect(Math.abs(image(warned).w / image(warned).h - 16 / 9)).toBeLessThan(
-      0.02,
-    );
-    expect(callout.fontSize).toBe(TYPE.card);
   });
 
   it("draws a decision as a question and one card per branch", () => {

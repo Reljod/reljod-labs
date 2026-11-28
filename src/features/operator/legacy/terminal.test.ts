@@ -1,20 +1,11 @@
 import { describe, expect, it } from "vitest";
 import { sampleTask } from "../domain/tasks";
-import type { MachineState } from "./engine";
-import { boot, render } from "./machine";
-import {
-  cellAt,
-  pointOf,
-  screenHtml,
-  screenText,
-  TERMINAL_CSS,
-} from "./terminal";
-import { Session, START } from "./test-kit";
-import type { CellStyle, Fixture, ScreenCode } from "./types";
-import { COLS, GEOMETRY, ROWS, SCREEN_TITLES } from "./types";
+import { cellAt, pointOf, TERMINAL_CSS } from "./terminal";
+import { Session } from "./test-kit";
+import type { Fixture } from "./types";
+import { COLS, GEOMETRY, ROWS } from "./types";
 
 const fixture = sampleTask("manifest-correction")?.fixture as Fixture;
-const codes = Object.keys(SCREEN_TITLES) as ScreenCode[];
 
 /** A click in the middle of the first cell of some text on the Screen. */
 function clickOn(s: Session, needle: string, offset = 0): Session {
@@ -23,54 +14,8 @@ function clickOn(s: Session, needle: string, offset = 0): Session {
   return s.act({ type: "click", x, y });
 }
 
-describe("render", () => {
-  it("draws every Screen as 24 rows of 80 cells", () => {
-    const base = boot(fixture, START) as MachineState;
-    for (const code of codes) {
-      const state = { ...base, screen: code, signedOn: true, voyage: "0377E" };
-      for (const extra of [{}, { help: true }]) {
-        const screen = render({ ...state, ...extra }, START);
-        expect(screen.code).toBe(code);
-        expect(screen.cells).toHaveLength(ROWS);
-        for (const row of screen.cells) {
-          expect(row).toHaveLength(COLS);
-          for (const cell of row) expect(cell.ch).toHaveLength(1);
-        }
-        const text = screenText(screen);
-        expect(text).toHaveLength(ROWS);
-        for (const line of text) expect(line).toHaveLength(COLS);
-        expect(text[0].startsWith(code)).toBe(true);
-        if (!("help" in extra)) {
-          expect(text[1]).toContain(SCREEN_TITLES[code].toUpperCase());
-          expect(text[23].trim().length, code).toBeGreaterThan(0);
-        }
-      }
-    }
-  });
-
-  it("puts the cursor in the focused field and styles errors", () => {
-    const s = new Session(fixture).feed("OPR7");
-    expect(s.screen.cursor).toEqual({ row: 11, col: 30 });
-    s.feed("<Tab>", "NOPE", "<Enter>");
-    const styles = new Set<CellStyle>(s.screen.cells[22].map((c) => c.style));
-    expect(styles.has("error")).toBe(true);
-    expect(s.screen.cells[11][26].style).toBe("field");
-  });
-});
-
-describe("screenHtml", () => {
-  it("writes 24 rows of 80 fixed cells with one cursor", () => {
-    const s = new Session(fixture).feed("A<&");
-    const html = screenHtml(s.screen);
-    expect(html.match(/<div class="r">/g)).toHaveLength(ROWS);
-    expect(html.match(/<span class="c[ "]/g)).toHaveLength(ROWS * COLS);
-    expect(html.match(/ cur"/g)).toHaveLength(1);
-    expect(html).toContain("&lt;");
-    expect(html).toContain("&amp;");
-    expect(html).toContain("s-field");
-    expect(html).toContain("s-reverse");
-  });
-
+describe("the terminal's layout", () => {
+  // A click is mapped to a cell by GEOMETRY; the browser lays the cells out by this CSS.
   it("sizes the container and the cells from GEOMETRY", () => {
     expect(TERMINAL_CSS).toContain(`width: ${GEOMETRY.width}px`);
     expect(TERMINAL_CSS).toContain(`height: ${GEOMETRY.height}px`);

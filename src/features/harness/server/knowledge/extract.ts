@@ -4,6 +4,7 @@ import { parseDocument } from "@/features/document-compliance/server/parsers";
 import type { SourceKind } from "../../domain/knowledge";
 import { pdfText } from "../../domain/knowledge/pdf-text";
 import { MAX_TEXT_CHARS } from "../../domain/knowledge/split";
+import { UnreadableError } from "../errors";
 
 /**
  * Turns a stored file into text, inside the app (no OCR: a scanned PDF has no
@@ -14,12 +15,7 @@ import { MAX_TEXT_CHARS } from "../../domain/knowledge/split";
 const clip = (text: string) =>
   text.length > MAX_TEXT_CHARS ? text.slice(0, MAX_TEXT_CHARS) : text;
 
-export class UnreadableError extends Error {
-  constructor(message: string) {
-    super(message);
-    this.name = "UnreadableError";
-  }
-}
+export { UnreadableError };
 
 /** The text of a file, or an UnreadableError whose message says why in words a person can act on. */
 export async function extractText(

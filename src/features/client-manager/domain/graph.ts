@@ -790,6 +790,20 @@ export function graphStats(graph: DraftGraph) {
   };
 }
 
+/** What a Node is embedded as: enough words for a question to find it. */
+export function nodeText(node: {
+  label: string;
+  category: string;
+  type: string;
+  summary: string;
+  attributes: Record<string, string>;
+}) {
+  const attributes = Object.entries(node.attributes ?? {})
+    .map(([name, value]) => `${name.replace(/_/g, " ")}: ${value}`)
+    .join("; ");
+  return `${node.label} (${node.type}, ${node.category.replace(".", " › ")}). ${node.summary} ${attributes}`.trim();
+}
+
 /** A Repair in one line, for the Critic's next round and the Build's log. */
 export function describeRepair(repair: Repair): string {
   switch (repair.op) {

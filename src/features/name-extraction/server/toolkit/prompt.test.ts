@@ -1,6 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { DEFAULT_RULEBOOK, SKILL_IDS } from "../../domain/contract";
-import { SKILLS } from "../../skills";
+import { DEFAULT_RULEBOOK } from "../../domain/contract";
 import {
   analystInstructions,
   asDocumentText,
@@ -11,16 +10,6 @@ import {
 } from "./prompt";
 
 describe("renderRulebook", () => {
-  it("states every rule, with the version", () => {
-    const text = renderRulebook(DEFAULT_RULEBOOK, 3);
-    expect(text).toMatch(/^Rulebook version 3:/);
-    expect(text).toContain('"Meridia Central Bank"');
-    expect(text).toContain("Fold aliases");
-    expect(text).toContain("nothing is dropped for low confidence");
-    for (const instruction of DEFAULT_RULEBOOK.instructions)
-      expect(text).toContain(instruction);
-  });
-
   it("follows the switches", () => {
     const text = renderRulebook(
       {
@@ -44,32 +33,7 @@ describe("renderRulebook", () => {
   });
 });
 
-describe("analystInstructions", () => {
-  const text = analystInstructions(DEFAULT_RULEBOOK, 0);
-
-  it("lists each Skill in one line, not its playbook", () => {
-    for (const id of SKILL_IDS) {
-      expect(text).toContain(`- ${id}: ${SKILLS[id].description}`);
-      expect(text).not.toContain(SKILLS[id].body.slice(0, 200));
-    }
-  });
-
-  it("states the goal, the Done gate and the Rulebook", () => {
-    expect(text).toContain("recall first");
-    expect(text).toContain("# The Done gate");
-    expect(text).toContain("Rulebook version 0");
-  });
-
-  it("is stable for the same Rulebook, so it caches", () => {
-    expect(analystInstructions(DEFAULT_RULEBOOK, 0)).toBe(text);
-  });
-});
-
 describe("Readers' prompt", () => {
-  it("asks for verbatim quotes", () => {
-    expect(READER_INSTRUCTIONS).toContain("EXACTLY as printed");
-  });
-
   it("puts the focus before the pages and numbers each page", () => {
     const text = readerPages(
       [

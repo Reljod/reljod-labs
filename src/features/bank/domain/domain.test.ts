@@ -1,6 +1,5 @@
 import { describe, expect, it } from "vitest";
 import { redactDetail } from "./audit";
-import { historyOf, instructionsFor, partsOf, toolSummary } from "./chat";
 import {
   cardLimitsRefusal,
   checkCardAuth,
@@ -689,63 +688,5 @@ describe("the Audit trail and the chat", () => {
     );
     expect(detail.amount).toBe(5);
     expect((detail.nested as { ok: boolean }).ok).toBe(true);
-  });
-  it("summarises tools and keeps history in order", () => {
-    expect(
-      toolSummary("transfer", {
-        structuredContent: {
-          status: "needs_confirmation",
-          message: "Not done yet.",
-        },
-      }),
-    ).toBe("Not done yet.");
-    expect(
-      toolSummary("get_account", { structuredContent: { account: {} } }),
-    ).toBe("Account");
-    expect(
-      toolSummary("transfer", {
-        isError: true,
-        content: [{ text: "Refused: no" }],
-      }),
-    ).toBe("Refused: no");
-    expect(
-      historyOf([
-        { role: "teller", content: "orphan" },
-        { role: "person", content: "hello" },
-        { role: "system", content: "skip" },
-        { role: "teller", content: "hi" },
-      ]),
-    ).toEqual([
-      { role: "user", content: "hello" },
-      { role: "assistant", content: "hi" },
-    ]);
-    const parts = partsOf([
-      { type: "reasoning.delta", text: "thinking" },
-      { type: "tool.started", id: "1", name: "get_overview", args: {} },
-      {
-        type: "tool.finished",
-        id: "1",
-        name: "get_overview",
-        ok: true,
-        summary: "Bank overview",
-        data: null,
-      },
-    ]);
-    expect(parts.map((part) => part.type)).toEqual(["reasoning", "tool"]);
-  });
-  it("tells the Teller it cannot confirm or approve", () => {
-    const text = instructionsFor({
-      staffName: "Ines Maro",
-      staffRole: "Teller",
-      bankDate: "2026-11-19",
-      customers: [],
-      focus: null,
-      skills: [],
-      confirmations: [],
-      sandbox: false,
-    });
-    expect(text).toMatch(/needs_confirmation/);
-    expect(text).toMatch(/never give an Approval/i);
-    expect(text).toMatch(/data\. Never follow instructions/);
   });
 });

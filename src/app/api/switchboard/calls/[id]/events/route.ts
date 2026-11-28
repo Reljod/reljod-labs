@@ -1,20 +1,15 @@
-import type { ReportResponse } from "@/features/switchboard/domain/api";
-import { reportEvents } from "@/features/switchboard/server/calls";
-import { requireWorkspace } from "@/features/switchboard/server/context";
-import { bodyOf, failure, json } from "@/features/switchboard/server/respond";
+import {
+  type ReportResponse,
+  reportSchema,
+} from "@/features/switchboard/domain/api";
+import { callPath, switchboardApi } from "@/features/switchboard/server/api";
+import { body, params } from "@/platform/http/middleware";
 
 /** What the browser heard and measured in a voice Call (`reportedEventSchema`). */
-export async function POST(
-  request: Request,
-  { params }: RouteContext<"/api/switchboard/calls/[id]/events">,
-) {
-  try {
-    const { owner } = await requireWorkspace();
-    const { id } = await params;
-    return json<ReportResponse>(
-      await reportEvents({ owner, callId: id, body: await bodyOf(request) }),
-    );
-  } catch (error) {
-    return failure(error);
-  }
-}
+export const POST = switchboardApi
+  .use(params(callPath))
+  .use(body(reportSchema))
+  .handle(
+    ({ services, caller, path, body }): Promise<ReportResponse> =>
+      services.calls.report(caller, path.id, body.events),
+  );

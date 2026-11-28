@@ -1,37 +1,43 @@
 "use client";
 
-import { useActionState } from "react";
-import { useSubmitGuard } from "@/components/ui/use-submit-guard";
+import { useRouter } from "next/navigation";
+import type { Outcome as WriteOutcome } from "@/platform/client/api";
+import type { Saved } from "../domain/api";
 import { LIMITS } from "../domain/guest-pass";
-import {
-  changePassword,
-  type SettingsState,
-  updateProfile,
-} from "../server/actions";
+import { changePassword, saveProfile } from "./api";
 import { fieldClass, submitClass } from "./styles";
+import { useWrite } from "./use-write";
 
-function Outcome({ state }: { state: SettingsState }) {
-  if (!state) return null;
-  return "error" in state ? (
-    <p role="alert" className="text-sm text-seal-red">
-      {state.error}
-    </p>
-  ) : (
+function Outcome({ outcome }: { outcome: WriteOutcome<Saved> | null }) {
+  if (!outcome) return null;
+  return outcome.ok ? (
     <output className="block text-sm font-semibold text-ivy">
-      {state.saved}
+      {outcome.value.saved}
     </output>
+  ) : (
+    <p role="alert" className="text-sm text-seal-red">
+      {outcome.error}
+    </p>
   );
 }
 
 /** Where a Host edits the name shown on their profile. */
 export function ProfileForm({ name, email }: { name: string; email: string }) {
-  const [state, action, pending] = useActionState<SettingsState, FormData>(
-    updateProfile,
-    null,
-  );
-  const guard = useSubmitGuard(pending, state);
+  const router = useRouter();
+  const { run, pending, outcome } = useWrite<Saved>();
   return (
-    <form action={action} onSubmit={guard} className="flex flex-col gap-3">
+    <form
+      onSubmit={async (event) => {
+        event.preventDefault();
+        const form = new FormData(event.currentTarget);
+        const result = await run(() =>
+          saveProfile(String(form.get("name") ?? "")),
+        );
+        // The page shows the name too: read it again.
+        if (result?.ok) router.refresh();
+      }}
+      className="flex flex-col gap-3"
+    >
       <label htmlFor="profile-email" className="eyebrow">
         Email
       </label>
@@ -66,20 +72,32 @@ export function ProfileForm({ name, email }: { name: string; email: string }) {
       >
         {pending ? "Saving…" : "Save profile"}
       </button>
-      <Outcome state={state} />
+      <Outcome outcome={outcome} />
     </form>
   );
 }
 
 /** Where a Host changes their password. */
 export function PasswordForm() {
-  const [state, action, pending] = useActionState<SettingsState, FormData>(
-    changePassword,
-    null,
-  );
-  const guard = useSubmitGuard(pending, state);
+  const { run, pending, outcome } = useWrite<Saved>();
   return (
-    <form action={action} onSubmit={guard} className="flex flex-col gap-3">
+    <form
+      onSubmit={async (event) => {
+        event.preventDefault();
+        const element = event.currentTarget;
+        const form = new FormData(element);
+        const result = await run(() =>
+          changePassword({
+            current: String(form.get("current") ?? ""),
+            next: String(form.get("next") ?? ""),
+            confirm: String(form.get("confirm") ?? ""),
+          }),
+        );
+        // No password stays on screen once it is changed.
+        if (result?.ok) element.reset();
+      }}
+      className="flex flex-col gap-3"
+    >
       <label htmlFor="password-current" className="eyebrow">
         Current password
       </label>
@@ -123,7 +141,7 @@ export function PasswordForm() {
       >
         {pending ? "Changing…" : "Change password"}
       </button>
-      <Outcome state={state} />
+      <Outcome outcome={outcome} />
     </form>
   );
 }

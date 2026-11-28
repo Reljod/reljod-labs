@@ -3,7 +3,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { useCallback, useMemo, useRef } from "react";
 import type { ParameterValue } from "../../domain/rules";
-import { api, failureOf, messageOf } from "../api";
+import { api, messageOf } from "../api";
 import { useController, useHarness } from "../harness-context";
 import { listQuery } from "../list-queries";
 import type { RuleCardHandle } from "../skills/rule-card";
@@ -24,9 +24,7 @@ const MCP_PAGE = "/demos/harness/mcp";
 
 /** Fetches the Plugin zip and hands it to the browser. Rejects with the server's message. */
 async function downloadPlugin(): Promise<string> {
-  const response = await fetch(api.plugin.href(), { cache: "no-store" });
-  if (!response.ok) throw await failureOf(response);
-  const blob = await response.blob();
+  const blob = await api.plugin.download();
   const url = URL.createObjectURL(blob);
   const link = document.createElement("a");
   link.href = url;

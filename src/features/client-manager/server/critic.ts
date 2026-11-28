@@ -12,6 +12,7 @@ import {
 import { env } from "./env";
 import type { GatheredSource } from "./gather";
 import { type CallContext, gateway, gatewayCost, track } from "./llm";
+import type { Critic } from "./ports";
 
 const OPS = [
   "remove_node",
@@ -193,3 +194,6 @@ export async function critique(input: {
     usage,
   };
 }
+
+/** The Critic model, as its port. */
+export const modelCritic: Critic = { critique };

@@ -3,8 +3,8 @@
 import { useQueryClient } from "@tanstack/react-query";
 import { motion } from "motion/react";
 import { useMemo, useState } from "react";
+import type { CatalogCard } from "../domain/api";
 import { BRANCHES, TONE_HEX } from "../domain/categories";
-import type { CatalogCard } from "../server/service";
 import { clientQuery } from "./api";
 import { Icon } from "./icons";
 import { Portrait } from "./portrait";

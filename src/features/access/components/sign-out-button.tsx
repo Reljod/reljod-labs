@@ -1,9 +1,9 @@
 "use client";
 
-import { useActionState } from "react";
-import { useSubmitGuard } from "@/components/ui/use-submit-guard";
-import { signOut } from "../server/actions";
+import type { Destination } from "../domain/api";
+import { signOut } from "./api";
 import { useLeave } from "./use-leave";
+import { useWrite } from "./use-write";
 
 /**
  * Ends this browser's session, once: the button waits while it signs out,
@@ -18,23 +18,25 @@ export function SignOutButton({
   label?: string;
   role?: "menuitem";
 }) {
-  const [state, action, pending] = useActionState<{ to: string } | null>(
-    () => signOut(),
-    null,
-  );
-  const guard = useSubmitGuard(pending, state);
-  const busy = useLeave(state) || pending;
+  const { run, pending, outcome } = useWrite<Destination>();
+  const busy = useLeave(outcome?.ok ? outcome.value : null) || pending;
   return (
-    <form action={action} onSubmit={guard}>
+    <div>
       <button
-        type="submit"
+        type="button"
         role={role}
         disabled={busy}
         aria-busy={busy}
+        onClick={() => void run(signOut)}
         className={`${className} disabled:opacity-50`}
       >
         {busy ? "Signing out…" : label}
       </button>
-    </form>
+      {outcome && !outcome.ok ? (
+        <p role="alert" className="mt-1 text-sm text-seal-red">
+          {outcome.error}
+        </p>
+      ) : null}
+    </div>
   );
 }

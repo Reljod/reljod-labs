@@ -30,13 +30,13 @@ import {
   runCode,
 } from "./code-sandbox";
 import type { RunContext } from "./context";
+import { ScreenUnavailable } from "./errors";
 import {
   BASE_OPTIONS,
   bootScreen,
   DISPOSE_OPTIONS,
   disposeScreen,
   RUN_OPTIONS,
-  ScreenUnavailable,
 } from "./screen";
 
 /*

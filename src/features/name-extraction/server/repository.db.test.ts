@@ -19,7 +19,7 @@ const ISO = /^\d{4}-\d\d-\d\dT\d\d:\d\d:\d\d(\.\d+)?\+00:00$/;
 
 describe.skipIf(!url)("Sieve's repository, on Postgres", () => {
   let repo: typeof import("./repository");
-  let db: typeof import("./db");
+  let db: { sql: typeof import("@/server/postgres").db };
 
   const newRun = (owner: Owner = OWNER, limits = null as never) =>
     repo.createRun({
@@ -43,7 +43,7 @@ describe.skipIf(!url)("Sieve's repository, on Postgres", () => {
   beforeAll(async () => {
     process.env.DATABASE_URL = url;
     repo = await import("./repository");
-    db = await import("./db");
+    db = { sql: (await import("@/server/postgres")).db };
   });
 
   afterAll(async () => {

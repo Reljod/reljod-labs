@@ -24,6 +24,9 @@ const run = await response.json();
 if (!run.taskId) throw new Error("only a Run of a sample Task can be a Replay");
 if (run.status !== "completed" || run.verdict !== "correct")
   throw new Error(`not a good Run: ${run.status}, ${run.verdict}`);
+// The stubbed suite's Runs have no model and placeholder Frames.
+if (run.driver === "operator" && !run.model)
+  throw new Error("a stubbed Run has no pictures to record: record a live one");
 
 const dir = new URL(
   `../public/operator/replays/${run.taskId}/`,

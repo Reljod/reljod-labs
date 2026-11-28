@@ -6,7 +6,9 @@ import { Sieve } from "@/features/name-extraction/components/sieve";
 import { SieveSkeleton } from "@/features/name-extraction/components/skeletons";
 import type { CorpusCard } from "@/features/name-extraction/domain/contract";
 import { corpusCards } from "@/features/name-extraction/domain/corpus";
-import { initialView } from "@/features/name-extraction/server/reads";
+import { sieve } from "@/features/name-extraction/server/container";
+import type { FirstView } from "@/features/name-extraction/server/services";
+import { currentRequest } from "@/platform/request/current";
 
 export const metadata: Metadata = {
   title: "Sieve · Demo",
@@ -17,9 +19,10 @@ export const metadata: Metadata = {
 /*
  * The demo Documents are seed data, built into the static shell. The
  * Owner's Runs and Rulebook come from the request's cookies, so they are
- * read behind Suspense (`cacheComponents` is on) and handed to Sieve, which
- * does not ask for them again on mount. The Access gate runs in
- * `src/proxy.ts`, here, and again in every route and server action.
+ * read behind Suspense (`cacheComponents` is on), through the same services
+ * the REST routes use, and handed to Sieve, which does not ask for them
+ * again on mount. The Access gate runs in `src/proxy.ts`, here, and again in
+ * every route.
  */
 export default function NameExtractionDemoPage() {
   const corpus = corpusCards();
@@ -31,13 +34,13 @@ export default function NameExtractionDemoPage() {
 }
 
 async function SieveWithData({ corpus }: { corpus: CorpusCard[] }) {
-  let view: Awaited<ReturnType<typeof initialView>> = {
-    runs: null,
-    rulebooks: null,
-  };
+  let view: FirstView = { runs: null, rulebooks: null };
   try {
-    const { owner } = await requireOwner();
-    view = await initialView(owner);
+    const [{ owner }, { mode }] = await Promise.all([
+      requireOwner(),
+      currentRequest(),
+    ]);
+    view = await sieve(mode).firstView(owner);
   } catch (error) {
     // Next's own signals pass; without Access the client's reads say why.
     unstable_rethrow(error);

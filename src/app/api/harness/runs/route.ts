@@ -4,12 +4,10 @@ import type {
   RunResponse,
 } from "@/features/harness/domain/api";
 import { PIPELINE_IDS } from "@/features/harness/domain/pipeline";
-import {
-  requirePermission,
-  requireStaff,
-} from "@/features/harness/server/context";
-import { bodyOf, failure, json } from "@/features/harness/server/respond";
-import { listRuns, startRun } from "@/features/harness/server/runs";
+import { harnessApi, permits } from "@/features/harness/server/api";
+import { authorize, body, query } from "@/platform/http/middleware";
+
+const listSchema = z.object({ session: z.string().max(64).optional() });
 
 const startSchema = z.object({
   pipelineId: z.enum(PIPELINE_IDS),
@@ -19,33 +17,25 @@ const startSchema = z.object({
 });
 
 /** The Workspace's Runs, newest first; `?session=` for one Session's. */
-export async function GET(request: Request) {
-  try {
-    const { owner } = await requireStaff();
-    const sessionId = new URL(request.url).searchParams.get("session");
-    return json<RunListResponse>({
-      runs: await listRuns(owner, { sessionId }),
-    });
-  } catch (error) {
-    return failure(error);
-  }
-}
+export const GET = harnessApi.use(query(listSchema)).handle(
+  async ({ services, caller, query }): Promise<RunListResponse> => ({
+    runs: await services.runs.list(caller, {
+      sessionId: query.session ?? null,
+    }),
+  }),
+);
 
 /** Starts a Run from the app or a Demo mode Beat. */
-export async function POST(request: Request) {
-  try {
-    const context = await requirePermission("run.start");
-    const body = startSchema.parse(await bodyOf(request));
-    return json<RunResponse>({
-      run: await startRun({
-        ...context,
+export const POST = harnessApi
+  .use(authorize(permits("run.start")))
+  .use(body(startSchema))
+  .handle(
+    async ({ services, caller, body }): Promise<RunResponse> => ({
+      run: await services.runs.start(caller, {
         sessionId: body.sessionId ?? null,
         pipelineId: body.pipelineId,
         input: body.input,
         via: body.via,
       }),
-    });
-  } catch (error) {
-    return failure(error);
-  }
-}
+    }),
+  );

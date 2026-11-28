@@ -6,14 +6,9 @@ import {
   ALLOWED_FILES,
   ALLOWED_NEW_MIGRATION,
   ALLOWED_PREFIXES,
-  findDuplicate,
   issueBody,
   issueTitle,
-  linkedPull,
   outsideAllowlist,
-  type PullFacts,
-  similarity,
-  statusFromGithub,
 } from "./growth";
 
 const file = (path: string, status = "modified") => ({ path, status });
@@ -313,83 +308,5 @@ describe("the issue", () => {
     // No model line becomes a checkbox outside the fence.
     expect(body).not.toContain("- [ ] A goal");
     expect(body.match(/<!--/g)).toHaveLength(1);
-  });
-});
-
-describe("de-duplication", () => {
-  it("finds the same request in other words, and not a different one", () => {
-    expect(
-      similarity(
-        "Export transactions as OFX",
-        "Let me export my transactions to OFX",
-      ),
-    ).toBeGreaterThanOrEqual(0.6);
-    expect(similarity("Savings goals", "Export transactions as OFX")).toBe(0);
-    const open = [
-      { title: "Export transactions as OFX", id: 1 },
-      { title: "Dark mode for statements", id: 2 },
-    ];
-    expect(
-      findDuplicate("I want to export transactions as OFX please", open)?.id,
-    ).toBe(1);
-    expect(findDuplicate("Savings goals with a target", open)).toBeNull();
-  });
-});
-
-describe("following GitHub", () => {
-  const pull = (over: Partial<PullFacts>): PullFacts => ({
-    number: 70,
-    url: "u",
-    body: "Closes #61",
-    state: "open",
-    merged: false,
-    mergeSha: null,
-    labels: ["bank:growth"],
-    ...over,
-  });
-  it("links the pull request that says it closes the issue", () => {
-    const pulls = [
-      pull({ number: 69, body: "Closes #610" }),
-      pull({ number: 70 }),
-      pull({ number: 71, body: "fixes #61", merged: true, state: "closed" }),
-    ];
-    expect(linkedPull(61, pulls)?.number).toBe(71);
-    expect(linkedPull(61, pulls.slice(0, 2))?.number).toBe(70);
-    expect(linkedPull(62, pulls)).toBeNull();
-    expect(linkedPull(61, [pull({ number: 72, labels: [] })])).toBeNull();
-  });
-  it("moves a request Issue, Pull request, Merged, Live", () => {
-    expect(
-      statusFromGithub({ issueState: "open", pull: null, deployed: null })
-        .status,
-    ).toBe("issue");
-    expect(
-      statusFromGithub({ issueState: "open", pull: pull({}), deployed: null })
-        .status,
-    ).toBe("pr");
-    const merged = pull({ merged: true, state: "closed", mergeSha: "abc" });
-    expect(
-      statusFromGithub({ issueState: "closed", pull: merged, deployed: false })
-        .status,
-    ).toBe("merged");
-    expect(
-      statusFromGithub({ issueState: "closed", pull: merged, deployed: true })
-        .status,
-    ).toBe("live");
-    expect(
-      statusFromGithub({ issueState: "closed", pull: merged, deployed: null })
-        .status,
-    ).toBe("live");
-    expect(
-      statusFromGithub({ issueState: "closed", pull: null, deployed: null })
-        .status,
-    ).toBe("closed");
-    expect(
-      statusFromGithub({
-        issueState: "closed",
-        pull: pull({ state: "closed" }),
-        deployed: null,
-      }).status,
-    ).toBe("closed");
   });
 });

@@ -10,8 +10,8 @@ import {
   ruleSpec,
   sentenceParts,
 } from "../../domain/rules";
-import { restoreRule, saveRule } from "../../server/rule-actions";
 import type { RuleView } from "../../view";
+import { restoreRule, saveRule } from "../api";
 import { RULES_KEY, ruleVersionsKey, ruleVersionsQuery } from "../queries";
 import { ParamInput } from "./param-input";
 
@@ -150,7 +150,8 @@ export function RuleCard({ rule }: { rule: RuleView }) {
         </label>
       </header>
 
-      <p className="text-base leading-relaxed">
+      {/* A div, not a p: a list Parameter is a fieldset, which a p cannot hold. */}
+      <div className="text-base leading-relaxed">
         {sentenceParts(spec, draft.params).map((part, index) =>
           part.kind === "text" ? (
             // biome-ignore lint/suspicious/noArrayIndexKey: parts never reorder
@@ -167,7 +168,7 @@ export function RuleCard({ rule }: { rule: RuleView }) {
             />
           ),
         )}
-      </p>
+      </div>
 
       {errors.length > 0 ? (
         <ul

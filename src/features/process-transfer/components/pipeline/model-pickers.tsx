@@ -9,7 +9,7 @@ import {
   PURPOSE_IDS,
   PURPOSES,
 } from "../../domain/models";
-import { saveModels } from "../../server/actions";
+import { saveModels } from "../api";
 import {
   fieldClass,
   InlineError,
@@ -58,7 +58,7 @@ export function ModelPickers({
         setError(result.error);
         return;
       }
-      onSaved(result.models);
+      onSaved(result.value);
       setNote("Saved. Your next Run uses these models.");
     } catch {
       setError("That did not reach the server. Try again.");

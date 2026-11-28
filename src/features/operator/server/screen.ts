@@ -3,6 +3,9 @@ import { Sandbox } from "@vercel/sandbox";
 import { LIMITS } from "../domain/limits";
 import type { Rulebook } from "../domain/rules";
 import type { Fixture } from "../legacy/types";
+import { env } from "./env";
+import { ScreenUnavailable } from "./errors";
+import type { ScreenPort } from "./ports";
 import {
   type ActRequest,
   type ActResult,
@@ -38,15 +41,6 @@ export const screenName = (runId: string) => `operator-screen-${runId}`;
 
 const message = (error: unknown) =>
   error instanceof Error ? error.message : String(error);
-
-/** Shown to people and to the model; the SDK's own text goes to the log only. */
-export class ScreenUnavailable extends Error {
-  constructor(detail: string) {
-    super("The Screen sandbox is unavailable.");
-    this.name = "ScreenUnavailable";
-    console.error("[operator] screen sandbox:", detail);
-  }
-}
 
 const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
 
@@ -340,3 +334,19 @@ export async function disposeScreen(runId: string) {
     // None was made, or it is already gone.
   }
 }
+
+/** A Run's Screen in a Vercel Sandbox of its own, with no network. */
+export const vercelScreen: ScreenPort = {
+  available: env.sandboxConfigured,
+  boot: bootScreen,
+  act: screenAct,
+  approve: async (runId, secret, fingerprint) => {
+    await screenApprove(runId, secret, fingerprint);
+  },
+  touch: async (runId, secret) => {
+    await screenTouch(runId, secret);
+  },
+  extend: extendScreen,
+  books: screenBooks,
+  dispose: disposeScreen,
+};

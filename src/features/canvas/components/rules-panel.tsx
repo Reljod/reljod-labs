@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { API, type RulesResponse } from "../domain/api";
+import type { RulesResponse } from "../domain/api";
 import {
   defaultRulebook,
   RULE_DEFS,
@@ -11,8 +11,7 @@ import {
   type RuleValue,
   sentenceOf,
 } from "../domain/rules";
-import { saveRulesAction } from "../server/actions";
-import { getJson } from "./api";
+import { rules as loadRules, saveRules } from "./api";
 import { Badge, Button, cx, inputClass, Panel } from "./ui";
 
 const same = (a: RuleValue | undefined, b: RuleValue | undefined) =>
@@ -49,11 +48,11 @@ export function RulesPanel({ initial }: { initial: RulesResponse | null }) {
   const [note, setNote] = useState<{ ok: boolean; text: string } | null>(null);
   const [errors, setErrors] = useState<Record<string, string>>({});
 
-  const load = async () => {
-    const next = await getJson<RulesResponse>(API.rules);
+  const show = (next: RulesResponse) => {
     setRules(next);
     setDraft(next.rulebook);
   };
+  const load = async () => show(await loadRules());
 
   // biome-ignore lint/correctness/useExhaustiveDependencies: loads once when the server gave nothing.
   useEffect(() => {
@@ -80,7 +79,7 @@ export function RulesPanel({ initial }: { initial: RulesResponse | null }) {
     setPending(true);
     setNote(null);
     setErrors({});
-    const result = await saveRulesAction(edits);
+    const result = await saveRules(edits);
     setPending(false);
     if (!result.ok) {
       setNote({ ok: false, text: result.error });
@@ -94,8 +93,9 @@ export function RulesPanel({ initial }: { initial: RulesResponse | null }) {
       );
       return;
     }
-    await load().catch(() => {});
-    setNote({ ok: true, text: `Saved as Rulebook v${result.version}.` });
+    // The write answers with the Rules as they now are: no second read.
+    show(result.value);
+    setNote({ ok: true, text: `Saved as Rulebook v${result.value.version}.` });
   };
 
   return (

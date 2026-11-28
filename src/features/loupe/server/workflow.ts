@@ -1,7 +1,7 @@
 import type { ToolResultPart } from "ai";
 import { RUN_LIMITS } from "../domain/limits";
-import type { EndOutcome } from "./ending";
 import { imageMark } from "./marks";
+import type { EndOutcome } from "./ports";
 import {
   endStep,
   noteStep,

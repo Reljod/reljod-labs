@@ -1,78 +1,29 @@
 import "server-only";
 import type { Owner } from "@/features/access/domain/owner";
+import { db as sql } from "@/server/postgres";
 import {
-  DEFAULT_MODELS,
   DEFAULT_RULEBOOK,
   type DocumentSource,
   type ExtractedName,
   type ModelChoice,
-  modelChoiceSchema,
   type Purpose,
   type Rulebook,
   type RulebookVersion,
-  type RunEvent,
   type RunEventInput,
   type RunStatus,
-  type RunSummary,
   rulebookSchema,
-  type Score,
-  type StopReason,
 } from "../domain/contract";
-import { sql } from "./db";
+import {
+  isUuid,
+  type RunRow,
+  type StoredEvent,
+  type UploadRow,
+} from "./run-row";
 
-const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
-export const isUuid = (value: unknown): value is string =>
-  typeof value === "string" && UUID.test(value);
+export type { RunRow, StoredEvent, UploadRow } from "./run-row";
+export { isOver, isUuid, toSummary } from "./run-row";
 
 // Runs ------------------------------------------------------------------------------
-
-export type RunRow = {
-  id: string;
-  owner: Owner;
-  title: string;
-  pages: number;
-  source: DocumentSource;
-  status: RunStatus;
-  models: ModelChoice;
-  rulebook_version: number;
-  rulebook: Rulebook;
-  workflow_run_id: string | null;
-  cost_usd: string | number;
-  names: ExtractedName[];
-  score: Score | null;
-  error: string | null;
-  /** The Done gate's verdict at the end; null when ended outside the workflow. */
-  gate_passed: boolean | null;
-  /** Why the harness wound a completed Run up early, if it did. */
-  stopped_by: StopReason | null;
-  visitor_hash: string;
-  started_at: string;
-  ended_at: string | null;
-};
-
-export function isOver(status: RunStatus) {
-  return status === "completed" || status === "failed" || status === "stopped";
-}
-
-export function toSummary(row: RunRow): RunSummary {
-  const models = modelChoiceSchema.safeParse(row.models);
-  return {
-    id: row.id,
-    title: row.title,
-    pages: row.pages,
-    source: row.source,
-    status: row.status,
-    startedAt: row.started_at,
-    endedAt: row.ended_at,
-    models: models.success ? models.data : DEFAULT_MODELS,
-    rulebookVersion: row.rulebook_version,
-    costUsd: Number(row.cost_usd) || 0,
-    names: Array.isArray(row.names) ? row.names.length : 0,
-    score: row.score ?? null,
-    gatePassed: row.gate_passed ?? null,
-    stoppedBy: row.stopped_by ?? null,
-  };
-}
 
 /**
  * Creates a Run row if the Owner and visitor are under their limits, under
@@ -249,8 +200,6 @@ export async function runStatus(runId: string): Promise<RunStatus | null> {
 }
 
 // Events (the Audit trail) ------------------------------------------------------------
-
-export type StoredEvent = RunEvent & { seq: number };
 
 type EventRow = {
   seq: number | string;
@@ -446,15 +395,6 @@ export async function insertRulebook(
 }
 
 // Uploads -----------------------------------------------------------------------------------
-
-export type UploadRow = {
-  id: string;
-  owner: Owner;
-  title: string;
-  pages: number;
-  storage_path: string;
-  created_at: string;
-};
 
 export async function insertUpload(input: {
   id: string;

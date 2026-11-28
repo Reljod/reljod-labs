@@ -1,7 +1,4 @@
-import { strToU8, zipSync } from "fflate";
 import { describe, expect, it } from "vitest";
-import { CATEGORY_IDS, isCategory, nearestCategory } from "./categories";
-import { citedKeys, splitCitations } from "./citations";
 import {
   applyRepairs,
   automaticRepairs,
@@ -9,14 +6,10 @@ import {
   type Extraction,
   emptyGraph,
   mergeExtraction,
-  normalizeKey,
-  normalizeRelation,
   quoteSupported,
   ROOT_KEY,
   validateGraph,
 } from "./graph";
-import { layoutGraph, spiral } from "./layout";
-import { readDocx, readXlsx } from "./office";
 
 const NOTE =
   "Maria Santos, 58, is married to Paolo. She sold her logistics firm Santos Freight in 2024 for $42M. She prefers WhatsApp over email and hates surprises.";
@@ -41,34 +34,6 @@ const entity = (
   quote,
   confidence: 0.9,
   ...extra,
-});
-
-describe("categories", () => {
-  it("names every leaf as branch.leaf", () => {
-    expect(CATEGORY_IDS).toContain("wealth.accounts");
-    expect(CATEGORY_IDS.every((id) => id.split(".").length === 2)).toBe(true);
-    expect(new Set(CATEGORY_IDS).size).toBe(CATEGORY_IDS.length);
-  });
-
-  it("snaps unknown categories to the nearest leaf", () => {
-    expect(nearestCategory("wealth.accounts")).toBe("wealth.accounts");
-    expect(nearestCategory("Family")).toBe("network.family");
-    expect(nearestCategory("wealth.crypto")).toBe("wealth.accounts");
-    expect(nearestCategory("something else")).toBe("profile.personal");
-    expect(isCategory("wealth.nope")).toBe(false);
-  });
-});
-
-describe("keys", () => {
-  it("normalises Keys and relations", () => {
-    expect(normalizeKey("Person: María Santos")).toBe("person:maria-santos");
-    expect(normalizeKey("Santos Freight", "organization")).toBe(
-      "organization:santos-freight",
-    );
-    expect(normalizeKey("CLIENT")).toBe(ROOT_KEY);
-    expect(normalizeRelation("married to")).toBe("MARRIED_TO");
-    expect(normalizeRelation("worksAt")).toBe("WORKS_AT");
-  });
 });
 
 describe("mergeExtraction", () => {
@@ -483,90 +448,5 @@ describe("applyRepairs", () => {
       graph.nodes.find((node) => node.key === "person:paolo")?.summary,
     ).toBe("Her husband");
     expect(graph.edges).toHaveLength(2);
-  });
-});
-
-describe("layout", () => {
-  it("keeps earlier Nodes where they were when more arrive", () => {
-    const first = layoutGraph([
-      { key: ROOT_KEY, category: "profile.personal" },
-      { key: "a", category: "wealth.accounts" },
-    ]);
-    const second = layoutGraph([
-      { key: ROOT_KEY, category: "profile.personal" },
-      { key: "a", category: "wealth.accounts" },
-      { key: "b", category: "wealth.accounts" },
-      { key: "c", category: "network.family" },
-    ]);
-    expect(second.nodes.get("a")).toEqual(first.nodes.get("a"));
-    expect(second.nodes.get(ROOT_KEY)).toMatchObject({ x: 0, y: 0 });
-    expect(second.leaves).toHaveLength(CATEGORY_IDS.length);
-  });
-
-  it("spirals Nodes outward without stacking them", () => {
-    const leaf = layoutGraph([]).leaves[0];
-    if (!leaf) throw new Error("no leaves");
-    const points = Array.from({ length: 30 }, (_, index) =>
-      spiral(leaf, index),
-    );
-    for (const [index, point] of points.entries()) {
-      for (const other of points.slice(index + 1)) {
-        expect(
-          Math.hypot(point.x - other.x, point.y - other.y),
-        ).toBeGreaterThan(14);
-      }
-    }
-  });
-});
-
-describe("citations", () => {
-  it("splits an answer into text and Node chips", () => {
-    const text =
-      "She sold [[organization:santos-freight]] and is married to [[person:paolo]]. [[client]]";
-    expect(citedKeys(text)).toEqual([
-      "organization:santos-freight",
-      "person:paolo",
-      "client",
-    ]);
-    expect(splitCitations("Hi [[person:paolo]]!")).toEqual([
-      { kind: "text", text: "Hi " },
-      { kind: "cite", handle: null, key: "person:paolo" },
-      { kind: "text", text: "!" },
-    ]);
-  });
-});
-
-describe("office files", () => {
-  it("reads an xlsx with shared strings, numbers and gaps", () => {
-    const bytes = zipSync({
-      "xl/workbook.xml": strToU8(
-        '<workbook><sheets><sheet name="Holdings" sheetId="1" r:id="rId1"/></sheets></workbook>',
-      ),
-      "xl/_rels/workbook.xml.rels": strToU8(
-        '<Relationships><Relationship Id="rId1" Target="worksheets/sheet1.xml"/></Relationships>',
-      ),
-      "xl/sharedStrings.xml": strToU8(
-        "<sst><si><t>Fund</t></si><si><t>Value</t></si><si><r><t>Global </t></r><r><t>Equity, A</t></r></si></sst>",
-      ),
-      "xl/worksheets/sheet1.xml": strToU8(
-        '<worksheet><sheetData><row r="1"><c r="A1" t="s"><v>0</v></c><c r="C1" t="s"><v>1</v></c></row><row r="2"><c r="A2" t="s"><v>2</v></c><c r="C2"><v>125000.5</v></c></row></sheetData></worksheet>',
-      ),
-    });
-    expect(readXlsx(bytes)).toEqual([
-      {
-        name: "Holdings",
-        rows: 2,
-        csv: 'Fund,,Value\n"Global Equity, A",,125000.5',
-      },
-    ]);
-  });
-
-  it("reads a docx as paragraphs", () => {
-    const bytes = zipSync({
-      "word/document.xml": strToU8(
-        '<w:document><w:body><w:p><w:r><w:t>Meeting notes</w:t></w:r></w:p><w:p><w:r><w:t xml:space="preserve">Prefers </w:t></w:r><w:r><w:t>calls &amp; lunch</w:t></w:r></w:p></w:body></w:document>',
-      ),
-    });
-    expect(readDocx(bytes)).toBe("Meeting notes\nPrefers calls & lunch");
   });
 });

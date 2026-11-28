@@ -2,7 +2,7 @@
 
 import type { ManifestSummary } from "../domain/contract";
 import { LIMITS } from "../domain/limits";
-import { createManifestUpload, readManifest } from "../server/actions";
+import { api } from "./api";
 import { bytes } from "./format";
 
 export type ManifestStage = "uploading" | "reading";
@@ -33,8 +33,10 @@ export async function uploadManifest(
   const problem = manifestProblem(file);
   if (problem) throw new Error(problem);
   onStage("uploading");
-  const slot = await createManifestUpload({ name: file.name, size: file.size });
-  if ("error" in slot) throw new Error(slot.error);
+  const slot = await api.openManifestUpload({
+    name: file.name,
+    size: file.size,
+  });
   const extension = file.name.split(".").pop()?.toLowerCase() ?? "";
   const response = await fetch(slot.signedUrl, {
     method: "PUT",
@@ -43,7 +45,5 @@ export async function uploadManifest(
   });
   if (!response.ok) throw new Error(`Storage said ${response.status}.`);
   onStage("reading");
-  const summary = await readManifest(slot.manifestId);
-  if ("error" in summary) throw new Error(summary.error);
-  return summary;
+  return api.readManifest(slot.manifestId);
 }
