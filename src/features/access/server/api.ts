@@ -92,3 +92,11 @@ export const hostApi = api("access")
   .use(withVisitor())
   .use(withBrowser())
   .use(withServices(accessServices));
+
+/**
+ * The routes that check their own bearer or need no Access: the Guest access
+ * MCP server and its OAuth endpoints, which MCP clients call from anywhere
+ * (so no same-origin guard either). The proxy lets them through
+ * (`BEARER_ROUTES`).
+ */
+export const openApi = api("access").use(withServices(accessServices));

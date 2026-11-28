@@ -6,7 +6,8 @@ import type { Owner } from "../domain/owner";
 import { pgCode, sql, UNDEFINED_FUNCTION, UNDEFINED_TABLE } from "./db";
 
 /*
- * Server-side state for the demos' MCP tokens (Client Manager, Harness).
+ * Server-side state for the demos' MCP tokens (Client Manager, Harness,
+ * Guest access).
  * The tokens themselves are signed blobs; these two tables are the only
  * state behind them: an Owner's token epoch ("Disconnect all MCP clients")
  * and the authorization codes already redeemed.

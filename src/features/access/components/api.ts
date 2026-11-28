@@ -79,6 +79,15 @@ export function restoreGuestPass(id: string): Promise<Outcome<PassChange>> {
   return attempt(() => send<PassChange>("POST", ROUTES.restore(id)));
 }
 
+/** The Guest access consent page's Allow or Deny: where the browser goes next. */
+export function answerMcpClient(input: {
+  request: string;
+  answer: "allow" | "deny";
+  trustHost: string | null;
+}): Promise<Outcome<Destination>> {
+  return attempt(() => send<Destination>("POST", ROUTES.mcpConsent, input));
+}
+
 export function disconnectMcpClients(): Promise<Outcome<Done>> {
   return attempt(() => send<Done>("DELETE", ROUTES.mcpClients));
 }

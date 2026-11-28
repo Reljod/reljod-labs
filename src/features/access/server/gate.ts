@@ -1,5 +1,5 @@
 import "server-only";
-import type { SupabaseClient } from "@supabase/supabase-js";
+import type { SupabaseClient, User } from "@supabase/supabase-js";
 import { cookies, headers } from "next/headers";
 import { E2E_HEADER } from "@/platform/request/headers";
 import { DENIED_MESSAGE } from "../constants";
@@ -10,7 +10,7 @@ import { env } from "./env";
 import { AccessDeniedError } from "./errors";
 import { FORWARDED_ACCESS_HEADER, forwardedAccess } from "./forwarded";
 import { guestPassOf } from "./repository";
-import { type AuthCookies, authClient } from "./supabase";
+import { type AuthCookies, authClient, supabase } from "./supabase";
 
 /** Why a request may use the demos. */
 export type Access =
@@ -27,12 +27,13 @@ export type Access =
 
 export { AccessDeniedError };
 
-/** The signed-in account, if it is a Host: confirmed, and on the Host list. */
-export async function hostOf(client: SupabaseClient) {
-  // Asks the Auth server, so a deleted or banned account stops being a Host.
-  const { data, error } = await client.auth.getUser();
-  const user = data?.user;
-  if (error || !user || user.is_anonymous) return null;
+/**
+ * The account, if it is a Host: not anonymous or banned, its email confirmed
+ * and on the Host list.
+ */
+function hostFrom(user: User | null | undefined, now = Date.now()) {
+  if (!user || user.is_anonymous) return null;
+  if (user.banned_until && Date.parse(user.banned_until) > now) return null;
   const email = user.email?.toLowerCase();
   if (!email || !user.email_confirmed_at) return null;
   if (!env.hostEmails().includes(email)) return null;
@@ -44,6 +45,30 @@ export async function hostOf(client: SupabaseClient) {
     email,
     name: typeof name === "string" ? name : "",
   };
+}
+
+/** The signed-in account, if it is a Host: confirmed, and on the Host list. */
+export async function hostOf(client: SupabaseClient) {
+  // Asks the Auth server, so a deleted or banned account stops being a Host.
+  const { data, error } = await client.auth.getUser();
+  return error ? null : hostFrom(data?.user);
+}
+
+/**
+ * The account with this id, if it is a Host now. For callers that carry no
+ * Auth cookies (the Guest access MCP server's bearer): asks the Auth admin
+ * API, so a deleted, banned or delisted account stops at once.
+ */
+export async function hostById(userId: string) {
+  const { data, error } = await supabase().auth.admin.getUserById(userId);
+  if (error) {
+    // A missing user is an answer; anything else is the Auth server failing.
+    if (error.status === 404 || error.code === "user_not_found") return null;
+    throw new Error(`Could not look up the Host: ${error.message}`, {
+      cause: error,
+    });
+  }
+  return hostFrom(data?.user);
 }
 
 /**

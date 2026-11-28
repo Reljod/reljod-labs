@@ -30,6 +30,8 @@ export const ROUTES = {
     `${ACCESS_API}/guest-passes/${encodeURIComponent(id)}/restore`,
   /** DELETE: "Disconnect all MCP clients" of the signed-in Host. */
   mcpClients: `${ACCESS_API}/mcp-clients`,
+  /** POST: the Guest access consent page's Allow or Deny; answers where the browser goes. */
+  mcpConsent: `${ACCESS_API}/mcp-consent`,
 } as const;
 
 export const signInSchema = z.object({
@@ -60,6 +62,16 @@ export const issueSchema = z.object({
 export const extendSchema = z.object({ hours: z.number() });
 
 export const passParamsSchema = z.object({ id: z.string().max(64) });
+
+export const mcpConsentSchema = z.object({
+  /** The authorization request's query, checked again on the server. */
+  request: z.string().max(8192),
+  answer: z.enum(["allow", "deny"]),
+  /** The callback host the Host ticked "I trust", if they did. */
+  trustHost: z.string().max(512).nullish(),
+});
+
+export type McpConsentAnswer = z.infer<typeof mcpConsentSchema>;
 
 /**
  * Where the browser goes after the door. It loads that page in full rather
